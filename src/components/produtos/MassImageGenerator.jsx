@@ -44,7 +44,7 @@ export default function MassImageGenerator({ products, onComplete }) {
 
       const promises = batch.map(async (product, i) => {
         try {
-          const prompt = `Product photography of ${product.nome}, ${product.categoria_nome || ''} ${product.marca || ''}. Professional studio lighting, white background, 4k, high detailed, realistic product shot.`;
+          const prompt = `Professional studio photography of construction material / hardware store product: ${product.nome} (${product.categoria_nome || ''}). Context: Building supplies, tools, or home improvement. Isolated on white background, 4k, realistic, commercial catalog style.`;
           
           // Add log
           setLogs(prev => [`Gerando imagem para: ${product.nome}...`, ...prev].slice(0, 50));

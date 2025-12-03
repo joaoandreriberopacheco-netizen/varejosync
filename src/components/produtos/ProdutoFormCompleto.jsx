@@ -318,7 +318,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       }
                       const loadingToast = toast({ title: "Gerando imagem IA...", duration: 10000 });
                       try {
-                        const prompt = `Product photography of ${formData.nome} ${formData.marca || ''}, ${formData.categoria_nome || ''}. White background, high quality, studio lighting.`;
+                        const prompt = `Professional studio photography of construction material / hardware store product: ${formData.nome} (${formData.categoria_nome || ''}). Context: Building supplies, tools, or home improvement. Isolated on white background, 4k, realistic, commercial catalog style.`;
                         const { url } = await base44.integrations.Core.GenerateImage({ prompt });
                         handleChange('imagem_url', url);
                         toast({ title: "Imagem gerada!", className: "bg-green-100 text-green-800" });
