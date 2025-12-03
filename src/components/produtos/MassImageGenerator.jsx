@@ -44,19 +44,27 @@ export default function MassImageGenerator({ products, onComplete }) {
 
       const promises = batch.map(async (product, i) => {
         try {
-          const prompt = `Professional studio photography of construction material / hardware store product: ${product.nome} (${product.categoria_nome || ''}). Context: Building supplies, tools, or home improvement. Isolated on white background, 4k, realistic, commercial catalog style.`;
+          const prompt = `Encontre uma URL direta de imagem real e pública para o produto de material de construção: ${product.nome} ${product.marca || ''} (${product.categoria_nome || ''}). A imagem deve ser do produto isolado ou em uso, preferencialmente fundo branco ou neutro. Retorne apenas o JSON com a URL.`;
           
           // Add log
-          setLogs(prev => [`Gerando imagem para: ${product.nome}...`, ...prev].slice(0, 50));
+          setLogs(prev => [`Buscando na web: ${product.nome}...`, ...prev].slice(0, 50));
 
-          const { url } = await base44.integrations.Core.GenerateImage({ prompt });
+          const response = await base44.integrations.Core.InvokeLLM({
+            prompt,
+            add_context_from_internet: true,
+            response_json_schema: {
+              type: "object",
+              properties: { image_url: { type: "string" } },
+              required: ["image_url"]
+            }
+          });
 
-          if (url) {
-            await base44.entities.Produto.update(product.id, { imagem_url: url });
+          if (response && response.image_url) {
+            await base44.entities.Produto.update(product.id, { imagem_url: response.image_url });
             setProgress(prev => ({ ...prev, current: prev.current + 1, success: prev.success + 1 }));
-            setLogs(prev => [`✓ Imagem gerada: ${product.nome}`, ...prev].slice(0, 50));
+            setLogs(prev => [`✓ Imagem encontrada: ${product.nome}`, ...prev].slice(0, 50));
           } else {
-            throw new Error("URL não retornada");
+            throw new Error("URL não encontrada");
           }
         } catch (error) {
           console.error(error);

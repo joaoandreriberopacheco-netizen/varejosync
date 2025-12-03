@@ -316,20 +316,29 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                         toast({ title: "Preencha o nome primeiro", variant: "destructive" });
                         return;
                       }
-                      const loadingToast = toast({ title: "Gerando imagem IA...", duration: 10000 });
+                      toast({ title: "Buscando imagem na web...", duration: 10000 });
                       try {
-                        const prompt = `Professional studio photography of construction material / hardware store product: ${formData.nome} (${formData.categoria_nome || ''}). Context: Building supplies, tools, or home improvement. Isolated on white background, 4k, realistic, commercial catalog style.`;
-                        const { url } = await base44.integrations.Core.GenerateImage({ prompt });
-                        handleChange('imagem_url', url);
-                        toast({ title: "Imagem gerada!", className: "bg-green-100 text-green-800" });
+                        const prompt = `Encontre uma URL direta de imagem real e pública para o produto de construção: ${formData.nome} ${formData.marca || ''} (${formData.categoria_nome || ''}). Preferência por fundo branco.`;
+                        const response = await base44.integrations.Core.InvokeLLM({ 
+                          prompt,
+                          add_context_from_internet: true,
+                          response_json_schema: { type: "object", properties: { image_url: { type: "string" } } }
+                        });
+                        
+                        if (response && response.image_url) {
+                          handleChange('imagem_url', response.image_url);
+                          toast({ title: "Imagem encontrada!", className: "bg-green-100 text-green-800" });
+                        } else {
+                          throw new Error("Imagem não encontrada");
+                        }
                       } catch (error) {
                         console.error(error);
-                        toast({ title: "Erro ao gerar imagem", variant: "destructive" });
+                        toast({ title: "Erro ao buscar imagem", variant: "destructive" });
                       }
                     }}
                     className="h-8 text-xs whitespace-nowrap"
                   >
-                    Gerar com IA
+                    Buscar na Web
                   </Button>
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400">
