@@ -288,7 +288,56 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-3 md:px-6 py-3 md:py-4">
           {/* ABA DESCRITIVO */}
-          <TabsContent value="descritivo" className="space-y-3 mt-0">
+          <TabsContent value="descritivo" className="space-y-4 mt-0">
+            {/* Image Upload Section */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
+              <div className="w-24 h-24 shrink-0 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center overflow-hidden relative group">
+                {formData.imagem_url ? (
+                  <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-gray-300 dark:text-gray-500 text-xs text-center p-1">Sem imagem</div>
+                )}
+              </div>
+              <div className="flex-1 w-full space-y-2">
+                <Label className="text-xs text-gray-600 dark:text-gray-400 block">URL da Imagem</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    value={formData.imagem_url || ''} 
+                    onChange={e => handleChange('imagem_url', e.target.value)} 
+                    placeholder="https://..." 
+                    className="flex-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 h-8 text-xs"
+                  />
+                  <Button 
+                    type="button" 
+                    size="sm" 
+                    variant="outline"
+                    onClick={async () => {
+                      if (!formData.nome) {
+                        toast({ title: "Preencha o nome primeiro", variant: "destructive" });
+                        return;
+                      }
+                      const loadingToast = toast({ title: "Gerando imagem IA...", duration: 10000 });
+                      try {
+                        const prompt = `Product photography of ${formData.nome} ${formData.marca || ''}, ${formData.categoria_nome || ''}. White background, high quality, studio lighting.`;
+                        const { url } = await base44.integrations.Core.GenerateImage({ prompt });
+                        handleChange('imagem_url', url);
+                        toast({ title: "Imagem gerada!", className: "bg-green-100 text-green-800" });
+                      } catch (error) {
+                        console.error(error);
+                        toast({ title: "Erro ao gerar imagem", variant: "destructive" });
+                      }
+                    }}
+                    className="h-8 text-xs whitespace-nowrap"
+                  >
+                    Gerar com IA
+                  </Button>
+                </div>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                  Cole uma URL ou use a IA para gerar uma imagem automaticamente.
+                </p>
+              </div>
+            </div>
+
             <div className="col-span-1 md:col-span-2">
               <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Descrição do Produto *</Label>
               <Input 
@@ -414,8 +463,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
               </div>
             </div>
 
-            {/* LAYOUT FLEX RESPONSIVO */}
-            <div className="flex flex-col lg:flex-row gap-8">
+            {/* LAYOUT FLEX RESPONSIVO - Alterado para xl:flex-row para evitar aperto no mobile/tablet */}
+            <div className="flex flex-col xl:flex-row gap-8">
               {/* Composição de Custos */}
               <div className="flex-1 min-w-0">
                 <h3 className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-3">Composição de Custos</h3>

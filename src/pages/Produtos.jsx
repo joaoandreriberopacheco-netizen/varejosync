@@ -1199,7 +1199,10 @@ export default function ProdutosPage() {
                       <TableHead className="sticky left-0 z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 w-[50px] border-r border-gray-200 dark:border-gray-700 text-xs p-2">
                         
                       </TableHead>
-                      <TableHead className="sticky left-[50px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[220px] border-r border-gray-200 dark:border-gray-700 text-xs">
+                      <TableHead className="sticky left-[50px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[60px] border-r border-gray-200 dark:border-gray-700 text-xs text-center">
+                        Img
+                      </TableHead>
+                      <TableHead className="sticky left-[110px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[220px] border-r border-gray-200 dark:border-gray-700 text-xs">
                         Produto
                       </TableHead>
                       
@@ -1309,7 +1312,16 @@ export default function ProdutosPage() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
-                          <TableCell className="sticky left-[50px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+                          <TableCell className="sticky left-[50px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-1 text-center">
+                            <div className="w-10 h-10 mx-auto bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center overflow-hidden">
+                              {produto.imagem_url ? (
+                                <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <Package className="w-5 h-5 text-gray-300" />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="sticky left-[110px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
                             <div className="font-medium text-sm text-gray-700 dark:text-gray-200">{produto.nome}</div>
                             <div className="text-xs text-gray-600 dark:text-gray-400">{produto.codigo_interno}</div>
                           </TableCell>
