@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,8 +12,6 @@ import { Package, DollarSign, Warehouse, Settings, Save, X, Plus } from 'lucide-
 import TagGenerator from './TagGenerator';
 import { useToast } from "@/components/ui/use-toast";
 import { getTenantId } from '@/components/utils/tenant';
-
-
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [formData, setFormData] = useState(produto ? {
