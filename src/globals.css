@@ -1,0 +1,240 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+.font-glacial {
+  font-family: 'Quicksand', sans-serif;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fonte padrão do sistema */
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ==========================================
+   ESTILOS GLOBAIS DE UX/UI
+   ========================================== */
+
+/* Mobile Touch Targets - Botões de ação maiores para toque fácil */
+@media (max-width: 767px) {
+  /* Botões primários de ação - tamanho mínimo de 44px (recomendação Apple/Google) */
+  button[data-action="primary"],
+  .btn-action-primary,
+  [role="button"].action-primary {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Botões de confirmação/submit em dialogs */
+  [role="dialog"] footer button,
+  [data-dialog-footer] button {
+    min-height: 48px !important;
+    font-size: 1rem;
+  }
+
+  /* Botões de ícone (delete, edit, etc) */
+  button[aria-label],
+  .btn-icon {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  /* Select triggers em mobile */
+  [data-radix-select-trigger],
+  [role="combobox"] {
+    min-height: 44px !important;
+  }
+
+  /* Inputs em mobile */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="search"],
+  input[type="date"],
+  textarea {
+    min-height: 44px;
+    font-size: 16px !important; /* Evita zoom automático no iOS */
+  }
+
+  /* Itens de lista clicáveis */
+  [role="option"],
+  [role="menuitem"],
+  .list-item-clickable {
+    min-height: 48px !important;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Tabs em mobile */
+  [role="tab"] {
+    min-height: 44px !important;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Cards clicáveis */
+  .card-clickable,
+  [data-clickable="true"] {
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Badge/chip de seleção */
+  .badge-selectable {
+    min-height: 36px;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* ==========================================
+   NAVEGAÇÃO POR TECLADO - Estilos de foco
+   ========================================== */
+
+/* Highlight visual para navegação por setas */
+.keyboard-nav-active {
+  outline: 2px solid rgba(59, 130, 246, 0.5) !important;
+  outline-offset: 2px;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Focus ring melhorado para acessibilidade */
+:focus-visible {
+  outline: 2px solid rgb(59, 130, 246);
+  outline-offset: 2px;
+}
+
+/* Remove outline padrão para cliques, mantém para teclado */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Item selecionado em listas navegáveis */
+.nav-item-selected {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-left: 3px solid rgb(107, 114, 128);
+}
+
+.dark .nav-item-selected {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: rgb(156, 163, 175);
+}
+
+/* ==========================================
+   TRANSIÇÕES SUAVES
+   ========================================== */
+
+/* Transições padrão para interações */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[role="menuitem"],
+[role="option"] {
+  transition: all 0.15s ease-in-out;
+}
+
+/* Hover suave em cards */
+.card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================
+   SCROLLBAR PERSONALIZADA
+   ========================================== */
+
+/* Scrollbar sutil */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================
+   UTILIDADES PARA TOUCH
+   ========================================== */
+
+/* Área de toque expandida para ícones pequenos */
+.touch-target {
+  position: relative;
+}
+
+.touch-target::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  bottom: -8px;
+  left: -8px;
+}
+
+/* Feedback visual de toque */
+@media (hover: none) {
+  button:active,
+  [role="button"]:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+/* ==========================================
+   DARK MODE AJUSTES
+   ========================================== */
+
+.dark {
+  color-scheme: dark;
+}
+
+/* ==========================================
+   ANIMAÇÕES
+   ========================================== */
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* Shake para erros */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}

@@ -1,0 +1,1786 @@
+import React, { useState, useEffect, useMemo } from 'react';
+// entities imported via base44 client
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  PlusCircle,
+  Edit,
+  Download,
+  Upload,
+  Package,
+  DollarSign,
+  MoreHorizontal,
+  Archive,
+  Copy,
+  TrendingUp,
+  CheckCircle,
+  Loader2,
+  RefreshCw,
+  Columns,
+  Search
+} from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
+import { base44 } from '@/api/base44Client';
+import { getTenantId } from '@/components/utils/tenant';
+
+import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
+import ColumnSelector from '../components/produtos/ColumnSelector';
+import MassTagGenerator from '../components/produtos/MassTagGenerator';
+import MassImageGenerator from '../components/produtos/MassImageGenerator';
+
+const getStockStatusIndicator = (produto) => {
+  if (!produto.ativo) {
+    return <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-xs"><div className="w-2 h-2 bg-gray-600 rounded-full" /> Inativo</div>;
+  }
+  const estoque = produto.estoque_atual || 0;
+  const minimo = produto.estoque_minimo || 0;
+
+  if (estoque <= 0) {
+    return <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 text-xs"><div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" /> Crítico</div>;
+  }
+  if (estoque <= minimo / 2) {
+    return <div className="flex items-center gap-1.5 text-red-500 dark:text-red-300 text-xs"><div className="w-2 h-2 bg-red-500 rounded-full" /> Crítico</div>;
+  }
+  if (estoque <= minimo) {
+    return <div className="flex items-center gap-1.5 text-orange-500 dark:text-orange-300 text-xs"><div className="w-2 h-2 bg-orange-500 rounded-full" /> Baixo</div>;
+  }
+  return <div className="flex items-center gap-1.5 text-green-500 dark:text-green-300 text-xs"><div className="w-2 h-2 bg-green-500 rounded-full" /> OK</div>;
+};
+
+export default function ProdutosPage() {
+  const [produtos, setProdutos] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [stats, setStats] = useState({ total: 0, valorEstoque: 0, abaixoMinimo: 0 });
+
+  const [filters, setFilters] = useState({
+    searchTerm: '',
+    categoria: 'all',
+    fornecedorId: 'all',
+    statusEstoque: 'all'
+  });
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedProduto, setSelectedProduto] = useState(null);
+  const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState([
+    'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
+  ]);
+
+  // States for unified import (products + costs)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [isProcessingImport, setIsProcessingImport] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+
+  // States for costs only import (original functionality, kept for now but could be refactored)
+  const [isImportCustosDialogOpen, setIsImportCustosDialogOpen] = useState(false);
+  const [importCustosFile, setImportCustosFile] = useState(null);
+  const [isProcessingCustos, setIsProcessingCustos] = useState(false);
+  const [previewCustosData, setPreviewCustosData] = useState(null);
+  const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
+
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    const tenantId = getTenantId();
+    const [produtosData, fornecedoresData] = await Promise.all([
+      base44.entities.Produto.filter({ empresa_id: tenantId }, '-created_date'),
+      base44.entities.Terceiro.filter({ empresa_id: tenantId, tipo: ['Fornecedor', 'Ambos'] })
+    ]);
+    
+    const safeProdutos = Array.isArray(produtosData) ? produtosData.filter(p => p && typeof p === 'object') : [];
+    const safeFornecedores = Array.isArray(fornecedoresData) ? fornecedoresData.filter(f => f && typeof f === 'object') : [];
+    
+    setProdutos(safeProdutos);
+    setFornecedores(safeFornecedores);
+
+    // Calcular estatísticas e categorias
+    let valorTotal = 0;
+    let abaixoMin = 0;
+    const catSet = new Set();
+    safeProdutos.forEach(p => {
+      valorTotal += (p.estoque_atual || 0) * (p.preco_custo_calculado || 0);
+      if (p.estoque_atual <= p.estoque_minimo && p.ativo) {
+        abaixoMin++;
+      }
+      if(p.categoria_nome) catSet.add(p.categoria_nome);
+    });
+
+    setStats({ total: safeProdutos.length, valorEstoque: valorTotal, abaixoMinimo: abaixoMin });
+    setCategorias(Array.from(catSet));
+  };
+
+  const handleSave = async () => {
+    await loadData();
+    setIsFormOpen(false);
+  };
+
+  const handleEdit = (produto) => {
+    setSelectedProduto(produto);
+    setIsFormOpen(true);
+  };
+
+  const handleAddNew = () => {
+    setSelectedProduto(null);
+    setIsFormOpen(true);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const formatarNumero = (numero) => {
+    if (numero === null || numero === undefined) return '0,00';
+    return numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const handleExportarCatalogo = () => {
+    const headers = [
+      "id_produto",
+      "Nome",
+      "Codigo_Interno",
+      "Codigo_Barras",
+      "Tipo",
+      "Categoria",
+      "Preco_Venda",
+      "Preco_Custo",
+      "Estoque_Atual",
+      "Estoque_Minimo",
+      "Estoque_Ideal",
+      "Estoque_Maximo",
+      "Fornecedor_Codigo",
+      "Tempo_Reposicao_Dias",
+      "Peso_KG",
+      "Dimensoes_CM",
+      "Ativo"
+    ];
+
+    let csvContent = "\uFEFF"; // UTF-8 BOM
+    csvContent += headers.join(";") + "\n";
+
+    produtos.forEach(p => {
+      // Buscar código do fornecedor
+      const fornecedor = fornecedores.find(f => f.id === p.fornecedor_padrao_id);
+      const fornecedorCodigo = fornecedor?.codigo_interno || '';
+
+      const row = [
+        p.id || '',
+        p.nome || '',
+        p.codigo_interno || '',
+        p.codigo_barras || '',
+        p.tipo || 'Produto',
+        p.categoria_nome || '',
+        formatarNumero(p.preco_venda_padrao),
+        formatarNumero(p.preco_custo_calculado),
+        formatarNumero(p.estoque_atual),
+        formatarNumero(p.estoque_minimo),
+        formatarNumero(p.estoque_ideal),
+        formatarNumero(p.estoque_maximo),
+        fornecedorCodigo,
+        p.tempo_reposicao_dias || 0,
+        formatarNumero(p.peso_kg),
+        p.dimensoes_cm || '',
+        p.ativo ? 'true' : 'false'
+      ];
+      csvContent += row.join(";") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `catalogo_produtos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Catálogo exportado!",
+      description: `${produtos.length} produtos exportados (formato BR: vírgula decimal).`,
+      className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700",
+      duration: 3000
+    });
+  };
+
+  const handleExportarPrecificacao = async () => {
+    // Buscar todos os tipos de custo existentes
+    const tenantId = getTenantId();
+    const todosCustos = await base44.entities.CustoDetalhado.filter({ empresa_id: tenantId });
+    const tiposCusto = [...new Set(todosCustos.map(c => c.descricao_custo))];
+
+    // UTF-8 COM BOM
+    let csvContent = "\uFEFF";
+
+    const headers = [
+      "id_produto",
+      "Nome do Produto",
+      "Preço de Venda",
+      ...tiposCusto.map(tipo => `Custo | ${tipo}`)
+    ];
+
+    csvContent += headers.join(";") + "\n";
+
+    for (const produto of produtos) {
+      const custos = await base44.entities.CustoDetalhado.filter({ produto_id: produto.id });
+      const custosPorTipo = {};
+      custos.forEach(c => {
+        custosPorTipo[c.descricao_custo] = c.valor_custo;
+      });
+
+      const row = [
+        produto.id,
+        produto.nome,
+        formatarNumero(produto.preco_venda_padrao),
+        ...tiposCusto.map(tipo => formatarNumero(custosPorTipo[tipo]))
+      ];
+
+      csvContent += row.join(";") + "\n";
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `precificacao_produtos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Precificação exportada!",
+      description: "Planilha gerada com formato largo para edição massiva de preços.",
+      className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
+      duration: 3000
+    });
+  };
+
+  const handleBaixarTemplateUnificado = () => {
+    const headers = [
+      "nome",
+      "codigo_barras",
+      "tipo",
+      "categoria",
+      "tags",
+      "valor_compra",
+      "frete_percentual",
+      "imposto_1_percentual",
+      "imposto_2_percentual",
+      "desconto_comercial_percentual",
+      "outros_custos_percentual",
+      "fornecedor_codigo",
+      "preco_venda_padrao",
+      "preco_venda_tipo",
+      "dimensoes_cm",
+      "peso_kg",
+      "tempo_reposicao_dias",
+      "estoque_ideal",
+      "estoque_minimo",
+      "estoque_maximo",
+      "unidades_por_pacote",
+      "unidade_principal",
+      "ativo"
+    ];
+    
+    let csvContent = "\uFEFF";
+    csvContent += "# TEMPLATE DE IMPORTAÇÃO DE PRODUTOS E CUSTOS\n";
+    csvContent += "# TIPO aceita apenas: Produto ou Serviço (ou 0 para Produto, 1 para Serviço)\n";
+    csvContent += "# TAGS separadas por vírgula (ex: torneira,banheiro,metais)\n";
+    csvContent += "# DIMENSOES no formato AxLxP (ex: 30x20x15)\n";
+    csvContent += "# Custos sempre em PERCENTUAL (sistema calcula o valor em R$)\n";
+    csvContent += "# ESTOQUE_ATUAL não deve ser preenchido (calculado pelo sistema)\n";
+    csvContent += "# CODIGO_INTERNO não deve ser preenchido (gerado automaticamente)\n";
+    csvContent += "\n";
+    csvContent += headers.join(";") + "\n";
+    
+    // Linha de exemplo
+    const exemplo = [
+      "Torneira de Mesa Cromada",
+      "7891234567890",
+      "Produto",
+      "Hidráulica",
+      "torneira,banheiro,metais",
+      "100,00",
+      "5",
+      "12",
+      "9",
+      "0",
+      "4",
+      "FOR-001",
+      "0", // preco_venda_padrao will be calculated if preco_venda_tipo is 'percentual'
+      "percentual",
+      "30x20x15",
+      "1,5",
+      "20",
+      "100",
+      "50",
+      "200",
+      "12",
+      "UN",
+      "true"
+    ];
+    csvContent += exemplo.join(";") + "\n";
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `template_produtos_custos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "✓ Template baixado!",
+      description: "Preencha produtos e custos conforme os comentários no arquivo.",
+      className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700",
+      duration: 3000
+    });
+  };
+
+  const handleProcessarImportacaoUnificada = async () => {
+    if (!importFile) {
+      toast({ title: "Nenhum arquivo selecionado.", variant: "destructive" });
+      return;
+    }
+    setIsProcessingImport(true);
+
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: importFile });
+      
+      const produtosSchema = {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                "nome": { type: "string" },
+                "codigo_barras": { type: "string" },
+                "tipo": { type: "string" },
+                "categoria": { type: "string" },
+                "tags": { type: "string" },
+                "valor_compra": { type: "number" },
+                "frete_percentual": { type: "number" },
+                "imposto_1_percentual": { type: "number" },
+                "imposto_2_percentual": { type: "number" },
+                "desconto_comercial_percentual": { type: "number" },
+                "outros_custos_percentual": { type: "number" },
+                "fornecedor_codigo": { type: "string" },
+                "preco_venda_padrao": { type: "number" },
+                "preco_venda_tipo": { type: "string" },
+                "preco_venda_percentual": { type: "number" }, // Kept for internal calculation if type is 'percentual'
+                "dimensoes_cm": { type: "string" },
+                "peso_kg": { type: "number" },
+                "tempo_reposicao_dias": { type: "number" },
+                "estoque_ideal": { type: "number" },
+                "estoque_minimo": { type: "number" },
+                "estoque_maximo": { type: "number" },
+                "unidades_por_pacote": { type: "number" },
+                "unidade_principal": { type: "string" },
+                "ativo": { type: "boolean" }
+              },
+              required: ["nome"],
+              additionalProperties: true
+            }
+          }
+        }
+      };
+      
+      const extraction = await base44.integrations.Core.ExtractDataFromUploadedFile({ 
+        file_url, 
+        json_schema: produtosSchema 
+      });
+
+      if (extraction.status !== 'success' || !extraction.output || !extraction.output.data) {
+        throw new Error(extraction.details || "Falha ao extrair dados.");
+      }
+
+      const importedData = extraction.output.data;
+      const resumo = { novos: 0, erros: [] };
+      const produtosValidados = [];
+
+      for (const linha of importedData) {
+        const errosLinha = [];
+        
+        if (!linha.nome) {
+          errosLinha.push("Nome é obrigatório");
+        }
+
+        if (errosLinha.length > 0) {
+          resumo.erros.push(`Produto '${linha.nome || 'Sem nome'}': ${errosLinha.join(', ')}`);
+          continue;
+        }
+
+        // Buscar fornecedor pelo código
+        let fornecedor_id = '';
+        let fornecedor_codigo = '';
+        if (linha.fornecedor_codigo) {
+          const forn = fornecedores.find(f => f.codigo_interno === String(linha.fornecedor_codigo)); // Ensure string comparison
+          if (forn) {
+            fornecedor_id = forn.id;
+            fornecedor_codigo = forn.codigo_interno;
+          }
+        }
+
+        // Parse numerical values, handling potential comma decimals
+        const parseNumber = (val) => {
+          if (typeof val === 'string') {
+            return parseFloat(val.replace(',', '.'));
+          }
+          return parseFloat(val);
+        };
+
+        const valorCompra = parseNumber(linha.valor_compra) || 0;
+        const fretePercentual = parseNumber(linha.frete_percentual) || 0;
+        const imposto1Percentual = parseNumber(linha.imposto_1_percentual) || 0;
+        const imposto2Percentual = parseNumber(linha.imposto_2_percentual) || 0;
+        const descontoComercialPercentual = parseNumber(linha.desconto_comercial_percentual) || 0;
+        const outrosCustosPercentual = parseNumber(linha.outros_custos_percentual) || 0;
+
+        const frete = valorCompra * (fretePercentual / 100);
+        const imposto1 = valorCompra * (imposto1Percentual / 100);
+        const imposto2 = valorCompra * (imposto2Percentual / 100);
+        const desconto = valorCompra * (descontoComercialPercentual / 100);
+        const outros = valorCompra * (outrosCustosPercentual / 100);
+        
+        // Summing up costs based on the outline's logic
+        const custoTotal = valorCompra + frete + imposto1 + imposto2 + outros - desconto;
+
+        // Calculate preço de venda
+        let precoVenda = 0;
+        const precoVendaTipo = linha.preco_venda_tipo || 'numerico';
+        // Default to 40% if not specified and type is percentual
+        const precoVendaPercentual = parseNumber(linha.preco_venda_percentual) || 40; 
+
+        if (precoVendaTipo.toLowerCase() === 'percentual') {
+          precoVenda = custoTotal * (1 + (precoVendaPercentual / 100));
+        } else {
+          precoVenda = parseNumber(linha.preco_venda_padrao) || 0;
+        }
+
+        // Process 'tipo' field (Produto/Serviço or 0/1)
+        let tipoProduto = 'Produto'; // Default
+        if (linha.tipo && (String(linha.tipo).toLowerCase() === 'serviço' || String(linha.tipo) === '1')) {
+          tipoProduto = 'Serviço';
+        } else if (linha.tipo && (String(linha.tipo).toLowerCase() === 'produto' || String(linha.tipo) === '0')) {
+          tipoProduto = 'Produto';
+        }
+
+        // Process 'tags' field
+        let tagsArray = [];
+        if (linha.tags && typeof linha.tags === 'string') {
+          tagsArray = linha.tags.split(',').map(t => t.trim()).filter(t => t);
+        }
+
+        // Calculate volume_cm3 if dimensions are provided
+        let volume_cm3 = 0;
+        if (linha.dimensoes_cm) {
+            const parts = String(linha.dimensoes_cm).split('x').map(p => parseFloat(p.trim()));
+            if (parts.length === 3 && parts.every(p => !isNaN(p) && p > 0)) {
+                volume_cm3 = parts[0] * parts[1] * parts[2];
+            }
+        }
+        
+        const produtoData = {
+          nome: linha.nome,
+          // codigo_interno is generated automatically, not imported from template
+          codigo_barras: String(linha.codigo_barras || ''),
+          tipo: tipoProduto,
+          categoria_nome: linha.categoria || '', // Changed to categoria_nome
+          tags: tagsArray, // New field
+          preco_venda_padrao: precoVenda,
+          preco_venda_tipo: precoVendaTipo,
+          preco_venda_percentual: precoVendaPercentual,
+          preco_custo_calculado: custoTotal, // Calculated cost
+          valor_compra: valorCompra, // Store base value for future cost calculations
+          unidade_principal: linha.unidade_principal || 'UN', // New field
+          unidades_por_pacote: parseInt(linha.unidades_por_pacote) || 1, // New field
+          // unidade_compra, unidade_venda, fator_conversao removed as per template
+          estoque_atual: 0, // Always start new products with 0 stock
+          estoque_minimo: parseNumber(linha.estoque_minimo) || 0,
+          estoque_ideal: parseNumber(linha.estoque_ideal) || 0,
+          estoque_maximo: parseNumber(linha.estoque_maximo) || 0,
+          estoque_avariado: 0,
+          fornecedor_padrao_id: fornecedor_id || null,
+          fornecedor_padrao_codigo: fornecedor_codigo || null, // Store for easier reference
+          tempo_reposicao_dias: parseInt(linha.tempo_reposicao_dias) || 0,
+          peso_kg: parseNumber(linha.peso_kg) || 0,
+          dimensoes_cm: linha.dimensoes_cm || '',
+          volume_cm3: volume_cm3, // New calculated field
+          ativo: (linha.ativo === true || String(linha.ativo).toLowerCase() === 'true'),
+          // Store costs separately to be created as CustoDetalhado
+          custos: [
+            { descricao_custo: 'Valor de Compra', valor_custo: valorCompra, tipo_valor: 'numerico', is_negativo: false },
+            { descricao_custo: 'Frete', valor_custo: fretePercentual, tipo_valor: 'percentual', is_negativo: false },
+            { descricao_custo: 'Imposto 1', valor_custo: imposto1Percentual, tipo_valor: 'percentual', is_negativo: false },
+            { descricao_custo: 'Imposto 2', valor_custo: imposto2Percentual, tipo_valor: 'percentual', is_negativo: false },
+            { descricao_custo: 'Desconto Comercial', valor_custo: descontoComercialPercentual, tipo_valor: 'percentual', is_negativo: true },
+            { descricao_custo: 'Outros Custos', valor_custo: outrosCustosPercentual, tipo_valor: 'percentual', is_negativo: false }
+          ].filter(c => c.valor_custo !== 0) // Only save costs with non-zero values
+        };
+
+        produtosValidados.push(produtoData);
+        resumo.novos++;
+      }
+
+      setPreviewData({ produtos: produtosValidados, resumo });
+      setIsImportDialogOpen(false);
+      setIsPreviewDialogOpen(true);
+
+    } catch (error) {
+      console.error("Erro no processamento da importação unificada:", error);
+      toast({ 
+        title: "Erro no Processamento", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsProcessingImport(false);
+    }
+  };
+
+  const handleConfirmarImportacaoUnificada = async () => {
+    if (!previewData) return;
+    setIsProcessingImport(true);
+
+    try {
+      for (const produtoData of previewData.produtos) {
+        const custosToCreate = produtoData.custos; // Get the costs
+        
+        // Remove 'custos' property before creating the Produto entity
+        const { custos, ...productToCreate } = produtoData;
+        
+        const tenantId = getTenantId();
+        const novoProduto = await base44.entities.Produto.create({ ...productToCreate, empresa_id: tenantId });
+        
+        // Create CustoDetalhado entities using the ID of the new product
+        const custosParaSalvar = custosToCreate.map(c => ({
+          empresa_id: tenantId,
+          produto_id: novoProduto.id,
+          descricao_custo: c.descricao_custo,
+          valor_custo: c.valor_custo,
+          tipo_valor: c.tipo_valor,
+          is_negativo: c.is_negativo
+        }));
+        
+        if (custosParaSalvar.length > 0) {
+          await base44.entities.CustoDetalhado.bulkCreate(custosParaSalvar);
+        }
+      }
+
+      toast({
+        title: "✓ Produtos e Custos Importados!",
+        description: `${previewData.produtos.length} produtos com custos detalhados criados com sucesso.`,
+        className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
+        duration: 5000
+      });
+
+      setPreviewData(null);
+      setIsPreviewDialogOpen(false);
+      setImportFile(null);
+      await loadData(); // Reload all data to reflect changes
+
+    } catch (error) {
+      console.error("Erro na importação final unificada:", error);
+      toast({ 
+        title: "Erro na Importação", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsProcessingImport(false);
+    }
+  };
+
+
+  const handleBaixarTemplateCustos = () => {
+    const headers = [
+      "id_produto",
+      "codigo_interno",
+      "codigo_barras",
+      "nome_produto",
+      "novo_valor_compra"
+    ];
+
+    let csvContent = "\uFEFF"; // UTF-8 BOM
+    csvContent += headers.join(";") + "\n";
+
+    // Adicionar alguns exemplos
+    produtos.slice(0, 5).forEach(p => {
+      const row = [
+        p.id || '',
+        p.codigo_interno || '',
+        p.codigo_barras || '',
+        p.nome || '',
+        formatarNumero(p.preco_custo_calculado || 0)
+      ];
+      csvContent += row.join(";") + "\n";
+    });
+
+    // Linha de exemplo
+    csvContent += ";SKU-999;7899999999999;Produto Exemplo;100,50\n";
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `template_atualizacao_custos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "✓ Template baixado!",
+      description: "Preencha com os novos valores de compra e importe.",
+      className: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300",
+      duration: 3000
+    });
+  };
+
+  const calcularNovoCustoTotal = (custosDetalhes, novoValorCompra) => {
+    // Recalcular custo total baseado no novo valor de compra
+    let totalCusto = 0;
+    // For simplicity, we assume "Custo da Mercadoria" is the base and other costs are applied on top.
+    // This logic should align with how the product's costs are structured in the backend/form.
+
+    let custoBaseEncontrado = false;
+    
+    // First, sum up numeric costs (excluding "Valor de Compra" initially)
+    // and identify the "Valor de Compra" to update its value.
+    custosDetalhes.forEach((custo) => {
+      if (custo.descricao_custo === 'Valor de Compra' || custo.descricao_custo === 'Custo da Mercadoria') {
+        custoBaseEncontrado = true;
+      } else if (custo.tipo_valor === 'numerico') {
+        const valor = parseFloat(custo.valor_custo) || 0;
+        totalCusto += custo.is_negativo ? -valor : valor;
+      }
+    });
+
+    // Add the new valorCompra as "Valor de Compra"
+    totalCusto += novoValorCompra;
+
+    // Then, add percentage-based costs, which depend on the merchandise cost (novoValorCompra)
+    custosDetalhes.forEach((custo) => {
+        if (custo.tipo_valor === 'percentual') {
+            const percentual = parseFloat(custo.valor_custo) || 0;
+            const valorCalculado = novoValorCompra * (percentual / 100);
+            totalCusto += custo.is_negativo ? -valorCalculado : valorCalculado;
+        }
+    });
+
+    return totalCusto;
+  };
+
+  const calcularNovoPrecoVenda = (produto, novoCustoTotal) => {
+    if (produto.preco_venda_tipo === 'percentual') {
+      return novoCustoTotal * (1 + (parseFloat(produto.preco_venda_percentual) || 0) / 100);
+    }
+    return produto.preco_venda_padrao || 0; // If not percentual, keep current selling price or 0
+  };
+
+  const handleProcessarImportacaoCustos = async () => {
+    if (!importCustosFile) {
+      toast({ title: "Nenhum arquivo selecionado.", variant: "destructive" });
+      return;
+    }
+    setIsProcessingCustos(true);
+
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: importCustosFile });
+
+      const custosSchema = {
+        type: "object",
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                "id_produto": { type: "string" },
+                "codigo_interno": { type: "string" },
+                "codigo_barras": { type: "string" },
+                "nome_produto": { type: "string" },
+                "novo_valor_compra": { type: "number" }
+              },
+              required: ["novo_valor_compra"],
+              // allow additional properties for flexibility but focus on required ones
+              additionalProperties: true
+            }
+          }
+        }
+      };
+
+      const extraction = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: custosSchema
+      });
+
+      if (extraction.status !== 'success' || !extraction.output || !extraction.output.data) {
+        throw new Error(extraction.details || "Falha ao extrair dados.");
+      }
+
+      const importedData = extraction.output.data;
+      const resumo = { atualizacoes: 0, erros: [], naoEncontrados: [] };
+      const atualizacoesValidadas = [];
+
+      for (const linha of importedData) {
+        const errosLinha = [];
+        const parseNumber = (val) => {
+          if (typeof val === 'string') {
+            return parseFloat(val.replace(',', '.'));
+          }
+          return parseFloat(val);
+        };
+
+        // Validar se tem identificador
+        if (!linha.id_produto && !linha.codigo_interno && !linha.codigo_barras) {
+          errosLinha.push("Precisa ter id_produto, codigo_interno ou codigo_barras");
+        }
+
+        // Validar valor
+        const novoValorCompraParsed = parseNumber(linha.novo_valor_compra);
+        if (typeof novoValorCompraParsed !== 'number' || isNaN(novoValorCompraParsed) || novoValorCompraParsed <= 0) {
+          errosLinha.push("novo_valor_compra deve ser um número maior que zero");
+        }
+
+        if (errosLinha.length > 0) {
+          const identificadorLinha = linha.nome_produto || linha.codigo_interno || linha.codigo_barras || JSON.stringify(linha);
+          resumo.erros.push(`Produto '${identificadorLinha}': ${errosLinha.join(', ')}`);
+          continue;
+        }
+
+        // Encontrar produto
+        let produto = null;
+        if (linha.id_produto) {
+          produto = produtos.find(p => p.id === linha.id_produto);
+        }
+        if (!produto && linha.codigo_interno) {
+          produto = produtos.find(p => p.codigo_interno === String(linha.codigo_interno));
+        }
+        if (!produto && linha.codigo_barras) {
+          produto = produtos.find(p => p.codigo_barras === String(linha.codigo_barras));
+        }
+
+        if (!produto) {
+          resumo.naoEncontrados.push(
+            linha.nome_produto || String(linha.codigo_interno) || String(linha.codigo_barras) || 'Desconhecido'
+          );
+          continue;
+        }
+
+        // Buscar custos detalhados do produto
+        let custosDetalhados = await base44.entities.CustoDetalhado.filter({ produto_id: produto.id });
+
+        // Se não tem custos detalhados, criar uma estrutura básica com "Valor de Compra"
+        if (custosDetalhados.length === 0) {
+          custosDetalhados = [
+            { produto_id: produto.id, descricao_custo: 'Valor de Compra', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false }
+          ];
+        }
+
+        const custoAnterior = produto.preco_custo_calculado || 0;
+        const novoCustoTotal = calcularNovoCustoTotal(custosDetalhados, novoValorCompraParsed);
+        const novoPrecoVenda = calcularNovoPrecoVenda(produto, novoCustoTotal);
+
+        const variacaoCusto = custoAnterior > 0 ?
+          ((novoCustoTotal - custoAnterior) / custoAnterior) * 100 :
+          (novoCustoTotal > 0 ? 100 : 0); // If previous was 0 and new is >0, it's 100% change
+
+        atualizacoesValidadas.push({
+          produto_id: produto.id,
+          nome: produto.nome,
+          codigo_interno: produto.codigo_interno,
+          valor_compra_anterior: custoAnterior,
+          novo_valor_compra: novoValorCompraParsed,
+          novo_custo_total: novoCustoTotal,
+          novo_preco_venda: novoPrecoVenda,
+          variacao_custo: variacaoCusto,
+          custos_detalhados_originais: custosDetalhados, // Keep original detailed costs for confirmation
+          produto_completo: produto
+        });
+
+        resumo.atualizacoes++;
+      }
+
+      setPreviewCustosData({ atualizacoes: atualizacoesValidadas, resumo });
+      setIsImportCustosDialogOpen(false);
+      setIsPreviewCustosDialogOpen(true);
+
+    } catch (error) {
+      console.error("Erro no processamento da importação:", error);
+      toast({
+        title: "Erro no Processamento",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingCustos(false);
+    }
+  };
+
+  const handleConfirmarImportacaoCustos = async () => {
+    if (!previewCustosData) return;
+    setIsProcessingCustos(true);
+
+    try {
+      for (const atualizacao of previewCustosData.atualizacoes) {
+        // 1. Deletar os custos detalhados existentes para o produto
+        const custosExistentes = await base44.entities.CustoDetalhado.filter({ produto_id: atualizacao.produto_id });
+        if (custosExistentes.length > 0) {
+          await Promise.all(custosExistentes.map(c => base44.entities.CustoDetalhado.delete(c.id)));
+        }
+
+        // 2. Criar novos custos detalhados, atualizando o "Valor de Compra"
+        const novosCustosParaSalvar = atualizacao.custos_detalhados_originais.map(c => {
+          if (c.descricao_custo === 'Valor de Compra' || c.descricao_custo === 'Custo da Mercadoria') {
+            return {
+              empresa_id: getTenantId(),
+              produto_id: atualizacao.produto_id,
+              descricao_custo: 'Valor de Compra', // Padroniza para 'Valor de Compra'
+              valor_custo: atualizacao.novo_valor_compra, // Usar o novo valor de compra
+              tipo_valor: 'numerico', // Valor de Compra é sempre numérico
+              is_negativo: false
+            };
+          }
+          // Para outros custos detalhados, manter o valor original, eles serão recalculados no produto
+          return {
+            empresa_id: getTenantId(),
+            produto_id: atualizacao.produto_id,
+            descricao_custo: c.descricao_custo,
+            valor_custo: c.valor_custo,
+            tipo_valor: c.tipo_valor,
+            is_negativo: c.is_negativo
+          };
+        });
+
+        if (novosCustosParaSalvar.length > 0) {
+          await base44.entities.CustoDetalhado.bulkCreate(novosCustosParaSalvar);
+        } else {
+             // If no detailed costs existed, create at least 'Valor de Compra'
+            await base44.entities.CustoDetalhado.create({
+                empresa_id: getTenantId(),
+                produto_id: atualizacao.produto_id,
+                descricao_custo: 'Valor de Compra',
+                valor_custo: atualizacao.novo_valor_compra,
+                tipo_valor: 'numerico',
+                is_negativo: false
+            });
+        }
+
+
+        // 3. Atualizar o produto com os novos valores calculados
+        await base44.entities.Produto.update(atualizacao.produto_id, {
+          preco_custo_calculado: atualizacao.novo_custo_total,
+          preco_venda_padrao: atualizacao.novo_preco_venda,
+          valor_compra: atualizacao.novo_valor_compra // Also update the base valor_compra in the product
+        });
+      }
+
+      toast({
+        title: "✓ Custos Atualizados!",
+        description: `${previewCustosData.atualizacoes.length} produtos atualizados com sucesso.`,
+        className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
+        duration: 5000
+      });
+
+      setPreviewCustosData(null);
+      setIsPreviewCustosDialogOpen(false);
+      setImportCustosFile(null);
+      await loadData(); // Reload all data to reflect changes
+
+    } catch (error) {
+      console.error("Erro na importação final de custos:", error);
+      toast({
+        title: "Erro na Importação",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingCustos(false);
+    }
+  };
+
+  const filteredProdutos = useMemo(() => {
+    if (!Array.isArray(produtos)) return [];
+    return produtos.filter(p => {
+      if (!p || typeof p !== 'object') return false;
+      const nome = p.nome || '';
+      const codigo = p.codigo_interno || '';
+      
+      const searchTermMatch = nome.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+                              codigo.toLowerCase().includes(filters.searchTerm.toLowerCase());
+      const categoriaMatch = filters.categoria === 'all' || p.categoria_nome === filters.categoria;
+      const tagMatch = !filters.tag || (Array.isArray(p.tags) && p.tags.some(t => t && t.toLowerCase().includes(filters.tag.toLowerCase())));
+      const fornecedorMatch = filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
+
+      const statusMatch = () => {
+        if (filters.statusEstoque === 'all') return true;
+        const estoque = p.estoque_atual || 0;
+        const minimo = p.estoque_minimo || 0;
+
+        if (filters.statusEstoque === 'inativo' && !p.ativo) return true;
+        if (filters.statusEstoque === 'ok' && p.ativo && estoque > minimo) return true;
+        if (filters.statusEstoque === 'baixo' && p.ativo && estoque > 0 && estoque <= minimo) return true;
+        if (filters.statusEstoque === 'critico' && p.ativo && (estoque <= 0 || estoque <= minimo/2)) return true;
+        return false;
+      };
+
+      return searchTermMatch && categoriaMatch && tagMatch && fornecedorMatch && statusMatch();
+    });
+  }, [produtos, filters]);
+
+  const fornecedorMap = useMemo(() => {
+    return fornecedores.reduce((acc, f) => {
+      acc[f.id] = f.nome;
+      return acc;
+    }, {});
+  }, [fornecedores]);
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden bg-white dark:bg-gray-900">
+      {/* Header + KPIs + Filtros - FIXOS */}
+      <div className="flex-none border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto p-3 md:p-4 space-y-3">
+          {/* Header + KPIs - CENTRALIZADOS */}
+          <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+            <div>
+              <h1 className="text-base md:text-lg font-medium text-gray-700 dark:text-gray-200">Catálogo de Produtos</h1>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Gerencie produtos, preços e custos</p>
+            </div>
+            
+            {/* KPIs inline - Desktop */}
+            <div className="hidden md:flex items-center gap-6 text-xs">
+              <div className="text-center">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Produtos</div>
+                <div className="text-base font-semibold text-gray-700 dark:text-gray-200">{stats.total}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Valor Estoque</div>
+                <div className="text-base font-semibold text-gray-700 dark:text-gray-200">R$ {formatarNumero(stats.valorEstoque)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Abaixo Mín.</div>
+                <div className="text-base font-semibold text-gray-700 dark:text-gray-200">{stats.abaixoMinimo}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Botões - ÍCONES PUROS */}
+          <div className="flex items-center gap-1.5">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Download className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="dark:bg-gray-800 dark:border-gray-700">
+                <DropdownMenuItem onClick={handleExportarCatalogo} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <Package className="w-3.5 h-3.5 mr-2" />Exportar Catálogo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportarPrecificacao} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <DollarSign className="w-3.5 h-3.5 mr-2" />Exportar Precificação
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Upload className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="dark:bg-gray-800 dark:border-gray-700">
+                <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <Download className="w-3.5 h-3.5 mr-2" />Template
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <Upload className="w-3.5 h-3.5 mr-2" />Importar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button onClick={handleAddNew} variant="ghost" size="icon" className="h-8 w-8">
+              <PlusCircle className="h-4 w-4 text-gray-700 dark:text-gray-400" />
+            </Button>
+          </div>
+
+          {/* KPIs Mobile - HORIZONTAL */}
+          <div className="md:hidden flex gap-6 overflow-x-auto pb-3 text-xs">
+            <div className="flex-none">
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Produtos</div>
+              <div className="text-base font-semibold text-gray-700 dark:text-gray-200">{stats.total}</div>
+            </div>
+            <div className="flex-none">
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Valor Estoque</div>
+              <div className="text-base font-semibold text-gray-700 dark:text-gray-200">R$ {formatarNumero(stats.valorEstoque)}</div>
+            </div>
+            <div className="flex-none">
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Abaixo Mín.</div>
+              <div className="text-base font-semibold text-gray-700 dark:text-gray-200">{stats.abaixoMinimo}</div>
+            </div>
+          </div>
+
+          {/* Filtros - MOBILE OPTIMIZED */}
+          <div className="space-y-2">
+          {/* Busca - sempre visível */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2 w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <Input
+              placeholder="Buscar produto..."
+              className="border-none bg-gray-100 dark:bg-gray-800 h-9 text-sm pl-9 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-1 focus-visible:ring-indigo-500"
+              value={filters.searchTerm}
+              onChange={e => handleFilterChange('searchTerm', e.target.value)}
+            />
+          </div>
+
+          {/* Filtros secundários - grid compacto */}
+          <div className="grid grid-cols-4 gap-2">
+          <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
+            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todas</SelectItem>
+              {categorias.map(cat => <SelectItem key={cat} value={cat} className="dark:hover:bg-gray-700 text-xs">{cat}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filters.fornecedorId === 'all' ? '' : filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
+            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
+              <SelectValue placeholder="Fornecedor" />
+            </SelectTrigger>
+            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todos</SelectItem>
+              {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="dark:hover:bg-gray-700 text-xs">{f.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filters.statusEstoque === 'all' ? '' : filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
+            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todos</SelectItem>
+              <SelectItem value="ok" className="dark:hover:bg-gray-700 text-xs">OK</SelectItem>
+              <SelectItem value="baixo" className="dark:hover:bg-gray-700 text-xs">Baixo</SelectItem>
+              <SelectItem value="critico" className="dark:hover:bg-gray-700 text-xs">Crítico</SelectItem>
+              <SelectItem value="inativo" className="dark:hover:bg-gray-700 text-xs">Inativo</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            placeholder="Tag"
+            className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm"
+            value={filters.tag || ''}
+            onChange={e => handleFilterChange('tag', e.target.value)}
+          />
+          </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabela - SCROLL INDEPENDENTE */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full max-w-7xl mx-auto px-3 md:px-4 pb-4">
+          <div className="h-full flex flex-col">
+            {/* Contador + Botão Colunas */}
+            <div className="flex items-center justify-between py-2 flex-none">
+              <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-4">
+                <span>{filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''}</span>
+                {filteredProdutos.length > 0 && (
+                  <>
+                    <MassTagGenerator products={filteredProdutos} onComplete={loadData} />
+                    <MassImageGenerator products={filteredProdutos} onComplete={loadData} />
+                  </>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsColumnSelectorOpen(true)}
+                className="hidden md:flex h-7 px-2 text-xs dark:text-gray-300"
+              >
+                <Columns className="w-3.5 h-3.5 text-gray-700 dark:text-gray-400" />
+                <span className="ml-1.5 text-gray-700 dark:text-gray-300">Colunas</span>
+              </Button>
+            </div>
+
+            {/* Tabela - MOBILE/DESKTOP */}
+            <div className="flex-1 overflow-auto">
+              {/* MOBILE: Cards */}
+              <div className="md:hidden space-y-3">
+                {filteredProdutos.map(produto => {
+                  const margem = produto.preco_venda_padrao && produto.preco_venda_padrao > 0 ?
+                    ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100 : 0;
+                  return (
+                    <div key={produto.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 mb-1">{produto.nome}</h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{produto.codigo_interno}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                              <MoreHorizontal className="h-4 w-4 text-gray-700 dark:text-gray-400" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+                            <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                              <Edit className="mr-2 h-3.5 w-3.5"/>Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                              <Copy className="mr-2 h-3.5 w-3.5"/>Duplicar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs">
+                              <Archive className="mr-2 h-3.5 w-3.5"/>Inativar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-700">
+                        <div className="flex flex-col gap-1">
+                          {getStockStatusIndicator(produto)}
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            Estoque: {formatarNumero(produto.estoque_atual)} {produto.unidade_principal || 'UN'}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(produto.preco_venda_padrao)}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Margem {formatarNumero(margem)}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* DESKTOP: Tabela */}
+              <div className="hidden md:block border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900">
+                <Table>
+                  <TableHeader className="bg-gray-50 sticky top-0 z-20 dark:bg-gray-800">
+                    <TableRow>
+                      <TableHead className="sticky left-0 z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 w-[50px] border-r border-gray-200 dark:border-gray-700 text-xs p-2">
+                        
+                      </TableHead>
+                      <TableHead className="sticky left-[50px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[220px] border-r border-gray-200 dark:border-gray-700 text-xs">
+                        Produto
+                      </TableHead>
+                      
+                      {visibleColumns.includes('status') && (
+                        <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300 text-xs">Status</TableHead>
+                      )}
+                      {visibleColumns.includes('codigo_interno') && (
+                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Código</TableHead>
+                      )}
+                      {visibleColumns.includes('codigo_barras') && (
+                        <TableHead className="min-w-[130px] text-gray-700 dark:text-gray-300 text-xs">Cód. Barras</TableHead>
+                      )}
+                      {visibleColumns.includes('categoria') && (
+                        <TableHead className="min-w-[130px] text-gray-700 dark:text-gray-300 text-xs">Categoria</TableHead>
+                      )}
+                      {visibleColumns.includes('tags') && (
+                        <TableHead className="min-w-[130px] text-gray-700 dark:text-gray-300 text-xs">Tags</TableHead>
+                      )}
+                      {visibleColumns.includes('fornecedor') && (
+                        <TableHead className="min-w-[140px] text-gray-700 dark:text-gray-300 text-xs">Fornecedor</TableHead>
+                      )}
+                      {visibleColumns.includes('preco_venda') && (
+                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Preço Venda</TableHead>
+                      )}
+                      {visibleColumns.includes('preco_custo') && (
+                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Custo Total</TableHead>
+                      )}
+                      {visibleColumns.includes('margem') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Margem</TableHead>
+                      )}
+                      {visibleColumns.includes('valor_compra') && (
+                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Vl. Compra</TableHead>
+                      )}
+                      {visibleColumns.includes('frete') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Frete</TableHead>
+                      )}
+                      {visibleColumns.includes('imposto_1') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Imposto 1</TableHead>
+                      )}
+                      {visibleColumns.includes('imposto_2') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Imposto 2</TableHead>
+                      )}
+                      {visibleColumns.includes('desconto') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Desconto</TableHead>
+                      )}
+                      {visibleColumns.includes('outros_custos') && (
+                        <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300 text-xs">Outros</TableHead>
+                      )}
+                      {visibleColumns.includes('markup') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Markup %</TableHead>
+                      )}
+                      {visibleColumns.includes('estoque_atual') && (
+                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Estoque</TableHead>
+                      )}
+                      {visibleColumns.includes('estoque_minimo') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Est. Mín</TableHead>
+                      )}
+                      {visibleColumns.includes('estoque_ideal') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Est. Ideal</TableHead>
+                      )}
+                      {visibleColumns.includes('estoque_maximo') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Est. Máx</TableHead>
+                      )}
+                      {visibleColumns.includes('tempo_reposicao') && (
+                        <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300 text-xs">Repos.</TableHead>
+                      )}
+                      {visibleColumns.includes('peso') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Peso</TableHead>
+                      )}
+                      {visibleColumns.includes('dimensoes') && (
+                        <TableHead className="min-w-[120px] text-gray-700 dark:text-gray-300 text-xs">Dimensões</TableHead>
+                      )}
+                      {visibleColumns.includes('tipo') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Tipo</TableHead>
+                      )}
+                      {visibleColumns.includes('unidade') && (
+                        <TableHead className="min-w-[70px] text-gray-700 dark:text-gray-300 text-xs">Unid.</TableHead>
+                      )}
+                      {visibleColumns.includes('unidades_pacote') && (
+                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Un/Pct</TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProdutos.map(produto => {
+                      const margem = produto.preco_venda_padrao && produto.preco_venda_padrao > 0 ?
+                        ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100 : 0;
+                      return (
+                        <TableRow key={produto.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <TableCell className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-1">
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                  <MoreHorizontal className="h-3.5 w-3.5 text-gray-700 dark:text-gray-400" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="z-50 dark:bg-gray-800 dark:border-gray-700" sideOffset={5}>
+                                <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                                  <Edit className="mr-2 h-3.5 w-3.5"/>Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                                  <Copy className="mr-2 h-3.5 w-3.5"/>Duplicar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs">
+                                  <Archive className="mr-2 h-3.5 w-3.5"/>Inativar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                          <TableCell className="sticky left-[50px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+                            <div className="font-medium text-sm text-gray-700 dark:text-gray-200">{produto.nome}</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">{produto.codigo_interno}</div>
+                          </TableCell>
+                          
+                          {visibleColumns.includes('codigo_interno') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_interno}</TableCell>
+                          )}
+                          {visibleColumns.includes('codigo_barras') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_barras || '-'}</TableCell>
+                          )}
+                          {visibleColumns.includes('categoria') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.categoria_nome || '-'}</TableCell>
+                          )}
+                          {visibleColumns.includes('tags') && (
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {(produto.tags || []).slice(0, 2).map(tag => (
+                                  <span key={tag} className="text-[10px] px-1 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes('status') && (
+                            <TableCell>{getStockStatusIndicator(produto)}</TableCell>
+                          )}
+                          {visibleColumns.includes('fornecedor') && (
+                            <TableCell>
+                              {fornecedorMap[produto.fornecedor_padrao_id] ? (
+                                <div className="text-xs text-gray-700 dark:text-gray-300">{fornecedorMap[produto.fornecedor_padrao_id]}</div>
+                              ) : <span className="text-xs text-gray-600 dark:text-gray-400">N/A</span>}
+                            </TableCell>
+                          )}
+                          {visibleColumns.includes('preco_venda') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.preco_venda_padrao)}</TableCell>
+                          )}
+                          {visibleColumns.includes('margem') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(margem)}%</TableCell>
+                          )}
+                          {visibleColumns.includes('preco_custo') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.preco_custo_calculado)}</TableCell>
+                          )}
+                          {visibleColumns.includes('valor_compra') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.valor_compra)}</TableCell>
+                          )}
+                          {visibleColumns.includes('markup') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.preco_venda_percentual || 0}%</TableCell>
+                          )}
+                          {visibleColumns.includes('estoque_atual') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_atual)} {produto.unidade_principal}</TableCell>
+                          )}
+                          {visibleColumns.includes('estoque_minimo') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_minimo)}</TableCell>
+                          )}
+                          {visibleColumns.includes('estoque_ideal') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_ideal)}</TableCell>
+                          )}
+                          {visibleColumns.includes('estoque_maximo') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_maximo)}</TableCell>
+                          )}
+                          {visibleColumns.includes('tempo_reposicao') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tempo_reposicao_dias || 0}d</TableCell>
+                          )}
+                          {visibleColumns.includes('peso') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.peso_kg)}kg</TableCell>
+                          )}
+                          {visibleColumns.includes('dimensoes') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.dimensoes_cm || '-'}</TableCell>
+                          )}
+                          {visibleColumns.includes('tipo') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>
+                          )}
+                          {visibleColumns.includes('unidade') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidade_principal}</TableCell>
+                          )}
+                          {visibleColumns.includes('unidades_pacote') && (
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dialog para o formulário */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="w-full h-full max-w-full max-h-full m-0 p-0 dark:bg-gray-900 dark:text-gray-200 dark:border-0 rounded-none">
+          <ProdutoFormCompleto
+            produto={selectedProduto}
+            onSave={handleSave}
+            onClose={() => setIsFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Upload Unificado (Produtos + Custos) */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-base font-medium text-gray-800 dark:text-gray-200">Importar Produtos e Custos</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-3">
+            <div>
+              <Label htmlFor="importFile" className="text-sm mb-2 block dark:text-gray-200">
+                Arquivo CSV (.csv, .xlsx)
+              </Label>
+              <Input 
+                id="importFile"
+                type="file" 
+                accept=".csv,.xlsx,.xls" 
+                onChange={(e) => setImportFile(e.target.files[0])} 
+                className="border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 text-sm"
+              />
+              {importFile && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  <CheckCircle className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                  {importFile.name}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsImportDialogOpen(false);
+                setImportFile(null);
+              }}
+              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleProcessarImportacaoUnificada} 
+              disabled={isProcessingImport || !importFile}
+              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-gray-500"
+            >
+              {isProcessingImport && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Processar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Preview de Importação Unificada */}
+      <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-base font-medium text-gray-800 dark:text-gray-200">Confirmar Importação de Produtos e Custos</DialogTitle>
+          </DialogHeader>
+          
+          {previewData && (
+            <div className="space-y-4 py-4">
+              {/* Resumo */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center p-3 border border-gray-200 rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                  <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                    {previewData.resumo.novos}
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Produtos a Importar</div>
+                </div>
+                {previewData.resumo.erros.length > 0 && (
+                  <div className="text-center p-3 border border-gray-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-900">
+                    <div className="text-xl font-semibold text-red-700 dark:text-red-300">
+                      {previewData.resumo.erros.length}
+                    </div>
+                    <div className="text-xs text-red-600 dark:text-red-300">Erros</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Erros */}
+              {previewData.resumo.erros.length > 0 && (
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200 dark:bg-red-900/20 dark:border-red-900">
+                  <div className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">❌ Erros:</div>
+                  <ul className="text-xs text-red-600 dark:text-red-300 list-disc ml-4 max-h-24 overflow-y-auto">
+                    {previewData.resumo.erros.map((erro, i) => <li key={i}>{erro}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {/* Preview dos Produtos */}
+              {previewData.produtos.length > 0 && (
+                <div className="border rounded-lg overflow-hidden dark:border-gray-700">
+                  <div className="max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader className="bg-gray-50 sticky top-0 dark:bg-gray-800">
+                        <TableRow>
+                          <TableHead className="dark:text-gray-400 text-xs">Nome</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Custo Calculado</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Preço Venda</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {previewData.produtos.map((produto, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <TableCell className="font-medium text-xs dark:text-gray-200">{produto.nome}</TableCell>
+                            <TableCell className="text-right text-xs dark:text-gray-200">R$ {formatarNumero(produto.preco_custo_calculado)}</TableCell>
+                            <TableCell className="text-right font-medium text-xs dark:text-gray-200">R$ {formatarNumero(produto.preco_venda_padrao)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 dark:bg-blue-900/20 dark:border-blue-900 dark:text-blue-300">
+                <strong>ℹ️ Atenção:</strong> Esta operação irá:
+                <ul className="list-disc ml-4 mt-1">
+                  <li>Criar novos produtos no sistema</li>
+                  <li>Criar os custos detalhados para cada produto com base nos dados fornecidos</li>
+                  <li>Calcular e salvar o Preço de Custo e Preço de Venda conforme sua precificação</li>
+                </ul>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsPreviewDialogOpen(false);
+                setPreviewData(null);
+              }}
+              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConfirmarImportacaoUnificada} 
+              disabled={
+                isProcessingImport || 
+                !previewData || 
+                previewData.produtos.length === 0
+              }
+              className="bg-gray-700 hover:bg-gray-600 text-white text-sm dark:bg-gray-600 dark:hover:bg-gray-500"
+            >
+              {isProcessingImport && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar Importação ({previewData?.produtos.length || 0})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+      {/* Dialog de Upload de Custos (Existing) */}
+      <Dialog open={isImportCustosDialogOpen} onOpenChange={setIsImportCustosDialogOpen}>
+        <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-medium text-gray-800 dark:text-gray-200">
+              <RefreshCw className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              Importar Atualização de Custos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:border-blue-900 dark:text-blue-300">
+              <p className="font-semibold mb-1">💡 Como funciona:</p>
+              <ul className="text-xs list-disc ml-4 space-y-1">
+                <li>Baixe o template com seus produtos atuais</li>
+                <li>Atualize a coluna <strong>novo_valor_compra</strong></li>
+                <li>Importe de volta e confirme as alterações</li>
+                <li>O sistema recalculará automaticamente custos totais e preços de venda</li>
+              </ul>
+            </div>
+
+            <div>
+              <Label htmlFor="importCustosFile" className="text-sm font-semibold mb-2 block dark:text-gray-200">
+                Arquivo CSV (.csv, .xlsx)
+              </Label>
+              <Input
+                id="importCustosFile"
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={(e) => setImportCustosFile(e.target.files[0])}
+                className="dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 text-sm"
+              />
+              {importCustosFile && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-green-600 dark:text-green-300">
+                  <CheckCircle className="w-4 h-4" />
+                  {importCustosFile.name}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsImportCustosDialogOpen(false);
+                setImportCustosFile(null);
+              }}
+              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleProcessarImportacaoCustos}
+              disabled={isProcessingCustos || !importCustosFile}
+              className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-600 text-sm"
+            >
+              {isProcessingCustos && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Processar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Column Selector */}
+      <ColumnSelector
+        visibleColumns={visibleColumns}
+        onColumnsChange={setVisibleColumns}
+        open={isColumnSelectorOpen}
+        onClose={() => setIsColumnSelectorOpen(false)}
+      />
+
+      {/* Dialog de Preview de Custos (Existing) */}
+      <Dialog open={isPreviewCustosDialogOpen} onOpenChange={setIsPreviewCustosDialogOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-medium text-gray-800 dark:text-gray-200">
+              <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              Confirmar Atualização de Custos
+            </DialogTitle>
+          </DialogHeader>
+
+          {previewCustosData && (
+            <div className="space-y-4 py-4">
+              {/* Resumo */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-orange-50 rounded-lg border-2 border-orange-200 dark:bg-orange-900/20 dark:border-orange-900">
+                  <div className="text-xl font-bold text-orange-700 dark:text-orange-300">
+                    {previewCustosData.resumo.atualizacoes}
+                  </div>
+                  <div className="text-xs text-orange-600 dark:text-orange-300 font-semibold">Produtos a Atualizar</div>
+                </div>
+                {previewCustosData.resumo.erros.length > 0 && (
+                  <div className="text-center p-3 bg-red-50 rounded-lg border-2 border-red-200 dark:bg-red-900/20 dark:border-red-900">
+                    <div className="text-xl font-bold text-red-700 dark:text-red-300">
+                      {previewCustosData.resumo.erros.length}
+                    </div>
+                    <div className="text-xs text-red-600 dark:text-red-300 font-semibold">Erros</div>
+                  </div>
+                )}
+                {previewCustosData.resumo.naoEncontrados.length > 0 && (
+                  <div className="text-center p-3 bg-yellow-50 rounded-lg border-2 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-900">
+                    <div className="text-xl font-bold text-yellow-700 dark:text-yellow-300">
+                      {previewCustosData.resumo.naoEncontrados.length}
+                    </div>
+                    <div className="text-xs text-yellow-600 dark:text-yellow-300 font-semibold">Não Encontrados</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Erros e Avisos */}
+              {previewCustosData.resumo.erros.length > 0 && (
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200 dark:bg-red-900/20 dark:border-red-900">
+                  <div className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">❌ Erros:</div>
+                  <ul className="text-xs text-red-600 dark:text-red-300 list-disc ml-4 max-h-24 overflow-y-auto">
+                    {previewCustosData.resumo.erros.map((erro, i) => <li key={i}>{erro}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {previewCustosData.resumo.naoEncontrados.length > 0 && (
+                <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-900">
+                  <div className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">⚠️ Produtos não encontrados:</div>
+                  <div className="text-xs text-yellow-700 dark:text-yellow-300 max-h-24 overflow-y-auto">
+                    {previewCustosData.resumo.naoEncontrados.join(', ')}
+                  </div>
+                </div>
+              )}
+
+              {/* Tabela de Preview */}
+              {previewCustosData.atualizacoes.length > 0 && (
+                <div className="border rounded-lg overflow-hidden dark:border-gray-700">
+                  <div className="max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader className="bg-gray-50 sticky top-0 dark:bg-gray-800">
+                        <TableRow>
+                          <TableHead className="w-[150px] dark:text-gray-400 text-xs">Produto</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Custo Atual</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo Valor Compra</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo Custo Total</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Novo Preço Venda</TableHead>
+                          <TableHead className="text-right dark:text-gray-400 text-xs">Variação</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {previewCustosData.atualizacoes.map((item, index) => {
+                          const isAumento = item.variacao_custo > 0;
+                          return (
+                            <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                              <TableCell>
+                                <div className="font-medium text-xs dark:text-gray-200">{item.nome}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{item.codigo_interno}</div>
+                              </TableCell>
+                              <TableCell className="text-right text-xs text-gray-600 dark:text-gray-300">
+                                R$ {formatarNumero(item.valor_compra_anterior)}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold text-orange-600 dark:text-orange-400 text-xs">
+                                R$ {formatarNumero(item.novo_valor_compra)}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold dark:text-gray-200 text-xs">
+                                R$ {formatarNumero(item.novo_custo_total)}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold text-green-600 dark:text-green-400 text-xs">
+                                R$ {formatarNumero(item.novo_preco_venda)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Badge
+                                  className={`text-[10px] ${
+                                    isAumento
+                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+                                      : item.variacao_custo < 0
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                  }`}
+                                >
+                                  {isAumento ? '↑' : item.variacao_custo < 0 ? '↓' : '='}
+                                  {Math.abs(item.variacao_custo).toFixed(1)}%
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 dark:bg-blue-900/20 dark:border-blue-900 dark:text-blue-300">
+                <strong>ℹ️ Atenção:</strong> Esta operação irá:
+                <ul className="list-disc ml-4 mt-1">
+                  <li>Atualizar o "Valor de Compra" nos Custos Detalhados</li>
+                  <li>Recalcular automaticamente todos os custos percentuais</li>
+                  <li>Atualizar o Custo Total calculado no produto</li>
+                  <li>Recalcular o Preço de Venda (se estiver em modo Markup %)</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsPreviewCustosDialogOpen(false);
+                setPreviewCustosData(null);
+              }}
+              className="text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmarImportacaoCustos}
+              disabled={
+                isProcessingCustos ||
+                !previewCustosData ||
+                previewCustosData.atualizacoes.length === 0
+              }
+              className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-600 text-sm"
+            >
+              {isProcessingCustos && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmar Atualização ({previewCustosData?.atualizacoes.length || 0})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
