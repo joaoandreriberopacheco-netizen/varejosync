@@ -96,7 +96,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const custoBaseItem = custos.find(c => c.descricao_custo === 'Valor de Compra');
   const custoBase = parseFloat(custoBaseItem?.valor_custo) || 0;
 
-  const precoCustoCalculado = custos.reduce((totalCusto, custo) => {
+  const precoCustoCalculado = Array.isArray(custos) ? custos.reduce((totalCusto, custo) => {
+    if (!custo || typeof custo !== 'object') return totalCusto;
     const valor = parseFloat(custo.valor_custo) || 0;
     let valorConsiderado = 0;
     if (custo.descricao_custo === 'Valor de Compra') {
@@ -107,7 +108,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       valorConsiderado = valor;
     }
     return custo.is_negativo ? totalCusto - valorConsiderado : totalCusto + valorConsiderado;
-  }, 0);
+  }, 0) : 0;
 
   const precoVendaCalculado = formData.preco_venda_tipo === 'numerico'
     ? (parseFloat(formData.preco_venda_padrao) || 0)
@@ -140,14 +141,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+    const currentTags = Array.isArray(formData.tags) ? formData.tags : [];
+    if (tagInput.trim() && !currentTags.includes(tagInput.trim())) {
+      setFormData(prev => ({ ...prev, tags: [...currentTags, tagInput.trim()] }));
       setTagInput('');
     }
   };
 
   const handleRemoveTag = (tag) => {
-    setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
+    setFormData(prev => ({ 
+      ...prev, 
+      tags: Array.isArray(prev.tags) ? prev.tags.filter(t => t !== tag) : [] 
+    }));
   };
 
   const handleSave = async () => {

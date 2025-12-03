@@ -113,8 +113,13 @@ export default function ProdutosPage() {
       base44.entities.Terceiro.filter({ empresa_id: tenantId, tipo: ['Fornecedor', 'Ambos'] })
     ]);
     
-    const safeProdutos = Array.isArray(produtosData) ? produtosData.filter(p => p && typeof p === 'object') : [];
-    const safeFornecedores = Array.isArray(fornecedoresData) ? fornecedoresData.filter(f => f && typeof f === 'object') : [];
+    // Defensive filtering to ensure only valid objects with proper prototypes are used
+    const safeProdutos = Array.isArray(produtosData) 
+      ? produtosData.filter(p => p && typeof p === 'object' && p !== null) 
+      : [];
+    const safeFornecedores = Array.isArray(fornecedoresData) 
+      ? fornecedoresData.filter(f => f && typeof f === 'object' && f !== null) 
+      : [];
     
     setProdutos(safeProdutos);
     setFornecedores(safeFornecedores);
