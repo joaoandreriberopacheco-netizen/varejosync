@@ -1,5 +1,4 @@
-import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useState, useCallback, useRef } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -8,7 +7,6 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress'; // Assuming you might have a progress component, otherwise I'll use standard HTML or skip
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Loader2, FileImage } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -20,28 +18,60 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef(null);
   const { toast } = useToast();
 
-  const onDrop = useCallback(acceptedFiles => {
-    setFiles(prev => [...prev, ...acceptedFiles.map(file => Object.assign(file, {
+  const handleFiles = (newFiles) => {
+    const validFiles = Array.from(newFiles).filter(file => 
+      file.type.startsWith('image/')
+    ).map(file => Object.assign(file, {
       preview: URL.createObjectURL(file)
-    }))]);
-    setResults(null); // Reset results on new drop
+    }));
+
+    if (validFiles.length > 0) {
+      setFiles(prev => [...prev, ...validFiles]);
+      setResults(null);
+    }
+  };
+
+  const onDragEnter = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/jpeg': [],
-      'image/png': [],
-      'image/webp': []
-    }
-  });
+  const onDragLeave = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  }, []);
 
-  const removeFile = (file) => () => {
-    const newFiles = [...files];
-    newFiles.splice(newFiles.indexOf(file), 1);
-    setFiles(newFiles);
+  const onDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const onDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  }, []);
+
+  const handleFileInputChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
+    // Reset input so same files can be selected again if cleared
+    e.target.value = ''; 
+  };
+
+  const removeFile = (fileToRemove) => () => {
+    setFiles(prev => prev.filter(file => file !== fileToRemove));
+    URL.revokeObjectURL(fileToRemove.preview);
   };
 
   const handleUpload = async () => {
@@ -136,6 +166,8 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
   };
 
   const handleClose = () => {
+    // Cleanup previews
+    files.forEach(file => URL.revokeObjectURL(file.preview));
     setFiles([]);
     setResults(null);
     setProgress(0);
@@ -161,20 +193,33 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
             <div className="flex-1 flex flex-col p-6 overflow-hidden">
               {/* Dropzone */}
               <div 
-                {...getRootProps()} 
+                onDragEnter={onDragEnter}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                onClick={() => fileInputRef.current?.click()}
                 className={`flex-none border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
                   ${isDragActive 
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
                     : 'border-gray-300 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 bg-white dark:bg-gray-800'
                   }`}
               >
-                <input {...getInputProps()} />
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleFileInputChange} 
+                  className="hidden" 
+                  multiple 
+                  accept="image/png, image/jpeg, image/webp" 
+                />
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
                     <Upload className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-700 dark:text-gray-200">Clique ou arraste imagens aqui</p>
+                    <p className="font-medium text-gray-700 dark:text-gray-200">
+                      {isDragActive ? 'Solte os arquivos aqui' : 'Clique ou arraste imagens aqui'}
+                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Suporta JPG, PNG, WEBP</p>
                   </div>
                 </div>
@@ -200,7 +245,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                             <img 
                               src={file.preview} 
                               className="w-full h-full object-cover" 
-                              onLoad={() => { URL.revokeObjectURL(file.preview) }}
+                              onLoad={() => { /* kept for potential logic */ }}
                               alt="preview"
                             />
                           </div>
@@ -208,7 +253,10 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                             {file.name}
                           </div>
                           <button 
-                            onClick={removeFile(file)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevent triggering file input
+                              removeFile(file)();
+                            }}
                             className="absolute top-1 right-1 bg-black/50 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="w-3 h-3" />
