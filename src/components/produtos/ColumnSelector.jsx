@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Columns, Package, DollarSign, Truck, Settings } from 'lucide-react';
 
 export default function ColumnSelector({ visibleColumns, onColumnsChange, open, onClose }) {
-  const [tempColumns, setTempColumns] = useState(visibleColumns);
+  // Ensure visibleColumns is always an array
+  const [tempColumns, setTempColumns] = useState(Array.isArray(visibleColumns) ? visibleColumns : []);
 
   const columnGroups = {
     descritivo: {
@@ -73,7 +74,15 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
   };
 
   const handleSelectAll = (groupKey) => {
-    const groupColumns = columnGroups[groupKey].columns.map(c => c.id);
+    const group = columnGroups[groupKey];
+    if (!group) return;
+
+    const allMainColumns = Array.isArray(group.columns) ? group.columns.map(c => c.id) : [];
+    const allSubColumns = Array.isArray(group.subgroups) 
+      ? group.subgroups.flatMap(sg => Array.isArray(sg.columns) ? sg.columns.map(c => c.id) : []) 
+      : [];
+    
+    const groupColumns = [...allMainColumns, ...allSubColumns];
     const allSelected = groupColumns.every(col => tempColumns.includes(col));
     
     if (allSelected) {

@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Wand2, Loader2, CheckCircle, AlertCircle, StopCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-// import { ScrollArea } from '@/components/ui/scroll-area'; // Removing potentially problematic dependency
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 
