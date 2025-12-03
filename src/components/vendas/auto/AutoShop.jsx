@@ -587,17 +587,11 @@ export default function AutoShop({
                   whileTap={{ scale: 0.95 }}
                   className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col h-full border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 group"
                 >
-                  <div className="aspect-square bg-gray-50 dark:bg-gray-700 rounded-2xl mb-4 flex items-center justify-center text-gray-300 dark:text-gray-600 overflow-hidden relative">
-                    {produto.imagem_url ? (
-                      <img src={produto.imagem_url} alt={produto.nome} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package className="w-20 h-20 opacity-50" />
-                    )}
-                    <div className="absolute bottom-3 right-3 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity scale-0 group-hover:scale-100">
-                      <Plus className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                    </div>
+                  {/* Imagem removida para layout Title-Oriented */}
+                  <div className="hidden aspect-square bg-gray-50 dark:bg-gray-700 rounded-2xl mb-4 items-center justify-center text-gray-300 dark:text-gray-600 overflow-hidden relative">
+                    {/* Placeholder oculto */}
                   </div>
-                  <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 line-clamp-2 mb-2 leading-tight flex-1">
+                  <h3 className="font-bold text-xl md:text-2xl text-gray-800 dark:text-gray-200 line-clamp-3 mb-4 leading-tight flex-1">
                     {produto.nome}
                   </h3>
                   <div className="mt-auto pt-2">
@@ -910,20 +904,8 @@ function SuggestedProductsSidebar({ recommendations, onAddRec }) {
             className="group relative bg-white dark:bg-gray-700 rounded-xl p-3 border border-gray-100 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 shadow-sm transition-all cursor-pointer"
             onClick={() => onAddRec(rec)}
           >
-            <div className="aspect-video bg-gray-50 dark:bg-gray-600 rounded-lg mb-2 overflow-hidden relative">
-               {rec.imagem_url ? (
-                 <img src={rec.imagem_url} alt={rec.nome} className="w-full h-full object-cover" />
-               ) : (
-                 <div className="w-full h-full flex items-center justify-center text-gray-300">
-                    <Package className="w-8 h-8" />
-                 </div>
-               )}
-               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <div className="bg-white dark:bg-gray-800 rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all">
-                    <Plus className="w-4 h-4 text-indigo-600" />
-                  </div>
-               </div>
-            </div>
+            {/* Imagem oculta na sidebar também */}
+            <div className="hidden aspect-video bg-gray-50 dark:bg-gray-600 rounded-lg mb-2 overflow-hidden relative"></div>
             
             <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-2 mb-1 leading-tight">
               {rec.nome}

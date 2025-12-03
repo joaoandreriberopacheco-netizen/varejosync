@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { generateProductImages } from "@/functions/generateProductImages";
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,15 +14,7 @@ import TagGenerator from './TagGenerator';
 import { useToast } from "@/components/ui/use-toast";
 import { getTenantId } from '@/components/utils/tenant';
 
-// Helper para validar se a imagem carrega
-const validateImage = (url) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
-};
+
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [formData, setFormData] = useState(produto ? {
@@ -318,54 +310,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                     placeholder="https://..." 
                     className="flex-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 h-8 text-xs"
                   />
-                  <Button 
-                    type="button" 
-                    size="sm" 
-                    variant="outline"
-                    onClick={async () => {
-                      if (!formData.nome) {
-                        toast({ title: "Preencha o nome primeiro", variant: "destructive" });
-                        return;
-                      }
-                      toast({ title: "Buscando imagem na web...", duration: 10000 });
-                      try {
-                        const response = await generateProductImages({
-                          productName: formData.nome,
-                          productBrand: formData.marca,
-                        });
-                        
-                        if (response && response.image_urls && response.image_urls.length > 0) {
-                          let validUrl = null;
-                          // Validar imagens sequencialmente
-                          for (const url of response.image_urls) {
-                            const isValid = await validateImage(url);
-                            if (isValid) {
-                              validUrl = url;
-                              break;
-                            }
-                          }
-                          
-                          if (validUrl) {
-                            handleChange('imagem_url', validUrl);
-                            toast({ title: "Imagem encontrada e validada!", className: "bg-green-100 text-green-800" });
-                          } else {
-                            throw new Error("Imagens encontradas mas bloqueadas (hotlink protection)");
-                          }
-                        } else {
-                          throw new Error("Nenhuma imagem encontrada");
-                        }
-                      } catch (error) {
-                        console.error(error);
-                        toast({ title: "Erro ao buscar imagem: " + error.message, variant: "destructive" });
-                      }
-                    }}
-                    className="h-8 text-xs whitespace-nowrap"
-                  >
-                    Buscar na Web
-                  </Button>
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                  Cole uma URL ou use a IA para gerar uma imagem automaticamente.
+                  Cole a URL da imagem do produto.
                 </p>
               </div>
             </div>

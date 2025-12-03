@@ -45,7 +45,7 @@ import { getTenantId } from '@/components/utils/tenant';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassTagGenerator from '../components/produtos/MassTagGenerator';
-import MassImageGenerator from '../components/produtos/MassImageGenerator';
+
 
 const getStockStatusIndicator = (produto) => {
   if (!produto.ativo) {
@@ -1126,7 +1126,6 @@ export default function ProdutosPage() {
                 {filteredProdutos.length > 0 && (
                   <>
                     <MassTagGenerator products={filteredProdutos} onComplete={loadData} />
-                    <MassImageGenerator products={filteredProdutos} onComplete={loadData} />
                   </>
                 )}
               </div>
