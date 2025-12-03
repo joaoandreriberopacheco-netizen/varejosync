@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { generateProductImages } from "@/functions/generateProductImages";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -328,38 +329,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       }
                       toast({ title: "Buscando imagem na web...", duration: 10000 });
                       try {
-                        const prompt = `Tarefa: Encontrar imagens funcionais para o produto: "${formData.nome}" ${formData.marca || ''}.
-                        
-                        IMPORTANTE: Preciso de uma imagem visual para o catálogo. Se não encontrar o produto exato, retorne uma imagem genérica similar (ex: "Lata de Tinta", "Saco de Cimento", "Tijolo").
-                        
-                        Estratégia:
-                        1. Tente o produto exato primeiro.
-                        2. Se difícil, busque pelo termo genérico do produto.
-                        3. Priorize URLs diretas (.jpg, .png) de fontes acessíveis.
-                        
-                        Retorne 5 URLs candidatas.
-                        
-                        Retorne APENAS JSON: { "images": ["url1", "url2", "url3", "url4", "url5"] }`;
-                        
-                        const response = await base44.integrations.Core.InvokeLLM({ 
-                          prompt,
-                          add_context_from_internet: true,
-                          response_json_schema: { 
-                            type: "object", 
-                            properties: { 
-                              images: { 
-                                type: "array", 
-                                items: { type: "string" } 
-                              } 
-                            },
-                            required: ["images"]
-                          }
+                        const response = await generateProductImages({
+                          productName: formData.nome,
+                          productBrand: formData.marca,
                         });
                         
-                        if (response && response.images && response.images.length > 0) {
+                        if (response && response.image_urls && response.image_urls.length > 0) {
                           let validUrl = null;
                           // Validar imagens sequencialmente
-                          for (const url of response.images) {
+                          for (const url of response.image_urls) {
                             const isValid = await validateImage(url);
                             if (isValid) {
                               validUrl = url;

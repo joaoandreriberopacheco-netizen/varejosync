@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
+import { generateProductImages } from "@/functions/generateProductImages";
 import { Image as ImageIcon, Loader2, Globe, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -54,43 +55,18 @@ export default function MassImageGenerator({ products, onComplete }) {
 
       const promises = batch.map(async (product, i) => {
         try {
-          const prompt = `Tarefa: Encontrar imagens funcionais para o produto: "${product.nome}" ${product.marca || ''}.
-          
-          IMPORTANTE: O usuário precisa ver UMA imagem. Se não encontrar o produto exato, você DEVE fornecer uma imagem genérica equivalente (ex: se não achar "Tinta X", retorne imagem de "Lata de Tinta Branca").
-          
-          Estratégia:
-          1. Busque pelo nome exato.
-          2. Se falhar, busque pelo tipo do produto e marca.
-          3. Se falhar, busque apenas pelo tipo do produto genérico.
-          4. Extraia URLs diretas de imagens (.jpg, .png, .webp).
-          5. EVITE links curtos, base64 ou de marketplaces fechados que bloqueiam acesso externo.
-          
-          Retorne 5 URLs candidatas em ordem de relevância.
-          
-          Retorne APENAS JSON: { "images": ["url1", "url2", "url3", "url4", "url5"] }`;
-          
           // Add log
           setLogs(prev => [`Buscando na web: ${product.nome}...`, ...prev].slice(0, 50));
 
-          const response = await base44.integrations.Core.InvokeLLM({
-            prompt,
-            add_context_from_internet: true,
-            response_json_schema: {
-              type: "object",
-              properties: { 
-                images: { 
-                  type: "array", 
-                  items: { type: "string" } 
-                } 
-              },
-              required: ["images"]
-            }
+          const response = await generateProductImages({
+            productName: product.nome,
+            productBrand: product.marca,
           });
 
-          if (response && response.images && response.images.length > 0) {
+          if (response && response.image_urls && response.image_urls.length > 0) {
             // Tentar validar as imagens sequencialmente até encontrar uma que funcione
             let validUrl = null;
-            for (const url of response.images) {
+            for (const url of response.image_urls) {
               try {
                 const isValid = await validateImage(url);
                 if (isValid) {
