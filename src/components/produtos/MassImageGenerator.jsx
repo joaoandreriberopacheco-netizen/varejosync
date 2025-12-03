@@ -54,15 +54,20 @@ export default function MassImageGenerator({ products, onComplete }) {
 
       const promises = batch.map(async (product, i) => {
         try {
-          const prompt = `Atue como um assistente de catálogo de e-commerce. Encontre 3 a 5 URLs de imagens candidatas (diretas, estáticas, .jpg/.png) para o produto: "${product.nome}" ${product.marca ? `da marca ${product.marca}` : ''} (${product.categoria_nome || ''}).
+          const prompt = `Tarefa: Encontrar imagens funcionais para o produto: "${product.nome}" ${product.marca || ''}.
           
-          Requisitos:
-          1. Imagens do produto isolado, fundo branco ou neutro preferencialmente.
-          2. URLs devem ser públicas e permitir acesso direto (evite links que expiram ou têm proteção de hotlink).
-          3. Se não encontrar a marca exata, inclua imagens genéricas de alta qualidade que representem fielmente o produto.
-          4. Diversifique as fontes para garantir que pelo menos uma funcione.
+          IMPORTANTE: O usuário precisa ver UMA imagem. Se não encontrar o produto exato, você DEVE fornecer uma imagem genérica equivalente (ex: se não achar "Tinta X", retorne imagem de "Lata de Tinta Branca").
           
-          Retorne JSON no formato: { "images": ["https://url1.jpg", "https://url2.png", ...] }`;
+          Estratégia:
+          1. Busque pelo nome exato.
+          2. Se falhar, busque pelo tipo do produto e marca.
+          3. Se falhar, busque apenas pelo tipo do produto genérico.
+          4. Extraia URLs diretas de imagens (.jpg, .png, .webp).
+          5. EVITE links curtos, base64 ou de marketplaces fechados que bloqueiam acesso externo.
+          
+          Retorne 5 URLs candidatas em ordem de relevância.
+          
+          Retorne APENAS JSON: { "images": ["url1", "url2", "url3", "url4", "url5"] }`;
           
           // Add log
           setLogs(prev => [`Buscando na web: ${product.nome}...`, ...prev].slice(0, 50));

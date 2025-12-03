@@ -328,15 +328,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       }
                       toast({ title: "Buscando imagem na web...", duration: 10000 });
                       try {
-                        const prompt = `Encontre 3 a 5 URLs de imagens candidatas (diretas, estáticas, .jpg/.png) para o produto: "${formData.nome}" ${formData.marca ? `da marca ${formData.marca}` : ''}.
+                        const prompt = `Tarefa: Encontrar imagens funcionais para o produto: "${formData.nome}" ${formData.marca || ''}.
                         
-                        Requisitos:
-                        1. Imagens do produto isolado, fundo branco ou neutro.
-                        2. URLs devem ser públicas e permitir acesso direto (evite links que expiram ou têm proteção de hotlink).
-                        3. Se não encontrar a marca exata, inclua imagens genéricas de alta qualidade.
-                        4. Diversifique as fontes.
+                        IMPORTANTE: Preciso de uma imagem visual para o catálogo. Se não encontrar o produto exato, retorne uma imagem genérica similar (ex: "Lata de Tinta", "Saco de Cimento", "Tijolo").
                         
-                        Retorne JSON no formato: { "images": ["https://url1.jpg", "https://url2.png", ...] }`;
+                        Estratégia:
+                        1. Tente o produto exato primeiro.
+                        2. Se difícil, busque pelo termo genérico do produto.
+                        3. Priorize URLs diretas (.jpg, .png) de fontes acessíveis.
+                        
+                        Retorne 5 URLs candidatas.
+                        
+                        Retorne APENAS JSON: { "images": ["url1", "url2", "url3", "url4", "url5"] }`;
                         
                         const response = await base44.integrations.Core.InvokeLLM({ 
                           prompt,
