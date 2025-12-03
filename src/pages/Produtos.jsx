@@ -35,7 +35,8 @@ import {
   Loader2,
   RefreshCw,
   Columns,
-  Search
+  Search,
+  Image as ImageIcon
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
@@ -45,6 +46,7 @@ import { getTenantId } from '@/components/utils/tenant';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassTagGenerator from '../components/produtos/MassTagGenerator';
+import MassImageUploader from '../components/produtos/MassImageUploader';
 
 
 const getStockStatusIndicator = (produto) => {
@@ -86,6 +88,7 @@ export default function ProdutosPage() {
     'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
   ]);
 
+  const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
   // States for unified import (products + costs)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -1033,7 +1036,10 @@ export default function ProdutosPage() {
                   <Download className="w-3.5 h-3.5 mr-2" />Template
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                  <Upload className="w-3.5 h-3.5 mr-2" />Importar
+                  <Upload className="w-3.5 h-3.5 mr-2" />Importar CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <ImageIcon className="w-3.5 h-3.5 mr-2" />Importar Imagens
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1641,6 +1647,16 @@ export default function ProdutosPage() {
         onColumnsChange={setVisibleColumns}
         open={isColumnSelectorOpen}
         onClose={() => setIsColumnSelectorOpen(false)}
+      />
+
+      <MassImageUploader 
+        isOpen={isMassImageUploaderOpen}
+        onClose={() => setIsMassImageUploaderOpen(false)}
+        onComplete={() => {
+          loadData();
+          // Optional: close dialog automatically or keep it open for results viewing
+          // setIsMassImageUploaderOpen(false); 
+        }}
       />
 
       {/* Dialog de Preview de Custos (Existing) */}

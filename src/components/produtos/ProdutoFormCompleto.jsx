@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2 } from 'lucide-react';
 import TagGenerator from './TagGenerator';
 import { useToast } from "@/components/ui/use-toast";
 import { getTenantId } from '@/components/utils/tenant';
@@ -40,8 +40,36 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const { toast } = useToast();
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      handleChange('imagem_url', file_url);
+      toast({
+        title: "Upload concluído",
+        description: "Imagem carregada com sucesso.",
+        className: "bg-green-100 text-green-800 border-green-200"
+      });
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      toast({
+        title: "Erro no upload",
+        description: error.message || "Falha ao enviar imagem.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      // Limpar o input para permitir selecionar o mesmo arquivo novamente se necessário
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     loadDependencies();
@@ -307,9 +335,34 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                     placeholder="https://..." 
                     className="flex-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 h-8 text-xs"
                   />
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3 text-xs border-gray-300 dark:border-gray-600 dark:text-gray-200"
+                      disabled={isUploading}
+                      onClick={() => document.getElementById('image-upload').click()}
+                    >
+                      {isUploading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                      ) : (
+                        <Upload className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Upload
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                  Cole a URL da imagem do produto.
+                  Cole a URL ou faça upload de uma imagem do seu computador.
                 </p>
               </div>
             </div>
