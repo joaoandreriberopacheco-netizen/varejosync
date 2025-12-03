@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
-import { Image as ImageIcon, Loader2, Sparkles, AlertCircle, CheckCircle } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Globe, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function MassImageGenerator({ products, onComplete }) {
@@ -92,16 +92,16 @@ export default function MassImageGenerator({ products, onComplete }) {
         className="ml-2 gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-800 dark:hover:bg-indigo-900/20"
         onClick={() => setIsOpen(true)}
       >
-        <Sparkles className="w-4 h-4" />
-        Auto Imagens
+        <Globe className="w-4 h-4" />
+        Buscar Imagens Web
       </Button>
 
       <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && setIsOpen(open)}>
         <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-600" />
-              Gerador de Imagens IA
+              <Globe className="w-5 h-5 text-indigo-600" />
+              Busca Automática de Imagens
             </DialogTitle>
           </DialogHeader>
 
@@ -113,8 +113,8 @@ export default function MassImageGenerator({ products, onComplete }) {
                     <AlertCircle className="w-4 h-4" />
                     Como funciona
                   </p>
-                  <p>A IA analisará o nome, categoria e marca dos produtos para gerar imagens realistas de estúdio automaticamente.</p>
-                  <p className="mt-2 text-xs opacity-80">Nota: O processo leva cerca de 5-10 segundos por imagem.</p>
+                  <p>O sistema buscará na internet imagens reais correspondentes ao nome e marca dos produtos selecionados.</p>
+                  <p className="mt-2 text-xs opacity-80">Nota: O processo pode levar alguns segundos por produto para garantir a melhor correspondência.</p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -123,7 +123,7 @@ export default function MassImageGenerator({ products, onComplete }) {
                     checked={onlyMissing} 
                     onCheckedChange={setOnlyMissing}
                   />
-                  <Label htmlFor="missing">Gerar apenas para produtos sem imagem</Label>
+                  <Label htmlFor="missing">Buscar apenas para produtos sem imagem</Label>
                 </div>
 
                 <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -171,14 +171,14 @@ export default function MassImageGenerator({ products, onComplete }) {
               <>
                 <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancelar</Button>
                 <Button onClick={handleStart} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Iniciar Geração
+                  <Globe className="w-4 h-4 mr-2" />
+                  Iniciar Busca
                 </Button>
               </>
             ) : (
               <Button disabled className="w-full">
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Gerando Imagens...
+                Buscando Imagens...
               </Button>
             )}
           </DialogFooter>
