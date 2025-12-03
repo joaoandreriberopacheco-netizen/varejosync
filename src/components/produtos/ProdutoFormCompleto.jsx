@@ -13,6 +13,16 @@ import TagGenerator from './TagGenerator';
 import { useToast } from "@/components/ui/use-toast";
 import { getTenantId } from '@/components/utils/tenant';
 
+// Helper para validar se a imagem carrega
+const validateImage = (url) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+  });
+};
+
 export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [formData, setFormData] = useState(produto ? {
     ...produto,
@@ -318,22 +328,54 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       }
                       toast({ title: "Buscando imagem na web...", duration: 10000 });
                       try {
-                        const prompt = `Encontre uma URL de imagem direta, pública e estática para o produto: "${formData.nome}" ${formData.marca ? `da marca ${formData.marca}` : ''}. Se não encontrar a marca exata, use uma imagem genérica de alta qualidade representativa do produto. Evite links quebrados ou protegidos. Retorne JSON { "image_url": "..." }`;
+                        const prompt = `Encontre 3 a 5 URLs de imagens candidatas (diretas, estáticas, .jpg/.png) para o produto: "${formData.nome}" ${formData.marca ? `da marca ${formData.marca}` : ''}.
+                        
+                        Requisitos:
+                        1. Imagens do produto isolado, fundo branco ou neutro.
+                        2. URLs devem ser públicas e permitir acesso direto (evite links que expiram ou têm proteção de hotlink).
+                        3. Se não encontrar a marca exata, inclua imagens genéricas de alta qualidade.
+                        4. Diversifique as fontes.
+                        
+                        Retorne JSON no formato: { "images": ["https://url1.jpg", "https://url2.png", ...] }`;
+                        
                         const response = await base44.integrations.Core.InvokeLLM({ 
                           prompt,
                           add_context_from_internet: true,
-                          response_json_schema: { type: "object", properties: { image_url: { type: "string" } } }
+                          response_json_schema: { 
+                            type: "object", 
+                            properties: { 
+                              images: { 
+                                type: "array", 
+                                items: { type: "string" } 
+                              } 
+                            },
+                            required: ["images"]
+                          }
                         });
                         
-                        if (response && response.image_url) {
-                          handleChange('imagem_url', response.image_url);
-                          toast({ title: "Imagem encontrada!", className: "bg-green-100 text-green-800" });
+                        if (response && response.images && response.images.length > 0) {
+                          let validUrl = null;
+                          // Validar imagens sequencialmente
+                          for (const url of response.images) {
+                            const isValid = await validateImage(url);
+                            if (isValid) {
+                              validUrl = url;
+                              break;
+                            }
+                          }
+                          
+                          if (validUrl) {
+                            handleChange('imagem_url', validUrl);
+                            toast({ title: "Imagem encontrada e validada!", className: "bg-green-100 text-green-800" });
+                          } else {
+                            throw new Error("Imagens encontradas mas bloqueadas (hotlink protection)");
+                          }
                         } else {
-                          throw new Error("Imagem não encontrada");
+                          throw new Error("Nenhuma imagem encontrada");
                         }
                       } catch (error) {
                         console.error(error);
-                        toast({ title: "Erro ao buscar imagem", variant: "destructive" });
+                        toast({ title: "Erro ao buscar imagem: " + error.message, variant: "destructive" });
                       }
                     }}
                     className="h-8 text-xs whitespace-nowrap"
