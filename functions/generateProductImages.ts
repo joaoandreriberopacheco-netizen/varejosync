@@ -15,52 +15,66 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'productName is required' }, { status: 400 });
         }
 
-        // Prompt otimizado para "fallback" inteligente e fontes de construção
-        const prompt = `Você é um especialista em catalogação de produtos de material de construção.
+        console.log(`Generating images for: ${productName}`);
+
+        // 1. TENTATIVA 1: Busca na Web por URLs estáveis (Wikimedia, etc)
+        let urls = [];
         
-        OBJETIVO: Encontrar URLs de imagens válidas para o produto: "${productName}" ${productBrand ? `Marca: ${productBrand}` : ''}.
+        try {
+            const prompt = `Encontre URLs diretas de imagens REAIS e PÚBLICAS para o produto: "${productName}" ${productBrand ? `Marca: ${productBrand}` : ''}.
+            
+            Priorize:
+            1. Wikimedia Commons (URLs terminadas em .jpg/.png)
+            2. Lojas de construção grandes (Leroy, Telhanorte) - URLs de CDN
+            3. Imagens genéricas se for material básico (Areia, Brita, Tijolo)
+            
+            IMPORTANTE: Teste mentalmente se a URL parece permanente.
+            
+            Retorne APENAS JSON: { "image_urls": ["url1", "url2"] }`;
 
-        ESTRATÉGIA DE BUSCA (Siga em ordem):
-        1.  **Busca Exata:** Tente encontrar a imagem oficial do produto da marca específica.
-        2.  **Busca Aproximada:** Se não houver imagem exata, busque por produtos equivalentes da mesma marca.
-        3.  **FALLBACK OBRIGATÓRIO (Genérico):** Se os passos acima falharem ou retornarem poucos resultados, busque por imagens GENÉRICAS de alta qualidade que representem o produto visualmente (ex: para "Tubo PVC Amanco", se não achar, retorne imagem de "Tubo PVC" genérico; para "Tijolo Baiano", retorne foto de qualquer tijolo baiano).
-
-        FONTES DE IMAGENS:
-        - Priorize: Wikimedia Commons, Pixabay, Pexels, Unsplash (busque termos em inglês se necessário, ex: "brick" para tijolo).
-        - E-commerces de construção (Leroy Merlin, Telhanorte, C&C, etc) - tente extrair a URL da imagem principal.
-        
-        REQUISITOS TÉCNICOS DAS URLS:
-        - Devem ser links diretos para a imagem (preferencialmente terminando em .jpg, .png, .webp).
-        - URLs devem ser públicas.
-        - Evite URLs longas com tokens de sessão que expiram.
-
-        SAÍDA:
-        Retorne uma lista com 8 a 10 URLs para aumentar a chance de sucesso. Misture imagens exatas e genéricas.
-
-        Formato JSON estrito:
-        {
-          "image_urls": ["url1", "url2", "url3", ...]
-        }
-        `;
-
-        const response = await base44.integrations.Core.InvokeLLM({
-            prompt: prompt,
-            add_context_from_internet: true,
-            response_json_schema: {
-                type: "object",
-                properties: {
-                    image_urls: {
-                        type: "array",
-                        items: { type: "string" }
+            const searchResponse = await base44.integrations.Core.InvokeLLM({
+                prompt: prompt,
+                add_context_from_internet: true,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        image_urls: { type: "array", items: { type: "string" } }
                     }
-                },
-                required: ["image_urls"]
+                }
+            });
+
+            if (searchResponse.image_urls && Array.isArray(searchResponse.image_urls)) {
+                // Filtra URLs vazias ou que parecem placeholder
+                urls = searchResponse.image_urls.filter(u => u && u.length > 10 && u.startsWith('http'));
             }
-        });
-        
-        return Response.json({ image_urls: response.image_urls || [] });
+        } catch (e) {
+            console.error("Erro na busca LLM:", e);
+        }
+
+        // 2. TENTATIVA 2 (FALLBACK INFALÍVEL): Gerar Imagem com IA
+        // Se não encontrou nada (ou trouxe pouco), gera uma imagem nova
+        if (urls.length === 0) {
+            console.log("Nenhuma URL encontrada na busca. Gerando imagem com IA...");
+            try {
+                const genPrompt = `Professional product photography of construction material: ${productName} ${productBrand || ''}. Isolated on white background, studio lighting, photorealistic, 8k uhd, high quality commercial catalog image.`;
+                
+                const genResponse = await base44.integrations.Core.GenerateImage({
+                    prompt: genPrompt
+                });
+
+                if (genResponse && genResponse.url) {
+                    urls.push(genResponse.url);
+                }
+            } catch (genError) {
+                console.error("Erro na geração de imagem IA:", genError);
+            }
+        }
+
+        // Retorna o que tiver (Busca ou Geração)
+        return Response.json({ image_urls: urls });
+
     } catch (error) {
-        console.error("Error in generateProductImages:", error);
+        console.error("Fatal error in generateProductImages:", error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
