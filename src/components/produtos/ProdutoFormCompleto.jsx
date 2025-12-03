@@ -318,7 +318,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       }
                       toast({ title: "Buscando imagem na web...", duration: 10000 });
                       try {
-                        const prompt = `Encontre uma URL direta de imagem real e pública para o produto de construção: ${formData.nome} ${formData.marca || ''} (${formData.categoria_nome || ''}). Preferência por fundo branco.`;
+                        const prompt = `Encontre uma URL de imagem direta, pública e estática para o produto: "${formData.nome}" ${formData.marca ? `da marca ${formData.marca}` : ''}. Se não encontrar a marca exata, use uma imagem genérica de alta qualidade representativa do produto. Evite links quebrados ou protegidos. Retorne JSON { "image_url": "..." }`;
                         const response = await base44.integrations.Core.InvokeLLM({ 
                           prompt,
                           add_context_from_internet: true,

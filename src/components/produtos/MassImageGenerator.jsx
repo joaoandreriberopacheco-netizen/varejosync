@@ -44,7 +44,15 @@ export default function MassImageGenerator({ products, onComplete }) {
 
       const promises = batch.map(async (product, i) => {
         try {
-          const prompt = `Encontre uma URL direta de imagem real e pública para o produto de material de construção: ${product.nome} ${product.marca || ''} (${product.categoria_nome || ''}). A imagem deve ser do produto isolado ou em uso, preferencialmente fundo branco ou neutro. Retorne apenas o JSON com a URL.`;
+          const prompt = `Atue como um assistente de catálogo de e-commerce. Encontre uma URL de imagem estática, pública e direta (preferencialmente .jpg ou .png) para o produto: "${product.nome}" ${product.marca ? `da marca ${product.marca}` : ''} (${product.categoria_nome || ''}).
+          
+          Requisitos:
+          1. A imagem deve ser do produto isolado, fundo branco ou neutro.
+          2. A URL NÃO pode ter proteção de hotlink (evite marketplaces que bloqueiam acesso externo).
+          3. Se não encontrar a marca exata, forneça uma imagem genérica de alta qualidade que represente fielmente este tipo de produto de construção.
+          4. A imagem deve parecer profissional.
+          
+          Retorne apenas o JSON no formato: { "image_url": "https://..." }`;
           
           // Add log
           setLogs(prev => [`Buscando na web: ${product.nome}...`, ...prev].slice(0, 50));
