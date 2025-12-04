@@ -598,50 +598,43 @@ export default function PDVVendedor() {
         )}
       </AnimatePresence>
 
-      {/* Header - Elegante */}
-      <div className="bg-white dark:bg-gray-800 p-4 md:p-4 flex items-center justify-between flex-shrink-0">
+      {/* Header - Glacial */}
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-4 flex items-center justify-between flex-shrink-0 shadow-sm z-10 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 md:w-10 md:h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <ShoppingCart className="w-5 h-5 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
+          <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shadow-sm">
+            <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </div>
           <div>
-            <h1 className="text-lg md:text-lg font-medium text-gray-800 dark:text-gray-100">PDV</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Ponto de Venda</p>
+            <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100 font-glacial">PDV</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Vendedor</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          <div className="hidden lg:flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
-            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F1 Ajuda</span>
-            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F3 Avançar</span>
-            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F4 Limpar</span>
-          </div>
+        <div className="flex items-center gap-3">
           <Button 
             variant="ghost" 
             size="icon"
             onClick={handleSair}
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8 rounded-lg"
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 h-10 w-10 rounded-xl transition-all"
           >
-            <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden pb-20 md:pb-0">
         {/* Área Principal - Glacial Style */}
-        <div className="flex-1 flex flex-col p-4 md:p-6 overflow-auto bg-gray-50 dark:bg-gray-900">
+        <div className="flex-1 flex flex-col p-4 md:p-6 overflow-auto bg-[#f8f9fa] dark:bg-[#0f172a]">
           {/* Busca de Produto - Limpo e Expandido */}
-          <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <Search className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Consulta de Produtos</span>
-            </div>
-            <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <div className="mb-6 flex-shrink-0" ref={suggestionsRef}>
+            <div className="flex gap-3">
+                <div className="flex-1 relative shadow-sm rounded-2xl">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                    <Barcode className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  </div>
                   <Input 
                     ref={inputProdutoRef}
-                    placeholder="Nome, código ou código de barras..."
-                    className="pl-12 pr-14 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 md:h-14 text-base focus:ring-2 focus:ring-gray-300 focus:border-gray-400 placeholder:text-gray-400"
+                    placeholder="Buscar produto..."
+                    className="pl-14 pr-14 bg-white dark:bg-gray-800 border-none shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-16 text-lg font-medium placeholder:text-gray-400 focus:ring-0"
                     value={buscaProduto}
                     onChange={(e) => setBuscaProduto(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -652,7 +645,7 @@ export default function PDVVendedor() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowBarcodeScanner(true)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl"
                   >
                     <Camera className="w-5 h-5" />
                   </Button>
@@ -661,8 +654,8 @@ export default function PDVVendedor() {
                 ref={quantidadeInputRef}
                 type="number"
                 inputMode="numeric"
-                placeholder="Qtd"
-                className="w-20 md:w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 md:h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-gray-300"
+                placeholder="1"
+                className="w-24 bg-white dark:bg-gray-800 border-none shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-16 text-center text-xl font-bold focus:ring-0 placeholder:text-gray-300"
                 value={quantidadeAtual}
                 onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
                 onKeyDown={handleQuantidadeKeyDown}
@@ -816,64 +809,61 @@ export default function PDVVendedor() {
         </div>
 
         {/* Sidebar Carrinho - Desktop Only - Glacial Style */}
-        <div className="hidden md:flex w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-col flex-shrink-0">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
+        <div className="hidden md:flex w-96 bg-white dark:bg-gray-800 shadow-[-5px_0_30px_rgba(0,0,0,0.03)] flex-col flex-shrink-0 z-20">
+          <div className="p-6 pb-4 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-normal text-gray-700 dark:text-gray-200">Carrinho</h2>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{carrinho.length} itens</span>
+              <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 font-glacial">Carrinho de Compras</h2>
+              <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg text-gray-600 dark:text-gray-300">{carrinho.length} itens</span>
             </div>
           </div>
 
-          {/* Lista de Itens - Glacial Style */}
-          <div className="flex-1 overflow-auto p-3 space-y-1">
+          {/* Lista de Itens */}
+          <div className="flex-1 overflow-auto px-4 space-y-3">
             {carrinho.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm">Carrinho vazio</p>
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 pb-20">
+                <div className="w-16 h-16 bg-gray-50 dark:bg-gray-700/50 rounded-full flex items-center justify-center mb-4">
+                  <ShoppingCart className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                </div>
+                <p className="text-sm font-medium">Seu carrinho está vazio</p>
+                <p className="text-xs mt-1">Adicione produtos para começar</p>
               </div>
             ) : (
               carrinho.map((item) => (
-                <div key={item.produto_id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm text-gray-700 dark:text-gray-200 truncate">{item.produto_nome}</h3>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                        R$ {item.preco_unitario_praticado.toFixed(2)} x {item.quantidade}
+                <div key={item.produto_id} className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-2xl hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all group">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0 pr-2">
+                      <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{item.produto_nome}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Un: R$ {item.preco_unitario_praticado.toFixed(2)}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    <button
                       onClick={() => handleRemoveItem(item.produto_id)}
-                      className="h-6 w-6 text-gray-400 hover:text-gray-600 hover:bg-transparent"
+                      className="text-gray-300 hover:text-red-500 transition-colors p-1 -mr-1 opacity-0 group-hover:opacity-100"
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                    <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm">
+                      <button
                         onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
-                        className="h-7 w-7 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                       >
                         <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="text-sm font-medium w-8 text-center text-gray-700 dark:text-gray-200">
+                      </button>
+                      <span className="text-sm font-bold w-8 text-center text-gray-800 dark:text-gray-200">
                         {item.quantidade}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      <button
                         onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
                         disabled={item.quantidade >= item.estoque_disponivel}
-                        className="h-7 w-7 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-30"
                       >
                         <Plus className="h-3 w-3" />
-                      </Button>
+                      </button>
                     </div>
-                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    <div className="text-base font-bold text-gray-800 dark:text-gray-100">
                       R$ {item.total.toFixed(2)}
                     </div>
                   </div>
@@ -882,81 +872,72 @@ export default function PDVVendedor() {
             )}
           </div>
 
-          {/* Resumo e Ações - Glacial Style */}
-          <div className="border-t border-gray-100 dark:border-gray-700 p-4 space-y-3 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
-            {/* Botão Venda Perdida - Desktop */}
-            <Button
-              variant="ghost"
-              size="sm"
+          {/* Resumo e Ações */}
+          <div className="p-6 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 flex-shrink-0 shadow-[0_-5px_20px_rgba(0,0,0,0.02)]">
+            {/* Botão Venda Perdida */}
+            <button
               onClick={() => setShowLostSalesForm(true)}
-              className="w-full text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-xs gap-2"
+              className="w-full text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-xs flex items-center justify-center gap-2 py-2 mb-4 rounded-lg transition-colors font-medium"
             >
               <AlertCircle className="w-3.5 h-3.5" />
               Registrar Venda Perdida
-            </Button>
+            </button>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs">
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs font-medium">
                 <span>Subtotal</span>
                 <span>R$ {subtotal.toFixed(2)}</span>
               </div>
 
-              {/* Seção de Ajuste - Clean Style */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
-                <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ajuste</Label>
-                <div className="flex gap-1">
+              {/* Ajuste */}
+              <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-2 flex gap-2">
                   <Select value={tipoAjuste} onValueChange={setTipoAjuste}>
-                    <SelectTrigger className="w-20 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-xs">
+                    <SelectTrigger className="w-20 bg-white dark:bg-gray-800 border-none shadow-sm rounded-lg h-8 text-xs font-medium">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-xs">
+                    <SelectContent className="border-none shadow-xl rounded-xl">
                       <SelectItem value="desconto">Desc.</SelectItem>
                       <SelectItem value="acrescimo">Acrés.</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Select value={tipoValorAjuste} onValueChange={setTipoValorAjuste}>
-                    <SelectTrigger className="w-14 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-xs">
-                      <SelectItem value="valor">R$</SelectItem>
-                      <SelectItem value="percentual">%</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={valorAjuste}
-                    onChange={(e) => setValorAjuste(parseFloat(e.target.value) || 0)}
-                    className="flex-1 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
-                    placeholder="0"
-                  />
-                </div>
-                {ajusteExcedido && (
-                  <p className="text-[10px] text-red-500">
-                    Excede limite de {currentUser?.limite_desconto || 0}%
-                  </p>
-                )}
-                {valorAjusteCalculado > 0 && !ajusteExcedido && (
-                  <p className="text-[10px] text-gray-500">
-                    {tipoAjuste === 'desconto' ? '-' : '+'} R$ {valorAjusteCalculado.toFixed(2)} ({percentualAjuste.toFixed(1)}%)
-                  </p>
-                )}
+                  <div className="flex-1 flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm px-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={valorAjuste}
+                      onChange={(e) => setValorAjuste(parseFloat(e.target.value) || 0)}
+                      className="flex-1 border-none bg-transparent h-8 text-sm p-0 focus:ring-0 text-right"
+                      placeholder="0"
+                    />
+                    <span className="text-gray-400 text-xs ml-1">{tipoValorAjuste === 'percentual' ? '%' : 'R$'}</span>
+                  </div>
+                  <button 
+                    onClick={() => setTipoValorAjuste(tipoValorAjuste === 'percentual' ? 'valor' : 'percentual')}
+                    className="w-8 h-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm flex items-center justify-center text-xs font-bold text-gray-500 hover:text-indigo-600"
+                  >
+                    {tipoValorAjuste === 'percentual' ? '%' : '$'}
+                  </button>
               </div>
+              
+              {ajusteExcedido && (
+                  <p className="text-[10px] text-red-500 text-center font-medium">
+                    ⚠️ Excede limite de {currentUser?.limite_desconto || 0}%
+                  </p>
+              )}
 
-              <div className="flex justify-between items-baseline pt-3 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-xs text-gray-500">Total</span>
-                <span className="text-xl font-semibold text-gray-800 dark:text-gray-100">R$ {valorTotal.toFixed(2)}</span>
+              <div className="flex justify-between items-baseline pt-2">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Final</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <Button 
                 onClick={handleAvancarParaCliente}
                 disabled={carrinho.length === 0 || ajusteExcedido}
-                className="w-full h-12 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white text-base font-medium"
+                className="w-full h-14 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-lg font-bold rounded-2xl shadow-lg shadow-gray-200 dark:shadow-none transition-all transform active:scale-[0.98]"
               >
-                Avançar (F3)
+                Avançar
               </Button>
           </div>
           </div>
