@@ -94,32 +94,32 @@ export default function RelatoriosPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="gerenciais">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TabsContent value="gerenciais" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatoriosGerenciais.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="vendas">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TabsContent value="vendas" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatoriosVendas.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="compras">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TabsContent value="compras" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatoriosCompras.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="estoque">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TabsContent value="estoque" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatoriosEstoque.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="financeiro">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TabsContent value="financeiro" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatoriosFinanceiros.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
