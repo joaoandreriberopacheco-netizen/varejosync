@@ -280,11 +280,11 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
+      <div className="min-h-screen flex font-sans bg-[#f8f9fa] dark:bg-[#0f172a]">
         {isMobile && !isOpen && (
           <button
             onClick={handleMobileMenuToggle}
-            className="fixed top-3 left-3 z-50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-md backdrop-blur-sm"
+            className="fixed top-3 left-3 z-50 p-3 rounded-2xl bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 shadow-sm backdrop-blur-sm transition-all"
             style={{ minWidth: '48px', minHeight: '48px' }}
           >
             <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
@@ -299,36 +299,35 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <aside
-          className={`fixed left-0 top-0 h-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 transition-all duration-300 z-50 flex flex-col ${
+          className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 transition-all duration-300 z-50 flex flex-col shadow-[1px_0_20px_rgba(0,0,0,0.02)] dark:shadow-none ${
             isMobile 
-              ? (isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full') 
-              : (isOpen ? 'w-64' : 'w-16')
+              ? (isOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full') 
+              : (isOpen ? 'w-72' : 'w-[88px]')
           } ${isMobile && !isOpen ? 'overflow-hidden' : ''}`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
           {/* Header */}
-          <div className="p-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="p-6 flex items-center justify-between flex-shrink-0">
             {(isOpen || isMobile) ? (
               <>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded bg-white flex items-center justify-center">
-                    <span className="text-gray-700 font-semibold text-sm">VS</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center shadow-sm">
+                    <span className="text-gray-800 dark:text-gray-100 font-bold text-base font-glacial">VS</span>
                   </div>
                   <div>
-                    <h1 className="text-sm font-medium text-gray-700 dark:text-white">VarejoSync</h1>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400">Sistema ERP</p>
+                    <h1 className="text-base font-bold text-gray-800 dark:text-gray-100 font-glacial">VarejoSync</h1>
                   </div>
                 </div>
                 {isMobile && (
-                  <button onClick={closeMobileMenu} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
-                    <X className="w-4 h-4 text-gray-700 dark:text-white" />
+                  <button onClick={closeMobileMenu} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                    <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   </button>
                 )}
               </>
             ) : (
-              <div className="w-8 h-8 rounded bg-white flex items-center justify-center mx-auto">
-                <span className="text-gray-700 font-semibold text-sm">VS</span>
+              <div className="w-10 h-10 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto shadow-sm group-hover:scale-105 transition-transform">
+                <span className="text-gray-800 dark:text-gray-100 font-bold text-sm font-glacial">VS</span>
               </div>
             )}
           </div>
