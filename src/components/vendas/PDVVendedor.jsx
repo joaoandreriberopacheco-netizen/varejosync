@@ -635,7 +635,7 @@ export default function PDVVendedor() {
               <Search className="w-4 h-4 text-gray-400" />
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Consulta de Produtos</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full">
                 <div className="flex-1 relative min-w-0">
                   <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                   <Input 
@@ -657,18 +657,20 @@ export default function PDVVendedor() {
                     <Camera className="w-5 h-5" />
                   </Button>
                 </div>
-              <Input 
-                ref={quantidadeInputRef}
-                type="number"
-                inputMode="numeric"
-                placeholder="Qtd"
-                className="w-20 md:w-24 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 md:h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-gray-300"
-                value={quantidadeAtual}
-                onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
-                onKeyDown={handleQuantidadeKeyDown}
-                min="1"
-                disabled={!produtoSelecionado}
-              />
+                <div className="w-20 md:w-24 shrink-0">
+                  <Input 
+                    ref={quantidadeInputRef}
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Qtd"
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-gray-300"
+                    value={quantidadeAtual}
+                    onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
+                    onKeyDown={handleQuantidadeKeyDown}
+                    min="1"
+                    disabled={!produtoSelecionado}
+                  />
+                </div>
             </div>
             {showSuggestions && produtosSugeridos.length > 0 && (
                 <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
