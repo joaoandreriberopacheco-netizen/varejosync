@@ -835,7 +835,7 @@ export default function PDVVendedor() {
                     </Button>
                     <Button
                       onClick={handleConfirmarAdicao}
-                      className="bg-gray-700 hover:bg-gray-600 text-white font-medium px-6"
+                      className="bg-gray-900 hover:bg-gray-800 text-white dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white font-medium px-6 shadow-sm"
                       size="sm"
                     >
                       Adicionar
