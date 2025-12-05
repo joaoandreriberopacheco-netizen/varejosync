@@ -44,14 +44,14 @@ export default function RelatoriosPage() {
   ];
 
   const RelatorioCard = ({ relatorio }) => (
-    <Card className="hover:shadow-md transition-shadow border-none bg-white dark:bg-gray-800 shadow-sm">
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="font-medium text-gray-800 dark:text-gray-200">{relatorio.nome}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{relatorio.descricao}</p>
+            <h3 className="font-semibold text-gray-900">{relatorio.nome}</h3>
+            <p className="text-sm text-gray-600 mt-1">{relatorio.descricao}</p>
           </div>
-          <Button variant="ghost" size="icon" className="text-emerald-600 dark:text-emerald-400 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
+          <Button variant="ghost" size="icon" className="text-green-600">
             <Download className="w-4 h-4" />
           </Button>
         </div>
@@ -60,14 +60,14 @@ export default function RelatoriosPage() {
   );
 
   return (
-    <div className="p-4 lg:p-6 bg-[#f8f9fa] dark:bg-[#0f172a] min-h-screen">
+    <div className="p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 font-glacial">Central de Relatórios</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Acesse relatórios estratégicos e operacionais do seu negócio.</p>
-          <div className="flex gap-4 mt-6">
+          <h1 className="text-3xl font-bold text-gray-800">Central de Relatórios</h1>
+          <p className="text-gray-600">Acesse relatórios estratégicos e operacionais do seu negócio.</p>
+          <div className="flex gap-4 mt-4">
             <Link to="/RelatorioMargem">
-              <Button className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 text-white gap-2 rounded-xl shadow-sm h-12 px-6">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
                 <TrendingUp className="w-4 h-4" />
                 Novo Relatório de Margem & Lucratividade
               </Button>
@@ -76,50 +76,50 @@ export default function RelatoriosPage() {
         </div>
 
         <Tabs defaultValue="gerenciais" className="space-y-6">
-          <TabsList className="w-full flex justify-start bg-transparent border-b border-gray-200 dark:border-gray-800 rounded-none h-auto p-0 gap-6 overflow-x-auto no-scrollbar">
-            <TabsTrigger value="gerenciais" className="gap-2 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 bg-transparent shadow-none transition-all">
-              <FileText className="w-4 h-4" /> <span className="hidden md:inline">Gerenciais</span>
+          <TabsList>
+            <TabsTrigger value="gerenciais" className="gap-2">
+              <FileText className="w-4 h-4" /> Gerenciais
             </TabsTrigger>
-            <TabsTrigger value="vendas" className="gap-2 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 bg-transparent shadow-none transition-all">
-              <TrendingUp className="w-4 h-4" /> <span className="hidden md:inline">Vendas</span>
+            <TabsTrigger value="vendas" className="gap-2">
+              <TrendingUp className="w-4 h-4" /> Vendas
             </TabsTrigger>
-            <TabsTrigger value="compras" className="gap-2 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 bg-transparent shadow-none transition-all">
-              <ShoppingCart className="w-4 h-4" /> <span className="hidden md:inline">Compras</span>
+            <TabsTrigger value="compras" className="gap-2">
+              <ShoppingCart className="w-4 h-4" /> Compras
             </TabsTrigger>
-            <TabsTrigger value="estoque" className="gap-2 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 bg-transparent shadow-none transition-all">
-              <Warehouse className="w-4 h-4" /> <span className="hidden md:inline">Estoque</span>
+            <TabsTrigger value="estoque" className="gap-2">
+              <Warehouse className="w-4 h-4" /> Estoque
             </TabsTrigger>
-            <TabsTrigger value="financeiro" className="gap-2 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 bg-transparent shadow-none transition-all">
-              <DollarSign className="w-4 h-4" /> <span className="hidden md:inline">Financeiro</span>
+            <TabsTrigger value="financeiro" className="gap-2">
+              <DollarSign className="w-4 h-4" /> Financeiro
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="gerenciais" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <TabsContent value="gerenciais">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {relatoriosGerenciais.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="vendas" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <TabsContent value="vendas">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {relatoriosVendas.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="compras" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <TabsContent value="compras">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {relatoriosCompras.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="estoque" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <TabsContent value="estoque">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {relatoriosEstoque.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>
 
-          <TabsContent value="financeiro" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <TabsContent value="financeiro">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {relatoriosFinanceiros.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
             </div>
           </TabsContent>

@@ -269,46 +269,48 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header Mobile-First Glacial */}
-      <div className="flex-none bg-white dark:bg-gray-900 pt-4 px-4 pb-2">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 truncate font-glacial">
-              {produto?.id ? 'Editar Produto' : 'Novo Produto'}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-              {formData.nome || 'Preencha os detalhes'}
-            </p>
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="rounded-xl h-10 w-10 hover:bg-gray-100 dark:hover:bg-gray-800">
-              <X className="w-5 h-5 text-gray-500" />
-            </Button>
-            <Button size="icon" onClick={handleSave} disabled={isSaving} className="rounded-xl bg-gray-900 hover:bg-gray-800 text-white h-10 w-10 shadow-md">
-              <Save className="w-5 h-5" />
-            </Button>
+      {/* Header Mobile-First */}
+      <div className="flex-none border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="p-3 md:p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base md:text-lg font-medium text-gray-700 dark:text-gray-200 truncate">
+                {produto?.id ? 'Editar:' : 'Novo Produto'}
+              </h2>
+              <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 mt-0.5 truncate">
+                {formData.nome || 'Sem nome'}
+              </p>
+            </div>
+            <div className="flex gap-1.5 flex-shrink-0">
+              <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-8 w-8 dark:text-gray-400">
+                <X className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+              </Button>
+              <Button size="icon" onClick={handleSave} disabled={isSaving} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 text-white h-8 w-8">
+                <Save className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs Glacial */}
+      {/* Tabs */}
       <Tabs defaultValue="descritivo" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className="flex w-full bg-transparent p-0 px-4 border-b border-gray-100 dark:border-gray-800 gap-4 overflow-x-auto no-scrollbar flex-shrink-0">
-            <TabsTrigger value="descritivo" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 transition-all">
-              <Package className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">Características</span>
+        <TabsList className="grid grid-cols-4 w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex-shrink-0">
+            <TabsTrigger value="descritivo" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
+              <Package className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Características</span>
             </TabsTrigger>
-            <TabsTrigger value="comercial" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 transition-all">
-              <DollarSign className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">Precificação</span>
+            <TabsTrigger value="comercial" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
+              <DollarSign className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Precificação</span>
             </TabsTrigger>
-            <TabsTrigger value="logistico" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 transition-all">
-              <Warehouse className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">Logística</span>
+            <TabsTrigger value="logistico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
+              <Warehouse className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Logística</span>
             </TabsTrigger>
-            <TabsTrigger value="sistema" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-800 dark:data-[state=active]:border-gray-200 rounded-none py-3 px-0 transition-all">
-              <Settings className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium">Sistema</span>
+            <TabsTrigger value="sistema" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
+              <Settings className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Sistema</span>
             </TabsTrigger>
           </TabsList>
 

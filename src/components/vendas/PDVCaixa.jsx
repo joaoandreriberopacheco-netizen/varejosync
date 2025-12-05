@@ -605,38 +605,36 @@ export default function PDVCaixa() {
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
-      {/* Header - Glacial */}
-      <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-white p-4 flex items-center justify-between shadow-sm z-10 relative">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shadow-sm">
-            <Receipt className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </div>
+      {/* Header - Responsivo */}
+      <div className="bg-gray-700 dark:bg-gray-800 text-white p-3 md:p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 md:gap-3">
+          <Receipt className="w-5 h-5 md:w-6 md:h-6" />
           <div>
-            <h1 className="text-lg font-bold font-glacial">PDV Caixa</h1>
-            <p className="text-xs text-gray-500 font-medium">Operação de Caixa</p>
+            <h1 className="text-base md:text-lg font-medium">PDV - Caixa</h1>
+            <p className="text-[10px] md:text-xs text-gray-300 dark:text-gray-400 hidden sm:block">Caixa PDV</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-3 text-[10px] text-gray-400 font-medium bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-full">
-            <span>F1 Ajuda</span>
-            <span>•</span>
-            <span>F2 Vendas</span>
-            <span>•</span>
-            <span>F3 Balanço</span>
-            <span>•</span>
-            <span>F6 Fechar</span>
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Atalhos de teclado - apenas desktop */}
+          <div className="hidden lg:block text-xs text-gray-300 dark:text-gray-400">
+            <span className="font-medium">F1:</span> Ajuda | 
+            <span className="font-medium"> F2:</span> Vendas | 
+            <span className="font-medium"> F3:</span> Balanço | 
+            <span className="font-medium"> F4:</span> Reforço | 
+            <span className="font-medium"> F5:</span> Sangria | 
+            <span className="font-medium"> F6:</span> Fechar
           </div>
-          <div className="text-sm font-bold flex items-center bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl">
-            <Clock className="w-4 h-4 mr-2 text-gray-500" />
+          <div className="text-sm font-medium flex items-center">
+            <Clock className="w-4 h-4 mr-1" />
             {format(new Date(), 'HH:mm')}
           </div>
           <Button 
             variant="ghost" 
             size="icon"
             onClick={() => window.location.href = '/'}
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 h-10 w-10 rounded-xl"
+            className="text-white hover:bg-gray-600 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" />
           </Button>
         </div>
       </div>
@@ -656,18 +654,18 @@ export default function PDVCaixa() {
         )}
 
         {view === 'dashboard' && (
-          <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
-            {/* KPIs Superiores - Cards Glacial */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Saldo em Caixa</div>
-                <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+          <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+            {/* KPIs Superiores */}
+            <div className="grid grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Saldo em Caixa</div>
+                <div className="text-xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">
                   {formatValor(caixaData.saldoAtual)}
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Total Vendas</div>
-                <div className="text-3xl md:text-4xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
+              <div>
+                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total Vendas</div>
+                <div className="text-xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">
                   {formatValor(caixaData.totalVendas)}
                 </div>
               </div>
@@ -733,26 +731,26 @@ export default function PDVCaixa() {
               </div>
             </div>
 
-            {/* Botões de Ação Principais - Big Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <button 
+            {/* Botões de Ação Principais */}
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <Button 
                 onClick={handleProcessarVendas}
-                className="h-32 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-2 group"
+                size="lg"
+                className="h-14 md:h-20 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white flex-col md:flex-row gap-1 md:gap-2"
               >
-                <div className="p-3 bg-white/10 dark:bg-gray-900/10 rounded-2xl group-hover:scale-110 transition-transform">
-                  <ShoppingCart className="w-8 h-8" />
-                </div>
-                <span className="text-lg font-bold">Processar Vendas</span>
-              </button>
-              <button 
+                <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+                <span className="text-xs md:text-base">
+                  <span className="hidden md:inline">Processar </span>Vendas
+                </span>
+              </Button>
+              <Button 
                 onClick={handleAbrirBalanco}
-                className="h-32 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-3xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-2 group"
+                size="lg"
+                className="h-14 md:h-20 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white flex-col md:flex-row gap-1 md:gap-2"
               >
-                <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-2xl group-hover:scale-110 transition-transform">
-                  <Wallet className="w-8 h-8 text-gray-600 dark:text-gray-300" />
-                </div>
-                <span className="text-lg font-bold">Balanço do Caixa</span>
-              </button>
+                <Wallet className="w-5 h-5 md:w-6 md:h-6" />
+                <span className="text-xs md:text-base">Balanço</span>
+              </Button>
             </div>
 
             {/* Botões Secundários */}
