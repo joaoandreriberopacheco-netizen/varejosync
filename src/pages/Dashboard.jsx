@@ -14,8 +14,8 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="pb-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">Dashboard</h1>
+      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+        <h1 className="text-xl md:text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Dashboard Estratégico</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Visão geral do seu negócio
         </p>
@@ -26,8 +26,8 @@ export default function DashboardPage() {
 
       {/* Tabs - MOBILE: SÓ ÍCONES */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full bg-transparent border-b border-gray-100 dark:border-gray-800 rounded-none h-auto p-0 mb-6">
-          <div className="flex justify-start w-full gap-6 overflow-x-auto no-scrollbar pb-1">
+        <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
+          <div className="flex justify-around w-full">
             <TabsTrigger 
               value="geral" 
               className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
