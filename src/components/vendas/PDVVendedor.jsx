@@ -636,12 +636,12 @@ export default function PDVVendedor() {
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Consulta de Produtos</span>
             </div>
             <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <div className="flex-1 relative min-w-0">
+                  <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                   <Input 
                     ref={inputProdutoRef}
                     placeholder="Nome, código ou código de barras..."
-                    className="pl-12 pr-14 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 md:h-14 text-base focus:ring-2 focus:ring-gray-300 focus:border-gray-400 placeholder:text-gray-400"
+                    className="w-full pl-12 pr-14 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-2 focus:ring-gray-300 focus:border-gray-400 placeholder:text-gray-400"
                     value={buscaProduto}
                     onChange={(e) => setBuscaProduto(e.target.value)}
                     onKeyDown={handleKeyDown}
