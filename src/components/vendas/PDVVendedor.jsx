@@ -839,6 +839,62 @@ export default function PDVVendedor() {
             )}
             </div>
 
+            {/* Sugestões / Vitrine */}
+            {!produtoSelecionado && !showSuggestions && (
+              <div className="mt-6 animate-in fade-in duration-500 pb-6">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 font-glacial">
+                    {carrinho.length > 0 ? 'Sugestões para você' : 'Produtos em Destaque'}
+                  </h3>
+                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+                    {recomendacoes.length} itens
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                  {recomendacoes.map((produto) => {
+                    const precoTabela = (produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1));
+                    return (
+                      <div 
+                        key={produto.id}
+                        onClick={() => handleSelecionarProduto(produto)}
+                        className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all cursor-pointer group border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                      >
+                        <div className="aspect-square rounded-xl bg-gray-100 dark:bg-gray-700 mb-3 flex items-center justify-center relative overflow-hidden">
+                          {produto.imagem_url ? (
+                            <img src={produto.imagem_url} alt={produto.nome} className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="w-8 h-8 text-gray-400 dark:text-gray-500 group-hover:scale-110 transition-transform" />
+                          )}
+                          {produto.estoque_atual <= 0 && (
+                            <div className="absolute inset-0 bg-white/60 dark:bg-black/60 flex items-center justify-center backdrop-blur-[1px]">
+                              <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-1 rounded-full">Sem Estoque</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <h4 className="font-medium text-sm text-gray-800 dark:text-gray-100 line-clamp-2 min-h-[2.5em] leading-tight mb-1">
+                          {produto.nome}
+                        </h4>
+                        
+                        <div className="flex items-end justify-between mt-2">
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mb-0.5">#{produto.codigo_interno}</p>
+                            <p className="font-bold text-gray-900 dark:text-white text-base">
+                              R$ {precoTabela.toFixed(2).replace('.', ',')}
+                            </p>
+                          </div>
+                          <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 group-hover:bg-gray-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-gray-900 transition-colors">
+                            <Plus className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
         </div>
 
         {/* Sidebar Carrinho - Desktop Only - Glacial Style */}
