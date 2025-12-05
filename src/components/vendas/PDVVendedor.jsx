@@ -118,6 +118,39 @@ export default function PDVVendedor() {
     };
   }, [carrinho, valorAjuste, tipoValorAjuste, tipoAjuste, currentUser]);
 
+  const recomendacoes = useMemo(() => {
+    if (produtos.length === 0) return [];
+    
+    const idsNoCarrinho = new Set(carrinho.map(i => i.produto_id));
+    const categoriasNoCarrinho = new Set();
+    carrinho.forEach(item => {
+      const prod = produtos.find(p => p.id === item.produto_id);
+      if (prod && prod.categoria_id) {
+        categoriasNoCarrinho.add(prod.categoria_id);
+      }
+    });
+
+    let recs = [];
+    if (categoriasNoCarrinho.size > 0) {
+      recs = produtos.filter(p => 
+        categoriasNoCarrinho.has(p.categoria_id) && 
+        !idsNoCarrinho.has(p.id) &&
+        p.estoque_atual > 0
+      );
+    }
+
+    if (recs.length < 12) {
+      const outros = produtos.filter(p => 
+        !idsNoCarrinho.has(p.id) && 
+        !recs.includes(p) &&
+        p.estoque_atual > 0
+      );
+      recs = [...recs, ...outros];
+    }
+
+    return recs.slice(0, 12);
+  }, [carrinho, produtos]);
+
   const totalItens = carrinho.reduce((sum, item) => sum + item.quantidade, 0);
 
   useEffect(() => {
