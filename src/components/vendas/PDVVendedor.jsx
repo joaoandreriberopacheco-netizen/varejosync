@@ -61,6 +61,37 @@ export default function PDVVendedor() {
   const [showLostSalesForm, setShowLostSalesForm] = useState(false);
   const [showCarrinhoMobile, setShowCarrinhoMobile] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
+
+  useEffect(() => {
+    if (produtos.length === 0) return;
+    
+    let candidates = [];
+    
+    if (carrinho.length > 0) {
+      const lastItem = carrinho[carrinho.length - 1];
+      const sourceProduct = produtos.find(p => p.id === lastItem.produto_id);
+      if (sourceProduct && sourceProduct.categoria_nome) {
+        candidates = produtos.filter(p => 
+          p.id !== sourceProduct.id &&
+          p.categoria_nome === sourceProduct.categoria_nome &&
+          p.ativo &&
+          !carrinho.some(c => c.produto_id === p.id)
+        );
+      }
+    }
+
+    if (candidates.length < 4) {
+      const others = produtos.filter(p => 
+        p.ativo && 
+        !carrinho.some(c => c.produto_id === p.id) &&
+        !candidates.includes(p)
+      ).slice(0, 10);
+      candidates = [...candidates, ...others];
+    }
+
+    setSugestoesContextuais(candidates.slice(0, 4));
+  }, [carrinho, produtos]);
 
   const [tipoAjuste, setTipoAjuste] = useState('desconto');
   const [valorAjuste, setValorAjuste] = useState(0);
@@ -814,6 +845,50 @@ export default function PDVVendedor() {
               </div>
             )}
             </div>
+
+            {!showSuggestions && sugestoesContextuais.length > 0 && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                    {carrinho.length > 0 ? 'Sugestões para o cliente' : 'Produtos em Destaque'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {sugestoesContextuais.map((prod) => {
+                     const preco = prod.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
+                     return (
+                      <div 
+                        key={prod.id}
+                        onClick={() => handleSelecionarProduto(prod)}
+                        className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-500">
+                            <Package className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
+                              {prod.nome}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-gray-400">#{prod.codigo_interno || 'N/A'}</span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 font-medium">
+                                {prod.estoque_atual} disp.
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right pl-2 whitespace-nowrap">
+                          <span className="text-xs font-bold text-gray-800 dark:text-gray-100">
+                            R$ {preco.toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
+                      </div>
+                     );
+                  })}
+                </div>
+              </div>
+            )}
 
         </div>
 
