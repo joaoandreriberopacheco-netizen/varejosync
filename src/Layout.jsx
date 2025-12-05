@@ -51,7 +51,7 @@ export default function Layout({ children, currentPageName }) {
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
 
-  const fullscreenPages = ['PDVVendedor', 'PDVCaixa', 'AutoAtendimento'];
+  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
 
   useEffect(() => {

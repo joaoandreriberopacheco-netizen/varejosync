@@ -652,7 +652,7 @@ export default function PDVVendedor() {
             onClick={handleSair}
             className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8 rounded-lg"
           >
-            <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" />
+            <Undo2 className="w-5 h-5 md:w-4 md:h-4" />
           </Button>
         </div>
       </div>
@@ -1138,18 +1138,18 @@ export default function PDVVendedor() {
         )}
           </div>
 
-          {/* Barra Inferior Mobile - Elegante */}
-              <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 p-4 flex items-center justify-between z-40">
+          {/* Barra Inferior Mobile - Compacta */}
+              <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 px-4 py-2 flex items-center justify-between z-40 border-t border-gray-100 dark:border-gray-700">
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</div>
-                  <div className="text-2xl font-semibold text-gray-800 dark:text-gray-100">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
+                  <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide leading-none mb-0.5">Total</div>
+                  <div className="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowLostSalesForm(true)}
-                    className="h-12 w-12 rounded-xl text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    className="h-10 w-10 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                   >
                     <AlertCircle className="h-5 w-5" />
                   </Button>
@@ -1157,11 +1157,11 @@ export default function PDVVendedor() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowCarrinhoMobile(true)}
-                    className="h-12 w-12 rounded-xl relative text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="h-10 w-10 rounded-lg relative text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <ShoppingCart className="h-5 w-5" />
                     {carrinho.length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                         {carrinho.length}
                       </span>
                     )}
@@ -1169,9 +1169,9 @@ export default function PDVVendedor() {
                   <Button
                     onClick={handleAvancarParaCliente}
                     disabled={carrinho.length === 0}
-                    className="h-12 px-5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-base font-medium rounded-xl"
+                    className="h-10 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-sm font-medium rounded-lg"
                   >
-                    <UserPlus className="h-4 w-4 mr-2" />
+                    <UserPlus className="h-4 w-4 mr-1.5" />
                     Cliente
                   </Button>
                 </div>
