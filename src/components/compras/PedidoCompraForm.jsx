@@ -318,8 +318,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           {/* ABA: DADOS GERAIS */}
           <TabsContent value="dados-gerais" className="mt-0 space-y-6">
             {/* Linha 1: Informações Básicas */}
-            <div className="grid grid-cols-6 gap-4">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+              <div className="col-span-1 sm:col-span-2 lg:col-span-4">
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Fornecedor *</Label>
                 <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
                   <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
@@ -333,7 +333,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </Select>
               </div>
 
-              <div>
+              <div className="col-span-1 lg:col-span-2">
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Emissão</Label>
                 <Input 
                   type="date" 
@@ -343,8 +343,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 />
               </div>
 
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Previsão de Entrega</Label>
+              <div className="col-span-1 lg:col-span-2">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Previsão</Label>
                 <Input 
                   type="date" 
                   className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
@@ -353,7 +353,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 />
               </div>
 
-              <div>
+              <div className="col-span-1 lg:col-span-2">
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Prazo (dias)</Label>
                 <Input 
                   type="number" 
@@ -363,7 +363,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 />
               </div>
 
-              <div>
+              <div className="col-span-1 lg:col-span-2">
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Status</Label>
                 <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
                   <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
@@ -383,7 +383,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </div>
 
             {/* Linha 2: Histórico e Tags */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Histórico</Label>
                 <Input 
@@ -425,8 +425,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </div>
 
             {/* Linha 4: Valores de Frete e Desconto */}
-            <div className="grid grid-cols-6 gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Frete Total (R$)</Label>
                 <Input 
                   type="number" 
@@ -437,7 +437,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 />
               </div>
 
-              <div className="col-span-2">
+              <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Desconto (%)</Label>
                 <Input 
                   type="number" 
@@ -448,7 +448,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 />
               </div>
 
-              <div className="col-span-2">
+              <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Desconto (R$)</Label>
                 <Input 
                   type="number" 
@@ -475,7 +475,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </Button>
               </div>
 
-              <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
+              {/* Desktop View - Table */}
+              <div className="hidden lg:block border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
                 <Table>
                   <TableHeader className="bg-gray-50 dark:bg-gray-800">
                     <TableRow className="dark:border-gray-700">
@@ -597,29 +598,147 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </Table>
               </div>
 
+              {/* Mobile/Tablet View - Cards */}
+              <div className="lg:hidden space-y-4">
+                {formData.itens.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700">
+                    <Package className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                    <p className="text-gray-500 dark:text-gray-400">Nenhum item adicionado</p>
+                  </div>
+                ) : (
+                  formData.itens.map((item, index) => (
+                    <div key={index} className="bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                             <span className="text-xs font-mono text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">#{String(index + 1).padStart(2, '0')}</span>
+                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Produto</span>
+                          </div>
+                          <Select 
+                            value={item.produto_id} 
+                            onValueChange={v => handleItemChange(index, 'produto_id', v)}
+                          >
+                            <SelectTrigger className="h-9 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 dark:text-gray-200">
+                              <SelectValue placeholder="Selecione o produto" />
+                            </SelectTrigger>
+                            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                              {produtos.map(p => (
+                                <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700">
+                                  {p.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 -mt-1 -mr-2"
+                          onClick={() => handleRemoveItem(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-[10px] text-gray-400 mb-1 block">Cód.</Label>
+                          <Input 
+                            className="h-8 text-xs font-mono bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                            value={item.codigo_produto} 
+                            onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-400 mb-1 block">Qtd</Label>
+                          <Input 
+                            type="number"
+                            className="h-8 text-sm bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                            value={item.quantidade} 
+                            onChange={e => handleItemChange(index, 'quantidade', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-400 mb-1 block">U/M</Label>
+                          <Input 
+                            className="h-8 text-xs bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                            value={item.unidade_medida} 
+                            onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                         <div>
+                          <Label className="text-[10px] text-gray-400 mb-1 block">Custo Unit. (R$)</Label>
+                          <Input 
+                            type="number"
+                            step="0.01"
+                            className="h-8 text-sm bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                            value={item.custo_unitario} 
+                            onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)}
+                          />
+                        </div>
+                        <div className="flex flex-col justify-end text-right h-8 mt-6">
+                           <span className="text-xs text-gray-400">Subtotal: {formatCurrency(item.subtotal || 0)}</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+                        <div>
+                          <Label className="text-[10px] text-gray-400 mb-1 block">Frete Item (R$)</Label>
+                          <Input 
+                            type="number"
+                            step="0.01"
+                            className="h-8 text-xs bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                            value={item.valor_frete_item || 0} 
+                            onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-400 mb-1 block">Desconto Item (R$)</Label>
+                          <Input 
+                            type="number"
+                            step="0.01"
+                            className="h-8 text-xs bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                            value={item.valor_desconto_item || 0} 
+                            onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <span className="text-xs font-medium text-gray-500">Total do Item</span>
+                        <span className="text-lg font-bold text-gray-800 dark:text-white">{formatCurrency(item.total || 0)}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
               {/* Totalizadores */}
               {formData.itens.length > 0 && (
                 <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="grid grid-cols-5 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
                     <div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Nº de Itens</div>
-                      <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formData.itens.length}</div>
+                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">{formData.itens.length}</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Itens</div>
-                      <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorItens)}</div>
+                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorItens)}</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Frete Total</div>
-                      <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(formData.valor_frete)}</div>
+                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(formData.valor_frete)}</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Desconto Total</div>
-                      <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">-{formatCurrency(formData.valor_desconto)}</div>
+                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">-{formatCurrency(formData.valor_desconto)}</div>
                     </div>
-                    <div className="text-right">
+                    <div className="col-span-2 sm:col-span-1 text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-0 border-gray-100 dark:border-gray-700 mt-2 sm:mt-0">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">VALOR TOTAL</div>
-                      <div className="text-3xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
+                      <div className="text-2xl sm:text-3xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
                     </div>
                   </div>
                 </div>
