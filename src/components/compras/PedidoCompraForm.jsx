@@ -420,7 +420,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   return (
-    <DialogContent className="w-full max-w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700 rounded-lg shadow-2xl">
+    <DialogContent className="!max-w-[95vw] !w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700 rounded-lg shadow-2xl">
       <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
         <DialogTitle className="text-xl font-normal text-gray-800 dark:text-gray-200">
           {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Compra'}
