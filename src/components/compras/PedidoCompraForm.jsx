@@ -300,17 +300,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
       <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
         <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-6">
-          <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-            <FileText className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-400" />
-            Dados Gerais
+          <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+            <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline">Dados Gerais</span>
           </TabsTrigger>
-          <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-            <DollarSign className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-400" />
-            Pagamento
+          <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+            <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline">Pagamento</span>
           </TabsTrigger>
-          <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-            <Ship className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-400" />
-            Logística (Inbound)
+          <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+            <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline">Logística</span>
           </TabsTrigger>
         </TabsList>
 
