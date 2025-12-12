@@ -475,21 +475,21 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </Button>
               </div>
 
-              {/* Desktop View - Table */}
-              <div className="hidden lg:block border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
-                <Table>
+              {/* Table View (Responsive) */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden overflow-x-auto">
+                <Table className="min-w-[900px]">
                   <TableHeader className="bg-gray-50 dark:bg-gray-800">
                     <TableRow className="dark:border-gray-700">
                       <TableHead className="w-[50px] dark:text-gray-400">#</TableHead>
-                      <TableHead className="w-[250px] dark:text-gray-400">Produto *</TableHead>
+                      <TableHead className="w-[200px] dark:text-gray-400">Produto *</TableHead>
                       <TableHead className="w-[100px] dark:text-gray-400">Código</TableHead>
                       <TableHead className="w-[80px] dark:text-gray-400">Qtd *</TableHead>
                       <TableHead className="w-[70px] dark:text-gray-400">U/M</TableHead>
-                      <TableHead className="w-[110px] dark:text-gray-400">Preço Compra *</TableHead>
-                      <TableHead className="w-[110px] dark:text-gray-400">Subtotal</TableHead>
-                      <TableHead className="w-[100px] dark:text-gray-400">Frete</TableHead>
-                      <TableHead className="w-[100px] dark:text-gray-400">Desconto</TableHead>
-                      <TableHead className="w-[120px] dark:text-gray-400">Total</TableHead>
+                      <TableHead className="w-[120px] dark:text-gray-400">Valor Unit. (Base) *</TableHead>
+                      <TableHead className="w-[120px] dark:text-gray-400">Subtotal</TableHead>
+                      <TableHead className="w-[100px] dark:text-gray-400">Frete (+)</TableHead>
+                      <TableHead className="w-[100px] dark:text-gray-400">Desconto (-)</TableHead>
+                      <TableHead className="w-[120px] dark:text-gray-400">Total Líquido</TableHead>
                       <TableHead className="w-[50px] dark:text-gray-400"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -596,124 +596,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     )}
                   </TableBody>
                 </Table>
-              </div>
-
-              {/* Mobile/Tablet View - Cards */}
-              <div className="lg:hidden space-y-4">
-                {formData.itens.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700">
-                    <Package className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                    <p className="text-gray-500 dark:text-gray-400">Nenhum item adicionado</p>
-                  </div>
-                ) : (
-                  formData.itens.map((item, index) => (
-                    <div key={index} className="bg-white dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                             <span className="text-xs font-mono text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">#{String(index + 1).padStart(2, '0')}</span>
-                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Produto</span>
-                          </div>
-                          <Select 
-                            value={item.produto_id} 
-                            onValueChange={v => handleItemChange(index, 'produto_id', v)}
-                          >
-                            <SelectTrigger className="h-9 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 dark:text-gray-200">
-                              <SelectValue placeholder="Selecione o produto" />
-                            </SelectTrigger>
-                            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                              {produtos.map(p => (
-                                <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700">
-                                  {p.nome}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 -mt-1 -mr-2"
-                          onClick={() => handleRemoveItem(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <Label className="text-[10px] text-gray-400 mb-1 block">Cód.</Label>
-                          <Input 
-                            className="h-8 text-xs font-mono bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
-                            value={item.codigo_produto} 
-                            onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-400 mb-1 block">Qtd</Label>
-                          <Input 
-                            type="number"
-                            className="h-8 text-sm bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
-                            value={item.quantidade} 
-                            onChange={e => handleItemChange(index, 'quantidade', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-400 mb-1 block">U/M</Label>
-                          <Input 
-                            className="h-8 text-xs bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
-                            value={item.unidade_medida} 
-                            onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                         <div>
-                          <Label className="text-[10px] text-gray-400 mb-1 block">Custo Unit. (R$)</Label>
-                          <Input 
-                            type="number"
-                            step="0.01"
-                            className="h-8 text-sm bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
-                            value={item.custo_unitario} 
-                            onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)}
-                          />
-                        </div>
-                        <div className="flex flex-col justify-end text-right h-8 mt-6">
-                           <span className="text-xs text-gray-400">Subtotal: {formatCurrency(item.subtotal || 0)}</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
-                        <div>
-                          <Label className="text-[10px] text-gray-400 mb-1 block">Frete Item (R$)</Label>
-                          <Input 
-                            type="number"
-                            step="0.01"
-                            className="h-8 text-xs bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
-                            value={item.valor_frete_item || 0} 
-                            onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-400 mb-1 block">Desconto Item (R$)</Label>
-                          <Input 
-                            type="number"
-                            step="0.01"
-                            className="h-8 text-xs bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
-                            value={item.valor_desconto_item || 0} 
-                            onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
-                        <span className="text-xs font-medium text-gray-500">Total do Item</span>
-                        <span className="text-lg font-bold text-gray-800 dark:text-white">{formatCurrency(item.total || 0)}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
               </div>
 
               {/* Totalizadores */}
