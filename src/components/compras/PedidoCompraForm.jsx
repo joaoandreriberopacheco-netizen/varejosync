@@ -165,36 +165,32 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const handleExportModel = async () => {
     try {
       toast({ title: "Gerando planilha...", description: "Aguarde o download." });
-      // Call backend function directly via URL to trigger download
-      // Using fetch to get blob then download to handle auth if needed, 
-      // but simpler is window.open if it's a GET with cookie auth (if app uses cookies).
-      // Since we use SDK client which handles auth, we'll use base44.functions.invoke to get the content
-      // Actually, invoke returns JSON typically. For file download, we might need a direct fetch with headers.
-      // But let's try invoking and handling the string response.
       
-      // Better approach for file download with headers:
       const response = await base44.functions.invoke('exportProdutosCompra');
-      // The SDK invoke parses JSON by default. If the function returns CSV string directly, 
-      // the SDK might try to parse it as JSON and fail or return it.
-      // Let's assume the function returns the string in the 'data' field if using standard response? 
-      // Wait, my function returns raw Response. 
-      // The SDK `invoke` uses `fetch` and returns `res.data`. If content-type is text, it might return text.
       
-      // Let's construct a manual blob download from the string data
-      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'modelo_importacao_compra.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (response.data && response.data.file_content) {
+          // Decode Base64 properly handling UTF-8 characters
+          const binaryString = window.atob(response.data.file_content);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+          }
+          
+          const blob = new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', response.data.filename || 'modelo.csv');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      } else {
+          throw new Error("Formato de resposta inválido");
+      }
       
     } catch (error) {
         console.error("Erro export:", error);
-        // Fallback or retry logic if SDK parsing fails due to non-json
-        // In this specific case, since we want a file download, a direct link might be better if we could pass auth.
-        toast({ title: "Erro ao exportar", description: "Tente novamente mais tarde.", variant: "destructive" });
+        toast({ title: "Erro ao exportar", description: "Verifique se a função backend está ativa.", variant: "destructive" });
     }
   };
 
@@ -460,7 +456,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   <SelectTrigger className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm focus:ring-0">
                     <SelectValue placeholder="Selecione o fornecedor..." />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
                     {fornecedores.map(f => (
                       <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
                     ))}
@@ -475,7 +471,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   <SelectTrigger className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
                     {['Rascunho', 'Enviado', 'Aguardando Recepção', 'Recebido Parcialmente', 'Recebido', 'Cancelado'].map(s => (
                       <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
@@ -662,9 +658,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                       {selectedProduct ? selectedProduct.nome : "Selecione..."}
                                     </span>
                                   </SelectTrigger>
-                                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-[200px]">
+                                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-[300px] z-[9999]">
                                     {produtos.map(p => (
-                                      <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
+                                      <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm cursor-pointer">
                                         {p.nome}
                                       </SelectItem>
                                     ))}

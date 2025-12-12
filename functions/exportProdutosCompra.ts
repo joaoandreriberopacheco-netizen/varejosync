@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { encodeBase64 } from "jsr:@std/encoding/base64";
 
 export const config = {
   path: "/exportProdutosCompra"
@@ -16,12 +17,8 @@ export default async function handler(req) {
       });
     }
 
-    // Fetch all active products
-    // Note: In a real large-scale scenario, we would paginate. 
-    // Here we fetch up to 10000 for simplicity as per common use case limits.
     const produtos = await base44.entities.Produto.filter({ ativo: true }, undefined, 10000);
 
-    // CSV Headers
     const headers = [
       'ID_SISTEMA',
       'CODIGO',
@@ -34,33 +31,46 @@ export default async function handler(req) {
       'DESCONTO_UNITARIO'
     ];
 
-    // CSV Rows
     const rows = produtos.map(p => {
+      // Escape function for CSV fields
+      const esc = (val) => {
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        if (str.includes(';') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const fmtNum = (val) => (typeof val === 'number' ? val.toFixed(2).replace('.', ',') : '');
+
       return [
-        p.id,
-        `"${(p.codigo_interno || p.codigo_barras || '').replace(/"/g, '""')}"`, // Escape quotes
-        `"${(p.nome || '').replace(/"/g, '""')}"`,
-        p.unidade_principal || 'UN',
-        (p.valor_compra || 0).toFixed(2).replace('.', ','), // Format for Excel (comma decimal)
-        '', // Quantidade (Empty for user input)
-        '', // Novo Custo (Empty, user defaults to Custo Atual if left blank)
-        '', // Frete (Empty)
-        ''  // Desconto (Empty)
-      ].join(';'); // Semicolon delimiter is standard for Excel in many regions (like Brazil)
+        esc(p.id),
+        esc(p.codigo_interno || p.codigo_barras || ''),
+        esc(p.nome),
+        esc(p.unidade_principal || 'UN'),
+        fmtNum(p.valor_compra || 0),
+        '', 
+        '', 
+        '', 
+        '' 
+      ].join(';'); 
     });
 
     const csvContent = [headers.join(';'), ...rows].join('\n');
     
-    // Add BOM for Excel to recognize UTF-8
+    // Add BOM for Excel UTF-8 recognition
     const bom = '\uFEFF'; 
     const finalContent = bom + csvContent;
 
-    return new Response(finalContent, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': 'attachment; filename=modelo_importacao_compra.csv'
-      }
+    // Encode to Base64 to safely transport via JSON
+    const textEncoder = new TextEncoder();
+    const encoded = textEncoder.encode(finalContent);
+    const base64Content = encodeBase64(encoded);
+
+    return Response.json({ 
+      file_content: base64Content,
+      filename: 'modelo_importacao_compra.csv'
     });
 
   } catch (error) {
