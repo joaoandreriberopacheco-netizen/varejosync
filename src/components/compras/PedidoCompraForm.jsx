@@ -117,44 +117,63 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const handleItemChange = (index, field, value) => {
     const newItems = [...formData.itens];
     const item = newItems[index];
-    item[field] = value;
-    
-    if (field === 'produto_id') {
-      const produto = produtos.find(p => p.id === value);
-      if (produto) {
-        item.produto_nome = produto.nome;
-        item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
-        item.unidade_medida = produto.unidade_compra || 'UN';
-        item.custo_unitario = produto.valor_compra || 0;
-      }
+
+    // Support for bulk updates (field as object)
+    if (typeof field === 'object' && field !== null) {
+        Object.assign(item, field);
+    } else {
+        item[field] = value;
+        
+        if (field === 'produto_id') {
+            const produto = produtos.find(p => p.id === value);
+            if (produto) {
+                item.produto_nome = produto.nome;
+                item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
+                item.unidade_medida = produto.unidade_compra || 'UN';
+                item.custo_unitario = produto.valor_compra || 0;
+            }
+        }
     }
 
-    if (['quantidade', 'custo_unitario', 'valor_frete_item', 'valor_desconto_item'].includes(field)) {
-      const qty = parseFloat(item.quantidade) || 0;
-      const cost = parseFloat(item.custo_unitario) || 0;
-      const frete = parseFloat(item.valor_frete_item) || 0;
-      const desc = parseFloat(item.valor_desconto_item) || 0;
-      item.subtotal = qty * cost;
-      item.total = item.subtotal + frete - desc;
-    }
+    // Recalculate totals
+    const qty = parseFloat(item.quantidade) || 0;
+    const cost = parseFloat(item.custo_unitario) || 0;
+    const frete = parseFloat(item.valor_frete_item) || 0;
+    const desc = parseFloat(item.valor_desconto_item) || 0;
+    item.subtotal = qty * cost;
+    item.total = item.subtotal + frete - desc;
     
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
 
   const handleAddItem = (product = null) => {
-    const newItem = { 
-        produto_id: product?.id || '', 
-        produto_nome: product?.nome || '', 
-        codigo_produto: product?.codigo_interno || product?.codigo_barras || '',
-        quantidade: 1, 
-        unidade_medida: product?.unidade_compra || 'UN',
-        custo_unitario: product?.valor_compra || 0,
-        valor_frete_item: 0,
-        valor_desconto_item: 0,
-        subtotal: (product?.valor_compra || 0),
-        total: (product?.valor_compra || 0),
-        observacao_item: ''
-    };
+    // Check if product is actually a full item object (from MobileProductSelector)
+    // If it has 'produto_id' and 'quantidade', use it directly.
+    let newItem;
+    
+    if (product && product.produto_id && product.quantidade) {
+        // It's a full item object
+        newItem = {
+            ...product,
+            subtotal: (product.quantidade * product.custo_unitario),
+            total: (product.quantidade * product.custo_unitario) + (product.valor_frete_item || 0) - (product.valor_desconto_item || 0)
+        };
+    } else {
+        // It's a product entity or null
+        newItem = { 
+            produto_id: product?.id || '', 
+            produto_nome: product?.nome || '', 
+            codigo_produto: product?.codigo_interno || product?.codigo_barras || '',
+            quantidade: 1, 
+            unidade_medida: product?.unidade_compra || 'UN',
+            custo_unitario: product?.valor_compra || 0,
+            valor_frete_item: 0,
+            valor_desconto_item: 0,
+            subtotal: (product?.valor_compra || 0),
+            total: (product?.valor_compra || 0),
+            observacao_item: ''
+        };
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -428,7 +447,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       </DialogHeader>
 
       <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-        <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-6">
+        <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 sm:px-6">
           <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
             <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
             <span className="hidden sm:inline">Dados Gerais</span>
@@ -443,7 +462,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-2 sm:p-6">
           {/* ABA: DADOS GERAIS */}
           <TabsContent value="dados-gerais" className="mt-0 space-y-4">
             
@@ -770,7 +789,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </div>
 
             {/* Mobile View: PDV Style Selector */}
-            <div className="lg:hidden h-[60vh]">
+            <div className="lg:hidden h-[70vh] -mx-2 sm:mx-0">
               <MobileProductSelector 
                 items={formData.itens}
                 products={produtos}
