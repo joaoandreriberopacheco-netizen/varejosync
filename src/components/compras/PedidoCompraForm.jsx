@@ -291,15 +291,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   return (
-    <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
-      <DialogHeader className="flex-shrink-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+    <DialogContent className="w-full max-w-5xl h-[90vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+      <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
         <DialogTitle className="text-xl font-normal text-gray-800 dark:text-gray-200">
           {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Compra'}
         </DialogTitle>
       </DialogHeader>
 
       <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-        <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
+        <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-6">
           <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
             <FileText className="w-4 h-4 mr-1 text-gray-700 dark:text-gray-400" />
             Dados Gerais
