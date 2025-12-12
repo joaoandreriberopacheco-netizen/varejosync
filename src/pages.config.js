@@ -24,6 +24,7 @@ import Manual from './pages/Manual';
 import DebugTenant from './pages/DebugTenant';
 import AutoAtendimento from './pages/AutoAtendimento';
 import RelatorioMargem from './pages/RelatorioMargem';
+import Intervenientes from './pages/Intervenientes';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +55,7 @@ export const PAGES = {
     "DebugTenant": DebugTenant,
     "AutoAtendimento": AutoAtendimento,
     "RelatorioMargem": RelatorioMargem,
+    "Intervenientes": Intervenientes,
 }
 
 export const pagesConfig = {

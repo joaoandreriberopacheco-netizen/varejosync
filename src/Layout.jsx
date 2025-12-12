@@ -167,6 +167,7 @@ export default function Layout({ children, currentPageName }) {
       icon: Settings, 
       submenu: [
         { name: 'Terceiros', page: 'Terceiros' },
+        { name: 'Intervenientes', page: 'Intervenientes' },
         { name: 'Parâmetros', page: 'Configuracoes' }
       ]
     },
