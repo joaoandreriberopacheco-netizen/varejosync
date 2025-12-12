@@ -291,7 +291,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   return (
-    <DialogContent className="w-full max-w-5xl h-[90vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
+    <DialogContent className="w-full max-w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700 rounded-lg shadow-2xl">
       <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
         <DialogTitle className="text-xl font-normal text-gray-800 dark:text-gray-200">
           {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Compra'}
@@ -316,147 +316,122 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
         <div className="flex-1 overflow-y-auto p-6">
           {/* ABA: DADOS GERAIS */}
-          <TabsContent value="dados-gerais" className="mt-0 space-y-6">
-            {/* Linha 1: Informações Básicas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
-              <div className="col-span-1 sm:col-span-2 lg:col-span-4">
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Fornecedor *</Label>
+          <TabsContent value="dados-gerais" className="mt-0 space-y-4">
+            
+            {/* Header Compacto - Grid Principal */}
+            <div className="grid grid-cols-12 gap-x-4 gap-y-2">
+              {/* Fornecedor (Largo) */}
+              <div className="col-span-12 lg:col-span-4">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Fornecedor *</Label>
                 <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
-                  <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
-                    <SelectValue placeholder="Selecione um fornecedor" />
+                  <SelectTrigger className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm focus:ring-0">
+                    <SelectValue placeholder="Selecione o fornecedor..." />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                     {fornecedores.map(f => (
-                      <SelectItem key={f.id} value={f.id} className="dark:text-gray-200 dark:hover:bg-gray-700">{f.nome}</SelectItem>
+                      <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="col-span-1 lg:col-span-2">
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Emissão</Label>
+              {/* Status */}
+              <div className="col-span-6 lg:col-span-2">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Status</Label>
+                <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
+                  <SelectTrigger className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                    {['Rascunho', 'Enviado', 'Aguardando Recepção', 'Recebido Parcialmente', 'Recebido', 'Cancelado'].map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Datas (Emissão, Previsão) */}
+              <div className="col-span-6 lg:col-span-2">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Emissão</Label>
                 <Input 
                   type="date" 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
                   value={formData.data_emissao} 
                   onChange={e => handleChange('data_emissao', e.target.value)} 
                 />
               </div>
 
-              <div className="col-span-1 lg:col-span-2">
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Previsão</Label>
+              <div className="col-span-6 lg:col-span-2">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Entrega</Label>
                 <Input 
                   type="date" 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
                   value={formData.data_prevista_entrega} 
                   onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
                 />
               </div>
-
-              <div className="col-span-1 lg:col-span-2">
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Prazo (dias)</Label>
+              
+               <div className="col-span-6 lg:col-span-2">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Prazo (Dias)</Label>
                 <Input 
                   type="number" 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
                   value={formData.prazo_entrega_dias} 
                   onChange={e => handleChange('prazo_entrega_dias', parseInt(e.target.value) || 0)} 
                 />
               </div>
 
-              <div className="col-span-1 lg:col-span-2">
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Status</Label>
-                <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
-                  <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="Rascunho" className="dark:text-gray-200 dark:hover:bg-gray-700">Rascunho</SelectItem>
-                    <SelectItem value="Enviado" className="dark:text-gray-200 dark:hover:bg-gray-700">Enviado</SelectItem>
-                    <SelectItem value="Aguardando Recepção" className="dark:text-gray-200 dark:hover:bg-gray-700">Aguardando Recepção</SelectItem>
-                    <SelectItem value="Recebido Parcialmente" className="dark:text-gray-200 dark:hover:bg-gray-700">Recebido Parcialmente</SelectItem>
-                    <SelectItem value="Recebido" className="dark:text-gray-200 dark:hover:bg-gray-700">Recebido</SelectItem>
-                    <SelectItem value="Recebido com Discrepância" className="dark:text-gray-200 dark:hover:bg-gray-700">Recebido com Discrepância</SelectItem>
-                    <SelectItem value="Cancelado" className="dark:text-gray-200 dark:hover:bg-gray-700">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Linha 2: Tags e Valores Globais (Frete/Desconto) */}
+              <div className="col-span-12 lg:col-span-4 flex items-center gap-2">
+                 <div className="flex-1">
+                    <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Tags</Label>
+                    <Input 
+                      className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
+                      placeholder="Ex: Urgente, Reposição..."
+                      value={formData.tags?.join(', ') || ''} 
+                      onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
+                    />
+                 </div>
               </div>
-            </div>
 
-            {/* Linha 2: Histórico e Tags */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Histórico</Label>
+               <div className="col-span-4 lg:col-span-2">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Frete (R$)</Label>
                 <Input 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
-                  placeholder="Informações adicionais..."
-                  value={formData.historico} 
-                  onChange={e => handleChange('historico', e.target.value)} 
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Tags</Label>
-                <Input 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
-                  placeholder="Ex: Urgente, Projeto X (separar por vírgula)"
-                  value={formData.tags?.join(', ') || ''} 
-                  onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
-                />
-                {formData.tags && formData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {formData.tags.map((tag, idx) => (
-                      <Badge key={idx} variant="outline" className="text-[10px] h-5 border-gray-300 dark:border-gray-600">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Linha 3: Observações */}
-            <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Observações</Label>
-              <Textarea 
-                className="bg-transparent border border-gray-300 dark:border-gray-600 rounded text-sm dark:text-gray-200 h-16 resize-none min-h-[64px]" 
-                placeholder="Observações gerais do pedido..."
-                value={formData.observacoes} 
-                onChange={e => handleChange('observacoes', e.target.value)} 
-              />
-            </div>
-
-            {/* Linha 4: Valores de Frete e Desconto */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Frete Total (R$)</Label>
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                  type="number" step="0.01"
+                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm font-medium" 
                   value={formData.valor_frete} 
                   onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)} 
                 />
               </div>
 
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Desconto (%)</Label>
+              <div className="col-span-4 lg:col-span-2">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Desc. (%)</Label>
                 <Input 
-                  type="number" 
-                  step="0.01"
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                  type="number" step="0.01"
+                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
                   value={formData.percentual_desconto?.toFixed(2) || 0} 
                   onChange={e => handleDescontoPercentualChange(e.target.value)} 
                 />
               </div>
 
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Desconto (R$)</Label>
+              <div className="col-span-4 lg:col-span-2">
+                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Desc. (R$)</Label>
                 <Input 
-                  type="number" 
-                  step="0.01"
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                  type="number" step="0.01"
+                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm font-medium" 
                   value={formData.valor_desconto?.toFixed(2) || 0} 
                   onChange={e => handleDescontoValorChange(e.target.value)} 
                 />
+              </div>
+              
+              {/* Observação Expansível */}
+              <div className="col-span-12">
+                 <Input 
+                    className="bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none px-0 h-8 text-sm focus:ring-0 placeholder:text-gray-400" 
+                    placeholder="Adicionar observações ou histórico..."
+                    value={formData.observacoes} 
+                    onChange={e => handleChange('observacoes', e.target.value)} 
+                  />
               </div>
             </div>
 
@@ -475,37 +450,43 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </Button>
               </div>
 
-              {/* Table View (Responsive) */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden overflow-x-auto">
-                <Table className="min-w-[900px]">
-                  <TableHeader className="bg-gray-50 dark:bg-gray-800">
-                    <TableRow className="dark:border-gray-700">
-                      <TableHead className="w-[50px] dark:text-gray-400">#</TableHead>
-                      <TableHead className="w-[200px] dark:text-gray-400">Produto *</TableHead>
-                      <TableHead className="w-[100px] dark:text-gray-400">Código</TableHead>
-                      <TableHead className="w-[80px] dark:text-gray-400">Qtd *</TableHead>
-                      <TableHead className="w-[70px] dark:text-gray-400">U/M</TableHead>
-                      <TableHead className="w-[120px] dark:text-gray-400">Valor Unit. (Base) *</TableHead>
-                      <TableHead className="w-[120px] dark:text-gray-400">Subtotal</TableHead>
-                      <TableHead className="w-[100px] dark:text-gray-400">Frete (+)</TableHead>
-                      <TableHead className="w-[100px] dark:text-gray-400">Desconto (-)</TableHead>
-                      <TableHead className="w-[120px] dark:text-gray-400">Total Líquido</TableHead>
-                      <TableHead className="w-[50px] dark:text-gray-400"></TableHead>
+              {/* Table View (Full Width) */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                <Table className="w-full">
+                  <TableHeader className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur">
+                    <TableRow className="dark:border-gray-700 hover:bg-transparent">
+                      <TableHead className="w-[3%] text-center dark:text-gray-400">#</TableHead>
+                      <TableHead className="w-[20%] dark:text-gray-400">Produto</TableHead>
+                      <TableHead className="w-[8%] dark:text-gray-400">Cód.</TableHead>
+                      <TableHead className="w-[7%] dark:text-gray-400">Qtd.</TableHead>
+                      <TableHead className="w-[5%] dark:text-gray-400">U/M</TableHead>
+                      <TableHead className="w-[10%] dark:text-gray-400">V. Unit (Base)</TableHead>
+                      <TableHead className="w-[10%] text-right dark:text-gray-400">Subtotal</TableHead>
+                      <TableHead className="w-[10%] dark:text-gray-400">Frete (+)</TableHead>
+                      <TableHead className="w-[10%] dark:text-gray-400">Desc. (-)</TableHead>
+                      <TableHead className="w-[12%] text-right dark:text-gray-400">Total Líquido</TableHead>
+                      <TableHead className="w-[5%] text-center dark:text-gray-400"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {formData.itens.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          <Package className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                          <p>Nenhum item adicionado</p>
-                          <p className="text-xs mt-1">Clique em "Adicionar Item" para começar</p>
+                        <TableCell colSpan={11} className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
+                          <div className="flex flex-col items-center justify-center gap-3">
+                            <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                              <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
+                              <p className="text-xs text-gray-400 mt-1">Utilize o botão "Adicionar Item" acima para começar</p>
+                            </div>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : (
                       formData.itens.map((item, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 dark:border-gray-800">
-                          <TableCell className="text-center text-gray-500 dark:text-gray-400 font-mono">
+                        <TableRow key={index} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group">
+                          <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs">
                             {String(index + 1).padStart(2, '0')}
                           </TableCell>
                           <TableCell>
@@ -513,12 +494,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               value={item.produto_id} 
                               onValueChange={v => handleItemChange(index, 'produto_id', v)}
                             >
-                              <SelectTrigger className="h-8 bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200">
-                                <SelectValue placeholder="Selecione" />
+                              <SelectTrigger className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 text-sm shadow-none focus:ring-0">
+                                <SelectValue placeholder="Selecione..." />
                               </SelectTrigger>
-                              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                              <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-[200px]">
                                 {produtos.map(p => (
-                                  <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700">
+                                  <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
                                     {p.nome}
                                   </SelectItem>
                                 ))}
@@ -527,7 +508,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                           </TableCell>
                           <TableCell>
                             <Input 
-                              className="h-8 text-xs font-mono bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                              className="h-8 text-xs font-mono bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
                               value={item.codigo_produto} 
                               onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
                               placeholder="Cód"
@@ -536,14 +517,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                           <TableCell>
                             <Input 
                               type="number" 
-                              className="h-8 bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
                               value={item.quantidade} 
                               onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
                             />
                           </TableCell>
                           <TableCell>
                             <Input 
-                              className="h-8 text-xs bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                              className="h-8 text-xs bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
                               value={item.unidade_medida} 
                               onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
                             />
@@ -552,19 +533,19 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                             <Input 
                               type="number" 
                               step="0.01"
-                              className="h-8 bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
                               value={item.custo_unitario} 
                               onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
                             />
                           </TableCell>
-                          <TableCell className="text-right font-medium text-gray-700 dark:text-gray-300">
+                          <TableCell className="text-right font-medium text-gray-600 dark:text-gray-400 text-sm">
                             {formatCurrency(item.subtotal || 0)}
                           </TableCell>
                           <TableCell>
                             <Input 
                               type="number" 
                               step="0.01"
-                              className="h-8 bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-gray-500" 
                               value={item.valor_frete_item || 0} 
                               onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)} 
                             />
@@ -573,22 +554,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                             <Input 
                               type="number" 
                               step="0.01"
-                              className="h-8 bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200" 
+                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-red-400" 
                               value={item.valor_desconto_item || 0} 
                               onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
                             />
                           </TableCell>
-                          <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200">
+                          <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200 text-sm">
                             {formatCurrency(item.total || 0)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-center">
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 dark:hover:bg-gray-700"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                               onClick={() => handleRemoveItem(index)}
                             >
-                              <X className="h-4 w-4 text-gray-400" />
+                              <X className="h-4 w-4" />
                             </Button>
                           </TableCell>
                         </TableRow>
