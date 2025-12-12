@@ -13,6 +13,7 @@ import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship,
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import MobileProductSelector from './MobileProductSelector';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -140,22 +141,24 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
 
-  const handleAddItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      itens: [...prev.itens, { 
-        produto_id: '', 
-        produto_nome: '', 
-        codigo_produto: '',
+  const handleAddItem = (product = null) => {
+    const newItem = { 
+        produto_id: product?.id || '', 
+        produto_nome: product?.nome || '', 
+        codigo_produto: product?.codigo_interno || product?.codigo_barras || '',
         quantidade: 1, 
-        unidade_medida: 'UN',
-        custo_unitario: 0,
+        unidade_medida: product?.unidade_compra || 'UN',
+        custo_unitario: product?.valor_compra || 0,
         valor_frete_item: 0,
         valor_desconto_item: 0,
-        subtotal: 0,
-        total: 0,
+        subtotal: (product?.valor_compra || 0),
+        total: (product?.valor_compra || 0),
         observacao_item: ''
-      }],
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      itens: [...prev.itens, newItem],
     }));
   };
 
@@ -435,177 +438,192 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </div>
 
-            {/* Tabela de Itens */}
-            <div>
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-normal text-gray-800 dark:text-gray-200">Itens do Pedido ({formData.itens.length})</h3>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleAddItem} 
-                  className="h-7 text-xs px-2 dark:text-gray-300"
-                >
-                  <PlusCircle className="h-4 w-4 mr-1" /> 
-                  Adicionar Item
-                </Button>
-              </div>
+            {/* Desktop View: Tabela e Totalizadores */}
+            <div className="hidden lg:block">
+               <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-normal text-gray-800 dark:text-gray-200">Itens do Pedido ({formData.itens.length})</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleAddItem()} 
+                    className="h-7 text-xs px-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-1" /> 
+                    Adicionar Item
+                  </Button>
+                </div>
 
-              {/* Table View (Full Width) */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
-                <Table className="w-full">
-                  <TableHeader className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur">
-                    <TableRow className="dark:border-gray-700 hover:bg-transparent">
-                      <TableHead className="w-[3%] text-center dark:text-gray-400">#</TableHead>
-                      <TableHead className="w-[20%] dark:text-gray-400">Produto</TableHead>
-                      <TableHead className="w-[8%] dark:text-gray-400">Cód.</TableHead>
-                      <TableHead className="w-[7%] dark:text-gray-400">Qtd.</TableHead>
-                      <TableHead className="w-[5%] dark:text-gray-400">U/M</TableHead>
-                      <TableHead className="w-[10%] dark:text-gray-400">V. Unit (Base)</TableHead>
-                      <TableHead className="w-[10%] text-right dark:text-gray-400">Subtotal</TableHead>
-                      <TableHead className="w-[10%] dark:text-gray-400">Frete (+)</TableHead>
-                      <TableHead className="w-[10%] dark:text-gray-400">Desc. (-)</TableHead>
-                      <TableHead className="w-[12%] text-right dark:text-gray-400">Total Líquido</TableHead>
-                      <TableHead className="w-[5%] text-center dark:text-gray-400"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {formData.itens.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={11} className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
-                          <div className="flex flex-col items-center justify-center gap-3">
-                            <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
-                              <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
-                              <p className="text-xs text-gray-400 mt-1">Utilize o botão "Adicionar Item" acima para começar</p>
-                            </div>
-                          </div>
-                        </TableCell>
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                  <Table className="w-full">
+                    <TableHeader className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur">
+                      <TableRow className="dark:border-gray-700 hover:bg-transparent">
+                        <TableHead className="w-[3%] text-center dark:text-gray-400">#</TableHead>
+                        <TableHead className="w-[20%] dark:text-gray-400">Produto</TableHead>
+                        <TableHead className="w-[8%] dark:text-gray-400">Cód.</TableHead>
+                        <TableHead className="w-[7%] dark:text-gray-400">Qtd.</TableHead>
+                        <TableHead className="w-[5%] dark:text-gray-400">U/M</TableHead>
+                        <TableHead className="w-[10%] dark:text-gray-400">V. Unit (Base)</TableHead>
+                        <TableHead className="w-[10%] text-right dark:text-gray-400">Subtotal</TableHead>
+                        <TableHead className="w-[10%] dark:text-gray-400">Frete (+)</TableHead>
+                        <TableHead className="w-[10%] dark:text-gray-400">Desc. (-)</TableHead>
+                        <TableHead className="w-[12%] text-right dark:text-gray-400">Total Líquido</TableHead>
+                        <TableHead className="w-[5%] text-center dark:text-gray-400"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
                       </TableRow>
-                    ) : (
-                      formData.itens.map((item, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group">
-                          <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs">
-                            {String(index + 1).padStart(2, '0')}
-                          </TableCell>
-                          <TableCell>
-                            <Select 
-                              value={item.produto_id} 
-                              onValueChange={v => handleItemChange(index, 'produto_id', v)}
-                            >
-                              <SelectTrigger className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 text-sm shadow-none focus:ring-0">
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                              <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-[200px]">
-                                {produtos.map(p => (
-                                  <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
-                                    {p.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              className="h-8 text-xs font-mono bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
-                              value={item.codigo_produto} 
-                              onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
-                              placeholder="Cód"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              type="number" 
-                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
-                              value={item.quantidade} 
-                              onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              className="h-8 text-xs bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
-                              value={item.unidade_medida} 
-                              onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              type="number" 
-                              step="0.01"
-                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
-                              value={item.custo_unitario} 
-                              onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
-                            />
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-gray-600 dark:text-gray-400 text-sm">
-                            {formatCurrency(item.subtotal || 0)}
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              type="number" 
-                              step="0.01"
-                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-gray-500" 
-                              value={item.valor_frete_item || 0} 
-                              onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)} 
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              type="number" 
-                              step="0.01"
-                              className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-red-400" 
-                              value={item.valor_desconto_item || 0} 
-                              onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
-                            />
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200 text-sm">
-                            {formatCurrency(item.total || 0)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                              onClick={() => handleRemoveItem(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {formData.itens.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={11} className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
+                            <div className="flex flex-col items-center justify-center gap-3">
+                              <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                                <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
+                                <p className="text-xs text-gray-400 mt-1">Utilize o botão "Adicionar Item" acima para começar</p>
+                              </div>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      ) : (
+                        formData.itens.map((item, index) => {
+                          const selectedProduct = produtos.find(p => p.id === item.produto_id);
+                          return (
+                            <TableRow key={index} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group">
+                              <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs">
+                                {String(index + 1).padStart(2, '0')}
+                              </TableCell>
+                              <TableCell>
+                                <Select 
+                                  value={item.produto_id} 
+                                  onValueChange={v => handleItemChange(index, 'produto_id', v)}
+                                >
+                                  <SelectTrigger className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 text-sm shadow-none focus:ring-0">
+                                    <span className="truncate block text-left w-full">
+                                      {selectedProduct ? selectedProduct.nome : "Selecione..."}
+                                    </span>
+                                  </SelectTrigger>
+                                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-[200px]">
+                                    {produtos.map(p => (
+                                      <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
+                                        {p.nome}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  className="h-8 text-xs font-mono bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
+                                  value={item.codigo_produto} 
+                                  onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
+                                  placeholder="Cód"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" 
+                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
+                                  value={item.quantidade} 
+                                  onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  className="h-8 text-xs bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
+                                  value={item.unidade_medida} 
+                                  onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
+                                  value={item.custo_unitario} 
+                                  onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell className="text-right font-medium text-gray-600 dark:text-gray-400 text-sm">
+                                {formatCurrency(item.subtotal || 0)}
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-gray-500" 
+                                  value={item.valor_frete_item || 0} 
+                                  onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-red-400" 
+                                  value={item.valor_desconto_item || 0} 
+                                  onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200 text-sm">
+                                {formatCurrency(item.total || 0)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  onClick={() => handleRemoveItem(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
 
-              {/* Totalizadores */}
-              {formData.itens.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
-                    <div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Nº de Itens</div>
-                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">{formData.itens.length}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Itens</div>
-                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorItens)}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Frete Total</div>
-                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(formData.valor_frete)}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Desconto Total</div>
-                      <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-200">-{formatCurrency(formData.valor_desconto)}</div>
-                    </div>
-                    <div className="col-span-2 sm:col-span-1 text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-0 border-gray-100 dark:border-gray-700 mt-2 sm:mt-0">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">VALOR TOTAL</div>
-                      <div className="text-2xl sm:text-3xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
+                {formData.itens.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-5 gap-6">
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Nº de Itens</div>
+                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formData.itens.length}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Itens</div>
+                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorItens)}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Frete Total</div>
+                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(formData.valor_frete)}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Desconto Total</div>
+                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">-{formatCurrency(formData.valor_desconto)}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">VALOR TOTAL</div>
+                        <div className="text-3xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+            </div>
+
+            {/* Mobile View: PDV Style Selector */}
+            <div className="lg:hidden h-[60vh]">
+              <MobileProductSelector 
+                items={formData.itens}
+                products={produtos}
+                onAddItem={handleAddItem}
+                onUpdateItem={handleItemChange}
+                onRemoveItem={handleRemoveItem}
+                formatCurrency={formatCurrency}
+              />
             </div>
           </TabsContent>
 
