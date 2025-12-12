@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
+import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -46,6 +47,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [newEventData, setNewEventData] = useState({ nome: '', transportadora: '', data_previsao_chegada: '' });
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -163,7 +165,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
 
-  const handleSave = async () => {
+  const handleInitiateSave = () => {
     if (!formData.fornecedor_id) {
       toast({
         title: "Fornecedor obrigatório",
@@ -182,13 +184,21 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       return;
     }
 
+    setIsAuthOpen(true);
+  };
+
+  const handleAuthSuccess = async (authData) => {
     setIsSaving(true);
     
     try {
+      const authNote = `\n[Autenticado: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM HH:mm')}]`;
+      
       const dataToSave = { 
         ...formData, 
         valor_itens: valorItens,
-        valor_total: valorTotal 
+        valor_total: valorTotal,
+        historico: (formData.historico || '') + authNote,
+        // Opcional: Salvar URL da evidência em algum campo específico se existir no futuro
       };
       
       // Se mudou para "Enviado", disparar lógicas automáticas
@@ -823,15 +833,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               Cancelar
             </Button>
             <Button 
-              onClick={handleSave} 
+              onClick={handleInitiateSave} 
               disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
               className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white"
             >
-              {isSaving ? 'Salvando...' : 'Salvar Pedido'}
+              {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
             </Button>
           </div>
         </div>
       </DialogFooter>
+      
+      <OperacaoAuthenticator 
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onSuccess={handleAuthSuccess}
+        operationName={pedido?.id ? `Salvar Pedido ${pedido.numero}` : "Criar Novo Pedido"}
+      />
     </DialogContent>
   );
 }
