@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -160,6 +160,136 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       ...prev,
       itens: [...prev.itens, newItem],
     }));
+  };
+
+  const handleExportModel = async () => {
+    try {
+      toast({ title: "Gerando planilha...", description: "Aguarde o download." });
+      // Call backend function directly via URL to trigger download
+      // Using fetch to get blob then download to handle auth if needed, 
+      // but simpler is window.open if it's a GET with cookie auth (if app uses cookies).
+      // Since we use SDK client which handles auth, we'll use base44.functions.invoke to get the content
+      // Actually, invoke returns JSON typically. For file download, we might need a direct fetch with headers.
+      // But let's try invoking and handling the string response.
+      
+      // Better approach for file download with headers:
+      const response = await base44.functions.invoke('exportProdutosCompra');
+      // The SDK invoke parses JSON by default. If the function returns CSV string directly, 
+      // the SDK might try to parse it as JSON and fail or return it.
+      // Let's assume the function returns the string in the 'data' field if using standard response? 
+      // Wait, my function returns raw Response. 
+      // The SDK `invoke` uses `fetch` and returns `res.data`. If content-type is text, it might return text.
+      
+      // Let's construct a manual blob download from the string data
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'modelo_importacao_compra.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (error) {
+        console.error("Erro export:", error);
+        // Fallback or retry logic if SDK parsing fails due to non-json
+        // In this specific case, since we want a file download, a direct link might be better if we could pass auth.
+        toast({ title: "Erro ao exportar", description: "Tente novamente mais tarde.", variant: "destructive" });
+    }
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const text = evt.target.result;
+        const lines = text.split('\n');
+        
+        // Remove headers
+        const dataRows = lines.slice(1);
+        
+        const newItems = [];
+        let skippedCount = 0;
+        let successCount = 0;
+
+        dataRows.forEach(line => {
+            if (!line.trim()) return;
+            
+            // Simple semi-colon split (assuming no semi-colons in quoted strings for simplicity, 
+            // or basic regex split if needed. Excel CSV usually safe with split unless text has it)
+            // Regex to split by semicolon, ignoring those inside quotes
+            const cols = line.split(/;(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            
+            // Map columns based on our export order:
+            // 0:ID, 1:COD, 2:NAME, 3:UNIT, 4:COST, 5:QTY, 6:NEW_COST, 7:FREIGHT, 8:DESC
+            
+            if (cols.length < 6) return; // Invalid row
+
+            const id = cols[0]?.replace(/"/g, '').trim();
+            const qtyStr = cols[5]?.replace(/"/g, '').trim();
+            
+            // Parse numbers (handle comma decimal)
+            const parseBRFloat = (str) => {
+                if (!str) return 0;
+                return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
+            };
+
+            const qty = parseBRFloat(qtyStr);
+
+            if (qty > 0 && id) {
+                const product = produtos.find(p => p.id === id);
+                if (product) {
+                    const currentCost = parseBRFloat(cols[4]?.replace(/"/g, ''));
+                    const newCost = parseBRFloat(cols[6]?.replace(/"/g, ''));
+                    const freight = parseBRFloat(cols[7]?.replace(/"/g, ''));
+                    const discount = parseBRFloat(cols[8]?.replace(/"/g, ''));
+                    
+                    const finalCost = newCost > 0 ? newCost : (currentCost > 0 ? currentCost : product.valor_compra);
+
+                    newItems.push({
+                        produto_id: product.id,
+                        produto_nome: product.nome,
+                        codigo_produto: product.codigo_interno || product.codigo_barras,
+                        quantidade: qty,
+                        unidade_medida: product.unidade_principal || 'UN',
+                        custo_unitario: finalCost,
+                        valor_frete_item: freight,
+                        valor_desconto_item: discount,
+                        subtotal: finalCost * qty,
+                        total: (finalCost * qty) + freight - discount,
+                        observacao_item: 'Importado via CSV'
+                    });
+                    successCount++;
+                }
+            } else {
+                skippedCount++;
+            }
+        });
+
+        if (newItems.length > 0) {
+            setFormData(prev => ({
+                ...prev,
+                itens: [...prev.itens, ...newItems]
+            }));
+            toast({ 
+                title: "Importação concluída", 
+                description: `${successCount} itens adicionados.`,
+                variant: "default"
+            });
+        } else {
+            toast({ 
+                title: "Nenhum item importado", 
+                description: "Verifique se preencheu a coluna 'QUANTIDADE_COMPRA' na planilha.",
+                variant: "warning"
+            });
+        }
+        
+        // Reset input
+        e.target.value = '';
+    };
+    reader.readAsText(file, 'UTF-8');
   };
 
   const handleRemoveItem = (index) => {
@@ -442,15 +572,44 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             <div className="hidden lg:block">
                <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-normal text-gray-800 dark:text-gray-200">Itens do Pedido ({formData.itens.length})</h3>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleAddItem()} 
-                    className="h-7 text-xs px-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-1" /> 
-                    Adicionar Item
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleExportModel} 
+                        className="h-7 text-xs px-2 border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        title="Baixar planilha para preencher quantidades e custos offline"
+                    >
+                        <FileDown className="h-3.5 w-3.5 mr-1.5" /> 
+                        Baixar Modelo
+                    </Button>
+                    <div className="relative">
+                        <input 
+                            type="file" 
+                            accept=".csv" 
+                            onChange={handleImportCSV}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs px-2 border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            title="Importar planilha preenchida (CSV)"
+                        >
+                            <FileUp className="h-3.5 w-3.5 mr-1.5" /> 
+                            Importar CSV
+                        </Button>
+                    </div>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleAddItem()} 
+                        className="h-7 text-xs px-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                        <PlusCircle className="h-4 w-4 mr-1" /> 
+                        Adicionar Item
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
