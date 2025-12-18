@@ -302,7 +302,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             const cols = line.split(/;(?=(?:(?:[^"]*"){2})*[^"]*$)/);
             
             // Map columns based on our export order:
-            // 0:ID, 1:COD, 2:NAME, 3:UNIT, 4:COST, 5:QTY, 6:NEW_COST, 7:FREIGHT, 8:DESC
+            // 0:ID, 1:COD, 2:NAME, 3:UNIT, 4:COST, 5:QTY, 6:NEW_COST, 7:FREIGHT, 8:IMP1, 9:IMP2, 10:DESC, 11:OUTROS, 12:MARKUP
             
             if (cols.length < 6) return; // Invalid row
 
@@ -323,9 +323,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     const currentCost = parseBRFloat(cols[4]?.replace(/"/g, ''));
                     const newCost = parseBRFloat(cols[6]?.replace(/"/g, ''));
                     const freight = parseBRFloat(cols[7]?.replace(/"/g, ''));
-                    const discount = parseBRFloat(cols[8]?.replace(/"/g, ''));
+                    const imp1 = parseBRFloat(cols[8]?.replace(/"/g, ''));
+                    const imp2 = parseBRFloat(cols[9]?.replace(/"/g, ''));
+                    const discount = parseBRFloat(cols[10]?.replace(/"/g, ''));
+                    const others = parseBRFloat(cols[11]?.replace(/"/g, ''));
+                    const markup = parseBRFloat(cols[12]?.replace(/"/g, ''));
                     
                     const finalCost = newCost > 0 ? newCost : (currentCost > 0 ? currentCost : product.valor_compra);
+                    const custoFinalUnitario = finalCost + freight + imp1 + imp2 + others - discount;
+
+                    // Calculate suggested price if markup provided, or default
+                    const finalMarkup = markup > 0 ? markup : 40;
+                    const suggested = custoFinalUnitario * (1 + (finalMarkup/100));
 
                     newItems.push({
                         produto_id: product.id,
@@ -335,9 +344,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         unidade_medida: product.unidade_principal || 'UN',
                         custo_unitario: finalCost,
                         valor_frete_item: freight,
+                        valor_imposto1: imp1,
+                        valor_imposto2: imp2,
                         valor_desconto_item: discount,
-                        subtotal: finalCost * qty,
-                        total: (finalCost * qty) + freight - discount,
+                        outros_custos: others,
+                        markup: finalMarkup,
+                        preco_venda_sugerido: suggested,
+                        custo_final_unitario: custoFinalUnitario,
+                        subtotal: qty * finalCost,
+                        total: custoFinalUnitario * qty,
+                        preco_venda_atual: product.preco_venda_padrao || 0,
+                        margem_contribuicao: suggested - custoFinalUnitario,
+                        margem_percentual: suggested > 0 ? ((suggested - custoFinalUnitario)/suggested)*100 : 0,
                         observacao_item: 'Importado via CSV'
                     });
                     successCount++;

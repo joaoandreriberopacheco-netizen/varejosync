@@ -28,7 +28,11 @@ export default async function handler(req) {
       'QUANTIDADE_COMPRA',
       'NOVO_CUSTO_UNITARIO',
       'FRETE_UNITARIO',
-      'DESCONTO_UNITARIO'
+      'IMPOSTO1_UNITARIO',
+      'IMPOSTO2_UNITARIO',
+      'DESCONTO_UNITARIO',
+      'OUTROS_CUSTOS_UNITARIO',
+      'MARKUP_PERCENTUAL'
     ];
 
     const rows = produtos.map(p => {
@@ -50,10 +54,14 @@ export default async function handler(req) {
         esc(p.nome),
         esc(p.unidade_principal || 'UN'),
         fmtNum(p.valor_compra || 0),
-        '', 
-        '', 
-        '', 
-        '' 
+        '', // QUANTIDADE_COMPRA
+        '', // NOVO_CUSTO_UNITARIO
+        '', // FRETE_UNITARIO
+        '', // IMPOSTO1_UNITARIO
+        '', // IMPOSTO2_UNITARIO
+        '', // DESCONTO_UNITARIO
+        '', // OUTROS_CUSTOS_UNITARIO
+        ''  // MARKUP_PERCENTUAL
       ].join(';'); 
     });
 
