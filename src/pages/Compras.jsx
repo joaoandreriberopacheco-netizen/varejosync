@@ -74,15 +74,23 @@ const PedidosCompraTab = () => {
 
   const handleSave = async (pedidoData) => {
     try {
-      if (pedidoData.id) {
-        await base44.entities.PedidoCompra.update(pedidoData.id, pedidoData);
+      const tenantId = getTenantId();
+      
+      // Ensure numeric fields are numbers to prevent "NaN" issues or API errors
+      const sanitizedData = {
+        ...pedidoData,
+        // Ensure numeric fields are actually numbers
+        valor_total: Number(pedidoData.valor_total) || 0,
+        valor_frete: Number(pedidoData.valor_frete) || 0,
+        valor_desconto: Number(pedidoData.valor_desconto) || 0,
+        empresa_id: tenantId // Ensure tenant linkage
+      };
+
+      if (sanitizedData.id) {
+        await base44.entities.PedidoCompra.update(sanitizedData.id, sanitizedData);
       } else {
-        // Remove ID if present (e.g. from template or clone) but empty
-        const { id, ...newPedido } = pedidoData;
+        const { id, ...newPedido } = sanitizedData;
         
-        // Generate a temporary number if needed, or let backend handle it
-        // Assuming backend or entity auto-generates or we need to generate:
-        // Let's generate a simple sequential one based on length for now if not present
         if (!newPedido.numero) {
            const count = pedidos.length + 1;
            newPedido.numero = `PC-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`;
@@ -94,7 +102,7 @@ const PedidosCompraTab = () => {
       setIsFormOpen(false);
     } catch (error) {
       console.error("Erro ao salvar pedido:", error);
-      throw error; // Propagate to Form to handle UI feedback
+      throw error; 
     }
   };
 
@@ -217,72 +225,125 @@ const PedidosCompraTab = () => {
 
       {/* Lista Cards - Glacial */}
       <div className="grid gap-3">
+        {/* Responsive: Cards for Mobile, Table for Desktop */}
         {pedidosFiltrados.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
             <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
             <p className="text-gray-500 dark:text-gray-400">Nenhum pedido encontrado</p>
           </div>
         ) : (
-          pedidosFiltrados.map(pedido => (
-            <div key={pedido.id} className="group bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200">
-              <div className="flex flex-col gap-4">
-                
-                {/* Topo Mobile / Desktop Unificado */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="w-5 h-5 text-gray-400 dark:text-gray-400" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{pedido.numero}</span>
-                        <Badge className={`${getStatusBadge(pedido.status)} border-0 font-normal px-2 py-0 text-[10px]`}>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+              <Table>
+                <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
+                  <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-700">
+                    <TableHead className="w-[100px] text-xs font-semibold uppercase tracking-wider text-gray-500">Número</TableHead>
+                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Status</TableHead>
+                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Fornecedor</TableHead>
+                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Emissão</TableHead>
+                    <TableHead className="text-xs font-semibold uppercase tracking-wider text-gray-500">Entrega</TableHead>
+                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Total</TableHead>
+                    <TableHead className="text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pedidosFiltrados.map((pedido) => (
+                    <TableRow key={pedido.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 border-gray-100 dark:border-gray-700 transition-colors">
+                      <TableCell className="font-medium text-gray-900 dark:text-white">
+                        {pedido.numero}
+                      </TableCell>
+                      <TableCell>
+                         <Badge className={`${getStatusBadge(pedido.status)} border-0 font-normal px-2.5 py-0.5 text-xs shadow-none`}>
                           {pedido.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-600 dark:text-gray-300">
+                        {pedido.fornecedor_nome}
+                      </TableCell>
+                      <TableCell className="text-gray-500 dark:text-gray-400 text-sm">
+                        {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : '-'}
+                      </TableCell>
+                      <TableCell className="text-gray-500 dark:text-gray-400 text-sm">
+                         {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM/yyyy') : '-'}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-gray-900 dark:text-white">
+                        {formatValor(pedido.valor_total)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => handleVerDetalhes(pedido)} className="h-8 w-8 p-0 text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(pedido)} className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="md:hidden grid gap-3">
+              {pedidosFiltrados.map(pedido => (
+                <div key={pedido.id} className="group bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200 shadow-sm">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-300">
+                          <DollarSign className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{pedido.numero}</span>
+                            <Badge className={`${getStatusBadge(pedido.status)} border-0 font-normal px-2 py-0 text-[10px]`}>
+                              {pedido.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                            <User className="w-3 h-3" />
+                            <span className="truncate max-w-[150px]">{pedido.fornecedor_nome}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                        <User className="w-3 h-3" />
-                        <span className="truncate max-w-[150px] sm:max-w-xs">{pedido.fornecedor_nome}</span>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-8 w-8 text-gray-400 hover:text-teal-600 hover:bg-teal-50">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-xs pt-3 border-t border-gray-50 dark:border-gray-700">
+                      <div>
+                        <p className="text-[10px] text-gray-400 uppercase mb-0.5">Criação</p>
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : '-'}
+                        </p>
+                      </div>
+                      <div className="text-center sm:text-left">
+                        <p className="text-[10px] text-gray-400 uppercase mb-0.5">Entrega</p>
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM/yyyy') : '-'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-400 uppercase mb-0.5">Total</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                          R$ {formatValor(pedido.valor_total)}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Ações */}
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-8 w-8 text-gray-400 hover:text-teal-600 hover:bg-teal-50">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </div>
                 </div>
-
-                {/* Grid de Info */}
-                <div className="grid grid-cols-3 gap-2 text-xs sm:text-sm pt-3 border-t border-gray-50 dark:border-gray-700">
-                  <div>
-                    <p className="text-[10px] text-gray-400 uppercase mb-0.5">Criação</p>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : '-'}
-                    </p>
-                  </div>
-                  <div className="text-center sm:text-left">
-                    <p className="text-[10px] text-gray-400 uppercase mb-0.5">Entrega</p>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM/yyyy') : '-'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-gray-400 uppercase mb-0.5">Total</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    </p>
-                  </div>
-                </div>
-
-              </div>
+              ))}
             </div>
-          ))
+          </>
         )}
       </div>
 
