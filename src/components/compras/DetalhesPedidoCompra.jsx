@@ -80,7 +80,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white px-8 py-8 z-50 grid w-full max-w-lg gap-4 border shadow-lg duration-200 sm:rounded-lg dark:bg-gray-900 max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white pt-8 pr-8 pb-8 pl-8 z-50 grid w-full max-w-lg gap-4 border shadow-lg duration-200 sm:rounded-lg dark:bg-gray-900 max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <ShoppingCart className="w-6 h-6 text-teal-600" />
