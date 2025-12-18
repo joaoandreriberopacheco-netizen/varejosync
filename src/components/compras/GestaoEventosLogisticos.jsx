@@ -262,7 +262,7 @@ export default function GestaoEventosLogisticos() {
 
       {/* Dialog de Criação */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto">
+        <DialogContent className="!max-w-[90vw] !w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Criar Evento de Recepção</DialogTitle>
           </DialogHeader>
