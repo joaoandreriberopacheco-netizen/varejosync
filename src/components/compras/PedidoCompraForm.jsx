@@ -131,8 +131,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
                 item.unidade_medida = produto.unidade_compra || 'UN';
                 item.custo_unitario = produto.valor_compra || 0;
+                
+                // Pre-fill costs from product registry
+                item.valor_frete_item = produto.custo_frete_padrao || 0;
+                item.valor_imposto1 = produto.custo_imposto1_padrao || 0;
+                item.valor_imposto2 = produto.custo_imposto2_padrao || 0;
+                item.outros_custos = produto.custo_outros_padrao || 0;
+                item.valor_desconto_item = produto.desconto_compra_padrao || 0;
+                
                 item.preco_venda_atual = produto.preco_venda_padrao || 0;
-                item.markup = 40; // Default markup preference?
+                item.markup = 40; 
             }
         }
     }
@@ -216,11 +224,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             quantidade: 1, 
             unidade_medida: product?.unidade_compra || 'UN',
             custo_unitario: product?.valor_compra || 0,
-            valor_frete_item: 0,
-            valor_imposto1: 0,
-            valor_imposto2: 0,
-            outros_custos: 0,
-            valor_desconto_item: 0,
+            valor_frete_item: product?.custo_frete_padrao || 0,
+            valor_imposto1: product?.custo_imposto1_padrao || 0,
+            valor_imposto2: product?.custo_imposto2_padrao || 0,
+            outros_custos: product?.custo_outros_padrao || 0,
+            valor_desconto_item: product?.desconto_compra_padrao || 0,
             markup: 40, // Default Markup
             preco_venda_atual: product?.preco_venda_padrao || 0,
             observacao_item: ''
@@ -525,7 +533,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <div className="col-span-12 lg:col-span-4">
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Fornecedor *</Label>
                 <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
-                  <SelectTrigger className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm focus:ring-0">
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm focus:ring-0 shadow-sm">
                     <SelectValue placeholder="Selecione o fornecedor..." />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
@@ -540,7 +548,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <div className="col-span-6 lg:col-span-2">
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Status</Label>
                 <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
-                  <SelectTrigger className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm focus:ring-0">
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm focus:ring-0 shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
@@ -556,7 +564,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Emissão</Label>
                 <Input 
                   type="date" 
-                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
+                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
                   value={formData.data_emissao} 
                   onChange={e => handleChange('data_emissao', e.target.value)} 
                 />
@@ -566,7 +574,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Entrega</Label>
                 <Input 
                   type="date" 
-                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
+                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
                   value={formData.data_prevista_entrega} 
                   onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
                 />
@@ -576,7 +584,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Prazo (Dias)</Label>
                 <Input 
                   type="number" 
-                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
+                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
                   value={formData.prazo_entrega_dias} 
                   onChange={e => handleChange('prazo_entrega_dias', parseInt(e.target.value) || 0)} 
                 />
@@ -587,7 +595,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                  <div className="flex-1">
                     <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Tags</Label>
                     <Input 
-                      className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
+                      className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
                       placeholder="Ex: Urgente, Reposição..."
                       value={formData.tags?.join(', ') || ''} 
                       onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
@@ -599,7 +607,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Frete (R$)</Label>
                 <Input 
                   type="number" step="0.01"
-                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm font-medium" 
+                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm font-medium shadow-sm" 
                   value={formData.valor_frete} 
                   onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)} 
                 />
@@ -609,7 +617,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Desc. (%)</Label>
                 <Input 
                   type="number" step="0.01"
-                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm" 
+                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
                   value={formData.percentual_desconto?.toFixed(2) || 0} 
                   onChange={e => handleDescontoPercentualChange(e.target.value)} 
                 />
@@ -619,7 +627,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Desc. (R$)</Label>
                 <Input 
                   type="number" step="0.01"
-                  className="bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 h-9 text-sm font-medium" 
+                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm font-medium shadow-sm" 
                   value={formData.valor_desconto?.toFixed(2) || 0} 
                   onChange={e => handleDescontoValorChange(e.target.value)} 
                 />
@@ -749,8 +757,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               </TableCell>
                               <TableCell>
                                 <Input 
-                                  className="h-8 text-xs font-mono bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
-                                  value={item.codigo_produto} 
+                                  className="h-8 text-xs font-mono bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0" 
+                                  value={item.codigo_produto}
                                   onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
                                   placeholder="Cód"
                                 />
@@ -758,22 +766,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableCell>
                                 <Input 
                                   type="number" 
-                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
-                                  value={item.quantidade} 
+                                  className="h-8 bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0" 
+                                  value={item.quantidade}
                                   onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
                                 />
                               </TableCell>
                               <TableCell>
                                 <Input 
-                                  className="h-8 text-xs bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0" 
-                                  value={item.unidade_medida} 
+                                  className="h-8 text-xs bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0" 
+                                  value={item.unidade_medida}
                                   onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
                                 />
                               </TableCell>
                               <TableCell>
                                 <Input 
                                   type="number" step="0.01"
-                                  className="h-8 min-w-[80px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
+                                  className="h-8 min-w-[80px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
                                   value={item.custo_unitario} 
                                   onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
                                 />
@@ -781,7 +789,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableCell>
                                 <Input 
                                   type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-blue-600 text-xs" 
+                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-blue-600 text-xs" 
                                   value={item.valor_frete_item || 0} 
                                   onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)} 
                                 />
@@ -789,7 +797,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableCell>
                                 <Input 
                                   type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
+                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
                                   value={item.valor_imposto1 || 0} 
                                   onChange={e => handleItemChange(index, 'valor_imposto1', e.target.value)} 
                                 />
@@ -797,7 +805,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableCell>
                                 <Input 
                                   type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
+                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
                                   value={item.valor_imposto2 || 0} 
                                   onChange={e => handleItemChange(index, 'valor_imposto2', e.target.value)} 
                                 />
@@ -805,7 +813,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableCell>
                                 <Input 
                                   type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-green-600 text-xs" 
+                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-green-600 text-xs" 
                                   value={item.valor_desconto_item || 0} 
                                   onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
                                 />
@@ -813,7 +821,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableCell>
                                 <Input 
                                   type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-gray-500 text-xs" 
+                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-gray-500 text-xs" 
                                   value={item.outros_custos || 0} 
                                   onChange={e => handleItemChange(index, 'outros_custos', e.target.value)} 
                                 />
@@ -825,7 +833,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                 <div className="relative">
                                     <Input 
                                         type="number" step="0.1"
-                                        className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-xs text-right pr-4" 
+                                        className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-xs text-right pr-4" 
                                         value={item.markup || 0} 
                                         onChange={e => handleItemChange(index, 'markup', e.target.value)} 
                                     />
