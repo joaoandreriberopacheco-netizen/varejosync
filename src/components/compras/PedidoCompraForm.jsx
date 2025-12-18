@@ -145,22 +145,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         }
     }
 
-    // Recalculate totals and margins
+    // Recalculate totals and margins (Values are UNITARY)
     const qty = parseFloat(item.quantidade) || 0;
     const cost = parseFloat(item.custo_unitario) || 0;
-    const frete = parseFloat(item.valor_frete_item) || 0;
-    const imposto1 = parseFloat(item.valor_imposto1) || 0;
-    const imposto2 = parseFloat(item.valor_imposto2) || 0;
-    const outros = parseFloat(item.outros_custos) || 0;
-    const desc = parseFloat(item.valor_desconto_item) || 0;
-    
-    // Total Line Cost
-    item.subtotal = qty * cost;
-    item.total = item.subtotal + frete + imposto1 + imposto2 + outros - desc;
+    const freteUnit = parseFloat(item.valor_frete_item) || 0;
+    const imposto1Unit = parseFloat(item.valor_imposto1) || 0;
+    const imposto2Unit = parseFloat(item.valor_imposto2) || 0;
+    const outrosUnit = parseFloat(item.outros_custos) || 0;
+    const descUnit = parseFloat(item.valor_desconto_item) || 0;
     
     // Unit Final Cost
-    const custoFinalUnitario = qty > 0 ? (item.total / qty) : 0;
+    const custoFinalUnitario = cost + freteUnit + imposto1Unit + imposto2Unit + outrosUnit - descUnit;
     item.custo_final_unitario = custoFinalUnitario;
+
+    // Total Line Cost
+    item.subtotal = qty * cost;
+    item.total = custoFinalUnitario * qty;
 
     // Price Formation
     const markup = parseFloat(item.markup) || 0;
@@ -195,14 +195,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     const calculateItemTotals = (item) => {
         const qty = parseFloat(item.quantidade) || 0;
         const cost = parseFloat(item.custo_unitario) || 0;
-        const frete = parseFloat(item.valor_frete_item) || 0;
-        const imposto1 = parseFloat(item.valor_imposto1) || 0;
-        const imposto2 = parseFloat(item.valor_imposto2) || 0;
-        const outros = parseFloat(item.outros_custos) || 0;
-        const desc = parseFloat(item.valor_desconto_item) || 0;
+        const freteUnit = parseFloat(item.valor_frete_item) || 0;
+        const imposto1Unit = parseFloat(item.valor_imposto1) || 0;
+        const imposto2Unit = parseFloat(item.valor_imposto2) || 0;
+        const outrosUnit = parseFloat(item.outros_custos) || 0;
+        const descUnit = parseFloat(item.valor_desconto_item) || 0;
         
-        const total = (qty * cost) + frete + imposto1 + imposto2 + outros - desc;
-        const custoFinalUnitario = qty > 0 ? total / qty : 0;
+        const custoFinalUnitario = cost + freteUnit + imposto1Unit + imposto2Unit + outrosUnit - descUnit;
+        const total = custoFinalUnitario * qty;
+        
         const markup = parseFloat(item.markup) || 40;
         const suggested = custoFinalUnitario * (1 + (markup/100));
 
@@ -701,11 +702,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableHead className="min-w-[70px] dark:text-gray-400">Qtd.</TableHead>
                               <TableHead className="min-w-[60px] dark:text-gray-400">U/M</TableHead>
                               <TableHead className="min-w-[100px] dark:text-gray-400">V. Unit</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-blue-600">Frete</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600">Imp 1</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600">Imp 2</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-green-600">Desc</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-gray-600">Outros</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-blue-600" title="Frete Unitário">Frete (Un)</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600" title="Imposto 1 Unitário">Imp 1 (Un)</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600" title="Imposto 2 Unitário">Imp 2 (Un)</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-green-600" title="Desconto Unitário">Desc (Un)</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-gray-600" title="Outros Custos Unitários">Outros (Un)</TableHead>
                               <TableHead className="min-w-[100px] bg-gray-100 dark:bg-gray-700 font-bold dark:text-gray-200">Custo Final</TableHead>
                               <TableHead className="min-w-[80px] dark:text-gray-400">MkUp %</TableHead>
                               <TableHead className="min-w-[100px] dark:text-gray-400 font-medium text-blue-700">Sugestão</TableHead>

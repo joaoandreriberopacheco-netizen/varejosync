@@ -105,12 +105,14 @@ export default function MobileProductSelector({
   const calculateTotal = (item) => {
     const qty = parseFloat(item.quantidade) || 0;
     const cost = parseFloat(item.custo_unitario) || 0;
-    const freight = parseFloat(item.valor_frete_item) || 0;
-    const imp1 = parseFloat(item.valor_imposto1) || 0;
-    const imp2 = parseFloat(item.valor_imposto2) || 0;
-    const outros = parseFloat(item.outros_custos) || 0;
-    const discount = parseFloat(item.valor_desconto_item) || 0;
-    return (qty * cost) + freight + imp1 + imp2 + outros - discount;
+    const freightUnit = parseFloat(item.valor_frete_item) || 0;
+    const imp1Unit = parseFloat(item.valor_imposto1) || 0;
+    const imp2Unit = parseFloat(item.valor_imposto2) || 0;
+    const outrosUnit = parseFloat(item.outros_custos) || 0;
+    const discountUnit = parseFloat(item.valor_desconto_item) || 0;
+    
+    const unitFinalCost = cost + freightUnit + imp1Unit + imp2Unit + outrosUnit - discountUnit;
+    return unitFinalCost * qty;
   };
 
   if (view === 'edit' && editingItem) {
@@ -162,7 +164,7 @@ export default function MobileProductSelector({
                 />
              </div>
              <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Frete Total (+)</Label>
+                <Label className="text-xs text-gray-500 mb-1.5 block">Frete Unit. (+)</Label>
                 <Input 
                    type="number" step="0.01"
                    className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-gray-700"
@@ -171,7 +173,7 @@ export default function MobileProductSelector({
                 />
              </div>
              <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Desconto Total (-)</Label>
+                <Label className="text-xs text-gray-500 mb-1.5 block">Desc. Unit. (-)</Label>
                 <Input 
                    type="number" step="0.01"
                    className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-red-500"
@@ -180,7 +182,7 @@ export default function MobileProductSelector({
                 />
              </div>
              <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Imposto 1 (+)</Label>
+                <Label className="text-xs text-gray-500 mb-1.5 block">Imp. 1 Unit. (+)</Label>
                 <Input 
                    type="number" step="0.01"
                    className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-orange-600"
@@ -189,7 +191,7 @@ export default function MobileProductSelector({
                 />
              </div>
              <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Imposto 2 (+)</Label>
+                <Label className="text-xs text-gray-500 mb-1.5 block">Imp. 2 Unit. (+)</Label>
                 <Input 
                    type="number" step="0.01"
                    className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-orange-600"
@@ -198,7 +200,7 @@ export default function MobileProductSelector({
                 />
              </div>
              <div className="col-span-2">
-                <Label className="text-xs text-gray-500 mb-1.5 block">Outros Custos (+)</Label>
+                <Label className="text-xs text-gray-500 mb-1.5 block">Outros Custos Unit. (+)</Label>
                 <Input 
                    type="number" step="0.01"
                    className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-gray-700"
