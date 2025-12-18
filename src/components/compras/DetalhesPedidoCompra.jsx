@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from '@/api/base44Client';
-import { 
-  ShoppingCart, 
-  User, 
-  Calendar, 
-  Clock, 
+import {
+  ShoppingCart,
+  User,
+  Calendar,
+  Clock,
   DollarSign,
   Package,
   FileText,
@@ -18,8 +18,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Ship,
-  MapPin
-} from 'lucide-react';
+  MapPin } from
+'lucide-react';
 import { format } from 'date-fns';
 
 export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
@@ -80,7 +80,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white px-8 py-8 z-50 grid w-full max-w-lg gap-4 border shadow-lg duration-200 sm:rounded-lg dark:bg-gray-900 max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <ShoppingCart className="w-6 h-6 text-teal-600" />
@@ -90,7 +90,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
 
         {/* Cabeçalho Compacto */}
         <Card className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200">
-          <CardContent className="p-4">
+          <CardContent className="px-5 py-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <div className="text-xs text-gray-500 mb-1">Número</div>
@@ -171,23 +171,23 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pedido.itens && pedido.itens.length > 0 ? (
-                      pedido.itens.map((item, idx) => (
-                        <TableRow key={idx}>
+                    {pedido.itens && pedido.itens.length > 0 ?
+                    pedido.itens.map((item, idx) =>
+                    <TableRow key={idx}>
                           <TableCell className="font-mono text-xs">{item.produto_id || '-'}</TableCell>
                           <TableCell className="font-medium">{item.produto_nome}</TableCell>
                           <TableCell className="text-right">{item.quantidade}</TableCell>
                           <TableCell className="text-right">{formatValor(item.custo_unitario)}</TableCell>
                           <TableCell className="text-right font-semibold">{formatValor(item.total)}</TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
+                    ) :
+
+                    <TableRow>
                         <TableCell colSpan={5} className="text-center text-gray-500">
                           Nenhum item cadastrado
                         </TableCell>
                       </TableRow>
-                    )}
+                    }
                   </TableBody>
                 </Table>
               </CardContent>
@@ -204,24 +204,24 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
             </Card>
 
             {/* Tags */}
-            {pedido.tags && pedido.tags.length > 0 && (
-              <Card>
+            {pedido.tags && pedido.tags.length > 0 &&
+            <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Tags</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {pedido.tags.map((tag, idx) => (
-                      <Badge key={idx} variant="outline">{tag}</Badge>
-                    ))}
+                    {pedido.tags.map((tag, idx) =>
+                  <Badge key={idx} variant="outline">{tag}</Badge>
+                  )}
                   </div>
                 </CardContent>
               </Card>
-            )}
+            }
 
             {/* Observações */}
-            {pedido.observacoes && (
-              <Card>
+            {pedido.observacoes &&
+            <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Observações</CardTitle>
                 </CardHeader>
@@ -229,7 +229,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                   <p className="text-sm text-gray-700">{pedido.observacoes}</p>
                 </CardContent>
               </Card>
-            )}
+            }
           </TabsContent>
 
           {/* ABA: FINANCEIRO */}
@@ -250,8 +250,8 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
             </Card>
 
             {/* Lançamentos Financeiros (Contas a Pagar) */}
-            {lancamentosFinanceiros.length > 0 ? (
-              <Card>
+            {lancamentosFinanceiros.length > 0 ?
+            <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Wallet className="w-5 h-5 text-teal-600" />
@@ -270,8 +270,8 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {lancamentosFinanceiros.map((lanc) => (
-                        <TableRow key={lanc.id}>
+                      {lancamentosFinanceiros.map((lanc) =>
+                    <TableRow key={lanc.id}>
                           <TableCell className="font-medium">{lanc.descricao}</TableCell>
                           <TableCell>
                             {lanc.data_vencimento ? format(new Date(lanc.data_vencimento), 'dd/MM/yyyy') : '-'}
@@ -281,22 +281,22 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                           </TableCell>
                           <TableCell>
                             <Badge className={
-                              lanc.status === 'Pago' ? 'bg-green-100 text-green-800' :
-                              lanc.status === 'Vencido' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }>
+                        lanc.status === 'Pago' ? 'bg-green-100 text-green-800' :
+                        lanc.status === 'Vencido' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                        }>
                               {lanc.status}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-semibold">{formatValor(lanc.valor)}</TableCell>
                         </TableRow>
-                      ))}
+                    )}
                     </TableBody>
                   </Table>
                 </CardContent>
-              </Card>
-            ) : (
-              <Card>
+              </Card> :
+
+            <Card>
                 <CardContent className="py-12">
                   <div className="text-center text-gray-500">
                     <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -305,13 +305,13 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            }
           </TabsContent>
 
           {/* ABA: LOGÍSTICA */}
           <TabsContent value="logistica" className="space-y-4 mt-4">
-            {eventoLogistico ? (
-              <Card className="bg-blue-50 border-blue-100">
+            {eventoLogistico ?
+            <Card className="bg-blue-50 border-blue-100">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2 text-blue-800">
                     <Ship className="w-5 h-5" />
@@ -336,15 +336,15 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-dashed">
+              </Card> :
+
+            <Card className="border-dashed">
                 <CardContent className="py-8 text-center text-gray-500">
                   <Truck className="w-12 h-12 mx-auto mb-2 opacity-20" />
                   <p>Este pedido não está vinculado a nenhum evento logístico.</p>
                 </CardContent>
               </Card>
-            )}
+            }
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
@@ -373,19 +373,19 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Nota Fiscal Emitida</span>
-                      {pedido.nfe_emitida ? (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Sim</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-500">Pendente</Badge>
-                      )}
+                      {pedido.nfe_emitida ?
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Sim</Badge> :
+
+                      <Badge variant="outline" className="text-gray-500">Pendente</Badge>
+                      }
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Manifesto Conferido</span>
-                      {pedido.manifesto_conferido ? (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Sim</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-500">Pendente</Badge>
-                      )}
+                      {pedido.manifesto_conferido ?
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Sim</Badge> :
+
+                      <Badge variant="outline" className="text-gray-500">Pendente</Badge>
+                      }
                     </div>
                   </div>
                 </CardContent>
@@ -405,41 +405,41 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {pedido.itens && pedido.itens.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  {pedido.itens && pedido.itens.map((item, idx) =>
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <div className="font-medium">{item.produto_nome}</div>
                         <div className="text-sm text-gray-500">Qtd Solicitada: {item.quantidade}</div>
                       </div>
                       <div className="text-right">
-                        {pedido.status === 'Recebido' ? (
-                          <Badge className="bg-green-100 text-green-800 gap-1">
+                        {pedido.status === 'Recebido' ?
+                      <Badge className="bg-green-100 text-green-800 gap-1">
                             <CheckCircle2 className="w-3 h-3" />
                             Recebido
-                          </Badge>
-                        ) : pedido.status === 'Recebido Parcialmente' ? (
-                          <Badge className="bg-orange-100 text-orange-800">
+                          </Badge> :
+                      pedido.status === 'Recebido Parcialmente' ?
+                      <Badge className="bg-orange-100 text-orange-800">
                             Parcial
-                          </Badge>
-                        ) : pedido.status === 'Aguardando Recepção' ? (
-                          <Badge className="bg-yellow-100 text-yellow-800">
+                          </Badge> :
+                      pedido.status === 'Aguardando Recepção' ?
+                      <Badge className="bg-yellow-100 text-yellow-800">
                             Aguardando
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-gray-100 text-gray-800">
+                          </Badge> :
+
+                      <Badge className="bg-gray-100 text-gray-800">
                             Pendente
                           </Badge>
-                        )}
+                      }
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Movimentações de Estoque */}
-            {movimentosEstoque.length > 0 ? (
-              <Card>
+            {movimentosEstoque.length > 0 ?
+            <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Package className="w-5 h-5 text-teal-600" />
@@ -457,8 +457,8 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {movimentosEstoque.map((mov) => (
-                        <TableRow key={mov.id}>
+                      {movimentosEstoque.map((mov) =>
+                    <TableRow key={mov.id}>
                           <TableCell className="font-medium">{mov.produto_nome}</TableCell>
                           <TableCell>
                             <Badge className={mov.tipo === 'Entrada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
@@ -470,13 +470,13 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                           </TableCell>
                           <TableCell className="text-right font-semibold">{mov.quantidade}</TableCell>
                         </TableRow>
-                      ))}
+                    )}
                     </TableBody>
                   </Table>
                 </CardContent>
-              </Card>
-            ) : (
-              <Card>
+              </Card> :
+
+            <Card>
                 <CardContent className="py-12">
                   <div className="text-center text-gray-500">
                     <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -485,10 +485,10 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            }
           </TabsContent>
         </Tabs>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 }
