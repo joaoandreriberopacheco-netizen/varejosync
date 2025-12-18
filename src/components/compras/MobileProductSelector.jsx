@@ -43,7 +43,12 @@ export default function MobileProductSelector({
         quantidade: 1,
         custo_unitario: product.valor_compra || 0,
         valor_frete_item: 0,
-        valor_desconto_item: 0
+        valor_imposto1: 0,
+        valor_imposto2: 0,
+        outros_custos: 0,
+        valor_desconto_item: 0,
+        markup: 40,
+        preco_venda_atual: product.preco_venda_padrao || 0
       });
       setEditingIndex(-1); // New item
       setView('edit');
