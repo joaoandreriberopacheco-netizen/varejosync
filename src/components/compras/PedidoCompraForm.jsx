@@ -173,6 +173,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         const suggested = parseFloat(value) || 0;
         // Markup = (Price / Cost) - 1
         item.markup = custoFinalUnitario > 0 ? ((suggested / custoFinalUnitario) - 1) * 100 : 0;
+        // Ensure preco_venda_sugerido is also set to the numeric value if this field is being updated
+        item.preco_venda_sugerido = suggested; 
     } else {
         // Calculate Price based on Markup
         item.preco_venda_sugerido = custoFinalUnitario * (1 + (markup / 100));
