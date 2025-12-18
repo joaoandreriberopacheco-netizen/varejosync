@@ -42,11 +42,11 @@ export default function MobileProductSelector({
         unidade_medida: product.unidade_principal || 'UN',
         quantidade: 1,
         custo_unitario: product.valor_compra || 0,
-        valor_frete_item: 0,
-        valor_imposto1: 0,
-        valor_imposto2: 0,
-        outros_custos: 0,
-        valor_desconto_item: 0,
+        valor_frete_item: product.custo_frete_padrao || 0,
+        valor_imposto1: product.custo_imposto1_padrao || 0,
+        valor_imposto2: product.custo_imposto2_padrao || 0,
+        outros_custos: product.custo_outros_padrao || 0,
+        valor_desconto_item: product.desconto_compra_padrao || 0,
         markup: 40,
         preco_venda_atual: product.preco_venda_padrao || 0
       });
@@ -137,7 +137,7 @@ export default function MobileProductSelector({
                 </Button>
                 <Input 
                   type="number"
-                  className="w-24 text-center h-12 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0"
+                  className="w-24 text-center h-12 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none"
                   value={editingItem.quantidade}
                   onChange={e => setEditingItem(prev => ({ ...prev, quantidade: parseFloat(e.target.value) || 0 }))}
                 />
@@ -156,7 +156,7 @@ export default function MobileProductSelector({
                 <Label className="text-xs text-gray-500 mb-1.5 block">Custo Unitário (R$)</Label>
                 <Input 
                    type="number" step="0.01"
-                   className="h-12 text-lg bg-gray-50 dark:bg-gray-800 border-transparent"
+                   className="h-12 text-lg bg-gray-50 dark:bg-gray-800 border-none shadow-none"
                    value={editingItem.custo_unitario}
                    onChange={e => setEditingItem(prev => ({ ...prev, custo_unitario: parseFloat(e.target.value) || 0 }))}
                 />
@@ -165,7 +165,7 @@ export default function MobileProductSelector({
                 <Label className="text-xs text-gray-500 mb-1.5 block">Frete Total (+)</Label>
                 <Input 
                    type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-gray-700"
+                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-gray-700"
                    value={editingItem.valor_frete_item}
                    onChange={e => setEditingItem(prev => ({ ...prev, valor_frete_item: parseFloat(e.target.value) || 0 }))}
                 />
@@ -174,7 +174,7 @@ export default function MobileProductSelector({
                 <Label className="text-xs text-gray-500 mb-1.5 block">Desconto Total (-)</Label>
                 <Input 
                    type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-red-500"
+                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-red-500"
                    value={editingItem.valor_desconto_item}
                    onChange={e => setEditingItem(prev => ({ ...prev, valor_desconto_item: parseFloat(e.target.value) || 0 }))}
                 />
@@ -183,7 +183,7 @@ export default function MobileProductSelector({
                 <Label className="text-xs text-gray-500 mb-1.5 block">Imposto 1 (+)</Label>
                 <Input 
                    type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-orange-600"
+                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-orange-600"
                    value={editingItem.valor_imposto1 || 0}
                    onChange={e => setEditingItem(prev => ({ ...prev, valor_imposto1: parseFloat(e.target.value) || 0 }))}
                 />
@@ -192,7 +192,7 @@ export default function MobileProductSelector({
                 <Label className="text-xs text-gray-500 mb-1.5 block">Imposto 2 (+)</Label>
                 <Input 
                    type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-orange-600"
+                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-orange-600"
                    value={editingItem.valor_imposto2 || 0}
                    onChange={e => setEditingItem(prev => ({ ...prev, valor_imposto2: parseFloat(e.target.value) || 0 }))}
                 />
