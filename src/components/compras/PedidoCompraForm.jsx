@@ -503,7 +503,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   return (
-    <DialogContent className="!max-w-[95vw] !w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700 rounded-lg shadow-2xl">
+    <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700 rounded-lg shadow-2xl">
       <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
         <DialogTitle className="text-xl font-normal text-gray-800 dark:text-gray-200">
           {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Compra'}
@@ -696,8 +696,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       <Table className="w-full min-w-[1400px]">
                           <TableHeader className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur">
                           <TableRow className="dark:border-gray-700 hover:bg-transparent">
-                              <TableHead className="w-[40px] text-center dark:text-gray-400 sticky left-0 z-10 bg-gray-50 dark:bg-gray-800">#</TableHead>
-                              <TableHead className="min-w-[200px] dark:text-gray-400 sticky left-[40px] z-10 bg-gray-50 dark:bg-gray-800">Produto</TableHead>
+                              <TableHead className="w-[40px] text-center dark:text-gray-400 sticky left-0 z-20 bg-gray-50 dark:bg-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">#</TableHead>
+                              <TableHead className="min-w-[250px] dark:text-gray-400 sticky left-[40px] z-20 bg-gray-50 dark:bg-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Produto</TableHead>
                               <TableHead className="min-w-[80px] dark:text-gray-400">Cód.</TableHead>
                               <TableHead className="min-w-[70px] dark:text-gray-400">Qtd.</TableHead>
                               <TableHead className="min-w-[60px] dark:text-gray-400">U/M</TableHead>
@@ -736,10 +736,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                           const selectedProduct = produtos.find(p => p.id === item.produto_id);
                           return (
                             <TableRow key={index} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group">
-                              <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
+                              <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                 {String(index + 1).padStart(2, '0')}
                               </TableCell>
-                              <TableCell className="sticky left-[40px] z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
+                              <TableCell className="sticky left-[40px] z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                 <Select 
                                   value={item.produto_id} 
                                   onValueChange={v => handleItemChange(index, 'produto_id', v)}

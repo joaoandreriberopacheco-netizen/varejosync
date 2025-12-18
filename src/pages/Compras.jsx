@@ -72,9 +72,30 @@ const PedidosCompraTab = () => {
     setShowDetalhes(true);
   };
 
-  const handleSave = async () => {
-    loadPedidos();
-    setIsFormOpen(false);
+  const handleSave = async (pedidoData) => {
+    try {
+      if (pedidoData.id) {
+        await base44.entities.PedidoCompra.update(pedidoData.id, pedidoData);
+      } else {
+        // Remove ID if present (e.g. from template or clone) but empty
+        const { id, ...newPedido } = pedidoData;
+        
+        // Generate a temporary number if needed, or let backend handle it
+        // Assuming backend or entity auto-generates or we need to generate:
+        // Let's generate a simple sequential one based on length for now if not present
+        if (!newPedido.numero) {
+           const count = pedidos.length + 1;
+           newPedido.numero = `PC-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`;
+        }
+        
+        await base44.entities.PedidoCompra.create(newPedido);
+      }
+      await loadPedidos();
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("Erro ao salvar pedido:", error);
+      throw error; // Propagate to Form to handle UI feedback
+    }
   };
 
   let pedidosFiltrados = pedidos.filter(pedido => {
