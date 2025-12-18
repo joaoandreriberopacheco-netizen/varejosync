@@ -80,7 +80,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white pt-8 pr-8 pb-8 pl-8 z-50 grid w-full max-w-lg gap-4 border shadow-lg duration-200 sm:rounded-lg dark:bg-gray-900 max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white p-6 z-50 grid w-full max-w-[95vw] gap-4 border shadow-lg duration-200 sm:rounded-lg dark:bg-gray-900 max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <ShoppingCart className="w-6 h-6 text-teal-600" />
@@ -130,22 +130,22 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
 
         {/* Abas de Conteúdo */}
         <Tabs defaultValue="detalhes" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-100">
             <TabsTrigger value="detalhes" className="gap-2">
               <FileText className="w-4 h-4" />
-              Detalhes
+              <span className="hidden sm:inline">Detalhes</span>
             </TabsTrigger>
             <TabsTrigger value="financeiro" className="gap-2">
               <Wallet className="w-4 h-4" />
-              Financeiro
+              <span className="hidden sm:inline">Financeiro</span>
             </TabsTrigger>
             <TabsTrigger value="estoque" className="gap-2">
               <Package className="w-4 h-4" />
-              Estoque
+              <span className="hidden sm:inline">Estoque</span>
             </TabsTrigger>
             <TabsTrigger value="logistica" className="gap-2">
               <Ship className="w-4 h-4" />
-              Logística
+              <span className="hidden sm:inline">Logística</span>
             </TabsTrigger>
           </TabsList>
 
