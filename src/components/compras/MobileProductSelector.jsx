@@ -101,8 +101,11 @@ export default function MobileProductSelector({
     const qty = parseFloat(item.quantidade) || 0;
     const cost = parseFloat(item.custo_unitario) || 0;
     const freight = parseFloat(item.valor_frete_item) || 0;
+    const imp1 = parseFloat(item.valor_imposto1) || 0;
+    const imp2 = parseFloat(item.valor_imposto2) || 0;
+    const outros = parseFloat(item.outros_custos) || 0;
     const discount = parseFloat(item.valor_desconto_item) || 0;
-    return (qty * cost) + freight - discount;
+    return (qty * cost) + freight + imp1 + imp2 + outros - discount;
   };
 
   if (view === 'edit' && editingItem) {
@@ -169,6 +172,33 @@ export default function MobileProductSelector({
                    className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-red-500"
                    value={editingItem.valor_desconto_item}
                    onChange={e => setEditingItem(prev => ({ ...prev, valor_desconto_item: parseFloat(e.target.value) || 0 }))}
+                />
+             </div>
+             <div>
+                <Label className="text-xs text-gray-500 mb-1.5 block">Imposto 1 (+)</Label>
+                <Input 
+                   type="number" step="0.01"
+                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-orange-600"
+                   value={editingItem.valor_imposto1 || 0}
+                   onChange={e => setEditingItem(prev => ({ ...prev, valor_imposto1: parseFloat(e.target.value) || 0 }))}
+                />
+             </div>
+             <div>
+                <Label className="text-xs text-gray-500 mb-1.5 block">Imposto 2 (+)</Label>
+                <Input 
+                   type="number" step="0.01"
+                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-orange-600"
+                   value={editingItem.valor_imposto2 || 0}
+                   onChange={e => setEditingItem(prev => ({ ...prev, valor_imposto2: parseFloat(e.target.value) || 0 }))}
+                />
+             </div>
+             <div className="col-span-2">
+                <Label className="text-xs text-gray-500 mb-1.5 block">Outros Custos (+)</Label>
+                <Input 
+                   type="number" step="0.01"
+                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-gray-700"
+                   value={editingItem.outros_custos || 0}
+                   onChange={e => setEditingItem(prev => ({ ...prev, outros_custos: parseFloat(e.target.value) || 0 }))}
                 />
              </div>
           </div>

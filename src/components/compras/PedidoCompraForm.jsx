@@ -131,35 +131,84 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
                 item.unidade_medida = produto.unidade_compra || 'UN';
                 item.custo_unitario = produto.valor_compra || 0;
+                item.preco_venda_atual = produto.preco_venda_padrao || 0;
+                item.markup = 40; // Default markup preference?
             }
         }
     }
 
-    // Recalculate totals
+    // Recalculate totals and margins
     const qty = parseFloat(item.quantidade) || 0;
     const cost = parseFloat(item.custo_unitario) || 0;
     const frete = parseFloat(item.valor_frete_item) || 0;
+    const imposto1 = parseFloat(item.valor_imposto1) || 0;
+    const imposto2 = parseFloat(item.valor_imposto2) || 0;
+    const outros = parseFloat(item.outros_custos) || 0;
     const desc = parseFloat(item.valor_desconto_item) || 0;
-    item.subtotal = qty * cost;
-    item.total = item.subtotal + frete - desc;
     
+    // Total Line Cost
+    item.subtotal = qty * cost;
+    item.total = item.subtotal + frete + imposto1 + imposto2 + outros - desc;
+    
+    // Unit Final Cost
+    const custoFinalUnitario = qty > 0 ? (item.total / qty) : 0;
+    item.custo_final_unitario = custoFinalUnitario;
+
+    // Price Formation
+    const markup = parseFloat(item.markup) || 0;
+    
+    // If field changed is markup, calculate suggested price. 
+    // If field changed is suggested price, calculate markup.
+    // If cost changed, recalculate suggested price based on markup (standard behavior)
+    
+    if (field === 'preco_venda_sugerido') {
+        const suggested = parseFloat(value) || 0;
+        // Markup = (Price / Cost) - 1
+        item.markup = custoFinalUnitario > 0 ? ((suggested / custoFinalUnitario) - 1) * 100 : 0;
+    } else {
+        // Calculate Price based on Markup
+        item.preco_venda_sugerido = custoFinalUnitario * (1 + (markup / 100));
+    }
+
+    // Resulting Margin (Contribution)
+    item.margem_contribuicao = (item.preco_venda_sugerido || 0) - custoFinalUnitario;
+    item.margem_percentual = (item.preco_venda_sugerido || 0) > 0 
+        ? (item.margem_contribuicao / item.preco_venda_sugerido) * 100 
+        : 0;
+
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
 
   const handleAddItem = (product = null) => {
-    // Check if product is actually a full item object (from MobileProductSelector)
-    // If it has 'produto_id' and 'quantidade', use it directly.
     let newItem;
     
-    if (product && product.produto_id && product.quantidade) {
-        // It's a full item object
-        newItem = {
-            ...product,
-            subtotal: (product.quantidade * product.custo_unitario),
-            total: (product.quantidade * product.custo_unitario) + (product.valor_frete_item || 0) - (product.valor_desconto_item || 0)
+    const calculateItemTotals = (item) => {
+        const qty = parseFloat(item.quantidade) || 0;
+        const cost = parseFloat(item.custo_unitario) || 0;
+        const frete = parseFloat(item.valor_frete_item) || 0;
+        const imposto1 = parseFloat(item.valor_imposto1) || 0;
+        const imposto2 = parseFloat(item.valor_imposto2) || 0;
+        const outros = parseFloat(item.outros_custos) || 0;
+        const desc = parseFloat(item.valor_desconto_item) || 0;
+        
+        const total = (qty * cost) + frete + imposto1 + imposto2 + outros - desc;
+        const custoFinalUnitario = qty > 0 ? total / qty : 0;
+        const markup = parseFloat(item.markup) || 40;
+        const suggested = custoFinalUnitario * (1 + (markup/100));
+
+        return {
+            ...item,
+            subtotal: qty * cost,
+            total: total,
+            custo_final_unitario: custoFinalUnitario,
+            preco_venda_sugerido: suggested,
+            margem_contribuicao: suggested - custoFinalUnitario
         };
+    };
+
+    if (product && product.produto_id && product.quantidade) {
+        newItem = calculateItemTotals(product);
     } else {
-        // It's a product entity or null
         newItem = { 
             produto_id: product?.id || '', 
             produto_nome: product?.nome || '', 
@@ -168,11 +217,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             unidade_medida: product?.unidade_compra || 'UN',
             custo_unitario: product?.valor_compra || 0,
             valor_frete_item: 0,
+            valor_imposto1: 0,
+            valor_imposto2: 0,
+            outros_custos: 0,
             valor_desconto_item: 0,
-            subtotal: (product?.valor_compra || 0),
-            total: (product?.valor_compra || 0),
+            markup: 40, // Default Markup
+            preco_venda_atual: product?.preco_venda_padrao || 0,
             observacao_item: ''
         };
+        newItem = calculateItemTotals(newItem);
     }
 
     setFormData(prev => ({
@@ -628,22 +681,30 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
 
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
-                  <Table className="w-full">
-                    <TableHeader className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur">
-                      <TableRow className="dark:border-gray-700 hover:bg-transparent">
-                        <TableHead className="w-[3%] text-center dark:text-gray-400">#</TableHead>
-                        <TableHead className="w-[20%] dark:text-gray-400">Produto</TableHead>
-                        <TableHead className="w-[8%] dark:text-gray-400">Cód.</TableHead>
-                        <TableHead className="w-[7%] dark:text-gray-400">Qtd.</TableHead>
-                        <TableHead className="w-[5%] dark:text-gray-400">U/M</TableHead>
-                        <TableHead className="w-[10%] dark:text-gray-400">V. Unit (Base)</TableHead>
-                        <TableHead className="w-[10%] text-right dark:text-gray-400">Subtotal</TableHead>
-                        <TableHead className="w-[10%] dark:text-gray-400">Frete (+)</TableHead>
-                        <TableHead className="w-[10%] dark:text-gray-400">Desc. (-)</TableHead>
-                        <TableHead className="w-[12%] text-right dark:text-gray-400">Total Líquido</TableHead>
-                        <TableHead className="w-[5%] text-center dark:text-gray-400"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                      <Table className="w-full min-w-[1400px]">
+                          <TableHeader className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur">
+                          <TableRow className="dark:border-gray-700 hover:bg-transparent">
+                              <TableHead className="w-[40px] text-center dark:text-gray-400 sticky left-0 z-10 bg-gray-50 dark:bg-gray-800">#</TableHead>
+                              <TableHead className="min-w-[200px] dark:text-gray-400 sticky left-[40px] z-10 bg-gray-50 dark:bg-gray-800">Produto</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400">Cód.</TableHead>
+                              <TableHead className="min-w-[70px] dark:text-gray-400">Qtd.</TableHead>
+                              <TableHead className="min-w-[60px] dark:text-gray-400">U/M</TableHead>
+                              <TableHead className="min-w-[100px] dark:text-gray-400">V. Unit</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-blue-600">Frete</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600">Imp 1</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600">Imp 2</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-green-600">Desc</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400 text-gray-600">Outros</TableHead>
+                              <TableHead className="min-w-[100px] bg-gray-100 dark:bg-gray-700 font-bold dark:text-gray-200">Custo Final</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400">MkUp %</TableHead>
+                              <TableHead className="min-w-[100px] dark:text-gray-400 font-medium text-blue-700">Sugestão</TableHead>
+                              <TableHead className="min-w-[90px] dark:text-gray-400 text-xs">Venda Atual</TableHead>
+                              <TableHead className="min-w-[80px] dark:text-gray-400">Margem</TableHead>
+                              <TableHead className="min-w-[120px] text-right dark:text-gray-400 sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 shadow-xl">Total Líq</TableHead>
+                              <TableHead className="w-[40px] text-center dark:text-gray-400"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
+                          </TableRow>
+                          </TableHeader>
                     <TableBody>
                       {formData.itens.length === 0 ? (
                         <TableRow>
@@ -664,10 +725,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                           const selectedProduct = produtos.find(p => p.id === item.produto_id);
                           return (
                             <TableRow key={index} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group">
-                              <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs">
+                              <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
                                 {String(index + 1).padStart(2, '0')}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="sticky left-[40px] z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
                                 <Select 
                                   value={item.produto_id} 
                                   onValueChange={v => handleItemChange(index, 'produto_id', v)}
@@ -711,35 +772,81 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               </TableCell>
                               <TableCell>
                                 <Input 
-                                  type="number" 
-                                  step="0.01"
-                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
+                                  type="number" step="0.01"
+                                  className="h-8 min-w-[80px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
                                   value={item.custo_unitario} 
                                   onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
                                 />
                               </TableCell>
-                              <TableCell className="text-right font-medium text-gray-600 dark:text-gray-400 text-sm">
-                                {formatCurrency(item.subtotal || 0)}
-                              </TableCell>
                               <TableCell>
                                 <Input 
-                                  type="number" 
-                                  step="0.01"
-                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-gray-500" 
+                                  type="number" step="0.01"
+                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-blue-600 text-xs" 
                                   value={item.valor_frete_item || 0} 
                                   onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)} 
                                 />
                               </TableCell>
                               <TableCell>
                                 <Input 
-                                  type="number" 
-                                  step="0.01"
-                                  className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-red-400" 
+                                  type="number" step="0.01"
+                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
+                                  value={item.valor_imposto1 || 0} 
+                                  onChange={e => handleItemChange(index, 'valor_imposto1', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" step="0.01"
+                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
+                                  value={item.valor_imposto2 || 0} 
+                                  onChange={e => handleItemChange(index, 'valor_imposto2', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" step="0.01"
+                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-green-600 text-xs" 
                                   value={item.valor_desconto_item || 0} 
                                   onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
                                 />
                               </TableCell>
-                              <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200 text-sm">
+                              <TableCell>
+                                <Input 
+                                  type="number" step="0.01"
+                                  className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-gray-500 text-xs" 
+                                  value={item.outros_custos || 0} 
+                                  onChange={e => handleItemChange(index, 'outros_custos', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell className="bg-gray-50 dark:bg-gray-700 font-bold text-gray-800 dark:text-gray-100 text-sm text-center">
+                                {formatCurrency(item.custo_final_unitario || 0)}
+                              </TableCell>
+                              <TableCell>
+                                <div className="relative">
+                                    <Input 
+                                        type="number" step="0.1"
+                                        className="h-8 min-w-[60px] bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 shadow-none focus-visible:ring-0 text-xs text-right pr-4" 
+                                        value={item.markup || 0} 
+                                        onChange={e => handleItemChange(index, 'markup', e.target.value)} 
+                                    />
+                                    <span className="absolute right-1 top-2 text-[10px] text-gray-400">%</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" step="0.01"
+                                  className="h-8 min-w-[80px] bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 focus:border-indigo-300 rounded px-2 shadow-none focus-visible:ring-0 font-medium text-indigo-700 dark:text-indigo-300" 
+                                  value={(item.preco_venda_sugerido || 0).toFixed(2)} 
+                                  onChange={e => handleItemChange(index, 'preco_venda_sugerido', e.target.value)} 
+                                />
+                              </TableCell>
+                              <TableCell className="text-center text-xs text-gray-500">
+                                {formatCurrency(item.preco_venda_atual || 0)}
+                              </TableCell>
+                              <TableCell className={`text-center text-xs font-medium ${(item.margem_percentual || 0) < 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                {(item.margem_percentual || 0).toFixed(1)}%
+                              </TableCell>
+                              <TableCell className="text-right font-bold text-gray-900 dark:text-white text-sm sticky right-0 z-10 bg-white dark:bg-gray-900 shadow-xl border-l border-gray-100 dark:border-gray-800">
                                 {formatCurrency(item.total || 0)}
                               </TableCell>
                               <TableCell className="text-center">
@@ -758,7 +865,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       )}
                     </TableBody>
                   </Table>
-                </div>
+                  </div>
+                  </div>
 
                 {formData.itens.length > 0 && (
                   <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
