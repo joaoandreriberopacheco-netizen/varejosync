@@ -382,7 +382,7 @@ export default function CotacoesManager() {
                                 Analisar & Preços
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                                 <DialogTitle className="text-xl font-light">Análise de Cotação: {cotacao.titulo}</DialogTitle>
                             </DialogHeader>
