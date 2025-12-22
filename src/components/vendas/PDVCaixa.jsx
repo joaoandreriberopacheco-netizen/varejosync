@@ -9,12 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Receipt, 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
+import {
+  Receipt,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Clock,
   CreditCard,
   Banknote,
   Smartphone,
@@ -29,8 +29,8 @@ import {
   Lock,
   Printer,
   Keyboard,
-  AlertCircle 
-} from 'lucide-react';
+  AlertCircle } from
+'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 import { createPageUrl } from '@/utils';
@@ -40,43 +40,43 @@ export default function PDVCaixa() {
   const [configVenda, setConfigVenda] = useState(null);
 
   useEffect(() => {
-    base44.entities.ConfiguracoesVenda.filter({ empresa_id: getTenantId() })
-      .then(configs => {
-        if (configs.length > 0) setConfigVenda(configs[0]);
-      })
-      .catch(console.error);
+    base44.entities.ConfiguracoesVenda.filter({ empresa_id: getTenantId() }).
+    then((configs) => {
+      if (configs.length > 0) setConfigVenda(configs[0]);
+    }).
+    catch(console.error);
   }, []);
   const [currentUser, setCurrentUser] = useState(null);
   const [pedidosAguardando, setPedidosAguardando] = useState([]);
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
-  const [contaCaixaPDV, setContaCaixaPDV] = useState(null); 
+  const [contaCaixaPDV, setContaCaixaPDV] = useState(null);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [view, setView] = useState('dashboard'); // Renamed telaAtual to view
-  
+
   const [showMovimentoDialog, setShowMovimentoDialog] = useState(false);
   const [tipoMovimento, setTipoMovimento] = useState('');
   const [valorMovimento, setValorMovimento] = useState('');
   const [observacaoMovimento, setObservacaoMovimento] = useState('');
   const [movimentoCriado, setMovimentoCriado] = useState(null);
   const [showComprovanteMovimento, setShowComprovanteMovimento] = useState(false);
-  
+
   const [showFechamentoDialog, setShowFechamentoDialog] = useState(false);
-  
+
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
   const [pagamentosPix, setPagamentosPix] = useState(0);
   const [pagamentosDebito, setPagamentosDebito] = useState(0);
   const [pagamentosCredito, setPagamentosCredito] = useState(0);
   const [parcelasCredito, setParcelasCredito] = useState(1);
   const [formaPagamentoAtiva, setFormaPagamentoAtiva] = useState(0);
-  
+
   // Valores como strings para edição livre
   const [inputDinheiro, setInputDinheiro] = useState('');
   const [inputPix, setInputPix] = useState('');
   const [inputDebito, setInputDebito] = useState('');
   const [inputCredito, setInputCredito] = useState('');
-  
+
   // Refs para os inputs
   const inputRefs = {
     dinheiro: React.useRef(null),
@@ -84,10 +84,10 @@ export default function PDVCaixa() {
     debito: React.useRef(null),
     credito: React.useRef(null)
   };
-  
+
   const [showComprovanteFinal, setShowComprovanteFinal] = useState(false);
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
-  
+
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
     saldoAtual: 0,
@@ -116,12 +116,12 @@ export default function PDVCaixa() {
   const aplicarMascaraValor = (valorAtual, tecla) => {
     // Remove tudo que não é número
     let numeros = valorAtual.replace(/\D/g, '');
-    
+
     // Adiciona o novo dígito
     if (/^\d$/.test(tecla)) {
       numeros += tecla;
     }
-    
+
     // Converte para número e divide por 100 (centavos)
     const valor = parseInt(numeros) / 100;
     return formatarValorExibicao(valor);
@@ -129,7 +129,7 @@ export default function PDVCaixa() {
 
   const handleInputMascara = (e, setInput, setValor) => {
     const tecla = e.key;
-    
+
     // Backspace - remove último dígito
     if (tecla === 'Backspace') {
       e.preventDefault();
@@ -140,7 +140,7 @@ export default function PDVCaixa() {
       setValor(valor);
       return;
     }
-    
+
     // Só aceita números
     if (/^\d$/.test(tecla)) {
       e.preventDefault();
@@ -150,7 +150,7 @@ export default function PDVCaixa() {
       setValor(valorNumerico);
       return;
     }
-    
+
     // Navegação
     if (tecla === 'ArrowUp' || tecla === 'ArrowDown') {
       handleNavegacaoPagamento(e);
@@ -174,12 +174,12 @@ export default function PDVCaixa() {
       setInputCredito('0,00');
       setParcelasCredito(1);
       setFormaPagamentoAtiva(0);
-      
+
       // Auto-focus no primeiro input
       setTimeout(() => inputRefs.dinheiro.current?.focus(), 100);
     }
   }, [pedidoSelecionado]);
-  
+
   // Focar no input quando mudar forma de pagamento ativa
   useEffect(() => {
     if (isDialogOpen) {
@@ -195,13 +195,13 @@ export default function PDVCaixa() {
   const handleNavegacaoPagamento = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setFormaPagamentoAtiva(prev => (prev + 1) % 4);
+      setFormaPagamentoAtiva((prev) => (prev + 1) % 4);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setFormaPagamentoAtiva(prev => (prev - 1 + 4) % 4);
+      setFormaPagamentoAtiva((prev) => (prev - 1 + 4) % 4);
     }
   };
-  
+
 
 
   useEffect(() => {
@@ -222,31 +222,31 @@ export default function PDVCaixa() {
         return;
       }
 
-      if (e.key === 'F2' && view === 'dashboard') { // Updated telaAtual to view
+      if (e.key === 'F2' && view === 'dashboard') {// Updated telaAtual to view
         e.preventDefault();
         handleProcessarVendas(); // Changed to new function
         return;
       }
 
-      if (e.key === 'F3' && view === 'dashboard') { // Updated telaAtual to view
+      if (e.key === 'F3' && view === 'dashboard') {// Updated telaAtual to view
         e.preventDefault();
         handleAbrirBalanco(); // Changed to new function
         return;
       }
 
-      if (e.key === 'F4' && view === 'dashboard') { // Updated telaAtual to view
+      if (e.key === 'F4' && view === 'dashboard') {// Updated telaAtual to view
         e.preventDefault();
         handleAbrirMovimento('Reforço');
         return;
       }
 
-      if (e.key === 'F5' && view === 'dashboard') { // Updated telaAtual to view
+      if (e.key === 'F5' && view === 'dashboard') {// Updated telaAtual to view
         e.preventDefault();
         handleAbrirMovimento('Sangria');
         return;
       }
 
-      if (e.key === 'F6' && view === 'dashboard') { // Updated telaAtual to view
+      if (e.key === 'F6' && view === 'dashboard') {// Updated telaAtual to view
         e.preventDefault();
         handleFecharCaixa();
         return;
@@ -263,13 +263,13 @@ export default function PDVCaixa() {
         return;
       }
 
-      if (e.key === 'Enter' && view === 'processar' && !isDialogOpen && pedidosAguardando.length > 0) { // Updated telaAtual to view
+      if (e.key === 'Enter' && view === 'processar' && !isDialogOpen && pedidosAguardando.length > 0) {// Updated telaAtual to view
         e.preventDefault();
         handleAbrirPedido(pedidosAguardando[0]);
         return;
       }
 
-      if (e.key === 'Escape' && view !== 'dashboard' && !isDialogOpen && !showMovimentoDialog && !showFechamentoDialog) { // Updated telaAtual to view
+      if (e.key === 'Escape' && view !== 'dashboard' && !isDialogOpen && !showMovimentoDialog && !showFechamentoDialog) {// Updated telaAtual to view
         e.preventDefault();
         setView('dashboard'); // Updated setTelaAtual to setView
         return;
@@ -287,10 +287,10 @@ export default function PDVCaixa() {
       setCurrentUser(user);
 
       const todasContas = await base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId });
-      let caixaPDV = todasContas.find(c => 
-        c.ativo && 
-        (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV') &&
-        (c.nome.toLowerCase().includes('caixa') || c.nome.toLowerCase().includes('pdv'))
+      let caixaPDV = todasContas.find((c) =>
+      c.ativo && (
+      c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV') && (
+      c.nome.toLowerCase().includes('caixa') || c.nome.toLowerCase().includes('pdv'))
       );
 
       if (!caixaPDV) {
@@ -304,7 +304,7 @@ export default function PDVCaixa() {
           observacoes: 'Conta criada automaticamente para o PDV Caixa',
           ativo: true
         });
-        
+
         toast({
           title: "✓ Conta Caixa PDV criada!",
           description: "Uma conta foi criada automaticamente para operações do caixa.",
@@ -316,36 +316,36 @@ export default function PDVCaixa() {
       setContaCaixaPDV(caixaPDV);
 
       const hoje = format(new Date(), 'yyyy-MM-dd');
-      
+
       const todosPedidos = await base44.entities.PedidoVenda.filter({ empresa_id: tenantId });
-      
-      const pedidosAguardandoCaixa = todosPedidos.filter(p => 
-        p.status === 'Aguardando Caixa'
+
+      const pedidosAguardandoCaixa = todosPedidos.filter((p) =>
+      p.status === 'Aguardando Caixa'
       );
-      
+
       setPedidosAguardando(pedidosAguardandoCaixa);
 
-      const vendasHoje = todosPedidos.filter(p => 
-        p.status === 'Finalizado' && 
-        p.created_date && 
-        p.created_date.startsWith(hoje)
+      const vendasHoje = todosPedidos.filter((p) =>
+      p.status === 'Finalizado' &&
+      p.created_date &&
+      p.created_date.startsWith(hoje)
       );
       setVendasFinalizadas(vendasHoje);
 
       const todasMovimentacoes = await base44.entities.MovimentosCaixa.filter({ empresa_id: tenantId });
-      const movimentosHoje = todasMovimentacoes.filter(m => 
-        m.created_date && 
-        m.created_date.startsWith(hoje) &&
-        m.conta_id === caixaPDV.id 
+      const movimentosHoje = todasMovimentacoes.filter((m) =>
+      m.created_date &&
+      m.created_date.startsWith(hoje) &&
+      m.conta_id === caixaPDV.id
       );
       setMovimentos(movimentosHoje);
 
       const totalVendas = vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-      
-      let totalDinheiro = 0, totalPix = 0, totalCartao = 0;
-      vendasHoje.forEach(venda => {
+
+      let totalDinheiro = 0,totalPix = 0,totalCartao = 0;
+      vendasHoje.forEach((venda) => {
         if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
-          venda.pagamentos.forEach(pag => {
+          venda.pagamentos.forEach((pag) => {
             if (pag.forma_pagamento === 'Dinheiro') totalDinheiro += pag.valor;
             if (pag.forma_pagamento === 'PIX') totalPix += pag.valor;
             if (pag.forma_pagamento && pag.forma_pagamento.includes('Cartão')) totalCartao += pag.valor;
@@ -353,9 +353,9 @@ export default function PDVCaixa() {
         }
       });
 
-      const totalReforcos = movimentosHoje.filter(m => m.tipo === 'Reforço').reduce((sum, m) => sum + m.valor, 0);
-      const totalSangrias = movimentosHoje.filter(m => m.tipo === 'Sangria').reduce((sum, m) => sum + m.valor, 0);
-      
+      const totalReforcos = movimentosHoje.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + m.valor, 0);
+      const totalSangrias = movimentosHoje.filter((m) => m.tipo === 'Sangria').reduce((sum, m) => sum + m.valor, 0);
+
       const saldoCaixa = caixaPDV.saldo_atual;
 
       // Update caixaData state
@@ -395,7 +395,7 @@ export default function PDVCaixa() {
       });
       return;
     }
-    
+
     if (!contaCaixaPDV) {
       toast({
         title: "Conta de Caixa PDV não encontrada",
@@ -407,7 +407,7 @@ export default function PDVCaixa() {
 
     try {
       const pagamentosArray = [];
-      
+
       if (pagamentosDinheiro > 0) {
         pagamentosArray.push({
           forma_pagamento: 'Dinheiro',
@@ -415,7 +415,7 @@ export default function PDVCaixa() {
           parcelas: 1
         });
       }
-      
+
       if (pagamentosPix > 0) {
         pagamentosArray.push({
           forma_pagamento: 'PIX',
@@ -423,7 +423,7 @@ export default function PDVCaixa() {
           parcelas: 1
         });
       }
-      
+
       if (pagamentosDebito > 0) {
         pagamentosArray.push({
           forma_pagamento: 'Cartão de Débito',
@@ -431,7 +431,7 @@ export default function PDVCaixa() {
           parcelas: 1
         });
       }
-      
+
       if (pagamentosCredito > 0) {
         pagamentosArray.push({
           forma_pagamento: 'Cartão de Crédito',
@@ -450,7 +450,7 @@ export default function PDVCaixa() {
         await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
           saldo_atual: novoSaldo
         });
-        setContaCaixaPDV(prev => ({ ...prev, saldo_atual: novoSaldo }));
+        setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
       }
 
       setVendaFinalizada({
@@ -466,7 +466,7 @@ export default function PDVCaixa() {
             pedido_venda_id: pedidoSelecionado.id,
             pedido_numero: pedidoSelecionado.numero,
             status: 'Pendente',
-            itens: pedidoSelecionado.itens.map(item => ({
+            itens: pedidoSelecionado.itens.map((item) => ({
               produto_id: item.produto_id,
               produto_nome: item.produto_nome,
               quantidade_solicitada: item.quantidade,
@@ -476,40 +476,40 @@ export default function PDVCaixa() {
           });
           toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
         } else if (configVenda.fluxo_venda_padrao === 'Balcao' && !configVenda.entrega_automatica_balcao) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           // Logic for Balcao with manual delivery (Logistics) could go here
           // For now, we assume default behavior or simple completion
-        }
-      }
+        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowComprovanteFinal(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}
 
-      toast({
-        title: "✓ Pagamento aprovado!",
-        description: "Venda finalizada com sucesso.",
-        className: "bg-emerald-100 text-emerald-800",
-        duration: 2000
-      });
-
-      setIsDialogOpen(false);
-      setShowComprovanteFinal(true);
-      loadData();
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleAbrirMovimento = (tipo) => {
-    if (!contaCaixaPDV) {
-      toast({
-        title: "Conta de Caixa PDV não encontrada",
-        description: "Não foi possível realizar o movimento. Recarregue a página.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     setTipoMovimento(tipo);
     setValorMovimento('');
     setObservacaoMovimento('');
@@ -537,10 +537,10 @@ export default function PDVCaixa() {
 
     try {
       const valorFloat = parseFloat(valorMovimento.replace(',', '.'));
-      
+
       const tenantId = getTenantId();
       const todosMovimentos = await base44.entities.MovimentosCaixa.filter({ empresa_id: tenantId });
-      const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map(m => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
+      const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;
 
       const movimento = await base44.entities.MovimentosCaixa.create({
@@ -549,28 +549,28 @@ export default function PDVCaixa() {
         tipo: tipoMovimento,
         valor: valorFloat,
         observacao: observacaoMovimento,
-        conta_id: contaCaixaPDV.id, 
+        conta_id: contaCaixaPDV.id,
         usuario_responsavel_id: currentUser.id,
         usuario_responsavel_nome: currentUser.full_name
       });
 
-      const novoSaldo = tipoMovimento === 'Sangria' 
-        ? contaCaixaPDV.saldo_atual - valorFloat
-        : contaCaixaPDV.saldo_atual + valorFloat;
+      const novoSaldo = tipoMovimento === 'Sangria' ?
+      contaCaixaPDV.saldo_atual - valorFloat :
+      contaCaixaPDV.saldo_atual + valorFloat;
 
       await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
         saldo_atual: novoSaldo
       });
 
-      setContaCaixaPDV(prev => ({ ...prev, saldo_atual: novoSaldo }));
+      setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
 
       setMovimentoCriado(movimento);
       setShowMovimentoDialog(false);
       setShowComprovanteMovimento(true);
-      
+
       toast({
         title: `✓ ${tipoMovimento} registrado!`,
-        description: `Movimento ${numeroMovimento} realizado.`, 
+        description: `Movimento ${numeroMovimento} realizado.`,
         className: "bg-emerald-100 text-emerald-800",
         duration: 2000
       });
@@ -591,7 +591,7 @@ export default function PDVCaixa() {
 
   const formatValor = (valor) => {
     const num = valor || 0;
-    return `R$ ${num.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
   // New helper functions for view navigation
@@ -606,11 +606,11 @@ export default function PDVCaixa() {
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
       {/* Header - Responsivo */}
-      <div className="bg-gray-700 dark:bg-gray-800 text-white p-3 md:p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 md:gap-3">
+      <div className="bg-gray-50 text-white p-3 dark:bg-gray-800 md:p-4 flex items-center justify-between">
+        <div className="text-gray-950 flex items-center gap-2 md:gap-3">
           <Receipt className="w-5 h-5 md:w-6 md:h-6" />
           <div>
-            <h1 className="text-base md:text-lg font-medium">PDV - Caixa</h1>
+            <h1 className="text-base font-black md:text-lg">PDV - Caixa</h1>
             <p className="text-[10px] md:text-xs text-gray-300 dark:text-gray-400 hidden sm:block">Caixa PDV</p>
           </div>
         </div>
@@ -628,12 +628,12 @@ export default function PDVCaixa() {
             <Clock className="w-4 h-4 mr-1" />
             {format(new Date(), 'HH:mm')}
           </div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => window.location.href = '/'}
-            className="text-white hover:bg-gray-600 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8"
-          >
+            className="text-white hover:bg-gray-600 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8">
+
             <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" />
           </Button>
         </div>
@@ -641,8 +641,8 @@ export default function PDVCaixa() {
 
       {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto">
-        {!contaCaixaPDV && (
-          <Card className="mb-4 border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700 mx-auto max-w-6xl mt-4">
+        {!contaCaixaPDV &&
+        <Card className="mb-4 border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700 mx-auto max-w-6xl mt-4">
             <CardContent className="p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -651,21 +651,21 @@ export default function PDVCaixa() {
               </div>
             </CardContent>
           </Card>
-        )}
+        }
 
-        {view === 'dashboard' && (
-          <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        {view === 'dashboard' &&
+        <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
             {/* KPIs Superiores */}
             <div className="grid grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Saldo em Caixa</div>
-                <div className="text-xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">
+              <div className="text-gray-300 opacity-100">
+                <div className="text-gray-500 px-3 uppercase tracking-wide md:text-xs dark:text-gray-400">Saldo em Caixa</div>
+                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
                   {formatValor(caixaData.saldoAtual)}
                 </div>
               </div>
               <div>
                 <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total Vendas</div>
-                <div className="text-xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200">
+                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
                   {formatValor(caixaData.totalVendas)}
                 </div>
               </div>
@@ -673,25 +673,25 @@ export default function PDVCaixa() {
 
             {/* Recebimentos do Turno */}
             <div className="pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-200 mb-3 md:mb-4">
-                Recebimentos do Turno
-              </h3>
+              <h3 className="text-gray-800 mb-3 text-sm font-bold md:text-base dark:text-gray-200 md:mb-4">Recebimentos do Turno
+
+            </h3>
               <div className="grid grid-cols-3 gap-3 md:gap-6">
                 <div>
                   <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Dinheiro</div>
-                  <div className="text-lg md:text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                  <div className="text-lg md:text-2xl font-\nbold text-gray-800 dark:text-gray-200">
                     {formatValor(caixaData.recebimentos.dinheiro)}
                   </div>
                 </div>
                 <div>
                   <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">PIX</div>
-                  <div className="text-lg md:text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                  <div className="text-lg md:text-2xl font-bold text-gray-800 dark:text-gray-200">
                     {formatValor(caixaData.recebimentos.pix)}
                   </div>
                 </div>
                 <div>
                   <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Cartão</div>
-                  <div className="text-lg md:text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                  <div className="text-lg md:text-2xl font-bold text-gray-800 dark:text-gray-200">
                     {formatValor(caixaData.recebimentos.cartao)}
                   </div>
                 </div>
@@ -700,9 +700,9 @@ export default function PDVCaixa() {
 
             {/* Movimentações do Turno */}
             <div className="pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-200 mb-3 md:mb-4">
-                Movimentações do Turno
-              </h3>
+              <h3 className="text-gray-800 mb-3 text-sm font-bold md:text-base dark:text-gray-200 md:mb-4">Movimentações do Turno
+
+            </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span className="text-xs md:text-sm">+ Vendas em Dinheiro:</span>
@@ -733,21 +733,21 @@ export default function PDVCaixa() {
 
             {/* Botões de Ação Principais */}
             <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <Button 
-                onClick={handleProcessarVendas}
-                size="lg"
-                className="h-14 md:h-20 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white flex-col md:flex-row gap-1 md:gap-2"
-              >
+              <Button
+              onClick={handleProcessarVendas}
+              size="lg" className="bg-gray-50 text-slate-800 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 h-14 md:h-20 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 flex-col md:flex-row gap-1 md:gap-2">
+
+
                 <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-                <span className="text-xs md:text-base">
-                  <span className="hidden md:inline">Processar </span>Vendas
-                </span>
+                <span className="text-xs font-black md:text-base">Vendas
+
+              </span>
               </Button>
-              <Button 
-                onClick={handleAbrirBalanco}
-                size="lg"
-                className="h-14 md:h-20 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white flex-col md:flex-row gap-1 md:gap-2"
-              >
+              <Button
+              onClick={handleAbrirBalanco}
+              size="lg" className="bg-gray-50 text-slate-800 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-14 md:h-20 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 flex-col md:flex-row gap-1 md:gap-2">
+
+
                 <Wallet className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="text-xs md:text-base">Balanço</span>
               </Button>
@@ -756,48 +756,48 @@ export default function PDVCaixa() {
             {/* Botões Secundários */}
             <div className="grid grid-cols-3 gap-2">
               <Button
-                onClick={() => handleAbrirMovimento('Reforço')}
-                variant="outline"
-                size="sm"
-                className="gap-1 md:gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300 h-10 md:h-auto"
-                disabled={!contaCaixaPDV}
-              >
+              onClick={() => handleAbrirMovimento('Reforço')}
+              variant="outline"
+              size="sm"
+              className="gap-1 md:gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300 h-10 md:h-auto"
+              disabled={!contaCaixaPDV}>
+
                 <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                 <span className="text-[10px] md:text-xs">Reforço</span>
               </Button>
               
               <Button
-                onClick={() => handleAbrirMovimento('Sangria')}
-                variant="outline"
-                size="sm"
-                className="gap-1 md:gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300 h-10 md:h-auto"
-                disabled={!contaCaixaPDV}
-              >
+              onClick={() => handleAbrirMovimento('Sangria')}
+              variant="outline"
+              size="sm"
+              className="gap-1 md:gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300 h-10 md:h-auto"
+              disabled={!contaCaixaPDV}>
+
                 <Minus className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
                 <span className="text-[10px] md:text-xs">Sangria</span>
               </Button>
 
               <Button
-                onClick={handleFecharCaixa}
-                variant="outline"
-                size="sm"
-                className="gap-1 md:gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300 h-10 md:h-auto"
-              >
+              onClick={handleFecharCaixa}
+              variant="outline"
+              size="sm"
+              className="gap-1 md:gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300 h-10 md:h-auto">
+
                 <Lock className="w-4 h-4 text-red-600 dark:text-red-400" />
                 <span className="text-[10px] md:text-xs">Fechar</span>
               </Button>
             </div>
           </div>
-        )}
+        }
 
-        {view === 'processar' && (
-          <div className="space-y-6 max-w-6xl mx-auto p-4">
+        {view === 'processar' &&
+        <div className="space-y-6 max-w-6xl mx-auto p-4">
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setView('dashboard')}
-              className="gap-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-            >
+            variant="ghost"
+            size="sm"
+            onClick={() => setView('dashboard')}
+            className="gap-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+
               <ArrowLeft className="w-4 h-4" />
               Voltar (ESC)
             </Button>
@@ -808,29 +808,29 @@ export default function PDVCaixa() {
                   Vendas Aguardando Confirmação ({pedidosAguardando.length})
                 </h2>
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={loadData}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                >
+                variant="ghost"
+                size="sm"
+                onClick={loadData}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+
                   Atualizar (F7)
                 </Button>
               </div>
 
-              {pedidosAguardando.length === 0 ? (
-                <div className="py-16 text-center">
+              {pedidosAguardando.length === 0 ?
+            <div className="py-16 text-center">
                   <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                   <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhum pedido aguardando confirmação</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui automaticamente</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pedidosAguardando.map(pedido => (
-                    <div 
-                      key={pedido.id} 
-                      className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                      onClick={() => handleAbrirPedido(pedido)}
-                    >
+                </div> :
+
+            <div className="space-y-3">
+                  {pedidosAguardando.map((pedido) =>
+              <div
+                key={pedido.id}
+                className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                onClick={() => handleAbrirPedido(pedido)}>
+
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="font-semibold text-base text-gray-800 dark:text-gray-200">{pedido.numero}</div>
@@ -841,33 +841,33 @@ export default function PDVCaixa() {
                           <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
                             R$ {formatarValorExibicao(pedido.valor_total)}
                           </div>
-                          <Button 
-                            size="sm"
-                            className="mt-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white"
-                          >
+                          <Button
+                      size="sm"
+                      className="mt-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white">
+
                             Confirmar
                           </Button>
                         </div>
                       </div>
                     </div>
-                  ))}
+              )}
                   <p className="text-xs text-gray-400 text-center pt-2">
                     Enter para processar o primeiro pedido
                   </p>
                 </div>
-              )}
+            }
             </div>
           </div>
-        )}
+        }
 
-        {view === 'balanco' && ( // Updated telaAtual to view
-          <div className="space-y-4 max-w-6xl mx-auto p-4">
+        {view === 'balanco' && // Updated telaAtual to view
+        <div className="space-y-4 max-w-6xl mx-auto p-4">
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView('dashboard')} // Updated setTelaAtual to setView
-              className="gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300"
-            >
+            variant="outline"
+            size="sm"
+            onClick={() => setView('dashboard')} // Updated setTelaAtual to setView
+            className="gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
+
               <ArrowLeft className="w-4 h-4" />
               Voltar (ESC)
             </Button>
@@ -884,7 +884,7 @@ export default function PDVCaixa() {
                 <CardContent className="p-3">
                   <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase">Reforços</div>
                   <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{formatValor(caixaData.reforcos)}</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-500">{movimentos.filter(m => m.tipo === 'Reforço').length} movimento(s)</div>
+                  <div className="text-[10px] text-gray-500 dark:text-gray-500">{movimentos.filter((m) => m.tipo === 'Reforço').length} movimento(s)</div>
                 </CardContent>
               </Card>
 
@@ -892,7 +892,7 @@ export default function PDVCaixa() {
                 <CardContent className="p-3">
                   <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase">Sangrias</div>
                   <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{formatValor(caixaData.sangrias)}</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-500">{movimentos.filter(m => m.tipo === 'Sangria').length} movimento(s)</div>
+                  <div className="text-[10px] text-gray-500 dark:text-gray-500">{movimentos.filter((m) => m.tipo === 'Sangria').length} movimento(s)</div>
                 </CardContent>
               </Card>
             </div>
@@ -906,11 +906,11 @@ export default function PDVCaixa() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {vendasFinalizadas.length === 0 ? (
-                    <p className="text-center py-4 text-sm text-gray-500">Nenhuma venda finalizada hoje</p>
-                  ) : (
-                    vendasFinalizadas.map(venda => (
-                      <div key={venda.id} className="p-2 border rounded hover:bg-gray-50 text-xs dark:border-gray-700 dark:hover:bg-gray-800">
+                  {vendasFinalizadas.length === 0 ?
+                <p className="text-center py-4 text-sm text-gray-500">Nenhuma venda finalizada hoje</p> :
+
+                vendasFinalizadas.map((venda) =>
+                <div key={venda.id} className="p-2 border rounded hover:bg-gray-50 text-xs dark:border-gray-700 dark:hover:bg-gray-800">
                         <div className="flex justify-between">
                           <div>
                             <div className="font-semibold text-gray-800 dark:text-gray-200">{venda.numero} - {venda.cliente_nome}</div>
@@ -926,15 +926,15 @@ export default function PDVCaixa() {
                           </div>
                         </div>
                       </div>
-                    ))
-                  )}
+                )
+                }
                 </div>
-                {vendasFinalizadas.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                {vendasFinalizadas.length > 0 &&
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Subtotal de Vendas:</span>
                     <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatValor(caixaData.totalVendas)}</span>
                   </div>
-                )}
+              }
               </CardContent>
             </Card>
 
@@ -944,18 +944,18 @@ export default function PDVCaixa() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {movimentos.length === 0 ? (
-                    <p className="text-center py-4 text-sm text-gray-500">Nenhuma movimentação registrada</p>
-                  ) : (
-                    movimentos.map((mov, idx) => (
-                      <div key={idx} className="p-2 border rounded text-xs flex justify-between items-start dark:border-gray-700 dark:hover:bg-gray-800">
+                  {movimentos.length === 0 ?
+                <p className="text-center py-4 text-sm text-gray-500">Nenhuma movimentação registrada</p> :
+
+                movimentos.map((mov, idx) =>
+                <div key={idx} className="p-2 border rounded text-xs flex justify-between items-start dark:border-gray-700 dark:hover:bg-gray-800">
                         <div className="flex-1">
                           <div className="font-semibold flex items-center gap-1 text-gray-800 dark:text-gray-200">
-                            {mov.tipo === 'Reforço' ? (
-                              <TrendingUp className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
-                            )}
+                            {mov.tipo === 'Reforço' ?
+                      <TrendingUp className="w-3 h-3 text-teal-600 dark:text-teal-400" /> :
+
+                      <TrendingDown className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                      }
                             {mov.tipo} - {mov.numero || 'S/N'}
                           </div>
                           <div className="text-[10px] text-gray-500 dark:text-gray-500">
@@ -966,11 +966,11 @@ export default function PDVCaixa() {
                           {mov.tipo === 'Reforço' ? '+' : '-'}{formatValor(mov.valor)}
                         </div>
                       </div>
-                    ))
-                  )}
+                )
+                }
                 </div>
-                {movimentos.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
+                {movimentos.length > 0 &&
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-teal-700 dark:text-teal-300 font-semibold">Total Reforços:</span>
                       <span className="font-bold text-teal-600 dark:text-teal-400">+{formatValor(caixaData.reforcos)}</span>
@@ -980,19 +980,19 @@ export default function PDVCaixa() {
                       <span className="font-bold text-yellow-600 dark:text-yellow-400">-{formatValor(caixaData.sangrias)}</span>
                     </div>
                   </div>
-                )}
+              }
               </CardContent>
             </Card>
           </div>
-        )}
+        }
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200">
             <DialogHeader>
               <DialogTitle className="text-lg text-gray-800 dark:text-gray-200">Confirmar Pagamento</DialogTitle>
             </DialogHeader>
-            {pedidoSelecionado && (
-              <div className="space-y-4">
+            {pedidoSelecionado &&
+            <div className="space-y-4">
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400">Pedido</div>
                   <div className="font-bold text-lg text-gray-800 dark:text-gray-200">{pedidoSelecionado.numero}</div>
@@ -1010,126 +1010,126 @@ export default function PDVCaixa() {
                   
                   <div className="space-y-1">
                     {/* Dinheiro */}
-                    <div 
-                      className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 0 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
-                      onClick={() => {
-                        setFormaPagamentoAtiva(0);
-                        inputRefs.dinheiro.current?.focus();
-                      }}
-                    >
+                    <div
+                    className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 0 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
+                    onClick={() => {
+                      setFormaPagamentoAtiva(0);
+                      inputRefs.dinheiro.current?.focus();
+                    }}>
+
                       <div className="flex items-center gap-3">
                         <Banknote className="w-5 h-5 text-gray-400" />
                         <span className="text-base text-gray-700 dark:text-gray-300">Dinheiro</span>
                       </div>
                       <input
-                        ref={inputRefs.dinheiro}
-                        type="text"
-                        inputMode="numeric"
-                        value={inputDinheiro}
-                        onChange={() => {}}
-                        onKeyDown={(e) => handleInputMascara(e, setInputDinheiro, setPagamentosDinheiro)}
-                        onFocus={(e) => {
-                          e.target.select();
-                          setFormaPagamentoAtiva(0);
-                        }}
-                        className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}
-                      />
+                      ref={inputRefs.dinheiro}
+                      type="text"
+                      inputMode="numeric"
+                      value={inputDinheiro}
+                      onChange={() => {}}
+                      onKeyDown={(e) => handleInputMascara(e, setInputDinheiro, setPagamentosDinheiro)}
+                      onFocus={(e) => {
+                        e.target.select();
+                        setFormaPagamentoAtiva(0);
+                      }}
+                      className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`} />
+
                     </div>
 
                     {/* PIX */}
-                    <div 
-                      className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 1 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
-                      onClick={() => {
-                        setFormaPagamentoAtiva(1);
-                        inputRefs.pix.current?.focus();
-                      }}
-                    >
+                    <div
+                    className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 1 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
+                    onClick={() => {
+                      setFormaPagamentoAtiva(1);
+                      inputRefs.pix.current?.focus();
+                    }}>
+
                       <div className="flex items-center gap-3">
                         <Smartphone className="w-5 h-5 text-gray-400" />
                         <span className="text-base text-gray-700 dark:text-gray-300">PIX</span>
                       </div>
                       <input
-                        ref={inputRefs.pix}
-                        type="text"
-                        inputMode="numeric"
-                        value={inputPix}
-                        onChange={() => {}}
-                        onKeyDown={(e) => handleInputMascara(e, setInputPix, setPagamentosPix)}
-                        onFocus={(e) => {
-                          e.target.select();
-                          setFormaPagamentoAtiva(1);
-                        }}
-                        className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 1 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}
-                      />
+                      ref={inputRefs.pix}
+                      type="text"
+                      inputMode="numeric"
+                      value={inputPix}
+                      onChange={() => {}}
+                      onKeyDown={(e) => handleInputMascara(e, setInputPix, setPagamentosPix)}
+                      onFocus={(e) => {
+                        e.target.select();
+                        setFormaPagamentoAtiva(1);
+                      }}
+                      className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 1 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`} />
+
                     </div>
 
                     {/* Cartão Débito */}
-                    <div 
-                      className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 2 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
-                      onClick={() => {
-                        setFormaPagamentoAtiva(2);
-                        inputRefs.debito.current?.focus();
-                      }}
-                    >
+                    <div
+                    className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 2 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
+                    onClick={() => {
+                      setFormaPagamentoAtiva(2);
+                      inputRefs.debito.current?.focus();
+                    }}>
+
                       <div className="flex items-center gap-3">
                         <CreditCard className="w-5 h-5 text-gray-400" />
                         <span className="text-base text-gray-700 dark:text-gray-300">Cartão Débito</span>
                       </div>
                       <input
-                        ref={inputRefs.debito}
-                        type="text"
-                        inputMode="numeric"
-                        value={inputDebito}
-                        onChange={() => {}}
-                        onKeyDown={(e) => handleInputMascara(e, setInputDebito, setPagamentosDebito)}
-                        onFocus={(e) => {
-                          e.target.select();
-                          setFormaPagamentoAtiva(2);
-                        }}
-                        className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}
-                      />
+                      ref={inputRefs.debito}
+                      type="text"
+                      inputMode="numeric"
+                      value={inputDebito}
+                      onChange={() => {}}
+                      onKeyDown={(e) => handleInputMascara(e, setInputDebito, setPagamentosDebito)}
+                      onFocus={(e) => {
+                        e.target.select();
+                        setFormaPagamentoAtiva(2);
+                      }}
+                      className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`} />
+
                     </div>
 
                     {/* Cartão Crédito */}
-                    <div 
-                      className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 3 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
-                      onClick={() => {
-                        setFormaPagamentoAtiva(3);
-                        inputRefs.credito.current?.focus();
-                      }}
-                    >
+                    <div
+                    className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 3 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
+                    onClick={() => {
+                      setFormaPagamentoAtiva(3);
+                      inputRefs.credito.current?.focus();
+                    }}>
+
                       <div className="flex items-center gap-3">
                         <CreditCard className="w-5 h-5 text-gray-400" />
                         <span className="text-base text-gray-700 dark:text-gray-300">Cartão Crédito</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
-                          ref={inputRefs.credito}
-                          type="text"
-                          inputMode="numeric"
-                          value={inputCredito}
-                          onChange={() => {}}
-                          onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}
-                          onFocus={(e) => {
-                            e.target.select();
-                            setFormaPagamentoAtiva(3);
-                          }}
-                          className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`}
-                        />
-                        {pagamentosCredito > 0 && (
-                          <Select value={parcelasCredito.toString()} onValueChange={(v) => setParcelasCredito(parseInt(v))}>
+                        ref={inputRefs.credito}
+                        type="text"
+                        inputMode="numeric"
+                        value={inputCredito}
+                        onChange={() => {}}
+                        onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}
+                        onFocus={(e) => {
+                          e.target.select();
+                          setFormaPagamentoAtiva(3);
+                        }}
+                        className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`} />
+
+                        {pagamentosCredito > 0 &&
+                      <Select value={parcelasCredito.toString()} onValueChange={(v) => setParcelasCredito(parseInt(v))}>
                             <SelectTrigger className="w-16 h-10 bg-transparent border-0 focus:ring-0 text-gray-700 dark:text-gray-300">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
-                              {[...Array(12)].map((_, i) => (
-                                <SelectItem key={i+1} value={(i+1).toString()} className="dark:hover:bg-gray-700">
-                                  {i+1}x
+                              {[...Array(12)].map((_, i) =>
+                          <SelectItem key={i + 1} value={(i + 1).toString()} className="dark:hover:bg-gray-700">
+                                  {i + 1}x
                                 </SelectItem>
-                              ))}
+                          )}
                             </SelectContent>
                           </Select>
-                        )}
+                      }
                       </div>
                     </div>
                   </div>
@@ -1140,37 +1140,37 @@ export default function PDVCaixa() {
                       <span className="text-gray-500 dark:text-gray-400">Total a Pagar</span>
                       <span className="font-medium text-gray-800 dark:text-gray-200">R$ {formatarValorExibicao(pedidoSelecionado.valor_total)}</span>
                     </div>
-                    {troco > 0 && (
-                      <div className="flex justify-between text-lg font-semibold">
+                    {troco > 0 &&
+                  <div className="flex justify-between text-lg font-semibold">
                         <span className="text-emerald-600 dark:text-emerald-400">Troco</span>
                         <span className="text-emerald-600 dark:text-emerald-400">R$ {formatarValorExibicao(troco)}</span>
                       </div>
-                    )}
-                    {valorRestante > 0.01 && (
-                      <div className="flex justify-between text-base">
+                  }
+                    {valorRestante > 0.01 &&
+                  <div className="flex justify-between text-base">
                         <span className="text-gray-500 dark:text-gray-400">Falta</span>
                         <span className="font-medium text-amber-600 dark:text-amber-400">R$ {formatarValorExibicao(valorRestante)}</span>
                       </div>
-                    )}
+                  }
                     
-                    {pagamentoValido && (
-                      <p className="text-sm text-center text-gray-400 pt-3">
+                    {pagamentoValido &&
+                  <p className="text-sm text-center text-gray-400 pt-3">
                         ↵ Enter para aprovar
                       </p>
-                    )}
+                  }
                   </div>
                 </div>
 
                 <Button
-                  onClick={handleFinalizarVenda}
-                  disabled={!pagamentoValido}
-                  className="w-full h-14 text-lg font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
-                >
+                onClick={handleFinalizarVenda}
+                disabled={!pagamentoValido}
+                className="w-full h-14 text-lg font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl">
+
                   <CheckCircle2 className="w-5 h-5 mr-2" />
                   Aprovar Pagamento {pagamentoValido && '(Enter)'}
                 </Button>
               </div>
-            )}
+            }
           </DialogContent>
         </Dialog>
 
@@ -1178,27 +1178,27 @@ export default function PDVCaixa() {
           <DialogContent className="max-w-sm dark:bg-gray-900 dark:text-gray-200">
             <DialogHeader>
               <DialogTitle className="text-base flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                {tipoMovimento === 'Reforço' ? (
-                  <><Plus className="w-5 h-5 text-teal-600 dark:text-teal-400" /> Reforço de Caixa</>
-                ) : (
-                  <><Minus className="w-5 h-5 text-yellow-600 dark:text-yellow-400" /> Sangria de Caixa</>
-                )}
+                {tipoMovimento === 'Reforço' ?
+                <><Plus className="w-5 h-5 text-teal-600 dark:text-teal-400" /> Reforço de Caixa</> :
+
+                <><Minus className="w-5 h-5 text-yellow-600 dark:text-yellow-400" /> Sangria de Caixa</>
+                }
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              {contaCaixaPDV && (
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+              {contaCaixaPDV &&
+              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
                   <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Conta:</div>
                   <div className="font-semibold text-gray-800 dark:text-gray-200">{contaCaixaPDV.nome}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Saldo: {formatValor(contaCaixaPDV.saldo_atual)}</div>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    {tipoMovimento === 'Sangria' 
-                      ? 'O valor será DEBITADO desta conta.'
-                      : 'O valor será CREDITADO nesta conta.'
-                    }
+                    {tipoMovimento === 'Sangria' ?
+                  'O valor será DEBITADO desta conta.' :
+                  'O valor será CREDITADO nesta conta.'
+                  }
                   </p>
                 </div>
-              )}
+              }
               <div>
                 <Label className="text-gray-700 dark:text-gray-300">Valor (R$) *</Label>
                 <Input
@@ -1207,8 +1207,8 @@ export default function PDVCaixa() {
                   value={valorMovimento}
                   onChange={(e) => setValorMovimento(e.target.value)}
                   className="h-12 text-lg font-bold dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                  autoFocus
-                />
+                  autoFocus />
+
               </div>
               <div>
                 <Label className="text-gray-700 dark:text-gray-300">Observação</Label>
@@ -1217,17 +1217,17 @@ export default function PDVCaixa() {
                   value={observacaoMovimento}
                   onChange={(e) => setObservacaoMovimento(e.target.value)}
                   rows={3}
-                  className="dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                />
+                  className="dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600" />
+
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setShowMovimentoDialog(false)} className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
                   Cancelar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSalvarMovimento}
-                  className={`flex-1 ${tipoMovimento === 'Reforço' ? 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600' : 'bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600'}`}
-                >
+                  className={`flex-1 ${tipoMovimento === 'Reforço' ? 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600' : 'bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600'}`}>
+
                   Confirmar
                 </Button>
               </div>
@@ -1271,12 +1271,12 @@ export default function PDVCaixa() {
                 </div>
               </div>
 
-              {movimentoCriado?.observacao && (
-                <div className="mb-4">
+              {movimentoCriado?.observacao &&
+              <div className="mb-4">
                   <p className="text-xs text-gray-600 dark:text-gray-400">Observação:</p>
                   <p className="text-sm text-gray-800 dark:text-gray-200">{movimentoCriado.observacao}</p>
                 </div>
-              )}
+              }
 
               <div className="text-center text-xs border-t-2 border-dashed border-gray-400 pt-4 dark:border-gray-500">
                 <p className="text-gray-700 dark:text-gray-300">Este não é um comprovante fiscal</p>
@@ -1336,7 +1336,7 @@ export default function PDVCaixa() {
                 <Button variant="outline" onClick={() => setShowFechamentoDialog(false)} className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
                   Cancelar
                 </Button>
-                <Button 
+                <Button
                   onClick={() => {
                     toast({
                       title: "✓ Caixa fechado!",
@@ -1345,8 +1345,8 @@ export default function PDVCaixa() {
                     });
                     setShowFechamentoDialog(false);
                   }}
-                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
-                >
+                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600">
+
                   Confirmar Fechamento
                 </Button>
               </div>
@@ -1362,8 +1362,8 @@ export default function PDVCaixa() {
                 <p className="text-sm text-gray-700 dark:text-gray-300">Comprovante de Venda</p>
               </div>
 
-              {vendaFinalizada && (
-                <>
+              {vendaFinalizada &&
+              <>
                   <div className="space-y-2 text-sm mb-4 text-gray-700 dark:text-gray-300">
                     <div className="flex justify-between">
                       <span>Pedido:</span>
@@ -1394,18 +1394,18 @@ export default function PDVCaixa() {
                     </div>
                     
                     <div className="text-sm space-y-1 pt-2 border-t border-gray-300 dark:border-gray-600">
-                      {vendaFinalizada.pagamentos?.map((pag, idx) => (
-                        <div key={idx} className="flex justify-between text-gray-700 dark:text-gray-300">
+                      {vendaFinalizada.pagamentos?.map((pag, idx) =>
+                    <div key={idx} className="flex justify-between text-gray-700 dark:text-gray-300">
                           <span>{pag.forma_pagamento} {pag.parcelas > 1 && `${pag.parcelas}x`}</span>
                           <span className="text-gray-800 dark:text-gray-200">{formatValor(pag.valor)}</span>
                         </div>
-                      ))}
-                      {vendaFinalizada.pagamentos?.find(p => p.troco > 0) && (
-                        <div className="flex justify-between font-bold text-yellow-600 dark:text-yellow-400">
+                    )}
+                      {vendaFinalizada.pagamentos?.find((p) => p.troco > 0) &&
+                    <div className="flex justify-between font-bold text-yellow-600 dark:text-yellow-400">
                           <span>Troco:</span>
-                          <span>{formatValor(vendaFinalizada.pagamentos.find(p => p.troco > 0).troco)}</span>
+                          <span>{formatValor(vendaFinalizada.pagamentos.find((p) => p.troco > 0).troco)}</span>
                         </div>
-                      )}
+                    }
                     </div>
                   </div>
 
@@ -1414,7 +1414,7 @@ export default function PDVCaixa() {
                     <p className="mt-2 text-gray-700 dark:text-gray-300">Este não é um documento fiscal</p>
                   </div>
                 </>
-              )}
+              }
 
               <div className="mt-6 flex justify-center gap-2 print:hidden">
                 <Button onClick={() => window.print()} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white">
@@ -1429,6 +1429,6 @@ export default function PDVCaixa() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
-  );
+    </div>);
+
 }
