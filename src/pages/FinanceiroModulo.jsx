@@ -39,9 +39,9 @@ export default function FinanceiroModuloPage() {
     setIsLoading(true);
     const tenantId = getTenantId();
     const [accountsData, transactionsData] = await Promise.all([
-      base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId }),
-      base44.entities.LancamentoFinanceiro.filter({ empresa_id: tenantId })
-    ]);
+    base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId }),
+    base44.entities.LancamentoFinanceiro.filter({ empresa_id: tenantId })]
+    );
     setAccounts(accountsData);
     setTransactions(transactionsData);
     setIsLoading(false);
@@ -106,18 +106,18 @@ export default function FinanceiroModuloPage() {
 
   // Calcular estatísticas
   const saldoTotal = accounts.reduce((acc, a) => acc + (a.saldo_atual || 0), 0);
-  
+
   const hoje = new Date();
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  
-  const receitasMes = transactions
-    .filter(t => t.tipo === 'Receita' && t.status === 'Pago' && new Date(t.data_pagamento) >= inicioMes)
-    .reduce((acc, t) => acc + (t.valor || 0), 0);
-  
-  const despesasMes = transactions
-    .filter(t => t.tipo === 'Despesa' && t.status === 'Pago' && new Date(t.data_pagamento) >= inicioMes)
-    .reduce((acc, t) => acc + (t.valor || 0), 0);
-  
+
+  const receitasMes = transactions.
+  filter((t) => t.tipo === 'Receita' && t.status === 'Pago' && new Date(t.data_pagamento) >= inicioMes).
+  reduce((acc, t) => acc + (t.valor || 0), 0);
+
+  const despesasMes = transactions.
+  filter((t) => t.tipo === 'Despesa' && t.status === 'Pago' && new Date(t.data_pagamento) >= inicioMes).
+  reduce((acc, t) => acc + (t.valor || 0), 0);
+
   const saldoMes = receitasMes - despesasMes;
 
   const formatCurrency = (value) => {
@@ -132,26 +132,26 @@ export default function FinanceiroModuloPage() {
           <h2 className="text-sm font-medium text-gray-800 dark:text-gray-200">Financeiro</h2>
         </div>
         
-        <Link 
+        <Link
           to={createPageUrl('CaixasAtivos')}
-          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
+          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+
           <Wallet className="w-4 h-4" />
           Caixas Ativos
         </Link>
         
-        <Link 
+        <Link
           to={createPageUrl('FinanceiroModulo')}
-          className="flex items-center gap-3 px-3 py-2 rounded text-sm bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium"
-        >
+          className="flex items-center gap-3 px-3 py-2 rounded text-sm bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium">
+
           <DollarSign className="w-4 h-4" />
           Gestão de Contas
         </Link>
         
-        <Link 
+        <Link
           to={createPageUrl('Configuracoes')}
-          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
+          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+
           <CreditCard className="w-4 h-4" />
           Formas de Pagamento
         </Link>
@@ -168,26 +168,26 @@ export default function FinanceiroModuloPage() {
       {/* KPIs - SEM CORES, SEM CARDS */}
       <div className="grid grid-cols-4 gap-8 pb-6 border-b border-gray-200 dark:border-gray-700">
         <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo Total</div>
-          <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(saldoTotal)}</div>
+          <div className="text-gray-500 mb-1 px-5 text-xs dark:text-gray-400">Saldo Total</div>
+          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(saldoTotal)}</div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{accounts.length} conta(s)</p>
         </div>
 
         <div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Receitas (Mês)</div>
-          <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(receitasMes)}</div>
+          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(receitasMes)}</div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Recebidas</p>
         </div>
 
         <div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Despesas (Mês)</div>
-          <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(despesasMes)}</div>
+          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(despesasMes)}</div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pagas</p>
         </div>
 
         <div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo do Mês</div>
-          <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(saldoMes)}</div>
+          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(saldoMes)}</div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Resultado</p>
         </div>
       </div>
@@ -195,17 +195,17 @@ export default function FinanceiroModuloPage() {
       <Tabs defaultValue="caixa" className="w-full">
         <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
           <div className="flex w-full">
-            <TabsTrigger 
-              value="caixa" 
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+            <TabsTrigger
+                value="caixa"
+                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
               <DollarSign className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Fluxo de Caixa</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="contas" 
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+            <TabsTrigger
+                value="contas"
+                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
               <Wallet className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Contas</span>
             </TabsTrigger>
@@ -231,15 +231,15 @@ export default function FinanceiroModuloPage() {
               </div>
 
               {/* Lista de Contas */}
-              {accounts.length === 0 ? (
+              {accounts.length === 0 ?
                 <div className="text-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
                   <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                   <p className="text-gray-500 dark:text-gray-400 mb-4">Nenhuma conta cadastrada</p>
                   <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600">
                     <PlusCircle className="w-4 h-4" /> Criar Primeira Conta
                   </Button>
-                </div>
-              ) : (
+                </div> :
+
                 <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden bg-white dark:bg-gray-800">
                   <Table>
                     <TableHeader className="bg-gray-50 dark:bg-gray-700">
@@ -253,8 +253,8 @@ export default function FinanceiroModuloPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {accounts.map(account => (
-                        <TableRow key={account.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                      {accounts.map((account) =>
+                      <TableRow key={account.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                           <TableCell className="font-medium text-gray-800 dark:text-gray-200">{account.nome}</TableCell>
                           <TableCell className="text-gray-600 dark:text-gray-400">{account.tipo}</TableCell>
                           <TableCell className="text-gray-600 dark:text-gray-400">{account.banco || '-'}</TableCell>
@@ -263,39 +263,39 @@ export default function FinanceiroModuloPage() {
                           </TableCell>
                           <TableCell>
                             <span className={`px-2 py-1 rounded text-xs ${
-                              account.ativo 
-                                ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' 
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-500'
-                            }`}>
+                          account.ativo ?
+                          'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' :
+                          'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-500'}`
+                          }>
                               {account.ativo ? 'Ativa' : 'Inativa'}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex gap-2 justify-end">
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleEditAccount(account)}
-                                className="hover:bg-gray-100 dark:hover:bg-gray-600"
-                              >
+                              <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditAccount(account)}
+                              className="hover:bg-gray-100 dark:hover:bg-gray-600">
+
                                 <Edit className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleDeleteAccount(account.id)}
-                                className="hover:bg-gray-100 dark:hover:bg-gray-600"
-                              >
+                              <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteAccount(account.id)}
+                              className="hover:bg-gray-100 dark:hover:bg-gray-600">
+
                                 <Trash2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                               </Button>
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </div>
-              )}
+                }
             </div>
           </TabsContent>
         </div>
@@ -312,16 +312,16 @@ export default function FinanceiroModuloPage() {
           <div className="space-y-4 py-4">
             <div>
               <Label className="text-gray-700 dark:text-gray-300">Nome da Conta</Label>
-              <Input 
-                value={formData.nome}
-                onChange={e => setFormData({...formData, nome: e.target.value})}
-                placeholder="Ex: Caixa Loja 1"
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-              />
+              <Input
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  placeholder="Ex: Caixa Loja 1"
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+
             </div>
             <div>
               <Label className="text-gray-700 dark:text-gray-300">Tipo</Label>
-              <Select value={formData.tipo} onValueChange={v => setFormData({...formData, tipo: v})}>
+              <Select value={formData.tipo} onValueChange={(v) => setFormData({ ...formData, tipo: v })}>
                 <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                   <SelectValue />
                 </SelectTrigger>
@@ -336,13 +336,13 @@ export default function FinanceiroModuloPage() {
             </div>
             <div>
               <Label className="text-gray-700 dark:text-gray-300">Saldo Inicial</Label>
-              <Input 
-                type="number"
-                step="0.01"
-                value={formData.saldo_inicial}
-                onChange={e => setFormData({...formData, saldo_inicial: parseFloat(e.target.value) || 0})}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-              />
+              <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.saldo_inicial}
+                  onChange={(e) => setFormData({ ...formData, saldo_inicial: parseFloat(e.target.value) || 0 })}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" />
+
             </div>
           </div>
           <DialogFooter>
@@ -356,6 +356,6 @@ export default function FinanceiroModuloPage() {
         </DialogContent>
       </Dialog>
       </div>
-    </div>
-  );
+    </div>);
+
 }
