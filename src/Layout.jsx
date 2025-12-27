@@ -123,8 +123,6 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const menuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
-    { name: 'Relatórios', icon: BookOpen, page: 'Relatorios' },
     { 
       name: 'PDV', 
       icon: Monitor, 
@@ -171,6 +169,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Parâmetros', page: 'Configuracoes' }
       ]
     },
+    { name: 'Relatórios', icon: BookOpen, page: 'Relatorios' },
     { name: 'Manual', icon: BookOpen, page: 'Manual' }
   ];
 
@@ -184,7 +183,6 @@ export default function Layout({ children, currentPageName }) {
         });
       }
     });
-    items.push({ name: 'Relatório de Margem', page: 'RelatorioMargem', icon: TrendingUp, parent: 'Relatórios' });
     return items;
   }, []);
 
@@ -369,29 +367,6 @@ export default function Layout({ children, currentPageName }) {
             </div>
           )}
 
-          {/* Atalhos PDV */}
-          {(isOpen || isMobile) && (
-            <div className="p-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 space-y-1">
-              <p className="text-[10px] px-2 mb-1 text-gray-500 dark:text-gray-400">Atalhos</p>
-              <Link
-                to={createPageUrl('PDV?mode=vendedor')}
-                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
-                onClick={closeMobileMenu}
-              >
-                <Monitor className="w-4 h-4" />
-                <span>PDV Vendedor</span>
-              </Link>
-              <Link
-                to={createPageUrl('PDV?mode=caixa')}
-                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
-                onClick={closeMobileMenu}
-              >
-                <Receipt className="w-4 h-4" />
-                <span>PDV Caixa</span>
-              </Link>
-            </div>
-          )}
-
           {/* Menu Principal */}
           <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
             {(isOpen || isMobile) && (
@@ -409,7 +384,14 @@ export default function Layout({ children, currentPageName }) {
                   {hasSubmenu ? (
                     <>
                       <button
-                        onClick={() => toggleSubmenu(item.name)}
+                        onClick={() => {
+                          // Close all other menus
+                          const newExpanded = {};
+                          if (!isExpanded) {
+                            newExpanded[item.name] = true;
+                          }
+                          setExpandedMenus(newExpanded);
+                        }}
                         className={`w-full flex items-center gap-2 px-2 py-2 rounded transition-colors ${
                           isActive
                             ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'

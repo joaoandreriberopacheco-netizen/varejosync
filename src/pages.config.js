@@ -1,61 +1,63 @@
-import Dashboard from './pages/Dashboard';
-import Produtos from './pages/Produtos';
-import Terceiros from './pages/Terceiros';
-import Vendas from './pages/Vendas';
-import Compras from './pages/Compras';
-import Estoque from './pages/Estoque';
-import Financeiro from './pages/Financeiro';
-import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
-import Logistica from './pages/Logistica';
-import TabelasPreco from './pages/TabelasPreco';
+import AutoAtendimento from './pages/AutoAtendimento';
+import CaixasAtivos from './pages/CaixasAtivos';
 import Campanhas from './pages/Campanhas';
-import Veiculos from './pages/Veiculos';
-import Relatorios from './pages/Relatorios';
-import MapaFuncionalidades from './pages/MapaFuncionalidades';
+import Compras from './pages/Compras';
+import Configuracoes from './pages/Configuracoes';
+import Dashboard from './pages/Dashboard';
+import DebugTenant from './pages/DebugTenant';
+import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
+import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
+import Financeiro from './pages/Financeiro';
+import FinanceiroModulo from './pages/FinanceiroModulo';
+import Home from './pages/Home';
+import Intervenientes from './pages/Intervenientes';
+import Logistica from './pages/Logistica';
+import Manual from './pages/Manual';
+import MapaFuncionalidades from './pages/MapaFuncionalidades';
 import Operacoes from './pages/Operacoes';
 import PDV from './pages/PDV';
-import VendasGestao from './pages/VendasGestao';
-import FinanceiroModulo from './pages/FinanceiroModulo';
-import Configuracoes from './pages/Configuracoes';
-import CaixasAtivos from './pages/CaixasAtivos';
-import VendasPerdidas from './pages/VendasPerdidas';
-import Manual from './pages/Manual';
-import DebugTenant from './pages/DebugTenant';
-import AutoAtendimento from './pages/AutoAtendimento';
+import Produtos from './pages/Produtos';
 import RelatorioMargem from './pages/RelatorioMargem';
-import Intervenientes from './pages/Intervenientes';
+import Relatorios from './pages/Relatorios';
+import TabelasPreco from './pages/TabelasPreco';
+import Terceiros from './pages/Terceiros';
+import Veiculos from './pages/Veiculos';
+import Vendas from './pages/Vendas';
+import VendasGestao from './pages/VendasGestao';
+import VendasPerdidas from './pages/VendasPerdidas';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Produtos": Produtos,
-    "Terceiros": Terceiros,
-    "Vendas": Vendas,
-    "Compras": Compras,
-    "Estoque": Estoque,
-    "Financeiro": Financeiro,
-    "EdicaoMassivaCustos": EdicaoMassivaCustos,
-    "Logistica": Logistica,
-    "TabelasPreco": TabelasPreco,
+    "AutoAtendimento": AutoAtendimento,
+    "CaixasAtivos": CaixasAtivos,
     "Campanhas": Campanhas,
-    "Veiculos": Veiculos,
-    "Relatorios": Relatorios,
-    "MapaFuncionalidades": MapaFuncionalidades,
+    "Compras": Compras,
+    "Configuracoes": Configuracoes,
+    "Dashboard": Dashboard,
+    "DebugTenant": DebugTenant,
+    "EdicaoMassivaCustos": EdicaoMassivaCustos,
+    "Estoque": Estoque,
     "Expedicao": Expedicao,
+    "Financeiro": Financeiro,
+    "FinanceiroModulo": FinanceiroModulo,
+    "Home": Home,
+    "Intervenientes": Intervenientes,
+    "Logistica": Logistica,
+    "Manual": Manual,
+    "MapaFuncionalidades": MapaFuncionalidades,
     "Operacoes": Operacoes,
     "PDV": PDV,
-    "VendasGestao": VendasGestao,
-    "FinanceiroModulo": FinanceiroModulo,
-    "Configuracoes": Configuracoes,
-    "CaixasAtivos": CaixasAtivos,
-    "VendasPerdidas": VendasPerdidas,
-    "Manual": Manual,
-    "DebugTenant": DebugTenant,
-    "AutoAtendimento": AutoAtendimento,
+    "Produtos": Produtos,
     "RelatorioMargem": RelatorioMargem,
-    "Intervenientes": Intervenientes,
+    "Relatorios": Relatorios,
+    "TabelasPreco": TabelasPreco,
+    "Terceiros": Terceiros,
+    "Veiculos": Veiculos,
+    "Vendas": Vendas,
+    "VendasGestao": VendasGestao,
+    "VendasPerdidas": VendasPerdidas,
 }
 
 export const pagesConfig = {
