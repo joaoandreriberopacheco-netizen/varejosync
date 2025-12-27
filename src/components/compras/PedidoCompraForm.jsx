@@ -666,144 +666,80 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           </TabsList>
 
           <div className="flex-1 overflow-y-auto">
-            <TabsContent value="dados-gerais" className="mt-0 p-4 space-y-4 border-0">
-            
-            {/* Header Compacto - Grid Principal */}
-            <div className="grid grid-cols-12 gap-x-4 gap-y-2">
-              {/* Fornecedor (Largo) */}
-              <div className="col-span-12 lg:col-span-4">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Fornecedor *</Label>
-                <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm focus:ring-0 shadow-sm">
-                    <SelectValue placeholder="Selecione o fornecedor..." />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
-                    {fornecedores.map(f => (
-                      <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <TabsContent value="dados-gerais" className="mt-0 px-3 py-6 space-y-6 border-0">
+              {/* Número do Pedido */}
+              {pedido?.numero && (
+                <div className="flex items-center justify-between pb-4">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Número do Pedido</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{pedido.numero}</span>
+                </div>
+              )}
 
-              {/* Status */}
-              <div className="col-span-6 lg:col-span-2">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Status</Label>
-                <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm focus:ring-0 shadow-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
-                    {['Rascunho', 'Enviado', 'Aguardando Recepção', 'Recebido Parcialmente', 'Recebido', 'Cancelado'].map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Datas (Emissão, Previsão) */}
-              <div className="col-span-6 lg:col-span-2">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Emissão</Label>
-                <Input 
-                  type="date" 
-                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
-                  value={formData.data_emissao} 
-                  onChange={e => handleChange('data_emissao', e.target.value)} 
-                />
-              </div>
-
-              <div className="col-span-6 lg:col-span-2">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Entrega</Label>
-                <Input 
-                  type="date" 
-                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
-                  value={formData.data_prevista_entrega} 
-                  onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
-                />
-              </div>
-              
-               <div className="col-span-6 lg:col-span-2">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Prazo (Dias)</Label>
-                <Input 
-                  type="number" 
-                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
-                  value={formData.prazo_entrega_dias} 
-                  onChange={e => handleChange('prazo_entrega_dias', parseInt(e.target.value) || 0)} 
-                />
-              </div>
-
-              {/* Linha 2: Tags e Valores Globais (Frete/Desconto) */}
-              <div className="col-span-12 lg:col-span-4 flex items-center gap-2">
-                 <div className="flex-1">
-                    <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Tags</Label>
-                    <Input 
-                      className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
-                      placeholder="Ex: Urgente, Reposição..."
-                      value={formData.tags?.join(', ') || ''} 
-                      onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
-                    />
-                 </div>
-              </div>
-
-               <div className="col-span-4 lg:col-span-2">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Frete (R$)</Label>
-                <Input 
-                  type="number" step="0.01"
-                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm font-medium shadow-sm" 
-                  value={formData.valor_frete} 
-                  onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)} 
-                />
-              </div>
-
-              <div className="col-span-4 lg:col-span-2">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Desc. (%)</Label>
-                <Input 
-                  type="number" step="0.01"
-                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm shadow-sm" 
-                  value={formData.percentual_desconto?.toFixed(2) || 0} 
-                  onChange={e => handleDescontoPercentualChange(e.target.value)} 
-                />
-              </div>
-
-              <div className="col-span-4 lg:col-span-2">
-                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-1 block">Desc. (R$)</Label>
-                <Input 
-                  type="number" step="0.01"
-                  className="bg-gray-50 dark:bg-gray-800 border-none h-9 text-sm font-medium shadow-sm" 
-                  value={formData.valor_desconto?.toFixed(2) || 0} 
-                  onChange={e => handleDescontoValorChange(e.target.value)} 
-                />
-              </div>
-              
-              {/* Observação Expansível */}
-              <div className="col-span-12">
-                 <Input 
-                    className="bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none px-0 h-8 text-sm focus:ring-0 placeholder:text-gray-400" 
-                    placeholder="Adicionar observações ou histórico..."
-                    value={formData.observacoes} 
-                    onChange={e => handleChange('observacoes', e.target.value)} 
-                  />
-              </div>
-            </div>
-
+              {/* Fornecedor com ícone */}
               <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Fornecedor *</Label>
-                <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Fornecedor *</Label>
+                <div 
+                  onClick={() => {
+                    const modal = document.getElementById('fornecedor-selector-mobile');
+                    if (modal) modal.classList.remove('hidden');
+                  }}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center gap-3 active:scale-[0.98] transition-transform"
+                >
+                  <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {formData.fornecedor_nome || 'Selecionar fornecedor'}
+                    </div>
+                    {!formData.fornecedor_nome && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Toque para escolher</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal de Seleção de Fornecedor */}
+              <div 
+                id="fornecedor-selector-mobile"
+                className="hidden fixed inset-0 bg-black/50 z-[9999] flex items-end"
+                onClick={(e) => {
+                  if (e.target.id === 'fornecedor-selector-mobile') {
+                    e.target.classList.add('hidden');
+                  }
+                }}
+              >
+                <div className="bg-white dark:bg-gray-900 w-full rounded-t-2xl max-h-[80vh] flex flex-col shadow-2xl">
+                  <div className="p-4 border-b-0">
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Selecionar Fornecedor</h3>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-3">
                     {fornecedores.map(f => (
-                      <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      <div
+                        key={f.id}
+                        onClick={() => {
+                          handleFornecedorChange(f.id);
+                          document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
+                        }}
+                        className={`p-4 rounded-xl mb-3 flex items-center gap-3 active:scale-[0.98] transition-transform shadow-sm ${
+                          formData.fornecedor_id === f.id ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="w-9 h-9 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{f.nome}</span>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Status</Label>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Status</Label>
                   <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm">
+                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
@@ -814,10 +750,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Emissão</Label>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Emissão</Label>
                   <Input 
                     type="date" 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                     value={formData.data_emissao} 
                     onChange={e => handleChange('data_emissao', e.target.value)} 
                   />
@@ -825,42 +761,43 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
 
               <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Entrega Prevista</Label>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Tags</Label>
                 <Input 
-                  type="date" 
-                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" 
-                  value={formData.data_prevista_entrega} 
-                  onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                  placeholder="Ex: Urgente, Reposição..."
+                  value={formData.tags?.join(', ') || ''} 
+                  onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
                 />
               </div>
 
               <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Observações</Label>
-                <Input 
-                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" 
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Observações</Label>
+                <Textarea 
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
                   placeholder="Observações do pedido..."
+                  rows={3}
                   value={formData.observacoes} 
                   onChange={e => handleChange('observacoes', e.target.value)} 
                 />
               </div>
 
               {/* Footer dentro da tab */}
-              <div className="pt-6 mt-6 space-y-3">
+              <div className="pt-8 mt-8 space-y-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{formData.itens.length} item(s)</span>
+                  <span className="text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
                   <div className="text-right">
-                    <span className="text-gray-600 dark:text-gray-400 text-xs block">Total</span>
-                    <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs block">Total</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm">
+                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm h-12">
                     Cancelar
                   </Button>
                   <Button 
                     onClick={handleInitiateSave} 
                     disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm h-12"
                   >
                     {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
                   </Button>
@@ -892,44 +829,56 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 formatCurrency={formatCurrency}
               />
 
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Frete Total</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-3">
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Frete Total</Label>
                   <Input 
                     type="number" step="0.01"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                    placeholder="R$ 0,00"
                     value={formData.valor_frete} 
                     onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)} 
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Desconto Total</Label>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Desc. (%)</Label>
                   <Input 
                     type="number" step="0.01"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" 
-                    value={formData.valor_desconto} 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                    placeholder="0,00"
+                    value={formData.percentual_desconto?.toFixed(2) || 0} 
+                    onChange={e => handleDescontoPercentualChange(e.target.value)} 
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Desc. (R$)</Label>
+                  <Input 
+                    type="number" step="0.01"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                    placeholder="R$ 0,00"
+                    value={formData.valor_desconto?.toFixed(2) || 0} 
                     onChange={e => handleDescontoValorChange(e.target.value)} 
                   />
                 </div>
               </div>
 
               {/* Footer dentro da tab */}
-              <div className="pt-6 mt-6 space-y-3">
+              <div className="pt-8 mt-8 space-y-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{formData.itens.length} item(s)</span>
+                  <span className="text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
                   <div className="text-right">
-                    <span className="text-gray-600 dark:text-gray-400 text-xs block">Total</span>
-                    <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs block">Total</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm">
+                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm h-12">
                     Cancelar
                   </Button>
                   <Button 
                     onClick={handleInitiateSave} 
                     disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm h-12"
                   >
                     {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
                   </Button>
@@ -956,22 +905,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
 
               {/* Footer dentro da tab */}
-              <div className="pt-6 mt-6 space-y-3">
+              <div className="pt-8 mt-8 space-y-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{formData.itens.length} item(s)</span>
+                  <span className="text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
                   <div className="text-right">
-                    <span className="text-gray-600 dark:text-gray-400 text-xs block">Total</span>
-                    <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs block">Total</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm">
+                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm h-12">
                     Cancelar
                   </Button>
                   <Button 
                     onClick={handleInitiateSave} 
                     disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm h-12"
                   >
                     {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
                   </Button>
@@ -981,7 +930,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
             <TabsContent value="logistica" className="mt-0 px-3 py-6 space-y-6 border-0">
               {supermanifesto ? (
-                <div className="p-4 bg-teal-50 rounded-lg shadow-sm border-0 dark:bg-teal-900/20">
+                <div className="p-4 bg-teal-50 rounded-xl shadow-sm border-0 dark:bg-teal-900/20">
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className="text-xs text-teal-700 dark:text-teal-300">Manifesto</span>
@@ -1065,22 +1014,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               )}
 
               {/* Footer dentro da tab */}
-              <div className="pt-6 mt-6 space-y-3">
+              <div className="pt-8 mt-8 space-y-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{formData.itens.length} item(s)</span>
+                  <span className="text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
                   <div className="text-right">
-                    <span className="text-gray-600 dark:text-gray-400 text-xs block">Total</span>
-                    <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs block">Total</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm">
+                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm h-12">
                     Cancelar
                   </Button>
                   <Button 
                     onClick={handleInitiateSave} 
                     disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm"
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm h-12"
                   >
                     {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
                   </Button>
