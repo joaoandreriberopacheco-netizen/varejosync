@@ -37,7 +37,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     };
   }).filter(Boolean);
 
-  const temItensComDiferenca = itensComComparacao.some(i => i.temDiferenca);
+  const qtdItensComDiferenca = itensComComparacao.filter(i => i.temDiferenca).length;
 
   const handleToggle = (produtoId) => {
     setSelecionados(prev => ({
@@ -98,57 +98,41 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     }
   };
 
-  if (!temItensComDiferenca) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-gray-500" />
-              Atualização de Preços
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              Nenhuma alteração de custo detectada nos produtos deste pedido.
-            </p>
-          </div>
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={() => onClose(false)}>
-              Fechar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-teal-600" />
-            Atualizar Preços de Venda
+            Revisar Preços de Venda
           </DialogTitle>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Os custos dos produtos foram atualizados. Revise e selecione quais preços de venda deseja ajustar.
+            {qtdItensComDiferenca > 0 
+              ? `${qtdItensComDiferenca} produto(s) com alteração de custo detectada. Revise e selecione quais preços deseja atualizar.`
+              : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
           </p>
         </DialogHeader>
 
         <div className="mt-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {itensComComparacao.filter(i => i.temDiferenca).length} produto(s) com alteração de custo
+              {itensComComparacao.length} produto(s) no pedido
+              {qtdItensComDiferenca > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded text-[10px] font-medium">
+                  {qtdItensComDiferenca} com alteração
+                </span>
+              )}
             </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSelecionarTodos}
-              className="text-xs h-7"
-            >
-              Selecionar Todos
-            </Button>
+            {qtdItensComDiferenca > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSelecionarTodos}
+                className="text-xs h-7"
+              >
+                Selecionar Alterados
+              </Button>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -163,11 +147,13 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
               >
                 <div className="flex items-start gap-3">
                   <div className="pt-1">
-                    {item.temDiferenca && (
+                    {item.temDiferenca ? (
                       <Checkbox
                         checked={selecionados[item.produto_id] || false}
                         onCheckedChange={() => handleToggle(item.produto_id)}
                       />
+                    ) : (
+                      <div className="w-4 h-4" />
                     )}
                   </div>
 
@@ -253,15 +239,17 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             onClick={() => onClose(false)}
             disabled={processando}
           >
-            Ignorar
+            {qtdItensComDiferenca > 0 ? 'Ignorar' : 'Fechar'}
           </Button>
-          <Button
-            onClick={handleAplicar}
-            disabled={processando || Object.keys(selecionados).length === 0}
-            className="bg-teal-600 hover:bg-teal-700"
-          >
-            {processando ? 'Aplicando...' : `Aplicar ${Object.keys(selecionados).filter(k => selecionados[k]).length} Selecionado(s)`}
-          </Button>
+          {qtdItensComDiferenca > 0 && (
+            <Button
+              onClick={handleAplicar}
+              disabled={processando || Object.keys(selecionados).filter(k => selecionados[k]).length === 0}
+              className="bg-teal-600 hover:bg-teal-700"
+            >
+              {processando ? 'Aplicando...' : `Aplicar ${Object.keys(selecionados).filter(k => selecionados[k]).length} Selecionado(s)`}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
