@@ -162,9 +162,24 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     }
   };
 
+  const formatMoney = (value) => {
+    const num = parseFloat(value) || 0;
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const parseMoney = (str) => {
+    if (!str) return 0;
+    return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
+  };
+
+  const handleMoneyChange = (produtoId, field, value) => {
+    const numValue = parseMoney(value);
+    handleCostChange(produtoId, field, numValue);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="!max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-teal-600" />
@@ -199,150 +214,147 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             )}
           </div>
 
-          <div className="space-y-2">
-            {itensComComparacao.map(item => (
-              <div
-                key={item.produto_id}
-                className={`p-3 rounded-lg transition-all ${
-                  item.temDiferenca
-                    ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800'
-                    : 'bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="pt-1">
-                    {item.temDiferenca ? (
-                      <Checkbox
-                        checked={selecionados[item.produto_id] || false}
-                        onCheckedChange={() => handleToggle(item.produto_id)}
-                      />
-                    ) : (
-                      <div className="w-4 h-4" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                        {item.produto_nome}
-                      </h4>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="w-8 p-2"></th>
+                  <th className="text-left p-2 min-w-[200px]">Produto</th>
+                  <th className="text-center p-2 w-[100px]">Preço Compra</th>
+                  <th className="text-center p-2 w-[100px]">Desconto</th>
+                  <th className="text-center p-2 w-[90px]">Frete</th>
+                  <th className="text-center p-2 w-[90px]">Imp 1</th>
+                  <th className="text-center p-2 w-[90px]">Imp 2</th>
+                  <th className="text-center p-2 w-[90px]">Outros</th>
+                  <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">Custo Total</th>
+                  <th className="text-center p-2 w-[80px]">Markup %</th>
+                  <th className="text-center p-2 w-[110px] bg-teal-50 dark:bg-teal-900/20 font-bold">Preço Venda</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itensComComparacao.map(item => (
+                  <tr
+                    key={item.produto_id}
+                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                      item.temDiferenca ? 'bg-amber-50/30 dark:bg-amber-900/5' : ''
+                    }`}
+                  >
+                    <td className="p-2 text-center">
                       {item.temDiferenca && (
-                        <div className="flex items-center gap-1 text-xs">
+                        <Checkbox
+                          checked={selecionados[item.produto_id] || false}
+                          onCheckedChange={() => handleToggle(item.produto_id)}
+                        />
+                      )}
+                    </td>
+                    <td className="p-2">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        {item.produto_nome}
+                      </div>
+                      {item.temDiferenca && (
+                        <div className="flex items-center gap-1 text-xs mt-0.5">
                           {item.diferencaCusto > 0 ? (
                             <>
-                              <TrendingUp className="w-3.5 h-3.5 text-red-500" />
+                              <TrendingUp className="w-3 h-3 text-red-500" />
                               <span className="text-red-600 dark:text-red-400 font-medium">
-                                +{item.diferencaCusto.toFixed(2)}
+                                +R$ {formatMoney(item.diferencaCusto)}
                               </span>
                             </>
                           ) : (
                             <>
-                              <TrendingDown className="w-3.5 h-3.5 text-green-500" />
+                              <TrendingDown className="w-3 h-3 text-green-500" />
                               <span className="text-green-600 dark:text-green-400 font-medium">
-                                {item.diferencaCusto.toFixed(2)}
+                                -R$ {formatMoney(Math.abs(item.diferencaCusto))}
                               </span>
                             </>
                           )}
                         </div>
                       )}
-                    </div>
-
-                    <div className="space-y-3 mt-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Preço Compra</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.costs?.valor_compra || 0}
-                            onChange={(e) => handleCostChange(item.produto_id, 'valor_compra', e.target.value)}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Desconto</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.costs?.desconto_compra_padrao || 0}
-                            onChange={(e) => handleCostChange(item.produto_id, 'desconto_compra_padrao', e.target.value)}
-                            className="h-8 text-sm text-green-600"
-                          />
-                        </div>
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="text"
+                        value={formatMoney(item.costs?.valor_compra || 0)}
+                        onChange={(e) => handleMoneyChange(item.produto_id, 'valor_compra', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        placeholder="R$ 0,00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="text"
+                        value={formatMoney(item.costs?.desconto_compra_padrao || 0)}
+                        onChange={(e) => handleMoneyChange(item.produto_id, 'desconto_compra_padrao', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm text-green-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        placeholder="R$ 0,00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="text"
+                        value={formatMoney(item.costs?.custo_frete_padrao || 0)}
+                        onChange={(e) => handleMoneyChange(item.produto_id, 'custo_frete_padrao', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm text-blue-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        placeholder="R$ 0,00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="text"
+                        value={formatMoney(item.costs?.custo_imposto1_padrao || 0)}
+                        onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto1_padrao', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm text-orange-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        placeholder="R$ 0,00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="text"
+                        value={formatMoney(item.costs?.custo_imposto2_padrao || 0)}
+                        onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto2_padrao', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm text-orange-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        placeholder="R$ 0,00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="text"
+                        value={formatMoney(item.costs?.custo_outros_padrao || 0)}
+                        onChange={(e) => handleMoneyChange(item.produto_id, 'custo_outros_padrao', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        placeholder="R$ 0,00"
+                      />
+                    </td>
+                    <td className="p-2 bg-gray-50 dark:bg-gray-800">
+                      <div className="text-center font-bold text-gray-900 dark:text-gray-100">
+                        R$ {formatMoney(item.novoCusto)}
                       </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Frete (Un)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.costs?.custo_frete_padrao || 0}
-                            onChange={(e) => handleCostChange(item.produto_id, 'custo_frete_padrao', e.target.value)}
-                            className="h-8 text-sm text-blue-600"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Imp 1 (Un)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.costs?.custo_imposto1_padrao || 0}
-                            onChange={(e) => handleCostChange(item.produto_id, 'custo_imposto1_padrao', e.target.value)}
-                            className="h-8 text-sm text-orange-600"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Imp 2 (Un)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.costs?.custo_imposto2_padrao || 0}
-                            onChange={(e) => handleCostChange(item.produto_id, 'custo_imposto2_padrao', e.target.value)}
-                            className="h-8 text-sm text-orange-600"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Outros (Un)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.costs?.custo_outros_padrao || 0}
-                            onChange={(e) => handleCostChange(item.produto_id, 'custo_outros_padrao', e.target.value)}
-                            className="h-8 text-sm"
-                          />
-                        </div>
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={item.costs?.preco_venda_percentual || 40}
+                        onChange={(e) => handleCostChange(item.produto_id, 'preco_venda_percentual', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                      />
+                    </td>
+                    <td className="p-2 bg-teal-50 dark:bg-teal-900/20">
+                      <div className="text-center font-bold text-teal-700 dark:text-teal-400">
+                        R$ {formatMoney(item.precoVendaSugerido)}
                       </div>
-
-                      <div className="grid grid-cols-3 gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Custo Total</Label>
-                          <div className="h-8 flex items-center px-2 bg-gray-100 dark:bg-gray-800 rounded text-sm font-bold">
-                            R$ {item.novoCusto.toFixed(2)}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Markup %</Label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            value={item.costs?.preco_venda_percentual || 40}
-                            onChange={(e) => handleCostChange(item.produto_id, 'preco_venda_percentual', e.target.value)}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Preço Venda</Label>
-                          <div className="h-8 flex items-center px-2 bg-teal-50 dark:bg-teal-900/20 rounded text-sm font-bold text-teal-700 dark:text-teal-400">
-                            R$ {item.precoVendaSugerido.toFixed(2)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
