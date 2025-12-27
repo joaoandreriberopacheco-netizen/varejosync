@@ -90,7 +90,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   const handleAddVolume = () => {
     setFormData({
       ...formData,
-      volumes: [...formData.volumes, { quantidade: 1, descricao: '', preco_unit_frete: 0 }]
+      volumes: [...formData.volumes, { quantidade: 1, descricao: '', preco_unit_frete: 0, observacoes: '' }]
     });
   };
 
@@ -452,6 +452,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                     <TableRow>
                       <TableHead className="w-20 text-xs">Quant.</TableHead>
                       <TableHead className="text-xs">Volumes</TableHead>
+                      <TableHead className="text-xs">Observações</TableHead>
                       <TableHead className="w-28 text-xs text-right">R$ Frete Un</TableHead>
                       <TableHead className="w-28 text-xs text-right">Total</TableHead>
                       <TableHead className="w-10"></TableHead>
@@ -474,6 +475,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                             placeholder="Ex: Caixas, Pallets..."
                             value={volume.descricao}
                             onChange={(e) => handleVolumeChange(idx, 'descricao', e.target.value)}
+                            className="h-8 text-sm w-full"
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input
+                            placeholder="Observações..."
+                            value={volume.observacoes || ''}
+                            onChange={(e) => handleVolumeChange(idx, 'observacoes', e.target.value)}
                             className="h-8 text-sm w-full"
                           />
                         </TableCell>
@@ -507,7 +516,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                       </TableRow>
                     ))}
                     <TableRow className="bg-gray-50 dark:bg-gray-900 font-medium">
-                      <TableCell colSpan={3} className="text-right text-sm">Total Frete:</TableCell>
+                      <TableCell colSpan={4} className="text-right text-sm">Total Frete:</TableCell>
                       <TableCell className="text-right text-sm">
                         R$ {calcularTotalFrete().toLocaleString('pt-BR', {
                           minimumFractionDigits: 2,
