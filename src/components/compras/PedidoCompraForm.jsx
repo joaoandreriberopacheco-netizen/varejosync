@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -868,7 +868,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </TabsContent>
 
-            <TabsContent value="itens" className="mt-0 p-4 space-y-4 border-0">
+            <TabsContent value="itens" className="mt-0 px-3 py-6 space-y-6 border-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Itens do Pedido</h3>
                 <Button 
@@ -937,7 +937,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </TabsContent>
 
-            <TabsContent value="pagamento" className="mt-0 p-4 space-y-4 border-0">
+            <TabsContent value="pagamento" className="mt-0 px-3 py-6 space-y-6 border-0">
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm border-0">
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Ao marcar como "Enviado", será criada automaticamente uma conta a pagar com status "Aguardando Recepção"
@@ -945,10 +945,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
 
               <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Condições de Pagamento</Label>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Condições de Pagamento</Label>
                 <Textarea 
-                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-24 resize-none" 
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
                   placeholder="Ex: 30/60/90 dias, À vista..."
+                  rows={4}
                   value={formData.condicoes_pagamento} 
                   onChange={e => handleChange('condicoes_pagamento', e.target.value)} 
                 />
@@ -978,7 +979,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </TabsContent>
 
-            <TabsContent value="logistica" className="mt-0 p-4 space-y-4 border-0">
+            <TabsContent value="logistica" className="mt-0 px-3 py-6 space-y-6 border-0">
               {supermanifesto ? (
                 <div className="p-4 bg-teal-50 rounded-lg shadow-sm border-0 dark:bg-teal-900/20">
                   <div className="space-y-3 text-sm">
@@ -995,9 +996,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               ) : (
                 <>
                   <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Transportadora</Label>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Transportadora</Label>
                     <Select value={formData.transportadora_embarque_id} onValueChange={v => handleChange('transportadora_embarque_id', v)}>
-                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm">
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
                       <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
@@ -1009,29 +1010,39 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </div>
 
                   <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Data de Chegada (ETA)</Label>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Data de Chegada (ETA)</Label>
                     <Input
                       type="datetime-local"
                       value={formData.eta_embarque || ''}
                       onChange={(e) => handleChange('eta_embarque', e.target.value)}
-                      className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+                      className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Entrega Prevista</Label>
+                    <Input 
+                      type="date" 
+                      className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                      value={formData.data_prevista_entrega} 
+                      onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
                     />
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Volumes</Label>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Volumes</Label>
                       <Input 
                         type="number" 
-                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" 
+                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                         value={formData.qtd_volumes} 
                         onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Tipo</Label>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Tipo</Label>
                       <Select value={formData.tipo_volume} onValueChange={v => handleChange('tipo_volume', v)}>
-                        <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm">
+                        <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
@@ -1041,10 +1052,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Peso (kg)</Label>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Peso (kg)</Label>
                       <Input 
                         type="number" step="0.1"
-                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" 
+                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                         value={formData.peso_total_kg} 
                         onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
                       />
