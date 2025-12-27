@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Truck, Package, Weight, Calendar, AlertCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,30 +13,23 @@ import { format, parseISO } from 'date-fns';
 
 export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess }) {
   const [transportadoras, setTransportadoras] = useState([]);
-  const [formData, setFormData] = useState({
-    transportadora_id: '',
-    eta: '',
-    peso_informado_kg: pedido?.peso_total_kg || 0,
-    volumes: []
-  });
-  const [manifestoExistente, setManifestoExistente] = useState(null);
-  const [showConfirmacao, setShowConfirmacao] = useState(false);
+  const [transportadoraId, setTransportadoraId] = useState('');
+  const [eta, setEta] = useState('');
+  const [pesoBruto, setPesoBruto] = useState('');
+  const [volumes, setVolumes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showNovaTransportadora, setShowNovaTransportadora] = useState(false);
   const [novaTransportadora, setNovaTransportadora] = useState({ nome: '', email: '', telefone: '' });
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && pedido) {
       loadTransportadoras();
-      setFormData({
-        transportadora_id: '',
-        eta: '',
-        peso_informado_kg: pedido?.peso_total_kg || 0,
-        volumes: []
-      });
+      setTransportadoraId('');
+      setEta('');
+      setPesoBruto(pedido?.peso_total_kg?.toString() || '');
+      setVolumes([]);
+      setShowNovaTransportadora(false);
       setNovaTransportadora({ nome: '', email: '', telefone: '' });
-      setManifestoExistente(null);
-      setShowConfirmacao(false);
     }
   }, [isOpen, pedido]);
 
@@ -49,14 +41,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         tipo: { $in: ['Fornecedor', 'Ambos'] },
         ativo: true
       });
-      setTransportadoras(data);
+      setTransportadoras(data || []);
     } catch (error) {
       console.error('Erro ao carregar transportadoras:', error);
+      toast.error('Erro ao carregar transportadoras');
     }
   };
 
   const handleCriarTransportadora = async () => {
-    if (!novaTransportadora.nome) {
+    if (!novaTransportadora.nome?.trim()) {
       toast.error('Nome da transportadora é obrigatório');
       return;
     }
@@ -70,14 +63,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         empresa_id: tenantId,
         codigo_interno: codigo,
         nome: novaTransportadora.nome,
-        email: novaTransportadora.email,
-        telefone: novaTransportadora.telefone,
+        email: novaTransportadora.email || '',
+        telefone: novaTransportadora.telefone || '',
         tipo: 'Fornecedor',
         ativo: true
       });
 
       setTransportadoras([...transportadoras, nova]);
-      setFormData({ ...formData, transportadora_id: nova.id });
+      setTransportadoraId(nova.id);
       setShowNovaTransportadora(false);
       setNovaTransportadora({ nome: '', email: '', telefone: '' });
       toast.success('Transportadora criada com sucesso');
@@ -88,25 +81,21 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   };
 
   const handleAddVolume = () => {
-    setFormData({
-      ...formData,
-      volumes: [...formData.volumes, { quantidade: '', descricao: '', preco_unit_frete: '', observacoes: '' }]
-    });
+    setVolumes([...volumes, { quantidade: '', descricao: '', preco_unit_frete: '', observacoes: '' }]);
   };
 
   const handleRemoveVolume = (index) => {
-    const newVolumes = formData.volumes.filter((_, i) => i !== index);
-    setFormData({ ...formData, volumes: newVolumes });
+    setVolumes(volumes.filter((_, i) => i !== index));
   };
 
   const handleVolumeChange = (index, field, value) => {
-    const newVolumes = [...formData.volumes];
+    const newVolumes = [...volumes];
     newVolumes[index][field] = value;
-    setFormData({ ...formData, volumes: newVolumes });
+    setVolumes(newVolumes);
   };
 
   const calcularTotalFrete = () => {
-    return formData.volumes.reduce((sum, v) => {
+    return volumes.reduce((sum, v) => {
       const qty = parseFloat(v.quantidade) || 0;
       const price = parseFloat(v.preco_unit_frete) || 0;
       return sum + (qty * price);
@@ -114,18 +103,42 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   };
 
   const gerarDescritivoVolumes = () => {
-    return formData.volumes
-      .map(v => `${v.quantidade}x ${v.descricao}`)
-      .filter(d => d.trim() !== 'x ')
+    return volumes
+      .map(v => `${v.quantidade || 0}x ${v.descricao || ''}`)
+      .filter(d => d.trim() !== 'x' && d.trim() !== '0x')
       .join(', ');
   };
 
-  const verificarManifestoExistente = async () => {
-    if (!formData.transportadora_id || !formData.eta) return;
+  const handleSalvar = async () => {
+    // Validações
+    if (!transportadoraId) {
+      toast.error('Selecione uma Transportadora');
+      return;
+    }
+
+    if (!eta || eta.trim() === '') {
+      toast.error('Informe a Data de Chegada Prevista (ETA)');
+      return;
+    }
+
+    const pesoNumerico = parseFloat(pesoBruto);
+    if (!pesoNumerico || pesoNumerico <= 0) {
+      toast.error('Informe o Peso Bruto (deve ser maior que zero)');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const tenantId = getTenantId();
-      const etaDate = new Date(formData.eta);
+      const transportadora = transportadoras.find(t => t.id === transportadoraId);
+
+      if (!transportadora) {
+        throw new Error('Transportadora não encontrada');
+      }
+
+      // Verificar se existe manifesto no mesmo dia
+      const etaDate = new Date(eta);
       const etaStart = new Date(etaDate);
       etaStart.setHours(0, 0, 0, 0);
       const etaEnd = new Date(etaDate);
@@ -133,72 +146,18 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
       const manifestos = await base44.entities.Supermanifesto.filter({
         empresa_id: tenantId,
-        transportadora_id: formData.transportadora_id,
+        transportadora_id: transportadoraId,
         status: { $in: ['Pendente', 'Em Trânsito'] }
       });
 
-      const manifestoMesmaData = manifestos.find(m => {
+      const manifestoExistente = manifestos.find(m => {
         const manifestoEta = new Date(m.eta);
         return manifestoEta >= etaStart && manifestoEta <= etaEnd;
       });
 
-      if (manifestoMesmaData) {
-        setManifestoExistente(manifestoMesmaData);
-        setShowConfirmacao(true);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Erro ao verificar manifesto:', error);
-      return false;
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.transportadora_id) {
-      toast.error('Selecione uma Transportadora');
-      return;
-    }
-
-    if (!formData.eta || formData.eta.trim() === '') {
-      toast.error('Informe a Data de Chegada Prevista (ETA)');
-      return;
-    }
-
-    const pesoFinal = parseFloat(formData.peso_informado_kg) || 0;
-    if (pesoFinal <= 0) {
-      toast.error('Peso Bruto deve ser maior que zero');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const existeManifesto = await verificarManifestoExistente();
-      
-      if (existeManifesto && !showConfirmacao) {
-        setLoading(false);
-        return;
-      }
-
-      await vincularPedidoAoManifesto();
-      
-    } catch (error) {
-      console.error('Erro ao informar embarque:', error);
-      toast.error('Erro ao informar embarque: ' + error.message);
-      setLoading(false);
-    }
-  };
-
-  const vincularPedidoAoManifesto = async (criarNovo = false) => {
-    try {
-      const tenantId = getTenantId();
-      const transportadora = transportadoras.find(t => t.id === formData.transportadora_id);
-      
       let manifestoId;
 
-      if (manifestoExistente && !criarNovo) {
+      if (manifestoExistente) {
         // Adicionar ao manifesto existente
         manifestoId = manifestoExistente.id;
         
@@ -207,14 +166,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           pedido_id: pedido.id,
           pedido_numero: pedido.numero,
           descritivo_volumes: gerarDescritivoVolumes(),
-          peso_informado_kg: parseFloat(formData.peso_informado_kg) || 0,
-          volumes: formData.volumes,
+          peso_informado_kg: pesoNumerico,
+          volumes: volumes,
           total_frete: calcularTotalFrete()
         });
 
         const observacoesConsolidadas = pedidosVinculados
           .map(p => `${p.pedido_numero}: ${p.descritivo_volumes}`)
-          .filter(o => o.trim() !== ':')
+          .filter(o => o.trim() && o.trim() !== ':')
           .join(' | ');
 
         const pesoTotal = pedidosVinculados.reduce((sum, p) => sum + (p.peso_informado_kg || 0), 0);
@@ -225,31 +184,34 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           observacoes_consolidadas: observacoesConsolidadas
         });
 
+        toast.success(`Pedido adicionado ao manifesto ${manifestoExistente.numero}`);
+
       } else {
         // Criar novo manifesto
-        const manifestos = await base44.entities.Supermanifesto.filter({ empresa_id: tenantId });
-        const numero = `SM-${String(manifestos.length + 1).padStart(5, '0')}`;
+        const todosManifestos = await base44.entities.Supermanifesto.filter({ empresa_id: tenantId });
+        const numero = `SM-${String(todosManifestos.length + 1).padStart(5, '0')}`;
 
         const novoManifesto = await base44.entities.Supermanifesto.create({
           empresa_id: tenantId,
           numero,
-          transportadora_id: formData.transportadora_id,
-          transportadora_nome: transportadora?.nome || '',
-          eta: formData.eta,
+          transportadora_id: transportadoraId,
+          transportadora_nome: transportadora.nome,
+          eta: eta,
           status: 'Pendente',
-          peso_total_bruto_kg: parseFloat(formData.peso_informado_kg) || 0,
+          peso_total_bruto_kg: pesoNumerico,
           pedidos_vinculados: [{
             pedido_id: pedido.id,
             pedido_numero: pedido.numero,
             descritivo_volumes: gerarDescritivoVolumes(),
-            peso_informado_kg: parseFloat(formData.peso_informado_kg) || 0,
-            volumes: formData.volumes,
+            peso_informado_kg: pesoNumerico,
+            volumes: volumes,
             total_frete: calcularTotalFrete()
           }],
           observacoes_consolidadas: `${pedido.numero}: ${gerarDescritivoVolumes()}`
         });
 
         manifestoId = novoManifesto.id;
+        toast.success(`Novo manifesto ${numero} criado com sucesso!`);
       }
 
       // Atualizar o pedido
@@ -258,71 +220,18 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         supermanifesto_id: manifestoId
       });
 
-      toast.success('Embarque informado com sucesso!');
       setLoading(false);
       onSuccess?.();
       onClose();
 
     } catch (error) {
-      console.error('Erro ao vincular pedido:', error);
-      toast.error('Erro ao vincular pedido ao manifesto');
+      console.error('Erro ao informar embarque:', error);
+      toast.error('Erro ao informar embarque: ' + (error.message || 'Erro desconhecido'));
       setLoading(false);
-      throw error;
     }
   };
 
-  if (showConfirmacao && manifestoExistente) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-amber-500" />
-              Manifesto Existente
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                Já existe um manifesto para <strong>{manifestoExistente.transportadora_nome}</strong> na data{' '}
-                <strong>{format(parseISO(manifestoExistente.eta), 'dd/MM/yyyy')}</strong>.
-              </p>
-              <div className="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                <p><strong>Manifesto:</strong> {manifestoExistente.numero}</p>
-                <p><strong>Pedidos:</strong> {manifestoExistente.pedidos_vinculados?.length || 0}</p>
-                <p><strong>Peso Total:</strong> {manifestoExistente.peso_total_bruto_kg || 0} kg</p>
-              </div>
-            </div>
-
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Deseja adicionar este pedido ao manifesto existente ou criar um novo?
-            </p>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={onClose} disabled={loading}>
-              Cancelar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => vincularPedidoAoManifesto(true)}
-              disabled={loading}
-            >
-              Criar Novo
-            </Button>
-            <Button
-              onClick={() => vincularPedidoAoManifesto(false)}
-              disabled={loading}
-              className="bg-teal-600 hover:bg-teal-700"
-            >
-              {loading ? 'Adicionando...' : 'Adicionar ao Existente'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -335,6 +244,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Transportadora */}
           <div className="space-y-2">
             <Label className="flex items-center justify-between">
               <span className="flex items-center gap-2">
@@ -397,10 +307,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                 </div>
               </div>
             ) : (
-              <Select 
-                value={formData.transportadora_id} 
-                onValueChange={(value) => setFormData({ ...formData, transportadora_id: value })}
-              >
+              <Select value={transportadoraId} onValueChange={setTransportadoraId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a transportadora" />
                 </SelectTrigger>
@@ -413,6 +320,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
             )}
           </div>
 
+          {/* Data ETA */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-400" />
@@ -420,11 +328,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
             </Label>
             <Input
               type="datetime-local"
-              value={formData.eta}
-              onChange={(e) => setFormData({ ...formData, eta: e.target.value })}
+              value={eta}
+              onChange={(e) => setEta(e.target.value)}
             />
           </div>
 
+          {/* Peso Bruto */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Weight className="w-4 h-4 text-gray-400" />
@@ -434,15 +343,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
               type="text"
               inputMode="decimal"
               placeholder="0,00"
-              value={formData.peso_informado_kg || ''}
+              value={pesoBruto}
               onChange={(e) => {
                 const val = e.target.value.replace(',', '.');
-                const num = parseFloat(val);
-                setFormData({ ...formData, peso_informado_kg: isNaN(num) ? '' : num });
+                setPesoBruto(val);
               }}
             />
           </div>
 
+          {/* Descritivo de Volumes */}
           <div className="space-y-2">
             <Label className="flex items-center justify-between">
               <span className="flex items-center gap-2">
@@ -461,7 +370,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
               </Button>
             </Label>
 
-            {formData.volumes.length > 0 && (
+            {volumes.length > 0 && (
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader className="bg-gray-50 dark:bg-gray-900">
@@ -475,18 +384,17 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {formData.volumes.map((volume, idx) => (
+                    {volumes.map((volume, idx) => (
                       <TableRow key={idx}>
                         <TableCell className="p-2">
                           <Input
                             type="text"
                             inputMode="decimal"
                             placeholder="0,00"
-                            value={volume.quantidade || ''}
+                            value={volume.quantidade}
                             onChange={(e) => {
                               const val = e.target.value.replace(',', '.');
-                              const num = parseFloat(val);
-                              handleVolumeChange(idx, 'quantidade', isNaN(num) ? '' : num);
+                              handleVolumeChange(idx, 'quantidade', val);
                             }}
                             className="h-8 text-sm w-full"
                           />
@@ -502,7 +410,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                         <TableCell className="p-2">
                           <Input
                             placeholder="Observações..."
-                            value={volume.observacoes || ''}
+                            value={volume.observacoes}
                             onChange={(e) => handleVolumeChange(idx, 'observacoes', e.target.value)}
                             className="h-8 text-sm w-full"
                           />
@@ -512,17 +420,16 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                             type="text"
                             inputMode="decimal"
                             placeholder="0,00"
-                            value={volume.preco_unit_frete || ''}
+                            value={volume.preco_unit_frete}
                             onChange={(e) => {
                               const val = e.target.value.replace(',', '.');
-                              const num = parseFloat(val);
-                              handleVolumeChange(idx, 'preco_unit_frete', isNaN(num) ? '' : num);
+                              handleVolumeChange(idx, 'preco_unit_frete', val);
                             }}
                             className="h-8 text-sm w-full text-right"
                           />
                         </TableCell>
                         <TableCell className="p-2 text-right text-sm font-medium">
-                          {((volume.quantidade || 0) * (volume.preco_unit_frete || 0)).toLocaleString('pt-BR', {
+                          {((parseFloat(volume.quantidade) || 0) * (parseFloat(volume.preco_unit_frete) || 0)).toLocaleString('pt-BR', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
                           })}
@@ -558,15 +465,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
           <Button 
-            onClick={handleSubmit} 
+            onClick={handleSalvar} 
             disabled={loading}
             className="bg-teal-600 hover:bg-teal-700"
           >
-            {loading ? 'Processando...' : 'Informar Embarque'}
+            {loading ? 'Salvando...' : 'Informar Embarque'}
           </Button>
         </DialogFooter>
       </DialogContent>
