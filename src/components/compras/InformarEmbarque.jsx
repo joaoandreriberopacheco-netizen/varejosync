@@ -90,7 +90,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   const handleAddVolume = () => {
     setFormData({
       ...formData,
-      volumes: [...formData.volumes, { quantidade: 1, descricao: '', preco_unit_frete: 0, observacoes: '' }]
+      volumes: [...formData.volumes, { quantidade: '', descricao: '', preco_unit_frete: '', observacoes: '' }]
     });
   };
 
@@ -420,10 +420,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
               Peso Bruto da Nota (kg) *
             </Label>
             <Input
-              type="number"
-              step="0.01"
-              value={formData.peso_informado_kg}
-              onChange={(e) => setFormData({ ...formData, peso_informado_kg: parseFloat(e.target.value) || 0 })}
+              type="text"
+              inputMode="decimal"
+              placeholder="0,00"
+              value={formData.peso_informado_kg || ''}
+              onChange={(e) => {
+                const val = e.target.value.replace(',', '.');
+                const num = parseFloat(val);
+                setFormData({ ...formData, peso_informado_kg: isNaN(num) ? '' : num });
+              }}
             />
           </div>
 
@@ -463,10 +468,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                       <TableRow key={idx}>
                         <TableCell className="p-2">
                           <Input
-                            type="number"
-                            min="1"
-                            value={volume.quantidade}
-                            onChange={(e) => handleVolumeChange(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="0,00"
+                            value={volume.quantidade || ''}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(',', '.');
+                              const num = parseFloat(val);
+                              handleVolumeChange(idx, 'quantidade', isNaN(num) ? '' : num);
+                            }}
                             className="h-8 text-sm w-full"
                           />
                         </TableCell>
@@ -488,11 +498,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                         </TableCell>
                         <TableCell className="p-2">
                           <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            value={volume.preco_unit_frete}
-                            onChange={(e) => handleVolumeChange(idx, 'preco_unit_frete', parseFloat(e.target.value) || 0)}
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="0,00"
+                            value={volume.preco_unit_frete || ''}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(',', '.');
+                              const num = parseFloat(val);
+                              handleVolumeChange(idx, 'preco_unit_frete', isNaN(num) ? '' : num);
+                            }}
                             className="h-8 text-sm w-full text-right"
                           />
                         </TableCell>
