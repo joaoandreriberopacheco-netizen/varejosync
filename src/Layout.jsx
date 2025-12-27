@@ -147,6 +147,7 @@ export default function Layout({ children, currentPageName }) {
       submenu: [
         { name: 'Produtos', page: 'Produtos' },
         { name: 'Compras', page: 'Compras' },
+        { name: 'Hub Logístico', page: 'HubLogistico' },
         { name: 'Logística', page: 'Logistica' },
         { name: 'Armazenagem', page: 'Estoque' }
       ]
