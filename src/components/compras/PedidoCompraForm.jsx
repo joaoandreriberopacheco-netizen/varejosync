@@ -1056,230 +1056,329 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto p-2 sm:p-6">
-            <TabsContent value="dados-gerais" className="mt-0 space-y-4">
-              {/* Desktop View: Tabela e Totalizadores */}
-              <div className="hidden lg:block">
-               <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-normal text-gray-800 dark:text-gray-200">Itens do Pedido ({formData.itens.length})</h3>
+          <div className="flex-1 overflow-y-auto p-6">
+            <TabsContent value="dados-gerais" className="mt-0 space-y-8">
+              {/* Header Compacto - Grid Principal */}
+              <div className="grid grid-cols-12 gap-x-6 gap-y-6">
+                {/* Fornecedor */}
+                <div className="col-span-12 lg:col-span-4">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Fornecedor *</Label>
+                  <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
+                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm">
+                      <SelectValue placeholder="Selecione o fornecedor..." />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+                      {fornecedores.map(f => (
+                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Status */}
+                <div className="col-span-6 lg:col-span-2">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Status</Label>
+                  <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
+                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+                      {['Rascunho', 'Enviado', 'Aguardando Recepção', 'Recebido Parcialmente', 'Recebido', 'Cancelado'].map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Data Emissão */}
+                <div className="col-span-6 lg:col-span-2">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Emissão</Label>
+                  <Input 
+                    type="date" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm" 
+                    value={formData.data_emissao} 
+                    onChange={e => handleChange('data_emissao', e.target.value)} 
+                  />
+                </div>
+
+                {/* Tags */}
+                <div className="col-span-12 lg:col-span-4">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Tags</Label>
+                  <Input 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm" 
+                    placeholder="Ex: Urgente, Reposição..."
+                    value={formData.tags?.join(', ') || ''} 
+                    onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
+                  />
+                </div>
+                
+                {/* Observação em linha inteira */}
+                <div className="col-span-12">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Observações</Label>
+                  <Textarea 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
+                    placeholder="Observações do pedido..."
+                    rows={2}
+                    value={formData.observacoes} 
+                    onChange={e => handleChange('observacoes', e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              {/* Seção de Itens */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Itens do Pedido</h3>
                   <div className="flex gap-2">
                     <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setShowAtualizarPrecos(true)} 
-                        className="h-7 text-xs px-2 border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        title="Revisar e atualizar custos e preços de venda"
-                        disabled={formData.itens.length === 0}
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowAtualizarPrecos(true)} 
+                      className="h-8 text-xs border-0 shadow-sm"
+                      disabled={formData.itens.length === 0}
                     >
-                        <DollarSign className="h-3.5 w-3.5 mr-1.5" /> 
-                        Ajuste de Preços
+                      <DollarSign className="h-3.5 w-3.5 mr-1.5" /> 
+                      Ajustar Preços
                     </Button>
                     <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleExportModel} 
-                        className="h-7 text-xs px-2 border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        title="Baixar planilha para preencher quantidades e custos offline"
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleExportModel} 
+                      className="h-8 text-xs border-0 shadow-sm"
                     >
-                        <FileDown className="h-3.5 w-3.5 mr-1.5" /> 
-                        Baixar Modelo
+                      <FileDown className="h-3.5 w-3.5 mr-1.5" /> 
+                      Baixar Modelo
                     </Button>
                     <div className="relative">
-                        <input 
-                            type="file" 
-                            accept=".csv" 
-                            onChange={handleImportCSV}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-7 text-xs px-2 border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                            title="Importar planilha preenchida (CSV)"
-                        >
-                            <FileUp className="h-3.5 w-3.5 mr-1.5" /> 
-                            Importar CSV
-                        </Button>
+                      <input 
+                        type="file" 
+                        accept=".csv" 
+                        onChange={handleImportCSV}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 text-xs border-0 shadow-sm"
+                      >
+                        <FileUp className="h-3.5 w-3.5 mr-1.5" /> 
+                        Importar CSV
+                      </Button>
                     </div>
                     <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleAddItem()} 
-                        className="h-7 text-xs px-2 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleAddItem()} 
+                      className="h-8 text-xs"
                     >
-                        <PlusCircle className="h-4 w-4 mr-1" /> 
-                        Adicionar Item
+                      <PlusCircle className="h-4 w-4 mr-1" /> 
+                      Adicionar
                     </Button>
                   </div>
                 </div>
 
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-gray-50 dark:bg-gray-800">
                   <div className="overflow-x-auto">
-                      <Table className="w-full min-w-[1400px]">
-                          <TableHeader className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur">
-                          <TableRow className="dark:border-gray-700 hover:bg-transparent">
-                              <TableHead className="w-[40px] text-center dark:text-gray-400 sticky left-0 z-20 bg-gray-50 dark:bg-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">#</TableHead>
-                              <TableHead className="min-w-[250px] dark:text-gray-400 sticky left-[40px] z-20 bg-gray-50 dark:bg-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Produto</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400">Cód.</TableHead>
-                              <TableHead className="min-w-[70px] dark:text-gray-400">Qtd.</TableHead>
-                              <TableHead className="min-w-[60px] dark:text-gray-400">U/M</TableHead>
-                              <TableHead className="min-w-[100px] dark:text-gray-400">Preço</TableHead>
-                              <TableHead className="min-w-[100px] dark:text-gray-400 text-green-600">Desconto</TableHead>
-                              <TableHead className="min-w-[120px] text-right dark:text-gray-400 sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 shadow-xl">Total Líq</TableHead>
-                              <TableHead className="w-[40px] text-center dark:text-gray-400"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
-                          </TableRow>
-                          </TableHeader>
-                    <TableBody>
-                      {formData.itens.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={11} className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
-                            <div className="flex flex-col items-center justify-center gap-3">
-                              <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
-                                <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
-                                <p className="text-xs text-gray-400 mt-1">Utilize o botão "Adicionar Item" acima para começar</p>
-                              </div>
-                            </div>
-                          </TableCell>
+                    <Table className="w-full min-w-[1400px]">
+                      <TableHeader className="bg-white/80 dark:bg-gray-900/80">
+                        <TableRow className="border-0 hover:bg-transparent">
+                          <TableHead className="w-[40px] text-center text-gray-400 sticky left-0 z-20 bg-white dark:bg-gray-900">#</TableHead>
+                          <TableHead className="min-w-[250px] text-gray-700 dark:text-gray-300 sticky left-[40px] z-20 bg-white dark:bg-gray-900">Produto</TableHead>
+                          <TableHead className="min-w-[80px] text-gray-700 dark:text-gray-300">Código</TableHead>
+                          <TableHead className="min-w-[70px] text-gray-700 dark:text-gray-300">Qtd</TableHead>
+                          <TableHead className="min-w-[60px] text-gray-700 dark:text-gray-300">U/M</TableHead>
+                          <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300">Preço Un</TableHead>
+                          <TableHead className="min-w-[100px] text-green-600 dark:text-green-500">Desconto</TableHead>
+                          <TableHead className="min-w-[120px] text-right text-gray-700 dark:text-gray-300 sticky right-0 z-10 bg-white dark:bg-gray-900">Total</TableHead>
+                          <TableHead className="w-[40px] text-center"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
                         </TableRow>
-                      ) : (
-                        formData.itens.map((item, index) => {
-                          const selectedProduct = produtos.find(p => p.id === item.produto_id);
-                          return (
-                            <TableRow key={index} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group">
-                              <TableCell className="text-center text-gray-400 dark:text-gray-500 font-mono text-xs sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                                {String(index + 1).padStart(2, '0')}
-                              </TableCell>
-                              <TableCell className="sticky left-[40px] z-10 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                                <Select 
-                                  value={item.produto_id} 
-                                  onValueChange={v => handleItemChange(index, 'produto_id', v)}
-                                >
-                                  <SelectTrigger className="h-8 bg-transparent border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-gray-300 dark:focus:border-gray-600 rounded px-2 text-sm shadow-none focus:ring-0">
-                                    <span className="truncate block text-left w-full">
-                                      {selectedProduct ? selectedProduct.nome : "Selecione..."}
-                                    </span>
-                                  </SelectTrigger>
-                                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 max-h-[300px] z-[9999]">
-                                    {produtos.map(p => (
-                                      <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm cursor-pointer">
-                                        {p.nome}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  className="h-8 text-xs font-mono bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0" 
-                                  value={item.codigo_produto}
-                                  onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
-                                  placeholder="Cód"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" 
-                                  className="h-8 bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0" 
-                                  value={item.quantidade}
-                                  onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  className="h-8 text-xs bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0" 
-                                  value={item.unidade_medida}
-                                  onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" step="0.01"
-                                  className="h-8 min-w-[80px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 font-medium" 
-                                  value={item.custo_unitario} 
-                                  onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" step="0.01"
-                                  className="h-8 min-w-[80px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-green-600" 
-                                  value={item.valor_desconto_item || 0} 
-                                  onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-gray-900 dark:text-white text-sm sticky right-0 z-10 bg-white dark:bg-gray-900 shadow-xl border-l border-gray-100 dark:border-gray-800">
-                                {formatCurrency(item.total || 0)}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                  onClick={() => handleRemoveItem(index)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {formData.itens.length === 0 ? (
+                          <TableRow className="border-0">
+                            <TableCell colSpan={9} className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
+                              <div className="flex flex-col items-center justify-center gap-3">
+                                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                  <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
+                                  <p className="text-xs text-gray-400 mt-1">Clique em "Adicionar" para começar</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          formData.itens.map((item, index) => {
+                            const selectedProduct = produtos.find(p => p.id === item.produto_id);
+                            return (
+                              <TableRow key={index} className="border-0 hover:bg-white/50 dark:hover:bg-gray-900/50 transition-colors group">
+                                <TableCell className="text-center text-gray-400 font-mono text-xs sticky left-0 z-10 bg-gray-50 dark:bg-gray-800">
+                                  {String(index + 1).padStart(2, '0')}
+                                </TableCell>
+                                <TableCell className="sticky left-[40px] z-10 bg-gray-50 dark:bg-gray-800">
+                                  <Select 
+                                    value={item.produto_id} 
+                                    onValueChange={v => handleItemChange(index, 'produto_id', v)}
+                                  >
+                                    <SelectTrigger className="h-9 bg-transparent border-0 hover:bg-white dark:hover:bg-gray-900 rounded-lg px-2 text-sm shadow-none">
+                                      <span className="truncate block text-left w-full">
+                                        {selectedProduct ? selectedProduct.nome : "Selecione..."}
+                                      </span>
+                                    </SelectTrigger>
+                                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg max-h-[300px] z-[9999]">
+                                      {produtos.map(p => (
+                                        <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 text-sm cursor-pointer">
+                                          {p.nome}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Input 
+                                    className="h-9 text-xs font-mono bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900" 
+                                    value={item.codigo_produto}
+                                    onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
+                                    placeholder="Código"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input 
+                                    type="number" 
+                                    className="h-9 bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900" 
+                                    value={item.quantidade}
+                                    onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input 
+                                    className="h-9 text-xs bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900" 
+                                    value={item.unidade_medida}
+                                    onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input 
+                                    type="number" step="0.01"
+                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 font-medium" 
+                                    value={item.custo_unitario} 
+                                    onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input 
+                                    type="number" step="0.01"
+                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-green-600" 
+                                    value={item.valor_desconto_item || 0} 
+                                    onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
+                                  />
+                                </TableCell>
+                                <TableCell className="text-right font-bold text-gray-900 dark:text-white text-sm sticky right-0 z-10 bg-gray-50 dark:bg-gray-800">
+                                  {formatCurrency(item.total || 0)}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
+                                    onClick={() => handleRemoveItem(index)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
-                  </div>
+                </div>
 
+                {/* Totalizadores */}
                 {formData.itens.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="mt-8 pt-6 space-y-4">
                     <div className="grid grid-cols-5 gap-6">
-                      <div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Nº de Itens</div>
+                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Itens</div>
                         <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formData.itens.length}</div>
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Itens</div>
+                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Subtotal</div>
                         <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorItens)}</div>
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Frete Total</div>
+                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Frete</div>
                         <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(formData.valor_frete)}</div>
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Desconto Total</div>
-                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">-{formatCurrency(formData.valor_desconto)}</div>
+                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Desconto</div>
+                        <div className="text-2xl font-medium text-green-600 dark:text-green-500">-{formatCurrency(formData.valor_desconto)}</div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">VALOR TOTAL</div>
-                        <div className="text-3xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
+                      <div className="bg-gray-700 dark:bg-gray-800 rounded-xl p-4 shadow-sm text-right">
+                        <div className="text-xs text-gray-300 mb-1">TOTAL</div>
+                        <div className="text-3xl font-bold text-white">{formatCurrency(valorTotal)}</div>
                       </div>
                     </div>
                   </div>
                 )}
+              </div>
+            </TabsContent>
+
+
+
+          {/* ABA: PAGAMENTO */}
+          <TabsContent value="pagamento" className="mt-0 space-y-8">
+            <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-sm border-0">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Automação Financeira</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Quando marcado como "Enviado", será criado automaticamente:
+                  </p>
+                  <ul className="text-sm text-gray-600 dark:text-gray-400 mt-2 ml-4 list-disc space-y-1">
+                    <li>Conta a Pagar com status "Aguardando Recepção"</li>
+                    <li>Tarefa de acompanhamento do manifesto/NF</li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
-            {/* Mobile View: PDV Style Selector */}
-            <div className="lg:hidden h-[70vh] -mx-2 sm:mx-0">
-              <MobileProductSelector 
-                items={formData.itens}
-                products={produtos}
-                onAddItem={handleAddItem}
-                onUpdateItem={handleItemChange}
-                onRemoveItem={handleRemoveItem}
-                formatCurrency={formatCurrency}
+            <div>
+              <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Condições de Pagamento</Label>
+              <Textarea 
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
+                placeholder="Ex: 30/60/90 dias, À vista, Antecipado..."
+                rows={4}
+                value={formData.condicoes_pagamento} 
+                onChange={e => handleChange('condicoes_pagamento', e.target.value)} 
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Valor Total do Pedido</div>
+                <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
+              </div>
+              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Vencimento Estimado</div>
+                <div className="text-xl font-medium text-gray-700 dark:text-gray-300">
+                  {formData.data_prevista_entrega ? 
+                    format(addDays(new Date(formData.data_prevista_entrega), 30), 'dd/MM/yyyy') : 
+                    'Definir data de entrega'
+                  }
+                </div>
+              </div>
             </div>
           </TabsContent>
 
-
-
           {/* ABA: LOGÍSTICA */}
-          <TabsContent value="logistica" className="mt-0 space-y-6">
+          <TabsContent value="logistica" className="mt-0 space-y-8">
             {!supermanifesto ? (
               <>
-                <div className="p-4 bg-blue-50 border border-blue-100 rounded dark:bg-blue-900/20 dark:border-blue-800">
+                <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-sm border-0">
                   <div className="flex items-start gap-3">
                     <Ship className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
@@ -1292,18 +1391,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
 
                 {/* Transportadora */}
-                <div className="space-y-2">
-                  <Label className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-2">
-                      <Truck className="w-4 h-4" />
-                      Transportadora
-                    </span>
+                <div className="space-y-3">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold flex items-center justify-between">
+                    <span>Transportadora</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowNovaTransportadora(!showNovaTransportadora)}
-                      className="h-6 text-xs gap-1 text-teal-600 hover:text-teal-700"
+                      className="h-7 text-xs gap-1 text-teal-600 hover:text-teal-700"
                     >
                       <PlusCircle className="w-3 h-3" />
                       Nova
@@ -1311,26 +1407,29 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </Label>
                   
                   {showNovaTransportadora ? (
-                    <div className="space-y-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border-0 shadow-sm">
                       <Input
                         placeholder="Nome da transportadora *"
+                        className="h-11"
                         value={novaTransportadora.nome}
                         onChange={(e) => setNovaTransportadora({ ...novaTransportadora, nome: e.target.value })}
                       />
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-3">
                         <Input
                           placeholder="Email"
                           type="email"
+                          className="h-11"
                           value={novaTransportadora.email}
                           onChange={(e) => setNovaTransportadora({ ...novaTransportadora, email: e.target.value })}
                         />
                         <Input
                           placeholder="Telefone"
+                          className="h-11"
                           value={novaTransportadora.telefone}
                           onChange={(e) => setNovaTransportadora({ ...novaTransportadora, telefone: e.target.value })}
                         />
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <Button
                           type="button"
                           variant="outline"
@@ -1339,7 +1438,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                             setShowNovaTransportadora(false);
                             setNovaTransportadora({ nome: '', email: '', telefone: '' });
                           }}
-                          className="flex-1"
+                          className="flex-1 border-0 shadow-sm"
                         >
                           Cancelar
                         </Button>
@@ -1347,7 +1446,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                           type="button"
                           size="sm"
                           onClick={handleCriarTransportadora}
-                          className="flex-1 bg-teal-600 hover:bg-teal-700"
+                          className="flex-1 bg-teal-600 hover:bg-teal-700 shadow-sm"
                         >
                           Criar
                         </Button>
@@ -1355,10 +1454,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     </div>
                   ) : (
                     <Select value={formData.transportadora_embarque_id} onValueChange={v => handleChange('transportadora_embarque_id', v)}>
-                      <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10">
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm">
                         <SelectValue placeholder="Selecione a transportadora" />
                       </SelectTrigger>
-                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                      <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
                         {fornecedores.map(t => (
                           <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                         ))}
@@ -1368,32 +1467,37 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
 
                 {/* Data ETA */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <Calendar className="w-4 h-4" />
-                    Data de Chegada Prevista (ETA)
-                  </Label>
+                <div className="space-y-3">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Data de Chegada (ETA)</Label>
                   <Input
                     type="datetime-local"
                     value={formData.eta_embarque || ''}
                     onChange={(e) => handleChange('eta_embarque', e.target.value)}
-                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm"
+                  />
+                </div>
+
+                {/* Entrega Prevista */}
+                <div className="space-y-3">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Entrega Prevista</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_prevista_entrega || ''}
+                    onChange={(e) => handleChange('data_prevista_entrega', e.target.value)}
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm"
                   />
                 </div>
 
                 {/* Descritivo de Volumes */}
-                <div className="space-y-2">
-                  <Label className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-2">
-                      <PackageIcon className="w-4 h-4" />
-                      Descritivo de Volumes
-                    </span>
+                <div className="space-y-3">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold flex items-center justify-between">
+                    <span>Descritivo de Volumes</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={handleAddVolume}
-                      className="h-6 text-xs gap-1"
+                      className="h-7 text-xs gap-1"
                     >
                       <PlusCircle className="w-3 h-3" />
                       Adicionar
@@ -1401,21 +1505,21 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </Label>
 
                   {volumes.length > 0 && (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-gray-50 dark:bg-gray-800">
                       <Table>
-                        <TableHeader className="bg-gray-50 dark:bg-gray-900">
-                          <TableRow>
-                            <TableHead className="w-20 text-xs">Quant.</TableHead>
-                            <TableHead className="text-xs">Volumes</TableHead>
-                            <TableHead className="text-xs">Observações</TableHead>
-                            <TableHead className="w-28 text-xs text-right">R$ Frete Un</TableHead>
-                            <TableHead className="w-28 text-xs text-right">Total</TableHead>
+                        <TableHeader className="bg-white/80 dark:bg-gray-900/80">
+                          <TableRow className="border-0">
+                            <TableHead className="w-20 text-xs text-gray-700 dark:text-gray-300">Qtd</TableHead>
+                            <TableHead className="text-xs text-gray-700 dark:text-gray-300">Volumes</TableHead>
+                            <TableHead className="text-xs text-gray-700 dark:text-gray-300">Observações</TableHead>
+                            <TableHead className="w-28 text-xs text-right text-gray-700 dark:text-gray-300">R$ Frete Un</TableHead>
+                            <TableHead className="w-28 text-xs text-right text-gray-700 dark:text-gray-300">Total</TableHead>
                             <TableHead className="w-10"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {volumes.map((volume, idx) => (
-                            <TableRow key={idx}>
+                            <TableRow key={idx} className="border-0 hover:bg-white/50 dark:hover:bg-gray-900/50">
                               <TableCell className="p-2">
                                 <Input
                                   type="text"
@@ -1426,7 +1530,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                     const val = e.target.value.replace(',', '.');
                                     handleVolumeChange(idx, 'quantidade', val);
                                   }}
-                                  className="h-8 text-sm w-full"
+                                  className="h-9 text-sm w-full bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
                                 />
                               </TableCell>
                               <TableCell className="p-2">
@@ -1434,7 +1538,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                   placeholder="Ex: Caixas, Pallets..."
                                   value={volume.descricao}
                                   onChange={(e) => handleVolumeChange(idx, 'descricao', e.target.value)}
-                                  className="h-8 text-sm w-full"
+                                  className="h-9 text-sm w-full bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
                                 />
                               </TableCell>
                               <TableCell className="p-2">
@@ -1442,7 +1546,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                   placeholder="Observações..."
                                   value={volume.observacoes}
                                   onChange={(e) => handleVolumeChange(idx, 'observacoes', e.target.value)}
-                                  className="h-8 text-sm w-full"
+                                  className="h-9 text-sm w-full bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
                                 />
                               </TableCell>
                               <TableCell className="p-2">
@@ -1455,7 +1559,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                     const val = e.target.value.replace(',', '.');
                                     handleVolumeChange(idx, 'preco_unit_frete', val);
                                   }}
-                                  className="h-8 text-sm w-full text-right"
+                                  className="h-9 text-sm w-full text-right bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
                                 />
                               </TableCell>
                               <TableCell className="p-2 text-right text-sm font-medium">
@@ -1470,14 +1574,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleRemoveVolume(idx)}
-                                  className="h-7 w-7 text-gray-400 hover:text-red-600"
+                                  className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                               </TableCell>
                             </TableRow>
                           ))}
-                          <TableRow className="bg-gray-50 dark:bg-gray-900 font-medium">
+                          <TableRow className="bg-white dark:bg-gray-900 font-medium border-0">
                             <TableCell colSpan={4} className="text-right text-sm">Total Frete:</TableCell>
                             <TableCell className="text-right text-sm">
                               R$ {calcularTotalFrete().toLocaleString('pt-BR', {
@@ -1494,14 +1598,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
               </>
             ) : (
-              <div className="p-4 bg-teal-50 border border-teal-200 rounded dark:bg-teal-900/20 dark:border-teal-800">
+              <div className="p-5 bg-teal-50 dark:bg-teal-900/20 rounded-xl shadow-sm border-0">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h4 className="font-medium text-teal-900 dark:text-teal-200 mb-2 flex items-center gap-2">
+                    <h4 className="font-medium text-teal-900 dark:text-teal-200 mb-3 flex items-center gap-2">
                       <Ship className="w-5 h-5" />
                       Supermanifesto Vinculado
                     </h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-6 text-sm">
                       <div>
                         <p className="text-xs text-teal-700 dark:text-teal-300">Número</p>
                         <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</p>
@@ -1528,116 +1632,76 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Status Documental</Label>
-                <div className="flex flex-col gap-3 pt-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-4 block">Status Documental</Label>
+                <div className="flex flex-col gap-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={formData.nfe_emitida || false} 
                       onChange={e => handleChange('nfe_emitida', e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Nota Fiscal Emitida pelo Fornecedor</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Nota Fiscal Emitida</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
                       checked={formData.manifesto_conferido || false} 
                       onChange={e => handleChange('manifesto_conferido', e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Manifesto de Carga Conferido</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Manifesto Conferido</span>
                   </label>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Qtd. Volumes</Label>
-                  <Input 
-                    type="number" 
-                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
-                    value={formData.qtd_volumes} 
-                    onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Tipo</Label>
-                  <Select 
-                    value={formData.tipo_volume} 
-                    onValueChange={v => handleChange('tipo_volume', v)}
-                  >
-                    <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                      <SelectItem value="Caixas">Caixas</SelectItem>
-                      <SelectItem value="Pallets">Pallets</SelectItem>
-                      <SelectItem value="Sacos">Sacos</SelectItem>
-                      <SelectItem value="Unidades">Unidades</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Peso (kg)</Label>
-                  <Input 
-                    type="number" 
-                    step="0.1"
-                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
-                    value={formData.peso_total_kg} 
-                    onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
-                  />
+              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-4 block">Informações de Carga</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Volumes</Label>
+                    <Input 
+                      type="number" 
+                      className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm" 
+                      value={formData.qtd_volumes} 
+                      onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Tipo</Label>
+                    <Select 
+                      value={formData.tipo_volume} 
+                      onValueChange={v => handleChange('tipo_volume', v)}
+                    >
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
+                        <SelectItem value="Caixas">Caixas</SelectItem>
+                        <SelectItem value="Pallets">Pallets</SelectItem>
+                        <SelectItem value="Sacos">Sacos</SelectItem>
+                        <SelectItem value="Unidades">Unidades</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Peso (kg)</Label>
+                    <Input 
+                      type="number" 
+                      step="0.1"
+                      className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm" 
+                      value={formData.peso_total_kg} 
+                      onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          {/* ABA: PAGAMENTO */}
-          <TabsContent value="pagamento" className="mt-0 space-y-6">
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded dark:bg-gray-800 dark:border-gray-700">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Automação Financeira</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Quando o pedido for marcado como <strong>"Enviado"</strong>, será criado automaticamente:
-                  </p>
-                  <ul className="text-sm text-gray-600 dark:text-gray-400 mt-2 ml-4 list-disc">
-                    <li>Um lançamento financeiro (Conta a Pagar) com status "Aguardando Recepção"</li>
-                    <li>Uma tarefa para acompanhamento do manifesto/nota fiscal</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Condições de Pagamento</Label>
-              <Textarea 
-                className="bg-transparent border border-gray-300 dark:border-gray-600 rounded text-sm dark:text-gray-200 h-20 resize-none" 
-                placeholder="Ex: 30/60/90 dias, À vista, Antecipado..."
-                value={formData.condicoes_pagamento} 
-                onChange={e => handleChange('condicoes_pagamento', e.target.value)} 
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Valor Total do Pedido</div>
-                <div className="text-3xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Vencimento Estimado</div>
-                <div className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                  {formData.data_prevista_entrega ? 
-                    format(addDays(new Date(formData.data_prevista_entrega), 30), 'dd/MM/yyyy') : 
-                    'Definir data de entrega'
-                  }
-                </div>
-              </div>
-            </div>
             </TabsContent>
           </div>
         </Tabs>
