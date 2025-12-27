@@ -128,10 +128,15 @@ export default function MobileProductSelector({
                   <Minus className="w-5 h-5" />
                 </Button>
                 <Input 
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   className="w-24 text-center h-12 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none"
-                  value={editingItem.quantidade}
-                  onChange={e => setEditingItem(prev => ({ ...prev, quantidade: parseFloat(e.target.value) || 0 }))}
+                  value={editingItem.quantidade || ''}
+                  onChange={e => {
+                    const val = e.target.value.replace(',', '.');
+                    setEditingItem(prev => ({ ...prev, quantidade: parseFloat(val) || 0 }));
+                  }}
+                  placeholder="0"
                 />
                 <Button 
                   variant="default" size="icon" className="h-12 w-12 rounded-full"
@@ -146,10 +151,15 @@ export default function MobileProductSelector({
           <div>
             <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Custo Unitário (R$)</Label>
             <Input 
-              type="number" step="0.01"
+              type="text"
+              inputMode="decimal"
               className="h-14 text-2xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center"
-              value={editingItem.custo_unitario}
-              onChange={e => setEditingItem(prev => ({ ...prev, custo_unitario: parseFloat(e.target.value) || 0 }))}
+              value={editingItem.custo_unitario || ''}
+              onChange={e => {
+                const val = e.target.value.replace(',', '.');
+                setEditingItem(prev => ({ ...prev, custo_unitario: parseFloat(val) || 0 }));
+              }}
+              placeholder="0,00"
             />
           </div>
 
