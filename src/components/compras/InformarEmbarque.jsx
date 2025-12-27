@@ -156,16 +156,17 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit chamado', formData);
+    if (!formData.transportadora_id) {
+      toast.error('Selecione uma Transportadora');
+      return;
+    }
 
-    if (!formData.transportadora_id || !formData.eta) {
-      toast.error('Preencha Transportadora e Data de Chegada');
+    if (!formData.eta || formData.eta.trim() === '') {
+      toast.error('Informe a Data de Chegada Prevista (ETA)');
       return;
     }
 
     const pesoFinal = parseFloat(formData.peso_informado_kg) || 0;
-    console.log('pesoFinal:', pesoFinal);
-    
     if (pesoFinal <= 0) {
       toast.error('Peso Bruto deve ser maior que zero');
       return;
@@ -175,7 +176,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
     try {
       const existeManifesto = await verificarManifestoExistente();
-      console.log('existeManifesto:', existeManifesto, 'showConfirmacao:', showConfirmacao);
       
       if (existeManifesto && !showConfirmacao) {
         setLoading(false);
