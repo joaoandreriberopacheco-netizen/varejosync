@@ -453,6 +453,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       // Salvar pedido primeiro
       await onSave(dataToSave);
       
+      // Abrir diálogo de atualização de preços (sempre)
+      setShowAtualizarPrecos(true);
+      
       if (mudouParaEnviado) {
         // Buscar o PO recém-criado/atualizado para pegar o ID e número
         const allPOs = await base44.entities.PedidoCompra.list();
@@ -505,9 +508,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           });
         }
       }
-
-      // Abrir diálogo de atualização de preços (sempre, não só quando muda status)
-      setShowAtualizarPrecos(true);
       
     } catch (error) {
       toast({
