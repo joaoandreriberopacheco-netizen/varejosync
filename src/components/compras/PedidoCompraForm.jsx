@@ -453,9 +453,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       // Salvar pedido primeiro
       await onSave(dataToSave);
       
-      // Abrir diálogo de atualização de preços (sempre)
-      setShowAtualizarPrecos(true);
-      
       if (mudouParaEnviado) {
         // Buscar o PO recém-criado/atualizado para pegar o ID e número
         const allPOs = await base44.entities.PedidoCompra.list();
@@ -841,6 +838,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-normal text-gray-800 dark:text-gray-200">Itens do Pedido ({formData.itens.length})</h3>
                   <div className="flex gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowAtualizarPrecos(true)} 
+                        className="h-7 text-xs px-2 border-gray-200 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        title="Revisar e atualizar custos e preços de venda"
+                        disabled={formData.itens.length === 0}
+                    >
+                        <DollarSign className="h-3.5 w-3.5 mr-1.5" /> 
+                        Ajuste de Preços
+                    </Button>
                     <Button 
                         variant="outline" 
                         size="sm" 

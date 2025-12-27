@@ -5,10 +5,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TrendingUp, TrendingDown, AlertTriangle, DollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
+import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { format } from 'date-fns';
 
 export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos }) {
   const [selecionados, setSelecionados] = useState({});
   const [processando, setProcessando] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState(null);
 
   // Calcular dados de comparação para cada item
   const itensComComparacao = itens.map(item => {
@@ -56,7 +60,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     setSelecionados(todos);
   };
 
-  const handleAplicar = async () => {
+  const handleInitiateUpdate = () => {
     const itensSelecionados = itensComComparacao.filter(i => selecionados[i.produto_id]);
     
     if (itensSelecionados.length === 0) {
@@ -68,10 +72,17 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       return;
     }
 
+    setPendingUpdate(itensSelecionados);
+    setIsAuthOpen(true);
+  };
+
+  const handleAuthSuccess = async (authData) => {
+    if (!pendingUpdate) return;
+    
     setProcessando(true);
 
     try {
-      for (const item of itensSelecionados) {
+      for (const item of pendingUpdate) {
         await base44.entities.Produto.update(item.produto_id, {
           valor_compra: item.novoCusto,
           preco_custo_calculado: item.novoCusto,
@@ -81,7 +92,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
 
       toast({
         title: "✓ Preços atualizados",
-        description: `${itensSelecionados.length} produto(s) atualizado(s) com sucesso`,
+        description: `${pendingUpdate.length} produto(s) atualizado(s) com sucesso [Auth: ${authData.intervenienteName}]`,
         className: "bg-emerald-100 text-emerald-800"
       });
 
@@ -95,6 +106,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       });
     } finally {
       setProcessando(false);
+      setPendingUpdate(null);
     }
   };
 
@@ -243,14 +255,21 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           </Button>
           {qtdItensComDiferenca > 0 && (
             <Button
-              onClick={handleAplicar}
+              onClick={handleInitiateUpdate}
               disabled={processando || Object.keys(selecionados).filter(k => selecionados[k]).length === 0}
               className="bg-teal-600 hover:bg-teal-700"
             >
-              {processando ? 'Aplicando...' : `Aplicar ${Object.keys(selecionados).filter(k => selecionados[k]).length} Selecionado(s)`}
+              {processando ? 'Aplicando...' : `Autenticar e Aplicar ${Object.keys(selecionados).filter(k => selecionados[k]).length} Selecionado(s)`}
             </Button>
           )}
         </div>
+
+        <OperacaoAuthenticator 
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
+          onSuccess={handleAuthSuccess}
+          operationName="Atualizar Custos e Preços de Venda"
+        />
       </DialogContent>
     </Dialog>
   );
