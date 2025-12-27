@@ -1221,7 +1221,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                     value={item.produto_id} 
                                     onValueChange={v => handleItemChange(index, 'produto_id', v)}
                                   >
-                                    <SelectTrigger className="h-9 bg-transparent border-0 hover:bg-white dark:hover:bg-gray-900 rounded-lg px-2 text-sm shadow-none">
+                                    <SelectTrigger className="h-9 bg-transparent border-0 hover:bg-white dark:hover:bg-gray-900 rounded-lg px-2 text-sm shadow-none text-gray-900 dark:text-white">
                                       <span className="truncate block text-left w-full">
                                         {selectedProduct ? selectedProduct.nome : "Selecione..."}
                                       </span>
@@ -1237,7 +1237,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                 </TableCell>
                                 <TableCell>
                                   <Input 
-                                    className="h-9 text-xs font-mono bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900" 
+                                    className="h-9 text-xs font-mono bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
                                     value={item.codigo_produto}
                                     onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
                                     placeholder="Código"
@@ -1246,14 +1246,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                 <TableCell>
                                   <Input 
                                     type="number" 
-                                    className="h-9 bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900" 
+                                    className="h-9 bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
                                     value={item.quantidade}
                                     onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
                                   />
                                 </TableCell>
                                 <TableCell>
                                   <Input 
-                                    className="h-9 text-xs bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900" 
+                                    className="h-9 text-xs bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
                                     value={item.unidade_medida}
                                     onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
                                   />
@@ -1261,7 +1261,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                 <TableCell>
                                   <Input 
                                     type="number" step="0.01"
-                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 font-medium" 
+                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 font-medium text-gray-900 dark:text-white" 
                                     value={item.custo_unitario} 
                                     onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
                                   />
@@ -1269,7 +1269,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                 <TableCell>
                                   <Input 
                                     type="number" step="0.01"
-                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-green-600" 
+                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-green-600 dark:text-green-500" 
                                     value={item.valor_desconto_item || 0} 
                                     onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
                                   />

@@ -199,32 +199,8 @@ export default function MobileProductSelector({
   const totalValue = items.reduce((acc, item) => acc + (item.total || 0), 0);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden">
-      {/* Mobile Toggle Tabs */}
-      <div className="flex p-2 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm z-10">
-        <button
-          onClick={() => setView('catalog')}
-          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-            view === 'catalog' 
-              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 shadow' 
-              : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
-          }`}
-        >
-          Produtos
-        </button>
-        <button
-          onClick={() => setView('cart')}
-          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all relative ${
-            view === 'cart' 
-              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 shadow' 
-              : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
-          }`}
-        >
-          Carrinho ({totalItems})
-        </button>
-      </div>
-
-      {/* Content Area */}
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
+      {/* Content Area - Apenas Carrinho */}
       <div className="flex-1 overflow-y-auto p-3">
         {view === 'catalog' ? (
           <div className="space-y-3">
@@ -232,7 +208,7 @@ export default function MobileProductSelector({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 placeholder="Buscar produto..."
-                className="pl-9 bg-white dark:bg-gray-800 border-none shadow-sm h-10 rounded-xl"
+                className="pl-9 bg-gray-50 dark:bg-gray-800 border-none shadow-sm h-10 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
@@ -242,7 +218,7 @@ export default function MobileProductSelector({
               {filteredProducts.map(product => {
                 const inCartCount = items.filter(i => i.produto_id === product.id).length;
                 const isSelected = inCartCount > 0;
-                
+
                 return (
                   <div 
                     key={product.id} 
@@ -250,7 +226,7 @@ export default function MobileProductSelector({
                     className={`p-3 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
                         isSelected 
                         ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
-                        : 'bg-white dark:bg-gray-800'
+                        : 'bg-gray-50 dark:bg-gray-800'
                     }`}
                   >
                     <div className="flex-1">
@@ -261,7 +237,7 @@ export default function MobileProductSelector({
                         {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
                       </div>
                     </div>
-                    
+
                     {isSelected ? (
                       <Badge className="bg-indigo-600 hover:bg-indigo-700 ml-2">
                         {inCartCount > 1 ? `${inCartCount}x` : 'No Carrinho'}
@@ -288,7 +264,7 @@ export default function MobileProductSelector({
                 <div 
                     key={index} 
                     onClick={() => handleEditItem(index)}
-                    className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm space-y-2 active:scale-[0.98] transition-transform"
+                    className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl shadow-sm space-y-2 active:scale-[0.98] transition-transform"
                 >
                    <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -298,12 +274,12 @@ export default function MobileProductSelector({
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
-                        {item.valor_desconto_item > 0 && (
-                           <div className="text-[10px] text-green-600 dark:text-green-500">
-                              -Desc: {formatCurrency(item.valor_desconto_item)}
-                           </div>
-                        )}
+                         <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
+                         {item.valor_desconto_item > 0 && (
+                            <div className="text-[10px] text-green-600 dark:text-green-500">
+                               -Desc: {formatCurrency(item.valor_desconto_item)}
+                            </div>
+                         )}
                       </div>
                    </div>
                    <div className="text-xs text-blue-600 dark:text-blue-400 font-medium pt-1">
@@ -316,17 +292,25 @@ export default function MobileProductSelector({
         )}
       </div>
 
-      {/* Footer Summary */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4 pb-8 md:pb-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-         <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total do Pedido</span>
+      {/* Footer com Total e Ícone do Carrinho */}
+      <div className="bg-white dark:bg-gray-800 border-t-0 p-4 pb-8 md:pb-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+         <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setView(view === 'cart' ? 'catalog' : 'cart')}
+                className="relative w-11 h-11 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors active:scale-95"
+              >
+                <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                {totalItems > 0 && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                    {totalItems}
+                  </div>
+                )}
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Total</span>
+            </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</span>
          </div>
-         {view === 'cart' && items.length > 0 && (
-             <Button className="w-full mt-3 bg-gray-900 text-white dark:bg-white dark:text-gray-900" onClick={() => setView('catalog')}>
-                 Continuar Comprando
-             </Button>
-         )}
       </div>
     </div>
   );
