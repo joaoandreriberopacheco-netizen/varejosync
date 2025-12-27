@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Weight, Calendar, AlertCircle } from 'lucide-react';
+import { Truck, Package, Weight, Calendar, AlertCircle, PlusCircle, Trash2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getTenantId } from '@/components/utils/tenant';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -17,11 +18,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
     transportadora_id: '',
     eta: '',
     peso_informado_kg: pedido?.peso_total_kg || 0,
-    descritivo_volumes: ''
+    volumes: []
   });
   const [manifestoExistente, setManifestoExistente] = useState(null);
   const [showConfirmacao, setShowConfirmacao] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showNovaTransportadora, setShowNovaTransportadora] = useState(false);
+  const [novaTransportadora, setNovaTransportadora] = useState({ nome: '', email: '', telefone: '' });
 
   useEffect(() => {
     if (isOpen) {
@@ -30,8 +33,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         transportadora_id: '',
         eta: '',
         peso_informado_kg: pedido?.peso_total_kg || 0,
-        descritivo_volumes: ''
+        volumes: []
       });
+      setNovaTransportadora({ nome: '', email: '', telefone: '' });
       setManifestoExistente(null);
       setShowConfirmacao(false);
     }
@@ -49,6 +53,71 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
     } catch (error) {
       console.error('Erro ao carregar transportadoras:', error);
     }
+  };
+
+  const handleCriarTransportadora = async () => {
+    if (!novaTransportadora.nome) {
+      toast.error('Nome da transportadora é obrigatório');
+      return;
+    }
+
+    try {
+      const tenantId = getTenantId();
+      const count = transportadoras.length;
+      const codigo = `FOR-${String(count + 1).padStart(5, '0')}`;
+
+      const nova = await base44.entities.Terceiro.create({
+        empresa_id: tenantId,
+        codigo_interno: codigo,
+        nome: novaTransportadora.nome,
+        email: novaTransportadora.email,
+        telefone: novaTransportadora.telefone,
+        tipo: 'Fornecedor',
+        ativo: true
+      });
+
+      setTransportadoras([...transportadoras, nova]);
+      setFormData({ ...formData, transportadora_id: nova.id });
+      setShowNovaTransportadora(false);
+      setNovaTransportadora({ nome: '', email: '', telefone: '' });
+      toast.success('Transportadora criada com sucesso');
+    } catch (error) {
+      console.error('Erro ao criar transportadora:', error);
+      toast.error('Erro ao criar transportadora');
+    }
+  };
+
+  const handleAddVolume = () => {
+    setFormData({
+      ...formData,
+      volumes: [...formData.volumes, { quantidade: 1, descricao: '', preco_unit_frete: 0 }]
+    });
+  };
+
+  const handleRemoveVolume = (index) => {
+    const newVolumes = formData.volumes.filter((_, i) => i !== index);
+    setFormData({ ...formData, volumes: newVolumes });
+  };
+
+  const handleVolumeChange = (index, field, value) => {
+    const newVolumes = [...formData.volumes];
+    newVolumes[index][field] = value;
+    setFormData({ ...formData, volumes: newVolumes });
+  };
+
+  const calcularTotalFrete = () => {
+    return formData.volumes.reduce((sum, v) => {
+      const qty = parseFloat(v.quantidade) || 0;
+      const price = parseFloat(v.preco_unit_frete) || 0;
+      return sum + (qty * price);
+    }, 0);
+  };
+
+  const gerarDescritivoVolumes = () => {
+    return formData.volumes
+      .map(v => `${v.quantidade}x ${v.descricao}`)
+      .filter(d => d.trim() !== 'x ')
+      .join(', ');
   };
 
   const verificarManifestoExistente = async () => {
@@ -126,8 +195,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         pedidosVinculados.push({
           pedido_id: pedido.id,
           pedido_numero: pedido.numero,
-          descritivo_volumes: formData.descritivo_volumes,
-          peso_informado_kg: formData.peso_informado_kg
+          descritivo_volumes: gerarDescritivoVolumes(),
+          peso_informado_kg: formData.peso_informado_kg,
+          volumes: formData.volumes,
+          total_frete: calcularTotalFrete()
         });
 
         const observacoesConsolidadas = pedidosVinculados
@@ -159,10 +230,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           pedidos_vinculados: [{
             pedido_id: pedido.id,
             pedido_numero: pedido.numero,
-            descritivo_volumes: formData.descritivo_volumes,
-            peso_informado_kg: formData.peso_informado_kg
+            descritivo_volumes: gerarDescritivoVolumes(),
+            peso_informado_kg: formData.peso_informado_kg,
+            volumes: formData.volumes,
+            total_frete: calcularTotalFrete()
           }],
-          observacoes_consolidadas: `${pedido.numero}: ${formData.descritivo_volumes}`
+          observacoes_consolidadas: `${pedido.numero}: ${gerarDescritivoVolumes()}`
         });
 
         manifestoId = novoManifesto.id;
@@ -252,23 +325,81 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-gray-400" />
-              Transportadora *
+            <Label className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-gray-400" />
+                Transportadora *
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowNovaTransportadora(!showNovaTransportadora)}
+                className="h-6 text-xs gap-1 text-teal-600 hover:text-teal-700"
+              >
+                <PlusCircle className="w-3 h-3" />
+                Nova
+              </Button>
             </Label>
-            <Select 
-              value={formData.transportadora_id} 
-              onValueChange={(value) => setFormData({ ...formData, transportadora_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a transportadora" />
-              </SelectTrigger>
-              <SelectContent>
-                {transportadoras.map(t => (
-                  <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            
+            {showNovaTransportadora ? (
+              <div className="space-y-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                <Input
+                  placeholder="Nome da transportadora *"
+                  value={novaTransportadora.nome}
+                  onChange={(e) => setNovaTransportadora({ ...novaTransportadora, nome: e.target.value })}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Email"
+                    type="email"
+                    value={novaTransportadora.email}
+                    onChange={(e) => setNovaTransportadora({ ...novaTransportadora, email: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Telefone"
+                    value={novaTransportadora.telefone}
+                    onChange={(e) => setNovaTransportadora({ ...novaTransportadora, telefone: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowNovaTransportadora(false);
+                      setNovaTransportadora({ nome: '', email: '', telefone: '' });
+                    }}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleCriarTransportadora}
+                    className="flex-1 bg-teal-600 hover:bg-teal-700"
+                  >
+                    Criar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Select 
+                value={formData.transportadora_id} 
+                onValueChange={(value) => setFormData({ ...formData, transportadora_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a transportadora" />
+                </SelectTrigger>
+                <SelectContent>
+                  {transportadoras.map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -297,19 +428,98 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           </div>
 
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Package className="w-4 h-4 text-gray-400" />
-              Descritivo de Volumes
+            <Label className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-gray-400" />
+                Descritivo de Volumes
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAddVolume}
+                className="h-6 text-xs gap-1"
+              >
+                <PlusCircle className="w-3 h-3" />
+                Adicionar
+              </Button>
             </Label>
-            <Textarea
-              placeholder="Ex: 10 caixas, 2 fardos..."
-              value={formData.descritivo_volumes}
-              onChange={(e) => setFormData({ ...formData, descritivo_volumes: e.target.value })}
-              rows={3}
-            />
-            <p className="text-xs text-gray-500">
-              Descreva os volumes conforme sua expertise logística
-            </p>
+
+            {formData.volumes.length > 0 && (
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-gray-50 dark:bg-gray-900">
+                    <TableRow>
+                      <TableHead className="w-20 text-xs">Quant.</TableHead>
+                      <TableHead className="text-xs">Volumes</TableHead>
+                      <TableHead className="w-28 text-xs text-right">R$ Frete Un</TableHead>
+                      <TableHead className="w-28 text-xs text-right">Total</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {formData.volumes.map((volume, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="p-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={volume.quantidade}
+                            onChange={(e) => handleVolumeChange(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                            className="h-8 text-sm w-full"
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input
+                            placeholder="Ex: Caixas, Pallets..."
+                            value={volume.descricao}
+                            onChange={(e) => handleVolumeChange(idx, 'descricao', e.target.value)}
+                            className="h-8 text-sm w-full"
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={volume.preco_unit_frete}
+                            onChange={(e) => handleVolumeChange(idx, 'preco_unit_frete', parseFloat(e.target.value) || 0)}
+                            className="h-8 text-sm w-full text-right"
+                          />
+                        </TableCell>
+                        <TableCell className="p-2 text-right text-sm font-medium">
+                          {((volume.quantidade || 0) * (volume.preco_unit_frete || 0)).toLocaleString('pt-BR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })}
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveVolume(idx)}
+                            className="h-7 w-7 text-gray-400 hover:text-red-600"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-gray-50 dark:bg-gray-900 font-medium">
+                      <TableCell colSpan={3} className="text-right text-sm">Total Frete:</TableCell>
+                      <TableCell className="text-right text-sm">
+                        R$ {calcularTotalFrete().toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })}
+                      </TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </div>
 
