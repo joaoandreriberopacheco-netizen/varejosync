@@ -142,7 +142,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
           </Card>
 
           {/* Seção de Embarque */}
-          {pedido.status === 'Enviado' && !pedido.supermanifesto_id && (
+          {!pedido.supermanifesto_id && (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center justify-between">
                 <div>
