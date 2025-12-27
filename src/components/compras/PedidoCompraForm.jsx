@@ -996,7 +996,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       <div>
                         <p className="text-xs text-teal-700 dark:text-teal-300">ETA</p>
                         <p className="font-medium text-teal-900 dark:text-teal-100">
-                          {format(new Date(supermanifesto.eta), 'dd/MM/yyyy HH:mm')}
+                          {supermanifesto.eta ? format(new Date(supermanifesto.eta), 'dd/MM/yyyy HH:mm') : 'Não informado'}
                         </p>
                       </div>
                       <div>
