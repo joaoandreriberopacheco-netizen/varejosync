@@ -130,7 +130,7 @@ export default function MobileProductSelector({
                 <Input 
                   type="text"
                   inputMode="decimal"
-                  className="w-24 text-center h-12 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none"
+                  className="w-24 text-center h-12 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
                   value={editingItem.quantidade || ''}
                   onChange={e => {
                     const val = e.target.value.replace(',', '.');
@@ -153,7 +153,7 @@ export default function MobileProductSelector({
             <Input 
               type="text"
               inputMode="decimal"
-              className="h-14 text-2xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center"
+              className="h-14 text-2xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
               value={editingItem.custo_unitario || ''}
               onChange={e => {
                 const val = e.target.value.replace(',', '.');
