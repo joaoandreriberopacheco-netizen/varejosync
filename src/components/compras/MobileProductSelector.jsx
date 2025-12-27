@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2 } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
@@ -13,7 +13,7 @@ export default function MobileProductSelector({
   onRemoveItem,
   formatCurrency 
 }) {
-  const [view, setView] = useState('catalog'); // 'catalog' | 'cart' | 'edit'
+  const [view, setView] = useState('cart'); // 'catalog' | 'cart' | 'edit'
   const [search, setSearch] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -218,49 +218,122 @@ export default function MobileProductSelector({
   const totalValue = items.reduce((acc, item) => acc + (item.total || 0), 0);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
-      {/* Content Area - Apenas Carrinho */}
-      <div className="flex-1 overflow-y-auto p-2">
-        <div className="space-y-2">
-          {items.length === 0 ? (
-             <div className="flex flex-col items-center justify-center h-48 text-gray-400">
-                <ShoppingCart className="w-12 h-12 mb-2 opacity-20" />
-                <p>Carrinho vazio</p>
-             </div>
-          ) : (
-            items.map((item, index) => (
-              <div 
-                  key={index} 
-                  onClick={() => handleEditItem(index)}
-                  className="bg-gray-50 dark:bg-gray-800 p-2.5 rounded-xl shadow-sm space-y-2 active:scale-[0.98] transition-transform"
-              >
-                 <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-800 dark:text-gray-100 line-clamp-1 text-sm">{item.produto_nome || "Produto"}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                       <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
-                       {item.valor_desconto_item > 0 && (
-                          <div className="text-[10px] text-green-600 dark:text-green-500">
-                             -Desc: {formatCurrency(item.valor_desconto_item)}
-                          </div>
-                       )}
-                    </div>
-                 </div>
-                 <div className="text-xs text-blue-600 dark:text-blue-400 font-medium pt-1">
-                    Toque para editar
-                 </div>
-              </div>
-            ))
-          )}
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-lg">
+      {view === 'catalog' && (
+        <div className="flex items-center p-2.5 border-b border-gray-100 dark:border-gray-700">
+          <Button variant="ghost" size="icon" onClick={() => setView('cart')}>
+            <X className="w-5 h-5" />
+          </Button>
+          <div className="ml-2 font-medium text-sm flex-1">Buscar Produtos</div>
         </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto p-2">
+        {view === 'cart' ? (
+          <div className="space-y-2">
+            {items.length === 0 ? (
+               <div className="flex flex-col items-center justify-center h-48 text-gray-400">
+                  <ShoppingCart className="w-12 h-12 mb-2 opacity-20" />
+                  <p>Carrinho vazio</p>
+                  <Button 
+                    className="mt-4" 
+                    onClick={() => setView('catalog')}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Produtos
+                  </Button>
+               </div>
+            ) : (
+              items.map((item, index) => (
+                <div 
+                    key={index} 
+                    onClick={() => handleEditItem(index)}
+                    className="bg-gray-50 dark:bg-gray-800 p-2.5 rounded-xl shadow-sm active:scale-[0.98] transition-transform"
+                >
+                   <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-800 dark:text-gray-100 line-clamp-1 text-sm">{item.produto_nome || "Produto"}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                         <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
+                         {item.valor_desconto_item > 0 && (
+                            <div className="text-[10px] text-green-600 dark:text-green-500">
+                               -Desc: {formatCurrency(item.valor_desconto_item)}
+                            </div>
+                         )}
+                      </div>
+                   </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Buscar produto..."
+                className="pl-9 bg-gray-50 dark:bg-gray-800 border-none shadow-sm h-10 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+
+            {filteredProducts.map(product => {
+              const inCartCount = items.filter(i => i.produto_id === product.id).length;
+              const isSelected = inCartCount > 0;
+              
+              return (
+                <div 
+                  key={product.id} 
+                  onClick={() => handleSelectProduct(product)}
+                  className={`p-2.5 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
+                      isSelected 
+                      ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
+                      : 'bg-gray-50 dark:bg-gray-800'
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className={`font-medium text-sm ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
+                      {product.nome}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
+                    </div>
+                  </div>
+                  
+                  {isSelected ? (
+                    <Badge className="bg-indigo-600 hover:bg-indigo-700 ml-2 text-xs">
+                      {inCartCount > 1 ? `${inCartCount}x` : '✓'}
+                    </Badge>
+                  ) : (
+                    <div className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Footer com Total e Ícone do Carrinho */}
-      <div className="bg-white dark:bg-gray-800 border-t-0 p-3 pb-8 md:pb-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+      {view === 'cart' && items.length > 0 && (
+        <div className="p-2 border-t border-gray-100 dark:border-gray-700">
+          <Button 
+            className="w-full" 
+            onClick={() => setView('catalog')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Adicionar Produtos
+          </Button>
+        </div>
+      )}
+
+      <div className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-3 pb-8 md:pb-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
          <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div className="relative w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
