@@ -1701,8 +1701,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </div>
           </TabsContent>
-
-            </TabsContent>
           </div>
         </Tabs>
       )}
