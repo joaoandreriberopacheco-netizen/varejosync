@@ -1064,7 +1064,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <div className="col-span-12 lg:col-span-4">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Fornecedor *</Label>
                   <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm">
+                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white">
                       <SelectValue placeholder="Selecione o fornecedor..." />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
@@ -1079,7 +1079,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <div className="col-span-6 lg:col-span-2">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Status</Label>
                   <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm">
+                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
@@ -1095,7 +1095,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Emissão</Label>
                   <Input 
                     type="date" 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white" 
                     value={formData.data_emissao} 
                     onChange={e => handleChange('data_emissao', e.target.value)} 
                   />
@@ -1105,7 +1105,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <div className="col-span-12 lg:col-span-4">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Tags</Label>
                   <Input 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400" 
                     placeholder="Ex: Urgente, Reposição..."
                     value={formData.tags?.join(', ') || ''} 
                     onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
@@ -1116,7 +1116,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <div className="col-span-12">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Observações</Label>
                   <Textarea 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none text-gray-900 dark:text-white placeholder:text-gray-400" 
                     placeholder="Observações do pedido..."
                     rows={2}
                     value={formData.observacoes} 
