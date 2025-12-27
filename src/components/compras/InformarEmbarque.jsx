@@ -157,7 +157,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
   const handleSubmit = async () => {
     if (!formData.transportadora_id || !formData.eta) {
-      toast.error('Preencha todos os campos obrigatórios');
+      toast.error('Preencha Transportadora e Data de Chegada');
+      return;
+    }
+
+    const pesoFinal = parseFloat(formData.peso_informado_kg) || 0;
+    if (pesoFinal <= 0) {
+      toast.error('Peso Bruto deve ser maior que zero');
       return;
     }
 
@@ -196,7 +202,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           pedido_id: pedido.id,
           pedido_numero: pedido.numero,
           descritivo_volumes: gerarDescritivoVolumes(),
-          peso_informado_kg: formData.peso_informado_kg,
+          peso_informado_kg: parseFloat(formData.peso_informado_kg) || 0,
           volumes: formData.volumes,
           total_frete: calcularTotalFrete()
         });
@@ -226,12 +232,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           transportadora_nome: transportadora?.nome || '',
           eta: formData.eta,
           status: 'Pendente',
-          peso_total_bruto_kg: formData.peso_informado_kg,
+          peso_total_bruto_kg: parseFloat(formData.peso_informado_kg) || 0,
           pedidos_vinculados: [{
             pedido_id: pedido.id,
             pedido_numero: pedido.numero,
             descritivo_volumes: gerarDescritivoVolumes(),
-            peso_informado_kg: formData.peso_informado_kg,
+            peso_informado_kg: parseFloat(formData.peso_informado_kg) || 0,
             volumes: formData.volumes,
             total_frete: calcularTotalFrete()
           }],
@@ -315,7 +321,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-teal-600" />
