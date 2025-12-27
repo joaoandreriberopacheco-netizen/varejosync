@@ -53,7 +53,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [volumes, setVolumes] = useState([]);
   const [showAtualizarPrecos, setShowAtualizarPrecos] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const loadDependencies = async () => {
@@ -623,25 +631,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         </DialogTitle>
       </DialogHeader>
 
-      <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-        <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 sm:px-6">
-          <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
-            <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline">Dados Gerais</span>
-          </TabsTrigger>
-          <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
-            <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline">Pagamento</span>
-          </TabsTrigger>
-          <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
-            <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-            <span className="hidden sm:inline">Logística</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <div className="flex-1 overflow-y-auto p-2 sm:p-6">
-          {/* ABA: DADOS GERAIS */}
-          <TabsContent value="dados-gerais" className="mt-0 space-y-4">
+      {isMobile ? (
+        /* MOBILE: Layout Linear Scrollável */
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-6 p-4">
+            {/* Seção 1: Cabeçalho */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+                <FileText className="w-4 h-4 text-gray-500" />
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Informações Gerais</h3>
+              </div>
             
             {/* Header Compacto - Grid Principal */}
             <div className="grid grid-cols-12 gap-x-4 gap-y-2">
@@ -760,8 +759,252 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </div>
 
-            {/* Desktop View: Tabela e Totalizadores */}
-            <div className="hidden lg:block">
+              <div>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Fornecedor *</Label>
+                <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
+                    {fornecedores.map(f => (
+                      <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Status</Label>
+                  <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
+                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700 z-[9999]">
+                      {['Rascunho', 'Enviado', 'Aguardando Recepção', 'Recebido'].map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Emissão</Label>
+                  <Input 
+                    type="date" 
+                    className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                    value={formData.data_emissao} 
+                    onChange={e => handleChange('data_emissao', e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Entrega Prevista</Label>
+                <Input 
+                  type="date" 
+                  className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                  value={formData.data_prevista_entrega} 
+                  onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Observações</Label>
+                <Input 
+                  className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                  placeholder="Observações do pedido..."
+                  value={formData.observacoes} 
+                  onChange={e => handleChange('observacoes', e.target.value)} 
+                />
+              </div>
+            </div>
+
+            {/* Seção 2: Itens e Precificação */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-gray-500" />
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Itens ({formData.itens.length})</h3>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowAtualizarPrecos(true)}
+                  disabled={formData.itens.length === 0}
+                  className="h-8 text-xs gap-1"
+                >
+                  <DollarSign className="w-3.5 h-3.5" />
+                  Ajustar
+                </Button>
+              </div>
+
+              <MobileProductSelector 
+                items={formData.itens}
+                products={produtos}
+                onAddItem={handleAddItem}
+                onUpdateItem={handleItemChange}
+                onRemoveItem={handleRemoveItem}
+                formatCurrency={formatCurrency}
+              />
+
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Frete</Label>
+                  <Input 
+                    type="number" step="0.01"
+                    className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                    value={formData.valor_frete} 
+                    onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)} 
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Desconto</Label>
+                  <Input 
+                    type="number" step="0.01"
+                    className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                    value={formData.valor_desconto} 
+                    onChange={e => handleDescontoValorChange(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total do Pedido</span>
+                  <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 3: Pagamento */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+                <DollarSign className="w-4 h-4 text-gray-500" />
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Condições de Pagamento</h3>
+              </div>
+
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Ao marcar como "Enviado", será criada automaticamente uma conta a pagar com status "Aguardando Recepção"
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Condições</Label>
+                <Textarea 
+                  className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 h-20 resize-none" 
+                  placeholder="Ex: 30/60/90 dias, À vista..."
+                  value={formData.condicoes_pagamento} 
+                  onChange={e => handleChange('condicoes_pagamento', e.target.value)} 
+                />
+              </div>
+            </div>
+
+            {/* Seção 4: Logística */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+                <Ship className="w-4 h-4 text-gray-500" />
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Informações Logísticas</h3>
+              </div>
+
+              {supermanifesto ? (
+                <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg dark:bg-teal-900/20 dark:border-teal-800">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-teal-700 dark:text-teal-300">Manifesto</span>
+                      <span className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-teal-700 dark:text-teal-300">Transportadora</span>
+                      <span className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.transportadora_nome}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Transportadora</Label>
+                    <Select value={formData.transportadora_embarque_id} onValueChange={v => handleChange('transportadora_embarque_id', v)}>
+                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                        {fornecedores.map(t => (
+                          <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Data de Chegada (ETA)</Label>
+                    <Input
+                      type="datetime-local"
+                      value={formData.eta_embarque || ''}
+                      onChange={(e) => handleChange('eta_embarque', e.target.value)}
+                      className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Volumes</Label>
+                      <Input 
+                        type="number" 
+                        className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                        value={formData.qtd_volumes} 
+                        onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Tipo</Label>
+                      <Select value={formData.tipo_volume} onValueChange={v => handleChange('tipo_volume', v)}>
+                        <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                          <SelectItem value="Caixas">Caixas</SelectItem>
+                          <SelectItem value="Pallets">Pallets</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2">Peso (kg)</Label>
+                      <Input 
+                        type="number" step="0.1"
+                        className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700" 
+                        value={formData.peso_total_kg} 
+                        onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* DESKTOP: Tabs Originais */
+        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
+          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 sm:px-6">
+            <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+              <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              <span className="hidden sm:inline">Dados Gerais</span>
+            </TabsTrigger>
+            <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+              <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              <span className="hidden sm:inline">Pagamento</span>
+            </TabsTrigger>
+            <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+              <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              <span className="hidden sm:inline">Logística</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex-1 overflow-y-auto p-2 sm:p-6">
+            <TabsContent value="dados-gerais" className="mt-0 space-y-4">
+              {/* Desktop View: Tabela e Totalizadores */}
+              <div className="hidden lg:block">
                <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-normal text-gray-800 dark:text-gray-200">Itens do Pedido ({formData.itens.length})</h3>
                   <div className="flex gap-2">
@@ -1340,9 +1583,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
               </div>
             </div>
-          </TabsContent>
-        </div>
-      </Tabs>
+            </TabsContent>
+          </div>
+        </Tabs>
+      )}
 
       <DialogFooter className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center justify-between w-full">
