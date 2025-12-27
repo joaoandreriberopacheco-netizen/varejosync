@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import MobileProductSelector from './MobileProductSelector';
+import InformarEmbarque from './InformarEmbarque';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -43,11 +44,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   });
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
-  const [eventosLogisticos, setEventosLogisticos] = useState([]);
+  const [supermanifesto, setSupermanifesto] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
-  const [newEventData, setNewEventData] = useState({ nome: '', transportadora: '', data_previsao_chegada: '' });
+  const [showInformarEmbarque, setShowInformarEmbarque] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { toast } = useToast();
 
@@ -56,17 +56,23 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const user = await base44.auth.me();
       setCurrentUser(user);
       
-      const [fornecedorData, produtoData, eventosData] = await Promise.all([
+      const [fornecedorData, produtoData] = await Promise.all([
         base44.entities.Terceiro.list(),
-        base44.entities.Produto.list(),
-        base44.entities.EventosLogisticos.list()
+        base44.entities.Produto.list()
       ]);
       setFornecedores(fornecedorData.filter(t => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
       setProdutos(produtoData);
-      setEventosLogisticos(eventosData.filter(e => e.status !== 'Finalizado' && e.status !== 'Cancelado'));
+
+      // Carregar supermanifesto se existir
+      if (pedido?.supermanifesto_id) {
+        const manifestoData = await base44.entities.Supermanifesto.filter({ id: pedido.supermanifesto_id });
+        if (manifestoData && manifestoData.length > 0) {
+          setSupermanifesto(manifestoData[0]);
+        }
+      }
     };
     loadDependencies();
-  }, []);
+  }, [pedido]);
 
   // Cálculos automáticos
   const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
@@ -500,23 +506,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
-  const handleCreateEvent = async () => {
-    if (!newEventData.nome || !newEventData.transportadora || !newEventData.data_previsao_chegada) {
-      toast({ title: "Preencha todos os campos", variant: "destructive" });
-      return;
-    }
-    try {
-      const newEvent = await base44.entities.EventosLogisticos.create({
-        ...newEventData,
-        status: 'Agendado',
-        data_saida: new Date().toISOString()
-      });
-      setEventosLogisticos([...eventosLogisticos, newEvent]);
-      handleChange('evento_logistico_id', newEvent.id);
-      setIsNewEventDialogOpen(false);
-      toast({ title: "Evento criado e selecionado", className: "bg-green-100 text-green-800" });
-    } catch (error) {
-      toast({ title: "Erro ao criar evento", description: error.message, variant: "destructive" });
+  const reloadSupermanifesto = async () => {
+    if (formData.supermanifesto_id) {
+      const manifestoData = await base44.entities.Supermanifesto.filter({ id: formData.supermanifesto_id });
+      if (manifestoData && manifestoData.length > 0) {
+        setSupermanifesto(manifestoData[0]);
+      }
     }
   };
 
@@ -942,84 +937,81 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
           {/* ABA: LOGÍSTICA */}
           <TabsContent value="logistica" className="mt-0 space-y-6">
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded dark:bg-blue-900/20 dark:border-blue-800">
-              <div className="flex items-start gap-3">
-                <Ship className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Rastreamento de Entrada</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Vincule este pedido a um evento logístico (viagem) para rastrear sua chegada.
-                  </p>
+            {!supermanifesto ? (
+              <>
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded dark:bg-blue-900/20 dark:border-blue-800">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <Ship className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Rastreamento de Entrada</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Vincule este pedido a um supermanifesto para rastrear sua chegada.
+                        </p>
+                      </div>
+                    </div>
+                    {pedido?.id && (
+                      <Button
+                        onClick={() => setShowInformarEmbarque(true)}
+                        className="bg-blue-600 hover:bg-blue-700 gap-2 flex-shrink-0"
+                        size="sm"
+                      >
+                        <Ship className="w-4 h-4" />
+                        Informar Embarque
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {!pedido?.id && (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded dark:bg-gray-800 dark:border-gray-700">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Salve o pedido primeiro para poder informar o embarque.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-4 bg-teal-50 border border-teal-200 rounded dark:bg-teal-900/20 dark:border-teal-800">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-medium text-teal-900 dark:text-teal-200 mb-2 flex items-center gap-2">
+                      <Ship className="w-5 h-5" />
+                      Supermanifesto Vinculado
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">Número</p>
+                        <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">Transportadora</p>
+                        <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.transportadora_nome}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">ETA</p>
+                        <p className="font-medium text-teal-900 dark:text-teal-100">
+                          {format(new Date(supermanifesto.eta), 'dd/MM/yyyy HH:mm')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">Status</p>
+                        <Badge className="bg-teal-100 text-teal-800 border-0">
+                          {supermanifesto.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 block">Evento Logístico (Viagem)</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-5 text-[10px] px-2 text-blue-600 hover:text-blue-700"
-                    onClick={() => setIsNewEventDialogOpen(true)}
-                  >
-                    <PlusCircle className="w-3 h-3 mr-1" /> Novo Evento
-                  </Button>
-                </div>
-                <Select 
-                  value={formData.evento_logistico_id || ''} 
-                  onValueChange={v => handleChange('evento_logistico_id', v === 'none' ? null : v)}
-                >
-                  <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
-                    <SelectValue placeholder="Selecione uma viagem..." />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="none" className="text-gray-500">-- Sem Vínculo --</SelectItem>
-                    {eventosLogisticos.map(ev => (
-                      <SelectItem key={ev.id} value={ev.id} className="dark:text-gray-200 dark:hover:bg-gray-700">
-                        {ev.nome} ({ev.transportadora})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Novo Evento Logístico</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-2">
-                      <div>
-                        <Label>Nome da Viagem/Evento</Label>
-                        <Input 
-                          placeholder="Ex: Balsa Manaus - 05/11" 
-                          value={newEventData.nome} 
-                          onChange={e => setNewEventData({...newEventData, nome: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <Label>Transportadora</Label>
-                        <Input 
-                          placeholder="Ex: Transportes Rio Negro" 
-                          value={newEventData.transportadora} 
-                          onChange={e => setNewEventData({...newEventData, transportadora: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <Label>Previsão de Chegada</Label>
-                        <Input 
-                          type="datetime-local" 
-                          value={newEventData.data_previsao_chegada} 
-                          onChange={e => setNewEventData({...newEventData, data_previsao_chegada: e.target.value})}
-                        />
-                      </div>
-                      <Button onClick={handleCreateEvent} className="w-full bg-blue-600 text-white">Criar e Selecionar</Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Status Documental</Label>
                 <div className="flex flex-col gap-3 pt-2">
@@ -1043,45 +1035,45 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </label>
                 </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Qtd. Volumes</Label>
-                <Input 
-                  type="number" 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
-                  value={formData.qtd_volumes} 
-                  onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Tipo de Volume</Label>
-                <Select 
-                  value={formData.tipo_volume} 
-                  onValueChange={v => handleChange('tipo_volume', v)}
-                >
-                  <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="Caixas">Caixas</SelectItem>
-                    <SelectItem value="Pallets">Pallets</SelectItem>
-                    <SelectItem value="Sacos">Sacos</SelectItem>
-                    <SelectItem value="Unidades">Unidades</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Peso Total (kg)</Label>
-                <Input 
-                  type="number" 
-                  step="0.1"
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
-                  value={formData.peso_total_kg} 
-                  onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
-                />
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Qtd. Volumes</Label>
+                  <Input 
+                    type="number" 
+                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                    value={formData.qtd_volumes} 
+                    onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Tipo</Label>
+                  <Select 
+                    value={formData.tipo_volume} 
+                    onValueChange={v => handleChange('tipo_volume', v)}
+                  >
+                    <SelectTrigger className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none h-10 text-sm dark:text-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                      <SelectItem value="Caixas">Caixas</SelectItem>
+                      <SelectItem value="Pallets">Pallets</SelectItem>
+                      <SelectItem value="Sacos">Sacos</SelectItem>
+                      <SelectItem value="Unidades">Unidades</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Peso (kg)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.1"
+                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm dark:text-gray-200" 
+                    value={formData.peso_total_kg} 
+                    onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -1160,6 +1152,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         onSuccess={handleAuthSuccess}
         operationName={pedido?.id ? `Salvar Pedido ${pedido.numero}` : "Criar Novo Pedido"}
       />
+
+      {pedido?.id && (
+        <InformarEmbarque
+          pedido={{ ...pedido, ...formData }}
+          isOpen={showInformarEmbarque}
+          onClose={() => setShowInformarEmbarque(false)}
+          onSuccess={async () => {
+            await reloadSupermanifesto();
+            setShowInformarEmbarque(false);
+          }}
+        />
+      )}
     </DialogContent>
   );
 }
