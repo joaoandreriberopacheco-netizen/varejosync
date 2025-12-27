@@ -42,13 +42,7 @@ export default function MobileProductSelector({
         unidade_medida: product.unidade_principal || 'UN',
         quantidade: 1,
         custo_unitario: product.valor_compra || 0,
-        valor_frete_item: product.custo_frete_padrao || 0,
-        valor_imposto1: product.custo_imposto1_padrao || 0,
-        valor_imposto2: product.custo_imposto2_padrao || 0,
-        outros_custos: product.custo_outros_padrao || 0,
-        valor_desconto_item: product.desconto_compra_padrao || 0,
-        markup: 40,
-        preco_venda_atual: product.preco_venda_padrao || 0
+        valor_desconto_item: product.desconto_compra_padrao || 0
       });
       setEditingIndex(-1); // New item
       setView('edit');
@@ -105,13 +99,9 @@ export default function MobileProductSelector({
   const calculateTotal = (item) => {
     const qty = parseFloat(item.quantidade) || 0;
     const cost = parseFloat(item.custo_unitario) || 0;
-    const freightUnit = parseFloat(item.valor_frete_item) || 0;
-    const imp1Unit = parseFloat(item.valor_imposto1) || 0;
-    const imp2Unit = parseFloat(item.valor_imposto2) || 0;
-    const outrosUnit = parseFloat(item.outros_custos) || 0;
     const discountUnit = parseFloat(item.valor_desconto_item) || 0;
     
-    const unitFinalCost = cost + freightUnit + imp1Unit + imp2Unit + outrosUnit - discountUnit;
+    const unitFinalCost = cost - discountUnit;
     return unitFinalCost * qty;
   };
 
@@ -152,62 +142,15 @@ export default function MobileProductSelector({
              </div>
           </div>
 
-          {/* Pricing Fields */}
-          <div className="grid grid-cols-2 gap-4">
-             <div className="col-span-2">
-                <Label className="text-xs text-gray-500 mb-1.5 block">Custo Unitário (R$)</Label>
-                <Input 
-                   type="number" step="0.01"
-                   className="h-12 text-lg bg-gray-50 dark:bg-gray-800 border-none shadow-none"
-                   value={editingItem.custo_unitario}
-                   onChange={e => setEditingItem(prev => ({ ...prev, custo_unitario: parseFloat(e.target.value) || 0 }))}
-                />
-             </div>
-             <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Frete Unit. (+)</Label>
-                <Input 
-                   type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-gray-700"
-                   value={editingItem.valor_frete_item}
-                   onChange={e => setEditingItem(prev => ({ ...prev, valor_frete_item: parseFloat(e.target.value) || 0 }))}
-                />
-             </div>
-             <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Desc. Unit. (-)</Label>
-                <Input 
-                   type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-red-500"
-                   value={editingItem.valor_desconto_item}
-                   onChange={e => setEditingItem(prev => ({ ...prev, valor_desconto_item: parseFloat(e.target.value) || 0 }))}
-                />
-             </div>
-             <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Imp. 1 Unit. (+)</Label>
-                <Input 
-                   type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-orange-600"
-                   value={editingItem.valor_imposto1 || 0}
-                   onChange={e => setEditingItem(prev => ({ ...prev, valor_imposto1: parseFloat(e.target.value) || 0 }))}
-                />
-             </div>
-             <div>
-                <Label className="text-xs text-gray-500 mb-1.5 block">Imp. 2 Unit. (+)</Label>
-                <Input 
-                   type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-none shadow-none text-orange-600"
-                   value={editingItem.valor_imposto2 || 0}
-                   onChange={e => setEditingItem(prev => ({ ...prev, valor_imposto2: parseFloat(e.target.value) || 0 }))}
-                />
-             </div>
-             <div className="col-span-2">
-                <Label className="text-xs text-gray-500 mb-1.5 block">Outros Custos Unit. (+)</Label>
-                <Input 
-                   type="number" step="0.01"
-                   className="h-12 bg-gray-50 dark:bg-gray-800 border-transparent text-gray-700"
-                   value={editingItem.outros_custos || 0}
-                   onChange={e => setEditingItem(prev => ({ ...prev, outros_custos: parseFloat(e.target.value) || 0 }))}
-                />
-             </div>
+          {/* Pricing Field - Somente Custo Unitário */}
+          <div>
+            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Custo Unitário (R$)</Label>
+            <Input 
+              type="number" step="0.01"
+              className="h-14 text-2xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center"
+              value={editingItem.custo_unitario}
+              onChange={e => setEditingItem(prev => ({ ...prev, custo_unitario: parseFloat(e.target.value) || 0 }))}
+            />
           </div>
 
           <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg flex justify-between items-center mt-6">
@@ -345,13 +288,12 @@ export default function MobileProductSelector({
                         </div>
                       </div>
                       <div className="text-right">
-                         <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
-                         {(item.valor_frete_item > 0 || item.valor_desconto_item > 0) && (
-                            <div className="text-[10px] text-gray-400">
-                               {item.valor_frete_item > 0 && `+F: ${item.valor_frete_item}`}
-                               {item.valor_desconto_item > 0 && ` -D: ${item.valor_desconto_item}`}
-                            </div>
-                         )}
+                        <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
+                        {item.valor_desconto_item > 0 && (
+                           <div className="text-[10px] text-green-600 dark:text-green-500">
+                              -Desc: {formatCurrency(item.valor_desconto_item)}
+                           </div>
+                        )}
                       </div>
                    </div>
                    <div className="text-xs text-blue-600 dark:text-blue-400 font-medium pt-1">
