@@ -146,60 +146,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
                 item.unidade_medida = produto.unidade_compra || 'UN';
                 item.custo_unitario = produto.valor_compra || 0;
-                
-                // Pre-fill costs from product registry
-                item.valor_frete_item = produto.custo_frete_padrao || 0;
-                item.valor_imposto1 = produto.custo_imposto1_padrao || 0;
-                item.valor_imposto2 = produto.custo_imposto2_padrao || 0;
-                item.outros_custos = produto.custo_outros_padrao || 0;
-                item.valor_desconto_item = produto.desconto_compra_padrao || 0;
-                
-                item.preco_venda_atual = produto.preco_venda_padrao || 0;
-                item.markup = 40; 
+                item.valor_desconto_item = produto.desconto_compra_padrao || 0; 
             }
         }
     }
 
-    // Recalculate totals and margins (Values are UNITARY)
+    // Simplified calculation: price - discount
     const qty = parseFloat(item.quantidade) || 0;
     const cost = parseFloat(item.custo_unitario) || 0;
-    const freteUnit = parseFloat(item.valor_frete_item) || 0;
-    const imposto1Unit = parseFloat(item.valor_imposto1) || 0;
-    const imposto2Unit = parseFloat(item.valor_imposto2) || 0;
-    const outrosUnit = parseFloat(item.outros_custos) || 0;
     const descUnit = parseFloat(item.valor_desconto_item) || 0;
     
-    // Unit Final Cost
-    const custoFinalUnitario = cost + freteUnit + imposto1Unit + imposto2Unit + outrosUnit - descUnit;
+    const custoFinalUnitario = cost - descUnit;
     item.custo_final_unitario = custoFinalUnitario;
-
-    // Total Line Cost
     item.subtotal = qty * cost;
     item.total = custoFinalUnitario * qty;
-
-    // Price Formation
-    const markup = parseFloat(item.markup) || 0;
-    
-    // If field changed is markup, calculate suggested price. 
-    // If field changed is suggested price, calculate markup.
-    // If cost changed, recalculate suggested price based on markup (standard behavior)
-    
-    if (field === 'preco_venda_sugerido') {
-        const suggested = parseFloat(value) || 0;
-        // Markup = (Price / Cost) - 1
-        item.markup = custoFinalUnitario > 0 ? ((suggested / custoFinalUnitario) - 1) * 100 : 0;
-        // Ensure preco_venda_sugerido is also set to the numeric value if this field is being updated
-        item.preco_venda_sugerido = suggested; 
-    } else {
-        // Calculate Price based on Markup
-        item.preco_venda_sugerido = custoFinalUnitario * (1 + (markup / 100));
-    }
-
-    // Resulting Margin (Contribution)
-    item.margem_contribuicao = (item.preco_venda_sugerido || 0) - custoFinalUnitario;
-    item.margem_percentual = (item.preco_venda_sugerido || 0) > 0 
-        ? (item.margem_contribuicao / item.preco_venda_sugerido) * 100 
-        : 0;
 
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
@@ -210,25 +170,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     const calculateItemTotals = (item) => {
         const qty = parseFloat(item.quantidade) || 0;
         const cost = parseFloat(item.custo_unitario) || 0;
-        const freteUnit = parseFloat(item.valor_frete_item) || 0;
-        const imposto1Unit = parseFloat(item.valor_imposto1) || 0;
-        const imposto2Unit = parseFloat(item.valor_imposto2) || 0;
-        const outrosUnit = parseFloat(item.outros_custos) || 0;
         const descUnit = parseFloat(item.valor_desconto_item) || 0;
         
-        const custoFinalUnitario = cost + freteUnit + imposto1Unit + imposto2Unit + outrosUnit - descUnit;
+        const custoFinalUnitario = cost - descUnit;
         const total = custoFinalUnitario * qty;
-        
-        const markup = parseFloat(item.markup) || 40;
-        const suggested = custoFinalUnitario * (1 + (markup/100));
 
         return {
             ...item,
             subtotal: qty * cost,
             total: total,
-            custo_final_unitario: custoFinalUnitario,
-            preco_venda_sugerido: suggested,
-            margem_contribuicao: suggested - custoFinalUnitario
+            custo_final_unitario: custoFinalUnitario
         };
     };
 
@@ -242,13 +193,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             quantidade: 1, 
             unidade_medida: product?.unidade_compra || 'UN',
             custo_unitario: product?.valor_compra || 0,
-            valor_frete_item: product?.custo_frete_padrao || 0,
-            valor_imposto1: product?.custo_imposto1_padrao || 0,
-            valor_imposto2: product?.custo_imposto2_padrao || 0,
-            outros_custos: product?.custo_outros_padrao || 0,
             valor_desconto_item: product?.desconto_compra_padrao || 0,
-            markup: 40, // Default Markup
-            preco_venda_atual: product?.preco_venda_padrao || 0,
             observacao_item: ''
         };
         newItem = calculateItemTotals(newItem);
@@ -337,19 +282,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 if (product) {
                     const currentCost = parseBRFloat(cols[4]?.replace(/"/g, ''));
                     const newCost = parseBRFloat(cols[6]?.replace(/"/g, ''));
-                    const freight = parseBRFloat(cols[7]?.replace(/"/g, ''));
-                    const imp1 = parseBRFloat(cols[8]?.replace(/"/g, ''));
-                    const imp2 = parseBRFloat(cols[9]?.replace(/"/g, ''));
                     const discount = parseBRFloat(cols[10]?.replace(/"/g, ''));
-                    const others = parseBRFloat(cols[11]?.replace(/"/g, ''));
-                    const markup = parseBRFloat(cols[12]?.replace(/"/g, ''));
                     
                     const finalCost = newCost > 0 ? newCost : (currentCost > 0 ? currentCost : product.valor_compra);
-                    const custoFinalUnitario = finalCost + freight + imp1 + imp2 + others - discount;
-
-                    // Calculate suggested price if markup provided, or default
-                    const finalMarkup = markup > 0 ? markup : 40;
-                    const suggested = custoFinalUnitario * (1 + (finalMarkup/100));
+                    const custoFinalUnitario = finalCost - discount;
 
                     newItems.push({
                         produto_id: product.id,
@@ -358,19 +294,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         quantidade: qty,
                         unidade_medida: product.unidade_principal || 'UN',
                         custo_unitario: finalCost,
-                        valor_frete_item: freight,
-                        valor_imposto1: imp1,
-                        valor_imposto2: imp2,
                         valor_desconto_item: discount,
-                        outros_custos: others,
-                        markup: finalMarkup,
-                        preco_venda_sugerido: suggested,
                         custo_final_unitario: custoFinalUnitario,
                         subtotal: qty * finalCost,
                         total: custoFinalUnitario * qty,
-                        preco_venda_atual: product.preco_venda_padrao || 0,
-                        margem_contribuicao: suggested - custoFinalUnitario,
-                        margem_percentual: suggested > 0 ? ((suggested - custoFinalUnitario)/suggested)*100 : 0,
                         observacao_item: 'Importado via CSV'
                     });
                     successCount++;
@@ -898,17 +825,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableHead className="min-w-[80px] dark:text-gray-400">Cód.</TableHead>
                               <TableHead className="min-w-[70px] dark:text-gray-400">Qtd.</TableHead>
                               <TableHead className="min-w-[60px] dark:text-gray-400">U/M</TableHead>
-                              <TableHead className="min-w-[100px] dark:text-gray-400">V. Unit</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-blue-600" title="Frete Unitário">Frete (Un)</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600" title="Imposto 1 Unitário">Imp 1 (Un)</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-orange-600" title="Imposto 2 Unitário">Imp 2 (Un)</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-green-600" title="Desconto Unitário">Desc (Un)</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400 text-gray-600" title="Outros Custos Unitários">Outros (Un)</TableHead>
-                              <TableHead className="min-w-[100px] bg-gray-100 dark:bg-gray-700 font-bold dark:text-gray-200">Custo Final</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400">MkUp %</TableHead>
-                              <TableHead className="min-w-[100px] dark:text-gray-400 font-medium text-blue-700">Sugestão</TableHead>
-                              <TableHead className="min-w-[90px] dark:text-gray-400 text-xs">Venda Atual</TableHead>
-                              <TableHead className="min-w-[80px] dark:text-gray-400">Margem</TableHead>
+                              <TableHead className="min-w-[100px] dark:text-gray-400">Preço</TableHead>
+                              <TableHead className="min-w-[100px] dark:text-gray-400 text-green-600">Desconto</TableHead>
                               <TableHead className="min-w-[120px] text-right dark:text-gray-400 sticky right-0 z-10 bg-gray-50 dark:bg-gray-800 shadow-xl">Total Líq</TableHead>
                               <TableHead className="w-[40px] text-center dark:text-gray-400"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
                           </TableRow>
@@ -989,70 +907,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               <TableCell>
                                 <Input 
                                   type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-blue-600 text-xs" 
-                                  value={item.valor_frete_item || 0} 
-                                  onChange={e => handleItemChange(index, 'valor_frete_item', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
-                                  value={item.valor_imposto1 || 0} 
-                                  onChange={e => handleItemChange(index, 'valor_imposto1', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-orange-600 text-xs" 
-                                  value={item.valor_imposto2 || 0} 
-                                  onChange={e => handleItemChange(index, 'valor_imposto2', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-green-600 text-xs" 
+                                  className="h-8 min-w-[80px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-green-600" 
                                   value={item.valor_desconto_item || 0} 
                                   onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
                                 />
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" step="0.01"
-                                  className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-gray-500 text-xs" 
-                                  value={item.outros_custos || 0} 
-                                  onChange={e => handleItemChange(index, 'outros_custos', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell className="bg-gray-50 dark:bg-gray-700 font-bold text-gray-800 dark:text-gray-100 text-sm text-center">
-                                {formatCurrency(item.custo_final_unitario || 0)}
-                              </TableCell>
-                              <TableCell>
-                                <div className="relative">
-                                    <Input 
-                                        type="number" step="0.1"
-                                        className="h-8 min-w-[60px] bg-transparent border-none rounded px-2 shadow-none focus-visible:ring-0 text-xs text-right pr-4" 
-                                        value={item.markup || 0} 
-                                        onChange={e => handleItemChange(index, 'markup', e.target.value)} 
-                                    />
-                                    <span className="absolute right-1 top-2 text-[10px] text-gray-400">%</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Input 
-                                  type="number" step="0.01"
-                                  className="h-8 min-w-[80px] bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800 focus:border-indigo-300 rounded px-2 shadow-none focus-visible:ring-0 font-medium text-indigo-700 dark:text-indigo-300" 
-                                  value={(item.preco_venda_sugerido || 0).toFixed(2)} 
-                                  onChange={e => handleItemChange(index, 'preco_venda_sugerido', e.target.value)} 
-                                />
-                              </TableCell>
-                              <TableCell className="text-center text-xs text-gray-500">
-                                {formatCurrency(item.preco_venda_atual || 0)}
-                              </TableCell>
-                              <TableCell className={`text-center text-xs font-medium ${(item.margem_percentual || 0) < 0 ? 'text-red-500' : 'text-green-600'}`}>
-                                {(item.margem_percentual || 0).toFixed(1)}%
                               </TableCell>
                               <TableCell className="text-right font-bold text-gray-900 dark:text-white text-sm sticky right-0 z-10 bg-white dark:bg-gray-900 shadow-xl border-l border-gray-100 dark:border-gray-800">
                                 {formatCurrency(item.total || 0)}

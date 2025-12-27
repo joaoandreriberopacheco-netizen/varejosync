@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TrendingUp, TrendingDown, AlertTriangle, DollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -13,20 +15,62 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const [processando, setProcessando] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState(null);
+  const [editedCosts, setEditedCosts] = useState({});
 
-  // Calcular dados de comparação para cada item
+  // Initialize edited costs from products
+  useEffect(() => {
+    if (isOpen && itens.length > 0) {
+      const initialCosts = {};
+      itens.forEach(item => {
+        const produto = produtos.find(p => p.id === item.produto_id);
+        if (produto) {
+          initialCosts[item.produto_id] = {
+            valor_compra: item.custo_unitario || produto.valor_compra || 0,
+            custo_frete_padrao: produto.custo_frete_padrao || 0,
+            custo_imposto1_padrao: produto.custo_imposto1_padrao || 0,
+            custo_imposto2_padrao: produto.custo_imposto2_padrao || 0,
+            custo_outros_padrao: produto.custo_outros_padrao || 0,
+            desconto_compra_padrao: item.valor_desconto_item || produto.desconto_compra_padrao || 0,
+            preco_venda_percentual: produto.preco_venda_percentual || 40,
+            preco_venda_padrao: produto.preco_venda_padrao || 0
+          };
+        }
+      });
+      setEditedCosts(initialCosts);
+    }
+  }, [isOpen, itens, produtos]);
+
+  const handleCostChange = (produtoId, field, value) => {
+    setEditedCosts(prev => ({
+      ...prev,
+      [produtoId]: {
+        ...prev[produtoId],
+        [field]: parseFloat(value) || 0
+      }
+    }));
+  };
+
+  // Calcular dados de comparação para cada item com custos editáveis
   const itensComComparacao = itens.map(item => {
     const produto = produtos.find(p => p.id === item.produto_id);
     if (!produto) return null;
 
+    const costs = editedCosts[item.produto_id] || {};
+    const valorCompra = costs.valor_compra || item.custo_unitario || produto.valor_compra || 0;
+    const frete = costs.custo_frete_padrao || 0;
+    const imp1 = costs.custo_imposto1_padrao || 0;
+    const imp2 = costs.custo_imposto2_padrao || 0;
+    const outros = costs.custo_outros_padrao || 0;
+    const desconto = costs.desconto_compra_padrao || 0;
+    
+    const novoCusto = valorCompra + frete + imp1 + imp2 + outros - desconto;
     const custoAtual = produto.preco_custo_calculado || produto.valor_compra || 0;
-    const novoCusto = item.custo_final_unitario || 0;
     const diferencaCusto = novoCusto - custoAtual;
     const temDiferenca = Math.abs(diferencaCusto) > 0.01;
 
-    const markupAtual = produto.preco_venda_percentual || 40;
+    const markup = costs.preco_venda_percentual || 40;
     const precoVendaAtual = produto.preco_venda_padrao || 0;
-    const precoVendaSugerido = novoCusto * (1 + markupAtual / 100);
+    const precoVendaSugerido = novoCusto * (1 + markup / 100);
 
     return {
       ...item,
@@ -35,9 +79,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       novoCusto,
       diferencaCusto,
       temDiferenca,
-      markupAtual,
+      markup,
       precoVendaAtual,
-      precoVendaSugerido
+      precoVendaSugerido,
+      costs
     };
   }).filter(Boolean);
 
@@ -83,9 +128,16 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
 
     try {
       for (const item of pendingUpdate) {
+        const costs = editedCosts[item.produto_id];
         await base44.entities.Produto.update(item.produto_id, {
-          valor_compra: item.novoCusto,
+          valor_compra: costs.valor_compra,
+          custo_frete_padrao: costs.custo_frete_padrao,
+          custo_imposto1_padrao: costs.custo_imposto1_padrao,
+          custo_imposto2_padrao: costs.custo_imposto2_padrao,
+          custo_outros_padrao: costs.custo_outros_padrao,
+          desconto_compra_padrao: costs.desconto_compra_padrao,
           preco_custo_calculado: item.novoCusto,
+          preco_venda_percentual: costs.preco_venda_percentual,
           preco_venda_padrao: item.precoVendaSugerido
         });
       }
@@ -195,49 +247,98 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400 mb-0.5">Custo Atual</p>
-                        <p className="font-medium text-gray-700 dark:text-gray-300">
-                          R$ {item.custoAtual.toFixed(2)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400 mb-0.5">Novo Custo</p>
-                        <p className={`font-medium ${
-                          item.temDiferenca 
-                            ? 'text-amber-700 dark:text-amber-400' 
-                            : 'text-gray-700 dark:text-gray-300'
-                        }`}>
-                          R$ {item.novoCusto.toFixed(2)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400 mb-0.5">Markup</p>
-                        <p className="font-medium text-gray-700 dark:text-gray-300">
-                          {item.markupAtual}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 dark:text-gray-400 mb-0.5">Preço Venda Atual</p>
-                        <p className="font-medium text-gray-700 dark:text-gray-300">
-                          R$ {item.precoVendaAtual.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {item.temDiferenca && (
-                      <div className="mt-2 pt-2 border-t border-amber-200 dark:border-amber-800">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 dark:text-gray-400">
-                            Preço de Venda Sugerido:
-                          </span>
-                          <span className="text-sm font-semibold text-teal-700 dark:text-teal-400">
-                            R$ {item.precoVendaSugerido.toFixed(2)}
-                          </span>
+                    <div className="space-y-3 mt-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Preço Compra</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.costs?.valor_compra || 0}
+                            onChange={(e) => handleCostChange(item.produto_id, 'valor_compra', e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Desconto</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.costs?.desconto_compra_padrao || 0}
+                            onChange={(e) => handleCostChange(item.produto_id, 'desconto_compra_padrao', e.target.value)}
+                            className="h-8 text-sm text-green-600"
+                          />
                         </div>
                       </div>
-                    )}
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Frete (Un)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.costs?.custo_frete_padrao || 0}
+                            onChange={(e) => handleCostChange(item.produto_id, 'custo_frete_padrao', e.target.value)}
+                            className="h-8 text-sm text-blue-600"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Imp 1 (Un)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.costs?.custo_imposto1_padrao || 0}
+                            onChange={(e) => handleCostChange(item.produto_id, 'custo_imposto1_padrao', e.target.value)}
+                            className="h-8 text-sm text-orange-600"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Imp 2 (Un)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.costs?.custo_imposto2_padrao || 0}
+                            onChange={(e) => handleCostChange(item.produto_id, 'custo_imposto2_padrao', e.target.value)}
+                            className="h-8 text-sm text-orange-600"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Outros (Un)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.costs?.custo_outros_padrao || 0}
+                            onChange={(e) => handleCostChange(item.produto_id, 'custo_outros_padrao', e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Custo Total</Label>
+                          <div className="h-8 flex items-center px-2 bg-gray-100 dark:bg-gray-800 rounded text-sm font-bold">
+                            R$ {item.novoCusto.toFixed(2)}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Markup %</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={item.costs?.preco_venda_percentual || 40}
+                            onChange={(e) => handleCostChange(item.produto_id, 'preco_venda_percentual', e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] text-gray-500 dark:text-gray-400">Preço Venda</Label>
+                          <div className="h-8 flex items-center px-2 bg-teal-50 dark:bg-teal-900/20 rounded text-sm font-bold text-teal-700 dark:text-teal-400">
+                            R$ {item.precoVendaSugerido.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
