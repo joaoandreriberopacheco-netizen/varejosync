@@ -52,7 +52,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [novaTransportadora, setNovaTransportadora] = useState({ nome: '', email: '', telefone: '' });
   const [volumes, setVolumes] = useState([]);
   const [showAtualizarPrecos, setShowAtualizarPrecos] = useState(false);
-  const [pedidoSalvo, setPedidoSalvo] = useState(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { toast } = useToast();
 
@@ -452,8 +451,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                (pedido && pedido.status !== 'Enviado' && formData.status === 'Enviado');
       
       // Salvar pedido primeiro
-      const pedidoCriado = await onSave(dataToSave);
-      setPedidoSalvo(pedidoCriado);
+      await onSave(dataToSave);
       
       if (mudouParaEnviado) {
         // Buscar o PO recém-criado/atualizado para pegar o ID e número
@@ -506,10 +504,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             className: "bg-emerald-100 text-emerald-800"
           });
         }
-
-        // Abrir diálogo de atualização de preços
-        setShowAtualizarPrecos(true);
       }
+
+      // Abrir diálogo de atualização de preços (sempre, não só quando muda status)
+      setShowAtualizarPrecos(true);
       
     } catch (error) {
       toast({
