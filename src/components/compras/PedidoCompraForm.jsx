@@ -15,6 +15,7 @@ import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import MobileProductSelector from './MobileProductSelector';
 import { getTenantId } from '@/components/utils/tenant';
+import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -50,6 +51,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [showNovaTransportadora, setShowNovaTransportadora] = useState(false);
   const [novaTransportadora, setNovaTransportadora] = useState({ nome: '', email: '', telefone: '' });
   const [volumes, setVolumes] = useState([]);
+  const [showAtualizarPrecos, setShowAtualizarPrecos] = useState(false);
+  const [pedidoSalvo, setPedidoSalvo] = useState(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { toast } = useToast();
 
@@ -449,7 +452,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                (pedido && pedido.status !== 'Enviado' && formData.status === 'Enviado');
       
       // Salvar pedido primeiro
-      await onSave(dataToSave);
+      const pedidoCriado = await onSave(dataToSave);
+      setPedidoSalvo(pedidoCriado);
       
       if (mudouParaEnviado) {
         // Buscar o PO recém-criado/atualizado para pegar o ID e número
@@ -502,6 +506,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             className: "bg-emerald-100 text-emerald-800"
           });
         }
+
+        // Abrir diálogo de atualização de preços
+        setShowAtualizarPrecos(true);
       }
       
     } catch (error) {
