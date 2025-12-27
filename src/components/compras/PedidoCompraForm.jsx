@@ -1508,6 +1508,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         operationName={pedido?.id ? `Salvar Pedido ${pedido.numero}` : "Criar Novo Pedido"}
       />
 
+      <AtualizarPrecosDialog
+        isOpen={showAtualizarPrecos}
+        onClose={(updated) => {
+          setShowAtualizarPrecos(false);
+          if (updated) {
+            // Recarregar produtos se houve atualização
+            base44.entities.Produto.list().then(setProdutos);
+          }
+        }}
+        itens={formData.itens || []}
+        produtos={produtos}
+      />
     </DialogContent>
   );
 }
