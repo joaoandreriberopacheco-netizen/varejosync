@@ -785,21 +785,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </TabsContent>
 
-            <TabsContent value="itens" className="mt-0 px-3 py-6 space-y-6 border-0">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Itens do Pedido</h3>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowAtualizarPrecos(true)}
-                  disabled={formData.itens.length === 0}
-                  className="h-8 text-xs gap-1"
-                >
-                  <DollarSign className="w-3.5 h-3.5" />
-                  Ajustar Preços
-                </Button>
-              </div>
-
+            <TabsContent value="itens" className="mt-0 h-full">
               <MobileProductSelector 
                 items={formData.itens}
                 products={produtos}
@@ -807,8 +793,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 onUpdateItem={handleItemChange}
                 onRemoveItem={handleRemoveItem}
                 formatCurrency={formatCurrency}
+                onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
               />
-
             </TabsContent>
 
             <TabsContent value="pagamento" className="mt-0 px-3 py-6 space-y-6 border-0">
