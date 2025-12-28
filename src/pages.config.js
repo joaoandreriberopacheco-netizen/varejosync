@@ -11,6 +11,7 @@ import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
 import FinanceiroModulo from './pages/FinanceiroModulo';
 import Home from './pages/Home';
+import HubLogistico from './pages/HubLogistico';
 import Intervenientes from './pages/Intervenientes';
 import Logistica from './pages/Logistica';
 import Manual from './pages/Manual';
@@ -26,7 +27,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import HubLogistico from './pages/HubLogistico';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +44,7 @@ export const PAGES = {
     "Financeiro": Financeiro,
     "FinanceiroModulo": FinanceiroModulo,
     "Home": Home,
+    "HubLogistico": HubLogistico,
     "Intervenientes": Intervenientes,
     "Logistica": Logistica,
     "Manual": Manual,
@@ -59,7 +60,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "HubLogistico": HubLogistico,
 }
 
 export const pagesConfig = {

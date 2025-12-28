@@ -16,6 +16,7 @@ import SugestaoCompra from '../components/compras/SugestaoCompra';
 import CotacoesManager from '../components/compras/CotacoesManager';
 import DetalhesPedidoCompra from '../components/compras/DetalhesPedidoCompra';
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
+import DetalhesSupermanifesto from '../components/compras/DetalhesSupermanifesto';
 import { getTenantId } from '@/components/utils/tenant';
 
 const getStatusBadge = (status) => {
@@ -581,87 +582,14 @@ const HubLogisticoTab = () => {
         </div>
       )}
 
-      {showDetalhes && manifestoSelecionado && (
-        <Dialog open={showDetalhes} onOpenChange={setShowDetalhes}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Truck className="w-5 h-5 text-teal-600" />
-                {manifestoSelecionado.numero} - Detalhes
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Transportadora</p>
-                  <p className="font-medium">{manifestoSelecionado.transportadora_nome}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Status</p>
-                  <Badge className={getStatusBadge(manifestoSelecionado.status)}>
-                    {manifestoSelecionado.status}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">ETA</p>
-                  <p className="font-medium">{manifestoSelecionado.eta ? format(parseISO(manifestoSelecionado.eta), 'dd/MM/yyyy HH:mm') : '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Peso Total</p>
-                  <p className="font-medium">{manifestoSelecionado.peso_total_bruto_kg?.toFixed(2) || 0} kg</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <PackageIcon className="w-4 h-4" />
-                  Pedidos Vinculados ({manifestoSelecionado.pedidos_vinculados?.length || 0})
-                </h4>
-                <div className="space-y-2">
-                  {manifestoSelecionado.pedidos_vinculados?.map((pedido, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{pedido.pedido_numero}</p>
-                        <p className="text-xs text-gray-500 mt-1">{pedido.descritivo_volumes}</p>
-                        <p className="text-xs text-gray-400 mt-1">Peso: {pedido.peso_informado_kg} kg</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoverPedido(manifestoSelecionado, pedido)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {manifestoSelecionado.observacoes_consolidadas && (
-                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <h4 className="text-sm font-semibold mb-2 text-amber-900 dark:text-amber-200">
-                    Descritivo Consolidado de Volumes
-                  </h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    {manifestoSelecionado.observacoes_consolidadas}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDetalhes(false)}>
-                Fechar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <DetalhesSupermanifesto
+        manifesto={manifestoSelecionado}
+        isOpen={showDetalhes}
+        onClose={() => {
+          setShowDetalhes(false);
+          setManifestoSelecionado(null);
+        }}
+      />
 
       {showConfirmRemocao && pedidoParaRemover && (
         <Dialog open={showConfirmRemocao} onOpenChange={setShowConfirmRemocao}>
