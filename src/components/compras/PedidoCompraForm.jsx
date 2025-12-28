@@ -822,7 +822,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
               <MobileProductSelector 
                items={formData.itens}
-               products={[]}
+               products={produtos}
                onAddItem={handleAddItem}
                onUpdateItem={handleItemChange}
                onRemoveItem={handleRemoveItem}
