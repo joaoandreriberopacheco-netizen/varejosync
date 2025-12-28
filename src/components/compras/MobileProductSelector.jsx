@@ -135,7 +135,7 @@ export default function MobileProductSelector({
                   type="text"
                   inputMode="decimal"
                   className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
-                  value={editingItem.quantidade > 0 ? editingItem.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                  value={editingItem.quantidade ? editingItem.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                   onChange={e => {
                     const val = e.target.value.replace(/\./g, '').replace(',', '.');
                     const parsed = parseFloat(val);
@@ -162,7 +162,7 @@ export default function MobileProductSelector({
               type="text"
               inputMode="decimal"
               className="h-13 text-xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
-              value={editingItem.custo_unitario > 0 ? editingItem.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+              value={editingItem.custo_unitario ? editingItem.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
               onChange={e => {
                 const val = e.target.value.replace(/\./g, '').replace(',', '.');
                 const parsed = parseFloat(val);
