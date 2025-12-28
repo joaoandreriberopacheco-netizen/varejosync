@@ -623,15 +623,52 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     }
   };
 
-  return (
-    <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-2xl">
-      <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-4">
-        <DialogTitle className="text-lg sm:text-xl font-normal text-gray-800 dark:text-gray-200">
-          {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Compra'}
-        </DialogTitle>
-      </DialogHeader>
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+        <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10">
+            <X className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-medium text-gray-800 dark:text-gray-200 flex-1">
+            {pedido?.id ? pedido.numero : 'Novo Pedido de Compra'}
+          </h1>
+        </div>
 
-      {isMobile ? (
+        {/* MOBILE: Tabs com Ícones */}
+        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
+          <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 rounded-none h-auto p-0 grid grid-cols-4 shadow-sm">
+            <TabsTrigger 
+              value="dados-gerais" 
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+            >
+              <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400">Geral</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="itens" 
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+            >
+              <Package className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400">Itens</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pagamento" 
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+            >
+              <DollarSign className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400">Pgto</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="logistica" 
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+            >
+              <Ship className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400">Log</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex-1 overflow-y-auto">
         /* MOBILE: Tabs com Ícones */
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 rounded-none h-auto p-0 grid grid-cols-4 shadow-sm">
@@ -829,28 +866,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 formatCurrency={formatCurrency}
               />
 
-              {/* Footer dentro da tab */}
-              <div className="pt-8 mt-8 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-                  <div className="text-right">
-                    <span className="text-gray-500 dark:text-gray-400 text-xs block">Total</span>
-                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm h-12">
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleInitiateSave} 
-                    disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm h-12"
-                  >
-                    {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
-                  </Button>
-                </div>
-              </div>
             </TabsContent>
 
             <TabsContent value="pagamento" className="mt-0 px-3 py-6 space-y-6 border-0">
@@ -871,28 +886,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 />
               </div>
 
-              {/* Footer dentro da tab */}
-              <div className="pt-8 mt-8 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-                  <div className="text-right">
-                    <span className="text-gray-500 dark:text-gray-400 text-xs block">Total</span>
-                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm h-12">
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleInitiateSave} 
-                    disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm h-12"
-                  >
-                    {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
-                  </Button>
-                </div>
-              </div>
             </TabsContent>
 
             <TabsContent value="logistica" className="mt-0 px-3 py-6 space-y-6 border-0">
@@ -980,32 +973,62 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </>
               )}
 
-              {/* Footer dentro da tab */}
-              <div className="pt-8 mt-8 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-                  <div className="text-right">
-                    <span className="text-gray-500 dark:text-gray-400 text-xs block">Total</span>
-                    <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm h-12">
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleInitiateSave} 
-                    disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm h-12"
-                  >
-                    {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
-                  </Button>
-                </div>
-              </div>
             </TabsContent>
           </div>
+
+          {/* Footer fixo no mobile */}
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
+              <div className="text-right">
+                <span className="text-xs text-gray-500 dark:text-gray-400 block">Total</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+              </div>
+            </div>
+            <Button 
+              onClick={handleInitiateSave} 
+              disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
+              className="w-full bg-gray-700 hover:bg-gray-600 h-12"
+            >
+              {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
+            </Button>
+          </div>
         </Tabs>
-      ) : (
+
+        <OperacaoAuthenticator 
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
+          onSuccess={handleAuthSuccess}
+          operationName={pedido?.id ? `Salvar Pedido ${pedido.numero}` : "Criar Novo Pedido"}
+        />
+
+        <AtualizarPrecosDialog
+          isOpen={showAtualizarPrecos}
+          onClose={(updated) => {
+            setShowAtualizarPrecos(false);
+            if (updated) {
+              base44.entities.Produto.list().then(setProdutos);
+            }
+          }}
+          itens={formData.itens || []}
+          produtos={produtos}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-2xl">
+      <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-4">
+        <DialogTitle className="text-lg sm:text-xl font-normal text-gray-800 dark:text-gray-200">
+          {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Compra'}
+        </DialogTitle>
+      </DialogHeader>
+
+      {/* DESKTOP: Tabs Originais */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Desktop: Tabs Originais */}
+        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
         /* DESKTOP: Tabs Originais */
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 sm:px-6">
@@ -1670,10 +1693,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           </TabsContent>
           </div>
         </Tabs>
-      )}
+      </div>
 
-      {!isMobile && (
-        <div className="p-4 space-y-3 border-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div className="p-4 space-y-3 border-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">{formData.itens.length} item(s)</span>
             <div className="text-right">
@@ -1694,7 +1716,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </Button>
           </div>
         </div>
-      )}
       
       <OperacaoAuthenticator 
         isOpen={isAuthOpen}
