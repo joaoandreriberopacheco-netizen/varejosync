@@ -148,7 +148,7 @@ const PedidosCompraTab = () => {
   return (
     <div className="space-y-6">
       {/* Filtros e Ações - Glacial: Limpo, sem bordas pesadas */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 md:p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
             <div className="relative w-full sm:w-72">
@@ -188,24 +188,26 @@ const PedidosCompraTab = () => {
           </div>
 
           {/* Filtros de Data Compactos */}
-          <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-50 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 pt-3 border-t border-gray-50 dark:border-gray-700">
             <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wide">
               <CalendarRange className="w-3 h-3" />
               Período
             </div>
-            <Input
-              type="date"
-              value={dataInicio}
-              onChange={(e) => setDataInicio(e.target.value)}
-              className="w-36 h-8 text-xs bg-gray-50 border-transparent rounded-lg"
-            />
-            <span className="text-gray-400">-</span>
-            <Input
-              type="date"
-              value={dataFim}
-              onChange={(e) => setDataFim(e.target.value)}
-              className="w-36 h-8 text-xs bg-gray-50 border-transparent rounded-lg"
-            />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Input
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="flex-1 sm:w-32 h-9 text-xs bg-gray-50 border-transparent rounded-lg"
+              />
+              <span className="text-gray-400">-</span>
+              <Input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="flex-1 sm:w-32 h-9 text-xs bg-gray-50 border-transparent rounded-lg"
+              />
+            </div>
             {(dataInicio || dataFim) && (
               <Button variant="ghost" size="sm" onClick={() => { setDataInicio(''); setDataFim(''); }} className="h-8 text-xs text-gray-500 hover:text-gray-700">
                 Limpar
@@ -216,15 +218,15 @@ const PedidosCompraTab = () => {
       </div>
 
       {/* Totais - Glacial: Texto grande e limpo */}
-      <div className="flex items-baseline gap-4 px-2">
-        <h2 className="text-2xl font-light text-gray-900 dark:text-gray-100">
+      <div className="flex items-baseline gap-4 px-1">
+        <h2 className="text-xl md:text-2xl font-light text-gray-900 dark:text-gray-100">
           <span className="font-semibold">R$ {formatValor(subtotalFiltrado)}</span>
-          <span className="text-sm text-gray-500 ml-2 font-normal">em {quantidadeFiltrada} pedidos filtrados</span>
+          <span className="text-xs md:text-sm text-gray-500 ml-2 font-normal">em {quantidadeFiltrada} pedidos</span>
         </h2>
       </div>
 
       {/* Lista Cards - Glacial */}
-      <div className="grid gap-3">
+      <div className="grid gap-3 md:gap-3">
         {/* Responsive: Cards for Mobile, Table for Desktop */}
         {pedidosFiltrados.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">

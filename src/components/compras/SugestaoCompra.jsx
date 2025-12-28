@@ -304,8 +304,8 @@ export default function SugestaoCompra() {
   const masterCheckboxChecked = selectableItems.length > 0 && selectableItems.every(s => selectedItems[s.produto_id]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="space-y-6 md:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
         <div>
           <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 flex items-center gap-2">
             <Lightbulb className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -348,7 +348,7 @@ export default function SugestaoCompra() {
         </div>
 
         {/* Barra de Controles Otimizada (Filtros + Ferramentas) */}
-        <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center">
+        <div className="flex flex-col gap-5 items-start">
 
           {/* Grupo de Filtros - Mobile First */}
           <div className="flex-1 w-full space-y-3">
