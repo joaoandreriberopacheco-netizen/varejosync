@@ -41,11 +41,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     tipo_volume: 'Caixas',
     peso_total_kg: 0,
     nfe_emitida: false,
-    manifesto_conferido: false
+    manifesto_conferido: false,
+    // Financeiro
+    forma_pagamento_compra: 'Parcelado',
+    num_parcelas: 1,
+    intervalo_parcelas_dias: 30,
+    data_primeiro_vencimento: '',
+    conta_pagamento_id: ''
   });
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [supermanifesto, setSupermanifesto] = useState(null);
+  const [contas, setContas] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [showNovaTransportadora, setShowNovaTransportadora] = useState(false);
@@ -68,13 +75,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const user = await base44.auth.me();
       setCurrentUser(user);
       
-      const [fornecedorData, produtoData, transportadoraData] = await Promise.all([
+      const tenantId = getTenantId();
+      const [fornecedorData, produtoData, transportadoraData, contasData] = await Promise.all([
         base44.entities.Terceiro.list(),
         base44.entities.Produto.list(),
-        base44.entities.Terceiro.list()
+        base44.entities.Terceiro.list(),
+        base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId })
       ]);
       setFornecedores(fornecedorData.filter(t => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
       setProdutos(produtoData);
+      setContas(contasData);
       
       // Transportadoras são também fornecedores
       const transportadoras = transportadoraData.filter(t => (t.tipo === 'Fornecedor' || t.tipo === 'Ambos') && t.ativo);
@@ -396,21 +406,48 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           allPOs[allPOs.length - 1];
         
         if (currentPO) {
-          // 1. Criar Lançamento Financeiro (Aguardando Recepção)
-          await base44.entities.LancamentoFinanceiro.create({
-            tipo: 'Despesa',
-            descricao: `Compra de Mercadoria - ${currentPO.numero}`,
-            terceiro_id: formData.fornecedor_id,
-            terceiro_nome: formData.fornecedor_nome,
-            valor: valorTotal,
-            data_vencimento: format(addDays(new Date(formData.data_prevista_entrega || new Date()), 30), 'yyyy-MM-dd'),
-            status: 'Aguardando Recepção',
-            categoria: 'Compra de Mercadoria',
-            referencia_id: currentPO.id,
-            referencia_tipo: 'PedidoCompra',
-            referencia_numero: currentPO.numero,
-            observacoes: `Pagamento bloqueado até recepção do pedido ${currentPO.numero}`
-          });
+          // 1. Criar Lançamentos Financeiros (Aguardando Aprovação Financeira)
+          if (formData.forma_pagamento_compra === 'À Vista') {
+            await base44.entities.LancamentoFinanceiro.create({
+              tipo: 'Despesa',
+              descricao: `Compra de Mercadoria - ${currentPO.numero} (À Vista)`,
+              terceiro_id: formData.fornecedor_id,
+              terceiro_nome: formData.fornecedor_nome,
+              valor: valorTotal,
+              data_vencimento: formData.data_primeiro_vencimento || format(new Date(), 'yyyy-MM-dd'),
+              status: 'Aguardando Aprovação Financeira',
+              categoria: 'Compra de Mercadoria',
+              referencia_id: currentPO.id,
+              referencia_tipo: 'PedidoCompra',
+              referencia_numero: currentPO.numero,
+              observacoes: `Pagamento à vista. Aguardando aprovação do financeiro.`
+            });
+          } else {
+            // Parcelado
+            const numParcelas = formData.num_parcelas || 1;
+            const valorParcela = valorTotal / numParcelas;
+            const dataBase = formData.data_primeiro_vencimento ? 
+              new Date(formData.data_primeiro_vencimento) : 
+              addDays(new Date(), 30);
+            
+            for (let i = 0; i < numParcelas; i++) {
+              const dataVencimento = addDays(dataBase, i * (formData.intervalo_parcelas_dias || 30));
+              await base44.entities.LancamentoFinanceiro.create({
+                tipo: 'Despesa',
+                descricao: `Compra de Mercadoria - ${currentPO.numero} (${i + 1}/${numParcelas})`,
+                terceiro_id: formData.fornecedor_id,
+                terceiro_nome: formData.fornecedor_nome,
+                valor: valorParcela,
+                data_vencimento: format(dataVencimento, 'yyyy-MM-dd'),
+                status: 'Aguardando Aprovação Financeira',
+                categoria: 'Compra de Mercadoria',
+                referencia_id: currentPO.id,
+                referencia_tipo: 'PedidoCompra',
+                referencia_numero: currentPO.numero,
+                observacoes: `Parcela ${i + 1} de ${numParcelas}. Aguardando aprovação do financeiro.`
+              });
+            }
+          }
           
           // 2. Criar Tarefa para o Comprador
           await base44.entities.Tarefa.create({
@@ -800,16 +837,68 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             <TabsContent value="pagamento" className="mt-0 px-3 py-6 space-y-6 border-0">
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm border-0">
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Ao marcar como "Enviado", será criada automaticamente uma conta a pagar com status "Aguardando Recepção"
+                  Ao marcar como "Enviado", as contas a pagar serão criadas e enviadas para aprovação do Financeiro
                 </p>
               </div>
 
               <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Condições de Pagamento</Label>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Forma de Pagamento *</Label>
+                <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+                    <SelectItem value="À Vista">À Vista</SelectItem>
+                    <SelectItem value="Parcelado">Parcelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.forma_pagamento_compra === 'Parcelado' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Nº de Parcelas</Label>
+                      <Input 
+                        type="number" 
+                        min="1"
+                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                        value={formData.num_parcelas} 
+                        onChange={e => handleChange('num_parcelas', parseInt(e.target.value) || 1)} 
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Intervalo (dias)</Label>
+                      <Input 
+                        type="number" 
+                        min="1"
+                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                        value={formData.intervalo_parcelas_dias} 
+                        onChange={e => handleChange('intervalo_parcelas_dias', parseInt(e.target.value) || 30)} 
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">
+                  {formData.forma_pagamento_compra === 'À Vista' ? 'Data de Pagamento' : 'Primeiro Vencimento'}
+                </Label>
+                <Input 
+                  type="date" 
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                  value={formData.data_primeiro_vencimento} 
+                  onChange={e => handleChange('data_primeiro_vencimento', e.target.value)} 
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Observações de Pagamento</Label>
                 <Textarea 
                   className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
-                  placeholder="Ex: 30/60/90 dias, À vista..."
-                  rows={4}
+                  placeholder="Ex: Pagar via PIX, transferência..."
+                  rows={3}
                   value={formData.condicoes_pagamento} 
                   onChange={e => handleChange('condicoes_pagamento', e.target.value)} 
                 />
@@ -1250,43 +1339,98 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Automação Financeira</h4>
+                  <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Integração com Financeiro</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Quando marcado como "Enviado", será criado automaticamente:
+                    Ao marcar como "Enviado", as contas a pagar serão criadas e encaminhadas para aprovação do setor financeiro
                   </p>
-                  <ul className="text-sm text-gray-600 dark:text-gray-400 mt-2 ml-4 list-disc space-y-1">
-                    <li>Conta a Pagar com status "Aguardando Recepção"</li>
-                    <li>Tarefa de acompanhamento do manifesto/NF</li>
-                  </ul>
                 </div>
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Forma de Pagamento *</Label>
+                <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
+                    <SelectItem value="À Vista">À Vista</SelectItem>
+                    <SelectItem value="Parcelado">Parcelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
+                  {formData.forma_pagamento_compra === 'À Vista' ? 'Data de Pagamento' : 'Primeiro Vencimento'}
+                </Label>
+                <Input 
+                  type="date" 
+                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm" 
+                  value={formData.data_primeiro_vencimento} 
+                  onChange={e => handleChange('data_primeiro_vencimento', e.target.value)} 
+                />
+              </div>
+            </div>
+
+            {formData.forma_pagamento_compra === 'Parcelado' && (
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Número de Parcelas</Label>
+                  <Input 
+                    type="number" 
+                    min="1"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm" 
+                    value={formData.num_parcelas} 
+                    onChange={e => handleChange('num_parcelas', parseInt(e.target.value) || 1)} 
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Intervalo entre Parcelas (dias)</Label>
+                  <Input 
+                    type="number" 
+                    min="1"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm" 
+                    value={formData.intervalo_parcelas_dias} 
+                    onChange={e => handleChange('intervalo_parcelas_dias', parseInt(e.target.value) || 30)} 
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
-              <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Condições de Pagamento</Label>
+              <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Observações de Pagamento</Label>
               <Textarea 
                 className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
-                placeholder="Ex: 30/60/90 dias, À vista, Antecipado..."
-                rows={4}
+                placeholder="Ex: Pagar via PIX, transferência, observações sobre o pagamento..."
+                rows={3}
                 value={formData.condicoes_pagamento} 
                 onChange={e => handleChange('condicoes_pagamento', e.target.value)} 
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-6">
               <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Valor Total do Pedido</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Valor Total</div>
                 <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
               </div>
-              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Vencimento Estimado</div>
-                <div className="text-xl font-medium text-gray-700 dark:text-gray-300">
-                  {formData.data_prevista_entrega ? 
-                    format(addDays(new Date(formData.data_prevista_entrega), 30), 'dd/MM/yyyy') : 
-                    'Definir data de entrega'
-                  }
-                </div>
-              </div>
+              {formData.forma_pagamento_compra === 'Parcelado' && (
+                <>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Valor por Parcela</div>
+                    <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">
+                      {formatCurrency(valorTotal / (formData.num_parcelas || 1))}
+                    </div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Parcelas</div>
+                    <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">
+                      {formData.num_parcelas || 1}x
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </TabsContent>
 

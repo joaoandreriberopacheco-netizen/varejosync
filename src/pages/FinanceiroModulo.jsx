@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings } from 'lucide-react';
+import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle } from 'lucide-react';
 import { getTenantId } from '@/components/utils/tenant';
 import GestaoCaixa from '../components/financeiro/GestaoCaixa';
 
@@ -146,6 +146,14 @@ export default function FinanceiroModuloPage() {
 
           <DollarSign className="w-4 h-4" />
           Gestão de Contas
+        </Link>
+        
+        <Link
+          to={createPageUrl('FinanceiroAprovacoes')}
+          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+
+          <AlertCircle className="w-4 h-4" />
+          Aprovações Pendentes
         </Link>
         
         <Link
