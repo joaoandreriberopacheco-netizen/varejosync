@@ -17,6 +17,8 @@ export default function MobileProductSelector({
   const [search, setSearch] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const [editingIndex, setEditingIndex] = useState(-1);
+  const [quantidadeInput, setQuantidadeInput] = useState('');
+  const [custoInput, setCustoInput] = useState('');
 
   const filteredProducts = useMemo(() => {
     if (!search) return products.slice(0, 20);
@@ -44,6 +46,8 @@ export default function MobileProductSelector({
         custo_unitario: product.valor_compra || 0,
         valor_desconto_item: product.desconto_compra_padrao || 0
       });
+      setQuantidadeInput('1');
+      setCustoInput((product.valor_compra || 0).toString());
       setEditingIndex(-1); // New item
       setView('edit');
     }
@@ -54,6 +58,8 @@ export default function MobileProductSelector({
     setEditingItem({
         ...item
     });
+    setQuantidadeInput(item.quantidade?.toString() || '1');
+    setCustoInput(item.custo_unitario?.toString() || '0');
     setEditingIndex(index);
     setView('edit');
   };
