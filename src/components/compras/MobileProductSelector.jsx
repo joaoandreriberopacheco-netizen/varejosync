@@ -143,6 +143,7 @@ export default function MobileProductSelector({
                       setEditingItem(prev => ({ ...prev, quantidade: val === '' || val === '.' ? 0 : parsed }));
                     }
                   }}
+                  onFocus={e => e.target.select()}
                   placeholder="0,00"
                 />
                 <Button 
@@ -169,6 +170,7 @@ export default function MobileProductSelector({
                   setEditingItem(prev => ({ ...prev, custo_unitario: val === '' || val === '.' ? 0 : parsed }));
                 }
               }}
+              onFocus={e => e.target.select()}
               placeholder="0,00"
             />
           </div>
