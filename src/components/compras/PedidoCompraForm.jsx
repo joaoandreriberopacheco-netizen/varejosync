@@ -821,46 +821,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
 
               <MobileProductSelector 
-               items={formData.itens}
-               products={produtos}
-               onAddItem={handleAddItem}
-               onUpdateItem={handleItemChange}
-               onRemoveItem={handleRemoveItem}
-               formatCurrency={formatCurrency}
+                items={formData.itens}
+                products={produtos}
+                onAddItem={handleAddItem}
+                onUpdateItem={handleItemChange}
+                onRemoveItem={handleRemoveItem}
+                formatCurrency={formatCurrency}
               />
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-3">
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Frete Total</Label>
-                  <Input 
-                    type="number" step="0.01"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
-                    placeholder="R$ 0,00"
-                    value={formData.valor_frete} 
-                    onChange={e => handleChange('valor_frete', parseFloat(e.target.value) || 0)} 
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Desc. (%)</Label>
-                  <Input 
-                    type="number" step="0.01"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
-                    placeholder="0,00"
-                    value={formData.percentual_desconto?.toFixed(2) || 0} 
-                    onChange={e => handleDescontoPercentualChange(e.target.value)} 
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Desc. (R$)</Label>
-                  <Input 
-                    type="number" step="0.01"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
-                    placeholder="R$ 0,00"
-                    value={formData.valor_desconto?.toFixed(2) || 0} 
-                    onChange={e => handleDescontoValorChange(e.target.value)} 
-                  />
-                </div>
-              </div>
 
               {/* Footer dentro da tab */}
               <div className="pt-8 mt-8 space-y-4">
