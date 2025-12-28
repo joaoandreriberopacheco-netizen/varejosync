@@ -287,54 +287,54 @@ const PedidosCompraTab = () => {
             </div>
 
             {/* Mobile Cards View */}
-            <div className="md:hidden grid gap-3">
+            <div className="md:hidden grid gap-4 px-1">
               {pedidosFiltrados.map(pedido => (
-                <div key={pedido.id} className="group bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200 shadow-sm">
-                  <div className="flex flex-col gap-4">
+                <div key={pedido.id} className="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200 shadow-sm">
+                  <div className="flex flex-col gap-5">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-300">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="w-11 h-11 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-300 shadow-sm">
                           <DollarSign className="w-5 h-5" />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{pedido.numero}</span>
-                            <Badge className={`${getStatusBadge(pedido.status)} border-0 font-normal px-2 py-0 text-[10px]`}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{pedido.numero}</span>
+                            <Badge className={`${getStatusBadge(pedido.status)} border-0 font-normal px-2 py-0.5 text-xs`}>
                               {pedido.status}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                            <User className="w-3 h-3" />
-                            <span className="truncate max-w-[150px]">{pedido.fornecedor_nome}</span>
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                            <User className="w-3.5 h-3.5" />
+                            <span className="truncate">{pedido.fornecedor_nome}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-8 w-8 text-gray-400 hover:text-teal-600 hover:bg-teal-50">
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-9 w-9 text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg">
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-9 w-9 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
                           <Edit className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 text-xs pt-3 border-t border-gray-50 dark:border-gray-700">
+                    <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                       <div>
-                        <p className="text-[10px] text-gray-400 uppercase mb-0.5">Criação</p>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : '-'}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Criação</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                          {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM') : '-'}
                         </p>
                       </div>
-                      <div className="text-center sm:text-left">
-                        <p className="text-[10px] text-gray-400 uppercase mb-0.5">Entrega</p>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM/yyyy') : '-'}
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Entrega</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                          {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM') : '-'}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] text-gray-400 uppercase mb-0.5">Total</p>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5">Total</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                           R$ {formatValor(pedido.valor_total)}
                         </p>
                       </div>
@@ -697,7 +697,7 @@ const HubLogisticoTab = () => {
 
 export default function ComprasPage() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-6">
+    <div className="max-w-7xl mx-auto space-y-6 px-2 py-4 md:p-6">
       <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-2xl font-light text-gray-800 dark:text-gray-200">Módulo de Compras</h1>
         <p className="text-sm text-gray-500 font-light">Gestão completa do ciclo de suprimentos</p>

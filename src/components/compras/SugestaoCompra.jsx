@@ -350,8 +350,8 @@ export default function SugestaoCompra() {
         {/* Barra de Controles Otimizada (Filtros + Ferramentas) */}
         <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center">
 
-          {/* Grupo de Filtros - Expandido Horizontalmente */}
-          <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 md:grid-cols-[1.5fr_1fr_1fr_auto] gap-3 items-center">
+          {/* Grupo de Filtros - Mobile First */}
+          <div className="flex-1 w-full space-y-3">
               <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input 
@@ -362,57 +362,62 @@ export default function SugestaoCompra() {
                   />
               </div>
 
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-10">
-                      <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">Todas Categorias</SelectItem>
-                      {categorias.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-10">
+                        <SelectValue placeholder="Categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todas Categorias</SelectItem>
+                        {categorias.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-              <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-                  <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-10">
-                      <SelectValue placeholder="Fornecedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">Todos Fornecedores</SelectItem>
-                      {fornecedores.map(f => (
-                          <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
+                <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+                    <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-10">
+                        <SelectValue placeholder="Fornecedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos Fornecedores</SelectItem>
+                        {fornecedores.map(f => (
+                            <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+              </div>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                        onClick={() => setHidePending(!hidePending)}
-                        variant="outline"
-                        size="icon"
-                        className={`h-10 w-10 border-gray-200 dark:border-gray-700 ${hidePending ? 'text-teal-600 bg-teal-50 border-teal-200' : 'text-gray-400'}`}
-                    >
-                        <FilterX className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{hidePending ? "Mostrar itens com pedidos pendentes" : "Ocultar itens com pedidos pendentes"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="flex items-center gap-3">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                          onClick={() => setHidePending(!hidePending)}
+                          variant="outline"
+                          size="sm"
+                          className={`flex-1 h-10 border-gray-200 dark:border-gray-700 ${hidePending ? 'text-teal-600 bg-teal-50 border-teal-200' : 'text-gray-400'}`}
+                      >
+                          <FilterX className="w-4 h-4 mr-2" />
+                          <span className="text-xs">{hidePending ? 'Mostrar Pendentes' : 'Ocultar Pendentes'}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{hidePending ? "Mostrar itens com pedidos pendentes" : "Ocultar itens com pedidos pendentes"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
           </div>
 
-          {/* Ferramenta: Otimização de Pacotes (Separada e Destacada) */}
-          <div className="w-full xl:w-auto flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 p-2 pr-4 rounded-lg border border-blue-100 dark:border-blue-800">
-              <div className="h-8 w-8 rounded-md bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300">
-                  <Package className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
+          {/* Ferramenta: Otimização de Pacotes */}
+          <div className="w-full bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+              <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300">
+                      <Package className="w-4 h-4" />
+                  </div>
                   <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide leading-none">Otimização de Pacotes</span>
+                      <span className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Otimização de Pacotes</span>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
@@ -424,20 +429,18 @@ export default function SugestaoCompra() {
                         </Tooltip>
                       </TooltipProvider>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-blue-600/70 dark:text-blue-400/70 font-medium whitespace-nowrap">Modo de ajuste:</span>
-                      <select 
-                          value={roundingMode} 
-                          onChange={(e) => setRoundingMode(e.target.value)}
-                          className="bg-transparent text-xs font-bold text-blue-700 dark:text-blue-300 border-none p-0 pr-4 focus:ring-0 cursor-pointer hover:text-blue-800 outline-none"
-                      >
-                          <option value="auto">Automático (Mais Próximo)</option>
-                          <option value="up">Arredondar p/ Cima</option>
-                          <option value="down">Arredondar p/ Baixo</option>
-                          <option value="none">Quantidade Exata (Desligado)</option>
-                      </select>
-                  </div>
               </div>
+              <Select value={roundingMode} onValueChange={setRoundingMode}>
+                <SelectTrigger className="w-full h-10 bg-white dark:bg-gray-900 border-0 shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Automático (Mais Próximo)</SelectItem>
+                  <SelectItem value="up">Arredondar p/ Cima</SelectItem>
+                  <SelectItem value="down">Arredondar p/ Baixo</SelectItem>
+                  <SelectItem value="none">Quantidade Exata (Desligado)</SelectItem>
+                </SelectContent>
+              </Select>
           </div>
 
         </div>
@@ -568,7 +571,7 @@ export default function SugestaoCompra() {
             </Table>
           </div>
 
-          <div className="md:hidden space-y-3 pb-20">
+          <div className="md:hidden space-y-4 pb-20">
              {sugestoesVisiveis.map(s => {
                 const isSelected = !!selectedItems[s.produto_id];
                 const temPendente = s.quantidade_pendente > 0;
@@ -576,50 +579,52 @@ export default function SugestaoCompra() {
                 return (
                   <div 
                     key={s.produto_id}
-                    className={`p-4 rounded-xl border transition-all ${
+                    className={`p-5 rounded-xl border transition-all ${
                       isSelected 
-                        ? 'border-teal-500 bg-white shadow-sm ring-1 ring-teal-500' 
-                        : 'border-gray-100 bg-white'
+                        ? 'border-teal-500 bg-white dark:bg-gray-800 shadow-sm ring-1 ring-teal-500' 
+                        : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800'
                     }`}
                   >
-                    <div className="flex items-start gap-3 mb-3">
+                    <div className="flex items-start gap-3 mb-4">
                       <Checkbox 
                         checked={isSelected}
                         className="mt-1"
                         onCheckedChange={(checked) => handleSelectItem(s.produto_id, checked)}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start" onClick={() => handleSelectItem(s.produto_id, !isSelected)}>
-                          <h4 className="font-medium text-gray-900 text-sm truncate pr-2">{s.produto_nome}</h4>
-                          <div className="flex flex-col items-end">
-                             <span className="text-xs font-bold text-teal-600">{s.quantidade_sugerida} <span className="font-normal text-gray-400">{s.unidade_compra}</span></span>
+                        <div className="flex justify-between items-start mb-2" onClick={() => handleSelectItem(s.produto_id, !isSelected)}>
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate pr-2">{s.produto_nome}</h4>
+                          <div className="flex flex-col items-end flex-shrink-0">
+                             <span className="text-sm font-bold text-teal-600 dark:text-teal-500">{s.quantidade_sugerida}</span>
+                             <span className="text-xs text-gray-400">{s.unidade_compra}</span>
                           </div>
                         </div>
                          {temPendente && (
-                            <div className="flex items-center gap-1 text-[10px] text-amber-600 mt-1">
-                               <Truck className="w-3 h-3" />
+                            <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-500 mt-2 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg w-fit">
+                               <Truck className="w-3.5 h-3.5" />
                                <span>{s.quantidade_pendente} em trânsito</span>
                             </div>
                           )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50 items-center">
+                    <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                        <div>
-                          <p className="text-[10px] text-gray-400 uppercase mb-1">Estoque</p>
-                          <div className="text-xs">
-                            <span className="text-gray-700 font-medium">{s.estoque_atual}</span>
-                            <span className="text-gray-400 mx-1">/</span>
-                            <span className="text-gray-500">{s.estoque_minimo}</span>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-2">Estoque Atual</p>
+                          <div className="text-sm">
+                            <span className="text-gray-900 dark:text-gray-100 font-medium">{s.estoque_atual}</span>
+                            <span className="text-gray-400 mx-1.5">/</span>
+                            <span className="text-gray-600 dark:text-gray-300">{s.estoque_minimo} mín</span>
                           </div>
                        </div>
                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-2">Fornecedor</p>
                           <Select 
                               value={s.fornecedor_selecionado_id || "none"} 
                               onValueChange={(v) => handleUpdateFornecedor(s.produto_id, v)}
                           >
-                              <SelectTrigger className="h-8 text-xs w-full bg-gray-50 border-transparent">
-                                <SelectValue placeholder="Fornecedor" />
+                              <SelectTrigger className="h-10 w-full bg-gray-50 dark:bg-gray-900 border-0 shadow-sm">
+                                <SelectValue placeholder="Selecione..." />
                               </SelectTrigger>
                               <SelectContent>
                                 {fornecedores.map(f => (
