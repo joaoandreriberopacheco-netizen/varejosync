@@ -304,14 +304,14 @@ export default function SugestaoCompra() {
   const masterCheckboxChecked = selectableItems.length > 0 && selectableItems.every(s => selectedItems[s.produto_id]);
 
   return (
-    <div className="space-y-6 md:space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="space-y-5 md:space-y-6 -mx-2 md:mx-0">
+      <div className="flex flex-col gap-3 pb-4 border-b border-gray-200 dark:border-gray-700 px-2 md:px-0">
         <div>
-          <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-base md:text-lg font-light text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
             Sugestões de Compra
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
+          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 font-light">
             Reposição baseada em estoque mínimo
           </p>
         </div>
@@ -319,126 +319,103 @@ export default function SugestaoCompra() {
           <Button 
             onClick={handleRefresh} 
             variant="outline"
-            className="gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+            size="sm"
+            className="gap-1.5 border-gray-300 text-gray-600 hover:bg-gray-50 flex-1 sm:flex-none h-9"
             disabled={isLoading}
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Atualizar
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="text-xs">Atualizar</span>
           </Button>
           <div className="hidden md:flex gap-2">
             <Button 
               onClick={handleEnviarCotacao}
               disabled={itensSelecionados.length === 0}
               variant="outline"
-              className="gap-2 border-gray-300 text-gray-700"
+              size="sm"
+              className="gap-1.5 border-gray-300 text-gray-700"
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-3.5 h-3.5" />
               Cotação
             </Button>
             <Button 
               onClick={handleGerarPedidos}
               disabled={itensSelecionados.length === 0}
-              className="gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-sm font-normal"
+              size="sm"
+              className="gap-1.5 bg-teal-600 hover:bg-teal-700 text-white shadow-sm font-normal"
             >
-              <ShoppingCart className="w-4 h-4" />
-              Gerar Pedido ({itensSelecionados.length})
+              <ShoppingCart className="w-3.5 h-3.5" />
+              Gerar ({itensSelecionados.length})
             </Button>
           </div>
         </div>
         </div>
 
         {/* Barra de Controles Otimizada (Filtros + Ferramentas) */}
-        <div className="flex flex-col gap-5 items-start">
+        <div className="flex flex-col gap-4 px-2 md:px-0">
 
           {/* Grupo de Filtros - Mobile First */}
-          <div className="flex-1 w-full space-y-3">
+          <div className="w-full space-y-3">
               <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input 
                       placeholder="Buscar produto..." 
                       value={filterTerm}
                       onChange={(e) => setFilterTerm(e.target.value)}
-                      className="pl-9 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-10"
+                      className="pl-9 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-11"
                   />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-10">
-                        <SelectValue placeholder="Categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas Categorias</SelectItem>
-                        {categorias.map(c => (
-                            <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-11 w-full">
+                      <SelectValue placeholder="Todas Categorias" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Todas Categorias</SelectItem>
+                      {categorias.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
 
-                <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-                    <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-10">
-                        <SelectValue placeholder="Fornecedor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos Fornecedores</SelectItem>
-                        {fornecedores.map(f => (
-                            <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-              </div>
+              <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+                  <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-11 w-full">
+                      <SelectValue placeholder="Todos Fornecedores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Todos Fornecedores</SelectItem>
+                      {fornecedores.map(f => (
+                          <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
 
-              <div className="flex items-center gap-3">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                          onClick={() => setHidePending(!hidePending)}
-                          variant="outline"
-                          size="sm"
-                          className={`flex-1 h-10 border-gray-200 dark:border-gray-700 ${hidePending ? 'text-teal-600 bg-teal-50 border-teal-200' : 'text-gray-400'}`}
-                      >
-                          <FilterX className="w-4 h-4 mr-2" />
-                          <span className="text-xs">{hidePending ? 'Mostrar Pendentes' : 'Ocultar Pendentes'}</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{hidePending ? "Mostrar itens com pedidos pendentes" : "Ocultar itens com pedidos pendentes"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+              <Button 
+                  onClick={() => setHidePending(!hidePending)}
+                  variant="outline"
+                  className={`w-full h-11 justify-start border-gray-200 dark:border-gray-700 ${hidePending ? 'text-teal-600 bg-teal-50 border-teal-200 dark:bg-teal-900/20' : 'text-gray-600'}`}
+              >
+                  <FilterX className="w-4 h-4 mr-2" />
+                  <span className="text-sm">{hidePending ? 'Mostrar Pendentes' : 'Ocultar Pendentes'}</span>
+              </Button>
           </div>
 
           {/* Ferramenta: Otimização de Pacotes */}
           <div className="w-full bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
-              <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300">
+              <div className="flex items-start gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300 flex-shrink-0">
                       <Package className="w-4 h-4" />
                   </div>
-                  <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Otimização de Pacotes</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="w-3 h-3 text-blue-400" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p>Ajusta automaticamente a quantidade sugerida para corresponder a pacotes fechados (ex: caixas com 12un), evitando compras fracionadas.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                  </div>
+                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Otimização de Pacotes</span>
               </div>
               <Select value={roundingMode} onValueChange={setRoundingMode}>
-                <SelectTrigger className="w-full h-10 bg-white dark:bg-gray-900 border-0 shadow-sm">
+                <SelectTrigger className="w-full h-11 bg-white dark:bg-gray-900 border-0 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="auto">Automático (Mais Próximo)</SelectItem>
                   <SelectItem value="up">Arredondar p/ Cima</SelectItem>
                   <SelectItem value="down">Arredondar p/ Baixo</SelectItem>
-                  <SelectItem value="none">Quantidade Exata (Desligado)</SelectItem>
+                  <SelectItem value="none">Quantidade Exata</SelectItem>
                 </SelectContent>
               </Select>
           </div>
@@ -446,9 +423,9 @@ export default function SugestaoCompra() {
         </div>
 
       {produtosSemFornecedor.length > 0 && (
-        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-start gap-3">
-          <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5"></div>
-          <div>
+        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4 flex items-start gap-3 mx-2 md:mx-0">
+          <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></div>
+          <div className="flex-1 min-w-0">
             <h4 className="font-medium text-gray-800 dark:text-gray-200 text-sm">
               {produtosSemFornecedor.length} produtos sem fornecedor
             </h4>
@@ -460,7 +437,7 @@ export default function SugestaoCompra() {
       )}
 
       {sugestoes.length === 0 && !isLoading ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl">
+        <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl mx-2 md:mx-0">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
           <p className="text-gray-500 dark:text-gray-400 font-light">Estoque saudável. Nenhuma sugestão no momento.</p>
         </div>
@@ -571,7 +548,7 @@ export default function SugestaoCompra() {
             </Table>
           </div>
 
-          <div className="md:hidden space-y-4 pb-20">
+          <div className="md:hidden space-y-5 pb-20 px-2">
              {sugestoesVisiveis.map(s => {
                 const isSelected = !!selectedItems[s.produto_id];
                 const temPendente = s.quantidade_pendente > 0;
@@ -579,7 +556,7 @@ export default function SugestaoCompra() {
                 return (
                   <div 
                     key={s.produto_id}
-                    className={`p-5 rounded-xl border transition-all ${
+                    className={`p-4 rounded-xl border transition-all ${
                       isSelected 
                         ? 'border-teal-500 bg-white dark:bg-gray-800 shadow-sm ring-1 ring-teal-500' 
                         : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800'
