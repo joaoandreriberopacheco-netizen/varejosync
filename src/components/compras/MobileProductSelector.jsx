@@ -117,7 +117,7 @@ export default function MobileProductSelector({
           }}>
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <div className="ml-2 font-medium truncate flex-1 text-sm">{editingItem.produto_nome}</div>
+          <div className="ml-2 font-medium truncate flex-1 text-sm text-gray-900 dark:text-white">{editingItem.produto_nome}</div>
         </div>
         
         <div className="flex-1 overflow-y-auto p-3 space-y-5">
@@ -134,13 +134,16 @@ export default function MobileProductSelector({
                 <Input 
                   type="text"
                   inputMode="decimal"
-                  className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white"
-                  value={editingItem.quantidade > 0 ? editingItem.quantidade : ''}
+                  className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                  value={editingItem.quantidade > 0 ? editingItem.quantidade.toFixed(2).replace(/\.?0+$/, '') : ''}
                   onChange={e => {
                     const val = e.target.value.replace(',', '.');
-                    setEditingItem(prev => ({ ...prev, quantidade: parseFloat(val) || 0 }));
+                    const parsed = parseFloat(val);
+                    if (!isNaN(parsed) || val === '' || val === '.') {
+                      setEditingItem(prev => ({ ...prev, quantidade: val === '' || val === '.' ? 0 : parsed }));
+                    }
                   }}
-                  placeholder="0"
+                  placeholder="0,00"
                 />
                 <Button 
                   variant="default" size="icon" className="h-11 w-11 rounded-full"
@@ -157,13 +160,16 @@ export default function MobileProductSelector({
             <Input 
               type="text"
               inputMode="decimal"
-              className="h-13 text-xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center text-gray-900 dark:text-white"
-              value={editingItem.custo_unitario > 0 ? editingItem.custo_unitario : ''}
+              className="h-13 text-xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+              value={editingItem.custo_unitario > 0 ? editingItem.custo_unitario.toFixed(2).replace(/\.?0+$/, '') : ''}
               onChange={e => {
                 const val = e.target.value.replace(',', '.');
-                setEditingItem(prev => ({ ...prev, custo_unitario: parseFloat(val) || 0 }));
+                const parsed = parseFloat(val);
+                if (!isNaN(parsed) || val === '' || val === '.') {
+                  setEditingItem(prev => ({ ...prev, custo_unitario: val === '' || val === '.' ? 0 : parsed }));
+                }
               }}
-              placeholder="255"
+              placeholder="0,00"
             />
           </div>
 
