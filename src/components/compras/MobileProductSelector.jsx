@@ -37,7 +37,7 @@ export default function MobileProductSelector({
       handleEditItem(index);
     } else {
       // Initialize new item structure from product
-      setEditingItem({
+      const newItem = {
         produto_id: product.id,
         produto_nome: product.nome,
         codigo_produto: product.codigo_interno || product.codigo_barras || '',
@@ -45,9 +45,10 @@ export default function MobileProductSelector({
         quantidade: 1,
         custo_unitario: product.valor_compra || 0,
         valor_desconto_item: product.desconto_compra_padrao || 0
-      });
-      setQuantidadeInput('1');
-      setCustoInput((product.valor_compra || 0).toString());
+      };
+      setEditingItem(newItem);
+      setQuantidadeInput((1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      setCustoInput((product.valor_compra || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       setEditingIndex(-1); // New item
       setView('edit');
     }
@@ -55,11 +56,9 @@ export default function MobileProductSelector({
 
   const handleEditItem = (index) => {
     const item = items[index];
-    setEditingItem({
-        ...item
-    });
-    setQuantidadeInput(item.quantidade?.toString() || '1');
-    setCustoInput(item.custo_unitario?.toString() || '0');
+    setEditingItem({ ...item });
+    setQuantidadeInput((item.quantidade || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    setCustoInput((item.custo_unitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     setEditingIndex(index);
     setView('edit');
   };
@@ -132,10 +131,14 @@ export default function MobileProductSelector({
              <Label className="mb-3 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Quantidade ({editingItem.unidade_medida})</Label>
              <div className="flex items-center gap-5">
                 <Button 
-                  variant="outline" size="icon" className="h-11 w-11 rounded-full border-gray-300 dark:border-gray-600"
-                  onClick={() => setEditingItem(prev => ({ ...prev, quantidade: Math.max(1, (parseFloat(prev.quantidade) || 0) - 1) }))}
+                 variant="outline" size="icon" className="h-11 w-11 rounded-full border-gray-300 dark:border-gray-600"
+                 onClick={() => {
+                   const newVal = Math.max(1, (parseFloat(editingItem.quantidade) || 0) - 1);
+                   setEditingItem(prev => ({ ...prev, quantidade: newVal }));
+                   setQuantidadeInput(newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                 }}
                 >
-                  <Minus className="w-5 h-5" />
+                 <Minus className="w-5 h-5" />
                 </Button>
                 <Input 
                   type="text"
@@ -162,10 +165,14 @@ export default function MobileProductSelector({
                   placeholder="0,00"
                 />
                 <Button 
-                  variant="default" size="icon" className="h-11 w-11 rounded-full"
-                  onClick={() => setEditingItem(prev => ({ ...prev, quantidade: (parseFloat(prev.quantidade) || 0) + 1 }))}
+                 variant="default" size="icon" className="h-11 w-11 rounded-full"
+                 onClick={() => {
+                   const newVal = (parseFloat(editingItem.quantidade) || 0) + 1;
+                   setEditingItem(prev => ({ ...prev, quantidade: newVal }));
+                   setQuantidadeInput(newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                 }}
                 >
-                  <Plus className="w-5 h-5" />
+                 <Plus className="w-5 h-5" />
                 </Button>
              </div>
           </div>
