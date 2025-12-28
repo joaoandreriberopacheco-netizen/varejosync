@@ -821,12 +821,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
 
               <MobileProductSelector 
-                items={formData.itens}
-                products={produtos}
-                onAddItem={handleAddItem}
-                onUpdateItem={handleItemChange}
-                onRemoveItem={handleRemoveItem}
-                formatCurrency={formatCurrency}
+               items={formData.itens}
+               products={[]}
+               onAddItem={handleAddItem}
+               onUpdateItem={handleItemChange}
+               onRemoveItem={handleRemoveItem}
+               formatCurrency={formatCurrency}
               />
 
               <div className="grid grid-cols-3 gap-3">

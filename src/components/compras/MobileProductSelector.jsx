@@ -19,6 +19,7 @@ export default function MobileProductSelector({
   const [editingIndex, setEditingIndex] = useState(-1);
   const [quantidadeInput, setQuantidadeInput] = useState('');
   const [custoInput, setCustoInput] = useState('');
+  const custoInputRef = React.useRef(null);
 
   const filteredProducts = useMemo(() => {
     if (!search) return products.slice(0, 20);
@@ -147,7 +148,6 @@ export default function MobileProductSelector({
                   value={quantidadeInput}
                   onChange={e => {
                     const val = e.target.value;
-                    // Permite apenas números, vírgula e ponto
                     if (/^[\d.,]*$/.test(val)) {
                       setQuantidadeInput(val);
                       const numVal = parseFloat(val.replace(',', '.'));
@@ -161,6 +161,12 @@ export default function MobileProductSelector({
                     const num = parseFloat(quantidadeInput.replace(',', '.')) || 0;
                     setQuantidadeInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                     setEditingItem(prev => ({ ...prev, quantidade: num }));
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      custoInputRef.current?.focus();
+                    }
                   }}
                   placeholder="0,00"
                 />
@@ -181,13 +187,13 @@ export default function MobileProductSelector({
           <div>
             <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2.5 block">Custo Unitário (R$)</Label>
             <Input 
+              ref={custoInputRef}
               type="text"
               inputMode="decimal"
               className="h-13 text-xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
               value={custoInput}
               onChange={e => {
                 const val = e.target.value;
-                // Permite apenas números, vírgula e ponto
                 if (/^[\d.,]*$/.test(val)) {
                   setCustoInput(val);
                   const numVal = parseFloat(val.replace(',', '.'));
@@ -201,6 +207,12 @@ export default function MobileProductSelector({
                 const num = parseFloat(custoInput.replace(',', '.')) || 0;
                 setCustoInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                 setEditingItem(prev => ({ ...prev, custo_unitario: num }));
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.target.blur();
+                }
               }}
               placeholder="0,00"
             />
