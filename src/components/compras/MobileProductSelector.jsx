@@ -22,7 +22,7 @@ export default function MobileProductSelector({
   const custoInputRef = React.useRef(null);
 
   const filteredProducts = useMemo(() => {
-    if (!search) return products.slice(0, 20);
+    if (!search.trim()) return [];
     const lower = search.toLowerCase();
     return products.filter(p => 
       p.nome.toLowerCase().includes(lower) || 
@@ -344,41 +344,55 @@ export default function MobileProductSelector({
             </div>
 
             <div className="space-y-2">
-              {filteredProducts.map(product => {
-                const inCartCount = items.filter(i => i.produto_id === product.id).length;
-                const isSelected = inCartCount > 0;
-                
-                return (
-                  <div 
-                    key={product.id} 
-                    onClick={() => handleSelectProduct(product)}
-                    className={`p-2.5 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
-                        isSelected 
-                        ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
-                        : 'bg-gray-50 dark:bg-gray-800'
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className={`font-medium text-sm truncate ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
-                        {product.nome}
+              {search.trim() === '' ? (
+                <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                  <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm font-medium">Digite para buscar</p>
+                  <p className="text-xs mt-1">Ex: areia, tinta, tubo...</p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                filteredProducts.map(product => {
+                  const inCartCount = items.filter(i => i.produto_id === product.id).length;
+                  const isSelected = inCartCount > 0;
+                  
+                  return (
+                    <div 
+                      key={product.id} 
+                      onClick={() => handleSelectProduct(product)}
+                      className={`p-2.5 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
+                          isSelected 
+                          ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
+                          : 'bg-gray-50 dark:bg-gray-800'
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-medium text-sm truncate ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
+                          {product.nome}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                          {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                        {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
-                      </div>
+                      
+                      {isSelected ? (
+                        <Badge className="bg-indigo-600 hover:bg-indigo-700 ml-2 text-xs flex-shrink-0">
+                          {inCartCount > 1 ? `${inCartCount}x` : '✓'}
+                        </Badge>
+                      ) : (
+                        <div className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 flex-shrink-0 ml-2">
+                          <Plus className="w-4 h-4" />
+                        </div>
+                      )}
                     </div>
-                    
-                    {isSelected ? (
-                      <Badge className="bg-indigo-600 hover:bg-indigo-700 ml-2 text-xs flex-shrink-0">
-                        {inCartCount > 1 ? `${inCartCount}x` : '✓'}
-                      </Badge>
-                    ) : (
-                      <div className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 flex-shrink-0 ml-2">
-                        <Plus className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                  )
+                })
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm font-medium">Nenhum produto encontrado</p>
+                  <p className="text-xs mt-1">para "{search}"</p>
+                </div>
+              )}
             </div>
           </div>
         )}
