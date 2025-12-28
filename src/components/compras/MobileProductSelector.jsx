@@ -135,15 +135,24 @@ export default function MobileProductSelector({
                   type="text"
                   inputMode="decimal"
                   className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
-                  value={editingItem.quantidade ? editingItem.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                  value={quantidadeInput}
                   onChange={e => {
-                    const val = e.target.value.replace(/\./g, '').replace(',', '.');
-                    const parsed = parseFloat(val);
-                    if (!isNaN(parsed) || val === '' || val === '.') {
-                      setEditingItem(prev => ({ ...prev, quantidade: val === '' || val === '.' ? 0 : parsed }));
+                    const val = e.target.value;
+                    // Permite apenas números, vírgula e ponto
+                    if (/^[\d.,]*$/.test(val)) {
+                      setQuantidadeInput(val);
+                      const numVal = parseFloat(val.replace(',', '.'));
+                      if (!isNaN(numVal)) {
+                        setEditingItem(prev => ({ ...prev, quantidade: numVal }));
+                      }
                     }
                   }}
                   onFocus={e => e.target.select()}
+                  onBlur={() => {
+                    const num = parseFloat(quantidadeInput.replace(',', '.')) || 0;
+                    setQuantidadeInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                    setEditingItem(prev => ({ ...prev, quantidade: num }));
+                  }}
                   placeholder="0,00"
                 />
                 <Button 
@@ -162,15 +171,24 @@ export default function MobileProductSelector({
               type="text"
               inputMode="decimal"
               className="h-13 text-xl font-bold bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-center text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
-              value={editingItem.custo_unitario ? editingItem.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+              value={custoInput}
               onChange={e => {
-                const val = e.target.value.replace(/\./g, '').replace(',', '.');
-                const parsed = parseFloat(val);
-                if (!isNaN(parsed) || val === '' || val === '.') {
-                  setEditingItem(prev => ({ ...prev, custo_unitario: val === '' || val === '.' ? 0 : parsed }));
+                const val = e.target.value;
+                // Permite apenas números, vírgula e ponto
+                if (/^[\d.,]*$/.test(val)) {
+                  setCustoInput(val);
+                  const numVal = parseFloat(val.replace(',', '.'));
+                  if (!isNaN(numVal)) {
+                    setEditingItem(prev => ({ ...prev, custo_unitario: numVal }));
+                  }
                 }
               }}
               onFocus={e => e.target.select()}
+              onBlur={() => {
+                const num = parseFloat(custoInput.replace(',', '.')) || 0;
+                setCustoInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                setEditingItem(prev => ({ ...prev, custo_unitario: num }));
+              }}
               placeholder="0,00"
             />
           </div>
