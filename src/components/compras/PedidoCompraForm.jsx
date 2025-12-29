@@ -426,24 +426,25 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         // Opcional: Salvar URL da evidência em algum campo específico se existir no futuro
       };
       
-      // Se mudou para "Enviado", disparar lógicas automáticas
-      const mudouParaEnviado = !pedido && formData.status === 'Enviado' || 
-                               (pedido && pedido.status !== 'Enviado' && formData.status === 'Enviado');
-      
-      // Atualizar status de aprovação financeira
-      if (mudouParaEnviado) {
-        dataToSave.status_aprovacao_financeira = 'Aguardando Aprovação Financeira';
-      }
-      
       // Salvar pedido primeiro
-      await onSave(dataToSave);
+      const pedidoSalvo = await onSave(dataToSave);
+      
+      // Verificar se mudou para "Enviado" APÓS salvar
+      const mudouParaEnviado = dataToSave.status === 'Enviado' && (
+        !pedido || pedido.status !== 'Enviado'
+      );
       
       if (mudouParaEnviado) {
-        // Buscar o PO recém-criado/atualizado para pegar o ID e número
-        const allPOs = await base44.entities.PedidoCompra.list();
-        const currentPO = pedido?.id ? 
-          allPOs.find(p => p.id === pedido.id) :
-          allPOs[allPOs.length - 1];
+        // Atualizar status de aprovação financeira
+        await base44.entities.PedidoCompra.update(pedidoSalvo?.id || pedido?.id, {
+          status_aprovacao_financeira: 'Aguardando Aprovação Financeira'
+        });
+        // Pegar o ID do pedido salvo
+        const pedidoId = pedidoSalvo?.id || pedido?.id;
+        
+        // Buscar o pedido atualizado para ter certeza que tem todos os dados
+        const pedidosAtualizados = await base44.entities.PedidoCompra.filter({ id: pedidoId });
+        const currentPO = pedidosAtualizados[0];
         
         if (currentPO) {
           // 1. Criar Lançamentos Financeiros (Aguardando Aprovação Financeira)
