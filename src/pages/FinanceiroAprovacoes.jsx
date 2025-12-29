@@ -6,20 +6,23 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, Clock, AlertCircle, DollarSign, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertCircle, DollarSign, FileText, Eye } from 'lucide-react';
 import { getTenantId } from '@/components/utils/tenant';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import DetalhesPedidoCompra from '@/components/compras/DetalhesPedidoCompra';
 
 export default function FinanceiroAprovacoesPage() {
   const [pendingTransactions, setPendingTransactions] = useState([]);
   const [contas, setContas] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [selectedPedido, setSelectedPedido] = useState(null);
   const [contaSelecionada, setContaSelecionada] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
+  const [showPedidoDetails, setShowPedidoDetails] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,6 +51,16 @@ export default function FinanceiroAprovacoesPage() {
     setContaSelecionada('');
   };
 
+  const handleViewPedido = async (transaction) => {
+    if (transaction.referencia_tipo === 'PedidoCompra' && transaction.referencia_id) {
+      const pedidos = await base44.entities.PedidoCompra.filter({ id: transaction.referencia_id });
+      if (pedidos.length > 0) {
+        setSelectedPedido(pedidos[0]);
+        setShowPedidoDetails(true);
+      }
+    }
+  };
+
   const handleInitiateApproval = () => {
     if (!contaSelecionada) {
       toast({
@@ -69,40 +82,71 @@ export default function FinanceiroAprovacoesPage() {
   const handleAuthSuccess = async (authData) => {
     try {
       if (actionType === 'approve') {
-        // Atualizar status do lançamento
-        await base44.entities.LancamentoFinanceiro.update(selectedTransaction.id, {
-          status: 'Em Aberto',
-          observacoes: (selectedTransaction.observacoes || '') + 
-            `\n[Aprovado por: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-        });
+        // Buscar todos os lançamentos do mesmo pedido
+        const allTransactions = pendingTransactions.filter(
+          t => t.referencia_id === selectedTransaction.referencia_id
+        );
 
-        // Buscar o pedido de compra para atualizar
+        // Atualizar todos os lançamentos
+        for (const trans of allTransactions) {
+          await base44.entities.LancamentoFinanceiro.update(trans.id, {
+            status: 'Em Aberto',
+            observacoes: (trans.observacoes || '') + 
+              `\n[Aprovado por: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
+          });
+        }
+
+        // Atualizar o pedido de compra
         if (selectedTransaction.referencia_tipo === 'PedidoCompra') {
           const pedidos = await base44.entities.PedidoCompra.filter({ id: selectedTransaction.referencia_id });
           if (pedidos.length > 0) {
             const pedido = pedidos[0];
             await base44.entities.PedidoCompra.update(pedido.id, {
               status: 'Aguardando Recepção',
-              conta_pagamento_id: contaSelecionada
+              status_aprovacao_financeira: 'Aprovado Financeiramente',
+              conta_pagamento_id: contaSelecionada,
+              historico: (pedido.historico || '') + 
+                `\n[Aprovação Financeira: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
             });
           }
         }
 
         toast({
           title: "Pagamento aprovado",
-          description: "O lançamento foi aprovado e está pronto para pagamento.",
-          className: "bg-emerald-100 text-emerald-800"
+          description: "O pedido foi aprovado financeiramente e está liberado.",
+          className: "bg-gray-100 text-gray-800"
         });
       } else if (actionType === 'reject') {
-        await base44.entities.LancamentoFinanceiro.update(selectedTransaction.id, {
-          status: 'Cancelado',
-          observacoes: (selectedTransaction.observacoes || '') + 
-            `\n[Rejeitado por: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-        });
+        // Buscar todos os lançamentos do mesmo pedido
+        const allTransactions = pendingTransactions.filter(
+          t => t.referencia_id === selectedTransaction.referencia_id
+        );
+
+        // Cancelar todos os lançamentos
+        for (const trans of allTransactions) {
+          await base44.entities.LancamentoFinanceiro.update(trans.id, {
+            status: 'Cancelado',
+            observacoes: (trans.observacoes || '') + 
+              `\n[Rejeitado por: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
+          });
+        }
+
+        // Atualizar o pedido
+        if (selectedTransaction.referencia_tipo === 'PedidoCompra') {
+          const pedidos = await base44.entities.PedidoCompra.filter({ id: selectedTransaction.referencia_id });
+          if (pedidos.length > 0) {
+            const pedido = pedidos[0];
+            await base44.entities.PedidoCompra.update(pedido.id, {
+              status_aprovacao_financeira: 'Rejeitado Financeiramente',
+              historico: (pedido.historico || '') + 
+                `\n[Rejeição Financeira: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
+            });
+          }
+        }
 
         toast({
           title: "Pagamento rejeitado",
-          description: "O lançamento foi cancelado.",
+          description: "O pedido foi rejeitado pelo financeiro.",
           variant: "destructive"
         });
       }
@@ -229,6 +273,14 @@ export default function FinanceiroAprovacoesPage() {
                   <Button 
                     variant="outline" 
                     className="gap-2 border-0 shadow-sm"
+                    onClick={() => handleViewPedido(transactions[0])}
+                  >
+                    <Eye className="w-4 h-4" />
+                    Ver Detalhes
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 border-0 shadow-sm"
                     onClick={() => {
                       setSelectedTransaction(transactions[0]);
                       setActionType('reject');
@@ -243,7 +295,7 @@ export default function FinanceiroAprovacoesPage() {
                     onClick={() => handleOpenDialog(transactions[0])}
                   >
                     <CheckCircle className="w-4 h-4" />
-                    Aprovar Pagamento
+                    Aprovar
                   </Button>
                 </div>
               </Card>
@@ -349,6 +401,15 @@ export default function FinanceiroAprovacoesPage() {
         onClose={() => setIsAuthOpen(false)}
         onSuccess={handleAuthSuccess}
         operationName={`${actionType === 'approve' ? 'Aprovar' : 'Rejeitar'} Pagamento ${selectedTransaction?.referencia_numero || ''}`}
+      />
+
+      <DetalhesPedidoCompra 
+        pedido={selectedPedido}
+        isOpen={showPedidoDetails}
+        onClose={() => {
+          setShowPedidoDetails(false);
+          setSelectedPedido(null);
+        }}
       />
     </div>
   );

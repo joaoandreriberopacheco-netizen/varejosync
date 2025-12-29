@@ -60,6 +60,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [volumes, setVolumes] = useState([]);
   const [showAtualizarPrecos, setShowAtualizarPrecos] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isReopenAuthOpen, setIsReopenAuthOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
 
@@ -377,6 +378,40 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setIsAuthOpen(true);
   };
 
+  const handleReopenForEdit = async (authData) => {
+    try {
+      const authNote = `\n[Reaberto para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM HH:mm')}]`;
+      
+      await base44.entities.PedidoCompra.update(pedido.id, {
+        status_aprovacao_financeira: 'Reaberto para Edição',
+        historico: (formData.historico || '') + authNote
+      });
+
+      toast({
+        title: "Pedido reaberto",
+        description: "O pedido foi reaberto para edição. Ao salvar, precisará de nova aprovação.",
+        className: "bg-blue-100 text-blue-800"
+      });
+
+      // Recarregar o pedido
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+    setIsReopenAuthOpen(false);
+  };
+
+  const isLocked = pedido && (
+    pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' || 
+    pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente'
+  );
+
+  const canReopen = currentUser?.role === 'admin' && isLocked;
+
   const handleAuthSuccess = async (authData) => {
     setIsSaving(true);
     
@@ -394,6 +429,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       // Se mudou para "Enviado", disparar lógicas automáticas
       const mudouParaEnviado = !pedido && formData.status === 'Enviado' || 
                                (pedido && pedido.status !== 'Enviado' && formData.status === 'Enviado');
+      
+      // Atualizar status de aprovação financeira
+      if (mudouParaEnviado) {
+        dataToSave.status_aprovacao_financeira = 'Aguardando Aprovação Financeira';
+      }
       
       // Salvar pedido primeiro
       await onSave(dataToSave);
@@ -715,15 +755,41 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
               )}
 
+              {/* Badge de Status Financeiro */}
+              {pedido?.status_aprovacao_financeira && pedido.status_aprovacao_financeira !== 'Pendente de Envio' && (
+                <div className="mb-6">
+                  <div className={`p-4 rounded-xl shadow-sm ${
+                    pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
+                    pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
+                    pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ? 'bg-gray-50 dark:bg-gray-800' :
+                    'bg-gray-50 dark:bg-gray-800'
+                  }`}>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Status Financeiro</div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-600' :
+                        pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-400' :
+                        'bg-gray-400'
+                      }`}></div>
+                      <span className="font-medium text-gray-800 dark:text-gray-200">{pedido.status_aprovacao_financeira}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Fornecedor com ícone */}
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Fornecedor *</Label>
                 <div 
                   onClick={() => {
-                    const modal = document.getElementById('fornecedor-selector-mobile');
-                    if (modal) modal.classList.remove('hidden');
+                    if (!isLocked) {
+                      const modal = document.getElementById('fornecedor-selector-mobile');
+                      if (modal) modal.classList.remove('hidden');
+                    }
                   }}
-                  className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center gap-3 active:scale-[0.98] transition-transform"
+                  className={`bg-gray-50 dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center gap-3 transition-transform ${
+                    isLocked ? 'opacity-50' : 'active:scale-[0.98]'
+                  }`}
                 >
                   <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
                     <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -1003,13 +1069,29 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
               </div>
             </div>
-            <Button 
-              onClick={handleInitiateSave} 
-              disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-              className="w-full bg-gray-700 hover:bg-gray-600 h-12"
-            >
-              {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
-            </Button>
+            {isLocked ? (
+              canReopen ? (
+                <Button 
+                  onClick={() => setIsReopenAuthOpen(true)} 
+                  variant="outline"
+                  className="w-full border-0 shadow-sm h-12"
+                >
+                  Reabrir para Edição (Admin)
+                </Button>
+              ) : (
+                <div className="text-center py-3 text-sm text-gray-500 dark:text-gray-400">
+                  Pedido bloqueado - {pedido.status_aprovacao_financeira}
+                </div>
+              )
+            ) : (
+              <Button 
+                onClick={handleInitiateSave} 
+                disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
+                className="w-full bg-gray-700 hover:bg-gray-600 h-12"
+              >
+                {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
+              </Button>
+            )}
           </div>
         </Tabs>
 
@@ -1018,6 +1100,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           onClose={() => setIsAuthOpen(false)}
           onSuccess={handleAuthSuccess}
           operationName={pedido?.id ? `Salvar Pedido ${pedido.numero}` : "Criar Novo Pedido"}
+        />
+
+        <OperacaoAuthenticator 
+          isOpen={isReopenAuthOpen}
+          onClose={() => setIsReopenAuthOpen(false)}
+          onSuccess={handleReopenForEdit}
+          operationName={`Reabrir Pedido ${pedido?.numero} para Edição`}
         />
 
         <AtualizarPrecosDialog
@@ -1063,12 +1152,34 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
           <div className="flex-1 overflow-y-auto p-6">
             <TabsContent value="dados-gerais" className="mt-0 space-y-8">
+              {/* Badge de Status Financeiro */}
+              {pedido?.status_aprovacao_financeira && pedido.status_aprovacao_financeira !== 'Pendente de Envio' && (
+                <div className="mb-6">
+                  <div className={`p-5 rounded-xl shadow-sm border-0 ${
+                    pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
+                    pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
+                    pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ? 'bg-gray-50 dark:bg-gray-800' :
+                    'bg-gray-50 dark:bg-gray-800'
+                  }`}>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Status Financeiro</div>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${
+                        pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-600' :
+                        pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-400' :
+                        'bg-gray-400'
+                      }`}></div>
+                      <span className="font-medium text-lg text-gray-800 dark:text-gray-200">{pedido.status_aprovacao_financeira}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Header Compacto - Grid Principal */}
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-4">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Fornecedor *</Label>
-                  <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange}>
+                  <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
                     <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white">
                       <SelectValue placeholder="Selecione o fornecedor..." />
                     </SelectTrigger>
@@ -1175,6 +1286,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       size="sm" 
                       onClick={() => handleAddItem()} 
                       className="h-8 text-xs"
+                      disabled={isLocked}
                     >
                       <PlusCircle className="h-4 w-4 mr-1" /> 
                       Adicionar
@@ -1777,13 +1889,29 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm">
               Cancelar
             </Button>
-            <Button 
-              onClick={handleInitiateSave} 
-              disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-              className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm"
-            >
-              {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
-            </Button>
+            {isLocked ? (
+              canReopen ? (
+                <Button 
+                  onClick={() => setIsReopenAuthOpen(true)} 
+                  variant="outline"
+                  className="flex-1 border-0 shadow-sm"
+                >
+                  Reabrir para Edição (Admin)
+                </Button>
+              ) : (
+                <div className="flex-1 text-center py-3 text-sm text-gray-500 dark:text-gray-400">
+                  Bloqueado - {pedido.status_aprovacao_financeira}
+                </div>
+              )
+            ) : (
+              <Button 
+                onClick={handleInitiateSave} 
+                disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
+                className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm"
+              >
+                {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
+              </Button>
+            )}
           </div>
         </div>
       
@@ -1792,6 +1920,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         onClose={() => setIsAuthOpen(false)}
         onSuccess={handleAuthSuccess}
         operationName={pedido?.id ? `Salvar Pedido ${pedido.numero}` : "Criar Novo Pedido"}
+      />
+
+      <OperacaoAuthenticator 
+        isOpen={isReopenAuthOpen}
+        onClose={() => setIsReopenAuthOpen(false)}
+        onSuccess={handleReopenForEdit}
+        operationName={`Reabrir Pedido ${pedido?.numero} para Edição`}
       />
 
       <AtualizarPrecosDialog

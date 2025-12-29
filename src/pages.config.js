@@ -9,6 +9,7 @@ import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
 import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
+import FinanceiroAprovacoes from './pages/FinanceiroAprovacoes';
 import FinanceiroModulo from './pages/FinanceiroModulo';
 import Home from './pages/Home';
 import HubLogistico from './pages/HubLogistico';
@@ -27,7 +28,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import FinanceiroAprovacoes from './pages/FinanceiroAprovacoes';
 import __Layout from './Layout.jsx';
 
 
@@ -43,6 +43,7 @@ export const PAGES = {
     "Estoque": Estoque,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
+    "FinanceiroAprovacoes": FinanceiroAprovacoes,
     "FinanceiroModulo": FinanceiroModulo,
     "Home": Home,
     "HubLogistico": HubLogistico,
@@ -61,7 +62,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "FinanceiroAprovacoes": FinanceiroAprovacoes,
 }
 
 export const pagesConfig = {
