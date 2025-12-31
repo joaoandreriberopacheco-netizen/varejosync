@@ -293,11 +293,13 @@ export default function ProdutosPage() {
 
   const handleBaixarTemplateUnificado = () => {
     const headers = [
-      "nome",
       "codigo_barras",
+      "nome",
       "tipo",
       "categoria",
+      "marca",
       "tags",
+      "imagem_url",
       "valor_compra",
       "frete_percentual",
       "imposto_1_percentual",
@@ -307,35 +309,43 @@ export default function ProdutosPage() {
       "fornecedor_codigo",
       "preco_venda_padrao",
       "preco_venda_tipo",
+      "preco_venda_percentual",
       "dimensoes_cm",
       "peso_kg",
       "tempo_reposicao_dias",
-      "estoque_ideal",
       "estoque_minimo",
+      "estoque_ideal",
       "estoque_maximo",
-      "unidades_por_pacote",
+      "estoque_avariado",
       "unidade_principal",
+      "unidades_por_pacote",
+      "controla_serial",
+      "controla_lote_validade",
       "ativo"
     ];
     
     let csvContent = "\uFEFF";
-    csvContent += "# TEMPLATE DE IMPORTAÇÃO DE PRODUTOS E CUSTOS\n";
-    csvContent += "# TIPO aceita apenas: Produto ou Serviço (ou 0 para Produto, 1 para Serviço)\n";
-    csvContent += "# TAGS separadas por vírgula (ex: torneira,banheiro,metais)\n";
-    csvContent += "# DIMENSOES no formato AxLxP (ex: 30x20x15)\n";
-    csvContent += "# Custos sempre em PERCENTUAL (sistema calcula o valor em R$)\n";
-    csvContent += "# ESTOQUE_ATUAL não deve ser preenchido (calculado pelo sistema)\n";
-    csvContent += "# CODIGO_INTERNO não deve ser preenchido (gerado automaticamente)\n";
+    csvContent += "# TEMPLATE COMPLETO DE IMPORTAÇÃO/ATUALIZAÇÃO DE PRODUTOS\n";
+    csvContent += "# Se codigo_barras existir, o produto será ATUALIZADO, senão será CRIADO\n";
+    csvContent += "# TIPO: Produto ou Serviço\n";
+    csvContent += "# TAGS: separadas por vírgula (ex: torneira,banheiro,metais)\n";
+    csvContent += "# DIMENSOES: formato AxLxP (ex: 30x20x15)\n";
+    csvContent += "# Custos em PERCENTUAL (sistema calcula valor em R$)\n";
+    csvContent += "# CODIGO_INTERNO: gerado automaticamente, não preencher\n";
+    csvContent += "# ESTOQUE_ATUAL: controlado por movimentações, não importar\n";
+    csvContent += "# CONTROLA_SERIAL/LOTE_VALIDADE: true/false\n";
     csvContent += "\n";
     csvContent += headers.join(";") + "\n";
     
     // Linha de exemplo
     const exemplo = [
-      "Torneira de Mesa Cromada",
       "7891234567890",
+      "Torneira de Mesa Cromada",
       "Produto",
       "Hidráulica",
+      "Deca",
       "torneira,banheiro,metais",
+      "",
       "100,00",
       "5",
       "12",
@@ -343,16 +353,20 @@ export default function ProdutosPage() {
       "0",
       "4",
       "FOR-001",
-      "0", // preco_venda_padrao will be calculated if preco_venda_tipo is 'percentual'
+      "0",
       "percentual",
+      "40",
       "30x20x15",
       "1,5",
       "20",
-      "100",
       "50",
+      "100",
       "200",
-      "12",
+      "0",
       "UN",
+      "12",
+      "false",
+      "false",
       "true"
     ];
     csvContent += exemplo.join(";") + "\n";
@@ -394,11 +408,13 @@ export default function ProdutosPage() {
             items: {
               type: "object",
               properties: {
-                "nome": { type: "string" },
                 "codigo_barras": { type: "string" },
+                "nome": { type: "string" },
                 "tipo": { type: "string" },
                 "categoria": { type: "string" },
+                "marca": { type: "string" },
                 "tags": { type: "string" },
+                "imagem_url": { type: "string" },
                 "valor_compra": { type: "number" },
                 "frete_percentual": { type: "number" },
                 "imposto_1_percentual": { type: "number" },
@@ -408,15 +424,18 @@ export default function ProdutosPage() {
                 "fornecedor_codigo": { type: "string" },
                 "preco_venda_padrao": { type: "number" },
                 "preco_venda_tipo": { type: "string" },
-                "preco_venda_percentual": { type: "number" }, // Kept for internal calculation if type is 'percentual'
+                "preco_venda_percentual": { type: "number" },
                 "dimensoes_cm": { type: "string" },
                 "peso_kg": { type: "number" },
                 "tempo_reposicao_dias": { type: "number" },
-                "estoque_ideal": { type: "number" },
                 "estoque_minimo": { type: "number" },
+                "estoque_ideal": { type: "number" },
                 "estoque_maximo": { type: "number" },
-                "unidades_por_pacote": { type: "number" },
+                "estoque_avariado": { type: "number" },
                 "unidade_principal": { type: "string" },
+                "unidades_por_pacote": { type: "number" },
+                "controla_serial": { type: "boolean" },
+                "controla_lote_validade": { type: "boolean" },
                 "ativo": { type: "boolean" }
               },
               required: ["nome"],
@@ -436,7 +455,7 @@ export default function ProdutosPage() {
       }
 
       const importedData = extraction.output.data;
-      const resumo = { novos: 0, erros: [] };
+      const resumo = { novos: 0, atualizados: 0, erros: [] };
       const produtosValidados = [];
 
       for (const linha of importedData) {
@@ -450,6 +469,13 @@ export default function ProdutosPage() {
           resumo.erros.push(`Produto '${linha.nome || 'Sem nome'}': ${errosLinha.join(', ')}`);
           continue;
         }
+
+        // Verificar se produto já existe (por código de barras)
+        let produtoExistente = null;
+        if (linha.codigo_barras) {
+          produtoExistente = produtos.find(p => p.codigo_barras === String(linha.codigo_barras));
+        }
+        const isUpdate = !!produtoExistente;
 
         // Buscar fornecedor pelo código
         let fornecedor_id = '';
@@ -522,33 +548,35 @@ export default function ProdutosPage() {
         }
         
         const produtoData = {
+          id: isUpdate ? produtoExistente.id : undefined,
           nome: linha.nome,
-          // codigo_interno is generated automatically, not imported from template
           codigo_barras: String(linha.codigo_barras || ''),
           tipo: tipoProduto,
-          categoria_nome: linha.categoria || '', // Changed to categoria_nome
-          tags: tagsArray, // New field
+          categoria_nome: linha.categoria || '',
+          marca: linha.marca || '',
+          tags: tagsArray,
+          imagem_url: linha.imagem_url || '',
           preco_venda_padrao: precoVenda,
           preco_venda_tipo: precoVendaTipo,
           preco_venda_percentual: precoVendaPercentual,
-          preco_custo_calculado: custoTotal, // Calculated cost
-          valor_compra: valorCompra, // Store base value for future cost calculations
-          unidade_principal: linha.unidade_principal || 'UN', // New field
-          unidades_por_pacote: parseInt(linha.unidades_por_pacote) || 1, // New field
-          // unidade_compra, unidade_venda, fator_conversao removed as per template
-          estoque_atual: 0, // Always start new products with 0 stock
+          preco_custo_calculado: custoTotal,
+          valor_compra: valorCompra,
+          unidade_principal: linha.unidade_principal || 'UN',
+          unidades_por_pacote: parseInt(linha.unidades_por_pacote) || 1,
+          estoque_atual: isUpdate ? produtoExistente.estoque_atual : 0,
           estoque_minimo: parseNumber(linha.estoque_minimo) || 0,
           estoque_ideal: parseNumber(linha.estoque_ideal) || 0,
           estoque_maximo: parseNumber(linha.estoque_maximo) || 0,
-          estoque_avariado: 0,
+          estoque_avariado: parseNumber(linha.estoque_avariado) || 0,
           fornecedor_padrao_id: fornecedor_id || null,
-          fornecedor_padrao_codigo: fornecedor_codigo || null, // Store for easier reference
+          fornecedor_padrao_codigo: fornecedor_codigo || null,
           tempo_reposicao_dias: parseInt(linha.tempo_reposicao_dias) || 0,
           peso_kg: parseNumber(linha.peso_kg) || 0,
           dimensoes_cm: linha.dimensoes_cm || '',
-          volume_cm3: volume_cm3, // New calculated field
+          volume_cm3: volume_cm3,
+          controla_serial: (linha.controla_serial === true || String(linha.controla_serial).toLowerCase() === 'true'),
+          controla_lote_validade: (linha.controla_lote_validade === true || String(linha.controla_lote_validade).toLowerCase() === 'true'),
           ativo: (linha.ativo === true || String(linha.ativo).toLowerCase() === 'true'),
-          // Store costs separately to be created as CustoDetalhado
           custos: [
             { descricao_custo: 'Valor de Compra', valor_custo: valorCompra, tipo_valor: 'numerico', is_negativo: false },
             { descricao_custo: 'Frete', valor_custo: fretePercentual, tipo_valor: 'percentual', is_negativo: false },
@@ -556,11 +584,15 @@ export default function ProdutosPage() {
             { descricao_custo: 'Imposto 2', valor_custo: imposto2Percentual, tipo_valor: 'percentual', is_negativo: false },
             { descricao_custo: 'Desconto Comercial', valor_custo: descontoComercialPercentual, tipo_valor: 'percentual', is_negativo: true },
             { descricao_custo: 'Outros Custos', valor_custo: outrosCustosPercentual, tipo_valor: 'percentual', is_negativo: false }
-          ].filter(c => c.valor_custo !== 0) // Only save costs with non-zero values
+          ].filter(c => c.valor_custo !== 0)
         };
 
         produtosValidados.push(produtoData);
-        resumo.novos++;
+        if (isUpdate) {
+          resumo.atualizados++;
+        } else {
+          resumo.novos++;
+        }
       }
 
       setPreviewData({ produtos: produtosValidados, resumo });
@@ -585,16 +617,30 @@ export default function ProdutosPage() {
 
     try {
       for (const produtoData of previewData.produtos) {
-        const custosToCreate = produtoData.custos; // Get the costs
+        const custosToCreate = produtoData.custos;
+        const { custos, id, ...productData } = produtoData;
         
-        // Remove 'custos' property before creating the Produto entity
-        const { custos, ...productToCreate } = produtoData;
+        let produtoId;
         
-        const novoProduto = await base44.entities.Produto.create(productToCreate);
+        if (id) {
+          // Atualizar produto existente
+          await base44.entities.Produto.update(id, productData);
+          produtoId = id;
+          
+          // Deletar custos existentes
+          const custosExistentes = await base44.entities.CustoDetalhado.filter({ produto_id: id });
+          if (custosExistentes.length > 0) {
+            await Promise.all(custosExistentes.map(c => base44.entities.CustoDetalhado.delete(c.id)));
+          }
+        } else {
+          // Criar novo produto
+          const novoProduto = await base44.entities.Produto.create(productData);
+          produtoId = novoProduto.id;
+        }
         
-        // Create CustoDetalhado entities using the ID of the new product
+        // Criar custos detalhados
         const custosParaSalvar = custosToCreate.map(c => ({
-          produto_id: novoProduto.id,
+          produto_id: produtoId,
           descricao_custo: c.descricao_custo,
           valor_custo: c.valor_custo,
           tipo_valor: c.tipo_valor,
@@ -607,8 +653,8 @@ export default function ProdutosPage() {
       }
 
       toast({
-        title: "✓ Produtos e Custos Importados!",
-        description: `${previewData.produtos.length} produtos com custos detalhados criados com sucesso.`,
+        title: "✓ Importação Concluída!",
+        description: `${previewData.resumo.novos} criados, ${previewData.resumo.atualizados} atualizados.`,
         className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
         duration: 5000
       });
@@ -1498,12 +1544,18 @@ export default function ProdutosPage() {
           {previewData && (
             <div className="space-y-4 py-4">
               {/* Resumo */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="text-center p-3 border border-gray-200 rounded-lg dark:border-gray-700 dark:bg-gray-800">
-                  <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                  <div className="text-xl font-semibold text-green-700 dark:text-green-400">
                     {previewData.resumo.novos}
                   </div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Produtos a Importar</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Novos</div>
+                </div>
+                <div className="text-center p-3 border border-gray-200 rounded-lg dark:border-gray-700 dark:bg-gray-800">
+                  <div className="text-xl font-semibold text-blue-700 dark:text-blue-400">
+                    {previewData.resumo.atualizados}
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Atualizações</div>
                 </div>
                 {previewData.resumo.erros.length > 0 && (
                   <div className="text-center p-3 border border-gray-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-900">
@@ -1554,9 +1606,10 @@ export default function ProdutosPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 dark:bg-blue-900/20 dark:border-blue-900 dark:text-blue-300">
                 <strong>ℹ️ Atenção:</strong> Esta operação irá:
                 <ul className="list-disc ml-4 mt-1">
-                  <li>Criar novos produtos no sistema</li>
-                  <li>Criar os custos detalhados para cada produto com base nos dados fornecidos</li>
-                  <li>Calcular e salvar o Preço de Custo e Preço de Venda conforme sua precificação</li>
+                  <li>Criar novos produtos (sem código de barras cadastrado)</li>
+                  <li>Atualizar produtos existentes (com código de barras já cadastrado)</li>
+                  <li>Recriar todos os custos detalhados conforme os dados fornecidos</li>
+                  <li>Recalcular preços de custo e venda automaticamente</li>
                 </ul>
               </div>
             </div>
