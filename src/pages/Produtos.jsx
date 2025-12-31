@@ -213,7 +213,6 @@ export default function ProdutosPage() {
       const tagsString = Array.isArray(p.tags) ? p.tags.join(',') : '';
 
       const row = [
-        p.id || '',
         p.codigo_interno || '',
         p.codigo_barras || '',
         p.nome || '',
