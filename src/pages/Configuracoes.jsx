@@ -15,6 +15,7 @@ import DadosEmpresaManager from '../components/config/DadosEmpresaManager';
 import DataAuditor from '../components/config/DataAuditor';
 import SeedDataTool from '../components/config/SeedDataTool';
 import TenantDebugger from '../components/config/TenantDebugger';
+import RecomecarDoZero from '../components/config/RecomecarDoZero';
 
 export default function ConfiguracoesPage() {
   return (
@@ -30,42 +31,42 @@ export default function ConfiguracoesPage() {
         <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex overflow-x-auto overflow-y-hidden no-scrollbar" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <TabsTrigger 
             value="vendas" 
-            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-700 dark:text-gray-400 dark:data-[state=active]:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
           >
             <TrendingUp className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden md:inline text-sm font-medium">Vendas</span>
           </TabsTrigger>
           <TabsTrigger 
             value="operacoes"
-            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-700 dark:text-gray-400 dark:data-[state=active]:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
           >
             <Package className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden md:inline text-sm font-medium">Operações</span>
           </TabsTrigger>
           <TabsTrigger 
             value="financeiro"
-            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-700 dark:text-gray-400 dark:data-[state=active]:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
           >
             <DollarSign className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden md:inline text-sm font-medium">Financeiro</span>
           </TabsTrigger>
           <TabsTrigger 
             value="relatorios"
-            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-700 dark:text-gray-400 dark:data-[state=active]:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
           >
             <BarChart3 className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden md:inline text-sm font-medium">Relatórios</span>
           </TabsTrigger>
           <TabsTrigger 
             value="geral"
-            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-700 dark:text-gray-400 dark:data-[state=active]:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
           >
             <Settings className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden md:inline text-sm font-medium">Parâmetros</span>
           </TabsTrigger>
           <TabsTrigger 
             value="sistema"
-            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+            className="flex-1 md:flex-none px-2 md:px-4 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-700 dark:text-gray-400 dark:data-[state=active]:text-gray-300 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
           >
             <Wrench className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden md:inline text-sm font-medium">Ferramentas</span>
@@ -161,10 +162,11 @@ export default function ConfiguracoesPage() {
             <div className="space-y-8">
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <Wrench className="w-5 h-5 text-gray-500" />
+                  <Wrench className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Ferramentas de Sistema</h2>
                 </div>
-                <div className="grid gap-6">
+                <div className="grid gap-4">
+                  <RecomecarDoZero />
                   <TenantDebugger />
                   <DataAuditor />
                   <SeedDataTool />
