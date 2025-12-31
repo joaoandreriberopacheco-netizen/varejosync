@@ -41,7 +41,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
+
 
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
@@ -110,10 +110,9 @@ export default function ProdutosPage() {
   }, []);
 
   const loadData = async () => {
-    const tenantId = getTenantId();
     const [produtosData, fornecedoresData] = await Promise.all([
-      base44.entities.Produto.filter({ empresa_id: tenantId }, '-created_date'),
-      base44.entities.Terceiro.filter({ empresa_id: tenantId, tipo: ['Fornecedor', 'Ambos'] })
+      base44.entities.Produto.list('-created_date'),
+      base44.entities.Terceiro.list()
     ]);
     
     // Defensive filtering to ensure only valid objects with proper prototypes are used
@@ -121,7 +120,7 @@ export default function ProdutosPage() {
       ? produtosData.filter(p => p && typeof p === 'object' && p !== null) 
       : [];
     const safeFornecedores = Array.isArray(fornecedoresData) 
-      ? fornecedoresData.filter(f => f && typeof f === 'object' && f !== null) 
+      ? fornecedoresData.filter(f => f && typeof f === 'object' && f !== null && (f.tipo === 'Fornecedor' || f.tipo === 'Ambos')) 
       : [];
     
     setProdutos(safeProdutos);
@@ -590,12 +589,10 @@ export default function ProdutosPage() {
         // Remove 'custos' property before creating the Produto entity
         const { custos, ...productToCreate } = produtoData;
         
-        const tenantId = getTenantId();
-        const novoProduto = await base44.entities.Produto.create({ ...productToCreate, empresa_id: tenantId });
+        const novoProduto = await base44.entities.Produto.create(productToCreate);
         
         // Create CustoDetalhado entities using the ID of the new product
         const custosParaSalvar = custosToCreate.map(c => ({
-          empresa_id: tenantId,
           produto_id: novoProduto.id,
           descricao_custo: c.descricao_custo,
           valor_custo: c.valor_custo,
@@ -876,17 +873,14 @@ export default function ProdutosPage() {
         const novosCustosParaSalvar = atualizacao.custos_detalhados_originais.map(c => {
           if (c.descricao_custo === 'Valor de Compra' || c.descricao_custo === 'Custo da Mercadoria') {
             return {
-              empresa_id: getTenantId(),
               produto_id: atualizacao.produto_id,
-              descricao_custo: 'Valor de Compra', // Padroniza para 'Valor de Compra'
-              valor_custo: atualizacao.novo_valor_compra, // Usar o novo valor de compra
-              tipo_valor: 'numerico', // Valor de Compra é sempre numérico
+              descricao_custo: 'Valor de Compra',
+              valor_custo: atualizacao.novo_valor_compra,
+              tipo_valor: 'numerico',
               is_negativo: false
             };
           }
-          // Para outros custos detalhados, manter o valor original, eles serão recalculados no produto
           return {
-            empresa_id: getTenantId(),
             produto_id: atualizacao.produto_id,
             descricao_custo: c.descricao_custo,
             valor_custo: c.valor_custo,
@@ -898,9 +892,7 @@ export default function ProdutosPage() {
         if (novosCustosParaSalvar.length > 0) {
           await base44.entities.CustoDetalhado.bulkCreate(novosCustosParaSalvar);
         } else {
-             // If no detailed costs existed, create at least 'Valor de Compra'
             await base44.entities.CustoDetalhado.create({
-                empresa_id: getTenantId(),
                 produto_id: atualizacao.produto_id,
                 descricao_custo: 'Valor de Compra',
                 valor_custo: atualizacao.novo_valor_compra,
