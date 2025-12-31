@@ -80,6 +80,7 @@ export default function ProdutosPage() {
     fornecedorId: 'all',
     statusEstoque: 'all'
   });
+  const [sortOrder, setSortOrder] = useState('default');
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState(null);
@@ -936,7 +937,7 @@ export default function ProdutosPage() {
 
   const filteredProdutos = useMemo(() => {
     if (!Array.isArray(produtos)) return [];
-    return produtos.filter(p => {
+    let filtered = produtos.filter(p => {
       if (!p || typeof p !== 'object') return false;
       const nome = p.nome || '';
       const codigo = p.codigo_interno || '';
@@ -961,7 +962,15 @@ export default function ProdutosPage() {
 
       return searchTermMatch && categoriaMatch && tagMatch && fornecedorMatch && statusMatch();
     });
-  }, [produtos, filters]);
+
+    if (sortOrder === 'az') {
+      filtered = [...filtered].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    } else if (sortOrder === 'za') {
+      filtered = [...filtered].sort((a, b) => (b.nome || '').localeCompare(a.nome || ''));
+    }
+
+    return filtered;
+  }, [produtos, filters, sortOrder]);
 
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {
@@ -1071,7 +1080,17 @@ export default function ProdutosPage() {
           </div>
 
           {/* Filtros secundários - grid compacto */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <Select value={sortOrder} onValueChange={setSortOrder}>
+            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
+              <SelectValue placeholder="Ordenar" />
+            </SelectTrigger>
+            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+              <SelectItem value="default" className="dark:hover:bg-gray-700 text-xs">Padrão</SelectItem>
+              <SelectItem value="az" className="dark:hover:bg-gray-700 text-xs">A → Z</SelectItem>
+              <SelectItem value="za" className="dark:hover:bg-gray-700 text-xs">Z → A</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
             <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
               <SelectValue placeholder="Categoria" />
