@@ -18,7 +18,8 @@ const ENTITIES = [
   { id: 'MovimentacaoEstoque', label: 'Movimentações de Estoque', description: 'Histórico de entradas/saídas' },
   { id: 'Supermanifesto', label: 'Supermanifestos', description: 'Manifestos logísticos' },
   { id: 'Tarefa', label: 'Tarefas', description: 'Todas as tarefas do sistema' },
-  { id: 'Categoria', label: 'Categorias', description: 'Categorias de produtos' }
+  { id: 'Categoria', label: 'Categorias', description: 'Categorias de produtos' },
+  { id: 'Cotacao', label: 'Cotações', description: 'Todas as cotações de compra' }
 ];
 
 export default function RecomecarDoZero() {
