@@ -169,7 +169,6 @@ export default function ProdutosPage() {
 
   const handleExportarCatalogo = () => {
     const headers = [
-      "id_produto",
       "codigo_interno",
       "codigo_barras",
       "nome",
