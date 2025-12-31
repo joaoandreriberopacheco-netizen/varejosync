@@ -14,7 +14,6 @@ import UsuariosManager from '../components/config/UsuariosManager';
 import DadosEmpresaManager from '../components/config/DadosEmpresaManager';
 import DataAuditor from '../components/config/DataAuditor';
 import SeedDataTool from '../components/config/SeedDataTool';
-import TenantDebugger from '../components/config/TenantDebugger';
 import RecomecarDoZero from '../components/config/RecomecarDoZero';
 
 export default function ConfiguracoesPage() {
@@ -167,7 +166,6 @@ export default function ConfiguracoesPage() {
                 </div>
                 <div className="grid gap-4">
                   <RecomecarDoZero />
-                  <TenantDebugger />
                   <DataAuditor />
                   <SeedDataTool />
                 </div>
