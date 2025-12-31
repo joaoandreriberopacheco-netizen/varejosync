@@ -170,49 +170,83 @@ export default function ProdutosPage() {
   const handleExportarCatalogo = () => {
     const headers = [
       "id_produto",
-      "Nome",
-      "Codigo_Interno",
-      "Codigo_Barras",
-      "Tipo",
-      "Categoria",
-      "Preco_Venda",
-      "Preco_Custo",
-      "Estoque_Atual",
-      "Estoque_Minimo",
-      "Estoque_Ideal",
-      "Estoque_Maximo",
-      "Fornecedor_Codigo",
-      "Tempo_Reposicao_Dias",
-      "Peso_KG",
-      "Dimensoes_CM",
-      "Ativo"
+      "codigo_interno",
+      "codigo_barras",
+      "nome",
+      "tipo",
+      "categoria",
+      "marca",
+      "tags",
+      "imagem_url",
+      "valor_compra",
+      "frete_percentual",
+      "imposto_1_percentual",
+      "imposto_2_percentual",
+      "desconto_comercial_percentual",
+      "outros_custos_percentual",
+      "preco_custo_calculado",
+      "fornecedor_codigo",
+      "preco_venda_padrao",
+      "preco_venda_tipo",
+      "preco_venda_percentual",
+      "dimensoes_cm",
+      "volume_cm3",
+      "peso_kg",
+      "tempo_reposicao_dias",
+      "estoque_atual",
+      "estoque_minimo",
+      "estoque_ideal",
+      "estoque_maximo",
+      "estoque_avariado",
+      "unidade_principal",
+      "unidades_por_pacote",
+      "controla_serial",
+      "controla_lote_validade",
+      "ativo"
     ];
 
-    let csvContent = "\uFEFF"; // UTF-8 BOM
+    let csvContent = "\uFEFF";
     csvContent += headers.join(";") + "\n";
 
     produtos.forEach(p => {
-      // Buscar código do fornecedor
       const fornecedor = fornecedores.find(f => f.id === p.fornecedor_padrao_id);
       const fornecedorCodigo = fornecedor?.codigo_interno || '';
+      const tagsString = Array.isArray(p.tags) ? p.tags.join(',') : '';
 
       const row = [
         p.id || '',
-        p.nome || '',
         p.codigo_interno || '',
         p.codigo_barras || '',
+        p.nome || '',
         p.tipo || 'Produto',
         p.categoria_nome || '',
-        formatarNumero(p.preco_venda_padrao),
-        formatarNumero(p.preco_custo_calculado),
-        formatarNumero(p.estoque_atual),
-        formatarNumero(p.estoque_minimo),
-        formatarNumero(p.estoque_ideal),
-        formatarNumero(p.estoque_maximo),
+        p.marca || '',
+        tagsString,
+        p.imagem_url || '',
+        formatarNumero(p.valor_compra || 0),
+        formatarNumero(p.custo_frete_padrao || 0),
+        formatarNumero(p.custo_imposto1_padrao || 0),
+        formatarNumero(p.custo_imposto2_padrao || 0),
+        formatarNumero(p.desconto_compra_padrao || 0),
+        formatarNumero(p.custo_outros_padrao || 0),
+        formatarNumero(p.preco_custo_calculado || 0),
         fornecedorCodigo,
-        p.tempo_reposicao_dias || 0,
-        formatarNumero(p.peso_kg),
+        formatarNumero(p.preco_venda_padrao || 0),
+        p.preco_venda_tipo || 'percentual',
+        formatarNumero(p.preco_venda_percentual || 0),
         p.dimensoes_cm || '',
+        formatarNumero(p.volume_cm3 || 0),
+        formatarNumero(p.peso_kg || 0),
+        p.tempo_reposicao_dias || 0,
+        formatarNumero(p.estoque_atual || 0),
+        formatarNumero(p.estoque_minimo || 0),
+        formatarNumero(p.estoque_ideal || 0),
+        formatarNumero(p.estoque_maximo || 0),
+        formatarNumero(p.estoque_avariado || 0),
+        p.unidade_principal || 'UN',
+        p.unidades_por_pacote || 1,
+        p.controla_serial ? 'true' : 'false',
+        p.controla_lote_validade ? 'true' : 'false',
         p.ativo ? 'true' : 'false'
       ];
       csvContent += row.join(";") + "\n";
@@ -231,7 +265,7 @@ export default function ProdutosPage() {
 
     toast({
       title: "Catálogo exportado!",
-      description: `${produtos.length} produtos exportados (formato BR: vírgula decimal).`,
+      description: `${produtos.length} produtos exportados com todos os campos.`,
       className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700",
       duration: 3000
     });
