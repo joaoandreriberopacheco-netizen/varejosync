@@ -14,7 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import MobileProductSelector from './MobileProductSelector';
-import { getTenantId } from '@/components/utils/tenant';
+
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
@@ -76,12 +76,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const user = await base44.auth.me();
       setCurrentUser(user);
       
-      const tenantId = getTenantId();
       const [fornecedorData, produtoData, transportadoraData, contasData] = await Promise.all([
         base44.entities.Terceiro.list(),
         base44.entities.Produto.list(),
         base44.entities.Terceiro.list(),
-        base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId })
+        base44.entities.ContasFinanceiras.list()
       ]);
       setFornecedores(fornecedorData.filter(t => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
       setProdutos(produtoData);
@@ -456,7 +455,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               terceiro_nome: formData.fornecedor_nome,
               valor: valorTotal,
               data_vencimento: formData.data_primeiro_vencimento || format(new Date(), 'yyyy-MM-dd'),
-              status: 'Aguardando Aprovação Financeira',
+              status: 'Liberado para Pagamento',
               categoria: 'Compra de Mercadoria',
               referencia_id: currentPO.id,
               referencia_tipo: 'PedidoCompra',
@@ -480,7 +479,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 terceiro_nome: formData.fornecedor_nome,
                 valor: valorParcela,
                 data_vencimento: format(dataVencimento, 'yyyy-MM-dd'),
-                status: 'Aguardando Aprovação Financeira',
+                status: 'Liberado para Pagamento',
                 categoria: 'Compra de Mercadoria',
                 referencia_id: currentPO.id,
                 referencia_tipo: 'PedidoCompra',
@@ -541,12 +540,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     }
 
     try {
-      const tenantId = getTenantId();
       const count = fornecedores.length;
       const codigo = `FOR-${String(count + 1).padStart(5, '0')}`;
 
       const nova = await base44.entities.Terceiro.create({
-        empresa_id: tenantId,
         codigo_interno: codigo,
         nome: novaTransportadora.nome,
         email: novaTransportadora.email || '',
@@ -597,7 +594,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   const processarEmbarque = async (pedidoAtualizado) => {
     try {
-      const tenantId = getTenantId();
       const transportadora = fornecedores.find(t => t.id === formData.transportadora_embarque_id);
 
       if (!transportadora) {
@@ -606,7 +602,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
       const pesoNumerico = parseFloat(formData.peso_total_kg) || 0;
 
-      // Verificar manifesto existente no mesmo dia
       const etaDate = new Date(formData.eta_embarque);
       const etaStart = new Date(etaDate);
       etaStart.setHours(0, 0, 0, 0);
@@ -614,7 +609,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       etaEnd.setHours(23, 59, 59, 999);
 
       const manifestos = await base44.entities.Supermanifesto.filter({
-        empresa_id: tenantId,
         transportadora_id: formData.transportadora_embarque_id,
         status: { $in: ['Pendente', 'Em Trânsito'] }
       });
@@ -655,11 +649,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
       } else {
         // Criar novo manifesto
-        const todosManifestos = await base44.entities.Supermanifesto.filter({ empresa_id: tenantId });
+        const todosManifestos = await base44.entities.Supermanifesto.list();
         const numero = `SM-${String(todosManifestos.length + 1).padStart(5, '0')}`;
 
         const novoManifesto = await base44.entities.Supermanifesto.create({
-          empresa_id: tenantId,
           numero,
           transportadora_id: formData.transportadora_embarque_id,
           transportadora_nome: transportadora.nome,
