@@ -587,9 +587,22 @@ export default function AutoShop({
                   whileTap={{ scale: 0.95 }}
                   className="bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col h-full border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 group"
                 >
-                  {/* Imagem removida para layout Title-Oriented */}
-                  <div className="hidden aspect-square bg-gray-50 dark:bg-gray-700 rounded-2xl mb-4 items-center justify-center text-gray-300 dark:text-gray-600 overflow-hidden relative">
-                    {/* Placeholder oculto */}
+                  {/* Imagem do Produto com Fallback */}
+                  <div className="aspect-square bg-gray-50 dark:bg-gray-700 rounded-2xl mb-4 flex items-center justify-center text-gray-300 dark:text-gray-600 overflow-hidden relative">
+                    {produto.imagem_url ? (
+                      <img 
+                        src={produto.imagem_url} 
+                        alt={produto.nome} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className={`absolute inset-0 flex items-center justify-center ${produto.imagem_url ? 'hidden' : ''}`}>
+                      <Package className="w-16 h-16 md:w-20 md:h-20" />
+                    </div>
                   </div>
                   <h3 className="font-bold text-xl md:text-2xl text-gray-800 dark:text-gray-200 line-clamp-3 mb-4 leading-tight flex-1">
                     {produto.nome}
@@ -904,8 +917,23 @@ function SuggestedProductsSidebar({ recommendations, onAddRec }) {
             className="group relative bg-white dark:bg-gray-700 rounded-xl p-3 border border-gray-100 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 shadow-sm transition-all cursor-pointer"
             onClick={() => onAddRec(rec)}
           >
-            {/* Imagem oculta na sidebar também */}
-            <div className="hidden aspect-video bg-gray-50 dark:bg-gray-600 rounded-lg mb-2 overflow-hidden relative"></div>
+            {/* Imagem do Produto Recomendado */}
+            <div className="aspect-video bg-gray-50 dark:bg-gray-600 rounded-lg mb-2 overflow-hidden relative flex items-center justify-center">
+              {rec.imagem_url ? (
+                <img 
+                  src={rec.imagem_url} 
+                  alt={rec.nome} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={`absolute inset-0 flex items-center justify-center ${rec.imagem_url ? 'hidden' : ''}`}>
+                <Package className="w-8 h-8 text-gray-300 dark:text-gray-500" />
+              </div>
+            </div>
             
             <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 line-clamp-2 mb-1 leading-tight">
               {rec.nome}
