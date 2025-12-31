@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { initializeTenant } from './components/utils/tenant';
+
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/toaster";
 import { 
@@ -81,10 +81,6 @@ export default function Layout({ children, currentPageName }) {
     try {
       const user = await base44.auth.me();
       if (user) {
-        // Inicializa Tenant Context
-        const tenantId = await initializeTenant(user);
-        // Adiciona tenant_id ao objeto user local para uso nos componentes
-        user.tenant_id = tenantId;
         setCurrentUser(user);
       }
     } catch (error) {
