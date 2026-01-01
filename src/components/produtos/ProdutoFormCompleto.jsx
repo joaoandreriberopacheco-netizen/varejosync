@@ -493,125 +493,31 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
             </div>
 
             {/* LAYOUT LADO A LADO (DESKTOP) - EMPILHADO (MOBILE) */}
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
               {/* Composição de Custos */}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-4">Composição de Custos</h3>
-                <div className="space-y-3">
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Composição de Custos</h3>
+                <div className="space-y-4">
                   {custos.map((custo, index) => {
-                    const isCustoBase = custo.descricao_custo === 'Valor de Compra';
-                    const valorDigitado = parseFloat(custo.valor_custo) || 0;
-                    const isPercentual = custo.tipo_valor === 'percentual';
-
-                    let valorCalculadoReais = 0;
-                    if (isCustoBase) {
-                      valorCalculadoReais = valorDigitado;
-                    } else if (isPercentual) {
-                      valorCalculadoReais = (custoBase * valorDigitado / 100);
-                    } else {
-                      valorCalculadoReais = valorDigitado;
-                    }
-
-                    return (
-                      <div key={index} className="flex items-center gap-2 py-3 border-b border-gray-100 dark:border-gray-800">
-                        {/* Nome do custo */}
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200 w-24 flex-shrink-0">{custo.descricao_custo}</span>
-
-                        {/* Input valor */}
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={custo.valor_custo || ''}
-                          onChange={e => handleCustoChange(index, 'valor_custo', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                          onKeyDown={e => {
-                            if (e.key === 'ArrowDown') {
-                              e.preventDefault();
-                              const nextIndex = index + 1;
-                              if (nextIndex < custos.length) {
-                                const nextInput = document.querySelector(`[data-custo-index="${nextIndex}"]`);
-                                if (nextInput) nextInput.focus();
-                              }
-                            } else if (e.key === 'ArrowUp') {
-                              e.preventDefault();
-                              const prevIndex = index - 1;
-                              if (prevIndex >= 0) {
-                                const prevInput = document.querySelector(`[data-custo-index="${prevIndex}"]`);
-                                if (prevInput) prevInput.focus();
-                              }
-                            }
-                          }}
-                          data-custo-index={index}
-                          placeholder="0,00"
-                          className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-7 text-xs w-20 text-right text-gray-800 dark:text-gray-200 flex-shrink-0"
-                        />
-
-                        {/* Toggle % / R$ */}
-                        {!isCustoBase && (
-                          <button
-                            type="button"
-                            tabIndex={-1}
-                            onClick={() => handleCustoChange(index, 'tipo_valor', isPercentual ? 'numerico' : 'percentual')}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${
-                              isPercentual ? 'bg-blue-100 dark:bg-blue-900' : 'bg-gray-200 dark:bg-gray-700'
-                            }`}
-                          >
-                            <span
-                              className={`inline-flex items-center justify-center h-4 w-4 transform rounded-full bg-white dark:bg-gray-300 transition-transform text-[8px] font-medium ${
-                                isPercentual ? 'translate-x-4 text-blue-600' : 'translate-x-0.5 text-gray-600'
-                              }`}
-                            >
-                              {isPercentual ? '%' : 'R$'}
-                            </span>
-                          </button>
-                        )}
-
-                        {/* Toggle Desconto/Custo */}
-                        {!isCustoBase && (
-                          <button
-                            type="button"
-                            tabIndex={-1}
-                            onClick={() => handleCustoChange(index, 'is_negativo', !custo.is_negativo)}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${
-                              custo.is_negativo ? 'bg-red-50 dark:bg-red-900/20' : 'bg-green-50 dark:bg-green-900/20'
-                            }`}
-                          >
-                            <span
-                              className={`inline-flex items-center justify-center h-4 w-4 transform rounded-full bg-white dark:bg-gray-300 transition-transform text-[8px] font-medium ${
-                                custo.is_negativo ? 'translate-x-4 text-red-600' : 'translate-x-0.5 text-green-600'
-                              }`}
-                            >
-                              {custo.is_negativo ? '-' : '+'}
-                            </span>
-                          </button>
-                        )}
-
-                        {/* Resultado */}
-                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 ml-auto">
-                          {custo.is_negativo ? '-' : ''}R$ {formatarNumero(Math.abs(valorCalculadoReais))}
-                        </span>
-                      </div>
-                    );
+...
                   })}
 
                   {/* TOTAL */}
-                  <div className="flex items-center justify-between pt-3 border-t-2 border-gray-300 dark:border-gray-600">
-                    <span className="text-xs font-bold text-gray-800 dark:text-gray-200">CUSTO TOTAL</span>
-                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</span>
+                  <div className="flex items-center justify-between pt-4 mt-2 border-t-2 border-gray-300 dark:border-gray-600">
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">CUSTO TOTAL</span>
+                    <span className="text-lg font-bold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* LINHA DIVISÓRIA - Desktop apenas */}
-              <div className="hidden lg:block w-px bg-gray-200 dark:bg-gray-700 self-stretch"></div>
-
               {/* Preço de Venda */}
-              <div className="flex-1 min-w-0 lg:mt-0 mt-6">
-                <h3 className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-4">Preço de Venda</h3>
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Preço de Venda</h3>
 
-                <div className="space-y-5">
+                <div className="space-y-6">
                   {/* Preço de Venda (R$) */}
                   <div>
-                    <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Preço de Venda (R$)</Label>
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Preço de Venda (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -626,13 +532,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                         }
                       }}
                       placeholder="0,00"
-                      className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-8 text-xs text-gray-800 dark:text-gray-200"
+                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                     />
                   </div>
 
                   {/* Markup % */}
                   <div>
-                    <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Markup (%)</Label>
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Markup (%)</Label>
                     <Input
                       type="number"
                       step="0.1"
@@ -643,18 +549,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                         handleChange('preco_venda_tipo', 'percentual');
                       }}
                       placeholder="0,00"
-                      className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-8 text-xs text-gray-800 dark:text-gray-200"
+                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                     />
                   </div>
 
                   {/* Margem de Contribuição (somente leitura) */}
                   <div>
-                    <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Margem de Contribuição (%)</Label>
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Margem de Contribuição (%)</Label>
                     <Input
                       type="text"
                       value={formatarNumero(margemContribuicao)}
                       disabled
-                      className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-xs text-gray-600 dark:text-gray-400"
+                      className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-600 dark:text-gray-400"
                     />
                   </div>
                 </div>
