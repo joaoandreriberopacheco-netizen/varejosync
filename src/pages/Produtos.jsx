@@ -368,6 +368,7 @@ export default function ProdutosPage() {
       "dimensoes_cm",
       "peso_kg",
       "tempo_reposicao_dias",
+      "estoque_atual",
       "estoque_minimo",
       "estoque_ideal",
       "estoque_maximo",
@@ -387,8 +388,8 @@ export default function ProdutosPage() {
     csvContent += "# DIMENSOES: formato AxLxP (ex: 30x20x15)\n";
     csvContent += "# Custos em PERCENTUAL (sistema calcula valor em R$)\n";
     csvContent += "# PRECO_VENDA_PADRAO: informe o valor final de venda (sistema calcula markup automaticamente)\n";
+    csvContent += "# ESTOQUE_ATUAL: estoque livre para venda (não reservado nem avariado)\n";
     csvContent += "# CODIGO_INTERNO: gerado automaticamente, não preencher\n";
-    csvContent += "# ESTOQUE_ATUAL: controlado por movimentações, não importar\n";
     csvContent += "# CONTROLA_SERIAL/LOTE_VALIDADE: true/false\n";
     csvContent += "\n";
     csvContent += headers.join(";") + "\n";
@@ -413,6 +414,7 @@ export default function ProdutosPage() {
       "30x20x15",
       "1,5",
       "20",
+      "150",
       "50",
       "100",
       "200",
@@ -480,6 +482,7 @@ export default function ProdutosPage() {
                 "dimensoes_cm": { type: "string" },
                 "peso_kg": { type: "number" },
                 "tempo_reposicao_dias": { type: "number" },
+                "estoque_atual": { type: "number" },
                 "estoque_minimo": { type: "number" },
                 "estoque_ideal": { type: "number" },
                 "estoque_maximo": { type: "number" },
@@ -612,7 +615,7 @@ export default function ProdutosPage() {
           valor_compra: valorCompra,
           unidade_principal: linha.unidade_principal || 'UN',
           unidades_por_pacote: parseInt(linha.unidades_por_pacote) || 1,
-          estoque_atual: isUpdate ? produtoExistente.estoque_atual : 0,
+          estoque_atual: parseNumber(linha.estoque_atual) || 0,
           estoque_minimo: parseNumber(linha.estoque_minimo) || 0,
           estoque_ideal: parseNumber(linha.estoque_ideal) || 0,
           estoque_maximo: parseNumber(linha.estoque_maximo) || 0,
