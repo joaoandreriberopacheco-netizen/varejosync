@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       'IMPOSTO2_UNITARIO',
       'DESCONTO_UNITARIO',
       'OUTROS_CUSTOS_UNITARIO',
-      'MARKUP_PERCENTUAL'
+      'PRECO_VENDA'
     ];
 
     const rows = produtos.map(p => {
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
         '', // IMPOSTO2_UNITARIO
         '', // DESCONTO_UNITARIO
         '', // OUTROS_CUSTOS_UNITARIO
-        ''  // MARKUP_PERCENTUAL
+        fmtNum(p.preco_venda_padrao || 0) // PRECO_VENDA
       ].join(';'); 
     });
 

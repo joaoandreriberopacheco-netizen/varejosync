@@ -365,8 +365,6 @@ export default function ProdutosPage() {
       "outros_custos_percentual",
       "fornecedor_codigo",
       "preco_venda_padrao",
-      "preco_venda_tipo",
-      "preco_venda_percentual",
       "dimensoes_cm",
       "peso_kg",
       "tempo_reposicao_dias",
@@ -388,6 +386,7 @@ export default function ProdutosPage() {
     csvContent += "# TAGS: separadas por vírgula (ex: torneira,banheiro,metais)\n";
     csvContent += "# DIMENSOES: formato AxLxP (ex: 30x20x15)\n";
     csvContent += "# Custos em PERCENTUAL (sistema calcula valor em R$)\n";
+    csvContent += "# PRECO_VENDA_PADRAO: informe o valor final de venda (sistema calcula markup automaticamente)\n";
     csvContent += "# CODIGO_INTERNO: gerado automaticamente, não preencher\n";
     csvContent += "# ESTOQUE_ATUAL: controlado por movimentações, não importar\n";
     csvContent += "# CONTROLA_SERIAL/LOTE_VALIDADE: true/false\n";
@@ -410,9 +409,7 @@ export default function ProdutosPage() {
       "0",
       "4",
       "FOR-001",
-      "0",
-      "percentual",
-      "40",
+      "180,00",
       "30x20x15",
       "1,5",
       "20",
@@ -480,8 +477,6 @@ export default function ProdutosPage() {
                 "outros_custos_percentual": { type: "number" },
                 "fornecedor_codigo": { type: "string" },
                 "preco_venda_padrao": { type: "number" },
-                "preco_venda_tipo": { type: "string" },
-                "preco_venda_percentual": { type: "number" },
                 "dimensoes_cm": { type: "string" },
                 "peso_kg": { type: "number" },
                 "tempo_reposicao_dias": { type: "number" },
@@ -569,16 +564,13 @@ export default function ProdutosPage() {
         // Summing up costs based on the outline's logic
         const custoTotal = valorCompra + frete + imposto1 + imposto2 + outros - desconto;
 
-        // Calculate preço de venda
-        let precoVenda = 0;
-        const precoVendaTipo = linha.preco_venda_tipo || 'numerico';
-        // Default to 40% if not specified and type is percentual
-        const precoVendaPercentual = parseNumber(linha.preco_venda_percentual) || 40; 
-
-        if (precoVendaTipo.toLowerCase() === 'percentual') {
-          precoVenda = custoTotal * (1 + (precoVendaPercentual / 100));
-        } else {
-          precoVenda = parseNumber(linha.preco_venda_padrao) || 0;
+        // Calculate preço de venda e markup automaticamente
+        const precoVenda = parseNumber(linha.preco_venda_padrao) || 0;
+        
+        // Calcular markup percentual baseado no custo e preço de venda
+        let markupPercentual = 0;
+        if (custoTotal > 0 && precoVenda > custoTotal) {
+          markupPercentual = ((precoVenda - custoTotal) / custoTotal) * 100;
         }
 
         // Process 'tipo' field (Produto/Serviço or 0/1)
@@ -606,16 +598,16 @@ export default function ProdutosPage() {
         
         const produtoData = {
           id: isUpdate ? produtoExistente.id : undefined,
-          nome: linha.nome,
+          nome: linha.nome.toUpperCase(),
           codigo_barras: String(linha.codigo_barras || ''),
           tipo: tipoProduto,
-          categoria_nome: linha.categoria || '',
-          marca: linha.marca || '',
+          categoria_nome: linha.categoria ? linha.categoria.toUpperCase() : '',
+          marca: linha.marca ? linha.marca.toUpperCase() : '',
           tags: tagsArray,
           imagem_url: linha.imagem_url || '',
           preco_venda_padrao: precoVenda,
-          preco_venda_tipo: precoVendaTipo,
-          preco_venda_percentual: precoVendaPercentual,
+          preco_venda_tipo: 'percentual',
+          preco_venda_percentual: markupPercentual,
           preco_custo_calculado: custoTotal,
           valor_compra: valorCompra,
           unidade_principal: linha.unidade_principal || 'UN',
