@@ -18,6 +18,7 @@ export default function ImportacaoProdutos() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const fileInputRef = useRef(null);
   const { toast } = useToast();
+  const cacheRef = useRef({ categorias: null, fornecedores: null, produtos: null });
 
   const handleDownloadTemplate = async () => {
     try {
