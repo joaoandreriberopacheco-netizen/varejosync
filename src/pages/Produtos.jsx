@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/components/utils';
 import {
   Table,
   TableBody,
@@ -996,8 +998,10 @@ export default function ProdutosPage() {
                 <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
                   <Download className="w-3.5 h-3.5 mr-2" />Template
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                  <Upload className="w-3.5 h-3.5 mr-2" />Importar CSV
+                <DropdownMenuItem asChild className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <Link to={createPageUrl('ImportacaoProdutos')}>
+                    <Upload className="w-3.5 h-3.5 mr-2" />Importar CSV
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
                   <ImageIcon className="w-3.5 h-3.5 mr-2" />Importar Imagens
