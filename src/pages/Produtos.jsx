@@ -49,6 +49,18 @@ import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import MassImageUploader from '../components/produtos/MassImageUploader';
 
 
+const isCadastroIncompleto = (produto) => {
+  const checks = {
+    semCategoria: !produto.categoria_nome,
+    semFornecedor: !produto.fornecedor_padrao_id,
+    semPrecoVenda: !produto.preco_venda_padrao || produto.preco_venda_padrao <= 0,
+    semCodigoBarras: !produto.codigo_barras,
+    semImagem: !produto.imagem_url
+  };
+  const totalIncompleto = Object.values(checks).filter(Boolean).length;
+  return { incompleto: totalIncompleto > 0, totalIncompleto, checks };
+};
+
 const getStockStatusIndicator = (produto) => {
   if (!produto.ativo) {
     return <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-xs"><div className="w-2 h-2 bg-gray-600 rounded-full" /> Inativo</div>;
@@ -78,7 +90,8 @@ export default function ProdutosPage() {
     searchTerm: '',
     categoria: 'all',
     fornecedorId: 'all',
-    statusEstoque: 'all'
+    statusEstoque: 'all',
+    cadastroIncompleto: 'all'
   });
   const [sortOrder, setSortOrder] = useState('az');
 
@@ -1038,7 +1051,15 @@ export default function ProdutosPage() {
         return false;
       };
 
-      return searchTermMatch && categoriaMatch && tagMatch && fornecedorMatch && statusMatch();
+      const cadastroMatch = () => {
+        if (filters.cadastroIncompleto === 'all') return true;
+        const { incompleto } = isCadastroIncompleto(p);
+        if (filters.cadastroIncompleto === 'incompleto') return incompleto;
+        if (filters.cadastroIncompleto === 'completo') return !incompleto;
+        return false;
+      };
+
+      return searchTermMatch && categoriaMatch && tagMatch && fornecedorMatch && statusMatch() && cadastroMatch();
     });
 
     if (sortOrder === 'az') {
@@ -1146,7 +1167,7 @@ export default function ProdutosPage() {
           </div>
 
           {/* Filtros secundários - grid compacto */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
             <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
               <SelectValue placeholder="Categoria" />
@@ -1183,6 +1204,16 @@ export default function ProdutosPage() {
             value={filters.tag || ''}
             onChange={e => handleFilterChange('tag', e.target.value)}
           />
+          <Select value={filters.cadastroIncompleto === 'all' ? '' : filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
+            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
+              <SelectValue placeholder="Cadastro" />
+            </SelectTrigger>
+            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todos</SelectItem>
+              <SelectItem value="incompleto" className="dark:hover:bg-gray-700 text-xs">Incompleto</SelectItem>
+              <SelectItem value="completo" className="dark:hover:bg-gray-700 text-xs">Completo</SelectItem>
+            </SelectContent>
+          </Select>
           </div>
           </div>
         </div>
@@ -1239,11 +1270,19 @@ export default function ProdutosPage() {
                 {filteredProdutos.map(produto => {
                   const margem = produto.preco_venda_padrao && produto.preco_venda_padrao > 0 ?
                     ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100 : 0;
+                  const cadastroStatus = isCadastroIncompleto(produto);
                   return (
                     <div key={produto.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1 min-w-0 pr-2">
-                          <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 mb-1">{produto.nome}</h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium text-base text-gray-800 dark:text-gray-200">{produto.nome}</h3>
+                            {cadastroStatus.incompleto && (
+                              <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-[10px]">
+                                {cadastroStatus.totalIncompleto} pendência{cadastroStatus.totalIncompleto > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{produto.codigo_interno}</p>
                         </div>
                         <DropdownMenu modal={false}>
@@ -1387,6 +1426,7 @@ export default function ProdutosPage() {
                     {filteredProdutos.map(produto => {
                       const margem = produto.preco_venda_padrao && produto.preco_venda_padrao > 0 ?
                         ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100 : 0;
+                      const cadastroStatus = isCadastroIncompleto(produto);
                       return (
                         <TableRow key={produto.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                           <TableCell className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-1">
@@ -1426,8 +1466,17 @@ export default function ProdutosPage() {
                             </div>
                           </TableCell>
                           <TableCell className="sticky left-[110px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-                            <div className="font-medium text-sm text-gray-700 dark:text-gray-200">{produto.nome}</div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{produto.codigo_interno}</div>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <div className="font-medium text-sm text-gray-700 dark:text-gray-200">{produto.nome}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">{produto.codigo_interno}</div>
+                              </div>
+                              {cadastroStatus.incompleto && (
+                                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-[10px]">
+                                  {cadastroStatus.totalIncompleto}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           
                           {visibleColumns.includes('codigo_interno') && (
