@@ -191,10 +191,19 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           setIsSaving(false);
           return;
       }
+
+      // Converte campos de texto para maiúsculas antes de salvar
       const produtoData = {
-        ...formData, codigo_interno: codigoInterno, categoria_nome: categoria?.nome || '',
-        preco_custo_calculado: precoCustoCalculado, preco_venda_padrao: precoVendaCalculado,
-        valor_compra: custoBase, preco_venda_tipo: formData.preco_venda_tipo,
+        ...formData,
+        codigo_interno: codigoInterno,
+        nome: formData.nome?.toUpperCase(),
+        marca: formData.marca?.toUpperCase(),
+        categoria_nome: categoria?.nome?.toUpperCase() || '',
+        fornecedor_padrao_codigo: formData.fornecedor_padrao_codigo?.toUpperCase(),
+        preco_custo_calculado: precoCustoCalculado,
+        preco_venda_padrao: precoVendaCalculado,
+        valor_compra: custoBase,
+        preco_venda_tipo: formData.preco_venda_tipo,
         empresa_id: tenantId,
         organization_id: tenantId
       };
