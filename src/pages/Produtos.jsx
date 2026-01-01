@@ -99,7 +99,7 @@ export default function ProdutosPage() {
   const [selectedProduto, setSelectedProduto] = useState(null);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState([
-    'status', 'cadastro', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
+    'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
   ]);
 
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
@@ -1287,14 +1287,7 @@ export default function ProdutosPage() {
                     <div key={produto.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1 min-w-0 pr-2">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium text-base text-gray-800 dark:text-gray-200">{produto.nome}</h3>
-                            {cadastroStatus.incompleto && (
-                              <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-[10px]">
-                                {cadastroStatus.totalIncompleto} pendência{cadastroStatus.totalIncompleto > 1 ? 's' : ''}
-                              </Badge>
-                            )}
-                          </div>
+                          <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 mb-1">{produto.nome}</h3>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{produto.codigo_interno}</p>
                         </div>
                         <DropdownMenu modal={false}>
@@ -1481,17 +1474,8 @@ export default function ProdutosPage() {
                             </div>
                           </TableCell>
                           <TableCell className="sticky left-[110px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <div className="font-medium text-sm text-gray-700 dark:text-gray-200">{produto.nome}</div>
-                                <div className="text-xs text-gray-600 dark:text-gray-400">{produto.codigo_interno}</div>
-                              </div>
-                              {cadastroStatus.incompleto && (
-                                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-[10px]">
-                                  {cadastroStatus.totalIncompleto}
-                                </Badge>
-                              )}
-                            </div>
+                            <div className="font-medium text-sm text-gray-700 dark:text-gray-200">{produto.nome}</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">{produto.codigo_interno}</div>
                           </TableCell>
                           
                           {visibleColumns.includes('codigo_interno') && (
