@@ -1506,16 +1506,16 @@ export default function ProdutosPage() {
         </div>
       </div>
 
-      {/* Dialog para o formulário */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="w-full h-full max-w-full max-h-full m-0 p-0 dark:bg-gray-900 dark:text-gray-200 dark:border-0 rounded-none">
+      {/* Tela completa para o formulário */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
           <ProdutoFormCompleto
             produto={selectedProduto}
             onSave={handleSave}
             onClose={() => setIsFormOpen(false)}
           />
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Dialog de Upload Unificado (Produtos + Custos) */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
