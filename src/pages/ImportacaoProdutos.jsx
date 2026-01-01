@@ -58,15 +58,28 @@ export default function ImportacaoProdutos() {
   };
 
   const handleValidateFile = async () => {
-    if (!file) return;
+    if (!file) {
+      toast({
+        title: "Nenhum arquivo selecionado",
+        description: "Por favor, selecione um arquivo CSV primeiro.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsValidating(true);
 
     try {
       const text = await file.text();
-      const linhas = text.split('\n').filter(l => l.trim());
-      const headers = linhas[0].split(';').map(h => h.trim());
+      const linhas = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
       
-      const requiredHeaders = ['CODIGO_BARRAS', 'NOME', 'PRECO_VENDA'];
+      if (linhas.length < 2) {
+        throw new Error("Arquivo vazio ou sem dados válidos");
+      }
+
+      const headers = linhas[0].split(';').map(h => h.trim().toUpperCase());
+      
+      const requiredHeaders = ['NOME', 'PRECO_VENDA'];
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
       if (missingHeaders.length > 0) {
@@ -81,22 +94,32 @@ export default function ImportacaoProdutos() {
 
       const produtosValidos = linhas.slice(1).filter(linha => {
         const cols = linha.split(';');
-        return cols.length >= 3 && cols[0]?.trim() && cols[1]?.trim();
+        return cols.length >= 2;
       });
 
-      const categorias = await base44.entities.Categoria.list();
-      const fornecedores = await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
-      const produtosExistentes = await base44.entities.Produto.list();
+      if (produtosValidos.length === 0) {
+        throw new Error("Nenhum produto válido encontrado no arquivo");
+      }
+
+      const [categorias, fornecedores, produtosExistentes] = await Promise.all([
+        base44.entities.Categoria.list(),
+        base44.entities.Terceiro.filter({ tipo: 'Fornecedor' }),
+        base44.entities.Produto.list()
+      ]);
       
       let novos = 0;
       let atualizacoes = 0;
 
       produtosValidos.forEach(linha => {
         const cols = linha.split(';');
-        const codigoBarras = cols[0]?.trim().toUpperCase();
-        const existe = produtosExistentes.find(p => p.codigo_barras === codigoBarras);
-        if (existe) atualizacoes++;
-        else novos++;
+        const codigoBarras = cols[headers.indexOf('CODIGO_BARRAS')]?.trim().toUpperCase();
+        if (codigoBarras) {
+          const existe = produtosExistentes.find(p => p.codigo_barras === codigoBarras);
+          if (existe) atualizacoes++;
+          else novos++;
+        } else {
+          novos++;
+        }
       });
 
       setValidationResult({
@@ -108,12 +131,25 @@ export default function ImportacaoProdutos() {
         totalFornecedores: fornecedores.length
       });
 
+      toast({
+        title: "Arquivo validado!",
+        description: `${produtosValidos.length} produtos prontos para importar.`,
+        className: "bg-green-100 text-green-800"
+      });
+
       setStep(2);
     } catch (error) {
+      console.error("Erro na validação:", error);
       setValidationResult({
         success: false,
         error: error.message,
         totalLinhas: 0
+      });
+      
+      toast({
+        title: "Erro na validação",
+        description: error.message,
+        variant: "destructive"
       });
     } finally {
       setIsValidating(false);
