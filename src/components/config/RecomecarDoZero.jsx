@@ -65,7 +65,6 @@ export default function RecomecarDoZero() {
     try {
       // Ordem de deleção: primeiro dependências, depois entidades principais
       const ordenacaoDependencias = [
-        'CustoDetalhado',
         'MovimentacaoEstoque', 
         'OrdemSeparacao', 
         'ProtocoloEntrega', 
@@ -94,14 +93,19 @@ export default function RecomecarDoZero() {
 
         try {
           let hasMore = true;
-          while (hasMore) {
+          let pageCount = 0;
+          
+          while (hasMore && pageCount < 50) {
             const records = await base44.entities[entityId].list('-created_date', 100);
             
             if (records && records.length > 0) {
               await Promise.all(records.map(r => base44.entities[entityId].delete(r.id)));
               totalDeleted += records.length;
+              pageCount++;
               
               if (records.length < 100) hasMore = false;
+              
+              await new Promise(resolve => setTimeout(resolve, 100));
             } else {
               hasMore = false;
             }

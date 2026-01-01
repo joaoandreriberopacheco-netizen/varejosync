@@ -613,16 +613,30 @@ export default function ProdutosPage() {
     setIsProcessingImport(true);
 
     try {
+      const BATCH_SIZE = 20;
+      const novos = [];
+      const atualizacoes = [];
+
+      // Separar novos de atualizações
       for (const produtoData of previewData.produtos) {
         const { custos, id, ...productData } = produtoData;
-        
         if (id) {
-          // Atualizar produto existente
-          await base44.entities.Produto.update(id, productData);
+          atualizacoes.push({ id, data: productData });
         } else {
-          // Criar novo produto
-          await base44.entities.Produto.create(productData);
+          novos.push(productData);
         }
+      }
+
+      // Processar atualizações em lotes
+      for (let i = 0; i < atualizacoes.length; i += BATCH_SIZE) {
+        const batch = atualizacoes.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(item => base44.entities.Produto.update(item.id, item.data)));
+      }
+
+      // Processar criações em lotes
+      for (let i = 0; i < novos.length; i += BATCH_SIZE) {
+        const batch = novos.slice(i, i + BATCH_SIZE);
+        await base44.entities.Produto.bulkCreate(batch);
       }
 
       toast({
