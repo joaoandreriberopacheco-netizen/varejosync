@@ -294,59 +294,7 @@ export default function ProdutosPage() {
     });
   };
 
-  const handleExportarPrecificacao = async () => {
-    // Buscar todos os tipos de custo existentes
-    const tenantId = getTenantId();
-    const todosCustos = await base44.entities.CustoDetalhado.filter({ empresa_id: tenantId });
-    const tiposCusto = [...new Set(todosCustos.map(c => c.descricao_custo))];
 
-    // UTF-8 COM BOM
-    let csvContent = "\uFEFF";
-
-    const headers = [
-      "id_produto",
-      "Nome do Produto",
-      "Preço de Venda",
-      ...tiposCusto.map(tipo => `Custo | ${tipo}`)
-    ];
-
-    csvContent += headers.join(";") + "\n";
-
-    for (const produto of produtos) {
-      const custos = await base44.entities.CustoDetalhado.filter({ produto_id: produto.id });
-      const custosPorTipo = {};
-      custos.forEach(c => {
-        custosPorTipo[c.descricao_custo] = c.valor_custo;
-      });
-
-      const row = [
-        produto.id,
-        produto.nome,
-        formatarNumero(produto.preco_venda_padrao),
-        ...tiposCusto.map(tipo => formatarNumero(custosPorTipo[tipo]))
-      ];
-
-      csvContent += row.join(";") + "\n";
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `precificacao_produtos_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Precificação exportada!",
-      description: "Planilha gerada com formato largo para edição massiva de preços.",
-      className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
-      duration: 3000
-    });
-  };
 
   const handleBaixarTemplateUnificado = () => {
     const headers = [
@@ -626,17 +574,14 @@ export default function ProdutosPage() {
           peso_kg: parseNumber(linha.peso_kg) || 0,
           dimensoes_cm: linha.dimensoes_cm || '',
           volume_cm3: volume_cm3,
+          custo_frete_padrao: frete,
+          custo_imposto1_padrao: imposto1,
+          custo_imposto2_padrao: imposto2,
+          desconto_compra_padrao: desconto,
+          custo_outros_padrao: outros,
           controla_serial: (linha.controla_serial === true || String(linha.controla_serial).toLowerCase() === 'true'),
           controla_lote_validade: (linha.controla_lote_validade === true || String(linha.controla_lote_validade).toLowerCase() === 'true'),
-          ativo: (linha.ativo === true || String(linha.ativo).toLowerCase() === 'true'),
-          custos: [
-            { descricao_custo: 'Valor de Compra', valor_custo: valorCompra, tipo_valor: 'numerico', is_negativo: false },
-            { descricao_custo: 'Frete', valor_custo: fretePercentual, tipo_valor: 'percentual', is_negativo: false },
-            { descricao_custo: 'Imposto 1', valor_custo: imposto1Percentual, tipo_valor: 'percentual', is_negativo: false },
-            { descricao_custo: 'Imposto 2', valor_custo: imposto2Percentual, tipo_valor: 'percentual', is_negativo: false },
-            { descricao_custo: 'Desconto Comercial', valor_custo: descontoComercialPercentual, tipo_valor: 'percentual', is_negativo: true },
-            { descricao_custo: 'Outros Custos', valor_custo: outrosCustosPercentual, tipo_valor: 'percentual', is_negativo: false }
-          ].filter(c => c.valor_custo !== 0)
+          ativo: (linha.ativo === true || String(linha.ativo).toLowerCase() === 'true')
         };
 
         produtosValidados.push(produtoData);
@@ -669,38 +614,14 @@ export default function ProdutosPage() {
 
     try {
       for (const produtoData of previewData.produtos) {
-        const custosToCreate = produtoData.custos;
         const { custos, id, ...productData } = produtoData;
-        
-        let produtoId;
         
         if (id) {
           // Atualizar produto existente
           await base44.entities.Produto.update(id, productData);
-          produtoId = id;
-          
-          // Deletar custos existentes
-          const custosExistentes = await base44.entities.CustoDetalhado.filter({ produto_id: id });
-          if (custosExistentes.length > 0) {
-            await Promise.all(custosExistentes.map(c => base44.entities.CustoDetalhado.delete(c.id)));
-          }
         } else {
           // Criar novo produto
-          const novoProduto = await base44.entities.Produto.create(productData);
-          produtoId = novoProduto.id;
-        }
-        
-        // Criar custos detalhados
-        const custosParaSalvar = custosToCreate.map(c => ({
-          produto_id: produtoId,
-          descricao_custo: c.descricao_custo,
-          valor_custo: c.valor_custo,
-          tipo_valor: c.tipo_valor,
-          is_negativo: c.is_negativo
-        }));
-        
-        if (custosParaSalvar.length > 0) {
-          await base44.entities.CustoDetalhado.bulkCreate(custosParaSalvar);
+          await base44.entities.Produto.create(productData);
         }
       }
 
@@ -714,7 +635,7 @@ export default function ProdutosPage() {
       setPreviewData(null);
       setIsPreviewDialogOpen(false);
       setImportFile(null);
-      await loadData(); // Reload all data to reflect changes
+      await loadData();
 
     } catch (error) {
       console.error("Erro na importação final unificada:", error);
@@ -775,46 +696,7 @@ export default function ProdutosPage() {
     });
   };
 
-  const calcularNovoCustoTotal = (custosDetalhes, novoValorCompra) => {
-    // Recalcular custo total baseado no novo valor de compra
-    let totalCusto = 0;
-    // For simplicity, we assume "Custo da Mercadoria" is the base and other costs are applied on top.
-    // This logic should align with how the product's costs are structured in the backend/form.
 
-    let custoBaseEncontrado = false;
-    
-    // First, sum up numeric costs (excluding "Valor de Compra" initially)
-    // and identify the "Valor de Compra" to update its value.
-    custosDetalhes.forEach((custo) => {
-      if (custo.descricao_custo === 'Valor de Compra' || custo.descricao_custo === 'Custo da Mercadoria') {
-        custoBaseEncontrado = true;
-      } else if (custo.tipo_valor === 'numerico') {
-        const valor = parseFloat(custo.valor_custo) || 0;
-        totalCusto += custo.is_negativo ? -valor : valor;
-      }
-    });
-
-    // Add the new valorCompra as "Valor de Compra"
-    totalCusto += novoValorCompra;
-
-    // Then, add percentage-based costs, which depend on the merchandise cost (novoValorCompra)
-    custosDetalhes.forEach((custo) => {
-        if (custo.tipo_valor === 'percentual') {
-            const percentual = parseFloat(custo.valor_custo) || 0;
-            const valorCalculado = novoValorCompra * (percentual / 100);
-            totalCusto += custo.is_negativo ? -valorCalculado : valorCalculado;
-        }
-    });
-
-    return totalCusto;
-  };
-
-  const calcularNovoPrecoVenda = (produto, novoCustoTotal) => {
-    if (produto.preco_venda_tipo === 'percentual') {
-      return novoCustoTotal * (1 + (parseFloat(produto.preco_venda_percentual) || 0) / 100);
-    }
-    return produto.preco_venda_padrao || 0; // If not percentual, keep current selling price or 0
-  };
 
   const handleProcessarImportacaoCustos = async () => {
     if (!importCustosFile) {
@@ -906,23 +788,25 @@ export default function ProdutosPage() {
           continue;
         }
 
-        // Buscar custos detalhados do produto
-        let custosDetalhados = await base44.entities.CustoDetalhado.filter({ produto_id: produto.id });
-
-        // Se não tem custos detalhados, criar uma estrutura básica com "Valor de Compra"
-        if (custosDetalhados.length === 0) {
-          custosDetalhados = [
-            { produto_id: produto.id, descricao_custo: 'Valor de Compra', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false }
-          ];
-        }
-
         const custoAnterior = produto.preco_custo_calculado || 0;
-        const novoCustoTotal = calcularNovoCustoTotal(custosDetalhados, novoValorCompraParsed);
-        const novoPrecoVenda = calcularNovoPrecoVenda(produto, novoCustoTotal);
+        
+        // Recalcular custo total com o novo valor de compra
+        const frete = novoValorCompraParsed * ((produto.custo_frete_padrao || 0) / 100);
+        const imposto1 = novoValorCompraParsed * ((produto.custo_imposto1_padrao || 0) / 100);
+        const imposto2 = novoValorCompraParsed * ((produto.custo_imposto2_padrao || 0) / 100);
+        const desconto = novoValorCompraParsed * ((produto.desconto_compra_padrao || 0) / 100);
+        const outros = novoValorCompraParsed * ((produto.custo_outros_padrao || 0) / 100);
+        const novoCustoTotal = novoValorCompraParsed + frete + imposto1 + imposto2 + outros - desconto;
+        
+        // Recalcular preço de venda se for tipo percentual
+        let novoPrecoVenda = produto.preco_venda_padrao || 0;
+        if (produto.preco_venda_tipo === 'percentual') {
+          novoPrecoVenda = novoCustoTotal * (1 + (parseFloat(produto.preco_venda_percentual) || 0) / 100);
+        }
 
         const variacaoCusto = custoAnterior > 0 ?
           ((novoCustoTotal - custoAnterior) / custoAnterior) * 100 :
-          (novoCustoTotal > 0 ? 100 : 0); // If previous was 0 and new is >0, it's 100% change
+          (novoCustoTotal > 0 ? 100 : 0);
 
         atualizacoesValidadas.push({
           produto_id: produto.id,
@@ -933,7 +817,6 @@ export default function ProdutosPage() {
           novo_custo_total: novoCustoTotal,
           novo_preco_venda: novoPrecoVenda,
           variacao_custo: variacaoCusto,
-          custos_detalhados_originais: custosDetalhados, // Keep original detailed costs for confirmation
           produto_completo: produto
         });
 
@@ -962,50 +845,19 @@ export default function ProdutosPage() {
 
     try {
       for (const atualizacao of previewCustosData.atualizacoes) {
-        // 1. Deletar os custos detalhados existentes para o produto
-        const custosExistentes = await base44.entities.CustoDetalhado.filter({ produto_id: atualizacao.produto_id });
-        if (custosExistentes.length > 0) {
-          await Promise.all(custosExistentes.map(c => base44.entities.CustoDetalhado.delete(c.id)));
-        }
+        const produto = atualizacao.produto_completo;
+        
+        // Recalcular custos percentuais baseados no novo valor de compra
+        const frete = atualizacao.novo_valor_compra * ((produto.custo_frete_padrao || 0) / 100);
+        const imposto1 = atualizacao.novo_valor_compra * ((produto.custo_imposto1_padrao || 0) / 100);
+        const imposto2 = atualizacao.novo_valor_compra * ((produto.custo_imposto2_padrao || 0) / 100);
+        const desconto = atualizacao.novo_valor_compra * ((produto.desconto_compra_padrao || 0) / 100);
+        const outros = atualizacao.novo_valor_compra * ((produto.custo_outros_padrao || 0) / 100);
 
-        // 2. Criar novos custos detalhados, atualizando o "Valor de Compra"
-        const novosCustosParaSalvar = atualizacao.custos_detalhados_originais.map(c => {
-          if (c.descricao_custo === 'Valor de Compra' || c.descricao_custo === 'Custo da Mercadoria') {
-            return {
-              produto_id: atualizacao.produto_id,
-              descricao_custo: 'Valor de Compra',
-              valor_custo: atualizacao.novo_valor_compra,
-              tipo_valor: 'numerico',
-              is_negativo: false
-            };
-          }
-          return {
-            produto_id: atualizacao.produto_id,
-            descricao_custo: c.descricao_custo,
-            valor_custo: c.valor_custo,
-            tipo_valor: c.tipo_valor,
-            is_negativo: c.is_negativo
-          };
-        });
-
-        if (novosCustosParaSalvar.length > 0) {
-          await base44.entities.CustoDetalhado.bulkCreate(novosCustosParaSalvar);
-        } else {
-            await base44.entities.CustoDetalhado.create({
-                produto_id: atualizacao.produto_id,
-                descricao_custo: 'Valor de Compra',
-                valor_custo: atualizacao.novo_valor_compra,
-                tipo_valor: 'numerico',
-                is_negativo: false
-            });
-        }
-
-
-        // 3. Atualizar o produto com os novos valores calculados
         await base44.entities.Produto.update(atualizacao.produto_id, {
+          valor_compra: atualizacao.novo_valor_compra,
           preco_custo_calculado: atualizacao.novo_custo_total,
-          preco_venda_padrao: atualizacao.novo_preco_venda,
-          valor_compra: atualizacao.novo_valor_compra // Also update the base valor_compra in the product
+          preco_venda_padrao: atualizacao.novo_preco_venda
         });
       }
 
@@ -1019,7 +871,7 @@ export default function ProdutosPage() {
       setPreviewCustosData(null);
       setIsPreviewCustosDialogOpen(false);
       setImportCustosFile(null);
-      await loadData(); // Reload all data to reflect changes
+      await loadData();
 
     } catch (error) {
       console.error("Erro na importação final de custos:", error);
@@ -1708,8 +1560,9 @@ export default function ProdutosPage() {
                 <ul className="list-disc ml-4 mt-1">
                   <li>Criar novos produtos (sem código de barras cadastrado)</li>
                   <li>Atualizar produtos existentes (com código de barras já cadastrado)</li>
-                  <li>Recriar todos os custos detalhados conforme os dados fornecidos</li>
-                  <li>Recalcular preços de custo e venda automaticamente</li>
+                  <li>Atualizar estoque atual dos produtos conforme informado</li>
+                  <li>Recalcular preços de custo automaticamente baseado nos percentuais</li>
+                  <li>Calcular markup percentual automaticamente baseado no preço de venda informado</li>
                 </ul>
               </div>
             </div>
@@ -1942,9 +1795,9 @@ export default function ProdutosPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 dark:bg-blue-900/20 dark:border-blue-900 dark:text-blue-300">
                 <strong>ℹ️ Atenção:</strong> Esta operação irá:
                 <ul className="list-disc ml-4 mt-1">
-                  <li>Atualizar o "Valor de Compra" nos Custos Detalhados</li>
-                  <li>Recalcular automaticamente todos os custos percentuais</li>
-                  <li>Atualizar o Custo Total calculado no produto</li>
+                  <li>Atualizar o "Valor de Compra" base no produto</li>
+                  <li>Recalcular automaticamente todos os custos percentuais (frete, impostos, etc)</li>
+                  <li>Atualizar o Custo Total calculado</li>
                   <li>Recalcular o Preço de Venda (se estiver em modo Markup %)</li>
                 </ul>
               </div>
