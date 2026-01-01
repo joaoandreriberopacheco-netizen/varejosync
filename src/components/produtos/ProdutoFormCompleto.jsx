@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target } from 'lucide-react';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
 import { useToast } from "@/components/ui/use-toast";
@@ -496,13 +496,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       valorCalculadoReais = (custoBase * valorDigitado / 100);
                     }
 
+                    const getIcon = () => {
+                      switch(custo.descricao_custo) {
+                        case 'Valor de Compra': return <Box className="w-3.5 h-3.5" />;
+                        case 'Frete': return <Truck className="w-3.5 h-3.5" />;
+                        case 'Custo Adicional': return <Plus className="w-3.5 h-3.5" />;
+                        case 'Imposto 1': return <FileText className="w-3.5 h-3.5" />;
+                        case 'Imposto 2': return <FileText className="w-3.5 h-3.5" />;
+                        case 'Desconto Comercial': return <Tag className="w-3.5 h-3.5" />;
+                        default: return null;
+                      }
+                    };
+
                     return (
-                      <div key={index} className="flex items-center justify-between gap-4 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                        <div className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px] flex-shrink-0">
-                          {custo.descricao_custo}
+                      <div key={index} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-gray-400">{getIcon()}</span>
+                          <span className="whitespace-nowrap">{custo.descricao_custo}</span>
                         </div>
                         
-                        <div className="flex items-center gap-3 flex-1 justify-end">
+                        <div className="flex items-center justify-end gap-2">
                           {isCustoNumerico ? (
                             <>
                               <CurrencyInput
@@ -510,12 +523,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                                 onChange={val => handleCustoChange(index, 'valor_custo', val)}
                                 dataIndex={index}
                                 placeholder="0,00"
-                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-24 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
                               />
-                              <span className="text-xs text-gray-400 w-8 text-right">(R$)</span>
-                              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 w-24 text-right tabular-nums">
-                                R$ {formatarNumero(valorCalculadoReais)}
-                              </span>
+                              <span className="text-xs text-gray-400 w-8">(R$)</span>
                             </>
                           ) : (
                             <>
@@ -525,15 +535,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                                 dataIndex={index}
                                 placeholder="0,00"
                                 isPercentage={true}
-                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-16 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-20 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
                               />
                               <span className="text-xs text-gray-400 w-8">%</span>
-                              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 w-24 text-right tabular-nums">
-                                {isDesconto ? '-' : ''}R$ {formatarNumero(Math.abs(valorCalculadoReais))}
-                              </span>
                             </>
                           )}
                         </div>
+
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap">
+                          {isDesconto && !isCustoNumerico ? '-' : ''}R$ {formatarNumero(isCustoNumerico ? valorCalculadoReais : Math.abs(valorCalculadoReais))}
+                        </span>
                       </div>
                     );
                   })}
@@ -553,10 +564,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                   <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preço de Venda</h3>
                 </div>
 
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px]">Preço de Venda</Label>
-                    <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="space-y-1">
+                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-gray-400"><DollarSign className="w-3.5 h-3.5" /></span>
+                      <span className="whitespace-nowrap">Preço de Venda</span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
                       <CurrencyInput
                         value={formData.preco_venda_tipo === 'numerico' ? formData.preco_venda_padrao : precoVendaCalculado}
                         onChange={val => {
@@ -569,15 +583,21 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                         }}
                         dataIndex="preco_venda"
                         placeholder="0,00"
-                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-32 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
                       />
-                      <span className="text-xs text-gray-400 w-8 text-right">(R$)</span>
+                      <span className="text-xs text-gray-400 w-8">(R$)</span>
                     </div>
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                      R$ 0,00
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4">
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px]">Markup</Label>
-                    <div className="flex items-center gap-3 flex-1 justify-end">
+                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-gray-400"><TrendingUp className="w-3.5 h-3.5" /></span>
+                      <span className="whitespace-nowrap">Markup</span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
                       <CurrencyInput
                         value={formData.preco_venda_percentual}
                         onChange={val => {
@@ -587,23 +607,32 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                         dataIndex="markup"
                         placeholder="0,00"
                         isPercentage={true}
-                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-24 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-20 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
                       />
                       <span className="text-xs text-gray-400 w-8">%</span>
                     </div>
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                      R$ 0,00
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4">
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px]">Margem de Contribuição</Label>
-                    <div className="flex items-center gap-3 flex-1 justify-end">
+                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="text-gray-400"><Target className="w-3.5 h-3.5" /></span>
+                      <span className="whitespace-nowrap">Margem de Contribuição</span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
                       <Input
                         type="text"
                         value={formatarNumero(margemContribuicao)}
                         disabled
-                        className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none px-0 h-8 text-sm w-24 text-right text-gray-500 dark:text-gray-400 tabular-nums"
+                        className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none px-0 h-8 text-sm w-20 text-right text-gray-500 dark:text-gray-400 tabular-nums font-glacial"
                       />
                       <span className="text-xs text-gray-400 w-8">%</span>
                     </div>
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                      R$ 0,00
+                    </span>
                   </div>
                 </div>
               </div>

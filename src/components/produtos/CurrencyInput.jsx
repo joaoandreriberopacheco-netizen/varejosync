@@ -17,7 +17,30 @@ export default function CurrencyInput({ value, onChange, onEnter, placeholder, c
 
   const parseCurrency = (str) => {
     if (!str) return 0;
-    const cleaned = str.replace(/\./g, '').replace(',', '.');
+    // Remove espaços e aceita tanto vírgula quanto ponto como separador decimal
+    let cleaned = str.trim().replace(/\s/g, '');
+    
+    // Se tem vírgula e ponto, assume que ponto é separador de milhar
+    if (cleaned.includes(',') && cleaned.includes('.')) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+    } 
+    // Se tem apenas vírgula, assume que é separador decimal
+    else if (cleaned.includes(',')) {
+      cleaned = cleaned.replace(',', '.');
+    }
+    // Se tem apenas ponto e mais de 2 dígitos depois, assume separador decimal
+    // Senão assume separador de milhar e remove
+    else if (cleaned.includes('.')) {
+      const parts = cleaned.split('.');
+      if (parts.length === 2 && parts[1].length <= 2) {
+        // É decimal: 10.50
+        // mantém como está
+      } else {
+        // É milhar: 1.050 ou 1.050.000
+        cleaned = cleaned.replace(/\./g, '');
+      }
+    }
+    
     return parseFloat(cleaned) || 0;
   };
 
