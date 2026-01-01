@@ -142,16 +142,16 @@ export default function SeedDataTool() {
     setLoading(true);
 
     try {
-      // 1. Fornecedores (8 fornecedores)
+      // 1. Fornecedores (8 fornecedores) - TUDO EM MAIÚSCULAS
       const fornecedoresData = [
-        { nome: "Votorantim Cimentos", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "vendas@votorantim.com", telefone: "(11) 3333-4444", ativo: true },
-        { nome: "Tigre Tubos e Conexões", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "comercial@tigre.com.br", telefone: "(47) 2107-6000", ativo: true },
-        { nome: "Suvinil Tintas", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "contato@suvinil.com.br", telefone: "(11) 2184-2000", ativo: true },
-        { nome: "Gerdau Aços", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "vendas@gerdau.com.br", telefone: "(51) 3323-2000", ativo: true },
-        { nome: "Quartzolit Materiais", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "sac@quartzolit.com.br", telefone: "0800 701 1105", ativo: true },
-        { nome: "Cerâmica Elizabeth", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "vendas@elizabeth.com.br", telefone: "(47) 3357-9000", ativo: true },
-        { nome: "Telhanorte Distribuição", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "comercial@telhanorte.com.br", telefone: "(11) 3311-3000", ativo: true },
-        { nome: "Leroy Merlin Brasil", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "fornecedores@leroymerlin.com.br", telefone: "(11) 3033-3000", ativo: true }
+        { nome: "VOTORANTIM CIMENTOS", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "vendas@votorantim.com", telefone: "(11) 3333-4444", ativo: true },
+        { nome: "TIGRE TUBOS E CONEXÕES", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "comercial@tigre.com.br", telefone: "(47) 2107-6000", ativo: true },
+        { nome: "SUVINIL TINTAS", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "contato@suvinil.com.br", telefone: "(11) 2184-2000", ativo: true },
+        { nome: "GERDAU AÇOS", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "vendas@gerdau.com.br", telefone: "(51) 3323-2000", ativo: true },
+        { nome: "QUARTZOLIT MATERIAIS", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "sac@quartzolit.com.br", telefone: "0800 701 1105", ativo: true },
+        { nome: "CERÂMICA ELIZABETH", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "vendas@elizabeth.com.br", telefone: "(47) 3357-9000", ativo: true },
+        { nome: "TELHANORTE DISTRIBUIÇÃO", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "comercial@telhanorte.com.br", telefone: "(11) 3311-3000", ativo: true },
+        { nome: "LEROY MERLIN BRASIL", tipo: "Fornecedor", perfil: "Empresa/Loja", email: "fornecedores@leroymerlin.com.br", telefone: "(11) 3033-3000", ativo: true }
       ];
 
       const createdFornecedores = [];
@@ -165,15 +165,15 @@ export default function SeedDataTool() {
         }
       }
 
-      // 2. Clientes (7 clientes)
+      // 2. Clientes (7 clientes) - TUDO EM MAIÚSCULAS
       const clientesData = [
-        { nome: "Construtora Silva & Filhos", tipo: "Cliente", perfil: "Construtora/Obra", email: "obras@silva.com.br", telefone: "(11) 98765-4321", ativo: true },
-        { nome: "João Pedreiro", tipo: "Cliente", perfil: "Profissional/Instalador", email: "joao.pedreiro@gmail.com", telefone: "(11) 99876-5432", ativo: true },
-        { nome: "Maria Oliveira Reformas", tipo: "Cliente", perfil: "Pessoa Física", email: "maria.oliveira@gmail.com", telefone: "(11) 97654-3210", ativo: true },
-        { nome: "Edificações Moderna Ltda", tipo: "Cliente", perfil: "Construtora/Obra", email: "contato@moderna.com.br", telefone: "(11) 3322-1100", ativo: true },
-        { nome: "Carlos Encanador", tipo: "Cliente", perfil: "Profissional/Instalador", email: "carlos.enc@hotmail.com", telefone: "(11) 96543-2109", ativo: true },
-        { nome: "Ana Paula Santos", tipo: "Cliente", perfil: "Pessoa Física", email: "anapaula@uol.com.br", telefone: "(11) 95432-1098", ativo: true },
-        { nome: "Construtora Horizonte", tipo: "Cliente", perfil: "Construtora/Obra", email: "projetos@horizonte.com.br", telefone: "(11) 3344-5566", ativo: true }
+        { nome: "CONSTRUTORA SILVA & FILHOS", tipo: "Cliente", perfil: "Construtora/Obra", email: "obras@silva.com.br", telefone: "(11) 98765-4321", ativo: true },
+        { nome: "JOÃO PEDREIRO", tipo: "Cliente", perfil: "Profissional/Instalador", email: "joao.pedreiro@gmail.com", telefone: "(11) 99876-5432", ativo: true },
+        { nome: "MARIA OLIVEIRA REFORMAS", tipo: "Cliente", perfil: "Pessoa Física", email: "maria.oliveira@gmail.com", telefone: "(11) 97654-3210", ativo: true },
+        { nome: "EDIFICAÇÕES MODERNA LTDA", tipo: "Cliente", perfil: "Construtora/Obra", email: "contato@moderna.com.br", telefone: "(11) 3322-1100", ativo: true },
+        { nome: "CARLOS ENCANADOR", tipo: "Cliente", perfil: "Profissional/Instalador", email: "carlos.enc@hotmail.com", telefone: "(11) 96543-2109", ativo: true },
+        { nome: "ANA PAULA SANTOS", tipo: "Cliente", perfil: "Pessoa Física", email: "anapaula@uol.com.br", telefone: "(11) 95432-1098", ativo: true },
+        { nome: "CONSTRUTORA HORIZONTE", tipo: "Cliente", perfil: "Construtora/Obra", email: "projetos@horizonte.com.br", telefone: "(11) 3344-5566", ativo: true }
       ];
 
       for (const c of clientesData) {
@@ -183,64 +183,72 @@ export default function SeedDataTool() {
         }
       }
 
-      // 3. 50 Produtos de Materiais de Construção
+      // 3. Obter último código interno e gerar sequenciais
+      const todosProdutosExistentes = await base44.entities.Produto.list();
+      const ultimoNumero = todosProdutosExistentes
+        .map(p => parseInt(p.codigo_interno) || 0)
+        .reduce((max, num) => Math.max(max, num), 0);
+      
+      let codigoSequencial = ultimoNumero + 1;
+
+      // 3. 50 Produtos de Materiais de Construção - CÓDIGOS NUMÉRICOS E TUDO EM MAIÚSCULAS
       const produtosData = [
-        { nome: "Cimento CP-II 50kg", codigo_interno: "CIM-001", tipo: "Produto", valor_compra: 28.50, preco_venda_padrao: 42.00, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[0]?.id, marca: "Votorantim", ativo: true },
-        { nome: "Cimento CP-III 50kg", codigo_interno: "CIM-002", tipo: "Produto", valor_compra: 31.00, preco_venda_padrao: 45.50, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[0]?.id, marca: "Votorantim", ativo: true },
-        { nome: "Areia Média Lavada (m³)", codigo_interno: "ARE-001", tipo: "Produto", valor_compra: 80.00, preco_venda_padrao: 120.00, unidade_principal: "M3", marca: "Granel", ativo: true },
-        { nome: "Areia Fina (m³)", codigo_interno: "ARE-002", tipo: "Produto", valor_compra: 75.00, preco_venda_padrao: 110.00, unidade_principal: "M3", marca: "Granel", ativo: true },
-        { nome: "Brita 1 (m³)", codigo_interno: "BRI-001", tipo: "Produto", valor_compra: 85.00, preco_venda_padrao: 130.00, unidade_principal: "M3", marca: "Granel", ativo: true },
-        { nome: "Brita 0 (m³)", codigo_interno: "BRI-002", tipo: "Produto", valor_compra: 82.00, preco_venda_padrao: 125.00, unidade_principal: "M3", marca: "Granel", ativo: true },
-        { nome: "Tijolo Baiano 8 Furos (Milheiro)", codigo_interno: "TIJ-001", tipo: "Produto", valor_compra: 650.00, preco_venda_padrao: 890.00, unidade_principal: "MIL", marca: "Cerâmica", ativo: true },
-        { nome: "Tijolo Maciço (Milheiro)", codigo_interno: "TIJ-002", tipo: "Produto", valor_compra: 720.00, preco_venda_padrao: 980.00, unidade_principal: "MIL", marca: "Cerâmica", ativo: true },
-        { nome: "Bloco de Concreto 14x19x39", codigo_interno: "BLC-001", tipo: "Produto", valor_compra: 3.20, preco_venda_padrao: 4.80, unidade_principal: "UN", marca: "Concreto", ativo: true },
-        { nome: "Bloco de Concreto 9x19x39", codigo_interno: "BLC-002", tipo: "Produto", valor_compra: 2.50, preco_venda_padrao: 3.90, unidade_principal: "UN", marca: "Concreto", ativo: true },
-        { nome: "Tubo PVC Esgoto 100mm 6m", codigo_interno: "PVC-001", tipo: "Produto", valor_compra: 45.00, preco_venda_padrao: 61.60, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "Tigre", ativo: true },
-        { nome: "Tubo PVC Esgoto 150mm 6m", codigo_interno: "PVC-002", tipo: "Produto", valor_compra: 89.00, preco_venda_padrao: 128.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "Tigre", ativo: true },
-        { nome: "Tubo PVC Água 25mm 6m", codigo_interno: "PVC-003", tipo: "Produto", valor_compra: 22.00, preco_venda_padrao: 32.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "Tigre", ativo: true },
-        { nome: "Joelho 90° PVC Esgoto 100mm", codigo_interno: "CNX-001", tipo: "Produto", valor_compra: 5.20, preco_venda_padrao: 7.80, unidade_principal: "UN", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "Tigre", ativo: true },
-        { nome: "Te PVC Esgoto 100mm", codigo_interno: "CNX-002", tipo: "Produto", valor_compra: 6.50, preco_venda_padrao: 9.50, unidade_principal: "UN", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "Tigre", ativo: true },
-        { nome: "Luva PVC Esgoto 100mm", codigo_interno: "CNX-003", tipo: "Produto", valor_compra: 4.80, preco_venda_padrao: 6.90, unidade_principal: "UN", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "Tigre", ativo: true },
-        { nome: "Tinta Acrílica Fosca Branco Neve 18L", codigo_interno: "TIN-001", tipo: "Produto", valor_compra: 280.00, preco_venda_padrao: 420.00, unidade_principal: "LT", fornecedor_padrao_id: createdFornecedores[2]?.id, marca: "Suvinil", ativo: true },
-        { nome: "Tinta Acrílica Palha 18L", codigo_interno: "TIN-002", tipo: "Produto", valor_compra: 290.00, preco_venda_padrao: 435.00, unidade_principal: "LT", fornecedor_padrao_id: createdFornecedores[2]?.id, marca: "Suvinil", ativo: true },
-        { nome: "Tinta Látex Premium Branco 18L", codigo_interno: "TIN-003", tipo: "Produto", valor_compra: 320.00, preco_venda_padrao: 480.00, unidade_principal: "LT", fornecedor_padrao_id: createdFornecedores[2]?.id, marca: "Suvinil", ativo: true },
-        { nome: "Verniz Marítimo 3,6L", codigo_interno: "VER-001", tipo: "Produto", valor_compra: 85.00, preco_venda_padrao: 125.00, unidade_principal: "LT", marca: "Suvinil", ativo: true },
-        { nome: "Ferro CA-50 8mm 12m", codigo_interno: "FER-001", tipo: "Produto", valor_compra: 42.00, preco_venda_padrao: 58.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[3]?.id, marca: "Gerdau", ativo: true },
-        { nome: "Ferro CA-50 10mm 12m", codigo_interno: "FER-002", tipo: "Produto", valor_compra: 65.00, preco_venda_padrao: 89.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[3]?.id, marca: "Gerdau", ativo: true },
-        { nome: "Ferro CA-50 12,5mm 12m", codigo_interno: "FER-003", tipo: "Produto", valor_compra: 98.00, preco_venda_padrao: 135.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[3]?.id, marca: "Gerdau", ativo: true },
-        { nome: "Arame Recozido 1kg", codigo_interno: "ARA-001", tipo: "Produto", valor_compra: 12.00, preco_venda_padrao: 18.00, unidade_principal: "KG", marca: "Gerdau", ativo: true },
-        { nome: "Prego 18x27 1kg", codigo_interno: "PRG-001", tipo: "Produto", valor_compra: 8.50, preco_venda_padrao: 13.00, unidade_principal: "KG", marca: "Gerdau", ativo: true },
-        { nome: "Cal Hidratada 20kg", codigo_interno: "CAL-001", tipo: "Produto", valor_compra: 12.00, preco_venda_padrao: 18.00, unidade_principal: "SC", marca: "Itaú", ativo: true },
-        { nome: "Argamassa AC-II 20kg", codigo_interno: "ARG-001", tipo: "Produto", valor_compra: 18.50, preco_venda_padrao: 27.00, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "Quartzolit", ativo: true },
-        { nome: "Argamassa AC-III 20kg", codigo_interno: "ARG-002", tipo: "Produto", valor_compra: 22.00, preco_venda_padrao: 32.00, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "Quartzolit", ativo: true },
-        { nome: "Rejunte Branco 1kg", codigo_interno: "REJ-001", tipo: "Produto", valor_compra: 9.50, preco_venda_padrao: 14.50, unidade_principal: "KG", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "Quartzolit", ativo: true },
-        { nome: "Rejunte Cinza 1kg", codigo_interno: "REJ-002", tipo: "Produto", valor_compra: 9.50, preco_venda_padrao: 14.50, unidade_principal: "KG", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "Quartzolit", ativo: true },
-        { nome: "Cerâmica 45x45 Acetinado m²", codigo_interno: "CER-001", tipo: "Produto", valor_compra: 32.00, preco_venda_padrao: 48.00, unidade_principal: "M2", fornecedor_padrao_id: createdFornecedores[5]?.id, marca: "Elizabeth", ativo: true },
-        { nome: "Cerâmica 60x60 Polido m²", codigo_interno: "CER-002", tipo: "Produto", valor_compra: 48.00, preco_venda_padrao: 72.00, unidade_principal: "M2", fornecedor_padrao_id: createdFornecedores[5]?.id, marca: "Elizabeth", ativo: true },
-        { nome: "Porcelanato 60x60 Polido m²", codigo_interno: "POR-001", tipo: "Produto", valor_compra: 68.00, preco_venda_padrao: 98.00, unidade_principal: "M2", fornecedor_padrao_id: createdFornecedores[5]?.id, marca: "Elizabeth", ativo: true },
-        { nome: "Telha Cerâmica Romana", codigo_interno: "TEL-001", tipo: "Produto", valor_compra: 2.80, preco_venda_padrao: 4.20, unidade_principal: "UN", marca: "Cerâmica", ativo: true },
-        { nome: "Telha Fibrocimento 2,44m", codigo_interno: "TEL-002", tipo: "Produto", valor_compra: 45.00, preco_venda_padrao: 65.00, unidade_principal: "UN", marca: "Brasilit", ativo: true },
-        { nome: "Caixa D'água 500L", codigo_interno: "CXA-001", tipo: "Produto", valor_compra: 180.00, preco_venda_padrao: 260.00, unidade_principal: "UN", marca: "Fortlev", ativo: true },
-        { nome: "Caixa D'água 1000L", codigo_interno: "CXA-002", tipo: "Produto", valor_compra: 320.00, preco_venda_padrao: 480.00, unidade_principal: "UN", marca: "Fortlev", ativo: true },
-        { nome: "Porta de Madeira 80cm", codigo_interno: "POR-001", tipo: "Produto", valor_compra: 280.00, preco_venda_padrao: 420.00, unidade_principal: "UN", marca: "Madeira", ativo: true },
-        { nome: "Janela Basculante 60x40", codigo_interno: "JAN-001", tipo: "Produto", valor_compra: 145.00, preco_venda_padrao: 210.00, unidade_principal: "UN", marca: "Alumínio", ativo: true },
-        { nome: "Fechadura Cromada 55mm", codigo_interno: "FEC-001", tipo: "Produto", valor_compra: 32.00, preco_venda_padrao: 48.00, unidade_principal: "UN", marca: "Pado", ativo: true },
-        { nome: "Dobradiça 3\" Cromada", codigo_interno: "DOB-001", tipo: "Produto", valor_compra: 8.50, preco_venda_padrao: 13.00, unidade_principal: "UN", marca: "Pado", ativo: true },
-        { nome: "Tomada 2P+T 10A Branca", codigo_interno: "ELE-001", tipo: "Produto", valor_compra: 5.20, preco_venda_padrao: 8.50, unidade_principal: "UN", marca: "Tramontina", ativo: true },
-        { nome: "Interruptor Simples Branco", codigo_interno: "ELE-002", tipo: "Produto", valor_compra: 4.80, preco_venda_padrao: 7.50, unidade_principal: "UN", marca: "Tramontina", ativo: true },
-        { nome: "Fio Elétrico 2,5mm 100m", codigo_interno: "FIO-001", tipo: "Produto", valor_compra: 85.00, preco_venda_padrao: 125.00, unidade_principal: "RL", marca: "Pirelli", ativo: true },
-        { nome: "Fio Elétrico 4mm 100m", codigo_interno: "FIO-002", tipo: "Produto", valor_compra: 140.00, preco_venda_padrao: 200.00, unidade_principal: "RL", marca: "Pirelli", ativo: true },
-        { nome: "Disjuntor 20A Bipolar", codigo_interno: "DIS-001", tipo: "Produto", valor_compra: 18.00, preco_venda_padrao: 27.00, unidade_principal: "UN", marca: "Schneider", ativo: true },
-        { nome: "Quadro de Luz 12 Disjuntores", codigo_interno: "QDL-001", tipo: "Produto", valor_compra: 95.00, preco_venda_padrao: 140.00, unidade_principal: "UN", marca: "Steck", ativo: true },
-        { nome: "Registro Esfera 1/2\" Cromado", codigo_interno: "REG-001", tipo: "Produto", valor_compra: 12.00, preco_venda_padrao: 18.50, unidade_principal: "UN", marca: "Deca", ativo: true },
-        { nome: "Registro Pressão 3/4\"", codigo_interno: "REG-002", tipo: "Produto", valor_compra: 18.00, preco_venda_padrao: 27.00, unidade_principal: "UN", marca: "Deca", ativo: true },
-        { nome: "Torneira Lavatório Cromada", codigo_interno: "TOR-001", tipo: "Produto", valor_compra: 45.00, preco_venda_padrao: 68.00, unidade_principal: "UN", marca: "Deca", ativo: true },
-        { nome: "Torneira Pia de Cozinha", codigo_interno: "TOR-002", tipo: "Produto", valor_compra: 52.00, preco_venda_padrao: 78.00, unidade_principal: "UN", marca: "Deca", ativo: true }
+        { nome: "CIMENTO CP-II 50KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 28.50, preco_venda_padrao: 42.00, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[0]?.id, marca: "VOTORANTIM", ativo: true },
+        { nome: "CIMENTO CP-III 50KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 31.00, preco_venda_padrao: 45.50, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[0]?.id, marca: "VOTORANTIM", ativo: true },
+        { nome: "AREIA MÉDIA LAVADA (M³)", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 80.00, preco_venda_padrao: 120.00, unidade_principal: "M3", marca: "GRANEL", ativo: true },
+        { nome: "AREIA FINA (M³)", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 75.00, preco_venda_padrao: 110.00, unidade_principal: "M3", marca: "GRANEL", ativo: true },
+        { nome: "BRITA 1 (M³)", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 85.00, preco_venda_padrao: 130.00, unidade_principal: "M3", marca: "GRANEL", ativo: true },
+        { nome: "BRITA 0 (M³)", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 82.00, preco_venda_padrao: 125.00, unidade_principal: "M3", marca: "GRANEL", ativo: true },
+        { nome: "TIJOLO BAIANO 8 FUROS (MILHEIRO)", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 650.00, preco_venda_padrao: 890.00, unidade_principal: "MIL", marca: "CERÂMICA", ativo: true },
+        { nome: "TIJOLO MACIÇO (MILHEIRO)", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 720.00, preco_venda_padrao: 980.00, unidade_principal: "MIL", marca: "CERÂMICA", ativo: true },
+        { nome: "BLOCO DE CONCRETO 14X19X39", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 3.20, preco_venda_padrao: 4.80, unidade_principal: "UN", marca: "CONCRETO", ativo: true },
+        { nome: "BLOCO DE CONCRETO 9X19X39", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 2.50, preco_venda_padrao: 3.90, unidade_principal: "UN", marca: "CONCRETO", ativo: true },
+        { nome: "TUBO PVC ESGOTO 100MM 6M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 45.00, preco_venda_padrao: 61.60, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "TIGRE", ativo: true },
+        { nome: "TUBO PVC ESGOTO 150MM 6M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 89.00, preco_venda_padrao: 128.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "TIGRE", ativo: true },
+        { nome: "TUBO PVC ÁGUA 25MM 6M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 22.00, preco_venda_padrao: 32.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "TIGRE", ativo: true },
+        { nome: "JOELHO 90° PVC ESGOTO 100MM", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 5.20, preco_venda_padrao: 7.80, unidade_principal: "UN", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "TIGRE", ativo: true },
+        { nome: "TE PVC ESGOTO 100MM", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 6.50, preco_venda_padrao: 9.50, unidade_principal: "UN", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "TIGRE", ativo: true },
+        { nome: "LUVA PVC ESGOTO 100MM", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 4.80, preco_venda_padrao: 6.90, unidade_principal: "UN", fornecedor_padrao_id: createdFornecedores[1]?.id, marca: "TIGRE", ativo: true },
+        { nome: "TINTA ACRÍLICA FOSCA BRANCO NEVE 18L", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 280.00, preco_venda_padrao: 420.00, unidade_principal: "LT", fornecedor_padrao_id: createdFornecedores[2]?.id, marca: "SUVINIL", ativo: true },
+        { nome: "TINTA ACRÍLICA PALHA 18L", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 290.00, preco_venda_padrao: 435.00, unidade_principal: "LT", fornecedor_padrao_id: createdFornecedores[2]?.id, marca: "SUVINIL", ativo: true },
+        { nome: "TINTA LÁTEX PREMIUM BRANCO 18L", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 320.00, preco_venda_padrao: 480.00, unidade_principal: "LT", fornecedor_padrao_id: createdFornecedores[2]?.id, marca: "SUVINIL", ativo: true },
+        { nome: "VERNIZ MARÍTIMO 3,6L", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 85.00, preco_venda_padrao: 125.00, unidade_principal: "LT", marca: "SUVINIL", ativo: true },
+        { nome: "FERRO CA-50 8MM 12M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 42.00, preco_venda_padrao: 58.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[3]?.id, marca: "GERDAU", ativo: true },
+        { nome: "FERRO CA-50 10MM 12M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 65.00, preco_venda_padrao: 89.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[3]?.id, marca: "GERDAU", ativo: true },
+        { nome: "FERRO CA-50 12,5MM 12M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 98.00, preco_venda_padrao: 135.00, unidade_principal: "BR", fornecedor_padrao_id: createdFornecedores[3]?.id, marca: "GERDAU", ativo: true },
+        { nome: "ARAME RECOZIDO 1KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 12.00, preco_venda_padrao: 18.00, unidade_principal: "KG", marca: "GERDAU", ativo: true },
+        { nome: "PREGO 18X27 1KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 8.50, preco_venda_padrao: 13.00, unidade_principal: "KG", marca: "GERDAU", ativo: true },
+        { nome: "CAL HIDRATADA 20KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 12.00, preco_venda_padrao: 18.00, unidade_principal: "SC", marca: "ITAÚ", ativo: true },
+        { nome: "ARGAMASSA AC-II 20KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 18.50, preco_venda_padrao: 27.00, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "QUARTZOLIT", ativo: true },
+        { nome: "ARGAMASSA AC-III 20KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 22.00, preco_venda_padrao: 32.00, unidade_principal: "SC", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "QUARTZOLIT", ativo: true },
+        { nome: "REJUNTE BRANCO 1KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 9.50, preco_venda_padrao: 14.50, unidade_principal: "KG", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "QUARTZOLIT", ativo: true },
+        { nome: "REJUNTE CINZA 1KG", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 9.50, preco_venda_padrao: 14.50, unidade_principal: "KG", fornecedor_padrao_id: createdFornecedores[4]?.id, marca: "QUARTZOLIT", ativo: true },
+        { nome: "CERÂMICA 45X45 ACETINADO M²", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 32.00, preco_venda_padrao: 48.00, unidade_principal: "M2", fornecedor_padrao_id: createdFornecedores[5]?.id, marca: "ELIZABETH", ativo: true },
+        { nome: "CERÂMICA 60X60 POLIDO M²", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 48.00, preco_venda_padrao: 72.00, unidade_principal: "M2", fornecedor_padrao_id: createdFornecedores[5]?.id, marca: "ELIZABETH", ativo: true },
+        { nome: "PORCELANATO 60X60 POLIDO M²", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 68.00, preco_venda_padrao: 98.00, unidade_principal: "M2", fornecedor_padrao_id: createdFornecedores[5]?.id, marca: "ELIZABETH", ativo: true },
+        { nome: "TELHA CERÂMICA ROMANA", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 2.80, preco_venda_padrao: 4.20, unidade_principal: "UN", marca: "CERÂMICA", ativo: true },
+        { nome: "TELHA FIBROCIMENTO 2,44M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 45.00, preco_venda_padrao: 65.00, unidade_principal: "UN", marca: "BRASILIT", ativo: true },
+        { nome: "CAIXA D'ÁGUA 500L", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 180.00, preco_venda_padrao: 260.00, unidade_principal: "UN", marca: "FORTLEV", ativo: true },
+        { nome: "CAIXA D'ÁGUA 1000L", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 320.00, preco_venda_padrao: 480.00, unidade_principal: "UN", marca: "FORTLEV", ativo: true },
+        { nome: "PORTA DE MADEIRA 80CM", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 280.00, preco_venda_padrao: 420.00, unidade_principal: "UN", marca: "MADEIRA", ativo: true },
+        { nome: "JANELA BASCULANTE 60X40", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 145.00, preco_venda_padrao: 210.00, unidade_principal: "UN", marca: "ALUMÍNIO", ativo: true },
+        { nome: "FECHADURA CROMADA 55MM", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 32.00, preco_venda_padrao: 48.00, unidade_principal: "UN", marca: "PADO", ativo: true },
+        { nome: "DOBRADIÇA 3\" CROMADA", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 8.50, preco_venda_padrao: 13.00, unidade_principal: "UN", marca: "PADO", ativo: true },
+        { nome: "TOMADA 2P+T 10A BRANCA", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 5.20, preco_venda_padrao: 8.50, unidade_principal: "UN", marca: "TRAMONTINA", ativo: true },
+        { nome: "INTERRUPTOR SIMPLES BRANCO", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 4.80, preco_venda_padrao: 7.50, unidade_principal: "UN", marca: "TRAMONTINA", ativo: true },
+        { nome: "FIO ELÉTRICO 2,5MM 100M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 85.00, preco_venda_padrao: 125.00, unidade_principal: "RL", marca: "PIRELLI", ativo: true },
+        { nome: "FIO ELÉTRICO 4MM 100M", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 140.00, preco_venda_padrao: 200.00, unidade_principal: "RL", marca: "PIRELLI", ativo: true },
+        { nome: "DISJUNTOR 20A BIPOLAR", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 18.00, preco_venda_padrao: 27.00, unidade_principal: "UN", marca: "SCHNEIDER", ativo: true },
+        { nome: "QUADRO DE LUZ 12 DISJUNTORES", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 95.00, preco_venda_padrao: 140.00, unidade_principal: "UN", marca: "STECK", ativo: true },
+        { nome: "REGISTRO ESFERA 1/2\" CROMADO", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 12.00, preco_venda_padrao: 18.50, unidade_principal: "UN", marca: "DECA", ativo: true },
+        { nome: "REGISTRO PRESSÃO 3/4\"", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 18.00, preco_venda_padrao: 27.00, unidade_principal: "UN", marca: "DECA", ativo: true },
+        { nome: "TORNEIRA LAVATÓRIO CROMADA", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 45.00, preco_venda_padrao: 68.00, unidade_principal: "UN", marca: "DECA", ativo: true },
+        { nome: "TORNEIRA PIA DE COZINHA", codigo_interno: String(codigoSequencial++).padStart(6, '0'), tipo: "Produto", valor_compra: 52.00, preco_venda_padrao: 78.00, unidade_principal: "UN", marca: "DECA", ativo: true }
       ];
 
       const createdProdutos = [];
       for (const p of produtosData) {
-        const exists = await base44.entities.Produto.filter({ codigo_interno: p.codigo_interno });
+        const exists = await base44.entities.Produto.filter({ nome: p.nome });
         if (exists.length === 0) {
           const res = await base44.entities.Produto.create(p);
           createdProdutos.push(res);
@@ -253,13 +261,13 @@ export default function SeedDataTool() {
       for (const prod of createdProdutos) {
         await base44.entities.MovimentacaoEstoque.create({
           produto_id: prod.id,
-          produto_nome: prod.nome,
+          produto_nome: prod.nome.toUpperCase(),
           tipo: "Entrada",
           motivo: "Ajuste de Inventário",
           quantidade: 100,
           custo_unitario: prod.valor_compra,
-          observacoes: "Estoque Inicial (Seed)",
-          usuario_responsavel: "Sistema"
+          observacoes: "ESTOQUE INICIAL (SEED)",
+          usuario_responsavel: "SISTEMA"
         });
 
         await base44.entities.Produto.update(prod.id, { estoque_atual: 100 });
