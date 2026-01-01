@@ -58,6 +58,8 @@ export default function ImportacaoProdutos() {
   };
 
   const handleValidateFile = async () => {
+    console.log("handleValidateFile chamada, file:", file);
+    
     if (!file) {
       toast({
         title: "Nenhum arquivo selecionado",
@@ -70,8 +72,12 @@ export default function ImportacaoProdutos() {
     setIsValidating(true);
 
     try {
+      console.log("Lendo arquivo...");
       const text = await file.text();
+      console.log("Texto lido, primeiros 200 chars:", text.substring(0, 200));
+      
       const linhas = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
+      console.log("Total de linhas:", linhas.length);
       
       if (linhas.length < 2) {
         throw new Error("Arquivo vazio ou sem dados válidos");
