@@ -1254,15 +1254,10 @@ export default function ProdutosPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent 
                             align="end" 
-                            className="dark:bg-gray-800 dark:border-gray-700" 
-                            onCloseAutoFocus={(e) => e.preventDefault()}
-                            onInteractOutside={(e) => e.preventDefault()}
+                            className="dark:bg-gray-800 dark:border-gray-700"
                           >
                             <DropdownMenuItem 
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                setTimeout(() => handleEdit(produto), 0);
-                              }}
+                              onClick={() => handleEdit(produto)}
                               className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
                             >
                               <Edit className="mr-2 h-3.5 w-3.5"/>Editar
@@ -1404,15 +1399,10 @@ export default function ProdutosPage() {
                               <DropdownMenuContent 
                             align="start" 
                             className="z-50 dark:bg-gray-800 dark:border-gray-700" 
-                            sideOffset={5} 
-                            onCloseAutoFocus={(e) => e.preventDefault()}
-                            onInteractOutside={(e) => e.preventDefault()}
+                            sideOffset={5}
                           >
                                 <DropdownMenuItem 
-                                  onSelect={(e) => {
-                                    e.preventDefault();
-                                    setTimeout(() => handleEdit(produto), 0);
-                                  }}
+                                  onClick={() => handleEdit(produto)}
                                   className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
                                 >
                                   <Edit className="mr-2 h-3.5 w-3.5"/>Editar
