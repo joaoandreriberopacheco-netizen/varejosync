@@ -80,7 +80,7 @@ export default function ProdutosPage() {
     fornecedorId: 'all',
     statusEstoque: 'all'
   });
-  const [sortOrder, setSortOrder] = useState('default');
+  const [sortOrder, setSortOrder] = useState('az');
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState(null);
@@ -1088,21 +1088,9 @@ export default function ProdutosPage() {
 
           {/* Botões - ÍCONES PUROS */}
           <div className="flex items-center gap-1.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Download className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="dark:bg-gray-800 dark:border-gray-700">
-                <DropdownMenuItem onClick={handleExportarCatalogo} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                  <Package className="w-3.5 h-3.5 mr-2" />Exportar Catálogo
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportarPrecificacao} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                  <DollarSign className="w-3.5 h-3.5 mr-2" />Exportar Precificação
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleExportarCatalogo}>
+              <Download className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1158,17 +1146,7 @@ export default function ProdutosPage() {
           </div>
 
           {/* Filtros secundários - grid compacto */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
-              <SelectValue placeholder="Ordenar" />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-              <SelectItem value="default" className="dark:hover:bg-gray-700 text-xs">Padrão</SelectItem>
-              <SelectItem value="az" className="dark:hover:bg-gray-700 text-xs">A → Z</SelectItem>
-              <SelectItem value="za" className="dark:hover:bg-gray-700 text-xs">Z → A</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
             <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
               <SelectValue placeholder="Categoria" />
@@ -1216,11 +1194,30 @@ export default function ProdutosPage() {
           <div className="h-full flex flex-col">
             {/* Contador + Botão Colunas */}
             <div className="flex items-center justify-between py-2 flex-none">
-              <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-4">
+              <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-3">
                 <span>{filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''}</span>
                 {filteredProdutos.length > 0 && (
                   <>
                     <MassTagGenerator products={filteredProdutos} onComplete={loadData} />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                          {sortOrder === 'az' ? (
+                            <TrendingUp className="w-3.5 h-3.5 rotate-90" />
+                          ) : (
+                            <TrendingUp className="w-3.5 h-3.5 -rotate-90" />
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="dark:bg-gray-800 dark:border-gray-700">
+                        <DropdownMenuItem onClick={() => setSortOrder('az')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                          A → Z
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortOrder('za')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                          Z → A
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </>
                 )}
               </div>
@@ -1255,11 +1252,17 @@ export default function ProdutosPage() {
                               <MoreHorizontal className="h-4 w-4 text-gray-700 dark:text-gray-400" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700" onCloseAutoFocus={(e) => e.preventDefault()}>
+                          <DropdownMenuContent 
+                            align="end" 
+                            className="dark:bg-gray-800 dark:border-gray-700" 
+                            onCloseAutoFocus={(e) => e.preventDefault()}
+                            onInteractOutside={(e) => e.preventDefault()}
+                          >
                             <DropdownMenuItem 
-                              onClick={() => {
-                                handleEdit(produto);
-                              }} 
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setTimeout(() => handleEdit(produto), 0);
+                              }}
                               className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
                             >
                               <Edit className="mr-2 h-3.5 w-3.5"/>Editar
@@ -1398,11 +1401,18 @@ export default function ProdutosPage() {
                                   <MoreHorizontal className="h-3.5 w-3.5 text-gray-700 dark:text-gray-400" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start" className="z-50 dark:bg-gray-800 dark:border-gray-700" sideOffset={5} onCloseAutoFocus={(e) => e.preventDefault()}>
+                              <DropdownMenuContent 
+                            align="start" 
+                            className="z-50 dark:bg-gray-800 dark:border-gray-700" 
+                            sideOffset={5} 
+                            onCloseAutoFocus={(e) => e.preventDefault()}
+                            onInteractOutside={(e) => e.preventDefault()}
+                          >
                                 <DropdownMenuItem 
-                                  onClick={() => {
-                                    handleEdit(produto);
-                                  }} 
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    setTimeout(() => handleEdit(produto), 0);
+                                  }}
                                   className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
                                 >
                                   <Edit className="mr-2 h-3.5 w-3.5"/>Editar
