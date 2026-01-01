@@ -193,9 +193,9 @@ export default function ImportacaoProdutos() {
       const linhas = text.split('\n').filter(l => l.trim());
       const headers = linhas[0].split(';').map(h => h.trim());
 
-      const categorias = await base44.entities.Categoria.list();
-      const fornecedores = await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
-      const produtosExistentes = await base44.entities.Produto.list();
+      const categorias = cacheRef.current.categorias || await base44.entities.Categoria.list();
+      const fornecedores = cacheRef.current.fornecedores || await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
+      const produtosExistentes = cacheRef.current.produtos || await base44.entities.Produto.list();
       const tenantId = getTenantId();
 
       const produtosParaImportar = [];
