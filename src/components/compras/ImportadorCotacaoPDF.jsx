@@ -128,7 +128,9 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
             setAiData(result);
             
-            setMappings(result.itens.map(item => ({
+            // Defensive check for itens array
+            const itens = Array.isArray(result.itens) ? result.itens : [];
+            setMappings(itens.map(item => ({
                 ...item,
                 selected_product_id: item.produto_sistema_match_id || '',
                 ignored: !item.produto_sistema_match_id
@@ -209,8 +211,9 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
 
             const subtotalItens = processedItems.reduce((sum, m) => sum + (m.quantidade_pdf * m.preco_unitario_pdf), 0);
             let discountRatio = 1;
-            if (aiData.financeiro.desconto_global > 0 && subtotalItens > 0) {
-                discountRatio = 1 - (aiData.financeiro.desconto_global / subtotalItens);
+            const descontoGlobal = aiData.financeiro?.desconto_global || 0;
+            if (descontoGlobal > 0 && subtotalItens > 0) {
+                discountRatio = 1 - (descontoGlobal / subtotalItens);
             }
 
             const respostas = processedItems.map(m => ({
@@ -365,23 +368,23 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                             <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Subtotal (Itens)</p>
                                 <p className="text-2xl font-light text-gray-900 dark:text-white">
-                                    R$ {formatCurrency(aiData.financeiro.subtotal)}
+                                    R$ {formatCurrency(aiData.financeiro?.subtotal || 0)}
                                 </p>
                             </div>
                             <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-2xl">
                                 <p className="text-sm text-orange-700 dark:text-orange-400 mb-2">Desconto Global Detectado</p>
                                 <p className="text-2xl font-light text-orange-700 dark:text-orange-400">
-                                    R$ {formatCurrency(aiData.financeiro.desconto_global)}
+                                    R$ {formatCurrency(aiData.financeiro?.desconto_global || 0)}
                                 </p>
                             </div>
                             <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-2xl">
                                 <p className="text-sm text-green-700 dark:text-green-400 mb-2">Total Final</p>
                                 <p className="text-2xl font-light text-green-700 dark:text-green-400">
-                                    R$ {formatCurrency(aiData.financeiro.total_final)}
+                                    R$ {formatCurrency(aiData.financeiro?.total_final || 0)}
                                 </p>
                             </div>
                         </div>
-                        {aiData.financeiro.desconto_global > 0 && (
+                        {(aiData.financeiro?.desconto_global || 0) > 0 && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 italic -mt-4">
                                 * O desconto global será rateado proporcionalmente no preço unitário de cada item importado.
                             </p>
