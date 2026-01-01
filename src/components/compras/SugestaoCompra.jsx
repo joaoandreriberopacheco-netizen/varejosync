@@ -392,7 +392,7 @@ export default function SugestaoCompra() {
               <Button 
                   onClick={() => setHidePending(!hidePending)}
                   variant="outline"
-                  className={`w-full h-11 justify-start border-gray-200 dark:border-gray-700 ${hidePending ? 'text-teal-600 bg-teal-50 border-teal-200 dark:bg-teal-900/20' : 'text-gray-600'}`}
+                  className={`w-full h-11 justify-start border-gray-200 dark:border-gray-700 ${hidePending ? 'text-gray-700 bg-gray-50 dark:bg-gray-800/50 dark:text-gray-300' : 'text-gray-600'}`}
               >
                   <FilterX className="w-4 h-4 mr-2" />
                   <span className="text-sm">{hidePending ? 'Mostrar Pendentes' : 'Ocultar Pendentes'}</span>
@@ -400,15 +400,15 @@ export default function SugestaoCompra() {
           </div>
 
           {/* Ferramenta: Otimização de Pacotes */}
-          <div className="w-full bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+          <div className="w-full bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
               <div className="flex items-start gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-300 flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 flex-shrink-0 shadow-sm">
                       <Package className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Otimização de Pacotes</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Otimização de Pacotes</span>
               </div>
               <Select value={roundingMode} onValueChange={setRoundingMode}>
-                <SelectTrigger className="w-full h-11 bg-white dark:bg-gray-900 border-0 shadow-sm">
+                <SelectTrigger className="w-full h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -423,8 +423,8 @@ export default function SugestaoCompra() {
         </div>
 
       {produtosSemFornecedor.length > 0 && (
-        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4 flex items-start gap-3 mx-2 md:mx-0">
-          <div className="w-2 h-2 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></div>
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 flex items-start gap-3 mx-2 md:mx-0 shadow-sm">
+          <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 mt-1.5 flex-shrink-0"></div>
           <div className="flex-1 min-w-0">
             <h4 className="font-medium text-gray-800 dark:text-gray-200 text-sm">
               {produtosSemFornecedor.length} produtos sem fornecedor
@@ -437,13 +437,13 @@ export default function SugestaoCompra() {
       )}
 
       {sugestoes.length === 0 && !isLoading ? (
-        <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl mx-2 md:mx-0">
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl mx-2 md:mx-0 shadow-sm">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
           <p className="text-gray-500 dark:text-gray-400 font-light">Estoque saudável. Nenhuma sugestão no momento.</p>
         </div>
       ) : (
         <>
-          <div className="hidden md:block border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+          <div className="hidden md:block rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
             <Table>
               <TableHeader className="bg-gray-50 dark:bg-gray-800">
                 <TableRow className="border-gray-100 dark:border-gray-700">
@@ -490,7 +490,7 @@ export default function SugestaoCompra() {
                         <TableCell>
                           <div className="font-medium text-gray-700 dark:text-gray-200">{s.produto_nome}</div>
                           {temPendente && (
-                            <div className="flex items-center gap-1 text-[10px] text-orange-600 mt-1">
+                            <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                                <Truck className="w-3 h-3" />
                                <span>Já existe pedido em andamento</span>
                             </div>
@@ -522,7 +522,7 @@ export default function SugestaoCompra() {
                         </TableCell>
                         <TableCell className="text-center">
                             {s.quantidade_pendente > 0 ? (
-                                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 font-normal">
+                                <Badge variant="outline" className="bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 font-normal">
                                     {s.quantidade_pendente} {s.unidade_compra}
                                 </Badge>
                             ) : (
@@ -533,7 +533,7 @@ export default function SugestaoCompra() {
                             <div className="flex items-center justify-end gap-2">
                                 <Input 
                                     type="number" 
-                                    className="h-8 w-20 text-right font-bold text-teal-600"
+                                    className="h-8 w-20 text-right font-bold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
                                     value={s.quantidade_sugerida}
                                     onChange={(e) => handleUpdateQuantidade(s.produto_id, e.target.value)}
                                 />
@@ -556,10 +556,10 @@ export default function SugestaoCompra() {
                 return (
                   <div 
                     key={s.produto_id}
-                    className={`p-4 rounded-xl border transition-all ${
+                    className={`p-4 rounded-xl transition-all ${
                       isSelected 
-                        ? 'border-teal-500 bg-white dark:bg-gray-800 shadow-sm ring-1 ring-teal-500' 
-                        : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800'
+                        ? 'bg-white dark:bg-gray-800 shadow-md' 
+                        : 'bg-white dark:bg-gray-800 shadow-sm'
                     }`}
                   >
                     <div className="flex items-start gap-3 mb-4">
@@ -572,12 +572,12 @@ export default function SugestaoCompra() {
                         <div className="flex justify-between items-start mb-2" onClick={() => handleSelectItem(s.produto_id, !isSelected)}>
                           <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate pr-2">{s.produto_nome}</h4>
                           <div className="flex flex-col items-end flex-shrink-0">
-                             <span className="text-sm font-bold text-teal-600 dark:text-teal-500">{s.quantidade_sugerida}</span>
+                             <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{s.quantidade_sugerida}</span>
                              <span className="text-xs text-gray-400">{s.unidade_compra}</span>
                           </div>
                         </div>
                          {temPendente && (
-                            <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-500 mt-2 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg w-fit">
+                            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mt-2 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg w-fit">
                                <Truck className="w-3.5 h-3.5" />
                                <span>{s.quantidade_pendente} em trânsito</span>
                             </div>
@@ -585,7 +585,7 @@ export default function SugestaoCompra() {
                       </div>
                     </div>
 
-                    <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="space-y-3 pt-4 border-t border-gray-50 dark:border-gray-800">
                        <div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-2">Estoque Atual</p>
                           <div className="text-sm">
