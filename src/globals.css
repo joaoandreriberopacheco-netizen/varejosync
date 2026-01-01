@@ -204,6 +204,29 @@ textarea,
 }
 
 /* ==========================================
+   TRANSFORMAÇÃO DE TEXTO - VERSALETE
+   ========================================== */
+
+/* Aplica maiúsculas em textos de exibição de dados */
+.uppercase-data,
+table td:not(:has(input)):not(:has(select)):not(:has(textarea)),
+table th,
+.badge,
+h1, h2, h3, h4, h5, h6 {
+  text-transform: uppercase;
+}
+
+/* Mantém normal em inputs durante edição */
+input, textarea, select {
+  text-transform: none;
+}
+
+/* Força maiúsculas em placeholders também */
+::placeholder {
+  text-transform: uppercase;
+}
+
+/* ==========================================
    DARK MODE AJUSTES
    ========================================== */
 
