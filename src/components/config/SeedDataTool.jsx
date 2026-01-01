@@ -69,6 +69,43 @@ export default function SeedDataTool() {
     }
   };
 
+  const convertToNumericCodes = async () => {
+    if (!confirm("Esta ação converterá TODOS os códigos internos alfanuméricos (ARA-001, TIN-002, etc) para códigos numéricos sequenciais (000001, 000002, etc).\n\nDeseja continuar?")) return;
+
+    setLoading(true);
+
+    try {
+      const produtos = await base44.entities.Produto.list('-created_date', 5000);
+      let codigoSequencial = 1;
+      let convertedCount = 0;
+
+      for (const produto of produtos) {
+        const codigoNumerico = String(codigoSequencial).padStart(6, '0');
+        await base44.entities.Produto.update(produto.id, { 
+          codigo_interno: codigoNumerico 
+        });
+        codigoSequencial++;
+        convertedCount++;
+      }
+
+      toast({
+        title: "Conversão Concluída",
+        description: `${convertedCount} produtos foram atualizados com códigos numéricos sequenciais.`,
+        className: "bg-emerald-100 text-emerald-800"
+      });
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Erro ao converter códigos",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const removeDuplicates = async () => {
     if (!confirm("Esta ação buscará por Produtos e Terceiros duplicados (mesmo código ou nome) e manterá apenas UM de cada, removendo os excedentes.\n\nDeseja continuar?")) return;
 
@@ -366,6 +403,26 @@ export default function SeedDataTool() {
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Remover Duplicatas
+              </>
+            )}
+          </Button>
+
+          <Button 
+            onClick={convertToNumericCodes} 
+            disabled={loading}
+            size="lg"
+            variant="outline"
+            className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 min-w-[200px]"
+          >
+            {loading ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Convertendo...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Converter p/ Numérico
               </>
             )}
           </Button>
