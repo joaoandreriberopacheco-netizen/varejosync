@@ -492,12 +492,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
               </div>
             </div>
 
-            {/* LAYOUT FLEX RESPONSIVO - Alterado para xl:flex-row para evitar aperto no mobile/tablet */}
-            <div className="flex flex-col xl:flex-row gap-8">
+            {/* LAYOUT LADO A LADO (DESKTOP) - EMPILHADO (MOBILE) */}
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               {/* Composição de Custos */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-3">Composição de Custos</h3>
-                <div className="space-y-2">
+                <h3 className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-4">Composição de Custos</h3>
+                <div className="space-y-3">
                   {custos.map((custo, index) => {
                     const isCustoBase = custo.descricao_custo === 'Valor de Compra';
                     const valorDigitado = parseFloat(custo.valor_custo) || 0;
@@ -513,7 +513,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                     }
 
                     return (
-                      <div key={index} className="flex items-center gap-2 py-2 border-b border-gray-100 dark:border-gray-800">
+                      <div key={index} className="flex items-center gap-2 py-3 border-b border-gray-100 dark:border-gray-800">
                         {/* Nome do custo */}
                         <span className="text-xs font-medium text-gray-700 dark:text-gray-200 w-24 flex-shrink-0">{custo.descricao_custo}</span>
 
@@ -601,15 +601,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                 </div>
               </div>
 
-              {/* LINHA DIVISÓRIA */}
-              <div className="hidden lg:block w-px bg-gray-200 dark:bg-gray-700 self-stretch mx-4"></div>
-              <div className="lg:hidden h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
+              {/* LINHA DIVISÓRIA - Desktop apenas */}
+              <div className="hidden lg:block w-px bg-gray-200 dark:bg-gray-700 self-stretch"></div>
 
               {/* Preço de Venda */}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-3">Preço de Venda</h3>
+              <div className="flex-1 min-w-0 lg:mt-0 mt-6">
+                <h3 className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-4">Preço de Venda</h3>
 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Preço de Venda (R$) */}
                   <div>
                     <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Preço de Venda (R$)</Label>
