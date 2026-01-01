@@ -175,9 +175,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       if (!produto?.id && !codigoInterno) {
         const todosProdutos = await base44.entities.Produto.list();
         const ultimoNumero = todosProdutos
-          .map(p => parseInt(p.codigo_interno?.split('-')[1]) || 0)
+          .map(p => parseInt(p.codigo_interno) || 0)
           .reduce((max, num) => Math.max(max, num), 0);
-        codigoInterno = `PRD-${String(ultimoNumero + 1).padStart(5, '0')}`;
+        codigoInterno = String(ultimoNumero + 1).padStart(6, '0');
       }
 
       const categoria = categorias.find(c => c.id === formData.categoria_id);
