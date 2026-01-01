@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, Loader2, AlertCircle, Check, FileText, Plus } from 'lucide-react';
+import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { getTenantId } from '@/components/utils/tenant';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
-    const [step, setStep] = useState('upload'); // upload, processing, review
+    const [step, setStep] = useState('upload');
     const [isUploading, setIsUploading] = useState(false);
     const [aiData, setAiData] = useState(null);
     const [mappings, setMappings] = useState([]);
@@ -20,6 +18,11 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
     const [produtosSistema, setProdutosSistema] = useState([]);
     const [fornecedoresSistema, setFornecedoresSistema] = useState([]);
     const { toast } = useToast();
+
+    const formatCurrency = (value) => {
+        const num = parseFloat(value) || 0;
+        return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
@@ -29,23 +32,23 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
         setStep('processing');
 
         try {
-            // 1. Upload File
             const uploadRes = await base44.integrations.Core.UploadFile({ file });
             const fileUrl = uploadRes.file_url;
 
-            // 2. Load Context Data (Products & Suppliers)
             const tenantId = getTenantId();
             const [produtos, fornecedores] = await Promise.all([
-                base44.entities.Produto.filter({ empresa_id: tenantId }), // Load all products for matching capability
+                base44.entities.Produto.filter({ empresa_id: tenantId }),
                 base44.entities.Terceiro.filter({ empresa_id: tenantId, tipo: ['Fornecedor', 'Ambos'] })
             ]);
             setProdutosSistema(produtos);
             setFornecedoresSistema(fornecedores);
 
-            // 3. Call LLM
             const prompt = `
                 Analise este PDF de cotação/orçamento de fornecedor.
                 Extraia os dados do fornecedor e a lista de itens.
+                
+                IMPORTANTE: Para cada item, identifique a MARCA do produto (ex: Tramontina, Vonder, Stanley, etc).
+                A marca é um critério qualitativo fundamental para comparação de cotações.
                 
                 Tente identificar se o fornecedor já existe nesta lista (por nome ou CNPJ aproximado):
                 ${JSON.stringify(fornecedores.map(f => ({ id: f.id, nome: f.nome, cnpj: f.cpf_cnpj })))}
@@ -71,6 +74,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                         {
                             "descricao_pdf": "string",
                             "codigo_pdf": "string",
+                            "marca_pdf": "string (marca do produto identificada no PDF)",
                             "quantidade_pdf": number,
                             "preco_unitario_pdf": number,
                             "produto_sistema_match_id": "string (id do produto ou null)",
@@ -109,6 +113,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                                 properties: {
                                     descricao_pdf: { type: "string" },
                                     codigo_pdf: { type: "string" },
+                                    marca_pdf: { type: "string" },
                                     quantidade_pdf: { type: "number" },
                                     preco_unitario_pdf: { type: "number" },
                                     produto_sistema_match_id: { type: ["string", "null"] },
@@ -123,14 +128,12 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
             setAiData(result);
             
-            // Initialize Mappings
             setMappings(result.itens.map(item => ({
                 ...item,
                 selected_product_id: item.produto_sistema_match_id || '',
-                ignored: !item.produto_sistema_match_id // Auto ignore if no match found initially
+                ignored: !item.produto_sistema_match_id
             })));
 
-            // Initialize Supplier Info
             setFornecedorInfo({
                 id: result.fornecedor.id_match || 'new',
                 nome: result.fornecedor.nome_identificado,
@@ -152,7 +155,6 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
         try {
             let finalFornecedorId = fornecedorInfo.id;
 
-            // 1. Create Supplier if new
             if (finalFornecedorId === 'new') {
                 const tenantId = getTenantId();
                 const novoFornecedor = await base44.entities.Terceiro.create({
@@ -165,7 +167,6 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                 finalFornecedorId = novoFornecedor.id;
             }
 
-            // 2. Process items (Create products if needed)
             const validItems = mappings.filter(m => !m.ignored && m.selected_product_id);
             
             const processedItems = [];
@@ -174,23 +175,22 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             for (const m of validItems) {
                 let produtoId = m.selected_product_id;
 
-                // Criar produto se selecionado 'create_new'
                 if (produtoId === 'create_new') {
                     try {
                         const tenantId = getTenantId();
                         const novoProduto = await base44.entities.Produto.create({
                             empresa_id: tenantId,
                             nome: m.descricao_pdf,
-                            codigo_interno: 'IMP-' + Math.floor(Math.random() * 10000), // Temp code
+                            marca: m.marca_pdf || '',
+                            codigo_interno: 'IMP-' + Math.floor(Math.random() * 10000),
                             tipo: 'Produto',
-                            preco_venda_padrao: m.preco_unitario_pdf * 1.5, // Sugestão inicial
+                            preco_venda_padrao: m.preco_unitario_pdf * 1.5,
                             valor_compra: m.preco_unitario_pdf,
-                            unidade_principal: 'UN', // Default
+                            unidade_principal: 'UN',
                             ativo: true
                         });
                         produtoId = novoProduto.id;
                         
-                        // Adicionar à lista de novos itens para incluir na cotação
                         novosItensCotacao.push({
                             produto_id: novoProduto.id,
                             produto_nome: novoProduto.nome,
@@ -207,7 +207,6 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                 processedItems.push({ ...m, final_product_id: produtoId });
             }
 
-            // 3. Calculate effective prices
             const subtotalItens = processedItems.reduce((sum, m) => sum + (m.quantidade_pdf * m.preco_unitario_pdf), 0);
             let discountRatio = 1;
             if (aiData.financeiro.desconto_global > 0 && subtotalItens > 0) {
@@ -218,15 +217,13 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                 fornecedor_id: finalFornecedorId,
                 produto_id: m.final_product_id,
                 preco_unitario: m.preco_unitario_pdf * discountRatio,
-                quantidade_ofertada: m.quantidade_pdf, // Quantidade que veio do fornecedor
-                marca: m.descricao_pdf,
-                observacao: `Importado via PDF. Preço original: R$ ${m.preco_unitario_pdf}. Desconto aplicado.`,
+                quantidade_ofertada: m.quantidade_pdf,
+                marca: m.marca_pdf || m.descricao_pdf,
+                observacao: `Importado via PDF. Preço original: R$ ${m.preco_unitario_pdf.toFixed(2)}${m.marca_pdf ? '. Marca: ' + m.marca_pdf : ''}`,
                 vencedor: false
             }));
 
-            // Se houver novos produtos criados, precisamos adicioná-los à cotação original
             if (novosItensCotacao.length > 0) {
-                // Atualiza cotação com novos itens
                 const cotacaoAtualizada = await base44.entities.Cotacao.get(cotacao.id);
                 const itensAtualizados = [...cotacaoAtualizada.itens, ...novosItensCotacao];
                 await base44.entities.Cotacao.update(cotacao.id, { itens: itensAtualizados });
@@ -242,61 +239,94 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
         }
     };
 
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Importar Cotação via PDF (IA)</DialogTitle>
-                </DialogHeader>
+    if (!isOpen) return null;
 
-                {step === 'upload' && (
-                    <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                        <Upload className="w-12 h-12 text-gray-400 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">Upload do PDF da Cotação</h3>
-                        <p className="text-sm text-gray-500 mb-6">A IA irá ler os itens, preços e identificar o fornecedor.</p>
-                        <div className="relative">
-                            <input 
-                                type="file" 
-                                accept=".pdf"
-                                onChange={handleFileUpload}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                disabled={isUploading}
-                            />
-                            <Button disabled={isUploading}>
-                                {isUploading ? (
-                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analisando...</>
-                                ) : (
-                                    "Selecionar Arquivo"
-                                )}
+    return (
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-10">
+                <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-lg">
+                                <X className="w-5 h-5" />
                             </Button>
+                            <div>
+                                <h2 className="text-xl font-medium text-gray-900 dark:text-white">Importar Cotação via PDF</h2>
+                                <p className="text-sm text-gray-500">A IA irá extrair itens, preços e marcas automaticamente</p>
+                            </div>
                         </div>
-                        {isUploading && <p className="text-xs text-gray-400 mt-4">Isso pode levar alguns segundos...</p>}
+                        {step === 'review' && (
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => setStep('upload')} className="gap-2">
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Reenviar
+                                </Button>
+                                <Button onClick={handleConfirmImport} className="bg-teal-600 hover:bg-teal-700 gap-2">
+                                    <Check className="w-4 h-4" />
+                                    Confirmar Importação
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+                {step === 'upload' && (
+                    <div className="max-w-2xl mx-auto">
+                        <div className="py-20 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
+                            <Upload className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-6" />
+                            <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">Upload do PDF da Cotação</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-8 text-center max-w-md">
+                                A IA irá ler os itens, identificar marcas, preços e fornecedor
+                            </p>
+                            <div className="relative">
+                                <input 
+                                    type="file" 
+                                    accept=".pdf"
+                                    onChange={handleFileUpload}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    disabled={isUploading}
+                                />
+                                <Button disabled={isUploading} size="lg" className="bg-teal-600 hover:bg-teal-700">
+                                    {isUploading ? (
+                                        <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Analisando...</>
+                                    ) : (
+                                        "Selecionar Arquivo PDF"
+                                    )}
+                                </Button>
+                            </div>
+                            {isUploading && <p className="text-sm text-gray-400 mt-6">Isso pode levar alguns segundos...</p>}
+                        </div>
                     </div>
                 )}
 
                 {step === 'processing' && (
-                    <div className="py-12 flex flex-col items-center justify-center">
-                        <Loader2 className="w-16 h-16 text-teal-600 animate-spin mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">Processando com Inteligência Artificial...</h3>
-                        <p className="text-sm text-gray-500">Extraindo dados e buscando correspondências.</p>
+                    <div className="max-w-2xl mx-auto py-20 flex flex-col items-center justify-center">
+                        <Loader2 className="w-20 h-20 text-teal-600 animate-spin mb-6" />
+                        <h3 className="text-2xl font-light text-gray-900 dark:text-white mb-2">Processando com IA...</h3>
+                        <p className="text-gray-500 dark:text-gray-400">Extraindo dados, marcas e buscando correspondências</p>
                     </div>
                 )}
 
                 {step === 'review' && aiData && (
-                    <div className="space-y-6">
-                        {/* 1. Supplier Identification */}
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <h4 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
-                                <FileText className="w-4 h-4" /> Dados do Fornecedor Identificado
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-8">
+                        {/* Supplier Info */}
+                        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl">
+                            <div className="flex items-center gap-3 mb-6">
+                                <FileText className="w-5 h-5 text-gray-400" />
+                                <h4 className="font-medium text-gray-900 dark:text-white">Dados do Fornecedor Identificado</h4>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <Label className="text-xs">Fornecedor no Sistema</Label>
+                                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2">Fornecedor no Sistema</Label>
                                     <Select 
                                         value={fornecedorInfo.id} 
                                         onValueChange={(v) => setFornecedorInfo({...fornecedorInfo, id: v})}
                                     >
-                                        <SelectTrigger className="bg-white">
+                                        <SelectTrigger className="bg-white dark:bg-gray-900">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -310,19 +340,19 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                                 {fornecedorInfo.id === 'new' && (
                                     <>
                                         <div>
-                                            <Label className="text-xs">Nome Identificado</Label>
+                                            <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2">Nome Identificado</Label>
                                             <Input 
                                                 value={fornecedorInfo.nome} 
                                                 onChange={e => setFornecedorInfo({...fornecedorInfo, nome: e.target.value})} 
-                                                className="bg-white"
+                                                className="bg-white dark:bg-gray-900"
                                             />
                                         </div>
                                         <div>
-                                            <Label className="text-xs">CNPJ Identificado</Label>
+                                            <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2">CNPJ Identificado</Label>
                                             <Input 
                                                 value={fornecedorInfo.cnpj} 
                                                 onChange={e => setFornecedorInfo({...fornecedorInfo, cnpj: e.target.value})} 
-                                                className="bg-white"
+                                                className="bg-white dark:bg-gray-900"
                                             />
                                         </div>
                                     </>
@@ -330,124 +360,137 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
                             </div>
                         </div>
 
-                        {/* 2. Financial Summary */}
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="p-3 bg-gray-50 rounded border">
-                                <p className="text-xs text-gray-500">Subtotal (Itens)</p>
-                                <p className="font-medium">R$ {aiData.financeiro.subtotal?.toFixed(2)}</p>
+                        {/* Financial Summary */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Subtotal (Itens)</p>
+                                <p className="text-2xl font-light text-gray-900 dark:text-white">
+                                    R$ {formatCurrency(aiData.financeiro.subtotal)}
+                                </p>
                             </div>
-                            <div className="p-3 bg-orange-50 rounded border border-orange-100">
-                                <p className="text-xs text-orange-700">Desconto Global Detectado</p>
-                                <p className="font-bold text-orange-700">R$ {aiData.financeiro.desconto_global?.toFixed(2)}</p>
+                            <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-2xl">
+                                <p className="text-sm text-orange-700 dark:text-orange-400 mb-2">Desconto Global Detectado</p>
+                                <p className="text-2xl font-light text-orange-700 dark:text-orange-400">
+                                    R$ {formatCurrency(aiData.financeiro.desconto_global)}
+                                </p>
                             </div>
-                            <div className="p-3 bg-green-50 rounded border border-green-100">
-                                <p className="text-xs text-green-700">Total Final</p>
-                                <p className="font-bold text-green-700">R$ {aiData.financeiro.total_final?.toFixed(2)}</p>
+                            <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-2xl">
+                                <p className="text-sm text-green-700 dark:text-green-400 mb-2">Total Final</p>
+                                <p className="text-2xl font-light text-green-700 dark:text-green-400">
+                                    R$ {formatCurrency(aiData.financeiro.total_final)}
+                                </p>
                             </div>
                         </div>
                         {aiData.financeiro.desconto_global > 0 && (
-                            <p className="text-xs text-gray-500 italic">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 italic -mt-4">
                                 * O desconto global será rateado proporcionalmente no preço unitário de cada item importado.
                             </p>
                         )}
 
-                        {/* 3. Items Matching */}
-                        <div className="border rounded-lg overflow-hidden">
-                            <Table>
-                                <TableHeader className="bg-gray-100">
-                                    <TableRow>
-                                        <TableHead className="w-[50px]">Imp.</TableHead>
-                                        <TableHead>Item no PDF (Descrição / Código)</TableHead>
-                                        <TableHead>Qtd / Preço PDF</TableHead>
-                                        <TableHead>Correspondência no Sistema</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {mappings.map((m, idx) => (
-                                        <TableRow key={idx} className={m.ignored ? 'opacity-50 bg-gray-50' : ''}>
-                                            <TableCell>
-                                                <Checkbox 
-                                                    checked={!m.ignored} 
-                                                    onCheckedChange={(checked) => {
-                                                        const newMappings = [...mappings];
-                                                        newMappings[idx].ignored = !checked;
-                                                        setMappings(newMappings);
-                                                    }}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="font-medium text-sm">{m.descricao_pdf}</div>
-                                                <div className="text-xs text-gray-500">{m.codigo_pdf || '-'}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="text-sm">{m.quantidade_pdf} x R$ {m.preco_unitario_pdf?.toFixed(2)}</div>
-                                                <div className="font-bold text-xs">Total: R$ {(m.quantidade_pdf * m.preco_unitario_pdf)?.toFixed(2)}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Select 
-                                                    value={m.selected_product_id} 
-                                                    onValueChange={(v) => {
-                                                        const newMappings = [...mappings];
-                                                        newMappings[idx].selected_product_id = v;
-                                                        newMappings[idx].ignored = false; // Auto select un-ignores
-                                                        setMappings(newMappings);
-                                                    }}
-                                                    disabled={m.ignored}
-                                                >
-                                                    <SelectTrigger className="w-full h-9 text-xs">
-                                                        <SelectValue placeholder="Selecione o produto..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {/* First show products from current quotation for easy access */}
-                                                        <SelectItem value="create_new" className="text-teal-600 font-semibold bg-teal-50">
-                                                            + Cadastrar: {m.descricao_pdf}
-                                                        </SelectItem>
-                                                        <SelectItem value={null} disabled>-- Da Cotação --</SelectItem>
-                                                        {cotacao.itens.map(i => (
-                                                            <SelectItem key={i.produto_id} value={i.produto_id}>
-                                                                {i.produto_nome}
-                                                            </SelectItem>
-                                                        ))}
-                                                        <SelectItem value="separator" disabled>-- Outros Produtos --</SelectItem>
-                                                        {produtosSistema
-                                                            .filter(p => !cotacao.itens.find(ci => ci.produto_id === p.id))
-                                                            .slice(0, 20)
-                                                            .map(p => (
-                                                                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                                                            ))
-                                                        }
-                                                    </SelectContent>
-                                                </Select>
-                                                {m.confianca_match && !m.ignored && (
-                                                    <div className={`text-[10px] mt-1 flex items-center gap-1 ${
-                                                        m.confianca_match === 'alta' ? 'text-green-600' : 'text-amber-600'
-                                                    }`}>
-                                                        {m.confianca_match === 'alta' ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                                                        Confiança IA: {m.confianca_match}
+                        {/* Items Table */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <Package className="w-5 h-5 text-gray-400" />
+                                    <h4 className="font-medium text-gray-900 dark:text-white">Itens para Importação</h4>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 dark:bg-gray-900/50">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">Imp.</th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item / Código / Marca</th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qtd / Preço</th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correspondência</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                        {mappings.map((m, idx) => (
+                                            <tr key={idx} className={`${m.ignored ? 'opacity-40 bg-gray-50 dark:bg-gray-900/20' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/50'} transition-colors`}>
+                                                <td className="px-6 py-4">
+                                                    <Checkbox 
+                                                        checked={!m.ignored} 
+                                                        onCheckedChange={(checked) => {
+                                                            const newMappings = [...mappings];
+                                                            newMappings[idx].ignored = !checked;
+                                                            setMappings(newMappings);
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-gray-900 dark:text-white mb-1">{m.descricao_pdf}</div>
+                                                    <div className="flex items-center gap-2 text-xs">
+                                                        {m.codigo_pdf && (
+                                                            <span className="text-gray-500 dark:text-gray-400">Cód: {m.codigo_pdf}</span>
+                                                        )}
+                                                        {m.marca_pdf && (
+                                                            <span className="px-2 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 rounded-md font-medium">
+                                                                {m.marca_pdf}
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-gray-700 dark:text-gray-300 mb-1">
+                                                        {m.quantidade_pdf} × R$ {formatCurrency(m.preco_unitario_pdf)}
+                                                    </div>
+                                                    <div className="font-medium text-gray-900 dark:text-white">
+                                                        Total: R$ {formatCurrency(m.quantidade_pdf * m.preco_unitario_pdf)}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <Select 
+                                                        value={m.selected_product_id} 
+                                                        onValueChange={(v) => {
+                                                            const newMappings = [...mappings];
+                                                            newMappings[idx].selected_product_id = v;
+                                                            newMappings[idx].ignored = false;
+                                                            setMappings(newMappings);
+                                                        }}
+                                                        disabled={m.ignored}
+                                                    >
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue placeholder="Selecione o produto..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="create_new" className="text-teal-600 font-semibold">
+                                                                + Cadastrar: {m.descricao_pdf}
+                                                            </SelectItem>
+                                                            <div className="px-2 py-1.5 text-xs text-gray-500 font-medium">Da Cotação</div>
+                                                            {cotacao.itens.map(i => (
+                                                                <SelectItem key={i.produto_id} value={i.produto_id}>
+                                                                    {i.produto_nome}
+                                                                </SelectItem>
+                                                            ))}
+                                                            <div className="px-2 py-1.5 text-xs text-gray-500 font-medium">Outros Produtos</div>
+                                                            {produtosSistema
+                                                                .filter(p => !cotacao.itens.find(ci => ci.produto_id === p.id))
+                                                                .slice(0, 20)
+                                                                .map(p => (
+                                                                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                                                                ))
+                                                            }
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {m.confianca_match && !m.ignored && (
+                                                        <div className={`flex items-center gap-1.5 mt-2 text-xs ${
+                                                            m.confianca_match === 'alta' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+                                                        }`}>
+                                                            {m.confianca_match === 'alta' ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                                                            Confiança IA: {m.confianca_match}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}
-
-                <DialogFooter>
-                    {step === 'review' ? (
-                        <>
-                            <Button variant="outline" onClick={() => setStep('upload')}>Voltar / Reenviar</Button>
-                            <Button onClick={handleConfirmImport} className="bg-teal-600 hover:bg-teal-700">
-                                Confirmar Importação
-                            </Button>
-                        </>
-                    ) : (
-                        <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-                    )}
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </div>
+        </div>
     );
 }
