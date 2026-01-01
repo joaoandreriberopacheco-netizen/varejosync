@@ -9,7 +9,7 @@ import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { getTenantId } from '@/components/utils/tenant';
 
 const ENTITIES = [
-  { id: 'Produto', label: 'Produtos', description: 'Todos os produtos cadastrados' },
+  { id: 'Produto', label: 'Produtos', description: 'Todos os produtos cadastrados (exclui CustoDetalhado junto)' },
   { id: 'Terceiro', label: 'Terceiros', description: 'Clientes e fornecedores' },
   { id: 'ContasFinanceiras', label: 'Contas Financeiras', description: 'Contas bancárias e caixas' },
   { id: 'LancamentoFinanceiro', label: 'Lançamentos Financeiros', description: 'Receitas e despesas' },
@@ -59,21 +59,53 @@ export default function RecomecarDoZero() {
 
   const handleAuthSuccess = async (authData) => {
     setIsProcessing(true);
-    const tenantId = getTenantId();
-    let successCount = 0;
+    let totalDeleted = 0;
     let errorCount = 0;
 
     try {
-      for (const entityId of selectedEntities) {
+      // Ordem de deleção: primeiro dependências, depois entidades principais
+      const ordenacaoDependencias = [
+        'CustoDetalhado',
+        'MovimentacaoEstoque', 
+        'OrdemSeparacao', 
+        'ProtocoloEntrega', 
+        'AgendaLogistica',
+        'LancamentoFinanceiro', 
+        'MovimentosCaixa',
+        'PedidoVenda', 
+        'PedidoCompra', 
+        'VendaPerdida', 
+        'Cotacao', 
+        'Tarefa',
+        'Supermanifesto',
+        'Produto',
+        'Veiculo', 
+        'Campanha', 
+        'TabelaPreco', 
+        'Terceiro',
+        'ContasFinanceiras', 
+        'FormasDePagamento',
+        'Categoria'
+      ];
+
+      // Deletar apenas as entidades selecionadas, na ordem de dependências
+      for (const entityId of ordenacaoDependencias) {
+        if (!selectedEntities.includes(entityId)) continue;
+
         try {
-          // Buscar todos os registros da entidade
-          const records = await base44.entities[entityId].filter({ empresa_id: tenantId });
-          
-          // Deletar cada registro
-          for (const record of records) {
-            await base44.entities[entityId].delete(record.id);
+          let hasMore = true;
+          while (hasMore) {
+            const records = await base44.entities[entityId].list('-created_date', 100);
+            
+            if (records && records.length > 0) {
+              await Promise.all(records.map(r => base44.entities[entityId].delete(r.id)));
+              totalDeleted += records.length;
+              
+              if (records.length < 100) hasMore = false;
+            } else {
+              hasMore = false;
+            }
           }
-          
           successCount++;
         } catch (error) {
           console.error(`Erro ao zerar ${entityId}:`, error);
@@ -83,8 +115,8 @@ export default function RecomecarDoZero() {
 
       toast({
         title: "Operação concluída",
-        description: `${successCount} entidade(s) zerada(s) com sucesso. ${errorCount > 0 ? `${errorCount} erro(s).` : ''}`,
-        className: "bg-gray-100 text-gray-800"
+        description: `${totalDeleted} registro(s) deletado(s) de ${successCount} entidade(s). ${errorCount > 0 ? `${errorCount} erro(s).` : ''}`,
+        className: "bg-emerald-100 text-emerald-800"
       });
 
       setSelectedEntities([]);
