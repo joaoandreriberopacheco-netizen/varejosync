@@ -77,10 +77,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       setCustos([
         { descricao_custo: 'Valor de Compra', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
         { descricao_custo: 'Frete', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Imposto 1', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Imposto 2', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Desconto Comercial', valor_custo: 0, tipo_valor: 'numerico', is_negativo: true },
-        { descricao_custo: 'Outros Custos', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false }
+        { descricao_custo: 'Custo Adicional', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
+        { descricao_custo: 'Imposto 1', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
+        { descricao_custo: 'Imposto 2', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
+        { descricao_custo: 'Desconto Comercial', valor_custo: 0, tipo_valor: 'percentual', is_negativo: true }
       ]);
     }
   }, [produto]);
@@ -100,10 +100,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       setCustos([
         { descricao_custo: 'Valor de Compra', valor_custo: produto.valor_compra || 0, tipo_valor: 'numerico', is_negativo: false },
         { descricao_custo: 'Frete', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Imposto 1', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Imposto 2', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Desconto Comercial', valor_custo: 0, tipo_valor: 'numerico', is_negativo: true },
-        { descricao_custo: 'Outros Custos', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false }
+        { descricao_custo: 'Custo Adicional', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
+        { descricao_custo: 'Imposto 1', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
+        { descricao_custo: 'Imposto 2', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
+        { descricao_custo: 'Desconto Comercial', valor_custo: 0, tipo_valor: 'percentual', is_negativo: true }
       ]);
     } else {
       setCustos(custosData);
@@ -479,14 +479,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
               {/* Composição de Custos */}
               <div>
                 <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-6">Composição de Custos</h3>
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {custos.map((custo, index) => {
-                    const isCustoBase = custo.descricao_custo === 'Valor de Compra';
+                    const isCustoNumerico = ['Valor de Compra', 'Frete', 'Custo Adicional'].includes(custo.descricao_custo);
+                    const isDesconto = custo.descricao_custo === 'Desconto Comercial';
                     const valorDigitado = parseFloat(custo.valor_custo) || 0;
                     const isPercentual = custo.tipo_valor === 'percentual';
 
                     let valorCalculadoReais = 0;
-                    if (isCustoBase) {
+                    if (isCustoNumerico) {
                       valorCalculadoReais = valorDigitado;
                     } else if (isPercentual) {
                       valorCalculadoReais = (custoBase * valorDigitado / 100);
@@ -495,13 +496,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                     }
 
                     return (
-                      <div key={index} className="space-y-2">
-                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{custo.descricao_custo}</div>
+                      <div key={index} className="flex items-center justify-between gap-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[140px]">
+                          {custo.descricao_custo}
+                        </div>
                         
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <Input
                             type="number"
-                            step="0.01"
+                            step={isCustoNumerico ? "0.01" : "0.1"}
                             value={custo.valor_custo || ''}
                             onChange={e => handleCustoChange(index, 'valor_custo', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                             onKeyDown={e => {
@@ -522,51 +525,24 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                               }
                             }}
                             data-custo-index={index}
-                            placeholder="0,00"
-                            className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm w-32 text-right text-gray-800 dark:text-gray-200"
+                            placeholder={isCustoNumerico ? "0,00" : "0"}
+                            className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm w-20 text-right text-gray-800 dark:text-gray-200"
                           />
 
-                          {!isCustoBase && (
-                            <button
-                              type="button"
-                              tabIndex={-1}
-                              onClick={() => handleCustoChange(index, 'tipo_valor', isPercentual ? 'numerico' : 'percentual')}
-                              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                                isPercentual ? 'bg-blue-100 dark:bg-blue-900' : 'bg-gray-200 dark:bg-gray-700'
-                              }`}
-                            >
-                              <span
-                                className={`inline-flex items-center justify-center h-5 w-5 transform rounded-full bg-white dark:bg-gray-300 transition-transform text-[10px] font-bold ${
-                                  isPercentual ? 'translate-x-6 text-blue-600' : 'translate-x-1 text-gray-600'
-                                }`}
-                              >
-                                {isPercentual ? '%' : 'R$'}
+                          {!isCustoNumerico && (
+                            <div className="flex items-center gap-1 min-w-[80px]">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                {isDesconto ? '-' : ''}R$ {formatarNumero(Math.abs(valorCalculadoReais))}
                               </span>
-                            </button>
+                            </div>
                           )}
-
-                          {!isCustoBase && (
-                            <button
-                              type="button"
-                              tabIndex={-1}
-                              onClick={() => handleCustoChange(index, 'is_negativo', !custo.is_negativo)}
-                              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                                custo.is_negativo ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                              }`}
-                            >
-                              <span
-                                className={`inline-flex items-center justify-center h-5 w-5 transform rounded-full bg-white dark:bg-gray-300 transition-transform text-xs font-bold ${
-                                  custo.is_negativo ? 'translate-x-6 text-red-600' : 'translate-x-1 text-green-600'
-                                }`}
-                              >
-                                {custo.is_negativo ? '-' : '+'}
-                              </span>
-                            </button>
+                          
+                          {isCustoNumerico && (
+                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap min-w-[80px] text-right">
+                              R$ {formatarNumero(valorCalculadoReais)}
+                            </span>
                           )}
-
-                          <span className="text-sm font-bold text-gray-800 dark:text-gray-200 ml-auto whitespace-nowrap">
-                            {custo.is_negativo ? '-' : ''}R$ {formatarNumero(Math.abs(valorCalculadoReais))}
-                          </span>
                         </div>
                       </div>
                     );
