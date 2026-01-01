@@ -285,6 +285,7 @@ export default function ImportacaoProdutos() {
           await base44.entities.Produto.create(produtoData);
         }
 
+        await new Promise(resolve => setTimeout(resolve, 150));
         setImportProgress({ current: i + 1, total: linhasDados.length });
       }
 
