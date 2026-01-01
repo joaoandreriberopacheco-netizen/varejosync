@@ -99,7 +99,7 @@ export default function ProdutosPage() {
   const [selectedProduto, setSelectedProduto] = useState(null);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState([
-    'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
+    'status', 'cadastro', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
   ]);
 
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
@@ -185,6 +185,7 @@ export default function ProdutosPage() {
       "codigo_interno",
       "codigo_barras",
       "nome",
+      "campos_pendentes",
       "tipo",
       "categoria",
       "marca",
@@ -224,11 +225,22 @@ export default function ProdutosPage() {
       const fornecedor = fornecedores.find(f => f.id === p.fornecedor_padrao_id);
       const fornecedorCodigo = fornecedor?.codigo_interno || '';
       const tagsString = Array.isArray(p.tags) ? p.tags.join(',') : '';
+      
+      // Identificar campos pendentes
+      const cadastroStatus = isCadastroIncompleto(p);
+      const camposPendentes = [];
+      if (cadastroStatus.checks.semCategoria) camposPendentes.push('Categoria');
+      if (cadastroStatus.checks.semFornecedor) camposPendentes.push('Fornecedor');
+      if (cadastroStatus.checks.semPrecoVenda) camposPendentes.push('Preço');
+      if (cadastroStatus.checks.semCodigoBarras) camposPendentes.push('Cód.Barras');
+      if (cadastroStatus.checks.semImagem) camposPendentes.push('Imagem');
+      const camposPendentesString = camposPendentes.length > 0 ? camposPendentes.join(', ') : '';
 
       const row = [
         p.codigo_interno || '',
         p.codigo_barras || '',
         p.nome || '',
+        camposPendentesString,
         p.tipo || 'Produto',
         p.categoria_nome || '',
         p.marca || '',
@@ -1345,6 +1357,9 @@ export default function ProdutosPage() {
                       {visibleColumns.includes('status') && (
                         <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300 text-xs">Status</TableHead>
                       )}
+                      {visibleColumns.includes('cadastro') && (
+                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Cadastro</TableHead>
+                      )}
                       {visibleColumns.includes('codigo_interno') && (
                         <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Código</TableHead>
                       )}
@@ -1501,6 +1516,21 @@ export default function ProdutosPage() {
                           )}
                           {visibleColumns.includes('status') && (
                             <TableCell>{getStockStatusIndicator(produto)}</TableCell>
+                          )}
+                          {visibleColumns.includes('cadastro') && (
+                            <TableCell>
+                              {cadastroStatus.incompleto ? (
+                                <div className="flex flex-col gap-0.5">
+                                  {cadastroStatus.checks.semCategoria && <span className="text-[10px] text-red-600 dark:text-red-400">Sem categoria</span>}
+                                  {cadastroStatus.checks.semFornecedor && <span className="text-[10px] text-red-600 dark:text-red-400">Sem fornecedor</span>}
+                                  {cadastroStatus.checks.semPrecoVenda && <span className="text-[10px] text-red-600 dark:text-red-400">Sem preço</span>}
+                                  {cadastroStatus.checks.semCodigoBarras && <span className="text-[10px] text-red-600 dark:text-red-400">Sem cód. barras</span>}
+                                  {cadastroStatus.checks.semImagem && <span className="text-[10px] text-red-600 dark:text-red-400">Sem imagem</span>}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-green-600 dark:text-green-400">Completo</span>
+                              )}
+                            </TableCell>
                           )}
                           {visibleColumns.includes('fornecedor') && (
                             <TableCell>
