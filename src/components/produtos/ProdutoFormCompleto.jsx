@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2 } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight } from 'lucide-react';
 import TagGenerator from './TagGenerator';
+import CurrencyInput from './CurrencyInput';
 import { useToast } from "@/components/ui/use-toast";
 import { getTenantId } from '@/components/utils/tenant';
 
@@ -477,71 +478,60 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
             {/* LAYOUT GRID - Desktop: lado a lado | Mobile: empilhado */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
               {/* Composição de Custos */}
-              <div>
-                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-6">Composição de Custos</h3>
-                <div className="space-y-4">
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-4">
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Composição de Custos</h3>
+                </div>
+                <div className="space-y-1">
                   {custos.map((custo, index) => {
                     const isCustoNumerico = ['Valor de Compra', 'Frete', 'Custo Adicional'].includes(custo.descricao_custo);
                     const isDesconto = custo.descricao_custo === 'Desconto Comercial';
                     const valorDigitado = parseFloat(custo.valor_custo) || 0;
-                    const isPercentual = custo.tipo_valor === 'percentual';
 
                     let valorCalculadoReais = 0;
                     if (isCustoNumerico) {
                       valorCalculadoReais = valorDigitado;
-                    } else if (isPercentual) {
-                      valorCalculadoReais = (custoBase * valorDigitado / 100);
                     } else {
-                      valorCalculadoReais = valorDigitado;
+                      valorCalculadoReais = (custoBase * valorDigitado / 100);
                     }
 
                     return (
-                      <div key={index} className="flex items-center justify-between gap-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[140px]">
+                      <div key={index} className="flex items-center justify-between gap-4 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px] flex-shrink-0">
                           {custo.descricao_custo}
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            step={isCustoNumerico ? "0.01" : "0.1"}
-                            value={custo.valor_custo || ''}
-                            onChange={e => handleCustoChange(index, 'valor_custo', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                            onKeyDown={e => {
-                              if (e.key === 'ArrowDown') {
-                                e.preventDefault();
-                                const nextIndex = index + 1;
-                                if (nextIndex < custos.length) {
-                                  const nextInput = document.querySelector(`[data-custo-index="${nextIndex}"]`);
-                                  if (nextInput) nextInput.focus();
-                                }
-                              } else if (e.key === 'ArrowUp') {
-                                e.preventDefault();
-                                const prevIndex = index - 1;
-                                if (prevIndex >= 0) {
-                                  const prevInput = document.querySelector(`[data-custo-index="${prevIndex}"]`);
-                                  if (prevInput) prevInput.focus();
-                                }
-                              }
-                            }}
-                            data-custo-index={index}
-                            placeholder={isCustoNumerico ? "0,00" : "0"}
-                            className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm w-20 text-right text-gray-800 dark:text-gray-200"
-                          />
-
-                          {!isCustoNumerico && (
-                            <div className="flex items-center gap-1 min-w-[80px]">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        <div className="flex items-center gap-3 flex-1 justify-end">
+                          {isCustoNumerico ? (
+                            <>
+                              <CurrencyInput
+                                value={custo.valor_custo}
+                                onChange={val => handleCustoChange(index, 'valor_custo', val)}
+                                dataIndex={index}
+                                placeholder="0,00"
+                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-24 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                              />
+                              <span className="text-xs text-gray-400 w-8 text-right">(R$)</span>
+                              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 w-24 text-right tabular-nums">
+                                R$ {formatarNumero(valorCalculadoReais)}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <CurrencyInput
+                                value={custo.valor_custo}
+                                onChange={val => handleCustoChange(index, 'valor_custo', val)}
+                                dataIndex={index}
+                                placeholder="0,00"
+                                isPercentage={true}
+                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-16 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                              />
+                              <span className="text-xs text-gray-400 w-8">%</span>
+                              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 w-24 text-right tabular-nums">
                                 {isDesconto ? '-' : ''}R$ {formatarNumero(Math.abs(valorCalculadoReais))}
                               </span>
-                            </div>
-                          )}
-                          
-                          {isCustoNumerico && (
-                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap min-w-[80px] text-right">
-                              R$ {formatarNumero(valorCalculadoReais)}
-                            </span>
+                            </>
                           )}
                         </div>
                       </div>
@@ -557,54 +547,63 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
               </div>
 
               {/* Preço de Venda */}
-              <div>
-                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-6">Preço de Venda</h3>
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-4">
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Preço de Venda</h3>
+                </div>
 
-                <div className="space-y-8">
-                  <div>
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">Preço de Venda (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.preco_venda_tipo === 'numerico' ? (formData.preco_venda_padrao || '') : (precoVendaCalculado > 0 ? precoVendaCalculado.toFixed(2) : '')}
-                      onChange={e => {
-                        const valorVenda = parseFloat(e.target.value) || 0;
-                        handleChange('preco_venda_padrao', valorVenda);
-                        handleChange('preco_venda_tipo', 'numerico');
-                        if (precoCustoCalculado > 0) {
-                          const markupCalc = ((valorVenda - precoCustoCalculado) / precoCustoCalculado) * 100;
-                          handleChange('preco_venda_percentual', markupCalc);
-                        }
-                      }}
-                      placeholder="0,00"
-                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-12 text-base text-gray-800 dark:text-gray-200"
-                    />
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px]">Preço de Venda</Label>
+                    <div className="flex items-center gap-3 flex-1 justify-end">
+                      <CurrencyInput
+                        value={formData.preco_venda_tipo === 'numerico' ? formData.preco_venda_padrao : precoVendaCalculado}
+                        onChange={val => {
+                          handleChange('preco_venda_padrao', val);
+                          handleChange('preco_venda_tipo', 'numerico');
+                          if (precoCustoCalculado > 0) {
+                            const markupCalc = ((val - precoCustoCalculado) / precoCustoCalculado) * 100;
+                            handleChange('preco_venda_percentual', markupCalc);
+                          }
+                        }}
+                        dataIndex="preco_venda"
+                        placeholder="0,00"
+                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-32 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                      />
+                      <span className="text-xs text-gray-400 w-8 text-right">(R$)</span>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">Markup (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={formData.preco_venda_percentual || ''}
-                      onChange={e => {
-                        const markup = parseFloat(e.target.value) || 0;
-                        handleChange('preco_venda_percentual', markup);
-                        handleChange('preco_venda_tipo', 'percentual');
-                      }}
-                      placeholder="0,00"
-                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-12 text-base text-gray-800 dark:text-gray-200"
-                    />
+                  <div className="flex items-center justify-between gap-4">
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px]">Markup</Label>
+                    <div className="flex items-center gap-3 flex-1 justify-end">
+                      <CurrencyInput
+                        value={formData.preco_venda_percentual}
+                        onChange={val => {
+                          handleChange('preco_venda_percentual', val);
+                          handleChange('preco_venda_tipo', 'percentual');
+                        }}
+                        dataIndex="markup"
+                        placeholder="0,00"
+                        isPercentage={true}
+                        className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-24 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                      />
+                      <span className="text-xs text-gray-400 w-8">%</span>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">Margem de Contribuição (%)</Label>
-                    <Input
-                      type="text"
-                      value={formatarNumero(margemContribuicao)}
-                      disabled
-                      className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-12 text-base text-gray-600 dark:text-gray-400"
-                    />
+                  <div className="flex items-center justify-between gap-4">
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-[140px]">Margem de Contribuição</Label>
+                    <div className="flex items-center gap-3 flex-1 justify-end">
+                      <Input
+                        type="text"
+                        value={formatarNumero(margemContribuicao)}
+                        disabled
+                        className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none px-0 h-8 text-sm w-24 text-right text-gray-500 dark:text-gray-400 tabular-nums"
+                      />
+                      <span className="text-xs text-gray-400 w-8">%</span>
+                    </div>
                   </div>
                 </div>
               </div>
