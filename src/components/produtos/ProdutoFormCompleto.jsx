@@ -296,7 +296,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-4 md:py-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-6 md:py-8">
           {/* ABA DESCRITIVO */}
           <TabsContent value="descritivo" className="space-y-6 mt-0">
             {/* Image Upload */}
@@ -455,7 +455,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           {/* ABA COMERCIAL */}
           <TabsContent value="comercial" className="mt-0">
             {/* KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-8 border-b border-gray-200 dark:border-gray-700">
               <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                 <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Custo Total</div>
                 <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</div>
