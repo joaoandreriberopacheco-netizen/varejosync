@@ -1249,14 +1249,19 @@ export default function ProdutosPage() {
                           <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 mb-1">{produto.nome}</h3>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{produto.codigo_interno}</p>
                         </div>
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
                               <MoreHorizontal className="h-4 w-4 text-gray-700 dark:text-gray-400" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
-                            <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                          <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700" onCloseAutoFocus={(e) => e.preventDefault()}>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                handleEdit(produto);
+                              }} 
+                              className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
+                            >
                               <Edit className="mr-2 h-3.5 w-3.5"/>Editar
                             </DropdownMenuItem>
                             <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
@@ -1393,8 +1398,13 @@ export default function ProdutosPage() {
                                   <MoreHorizontal className="h-3.5 w-3.5 text-gray-700 dark:text-gray-400" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start" className="z-50 dark:bg-gray-800 dark:border-gray-700" sideOffset={5}>
-                                <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                              <DropdownMenuContent align="start" className="z-50 dark:bg-gray-800 dark:border-gray-700" sideOffset={5} onCloseAutoFocus={(e) => e.preventDefault()}>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    handleEdit(produto);
+                                  }} 
+                                  className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
+                                >
                                   <Edit className="mr-2 h-3.5 w-3.5"/>Editar
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
