@@ -3,6 +3,8 @@ import { Input } from '@/components/ui/input';
 
 export default function CurrencyInput({ value, onChange, onEnter, placeholder, className, dataIndex, isPercentage = false }) {
   const inputRef = useRef(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editValue, setEditValue] = React.useState('');
 
   const formatCurrency = (val) => {
     if (!val && val !== 0) return '';
@@ -45,13 +47,36 @@ export default function CurrencyInput({ value, onChange, onEnter, placeholder, c
   };
 
   const handleFocus = (e) => {
+    setIsEditing(false);
+    setEditValue('');
     e.target.select();
   };
 
   const handleChange = (e) => {
     const rawValue = e.target.value;
-    const numValue = parseCurrency(rawValue);
-    onChange(numValue);
+    
+    // Se está no modo de edição (começou a digitar), usa o valor raw
+    if (isEditing) {
+      setEditValue(rawValue);
+      const numValue = parseCurrency(rawValue);
+      onChange(numValue);
+    } else {
+      const numValue = parseCurrency(rawValue);
+      onChange(numValue);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    // Quando o usuário começa a digitar (qualquer tecla que não seja controle)
+    if (!isEditing && e.key.length === 1) {
+      setIsEditing(true);
+      setEditValue('');
+    }
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    setEditValue('');
   };
 
   const handleKeyDown = (e) => {
@@ -87,10 +112,12 @@ export default function CurrencyInput({ value, onChange, onEnter, placeholder, c
       ref={inputRef}
       type="text"
       inputMode="decimal"
-      value={formatCurrency(value)}
+      value={isEditing ? editValue : formatCurrency(value)}
       onChange={handleChange}
       onFocus={handleFocus}
+      onKeyPress={handleKeyPress}
       onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
       data-custo-index={dataIndex}
