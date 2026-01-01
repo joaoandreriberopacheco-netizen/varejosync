@@ -722,17 +722,25 @@ export default function PDVVendedor() {
 
                         {/* Mobile Layout */}
                         <div className="flex md:hidden items-start gap-3">
-                          <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                      estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
-                      estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                      'bg-gray-100 dark:bg-gray-700'}`
-                      }>
-                            <Package className={`w-5 h-5 ${
-                        estoqueStatus === 'sem' ? 'text-red-500' :
-                        estoqueStatus === 'baixo' ? 'text-amber-500' :
-                        'text-gray-500 dark:text-gray-400'}`
-                        } />
-                          </div>
+                          {produto.imagem_url ? (
+                            <img 
+                              src={produto.imagem_url} 
+                              alt={produto.nome}
+                              className="flex-shrink-0 w-10 h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-700"
+                            />
+                          ) : (
+                            <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                              estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
+                              estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
+                              'bg-gray-100 dark:bg-gray-700'}`
+                            }>
+                              <Package className={`w-5 h-5 ${
+                                estoqueStatus === 'sem' ? 'text-red-500' :
+                                estoqueStatus === 'baixo' ? 'text-amber-500' :
+                                'text-gray-500 dark:text-gray-400'}`
+                              } />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight">
@@ -759,17 +767,25 @@ export default function PDVVendedor() {
 
                         {/* Desktop Layout */}
                         <div className="hidden md:flex items-start gap-4">
-                          <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-                      estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
-                      estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                      'bg-gray-100 dark:bg-gray-700'}`
-                      }>
-                            <Package className={`w-6 h-6 ${
-                        estoqueStatus === 'sem' ? 'text-red-500' :
-                        estoqueStatus === 'baixo' ? 'text-amber-500' :
-                        'text-gray-500 dark:text-gray-400'}`
-                        } />
-                          </div>
+                          {produto.imagem_url ? (
+                            <img 
+                              src={produto.imagem_url} 
+                              alt={produto.nome}
+                              className="flex-shrink-0 w-12 h-12 rounded-xl object-cover bg-gray-100 dark:bg-gray-700"
+                            />
+                          ) : (
+                            <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                              estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
+                              estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
+                              'bg-gray-100 dark:bg-gray-700'}`
+                            }>
+                              <Package className={`w-6 h-6 ${
+                                estoqueStatus === 'sem' ? 'text-red-500' :
+                                estoqueStatus === 'baixo' ? 'text-amber-500' :
+                                'text-gray-500 dark:text-gray-400'}`
+                              } />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-tight mb-1">
                               {produto.nome}
@@ -805,9 +821,17 @@ export default function PDVVendedor() {
             <div className="mt-3 p-3 md:p-4 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <Package className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    </div>
+                    {produtoSelecionado.imagem_url ? (
+                      <img 
+                        src={produtoSelecionado.imagem_url} 
+                        alt={produtoSelecionado.nome}
+                        className="w-10 h-10 rounded-lg object-cover bg-gray-200 dark:bg-gray-700"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <Package className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -862,9 +886,17 @@ export default function PDVVendedor() {
                     className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm">
 
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-500">
-                            <Package className="w-4 h-4" />
-                          </div>
+                          {prod.imagem_url ? (
+                            <img 
+                              src={prod.imagem_url} 
+                              alt={prod.nome}
+                              className="w-8 h-8 rounded object-cover bg-gray-100 dark:bg-gray-700 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-500">
+                              <Package className="w-4 h-4" />
+                            </div>
+                          )}
                           <div className="min-w-0">
                             <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
                               {prod.nome}
