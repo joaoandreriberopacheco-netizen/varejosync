@@ -325,11 +325,10 @@ export default function PDVVendedor() {
 
   const loadDependencies = async () => {
     try {
-      const tenantId = getTenantId();
       const [produtosData, userData, clientesData] = await Promise.all([
-      Produto.filter({ ativo: true, empresa_id: tenantId }),
-      User.me(),
-      Terceiro.filter({ tipo: ['Cliente', 'Ambos'], empresa_id: tenantId })]
+      base44.entities.Produto.filter({ ativo: true }),
+      base44.auth.me(),
+      base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] })]
       );
 
       setProdutos(produtosData);
