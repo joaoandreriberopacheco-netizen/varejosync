@@ -18,7 +18,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     ...produto,
     tags: Array.isArray(produto.tags) ? produto.tags : [],
     unidades_alternativas: Array.isArray(produto.unidades_alternativas) ? produto.unidades_alternativas : [],
-    // Ensure defaults for potentially missing fields in legacy records
     tipo: produto.tipo || 'Produto',
     valor_compra: produto.valor_compra || 0,
     preco_venda_padrao: produto.preco_venda_padrao || 0,
@@ -66,7 +65,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       });
     } finally {
       setIsUploading(false);
-      // Limpar o input para permitir selecionar o mesmo arquivo novamente se necessário
       e.target.value = '';
     }
   };
@@ -148,25 +146,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
-  const handleCustoChangePercentual = (index, value) => {
-    const newCustos = [...custos];
-    newCustos[index].valor_custo = value === '' ? 0 : parseFloat(value);
-    setCustos(newCustos);
-  };
-
-  const handleCustoChangeReais = (index, value) => {
-    const newCustos = [...custos];
-    newCustos[index].valor_custo = value === '' ? 0 : parseFloat(value);
-    setCustos(newCustos);
-  };
-
   const handleCustoChange = (index, field, value) => {
     const newCustos = [...custos];
     newCustos[index][field] = value;
     setCustos(newCustos);
   };
-
-
 
   const handleAddTag = () => {
     const currentTags = Array.isArray(formData.tags) ? formData.tags : [];
@@ -197,7 +181,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
       const categoria = categorias.find(c => c.id === formData.categoria_id);
       const tenantId = getTenantId();
-      console.log("ProdutoFormCompleto - handleSave: tenantId obtido antes de salvar Produto:", tenantId);
       if (!tenantId) {
           toast({
               title: "Erro de Tenant",
@@ -240,7 +223,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
             : (parseFloat(c.valor_custo) || 0),
           is_negativo: c.is_negativo || false
         }));
-      console.log("ProdutoFormCompleto - handleSave: Custos a serem criados (com empresa_id):", custosParaCriar);
 
       if (custosParaCriar.length > 0) {
         await base44.entities.CustoDetalhado.bulkCreate(custosParaCriar);
@@ -268,25 +250,25 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header Mobile-First */}
+    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-900">
+      {/* Header */}
       <div className="flex-none border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <div className="p-3 md:p-4">
+        <div className="p-4 md:p-6">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h2 className="text-base md:text-lg font-medium text-gray-700 dark:text-gray-200 truncate">
+              <h2 className="text-lg md:text-xl font-medium text-gray-800 dark:text-gray-200 truncate">
                 {produto?.id ? 'Editar:' : 'Novo Produto'}
               </h2>
-              <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 mt-0.5 truncate">
+              <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1 truncate">
                 {formData.nome || 'Sem nome'}
               </p>
             </div>
-            <div className="flex gap-1.5 flex-shrink-0">
-              <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-8 w-8 dark:text-gray-400">
-                <X className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+            <div className="flex gap-2 flex-shrink-0">
+              <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
+                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </Button>
-              <Button size="icon" onClick={handleSave} disabled={isSaving} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 text-white h-8 w-8">
-                <Save className="w-4 h-4" />
+              <Button size="icon" onClick={handleSave} disabled={isSaving} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 text-white h-10 w-10">
+                <Save className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -296,44 +278,44 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       {/* Tabs */}
       <Tabs defaultValue="descritivo" className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <TabsList className="grid grid-cols-4 w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex-shrink-0">
-            <TabsTrigger value="descritivo" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
-              <Package className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Características</span>
-            </TabsTrigger>
-            <TabsTrigger value="comercial" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
-              <DollarSign className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Precificação</span>
-            </TabsTrigger>
-            <TabsTrigger value="logistico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
-              <Warehouse className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Logística</span>
-            </TabsTrigger>
-            <TabsTrigger value="sistema" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-xs">
-              <Settings className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-              <span className="hidden sm:inline ml-1.5 text-gray-700 dark:text-gray-300">Sistema</span>
-            </TabsTrigger>
-          </TabsList>
+          <TabsTrigger value="descritivo" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
+            <Package className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Características</span>
+          </TabsTrigger>
+          <TabsTrigger value="comercial" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
+            <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Precificação</span>
+          </TabsTrigger>
+          <TabsTrigger value="logistico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
+            <Warehouse className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Logística</span>
+          </TabsTrigger>
+          <TabsTrigger value="sistema" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
+            <Settings className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Sistema</span>
+          </TabsTrigger>
+        </TabsList>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-3 md:px-6 py-3 md:py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-4 md:py-6">
           {/* ABA DESCRITIVO */}
-          <TabsContent value="descritivo" className="space-y-4 mt-0">
-            {/* Image Upload Section */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-800">
-              <div className="w-24 h-24 shrink-0 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center overflow-hidden relative group">
+          <TabsContent value="descritivo" className="space-y-6 mt-0">
+            {/* Image Upload */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="w-28 h-28 shrink-0 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
                 {formData.imagem_url ? (
                   <img src={formData.imagem_url} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="text-gray-300 dark:text-gray-500 text-xs text-center p-1">Sem imagem</div>
+                  <div className="text-gray-300 dark:text-gray-500 text-xs text-center p-2">Sem imagem</div>
                 )}
               </div>
-              <div className="flex-1 w-full space-y-2">
+              <div className="flex-1 w-full space-y-3">
                 <Label className="text-xs text-gray-600 dark:text-gray-400 block">URL da Imagem</Label>
                 <div className="flex gap-2">
                   <Input 
                     value={formData.imagem_url || ''} 
                     onChange={e => handleChange('imagem_url', e.target.value)} 
                     placeholder="https://..." 
-                    className="flex-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 h-8 text-xs"
+                    className="flex-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 h-10 text-sm"
                   />
                   <div className="relative">
                     <input
@@ -348,61 +330,61 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="h-8 px-3 text-xs border-gray-300 dark:border-gray-600 dark:text-gray-200"
+                      className="h-10 px-4 text-sm border-gray-300 dark:border-gray-600 dark:text-gray-200"
                       disabled={isUploading}
                       onClick={() => document.getElementById('image-upload').click()}
                     >
                       {isUploading ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       ) : (
-                        <Upload className="w-3.5 h-3.5 mr-1.5" />
+                        <Upload className="w-4 h-4 mr-2" />
                       )}
                       Upload
                     </Button>
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Cole a URL ou faça upload de uma imagem do seu computador.
                 </p>
               </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2">
-              <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Descrição do Produto *</Label>
+            <div>
+              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Descrição do Produto *</Label>
               <Input 
                 value={formData.nome} 
                 onChange={e => handleChange('nome', e.target.value)} 
                 placeholder="Ex: Torneira de Mesa Cromada" 
-                className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm font-medium text-gray-800 dark:text-gray-200"
+                className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-base font-medium text-gray-800 dark:text-gray-200"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Código Interno</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Código Interno</Label>
                 <Input 
                   value={formData.codigo_interno} 
                   placeholder="Automático"
                   disabled 
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-9 text-sm text-gray-500 dark:text-gray-500"
+                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
                 />
               </div>
 
               <div>
-                <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Código de Barras</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Código de Barras</Label>
                 <Input 
                   value={formData.codigo_barras} 
                   onChange={e => handleChange('codigo_barras', e.target.value)} 
                   placeholder="7891234567890" 
-                  className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Categoria</Label>
+              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Categoria</Label>
               <Select value={formData.categoria_id} onValueChange={v => handleChange('categoria_id', v)}>
-                <SelectTrigger className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none h-9 text-sm text-gray-800 dark:text-gray-200">
+                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-gray-800 dark:text-gray-200">
                   <SelectValue placeholder="Selecione a categoria..." />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
@@ -414,18 +396,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
             </div>
 
             <div>
-              <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Fornecedor Padrão</Label>
+              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Fornecedor Padrão</Label>
               <Select value={formData.fornecedor_padrao_id} onValueChange={v => {
                 const forn = fornecedores.find(f => f.id === v);
                 handleChange('fornecedor_padrao_id', v);
                 handleChange('fornecedor_padrao_codigo', forn?.codigo_interno || '');
               }}>
-                <SelectTrigger className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none h-9 text-sm text-gray-800 dark:text-gray-200">
+                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-gray-800 dark:text-gray-200">
                   <SelectValue placeholder="Selecione o fornecedor..." />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                   {fornecedores.map(f => (
-                    <SelectItem key={f.id} value={f.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                    <SelectItem key={f.id} value={f.id} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
                       {f.nome}
                     </SelectItem>
                   ))}
@@ -434,11 +416,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <Label className="text-xs text-gray-600 dark:text-gray-400 block">Tags de Agrupamento</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm text-gray-600 dark:text-gray-400 block">Tags de Agrupamento</Label>
                 <TagGenerator 
                   produtoNome={formData.nome} 
-                  produtoDescricao={formData.descricao} // Assumindo que existe formData.descricao
+                  produtoDescricao={formData.descricao}
                   onTagsGenerated={(tags) => {
                     const newTags = [...new Set([...formData.tags, ...tags])];
                     handleChange('tags', newTags);
@@ -451,18 +433,18 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                   placeholder="Ex: torneira, banheiro" 
-                  className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
-                <Button type="button" onClick={handleAddTag} size="sm" variant="ghost" className="h-9 px-2 dark:text-gray-300">
-                  <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                <Button type="button" onClick={handleAddTag} size="sm" variant="ghost" className="h-10 px-3">
+                  <Plus className="w-5 h-5 text-gray-700 dark:text-gray-400" />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-1 mt-2">
+              <div className="flex flex-wrap gap-2 mt-3">
                 {formData.tags.map(tag => (
-                  <Badge key={tag} className="bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 text-xs">
+                  <Badge key={tag} className="bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 text-sm py-1 px-3">
                     #{tag}
-                    <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-gray-900 dark:hover:text-gray-100">
-                      <X className="w-3 h-3" />
+                    <button onClick={() => handleRemoveTag(tag)} className="ml-2 hover:text-gray-900 dark:hover:text-gray-100">
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </Badge>
                 ))}
@@ -471,53 +453,140 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           </TabsContent>
 
           {/* ABA COMERCIAL */}
-          <TabsContent value="comercial" className="space-y-4 mt-0">
-            {/* KPIs - 4 CARDS */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="text-center">
-                <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Custo Total</div>
-                <div className="text-base font-semibold text-gray-700 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</div>
+          <TabsContent value="comercial" className="mt-0">
+            {/* KPIs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Custo Total</div>
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</div>
               </div>
-              <div className="text-center">
-                <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Preço Venda</div>
-                <div className="text-base font-semibold text-gray-700 dark:text-gray-200">R$ {formatarNumero(precoVendaCalculado)}</div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Preço Venda</div>
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoVendaCalculado)}</div>
               </div>
-              <div className="text-center">
-                <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Markup</div>
-                <div className="text-base font-semibold text-gray-700 dark:text-gray-200">{(Math.round((formData.preco_venda_percentual || 0) * 100) / 100).toFixed(2)}%</div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Markup</div>
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">{formatarNumero(formData.preco_venda_percentual || 0)}%</div>
               </div>
-              <div className="text-center">
-                <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase mb-0.5">Margem</div>
-                <div className="text-base font-semibold text-gray-700 dark:text-gray-200">{formatarNumero(margemContribuicao)}%</div>
+              <div className="text-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Margem</div>
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-200">{formatarNumero(margemContribuicao)}%</div>
               </div>
             </div>
 
-            {/* LAYOUT LADO A LADO (DESKTOP) - EMPILHADO (MOBILE) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* LAYOUT GRID - Desktop: lado a lado | Mobile: empilhado */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
               {/* Composição de Custos */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Composição de Custos</h3>
-                <div className="space-y-4">
+              <div>
+                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-6">Composição de Custos</h3>
+                <div className="space-y-6">
                   {custos.map((custo, index) => {
-...
+                    const isCustoBase = custo.descricao_custo === 'Valor de Compra';
+                    const valorDigitado = parseFloat(custo.valor_custo) || 0;
+                    const isPercentual = custo.tipo_valor === 'percentual';
+
+                    let valorCalculadoReais = 0;
+                    if (isCustoBase) {
+                      valorCalculadoReais = valorDigitado;
+                    } else if (isPercentual) {
+                      valorCalculadoReais = (custoBase * valorDigitado / 100);
+                    } else {
+                      valorCalculadoReais = valorDigitado;
+                    }
+
+                    return (
+                      <div key={index} className="space-y-2">
+                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{custo.descricao_custo}</div>
+                        
+                        <div className="flex items-center gap-3">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={custo.valor_custo || ''}
+                            onChange={e => handleCustoChange(index, 'valor_custo', e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                            onKeyDown={e => {
+                              if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                const nextIndex = index + 1;
+                                if (nextIndex < custos.length) {
+                                  const nextInput = document.querySelector(`[data-custo-index="${nextIndex}"]`);
+                                  if (nextInput) nextInput.focus();
+                                }
+                              } else if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                const prevIndex = index - 1;
+                                if (prevIndex >= 0) {
+                                  const prevInput = document.querySelector(`[data-custo-index="${prevIndex}"]`);
+                                  if (prevInput) prevInput.focus();
+                                }
+                              }
+                            }}
+                            data-custo-index={index}
+                            placeholder="0,00"
+                            className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm w-32 text-right text-gray-800 dark:text-gray-200"
+                          />
+
+                          {!isCustoBase && (
+                            <button
+                              type="button"
+                              tabIndex={-1}
+                              onClick={() => handleCustoChange(index, 'tipo_valor', isPercentual ? 'numerico' : 'percentual')}
+                              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                                isPercentual ? 'bg-blue-100 dark:bg-blue-900' : 'bg-gray-200 dark:bg-gray-700'
+                              }`}
+                            >
+                              <span
+                                className={`inline-flex items-center justify-center h-5 w-5 transform rounded-full bg-white dark:bg-gray-300 transition-transform text-[10px] font-bold ${
+                                  isPercentual ? 'translate-x-6 text-blue-600' : 'translate-x-1 text-gray-600'
+                                }`}
+                              >
+                                {isPercentual ? '%' : 'R$'}
+                              </span>
+                            </button>
+                          )}
+
+                          {!isCustoBase && (
+                            <button
+                              type="button"
+                              tabIndex={-1}
+                              onClick={() => handleCustoChange(index, 'is_negativo', !custo.is_negativo)}
+                              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                                custo.is_negativo ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                              }`}
+                            >
+                              <span
+                                className={`inline-flex items-center justify-center h-5 w-5 transform rounded-full bg-white dark:bg-gray-300 transition-transform text-xs font-bold ${
+                                  custo.is_negativo ? 'translate-x-6 text-red-600' : 'translate-x-1 text-green-600'
+                                }`}
+                              >
+                                {custo.is_negativo ? '-' : '+'}
+                              </span>
+                            </button>
+                          )}
+
+                          <span className="text-sm font-bold text-gray-800 dark:text-gray-200 ml-auto whitespace-nowrap">
+                            {custo.is_negativo ? '-' : ''}R$ {formatarNumero(Math.abs(valorCalculadoReais))}
+                          </span>
+                        </div>
+                      </div>
+                    );
                   })}
 
                   {/* TOTAL */}
-                  <div className="flex items-center justify-between pt-4 mt-2 border-t-2 border-gray-300 dark:border-gray-600">
-                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">CUSTO TOTAL</span>
-                    <span className="text-lg font-bold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</span>
+                  <div className="flex items-center justify-between pt-6 mt-4 border-t-2 border-gray-300 dark:border-gray-600">
+                    <span className="text-base font-bold text-gray-800 dark:text-gray-200">CUSTO TOTAL</span>
+                    <span className="text-xl font-bold text-gray-800 dark:text-gray-200">R$ {formatarNumero(precoCustoCalculado)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Preço de Venda */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-5">Preço de Venda</h3>
+              <div>
+                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-6">Preço de Venda</h3>
 
-                <div className="space-y-6">
-                  {/* Preço de Venda (R$) */}
+                <div className="space-y-8">
                   <div>
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Preço de Venda (R$)</Label>
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">Preço de Venda (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -532,13 +601,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                         }
                       }}
                       placeholder="0,00"
-                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-12 text-base text-gray-800 dark:text-gray-200"
                     />
                   </div>
 
-                  {/* Markup % */}
                   <div>
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Markup (%)</Label>
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">Markup (%)</Label>
                     <Input
                       type="number"
                       step="0.1"
@@ -549,18 +617,17 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                         handleChange('preco_venda_tipo', 'percentual');
                       }}
                       placeholder="0,00"
-                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
+                      className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-12 text-base text-gray-800 dark:text-gray-200"
                     />
                   </div>
 
-                  {/* Margem de Contribuição (somente leitura) */}
                   <div>
-                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Margem de Contribuição (%)</Label>
+                    <Label className="text-sm text-gray-600 dark:text-gray-400 mb-3 block">Margem de Contribuição (%)</Label>
                     <Input
                       type="text"
                       value={formatarNumero(margemContribuicao)}
                       disabled
-                      className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-600 dark:text-gray-400"
+                      className="bg-gray-50 dark:bg-gray-800 border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-12 text-base text-gray-600 dark:text-gray-400"
                     />
                   </div>
                 </div>
@@ -569,105 +636,105 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           </TabsContent>
 
           {/* ABA LOGÍSTICO */}
-          <TabsContent value="logistico" className="space-y-3 mt-0">
-            <div className="grid grid-cols-2 gap-3">
+          <TabsContent value="logistico" className="space-y-6 mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Dimensões (AxLxP cm)</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Dimensões (AxLxP cm)</Label>
                 <Input 
                   value={formData.dimensoes_cm} 
                   onChange={e => handleChange('dimensoes_cm', e.target.value)} 
                   placeholder="30x20x15" 
-                  className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
 
               <div>
-                <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Volume (L)</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Volume (L)</Label>
                 <Input 
                   value={formData.volume_cm3 ? formatarNumero(formData.volume_cm3 / 1000) : '0,00'}
                   disabled
                   placeholder="Calculado"
-                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-9 text-sm text-gray-500 dark:text-gray-500"
+                  className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
                 />
               </div>
 
               <div>
-                <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Peso (kg)</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Peso (kg)</Label>
                 <Input 
                   type="number" 
                   step="0.001"
                   value={formData.peso_kg} 
                   onChange={e => handleChange('peso_kg', parseFloat(e.target.value) || 0)} 
                   placeholder="0,000"
-                  className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
 
               <div>
-                <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Tempo Reposição (dias)</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Tempo Reposição (dias)</Label>
                 <Input 
                   type="number"
                   value={formData.tempo_reposicao_dias} 
                   onChange={e => handleChange('tempo_reposicao_dias', parseInt(e.target.value) || 0)} 
                   placeholder="0"
-                  className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
 
               <div>
-                <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Unidade Principal</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Unidade Principal</Label>
                 <Input 
                   value={formData.unidade_principal} 
                   onChange={e => handleChange('unidade_principal', e.target.value)} 
                   placeholder="UN" 
-                  className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                  className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
             </div>
 
-            <div className="border-t pt-3 dark:border-gray-700">
-              <h3 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">Níveis de Estoque</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="border-t pt-6 dark:border-gray-700">
+              <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Níveis de Estoque</h3>
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Mínimo</Label>
+                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Mínimo</Label>
                   <Input 
                     type="number" 
                     step="0.01" 
                     value={formData.estoque_minimo} 
                     onChange={e => handleChange('estoque_minimo', parseFloat(e.target.value) || 0)} 
                     placeholder="0,00"
-                    className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Ideal</Label>
+                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Ideal</Label>
                   <Input 
                     type="number" 
                     step="0.01" 
                     value={formData.estoque_ideal} 
                     onChange={e => handleChange('estoque_ideal', parseFloat(e.target.value) || 0)} 
                     placeholder="0,00"
-                    className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Máximo</Label>
+                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Máximo</Label>
                   <Input 
                     type="number" 
                     step="0.01" 
                     value={formData.estoque_maximo} 
                     onChange={e => handleChange('estoque_maximo', parseFloat(e.target.value) || 0)} 
                     placeholder="0,00"
-                    className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200"
+                    className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Atual (sistema)</Label>
+                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Atual (sistema)</Label>
                   <Input 
                     type="number" 
                     value={formData.estoque_atual} 
                     disabled
-                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-9 text-sm text-gray-500 dark:text-gray-500"
+                    className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-10 text-sm text-gray-500 dark:text-gray-500"
                   />
                 </div>
               </div>
@@ -675,48 +742,48 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           </TabsContent>
 
           {/* ABA SISTEMA */}
-          <TabsContent value="sistema" className="space-y-3 mt-0">
+          <TabsContent value="sistema" className="space-y-6 mt-0">
             <div>
-              <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 block">Tipo de Produto *</Label>
+              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Tipo de Produto *</Label>
               <Select value={formData.tipo} onValueChange={v => handleChange('tipo', v)}>
-                <SelectTrigger className="bg-transparent border-0 border-b border-gray-400 dark:border-gray-500 rounded-none h-9 text-sm text-gray-800 dark:text-gray-200">
+                <SelectTrigger className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none h-10 text-sm text-gray-800 dark:text-gray-200">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                  <SelectItem value="Produto" className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">Produto (0)</SelectItem>
-                  <SelectItem value="Serviço" className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">Serviço (1)</SelectItem>
+                  <SelectItem value="Produto" className="dark:text-gray-200 dark:hover:bg-gray-700">Produto (0)</SelectItem>
+                  <SelectItem value="Serviço" className="dark:text-gray-200 dark:hover:bg-gray-700">Serviço (1)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center gap-2 py-2">
+            <div className="flex items-center gap-3 py-3">
               <Checkbox 
                 checked={formData.ativo} 
                 onCheckedChange={v => handleChange('ativo', v)} 
                 id="ativo"
-                className="dark:border-gray-500 h-4 w-4"
+                className="dark:border-gray-500 h-5 w-5"
               />
               <Label htmlFor="ativo" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Produto Ativo</Label>
             </div>
 
-            <div className="border-t pt-3 dark:border-gray-700">
-              <h3 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">Rastreabilidade</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
+            <div className="border-t pt-6 dark:border-gray-700">
+              <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Rastreabilidade</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
                   <Checkbox
                     checked={formData.controla_serial}
                     onCheckedChange={v => handleChange('controla_serial', v)}
                     id="serial"
-                    className="dark:border-gray-500 h-4 w-4"
+                    className="dark:border-gray-500 h-5 w-5"
                   />
                   <Label htmlFor="serial" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Número de Série</Label>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Checkbox
                     checked={formData.controla_lote_validade}
                     onCheckedChange={v => handleChange('controla_lote_validade', v)}
                     id="lote"
-                    className="dark:border-gray-500 h-4 w-4"
+                    className="dark:border-gray-500 h-5 w-5"
                   />
                   <Label htmlFor="lote" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Lote e Validade</Label>
                 </div>
