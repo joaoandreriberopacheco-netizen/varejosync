@@ -361,12 +361,12 @@ export default function SugestaoCompra() {
                       placeholder="Buscar produto..." 
                       value={filterTerm}
                       onChange={(e) => setFilterTerm(e.target.value)}
-                      className="pl-9 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-11"
+                      className="pl-9 bg-gray-50 dark:bg-gray-800/50 border-transparent h-11"
                   />
               </div>
 
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-11 w-full">
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11 w-full">
                       <SelectValue placeholder="Todas Categorias" />
                   </SelectTrigger>
                   <SelectContent>
@@ -378,7 +378,7 @@ export default function SugestaoCompra() {
               </Select>
 
               <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-                  <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 h-11 w-full">
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11 w-full">
                       <SelectValue placeholder="Todos Fornecedores" />
                   </SelectTrigger>
                   <SelectContent>
@@ -392,7 +392,7 @@ export default function SugestaoCompra() {
               <Button 
                   onClick={() => setHidePending(!hidePending)}
                   variant="outline"
-                  className={`w-full h-11 justify-start border-gray-200 dark:border-gray-700 ${hidePending ? 'text-gray-700 bg-gray-50 dark:bg-gray-800/50 dark:text-gray-300' : 'text-gray-600'}`}
+                  className={`w-full h-11 justify-start border-transparent ${hidePending ? 'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-300' : 'text-gray-600 bg-gray-50 dark:bg-gray-800/50'}`}
               >
                   <FilterX className="w-4 h-4 mr-2" />
                   <span className="text-sm">{hidePending ? 'Mostrar Pendentes' : 'Ocultar Pendentes'}</span>
@@ -402,13 +402,13 @@ export default function SugestaoCompra() {
           {/* Ferramenta: Otimização de Pacotes */}
           <div className="w-full bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
               <div className="flex items-start gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 flex-shrink-0 shadow-sm">
+                  <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 flex-shrink-0">
                       <Package className="w-4 h-4" />
                   </div>
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Otimização de Pacotes</span>
               </div>
               <Select value={roundingMode} onValueChange={setRoundingMode}>
-                <SelectTrigger className="w-full h-11 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-sm">
+                <SelectTrigger className="w-full h-11 bg-white dark:bg-gray-900 border-transparent">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -423,8 +423,8 @@ export default function SugestaoCompra() {
         </div>
 
       {produtosSemFornecedor.length > 0 && (
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 flex items-start gap-3 mx-2 md:mx-0 shadow-sm">
-          <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 mt-1.5 flex-shrink-0"></div>
+        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 flex items-start gap-3 mx-2 md:mx-0">
+          <div className="w-2 h-2 rounded-full bg-amber-400 dark:bg-amber-500 mt-1.5 flex-shrink-0"></div>
           <div className="flex-1 min-w-0">
             <h4 className="font-medium text-gray-800 dark:text-gray-200 text-sm">
               {produtosSemFornecedor.length} produtos sem fornecedor

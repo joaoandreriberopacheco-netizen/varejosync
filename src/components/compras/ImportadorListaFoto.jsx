@@ -180,6 +180,42 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete 
         setIsCreatingProduct(true);
         try {
             const tenantId = getTenantId();
+            
+            // Buscar categorias para classificação inteligente
+            const categorias = await base44.entities.Categoria.filter({ empresa_id: tenantId });
+            let categoria_id = null;
+            let categoria_nome = '';
+            
+            if (categorias.length > 0) {
+                const prompt = `
+                    Dado o produto "${newProductData.nome}", qual destas categorias é a mais adequada?
+                    Categorias disponíveis: ${JSON.stringify(categorias.map(c => ({ id: c.id, nome: c.nome })))}
+                    
+                    Retorne apenas o ID da categoria mais adequada.
+                `;
+                
+                try {
+                    const aiRes = await base44.integrations.Core.InvokeLLM({
+                        prompt: prompt,
+                        response_json_schema: {
+                            type: "object",
+                            properties: {
+                                categoria_id: { type: "string" }
+                            }
+                        }
+                    });
+                    
+                    const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
+                    categoria_id = result.categoria_id;
+                    const cat = categorias.find(c => c.id === categoria_id);
+                    categoria_nome = cat?.nome || '';
+                } catch (err) {
+                    console.log("Erro ao classificar categoria via IA, usando primeira categoria", err);
+                    categoria_id = categorias[0].id;
+                    categoria_nome = categorias[0].nome;
+                }
+            }
+            
             const newProd = await base44.entities.Produto.create({
                 empresa_id: tenantId,
                 nome: newProductData.nome,
@@ -188,7 +224,9 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete 
                 preco_venda_padrao: parseFloat(newProductData.preco) || 0,
                 valor_compra: 0,
                 ativo: true,
-                codigo_interno: `PRD-${Math.floor(Math.random()*10000)}`
+                codigo_interno: `PRD-${Math.floor(Math.random()*10000)}`,
+                categoria_id: categoria_id,
+                categoria_nome: categoria_nome
             });
 
             setProducts(prev => [...prev, newProd]);
