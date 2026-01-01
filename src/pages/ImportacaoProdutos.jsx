@@ -108,11 +108,27 @@ export default function ImportacaoProdutos() {
         throw new Error("Nenhum produto válido encontrado no arquivo");
       }
 
-      const [categorias, fornecedores, produtosExistentes] = await Promise.all([
-        base44.entities.Categoria.list(),
-        base44.entities.Terceiro.filter({ tipo: 'Fornecedor' }),
-        base44.entities.Produto.list()
-      ]);
+      let categorias = cacheRef.current.categorias;
+      let fornecedores = cacheRef.current.fornecedores;
+      let produtosExistentes = cacheRef.current.produtos;
+
+      if (!categorias) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        categorias = await base44.entities.Categoria.list();
+        cacheRef.current.categorias = categorias;
+      }
+
+      if (!fornecedores) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        fornecedores = await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
+        cacheRef.current.fornecedores = fornecedores;
+      }
+
+      if (!produtosExistentes) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        produtosExistentes = await base44.entities.Produto.list();
+        cacheRef.current.produtos = produtosExistentes;
+      }
       
       let novos = 0;
       let atualizacoes = 0;
