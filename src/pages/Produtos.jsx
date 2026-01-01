@@ -1287,8 +1287,8 @@ export default function ProdutosPage() {
                     <div key={produto.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1 min-w-0 pr-2">
-                          <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 mb-1">{produto.nome}</h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{produto.codigo_interno}</p>
+                          <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 mb-1 uppercase">{produto.nome}</h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">{produto.codigo_interno}</p>
                         </div>
                         <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
@@ -1474,8 +1474,8 @@ export default function ProdutosPage() {
                             </div>
                           </TableCell>
                           <TableCell className="sticky left-[110px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-                            <div className="font-medium text-sm text-gray-700 dark:text-gray-200">{produto.nome}</div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{produto.codigo_interno}</div>
+                            <div className="font-medium text-sm text-gray-700 dark:text-gray-200 uppercase">{produto.nome}</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 uppercase">{produto.codigo_interno}</div>
                           </TableCell>
                           
                           {visibleColumns.includes('codigo_interno') && (

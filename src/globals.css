@@ -212,13 +212,16 @@ textarea,
 table td:not(:has(input)):not(:has(select)):not(:has(textarea)),
 table th,
 .badge,
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3, h4, h5, h6,
+p, span, div:not(:has(input)):not(:has(select)):not(:has(textarea)) {
   text-transform: uppercase;
 }
 
 /* Mantém normal em inputs durante edição */
-input, textarea, select {
-  text-transform: none;
+input, textarea, select, 
+[contenteditable="true"],
+[role="textbox"] {
+  text-transform: none !important;
 }
 
 /* Força maiúsculas em placeholders também */
