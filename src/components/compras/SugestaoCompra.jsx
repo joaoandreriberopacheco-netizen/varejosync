@@ -1,692 +1,434 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from "@/components/ui/checkbox"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShoppingCart, RefreshCw, Lightbulb, AlertCircle, CheckCircle, FileText, FilterX, Truck, Search, Filter, Settings2, Package, Info, X, Tag } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useToast } from "@/components/ui/use-toast"
+import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Truck, Search, Package, X } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 import { getTenantId } from '@/components/utils/tenant';
 
-// Função pura para calcular quantidade sugerida
-const calcularQuantidadeSugerida = (necessidade, fator, roundingMode) => {
-  if (necessidade <= 0) return fator || 1;
-  if (fator <= 1) return necessidade;
-
-  if (roundingMode === 'up') {
-    return Math.ceil(necessidade / fator) * fator;
-  } else if (roundingMode === 'down') {
-    const qtd = Math.floor(necessidade / fator) * fator;
-    return qtd === 0 && necessidade > 0 ? fator : qtd;
-  } else if (roundingMode === 'none') {
-    return necessidade;
-  } else {
-    // Auto / Nearest
-    const qtd = Math.round(necessidade / fator) * fator;
-    return qtd === 0 ? fator : qtd;
-  }
-};
-
 export default function SugestaoCompra() {
-  const [produtosBase, setProdutosBase] = useState([]);
+  const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState({});
-  const [hidePending, setHidePending] = useState(false);
-  const [qtdPendenteMap, setQtdPendenteMap] = useState({});
+  const [fornecedorPorProduto, setFornecedorPorProduto] = useState({});
   
-  // Filtros e Configurações
-  const [filterTerm, setFilterTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [filterSupplier, setFilterSupplier] = useState('all');
-  const [filterTags, setFilterTags] = useState([]);
-  const [tagSearchTerm, setTagSearchTerm] = useState('');
-  const [allTags, setAllTags] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [supplierFilter, setSupplierFilter] = useState('all');
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [tagSearch, setTagSearch] = useState('');
+  const [hidePending, setHidePending] = useState(false);
   const [roundingMode, setRoundingMode] = useState('auto');
-  const [fornecedoresSelecionados, setFornecedoresSelecionados] = useState({});
   
   const { toast } = useToast();
 
-  const handleRefresh = async () => {
+  const allTags = useMemo(() => {
+    const tags = new Set();
+    produtos.forEach(p => p.tags?.forEach(t => tags.add(t)));
+    return [...tags].sort();
+  }, [produtos]);
+
+  const calcQuantity = (produto) => {
+    const target = produto.estoque_ideal || produto.estoque_maximo || 
+                   (produto.estoque_minimo > 0 ? produto.estoque_minimo * 2 : 10);
+    const need = Math.max(target - (produto.estoque_atual || 0), produto.unidades_por_pacote || 1);
+    const pack = produto.unidades_por_pacote || 1;
+    
+    if (pack <= 1) return need;
+    
+    if (roundingMode === 'up') return Math.ceil(need / pack) * pack;
+    if (roundingMode === 'down') {
+      const q = Math.floor(need / pack) * pack;
+      return q === 0 ? pack : q;
+    }
+    if (roundingMode === 'none') return need;
+    
+    const q = Math.round(need / pack) * pack;
+    return q === 0 ? pack : q;
+  };
+
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const tenantId = getTenantId();
-      const [produtos, fornecedorData, categoriasData, pedidosAbertos] = await Promise.all([
-        base44.entities.Produto.filter({ empresa_id: tenantId, tipo: 'Produto', ativo: true }),
-        base44.entities.Terceiro.filter({ empresa_id: tenantId }),
-        base44.entities.Categoria.filter({ empresa_id: tenantId }),
+      const tid = getTenantId();
+      const [prods, forn, cats, pedidos] = await Promise.all([
+        base44.entities.Produto.filter({ empresa_id: tid, tipo: 'Produto', ativo: true }),
+        base44.entities.Terceiro.filter({ empresa_id: tid }),
+        base44.entities.Categoria.filter({ empresa_id: tid }),
         base44.entities.PedidoCompra.filter({ 
-          empresa_id: tenantId,
+          empresa_id: tid,
           status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'] 
         })
       ]);
-      
-      setFornecedores(fornecedorData);
-      setCategorias(categoriasData);
 
-      const tagsSet = new Set();
-      produtos.forEach(p => {
-        if (p.tags && Array.isArray(p.tags)) {
-          p.tags.forEach(tag => tagsSet.add(tag));
-        }
-      });
-      setAllTags([...tagsSet].sort());
-
-      const pendentes = {};
-      pedidosAbertos.forEach(pedido => {
-        pedido.itens?.forEach(item => {
-          pendentes[item.produto_id] = (pendentes[item.produto_id] || 0) + (item.quantidade || 0);
+      const pending = {};
+      pedidos.forEach(p => {
+        p.itens?.forEach(i => {
+          pending[i.produto_id] = (pending[i.produto_id] || 0) + (i.quantidade || 0);
         });
       });
-      setQtdPendenteMap(pendentes);
 
-      const produtosFiltrados = produtos.filter(p => {
-        const estoqueAtual = p.estoque_atual || 0;
-        const estoqueMinimo = p.estoque_minimo || 0;
-        const estoqueIdeal = p.estoque_ideal || 0;
-        const estoqueMaximo = p.estoque_maximo || 0;
-        
-        return estoqueAtual < estoqueMinimo || 
-               (estoqueAtual === 0 && (estoqueMinimo > 0 || estoqueIdeal > 0 || estoqueMaximo > 0));
-      }).sort((a, b) => a.nome.localeCompare(b.nome));
+      const filtered = prods.filter(p => {
+        const ea = p.estoque_atual || 0;
+        const em = p.estoque_minimo || 0;
+        return ea < em || (ea === 0 && (em > 0 || p.estoque_ideal > 0 || p.estoque_maximo > 0));
+      }).map(p => ({
+        ...p,
+        quantidade_pendente: pending[p.id] || 0
+      })).sort((a, b) => a.nome.localeCompare(b.nome));
 
-      setProdutosBase(produtosFiltrados);
+      setProdutos(filtered);
+      setFornecedores(forn);
+      setCategorias(cats);
     } catch (error) {
-      console.error("Error generating suggestions:", error);
-      toast({
-        title: "Erro ao carregar sugestões",
-        description: "Não foi possível carregar as sugestões de compra.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao carregar", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    handleRefresh();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
-  // Calcular sugestões com base nos produtos e roundingMode
-  const sugestoes = useMemo(() => {
-    const fornecedorMap = fornecedores.reduce((acc, f) => {
-      acc[f.id] = f.nome;
-      return acc;
-    }, {});
-
-    return produtosBase.map(p => {
-      let estoqueAlvo = p.estoque_ideal || p.estoque_maximo || 0;
-      
-      if (estoqueAlvo === 0) {
-        if ((p.estoque_minimo || 0) > 0) {
-          estoqueAlvo = p.estoque_minimo * 2;
-        } else {
-          estoqueAlvo = Math.max(10, p.unidades_por_pacote || 1);
-        }
-      }
-
-      const necessidade = Math.max(estoqueAlvo - (p.estoque_atual || 0), p.unidades_por_pacote || 1);
-      const quantidadeSugerida = calcularQuantidadeSugerida(necessidade, p.unidades_por_pacote || 1, roundingMode);
-
-      return {
-        produto_id: p.id,
-        produto_nome: p.nome,
-        categoria_id: p.categoria_id,
-        fornecedor_padrao_id: p.fornecedor_padrao_id,
-        fornecedor_selecionado_id: fornecedoresSelecionados[p.id] || p.fornecedor_padrao_id,
-        fornecedor_nome: fornecedorMap[fornecedoresSelecionados[p.id] || p.fornecedor_padrao_id] || 'Não definido',
-        estoque_atual: p.estoque_atual,
-        estoque_minimo: p.estoque_minimo,
-        estoque_ideal: p.estoque_ideal,
-        quantidade_sugerida: quantidadeSugerida,
-        quantidade_pendente: qtdPendenteMap[p.id] || 0,
-        unidade_compra: p.unidade_compra,
-        custo_unitario: p.preco_custo_calculado,
-        tags: p.tags || []
-      };
+  const filteredProducts = useMemo(() => {
+    const s = searchTerm.toLowerCase();
+    return produtos.filter(p => {
+      if (hidePending && p.quantidade_pendente > 0) return false;
+      if (s && !p.nome.toLowerCase().includes(s)) return false;
+      if (categoryFilter !== 'all' && p.categoria_id !== categoryFilter) return false;
+      if (supplierFilter !== 'all' && p.fornecedor_padrao_id !== supplierFilter) return false;
+      if (selectedTags.length > 0 && !selectedTags.every(t => p.tags?.includes(t))) return false;
+      return true;
     });
-  }, [produtosBase, fornecedores, qtdPendenteMap, roundingMode, fornecedoresSelecionados]);
+  }, [produtos, searchTerm, categoryFilter, supplierFilter, selectedTags, hidePending]);
 
-  const handleSelectItem = (id, checked) => {
-    setSelectedItems(prev => {
-      const newSelection = {...prev};
-      if(checked) {
-        newSelection[id] = true;
-      } else {
-        delete newSelection[id];
-      }
-      return newSelection;
-    });
-  };
+  const selectedCount = Object.keys(selectedItems).length;
 
-  const handleUpdateFornecedor = (produtoId, fornecedorId) => {
-    setFornecedoresSelecionados(prev => ({
-      ...prev,
-      [produtoId]: fornecedorId
-    }));
-  };
-
-  const handleRemovePending = () => {
-    setSugestoes(prev => prev.filter(s => s.quantidade_pendente === 0));
-    toast({ title: "Lista filtrada", description: "Itens com pedidos pendentes foram removidos da visualização." });
-  };
-
-  const itensSelecionados = useMemo(() => {
-      return sugestoes.filter(s => selectedItems[s.produto_id]);
-  }, [sugestoes, selectedItems]);
-  
-  const handleGerarPedidos = async () => {
-      if (itensSelecionados.length === 0) return;
-
-      const itensSemFornecedor = itensSelecionados.filter(item => !item.fornecedor_selecionado_id);
-      if (itensSemFornecedor.length > 0) {
-          toast({ 
-            title: "Produtos sem fornecedor", 
-            description: `${itensSemFornecedor.length} produto(s) selecionado(s) não possuem fornecedor selecionado.`,
-            variant: "destructive" 
-          });
-          return;
-      }
-
-      const pedidosPorFornecedor = itensSelecionados.reduce((acc, item) => {
-          const fornecedorId = item.fornecedor_selecionado_id;
-          const fornecedor = fornecedores.find(f => f.id === fornecedorId);
-
-          if(!acc[fornecedorId]) {
-              acc[fornecedorId] = {
-                  fornecedor_id: fornecedorId,
-                  fornecedor_nome: fornecedor?.nome || item.fornecedor_nome,
-                  itens: []
-              };
-          }
-          acc[fornecedorId].itens.push({
-              produto_id: item.produto_id,
-              produto_nome: item.produto_nome,
-              quantidade: item.quantidade_sugerida,
-              custo_unitario: item.custo_unitario || 0,
-              total: (item.quantidade_sugerida * (item.custo_unitario || 0))
-          });
-          return acc;
-      }, {});
-
-      try {
-        const tenantId = getTenantId();
-        const allPOs = await base44.entities.PedidoCompra.filter({ empresa_id: tenantId });
-        let nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
-        
-        const promises = Object.values(pedidosPorFornecedor).map(pedidoData => {
-            const valor_total = pedidoData.itens.reduce((sum, item) => sum + item.total, 0);
-            const po = {
-                ...pedidoData,
-                empresa_id: tenantId,
-                numero: `PC-${String(nextNumber++).padStart(5, '0')}`,
-                status: 'Rascunho',
-                valor_total: valor_total,
-            };
-            return base44.entities.PedidoCompra.create(po);
-        });
-
-        await Promise.all(promises);
-
-        toast({
-            title: "✓ Pedidos Gerados!",
-            description: `${promises.length} pedido(s) criados em Rascunho.`,
-            className: "bg-green-100 text-green-800"
-        });
-
-        setSelectedItems({});
-        handleRefresh();
-      } catch (error) {
-          console.error("Error generating purchase orders:", error);
-          toast({ title: "Erro", description: error.message, variant: "destructive" });
-      }
-  }
-
-  const handleEnviarCotacao = async () => {
-    if (itensSelecionados.length === 0) return;
-
-    try {
-        const tenantId = getTenantId();
-        const allCots = await base44.entities.Cotacao.filter({ empresa_id: tenantId });
-        let nextNumber = (allCots.length > 0 ? Math.max(...allCots.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
-
-        // Usa o fornecedor selecionado na tabela, não necessariamente o padrão
-        const fornecedoresIds = [...new Set(itensSelecionados.map(i => i.fornecedor_selecionado_id).filter(Boolean))];
-        const fornecedoresConvidados = fornecedoresIds.map(id => {
-            const f = fornecedores.find(forn => forn.id === id);
-            return {
-                fornecedor_id: id,
-                fornecedor_nome: f?.nome || 'Unknown',
-                status_envio: 'Pendente'
-            };
-        });
-
-        const novaCotacao = {
-            empresa_id: tenantId,
-            numero: `COT-${String(nextNumber++).padStart(5, '0')}`,
-            titulo: `Cotação Automática - ${new Date().toLocaleDateString()}`,
-            status: 'Rascunho',
-            data_abertura: new Date().toISOString().split('T')[0],
-            itens: itensSelecionados.map(item => ({
-                produto_id: item.produto_id,
-                produto_nome: item.produto_nome,
-                quantidade: item.quantidade_sugerida,
-                unidade: item.unidade_compra || 'UN'
-            })),
-            fornecedores: fornecedoresConvidados
-        };
-
-        await base44.entities.Cotacao.create(novaCotacao);
-
-        toast({
-            title: "✓ Cotação Criada!",
-            description: `Cotação ${novaCotacao.numero} criada com sucesso.`,
-            className: "bg-blue-100 text-blue-800"
-        });
-
-        setSelectedItems({});
-    } catch (error) {
-        toast({ title: "Erro", description: error.message, variant: "destructive" });
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      const all = {};
+      filteredProducts.forEach(p => all[p.id] = true);
+      setSelectedItems(all);
+    } else {
+      setSelectedItems({});
     }
   };
 
-  const produtosSemFornecedor = useMemo(() => 
-    sugestoes.filter(s => !s.fornecedor_selecionado_id), 
-    [sugestoes]
-  );
-  
-  // Aplicar filtros com useMemo
-  const sugestoesVisiveis = useMemo(() => {
-    const searchLower = filterTerm.toLowerCase();
-    
-    return sugestoes.filter(s => {
-      if (hidePending && s.quantidade_pendente > 0) return false;
-      if (searchLower && !s.produto_nome.toLowerCase().includes(searchLower)) return false;
-      if (filterCategory !== 'all' && s.categoria_id !== filterCategory) return false;
-      if (filterSupplier !== 'all' && s.fornecedor_padrao_id !== filterSupplier && s.fornecedor_selecionado_id !== filterSupplier) return false;
-      if (filterTags.length > 0 && !filterTags.every(tag => s.tags && s.tags.includes(tag))) return false;
-      
-      return true;
-    });
-  }, [sugestoes, hidePending, filterTerm, filterCategory, filterSupplier, filterTags]);
+  const handleGenerate = async () => {
+    const selected = filteredProducts.filter(p => selectedItems[p.id]);
+    if (selected.length === 0) return;
 
-  const selectableItems = sugestoesVisiveis; // Agora permite selecionar mesmo sem fornecedor (usuário pode atribuir depois)
-  const selectedSelectableItems = itensSelecionados.filter(s => sugestoesVisiveis.some(v => v.produto_id === s.produto_id));
-  const masterCheckboxChecked = selectableItems.length > 0 && selectableItems.every(s => selectedItems[s.produto_id]);
+    const noSupplier = selected.filter(p => !fornecedorPorProduto[p.id] && !p.fornecedor_padrao_id);
+    if (noSupplier.length > 0) {
+      toast({ title: "Produtos sem fornecedor", description: `${noSupplier.length} produto(s) sem fornecedor`, variant: "destructive" });
+      return;
+    }
+
+    const bySupplier = {};
+    selected.forEach(p => {
+      const sid = fornecedorPorProduto[p.id] || p.fornecedor_padrao_id;
+      const supplier = fornecedores.find(f => f.id === sid);
+      if (!bySupplier[sid]) {
+        bySupplier[sid] = { fornecedor_id: sid, fornecedor_nome: supplier?.nome || 'N/A', itens: [] };
+      }
+      bySupplier[sid].itens.push({
+        produto_id: p.id,
+        produto_nome: p.nome,
+        quantidade: calcQuantity(p),
+        custo_unitario: p.preco_custo_calculado || 0,
+        total: calcQuantity(p) * (p.preco_custo_calculado || 0)
+      });
+    });
+
+    try {
+      const tid = getTenantId();
+      const all = await base44.entities.PedidoCompra.filter({ empresa_id: tid });
+      let num = (all.length > 0 ? Math.max(...all.map(x => parseInt(x.numero?.split('-')[1] || 0))) : 0) + 1;
+
+      await Promise.all(Object.values(bySupplier).map(data => {
+        const total = data.itens.reduce((sum, i) => sum + i.total, 0);
+        return base44.entities.PedidoCompra.create({
+          ...data,
+          empresa_id: tid,
+          numero: `PC-${String(num++).padStart(5, '0')}`,
+          status: 'Rascunho',
+          valor_total: total
+        });
+      }));
+
+      toast({ title: "✓ Pedidos Gerados!", description: `${Object.keys(bySupplier).length} pedido(s) criados`, className: "bg-green-100 text-green-800" });
+      setSelectedItems({});
+      loadData();
+    } catch (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleQuote = async () => {
+    const selected = filteredProducts.filter(p => selectedItems[p.id]);
+    if (selected.length === 0) return;
+
+    try {
+      const tid = getTenantId();
+      const all = await base44.entities.Cotacao.filter({ empresa_id: tid });
+      const num = (all.length > 0 ? Math.max(...all.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
+
+      const suppliers = [...new Set(selected.map(p => fornecedorPorProduto[p.id] || p.fornecedor_padrao_id).filter(Boolean))];
+      
+      await base44.entities.Cotacao.create({
+        empresa_id: tid,
+        numero: `COT-${String(num).padStart(5, '0')}`,
+        titulo: `Cotação - ${new Date().toLocaleDateString()}`,
+        status: 'Rascunho',
+        data_abertura: new Date().toISOString().split('T')[0],
+        itens: selected.map(p => ({
+          produto_id: p.id,
+          produto_nome: p.nome,
+          quantidade: calcQuantity(p),
+          unidade: p.unidade_compra || 'UN'
+        })),
+        fornecedores: suppliers.map(id => {
+          const f = fornecedores.find(x => x.id === id);
+          return { fornecedor_id: id, fornecedor_nome: f?.nome || 'N/A', status_envio: 'Pendente' };
+        })
+      });
+
+      toast({ title: "✓ Cotação Criada!", className: "bg-blue-100 text-blue-800" });
+      setSelectedItems({});
+    } catch (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-gray-400" /></div>;
+  }
 
   return (
-    <div className="space-y-5 md:space-y-6 -mx-2 md:mx-0">
+    <div className="space-y-4 -mx-2 md:mx-0">
       <div className="flex flex-col gap-3 pb-4 border-b border-gray-200 dark:border-gray-700 px-2 md:px-0">
         <div>
-          <h3 className="text-base md:text-lg font-light text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             Sugestões de Compra
           </h3>
-          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 font-light">
-            Reposição baseada em estoque mínimo
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Reposição baseada em estoque mínimo</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={handleRefresh} 
-            variant="outline"
-            size="sm"
-            className="gap-1.5 border-gray-300 text-gray-600 hover:bg-gray-50 flex-1 sm:flex-none h-9"
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <Button onClick={loadData} variant="outline" size="sm" className="gap-1.5 h-9">
+            <RefreshCw className="h-3.5 w-3.5" />
             <span className="text-xs">Atualizar</span>
           </Button>
           <div className="hidden md:flex gap-2">
-            <Button 
-              onClick={handleEnviarCotacao}
-              disabled={itensSelecionados.length === 0}
-              variant="outline"
-              size="sm"
-              className="gap-1.5 border-gray-300 text-gray-700"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              Cotação
+            <Button onClick={handleQuote} disabled={selectedCount === 0} variant="outline" size="sm" className="gap-1.5">
+              <FileText className="w-3.5 h-3.5" />Cotação
             </Button>
-            <Button 
-              onClick={handleGerarPedidos}
-              disabled={itensSelecionados.length === 0}
-              size="sm"
-              className="gap-1.5 bg-teal-600 hover:bg-teal-700 text-white shadow-sm font-normal"
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              Gerar ({itensSelecionados.length})
+            <Button onClick={handleGenerate} disabled={selectedCount === 0} size="sm" className="gap-1.5 bg-teal-600 hover:bg-teal-700">
+              <ShoppingCart className="w-3.5 h-3.5" />Gerar ({selectedCount})
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="space-y-3 px-2 md:px-0">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input 
+            placeholder="Buscar produto..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-gray-50 dark:bg-gray-800/50 border-0 h-11"
+          />
         </div>
 
-        {/* Barra de Controles Otimizada (Filtros + Ferramentas) */}
-        <div className="flex flex-col gap-4 px-2 md:px-0">
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-0 h-11">
+            <SelectValue placeholder="Todas Categorias" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas Categorias</SelectItem>
+            {categorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
 
-          {/* Grupo de Filtros - Mobile First */}
-          <div className="w-full space-y-3">
-              <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input 
-                      placeholder="Buscar produto..." 
-                      value={filterTerm}
-                      onChange={(e) => setFilterTerm(e.target.value)}
-                      className="pl-9 bg-gray-50 dark:bg-gray-800/50 border-transparent h-11"
-                  />
-              </div>
+        <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+          <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-0 h-11">
+            <SelectValue placeholder="Todos Fornecedores" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos Fornecedores</SelectItem>
+            {fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
 
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11 w-full">
-                      <SelectValue placeholder="Todas Categorias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">Todas Categorias</SelectItem>
-                      {categorias.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-
-              <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11 w-full">
-                      <SelectValue placeholder="Todos Fornecedores" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">Todos Fornecedores</SelectItem>
-                      {fornecedores.map(f => (
-                          <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-
-              {/* Seletor de Tags */}
-              <div>
-                {/* Tags selecionadas */}
-                {filterTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {filterTags.map(tag => (
-                      <Badge 
-                        key={tag} 
-                        variant="secondary"
-                        className="bg-gray-700 dark:bg-gray-600 text-white text-xs px-2 py-1 flex items-center gap-1"
-                      >
-                        {tag}
-                        <X 
-                          className="w-3 h-3 cursor-pointer hover:text-gray-300" 
-                          onClick={() => setFilterTags(filterTags.filter(t => t !== tag))}
-                        />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-
-                {/* Input de busca de tags */}
-                <div className="relative">
-                  <Input 
-                    placeholder="Buscar e adicionar tag..."
-                    value={tagSearchTerm}
-                    onChange={(e) => setTagSearchTerm(e.target.value)}
-                    className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11"
-                  />
-                  {tagSearchTerm && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-40 overflow-y-auto z-10">
-                      {allTags
-                        .filter(tag => 
-                          tag.toLowerCase().includes(tagSearchTerm.toLowerCase()) && 
-                          !filterTags.includes(tag)
-                        )
-                        .slice(0, 10)
-                        .map(tag => (
-                          <button
-                            key={tag}
-                            onClick={() => {
-                              setFilterTags([...filterTags, tag]);
-                              setTagSearchTerm('');
-                            }}
-                            className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-gray-700 dark:text-gray-200"
-                          >
-                            {tag}
-                          </button>
-                        ))}
-                      {allTags.filter(tag => 
-                        tag.toLowerCase().includes(tagSearchTerm.toLowerCase()) && 
-                        !filterTags.includes(tag)
-                      ).length === 0 && (
-                        <div className="px-3 py-2 text-sm text-gray-400">Nenhuma tag encontrada</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <Button 
-                  onClick={() => setHidePending(!hidePending)}
-                  variant="outline"
-                  className={`w-full h-11 justify-start border-transparent ${hidePending ? 'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-300' : 'text-gray-600 bg-gray-50 dark:bg-gray-800/50'}`}
-              >
-                  <FilterX className="w-4 h-4 mr-2" />
-                  <span className="text-sm">{hidePending ? 'Mostrar Pendentes' : 'Ocultar Pendentes'}</span>
-              </Button>
+        {selectedTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {selectedTags.map(tag => (
+              <Badge key={tag} className="bg-gray-700 text-white px-2 py-1 flex items-center gap-1">
+                {tag}
+                <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))} />
+              </Badge>
+            ))}
           </div>
+        )}
 
-          {/* Ferramenta: Otimização de Pacotes */}
-          <div className="w-full bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-              <div className="flex items-start gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 flex-shrink-0">
-                      <Package className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Otimização de Pacotes</span>
-              </div>
-              <Select value={roundingMode} onValueChange={setRoundingMode}>
-                <SelectTrigger className="w-full h-11 bg-white dark:bg-gray-900 border-transparent">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">Automático (Mais Próximo)</SelectItem>
-                  <SelectItem value="up">Arredondar p/ Cima</SelectItem>
-                  <SelectItem value="down">Arredondar p/ Baixo</SelectItem>
-                  <SelectItem value="none">Quantidade Exata</SelectItem>
-                </SelectContent>
-              </Select>
-          </div>
-
+        <div className="relative">
+          <Input 
+            placeholder="Buscar tag..."
+            value={tagSearch}
+            onChange={(e) => setTagSearch(e.target.value)}
+            className="bg-gray-50 dark:bg-gray-800/50 border-0 h-11"
+          />
+          {tagSearch && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border max-h-40 overflow-y-auto z-10">
+              {allTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(t)).slice(0, 10).map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => { setSelectedTags([...selectedTags, tag]); setTagSearch(''); }}
+                  className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-      {produtosSemFornecedor.length > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 flex items-start gap-3 mx-2 md:mx-0">
-          <div className="w-2 h-2 rounded-full bg-amber-400 dark:bg-amber-500 mt-1.5 flex-shrink-0"></div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-gray-800 dark:text-gray-200 text-sm">
-              {produtosSemFornecedor.length} produtos sem fornecedor
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Atribua um fornecedor para prosseguir com o pedido.
-            </p>
-          </div>
-        </div>
-      )}
+        <Button onClick={() => setHidePending(!hidePending)} variant="outline" className="w-full h-11 justify-start border-0 bg-gray-50 dark:bg-gray-800/50">
+          <FilterX className="w-4 h-4 mr-2" />
+          {hidePending ? 'Mostrar' : 'Ocultar'} Pendentes
+        </Button>
 
-      {sugestoes.length === 0 && !isLoading ? (
-        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl mx-2 md:mx-0 shadow-sm">
-          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400 font-light">Estoque saudável. Nenhuma sugestão no momento.</p>
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
+          <div className="flex items-center gap-3 mb-3">
+            <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Otimização de Pacotes</span>
+          </div>
+          <Select value={roundingMode} onValueChange={setRoundingMode}>
+            <SelectTrigger className="h-11 bg-white dark:bg-gray-900 border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Automático (Mais Próximo)</SelectItem>
+              <SelectItem value="up">Arredondar p/ Cima</SelectItem>
+              <SelectItem value="down">Arredondar p/ Baixo</SelectItem>
+              <SelectItem value="none">Quantidade Exata</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {produtos.length === 0 ? (
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl mx-2 md:mx-0">
+          <CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <p className="text-gray-500">Estoque saudável. Nenhuma sugestão no momento.</p>
         </div>
       ) : (
-        <>
-          <div className="hidden md:block rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
-            <Table>
-              <TableHeader className="bg-gray-50 dark:bg-gray-800">
-                <TableRow className="border-gray-100 dark:border-gray-700">
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                      checked={masterCheckboxChecked}
-                      onCheckedChange={(checked) => {
-                          const allIds = {};
-                          if(checked) {
-                              selectableItems.forEach(s => allIds[s.produto_id] = true);
-                          }
-                          setSelectedItems(allIds);
-                      }}
-                      disabled={selectableItems.length === 0}
-                    />
-                  </TableHead>
-                  <TableHead className="font-normal text-gray-500">Produto</TableHead>
-                  <TableHead className="font-normal text-gray-500 w-[200px]">Fornecedor</TableHead>
-                  <TableHead className="font-normal text-gray-500 text-center">Estoque</TableHead>
-                  <TableHead className="font-normal text-gray-500 text-center">Em Pedido</TableHead>
-                  <TableHead className="font-normal text-gray-500 text-right">Qtd. Sugerida</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan="6" className="h-24 text-center text-gray-400">Carregando...</TableCell>
-                  </TableRow>
-                ) : (
-                  sugestoesVisiveis.map(s => {
-                    const temPendente = s.quantidade_pendente > 0;
-                    
-                    return (
-                      <TableRow 
-                        key={s.produto_id} 
-                        className={`border-gray-100 dark:border-gray-800 hover:bg-gray-50/50`}
-                      >
-                        <TableCell>
-                            <Checkbox 
-                                checked={!!selectedItems[s.produto_id]} 
-                                onCheckedChange={(checked) => handleSelectItem(s.produto_id, checked)}
-                            />
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-gray-700 dark:text-gray-200">{s.produto_nome}</div>
-                          {temPendente && (
-                            <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-                               <Truck className="w-3 h-3" />
-                               <span>Já existe pedido em andamento</span>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                           <Select 
-                              value={s.fornecedor_selecionado_id || "none"} 
-                              onValueChange={(v) => handleUpdateFornecedor(s.produto_id, v)}
-                           >
-                              <SelectTrigger className="h-8 text-xs border-transparent hover:border-gray-300 bg-transparent">
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {fornecedores.map(f => (
-                                  <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                                ))}
-                              </SelectContent>
-                           </Select>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            <div className="flex flex-col items-center">
-                                <div>
-                                    <span className="text-gray-900 font-medium">{s.estoque_atual}</span>
-                                    <span className="text-gray-400 text-xs mx-1">/</span>
-                                    <span className="text-gray-500 text-xs">{s.estoque_minimo}</span>
-                                </div>
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            {s.quantidade_pendente > 0 ? (
-                                <Badge variant="outline" className="bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 font-normal">
-                                    {s.quantidade_pendente} {s.unidade_compra}
-                                </Badge>
-                            ) : (
-                                <span className="text-gray-300">-</span>
-                            )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                                <span className="font-bold text-gray-700 dark:text-gray-200">{s.quantidade_sugerida}</span>
-                                <span className="text-gray-400 text-xs w-8 text-left">{s.unidade_compra}</span>
-                            </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="md:hidden space-y-5 pb-20 px-2">
-             {sugestoesVisiveis.map(s => {
-                const isSelected = !!selectedItems[s.produto_id];
-                const temPendente = s.quantidade_pendente > 0;
-
-                return (
-                  <div 
-                    key={s.produto_id}
-                    className={`p-4 rounded-xl transition-all ${
-                      isSelected 
-                        ? 'bg-white dark:bg-gray-800 shadow-md' 
-                        : 'bg-white dark:bg-gray-800 shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3 mb-4">
-                      <Checkbox 
-                        checked={isSelected}
-                        className="mt-1"
-                        onCheckedChange={(checked) => handleSelectItem(s.produto_id, checked)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-2" onClick={() => handleSelectItem(s.produto_id, !isSelected)}>
-                          <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate pr-2">{s.produto_nome}</h4>
-                          <div className="flex flex-col items-end flex-shrink-0">
-                             <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{s.quantidade_sugerida}</span>
-                             <span className="text-xs text-gray-400">{s.unidade_compra}</span>
-                          </div>
-                        </div>
-                         {temPendente && (
-                            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mt-2 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg w-fit">
-                               <Truck className="w-3.5 h-3.5" />
-                               <span>{s.quantidade_pendente} em trânsito</span>
-                            </div>
-                          )}
+        <div className="hidden md:block rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-800">
+              <tr className="border-b border-gray-100 dark:border-gray-700">
+                <th className="w-12 p-3 text-left">
+                  <Checkbox checked={filteredProducts.length > 0 && filteredProducts.every(p => selectedItems[p.id])} onCheckedChange={handleSelectAll} />
+                </th>
+                <th className="p-3 text-left text-xs font-normal text-gray-500">Produto</th>
+                <th className="p-3 text-left text-xs font-normal text-gray-500 w-48">Fornecedor</th>
+                <th className="p-3 text-center text-xs font-normal text-gray-500">Estoque</th>
+                <th className="p-3 text-center text-xs font-normal text-gray-500">Pendente</th>
+                <th className="p-3 text-right text-xs font-normal text-gray-500">Qtd Sugerida</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.map(p => (
+                <tr key={p.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50/50">
+                  <td className="p-3">
+                    <Checkbox checked={!!selectedItems[p.id]} onCheckedChange={(c) => setSelectedItems(prev => c ? {...prev, [p.id]: true} : {...prev, [p.id]: undefined})} />
+                  </td>
+                  <td className="p-3">
+                    <div className="font-medium text-gray-700 dark:text-gray-200">{p.nome}</div>
+                    {p.quantidade_pendente > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                        <Truck className="w-3 h-3" />Em andamento
                       </div>
-                    </div>
-
-                    <div className="space-y-3 pt-4 border-t border-gray-50 dark:border-gray-800">
-                       <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-2">Estoque Atual</p>
-                          <div className="text-sm">
-                            <span className="text-gray-900 dark:text-gray-100 font-medium">{s.estoque_atual}</span>
-                            <span className="text-gray-400 mx-1.5">/</span>
-                            <span className="text-gray-600 dark:text-gray-300">{s.estoque_minimo} mín</span>
-                          </div>
-                       </div>
-                       <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-2">Fornecedor</p>
-                          <Select 
-                              value={s.fornecedor_selecionado_id || "none"} 
-                              onValueChange={(v) => handleUpdateFornecedor(s.produto_id, v)}
-                          >
-                              <SelectTrigger className="h-10 w-full bg-gray-50 dark:bg-gray-900 border-0 shadow-sm">
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {fornecedores.map(f => (
-                                  <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                                ))}
-                              </SelectContent>
-                          </Select>
-                       </div>
-                    </div>
-                  </div>
-                );
-             })}
-          </div>
-        </>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    <select 
+                      className="w-full h-8 text-xs bg-transparent border-0 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
+                      value={fornecedorPorProduto[p.id] || p.fornecedor_padrao_id || ''}
+                      onChange={(e) => setFornecedorPorProduto({...fornecedorPorProduto, [p.id]: e.target.value})}
+                    >
+                      <option value="">Selecione...</option>
+                      {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                    </select>
+                  </td>
+                  <td className="p-3 text-center">
+                    <span className="font-medium">{p.estoque_atual || 0}</span>
+                    <span className="text-gray-400 mx-1">/</span>
+                    <span className="text-gray-500 text-xs">{p.estoque_minimo || 0}</span>
+                  </td>
+                  <td className="p-3 text-center">
+                    {p.quantidade_pendente > 0 ? (
+                      <Badge variant="outline" className="bg-gray-50 text-gray-600 font-normal">{p.quantidade_pendente}</Badge>
+                    ) : '-'}
+                  </td>
+                  <td className="p-3 text-right">
+                    <span className="font-bold text-gray-700 dark:text-gray-200">{calcQuantity(p)}</span>
+                    <span className="text-gray-400 text-xs ml-2">{p.unidade_compra || 'UN'}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      <div className="md:hidden space-y-3 pb-20 px-2">
+        {filteredProducts.map(p => (
+          <div key={p.id} className={`p-4 rounded-xl ${selectedItems[p.id] ? 'bg-white dark:bg-gray-800 shadow-md' : 'bg-white dark:bg-gray-800 shadow-sm'}`}>
+            <div className="flex items-start gap-3 mb-3">
+              <Checkbox checked={!!selectedItems[p.id]} onCheckedChange={(c) => setSelectedItems(prev => c ? {...prev, [p.id]: true} : {...prev, [p.id]: undefined})} className="mt-1" />
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">{p.nome}</h4>
+                  <div className="text-right">
+                    <div className="text-sm font-bold">{calcQuantity(p)}</div>
+                    <div className="text-xs text-gray-400">{p.unidade_compra || 'UN'}</div>
+                  </div>
+                </div>
+                {p.quantidade_pendente > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600 mt-2 bg-gray-50 px-2 py-1 rounded w-fit">
+                    <Truck className="w-3.5 h-3.5" />{p.quantidade_pendente} em trânsito
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-3 pt-3 border-t border-gray-100">
+              <div>
+                <p className="text-xs text-gray-500 uppercase mb-1">Estoque</p>
+                <span className="font-medium">{p.estoque_atual || 0}</span>
+                <span className="text-gray-400 mx-1.5">/</span>
+                <span className="text-gray-600">{p.estoque_minimo || 0} mín</span>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase mb-1">Fornecedor</p>
+                <select 
+                  className="w-full h-10 bg-gray-50 dark:bg-gray-900 border-0 rounded text-sm"
+                  value={fornecedorPorProduto[p.id] || p.fornecedor_padrao_id || ''}
+                  onChange={(e) => setFornecedorPorProduto({...fornecedorPorProduto, [p.id]: e.target.value})}
+                >
+                  <option value="">Selecione...</option>
+                  {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
