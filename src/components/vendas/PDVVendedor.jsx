@@ -63,6 +63,7 @@ export default function PDVVendedor() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
   const [configVenda, setConfigVenda] = useState(null);
+  const [configVenda, setConfigVenda] = useState(null);
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -1012,7 +1013,53 @@ export default function PDVVendedor() {
                 <span>R$ {subtotal.toFixed(2)}</span>
               </div>
 
-              {/* Seção de Ajuste - Clean Style */}
+              {/* Seção de Desconto Comercial - se permitido pela tabela */}
+              {tabelaPreco?.permite_desconto_comercial && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
+                  <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Desconto Comercial</Label>
+                  <div className="flex gap-1">
+                    <Select value={tipoValorAjuste} onValueChange={setTipoValorAjuste}>
+                      <SelectTrigger className="w-14 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-xs">
+                        <SelectItem value="valor">R$</SelectItem>
+                        <SelectItem value="percentual">%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      max={tipoValorAjuste === 'percentual' ? (tabelaPreco?.percentual_desconto_maximo || 100) : undefined}
+                      value={valorAjuste}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        if (tipoValorAjuste === 'percentual' && tabelaPreco?.percentual_desconto_maximo) {
+                          setValorAjuste(Math.min(val, tabelaPreco.percentual_desconto_maximo));
+                        } else {
+                          setValorAjuste(val);
+                        }
+                      }}
+                      className="flex-1 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
+                      placeholder="0"
+                    />
+                  </div>
+                  {ajusteExcedido && (
+                    <p className="text-[10px] text-red-500">
+                      Excede limite de {currentUser?.limite_desconto || 0}%
+                    </p>
+                  )}
+                  {valorAjusteCalculado > 0 && !ajusteExcedido && (
+                    <p className="text-[10px] text-gray-500">
+                      - R$ {valorAjusteCalculado.toFixed(2)} ({percentualAjuste.toFixed(1)}%)
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Seção de Ajuste Manual - Clean Style */}
+              {!tabelaPreco?.permite_desconto_comercial && (
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
                 <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ajuste</Label>
                 <div className="flex gap-1">
@@ -1055,6 +1102,7 @@ export default function PDVVendedor() {
                   </p>
                 }
               </div>
+              )}
 
               <div className="flex justify-between items-baseline pt-3 border-t border-gray-200 dark:border-gray-700">
                 <span className="text-xs text-gray-500">Total</span>

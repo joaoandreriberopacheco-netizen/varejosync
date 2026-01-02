@@ -37,7 +37,7 @@ export default function PDVSupermercado() {
   const [quantidadeAtual, setQuantidadeAtual] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [produtoSelecionadoIndex, setProdutoSelecionadoIndex] = useState(0);
-  const [configVendas, setConfigVendas] = useState(null);
+  const [configVenda, setConfigVenda] = useState(null);
 
   // Payment States
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
@@ -127,7 +127,7 @@ export default function PDVSupermercado() {
       setCurrentUser(userData);
       setClientes(clientesData);
       if (configsVendas.length > 0) {
-        setConfigVendas(configsVendas[0]);
+        setConfigVenda(configsVendas[0]);
       }
       if (userData.tabela_preco_id) {
         const tabela = await TabelaPreco.get(userData.tabela_preco_id);
