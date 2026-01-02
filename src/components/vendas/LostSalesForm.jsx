@@ -77,8 +77,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
 
   const loadProdutos = async () => {
     try {
-      const tenantId = getTenantId();
-      const produtosData = await base44.entities.Produto.filter({ empresa_id: tenantId });
+      const produtosData = await base44.entities.Produto.list();
       setProdutos(produtosData);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
@@ -87,8 +86,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
 
   const loadProdutosNaoMix = async () => {
     try {
-      const tenantId = getTenantId();
-      const vendasPerdidas = await base44.entities.VendaPerdida.filter({ empresa_id: tenantId });
+      const vendasPerdidas = await base44.entities.VendaPerdida.list();
       // Extrai nomes únicos de produtos não-mix já registrados
       const nomesUnicos = [...new Set(
         vendasPerdidas
@@ -171,8 +169,7 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
 
     setIsSubmitting(true);
     try {
-      const tenantId = getTenantId();
-      await base44.entities.VendaPerdida.create({ ...formData, empresa_id: tenantId });
+      await base44.entities.VendaPerdida.create(formData);
       showFeedback('success', 'Venda perdida registrada');
     } catch (error) {
       showFeedback('error', error.message);

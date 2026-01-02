@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Campanha } from '@/entities/Campanha';
-import { Produto } from '@/entities/Produto';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,15 +23,15 @@ export default function CampanhasPage() {
   }, []);
 
   const loadCampanhas = async () => {
-    const data = await Campanha.list('-created_date');
+    const data = await base44.entities.Campanha.list('-created_date');
     setCampanhas(data);
   };
 
   const handleSave = async (data) => {
     if (data.id) {
-      await Campanha.update(data.id, data);
+      await base44.entities.Campanha.update(data.id, data);
     } else {
-      await Campanha.create(data);
+      await base44.entities.Campanha.create(data);
     }
     loadCampanhas();
     setIsFormOpen(false);
@@ -140,7 +139,7 @@ function CampanhaForm({ campanha, onSave, onClose }) {
   const [produtos, setProdutos] = useState([]);
 
   useEffect(() => {
-    Produto.list().then(setProdutos);
+    base44.entities.Produto.list().then(setProdutos);
   }, []);
 
   const handleChange = (field, value) => {

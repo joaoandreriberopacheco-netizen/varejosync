@@ -19,8 +19,7 @@ export default function VendasPerdidasPage() {
   const loadVendasPerdidas = async () => {
     setLoading(true);
     try {
-      const tenantId = getTenantId();
-      const data = await base44.entities.VendaPerdida.filter({ empresa_id: tenantId }, '-created_date');
+      const data = await base44.entities.VendaPerdida.list('-created_date');
       setVendasPerdidas(data);
     } catch (error) {
       console.error('Erro ao carregar vendas perdidas:', error);

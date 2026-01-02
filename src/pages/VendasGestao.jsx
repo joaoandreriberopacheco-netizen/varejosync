@@ -40,8 +40,7 @@ export default function VendasGestaoPage() {
 
   const loadPedidos = async () => {
     setIsLoading(true);
-    const tenantId = getTenantId();
-    const data = await base44.entities.PedidoVenda.filter({ empresa_id: tenantId }, '-created_date');
+    const data = await base44.entities.PedidoVenda.list('-created_date');
     setPedidos(data);
     
     // Calcular estatísticas
@@ -110,10 +109,9 @@ export default function VendasGestaoPage() {
     if (data.id) {
       await base44.entities.PedidoVenda.update(data.id, data);
     } else {
-      const tenantId = getTenantId();
-      const allPOs = await base44.entities.PedidoVenda.filter({ empresa_id: tenantId });
+      const allPOs = await base44.entities.PedidoVenda.list();
       const nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
-      await base44.entities.PedidoVenda.create({ ...data, empresa_id: tenantId, numero: `PV-${String(nextNumber).padStart(5, '0')}` });
+      await base44.entities.PedidoVenda.create({ ...data, numero: `PV-${String(nextNumber).padStart(5, '0')}` });
     }
     loadPedidos();
     setIsFormOpen(false);
