@@ -24,14 +24,14 @@ export default function OtimizacaoEstoqueIA() {
 
   const loadData = async () => {
     try {
-      const tid = getTenantId();
       const [prods, cats] = await Promise.all([
-        base44.entities.Produto.filter({ empresa_id: tid, tipo: 'Produto', ativo: true }),
-        base44.entities.Categoria.filter({ empresa_id: tid })
+        base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+        base44.entities.Categoria.list()
       ]);
-      setProdutos(prods);
-      setCategorias(cats);
+      setProdutos(prods || []);
+      setCategorias(cats || []);
     } catch (error) {
+      console.error("Erro ao carregar:", error);
       toast({ title: "Erro ao carregar dados", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
