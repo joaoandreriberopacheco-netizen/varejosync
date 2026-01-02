@@ -119,62 +119,53 @@ export default function ImportacaoProdutos() {
         cacheRef.current.produtos = produtosExistentes;
       }
 
-      setValidationProgress({ step: 'Identificando formato com IA...', progress: 65 });
+      setValidationProgress({ step: 'Identificando formato...', progress: 65 });
 
       const linhas = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
-      const amostra = linhas.slice(0, 6).join('\n');
+      if (linhas.length < 2) {
+        throw new Error("Arquivo vazio ou com dados insuficientes");
+      }
 
-      const listaCategorias = categorias.map(c => c.nome).join(', ');
-      const listaFornecedores = fornecedores.map(f => `${f.nome} (${f.codigo_interno})`).join(', ');
-
-      const mapeamento = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise estas primeiras linhas de CSV e identifique o mapeamento EXATO de colunas:
-
-${amostra}
-
-IMPORTANTE - DIFERENCIE:
-- estoque_atual: quantidade DISPONÍVEL em estoque (valores como 150, 200, 50)
-- unidades_por_pacote: quantas unidades VÊM em um pacote de compra (valores pequenos como 1, 6, 12, 24)
-- estoque_minimo: ponto de reposição (valores médios)
-- estoque_ideal: quantidade ideal (geralmente maior que mínimo)
-- estoque_maximo: limite superior (geralmente maior que ideal)
-
-CATEGORIAS: ${listaCategorias}
-FORNECEDORES: ${listaFornecedores}
-
-Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (primeira coluna = 0, segunda = 1, etc). Se a coluna não existir, retorne -1.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            separador: { type: "string" },
-            indice_codigo_barras: { type: "number" },
-            indice_nome: { type: "number" },
-            indice_categoria: { type: "number" },
-            indice_marca: { type: "number" },
-            indice_fornecedor: { type: "number" },
-            indice_valor_compra: { type: "number" },
-            indice_frete: { type: "number" },
-            indice_imposto1: { type: "number" },
-            indice_imposto2: { type: "number" },
-            indice_desconto: { type: "number" },
-            indice_outros: { type: "number" },
-            indice_preco_venda: { type: "number" },
-            indice_estoque_minimo: { type: "number" },
-            indice_estoque_ideal: { type: "number" },
-            indice_estoque_maximo: { type: "number" },
-            indice_estoque_atual: { type: "number" },
-            indice_unidade: { type: "number" },
-            indice_tempo_reposicao: { type: "number" },
-            indice_peso: { type: "number" },
-            indice_dimensoes: { type: "number" },
-            indice_tags: { type: "number" }
-          }
+      const primeiraLinha = linhas[0];
+      const separador = primeiraLinha.includes(';') ? ';' : (primeiraLinha.includes(',') ? ',' : '\t');
+      
+      const headers = primeiraLinha.split(separador).map(h => h.trim().toUpperCase());
+      
+      const mapearColuna = (nomesOpcoes) => {
+        for (const nome of nomesOpcoes) {
+          const idx = headers.findIndex(h => h === nome.toUpperCase());
+          if (idx >= 0) return idx;
         }
-      });
+        return -1;
+      };
+
+      const mapeamento = {
+        separador,
+        indice_codigo_barras: mapearColuna(['CODIGO_BARRAS', 'COD_BARRAS', 'BARCODE', 'EAN']),
+        indice_nome: mapearColuna(['NOME', 'PRODUTO', 'DESCRICAO', 'DESCRIPTION']),
+        indice_categoria: mapearColuna(['CATEGORIA', 'CATEGORY']),
+        indice_marca: mapearColuna(['MARCA', 'BRAND']),
+        indice_fornecedor: mapearColuna(['FORNECEDOR_CODIGO', 'FORNECEDOR', 'SUPPLIER']),
+        indice_valor_compra: mapearColuna(['VALOR_COMPRA', 'CUSTO', 'COST']),
+        indice_frete: mapearColuna(['FRETE_PERCENTUAL', 'FRETE', 'FREIGHT']),
+        indice_imposto1: mapearColuna(['IMPOSTO1_PERCENTUAL', 'IMPOSTO1', 'IPI']),
+        indice_imposto2: mapearColuna(['IMPOSTO2_PERCENTUAL', 'IMPOSTO2', 'ICMS']),
+        indice_desconto: mapearColuna(['DESCONTO_COMERCIAL_PERCENTUAL', 'DESCONTO']),
+        indice_outros: mapearColuna(['OUTROS_CUSTOS_PERCENTUAL', 'OUTROS']),
+        indice_preco_venda: mapearColuna(['PRECO_VENDA', 'PRECO', 'PRICE']),
+        indice_estoque_minimo: mapearColuna(['ESTOQUE_MINIMO', 'MIN']),
+        indice_estoque_ideal: mapearColuna(['ESTOQUE_IDEAL', 'IDEAL']),
+        indice_estoque_maximo: mapearColuna(['ESTOQUE_MAXIMO', 'MAX']),
+        indice_estoque_atual: mapearColuna(['ESTOQUE_ATUAL', 'ESTOQUE', 'STOCK']),
+        indice_unidade: mapearColuna(['UNIDADE_PRINCIPAL', 'UNIDADE', 'UNIT']),
+        indice_tempo_reposicao: mapearColuna(['TEMPO_REPOSICAO_DIAS', 'TEMPO_REPOSICAO', 'LEAD_TIME']),
+        indice_peso: mapearColuna(['PESO_KG', 'PESO', 'WEIGHT']),
+        indice_dimensoes: mapearColuna(['DIMENSOES_CM', 'DIMENSOES', 'DIMENSIONS']),
+        indice_tags: mapearColuna(['TAGS', 'KEYWORDS'])
+      };
 
       setValidationProgress({ step: 'Processando todos os produtos...', progress: 75 });
 
-      const separador = mapeamento.separador || ';';
       const linhasDados = linhas.slice(1);
       const produtosIA = [];
 
@@ -262,7 +253,7 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
       });
 
       toast({
-        title: "Análise IA concluída!",
+        title: "Validação concluída!",
         description: `${produtosIA.length} produtos reconhecidos`,
         className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
       });
