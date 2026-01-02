@@ -63,39 +63,36 @@ export default function OtimizacaoEstoqueIA() {
         batches.push(dadosProdutos.slice(i, i + BATCH_SIZE));
       }
 
-      toast({ 
-        title: "🔄 Processando...", 
-        description: `Analisando ${produtos.length} produtos em ${batches.length} etapas`,
-        className: "bg-blue-100 text-blue-800"
-      });
-
       const investimentoPorBatch = parseFloat(valorInvestimento) / batches.length;
       const todasClassificacoes = [];
 
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
         
-        const prompt = `Você é um especialista em gestão de estoque para materiais de construção.
+        // Simplificar dados para evitar JSON muito grande
+        const batchSimplificado = batch.map(p => `${p.id}|${p.nome}|${p.categoria}|Custo:${p.custo_unitario}|Estoque:${p.estoque_atual}|Reposição:${p.tempo_reposicao_dias}d`).join('\n');
+        
+        const prompt = `Especialista em estoque de materiais de construção.
 
-TAREFA: Classificar ${batch.length} produtos e distribuir R$ ${investimentoPorBatch.toFixed(2)} de investimento.
+TAREFA: Classificar ${batch.length} produtos (lote ${i + 1}/${batches.length}) e distribuir R$ ${investimentoPorBatch.toFixed(2)}.
 
-PRODUTOS (${i + 1}/${batches.length}):
-${JSON.stringify(batch, null, 2)}
+PRODUTOS (formato: ID|Nome|Categoria|Custo|Estoque|Tempo):
+${batchSimplificado}
 
-REGRAS:
-• Categoria A (70%): Essenciais, alto giro
-• Categoria B (20%): Intermediários
-• Categoria C (10%): Complementares
+CLASSIFICAÇÃO:
+• A (70% investimento): Essenciais, alto giro
+• B (20%): Intermediários
+• C (10%): Baixo giro
 
-Para CADA produto defina:
-- classificacao_abc: "A", "B" ou "C"
-- estoque_minimo: segurança (considere tempo_reposicao_dias)
-- estoque_ideal: ponto de pedido
-- estoque_maximo: limite superior
-- justificativa: breve (máx 15 palavras)
+DEFINA para cada ID:
+- classificacao_abc: "A"/"B"/"C"
+- estoque_minimo: segurança
+- estoque_ideal: ponto pedido
+- estoque_maximo: limite
+- justificativa: máx 10 palavras
 
-RESPONDA JSON PURO:
-{"produtos":[{"produto_id":"id","classificacao_abc":"A","estoque_minimo":10,"estoque_ideal":25,"estoque_maximo":50,"justificativa":"razão"}]}`;
+JSON:
+{"produtos":[{"produto_id":"id","classificacao_abc":"A","estoque_minimo":10,"estoque_ideal":25,"estoque_maximo":50,"justificativa":"texto"}]}`;
 
         const response = await base44.integrations.Core.InvokeLLM({
           prompt,
@@ -122,11 +119,10 @@ RESPONDA JSON PURO:
 
         todasClassificacoes.push(...response.produtos);
         
-        toast({ 
-          title: `✓ Etapa ${i + 1}/${batches.length}`, 
-          description: `${todasClassificacoes.length} de ${produtos.length} produtos classificados`,
-          className: "bg-blue-100 text-blue-800"
-        });
+        // Aguardar 2s entre batches para evitar rate limit
+        if (i < batches.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
 
       // Consolidar resumo
@@ -150,7 +146,11 @@ RESPONDA JSON PURO:
       };
 
       setResultados(resultadoFinal);
-      toast({ title: "✨ Análise Concluída!", description: `${todasClassificacoes.length} produtos classificados`, className: "bg-green-100 text-green-800" });
+      toast({ 
+        title: "✨ Concluído!", 
+        description: `${todasClassificacoes.length} produtos: ${countA} A, ${countB} B, ${countC} C`, 
+        className: "bg-green-100 text-green-800" 
+      });
     } catch (error) {
       toast({ title: "Erro na otimização", description: error.message, variant: "destructive" });
     } finally {

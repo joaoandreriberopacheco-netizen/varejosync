@@ -60,45 +60,33 @@ export default function EstimativaEmbalagensIA() {
         batches.push(dadosProdutos.slice(i, i + BATCH_SIZE));
       }
 
-      toast({ 
-        title: "🔄 Processando...", 
-        description: `Analisando ${prodsParaAnalisar.length} produtos em ${batches.length} etapas`,
-        className: "bg-blue-100 text-blue-800"
-      });
-
       const todasEstimativas = [];
 
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
         
-        const prompt = `Você é um especialista em logística e embalagens de materiais de construção.
+        // Simplificar para evitar JSON muito grande
+        const batchSimplificado = batch.map(p => `${p.id}|${p.nome}|${p.categoria}|Dim:${p.dimensoes_cm||'?'}|Peso:${p.peso_kg||'?'}kg`).join('\n');
+        
+        const prompt = `Especialista em embalagens de materiais de construção.
 
-TAREFA: Estimar unidades por pacote/caixa para ${batch.length} produtos (lote ${i + 1}/${batches.length}).
+TAREFA: Estimar unidades/pacote para ${batch.length} produtos (${i + 1}/${batches.length}).
 
-PRODUTOS:
-${JSON.stringify(batch, null, 2)}
+PRODUTOS (ID|Nome|Categoria|Dimensões|Peso):
+${batchSimplificado}
 
-PADRÕES DE MERCADO (guia, não limite rígido):
-- Fixadores pequenos (parafusos, buchas): 50-200 unidades
-- Fixadores médios (chumbadores): 10-50 unidades
-- Metais sanitários (torneiras, registros): 6-12 unidades
-- Tubos/conexões PVC pequenos: 10-20 unidades
-- Tubos/conexões PVC grandes: 6 unidades
-- Tintas/vedantes: 12-24 unidades
-- Ferramentas manuais: 6-12 unidades
-- Material elétrico pequeno (tomadas, interruptores): 10-50 unidades
-- Fios/cabos elétricos: 1 rolo por caixa
-- Caixas d'água, vasos: 1-2 unidades
-- Portas, janelas: 1 unidade
+PADRÕES:
+- Fixadores pequenos: 50-200un
+- Metais sanitários: 6-12un
+- Tubos PVC: 6un
+- Tintas: 12-24un
+- Elétricos: 10-50un
+- Grandes (vasos, caixas): 1-2un
 
-ANÁLISE REQUERIDA:
-1. Leia atentamente o NOME completo do produto
-2. Identifique dimensões/tamanho mencionados no nome
-3. Considere a categoria e tags
-4. Pesquise como o fornecedor normalmente embala esse tipo de produto
+ANALISE o NOME e estime.
 
-RESPONDA JSON PURO:
-{"estimativas":[{"produto_id":"id","unidades_por_pacote":12,"justificativa":"razão concisa"}]}`;
+JSON:
+{"estimativas":[{"produto_id":"id","unidades_por_pacote":12,"justificativa":"breve"}]}`;
 
         const response = await base44.integrations.Core.InvokeLLM({
           prompt,
@@ -122,11 +110,10 @@ RESPONDA JSON PURO:
 
         todasEstimativas.push(...response.estimativas);
         
-        toast({ 
-          title: `✓ Etapa ${i + 1}/${batches.length}`, 
-          description: `${todasEstimativas.length} de ${prodsParaAnalisar.length} produtos estimados`,
-          className: "bg-blue-100 text-blue-800"
-        });
+        // Aguardar 2s entre batches para evitar rate limit
+        if (i < batches.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
 
       const estimativasMap = {};
@@ -134,7 +121,7 @@ RESPONDA JSON PURO:
         estimativasMap[e.produto_id] = e;
       });
       setEstimativas(estimativasMap);
-      toast({ title: "✨ Análise Concluída!", description: `${todasEstimativas.length} produtos estimados`, className: "bg-green-100 text-green-800" });
+      toast({ title: "✨ Concluído!", description: `${todasEstimativas.length} produtos estimados`, className: "bg-green-100 text-green-800" });
     } catch (error) {
       toast({ title: "Erro na estimativa", description: error.message, variant: "destructive" });
     } finally {
