@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Upload, CheckCircle, AlertTriangle, Loader2, FileText, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import HistoricoImportacoes from '../components/produtos/HistoricoImportacoes';
 import { createPageUrl } from '@/components/utils';
 import { Link } from 'react-router-dom';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
