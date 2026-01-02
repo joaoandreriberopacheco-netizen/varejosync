@@ -37,6 +37,7 @@ export default function PDVSupermercado() {
   const [quantidadeAtual, setQuantidadeAtual] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [produtoSelecionadoIndex, setProdutoSelecionadoIndex] = useState(0);
+  const [configVendas, setConfigVendas] = useState(null);
 
   // Payment States
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
@@ -116,15 +117,18 @@ export default function PDVSupermercado() {
 
   const loadDependencies = async () => {
     try {
-      const tenantId = getTenantId();
-      const [produtosData, userData, clientesData] = await Promise.all([
-        Produto.filter({ ativo: true, empresa_id: tenantId }),
-        User.me(),
-        Terceiro.filter({ tipo: ['Cliente', 'Ambos'], empresa_id: tenantId })
+      const [produtosData, userData, clientesData, configsVendas] = await Promise.all([
+        base44.entities.Produto.filter({ ativo: true }),
+        base44.auth.me(),
+        base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] }),
+        base44.entities.ConfiguracoesVenda.list()
       ]);
       setProdutos(produtosData);
       setCurrentUser(userData);
       setClientes(clientesData);
+      if (configsVendas.length > 0) {
+        setConfigVendas(configsVendas[0]);
+      }
       if (userData.tabela_preco_id) {
         const tabela = await TabelaPreco.get(userData.tabela_preco_id);
         setTabelaPreco(tabela);

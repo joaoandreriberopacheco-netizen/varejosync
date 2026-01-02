@@ -62,6 +62,7 @@ export default function PDVVendedor() {
   const [showCarrinhoMobile, setShowCarrinhoMobile] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
+  const [configVendas, setConfigVendas] = useState(null);
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -158,10 +159,12 @@ export default function PDVVendedor() {
 
   const loadConfiguracoesVenda = async () => {
     try {
-      const tenantId = getTenantId();
-      const configs = await base44.entities.ConfiguracoesVenda.filter({ empresa_id: tenantId });
-      if (configs.length > 0 && configs[0].auto_delivery_balcao) {
-        setMetodoEntrega('Retirada');
+      const configs = await base44.entities.ConfiguracoesVenda.list();
+      if (configs.length > 0) {
+        setConfigVendas(configs[0]);
+        if (configs[0].auto_delivery_balcao) {
+          setMetodoEntrega('Retirada');
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -366,7 +369,8 @@ export default function PDVVendedor() {
 
     const quantidade = parseInt(quantidadeAtual) || 1; // Updated state
 
-    if (produtoSelecionado.estoque_atual < quantidade) {
+    // Só valida estoque se a configuração NÃO permitir vender sem estoque
+    if (!configVendas?.vender_sem_estoque && produtoSelecionado.estoque_atual < quantidade) {
       showFeedback('error', `Estoque insuficiente: ${produtoSelecionado.estoque_atual} disponível`, 3000);
       return;
     }
@@ -431,7 +435,8 @@ export default function PDVVendedor() {
       setCarrinho(carrinho.filter((item) => item.produto_id !== produtoId));
     } else {
       const item = carrinho.find((i) => i.produto_id === produtoId);
-      if (item && novaQuantidade <= item.estoque_disponivel) {
+      // Só valida estoque se a configuração NÃO permitir vender sem estoque
+      if (configVendas?.vender_sem_estoque || (item && novaQuantidade <= item.estoque_disponivel)) {
         setCarrinho(carrinho.map((item) =>
         item.produto_id === produtoId ?
         { ...item, quantidade: novaQuantidade, total: novaQuantidade * item.preco_unitario } :
