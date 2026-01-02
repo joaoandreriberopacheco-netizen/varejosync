@@ -56,46 +56,33 @@ export default function OtimizacaoEstoqueIA() {
         tags: p.tags || []
       }));
 
-      const prompt = `Você é um especialista em gestão de estoque e otimização de mix de produtos.
+      const prompt = `Você é um especialista em gestão de estoque e otimização de mix de produtos para materiais de construção.
 
-TAREFA: Realizar classificação ABC e distribuir um investimento de R$ ${valorInvestimento} em estoque entre ${produtos.length} produtos.
+TAREFA CRÍTICA: Classificar TODOS os ${produtos.length} produtos e distribuir R$ ${valorInvestimento} de investimento em estoque.
 
-DADOS DOS PRODUTOS:
+DADOS COMPLETOS:
 ${JSON.stringify(dadosProdutos, null, 2)}
 
-INSTRUÇÕES:
-1. Classifique os produtos em A, B ou C baseado em:
-   - Produtos essenciais/alto giro = A (60% do valor)
-   - Produtos intermediários = B (30% do valor)
-   - Produtos de baixo giro/complementares = C (10% do valor)
+REGRAS OBRIGATÓRIAS:
+1. ANALISE CADA UM DOS ${produtos.length} PRODUTOS - não pule nenhum
+2. Classifique baseado na importância para o negócio:
+   • Categoria A (60% investimento): Produtos essenciais, alto giro, maior demanda
+   • Categoria B (30% investimento): Produtos intermediários, giro médio
+   • Categoria C (10% investimento): Produtos complementares, baixo giro
 
-2. Para cada produto, defina:
+3. Para CADA produto defina:
    - classificacao_abc: "A", "B" ou "C"
-   - estoque_minimo: quantidade mínima de segurança (considere tempo_reposicao)
-   - estoque_ideal: quantidade ideal para manter (ponto de pedido)
-   - estoque_maximo: quantidade máxima (evitar capital parado)
-   - justificativa: breve explicação da classificação
+   - estoque_minimo: segurança considerando tempo_reposicao_dias
+   - estoque_ideal: ponto de pedido otimizado
+   - estoque_maximo: limite para evitar capital parado
+   - justificativa: explicação concisa (máx 15 palavras)
 
-3. A soma dos valores (estoque_ideal × custo_unitario) deve se aproximar de R$ ${valorInvestimento}
+4. VALOR TOTAL: estoque_ideal × custo_unitario de TODOS produtos ≈ R$ ${valorInvestimento}
 
-RESPONDA APENAS COM JSON (sem markdown):
+FORMATO DE RESPOSTA (JSON puro, sem markdown):
 {
-  "produtos": [
-    {
-      "produto_id": "id",
-      "classificacao_abc": "A",
-      "estoque_minimo": 10,
-      "estoque_ideal": 25,
-      "estoque_maximo": 50,
-      "justificativa": "razão da classificação"
-    }
-  ],
-  "resumo": {
-    "total_produtos_a": 0,
-    "total_produtos_b": 0,
-    "total_produtos_c": 0,
-    "valor_estimado_estoque": 0
-  }
+  "produtos": [${produtos.map(p => `{"produto_id":"${p.id}","classificacao_abc":"A","estoque_minimo":10,"estoque_ideal":25,"estoque_maximo":50,"justificativa":"razão"}`).slice(0, 3).join(',')}],
+  "resumo": {"total_produtos_a":0,"total_produtos_b":0,"total_produtos_c":0,"valor_estimado_estoque":0}
 }`;
 
       const response = await base44.integrations.Core.InvokeLLM({
@@ -114,7 +101,8 @@ RESPONDA APENAS COM JSON (sem markdown):
                   estoque_ideal: { type: "number" },
                   estoque_maximo: { type: "number" },
                   justificativa: { type: "string" }
-                }
+                },
+                required: ["produto_id", "classificacao_abc", "estoque_minimo", "estoque_ideal", "estoque_maximo"]
               }
             },
             resumo: {
@@ -129,6 +117,16 @@ RESPONDA APENAS COM JSON (sem markdown):
           }
         }
       });
+
+      // Validar que todos os produtos foram analisados
+      if (response.produtos.length < produtos.length) {
+        toast({ 
+          title: "⚠️ Análise Incompleta", 
+          description: `Apenas ${response.produtos.length} de ${produtos.length} produtos foram classificados. Tente novamente.`,
+          variant: "destructive" 
+        });
+        return;
+      }
 
       setResultados(response);
       toast({ title: "✨ Análise Concluída!", className: "bg-green-100 text-green-800" });
