@@ -63,7 +63,6 @@ export default function PDVVendedor() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
   const [configVenda, setConfigVenda] = useState(null);
-  const [configVenda, setConfigVenda] = useState(null);
 
   useEffect(() => {
     if (produtos.length === 0) return;
