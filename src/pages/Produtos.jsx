@@ -38,7 +38,9 @@ import {
   RefreshCw,
   Columns,
   Search,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Sparkles,
+  Wand2
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
@@ -1005,6 +1007,26 @@ export default function ProdutosPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
                   <ImageIcon className="w-3.5 h-3.5 mr-2" />Importar Imagens
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="dark:bg-gray-800 dark:border-gray-700">
+                <DropdownMenuItem asChild className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <Link to={createPageUrl('OtimizacaoEstoqueIA')}>
+                    <Sparkles className="w-3.5 h-3.5 mr-2 text-purple-600" />Otimizar Estoque
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
+                  <Link to={createPageUrl('EstimativaEmbalagensIA')}>
+                    <Wand2 className="w-3.5 h-3.5 mr-2 text-blue-600" />Estimar Embalagens
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
