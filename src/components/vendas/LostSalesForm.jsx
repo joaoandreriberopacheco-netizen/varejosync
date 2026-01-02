@@ -168,7 +168,12 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
 
     setIsSubmitting(true);
     try {
-      await base44.entities.VendaPerdida.create(formData);
+      const dataToSave = {
+        ...formData,
+        produto_nome: formData.produto_consultado_nome,
+        motivo: formData.motivo_perda
+      };
+      await base44.entities.VendaPerdida.create(dataToSave);
       showFeedback('success', 'Venda perdida registrada');
     } catch (error) {
       showFeedback('error', error.message);
