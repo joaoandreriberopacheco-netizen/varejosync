@@ -65,9 +65,18 @@ export default function OtimizacaoEstoqueIA() {
 
       const investimentoPorBatch = parseFloat(valorInvestimento) / batches.length;
       const todasClassificacoes = [];
+      
+      setProgress({ current: 0, total: produtos.length, batch: 0, totalBatches: batches.length });
 
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
+        
+        setProgress({ 
+          current: todasClassificacoes.length, 
+          total: produtos.length, 
+          batch: i + 1, 
+          totalBatches: batches.length 
+        });
         
         // Simplificar dados para evitar JSON muito grande
         const batchSimplificado = batch.map(p => `${p.id}|${p.nome}|${p.categoria}|Custo:${p.custo_unitario}|Estoque:${p.estoque_atual}|Reposição:${p.tempo_reposicao_dias}d`).join('\n');

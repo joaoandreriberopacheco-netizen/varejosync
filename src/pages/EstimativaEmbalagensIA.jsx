@@ -61,9 +61,18 @@ export default function EstimativaEmbalagensIA() {
       }
 
       const todasEstimativas = [];
+      
+      setProgress({ current: 0, total: prodsParaAnalisar.length, batch: 0, totalBatches: batches.length });
 
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
+        
+        setProgress({ 
+          current: todasEstimativas.length, 
+          total: prodsParaAnalisar.length, 
+          batch: i + 1, 
+          totalBatches: batches.length 
+        });
         
         // Simplificar para evitar JSON muito grande
         const batchSimplificado = batch.map(p => `${p.id}|${p.nome}|${p.categoria}|Dim:${p.dimensoes_cm||'?'}|Peso:${p.peso_kg||'?'}kg`).join('\n');
