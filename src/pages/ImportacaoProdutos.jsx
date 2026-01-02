@@ -112,14 +112,21 @@ export default function ImportacaoProdutos() {
       const listaFornecedores = fornecedores.map(f => `${f.nome} (${f.codigo_interno})`).join(', ');
 
       const mapeamento = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise estas primeiras linhas de CSV e identifique o mapeamento de colunas:
+        prompt: `Analise estas primeiras linhas de CSV e identifique o mapeamento EXATO de colunas:
 
 ${amostra}
+
+IMPORTANTE - DIFERENCIE:
+- estoque_atual: quantidade DISPONÍVEL em estoque (valores como 150, 200, 50)
+- unidades_por_pacote: quantas unidades VÊM em um pacote de compra (valores pequenos como 1, 6, 12, 24)
+- estoque_minimo: ponto de reposição (valores médios)
+- estoque_ideal: quantidade ideal (geralmente maior que mínimo)
+- estoque_maximo: limite superior (geralmente maior que ideal)
 
 CATEGORIAS: ${listaCategorias}
 FORNECEDORES: ${listaFornecedores}
 
-Retorne o índice (posição) de cada coluna no CSV (começando do 0). Se não existir, retorne -1.`,
+Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (primeira coluna = 0, segunda = 1, etc). Se a coluna não existir, retorne -1.`,
         response_json_schema: {
           type: "object",
           properties: {
