@@ -62,7 +62,7 @@ export default function PDVVendedor() {
   const [showCarrinhoMobile, setShowCarrinhoMobile] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
-  const [configVendas, setConfigVendas] = useState(null);
+  const [configVenda, setConfigVenda] = useState(null);
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -161,7 +161,7 @@ export default function PDVVendedor() {
     try {
       const configs = await base44.entities.ConfiguracoesVenda.list();
       if (configs.length > 0) {
-        setConfigVendas(configs[0]);
+        setConfigVenda(configs[0]);
         if (configs[0].auto_delivery_balcao) {
           setMetodoEntrega('Retirada');
         }
@@ -369,8 +369,7 @@ export default function PDVVendedor() {
 
     const quantidade = parseInt(quantidadeAtual) || 1; // Updated state
 
-    // Só valida estoque se a configuração NÃO permitir vender sem estoque
-    if (!configVendas?.vender_sem_estoque && produtoSelecionado.estoque_atual < quantidade) {
+    if (!configVenda?.vender_sem_estoque && produtoSelecionado.estoque_atual < quantidade) {
       showFeedback('error', `Estoque insuficiente: ${produtoSelecionado.estoque_atual} disponível`, 3000);
       return;
     }
@@ -435,8 +434,7 @@ export default function PDVVendedor() {
       setCarrinho(carrinho.filter((item) => item.produto_id !== produtoId));
     } else {
       const item = carrinho.find((i) => i.produto_id === produtoId);
-      // Só valida estoque se a configuração NÃO permitir vender sem estoque
-      if (configVendas?.vender_sem_estoque || (item && novaQuantidade <= item.estoque_disponivel)) {
+      if (configVenda?.vender_sem_estoque || (item && novaQuantidade <= item.estoque_disponivel)) {
         setCarrinho(carrinho.map((item) =>
         item.produto_id === produtoId ?
         { ...item, quantidade: novaQuantidade, total: novaQuantidade * item.preco_unitario } :
@@ -980,7 +978,7 @@ export default function PDVVendedor() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
-                    disabled={item.quantidade >= item.estoque_disponivel}
+                    disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
                     className="h-7 w-7 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600">
 
                         <Plus className="h-3 w-3" />
@@ -1132,7 +1130,7 @@ export default function PDVVendedor() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
-                    disabled={item.quantidade >= item.estoque_disponivel}
+                    disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
                     className="h-11 w-11 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
 
                           <Plus className="h-4 w-4" />
