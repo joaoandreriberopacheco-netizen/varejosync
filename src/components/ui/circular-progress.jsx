@@ -1,7 +1,9 @@
 import React from 'react';
 
 export function CircularProgress({ value, max, currentBatch, totalBatches, processedItems, totalItems }) {
-  const percentage = (value / max) * 100;
+  const safeValue = Math.min(value || 0, max || 1);
+  const safeMax = max || 1;
+  const percentage = Math.min(100, Math.max(0, (safeValue / safeMax) * 100));
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
