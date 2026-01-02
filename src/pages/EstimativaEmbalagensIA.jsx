@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CircularProgress } from '@/components/ui/circular-progress';
 import { ArrowLeft, Sparkles, Package, CheckCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -15,6 +16,7 @@ export default function EstimativaEmbalagensIA() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [estimativas, setEstimativas] = useState({});
   const [modoAnalise, setModoAnalise] = useState('sem_info'); // 'sem_info' ou 'todos'
+  const [progress, setProgress] = useState({ current: 0, total: 0, batch: 0, totalBatches: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -135,6 +137,7 @@ JSON:
       toast({ title: "Erro na estimativa", description: error.message, variant: "destructive" });
     } finally {
       setIsProcessing(false);
+      setProgress({ current: 0, total: 0, batch: 0, totalBatches: 0 });
     }
   };
 
@@ -233,25 +236,30 @@ JSON:
           </div>
         </div>
 
-        {Object.keys(estimativas).length === 0 ? (
+        {isProcessing && (
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl shadow-sm">
+            <CircularProgress 
+              value={progress.current}
+              max={progress.total}
+              currentBatch={progress.batch}
+              totalBatches={progress.totalBatches}
+              processedItems={progress.current}
+              totalItems={progress.total}
+            />
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 pb-6">A IA está estimando as embalagens...</p>
+          </div>
+        )}
+
+        {!isProcessing && Object.keys(estimativas).length === 0 ? (
           <Button 
             onClick={handleEstimate} 
-            disabled={isProcessing || (modoAnalise === 'sem_info' ? produtos.length === 0 : produtosTodos.length === 0)}
+            disabled={modoAnalise === 'sem_info' ? produtos.length === 0 : produtosTodos.length === 0}
             className="w-full h-14 text-base bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
           >
-            {isProcessing ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Analisando com IA...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5 mr-2" />
-                Gerar Estimativas
-              </>
-            )}
+            <Sparkles className="w-5 h-5 mr-2" />
+            Gerar Estimativas
           </Button>
-        ) : (
+        ) : !isProcessing ? (
           <div className="space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
               <div className="p-4 border-b border-gray-100 dark:border-gray-700">

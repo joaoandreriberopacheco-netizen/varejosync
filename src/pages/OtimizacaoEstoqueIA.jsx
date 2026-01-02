@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { CircularProgress } from '@/components/ui/circular-progress';
 import { ArrowLeft, Sparkles, TrendingUp, DollarSign, Package, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -15,6 +16,7 @@ export default function OtimizacaoEstoqueIA() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [resultados, setResultados] = useState(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0, batch: 0, totalBatches: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -164,6 +166,7 @@ JSON:
       toast({ title: "Erro na otimização", description: error.message, variant: "destructive" });
     } finally {
       setIsProcessing(false);
+      setProgress({ current: 0, total: 0, batch: 0, totalBatches: 0 });
     }
   };
 
@@ -257,25 +260,30 @@ JSON:
           </div>
         </div>
 
-        {!resultados ? (
+        {isProcessing && (
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 rounded-2xl shadow-sm">
+            <CircularProgress 
+              value={progress.current}
+              max={progress.total}
+              currentBatch={progress.batch}
+              totalBatches={progress.totalBatches}
+              processedItems={progress.current}
+              totalItems={progress.total}
+            />
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 pb-6">A IA está classificando seus produtos...</p>
+          </div>
+        )}
+
+        {!isProcessing && !resultados ? (
           <Button 
             onClick={handleOptimize} 
-            disabled={isProcessing || !valorInvestimento}
+            disabled={!valorInvestimento}
             className="w-full h-14 text-base bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
           >
-            {isProcessing ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Analisando com IA...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5 mr-2" />
-                Otimizar Estoque
-              </>
-            )}
+            <Sparkles className="w-5 h-5 mr-2" />
+            Otimizar Estoque
           </Button>
-        ) : (
+        ) : !isProcessing ? (
           <div className="space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
