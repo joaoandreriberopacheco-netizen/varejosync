@@ -175,6 +175,7 @@ JSON:
     
     try {
       const updateData = resultados.produtos
+        .filter(r => r.produto_id && r.produto_id !== 'undefined' && r.produto_id !== 'null')
         .map(r => {
           const produto = produtos.find(p => p.id === r.produto_id);
           if (!produto) return null;
@@ -189,6 +190,11 @@ JSON:
           };
         })
         .filter(Boolean);
+
+      if (updateData.length === 0) {
+        toast({ title: "Nenhum produto válido", description: "Não há produtos com IDs válidos para atualizar", variant: "destructive" });
+        return;
+      }
 
       const BATCH_SIZE = 10;
       for (let i = 0; i < updateData.length; i += BATCH_SIZE) {

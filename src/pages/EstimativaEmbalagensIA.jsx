@@ -143,7 +143,13 @@ JSON:
 
   const handleApply = async () => {
     try {
-      const entries = Object.entries(estimativas);
+      const entries = Object.entries(estimativas).filter(([produtoId]) => produtoId && produtoId !== 'undefined' && produtoId !== 'null');
+      
+      if (entries.length === 0) {
+        toast({ title: "Nenhum produto válido", description: "Não há produtos com IDs válidos para atualizar", variant: "destructive" });
+        return;
+      }
+
       const BATCH_SIZE = 10;
       
       for (let i = 0; i < entries.length; i += BATCH_SIZE) {
