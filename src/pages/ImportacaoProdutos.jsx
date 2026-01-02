@@ -59,8 +59,6 @@ export default function ImportacaoProdutos() {
   };
 
   const handleValidateFile = async () => {
-    console.log("handleValidateFile chamada, file:", file);
-    
     if (!file) {
       toast({
         title: "Nenhum arquivo selecionado",
@@ -73,40 +71,12 @@ export default function ImportacaoProdutos() {
     setIsValidating(true);
 
     try {
-      console.log("Lendo arquivo...");
       const text = await file.text();
-      console.log("Texto lido, primeiros 200 chars:", text.substring(0, 200));
       
-      const linhas = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
-      console.log("Total de linhas:", linhas.length);
-      
-      if (linhas.length < 2) {
-        throw new Error("Arquivo vazio ou sem dados válidos");
-      }
-
-      const headers = linhas[0].split(';').map(h => h.trim().toUpperCase());
-      
-      const requiredHeaders = ['NOME', 'PRECO_VENDA'];
-      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-
-      if (missingHeaders.length > 0) {
-        setValidationResult({
-          success: false,
-          error: `Colunas obrigatórias ausentes: ${missingHeaders.join(', ')}`,
-          totalLinhas: 0
-        });
-        setIsValidating(false);
-        return;
-      }
-
-      const produtosValidos = linhas.slice(1).filter(linha => {
-        const cols = linha.split(';');
-        return cols.length >= 2;
+      toast({
+        title: "Analisando com IA...",
+        description: "Interpretando o conteúdo do arquivo"
       });
-
-      if (produtosValidos.length === 0) {
-        throw new Error("Nenhum produto válido encontrado no arquivo");
-      }
 
       let categorias = cacheRef.current.categorias;
       let fornecedores = cacheRef.current.fornecedores;
@@ -129,15 +99,81 @@ export default function ImportacaoProdutos() {
         produtosExistentes = await base44.entities.Produto.list();
         cacheRef.current.produtos = produtosExistentes;
       }
+
+      const listaCategorias = categorias.map(c => c.nome).join(', ');
+      const listaFornecedores = fornecedores.map(f => `${f.nome} (${f.codigo_interno})`).join(', ');
+
+      const resultado = await base44.integrations.Core.InvokeLLM({
+        prompt: `Você é um assistente de importação de produtos. Analise o conteúdo CSV abaixo e extraia TODOS os produtos listados.
+
+CATEGORIAS DISPONÍVEIS: ${listaCategorias}
+FORNECEDORES DISPONÍVEIS: ${listaFornecedores}
+
+REGRAS:
+- Nome do produto: obrigatório (extrair e converter para MAIÚSCULAS)
+- Preço de venda: obrigatório (converter para número decimal)
+- Código de barras: extrair se disponível (converter para MAIÚSCULAS)
+- Categoria: mapear para uma das categorias disponíveis pelo nome exato
+- Fornecedor: mapear pelo código se disponível
+- Custos/Percentuais: extrair valores de frete, impostos, descontos como números decimais
+- Estoque: extrair quantidades se disponíveis
+- Tags: extrair e separar por vírgula se disponíveis
+
+Retorne TODOS os produtos encontrados no formato JSON.
+
+CONTEÚDO CSV:
+${text}`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            produtos: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  nome: { type: "string" },
+                  preco_venda: { type: "number" },
+                  codigo_barras: { type: "string" },
+                  categoria_nome: { type: "string" },
+                  fornecedor_codigo: { type: "string" },
+                  marca: { type: "string" },
+                  valor_compra: { type: "number" },
+                  frete_percentual: { type: "number" },
+                  imposto1_percentual: { type: "number" },
+                  imposto2_percentual: { type: "number" },
+                  desconto_comercial_percentual: { type: "number" },
+                  outros_custos_percentual: { type: "number" },
+                  estoque_minimo: { type: "number" },
+                  estoque_ideal: { type: "number" },
+                  estoque_maximo: { type: "number" },
+                  estoque_atual: { type: "number" },
+                  unidade_principal: { type: "string" },
+                  tempo_reposicao_dias: { type: "number" },
+                  peso_kg: { type: "number" },
+                  dimensoes_cm: { type: "string" },
+                  tags: { type: "string" }
+                },
+                required: ["nome", "preco_venda"]
+              }
+            }
+          }
+        }
+      });
+
+      const produtosIA = resultado.produtos || [];
       
+      if (produtosIA.length === 0) {
+        throw new Error("Nenhum produto reconhecido pela IA");
+      }
+
       let novos = 0;
       let atualizacoes = 0;
 
-      produtosValidos.forEach(linha => {
-        const cols = linha.split(';');
-        const codigoBarras = cols[headers.indexOf('CODIGO_BARRAS')]?.trim().toUpperCase();
-        if (codigoBarras) {
-          const existe = produtosExistentes.find(p => p.codigo_barras === codigoBarras);
+      produtosIA.forEach(prod => {
+        if (prod.codigo_barras) {
+          const existe = produtosExistentes.find(p => 
+            p.codigo_barras?.toUpperCase() === prod.codigo_barras?.toUpperCase()
+          );
           if (existe) atualizacoes++;
           else novos++;
         } else {
@@ -145,9 +181,11 @@ export default function ImportacaoProdutos() {
         }
       });
 
+      cacheRef.current.produtosIA = produtosIA;
+
       setValidationResult({
         success: true,
-        totalLinhas: produtosValidos.length,
+        totalLinhas: produtosIA.length,
         novos,
         atualizacoes,
         totalCategorias: categorias.length,
@@ -155,14 +193,13 @@ export default function ImportacaoProdutos() {
       });
 
       toast({
-        title: "Arquivo validado!",
-        description: `${produtosValidos.length} produtos prontos para importar.`,
+        title: "Análise IA concluída!",
+        description: `${produtosIA.length} produtos reconhecidos`,
         className: "bg-green-100 text-green-800"
       });
 
       setStep(2);
     } catch (error) {
-      console.error("Erro na validação:", error);
       setValidationResult({
         success: false,
         error: error.message,
@@ -170,7 +207,7 @@ export default function ImportacaoProdutos() {
       });
       
       toast({
-        title: "Erro na validação",
+        title: "Erro na análise",
         description: error.message,
         variant: "destructive"
       });
