@@ -324,22 +324,27 @@ export default function SugestaoCompra() {
     }
   };
 
-  const produtosSemFornecedor = sugestoes.filter(s => !s.fornecedor_selecionado_id);
+  const produtosSemFornecedor = useMemo(() => 
+    sugestoes.filter(s => !s.fornecedor_selecionado_id), 
+    [sugestoes]
+  );
   
-  // Aplicar filtros
-  const sugestoesVisiveis = sugestoes.filter(s => {
-     const matchesPending = hidePending ? s.quantidade_pendente === 0 : true;
-     const matchesTerm = debouncedFilterTerm ? s.produto_nome.toLowerCase().includes(debouncedFilterTerm.toLowerCase()) : true;
-     const matchesCategory = filterCategory === 'all' || s.categoria_id === filterCategory;
-     const matchesSupplier = filterSupplier === 'all' || s.fornecedor_padrao_id === filterSupplier || s.fornecedor_selecionado_id === filterSupplier;
-     
-     // Filtro de tags: produto deve ter todas as tags selecionadas
-     const matchesTags = filterTags.length === 0 || filterTags.every(tag => 
-       s.tags && s.tags.includes(tag)
-     );
+  // Aplicar filtros com useMemo para otimização
+  const sugestoesVisiveis = useMemo(() => {
+    return sugestoes.filter(s => {
+      const matchesPending = hidePending ? s.quantidade_pendente === 0 : true;
+      const matchesTerm = debouncedFilterTerm ? s.produto_nome.toLowerCase().includes(debouncedFilterTerm.toLowerCase()) : true;
+      const matchesCategory = filterCategory === 'all' || s.categoria_id === filterCategory;
+      const matchesSupplier = filterSupplier === 'all' || s.fornecedor_padrao_id === filterSupplier || s.fornecedor_selecionado_id === filterSupplier;
+      
+      // Filtro de tags: produto deve ter todas as tags selecionadas
+      const matchesTags = filterTags.length === 0 || filterTags.every(tag => 
+        s.tags && s.tags.includes(tag)
+      );
 
-     return matchesPending && matchesTerm && matchesCategory && matchesSupplier && matchesTags;
-  });
+      return matchesPending && matchesTerm && matchesCategory && matchesSupplier && matchesTags;
+    });
+  }, [sugestoes, hidePending, debouncedFilterTerm, filterCategory, filterSupplier, filterTags]);
 
   const selectableItems = sugestoesVisiveis; // Agora permite selecionar mesmo sem fornecedor (usuário pode atribuir depois)
   const selectedSelectableItems = itensSelecionados.filter(s => sugestoesVisiveis.some(v => v.produto_id === s.produto_id));
