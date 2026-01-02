@@ -131,6 +131,9 @@ export default function ImportacaoProdutos() {
       
       const headers = primeiraLinha.split(separador).map(h => h.trim().toUpperCase());
       
+      console.log('📋 Cabeçalhos detectados:', headers);
+      console.log('🔍 Separador detectado:', separador);
+      
       const mapearColuna = (nomesOpcoes) => {
         for (const nome of nomesOpcoes) {
           const idx = headers.findIndex(h => h === nome.toUpperCase());
@@ -163,6 +166,12 @@ export default function ImportacaoProdutos() {
         indice_dimensoes: mapearColuna(['DIMENSOES_CM', 'DIMENSOES', 'DIMENSIONS']),
         indice_tags: mapearColuna(['TAGS', 'KEYWORDS'])
       };
+
+      console.log('🗺️ Mapeamento de colunas:', mapeamento);
+      
+      if (mapeamento.indice_nome === -1 || mapeamento.indice_preco_venda === -1) {
+        throw new Error(`Colunas obrigatórias não encontradas. Necessário: NOME (${mapeamento.indice_nome}) e PRECO_VENDA (${mapeamento.indice_preco_venda}). Cabeçalhos: ${headers.join(', ')}`);
+      }
 
       setValidationProgress({ step: 'Processando todos os produtos...', progress: 75 });
 
@@ -220,8 +229,10 @@ export default function ImportacaoProdutos() {
       
       setValidationProgress({ step: 'Processando resultados...', progress: 85 });
       
+      console.log(`✅ ${produtosIA.length} produtos processados`);
+      
       if (produtosIA.length === 0) {
-        throw new Error("Nenhum produto reconhecido pela IA");
+        throw new Error("Nenhum produto válido encontrado no arquivo. Verifique se as colunas NOME e PRECO_VENDA estão preenchidas.");
       }
 
       let novos = 0;
