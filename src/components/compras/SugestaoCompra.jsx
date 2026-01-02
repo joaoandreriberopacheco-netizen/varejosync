@@ -32,18 +32,14 @@ export default function SugestaoCompra() {
   
   const { toast } = useToast();
 
-  // Debounce para busca de texto
-  const debouncedSearch = useCallback(
-    debounce((value) => {
-      setDebouncedFilterTerm(value);
-    }, 300),
-    []
-  );
-
+  // Debounce apenas para a busca/filtragem, não para o input visual
   useEffect(() => {
-    debouncedSearch(filterTerm);
-    return () => debouncedSearch.cancel();
-  }, [filterTerm, debouncedSearch]);
+    const timer = setTimeout(() => {
+      setDebouncedFilterTerm(filterTerm);
+    }, 400);
+    
+    return () => clearTimeout(timer);
+  }, [filterTerm]);
 
   const handleRefresh = async () => {
   setIsLoading(true);
