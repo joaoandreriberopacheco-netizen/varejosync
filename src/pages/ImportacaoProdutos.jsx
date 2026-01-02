@@ -182,7 +182,15 @@ export default function ImportacaoProdutos() {
       for (let i = 0; i < linhasDados.length; i++) {
         const cols = linhasDados[i].split(separador).map(c => c.trim());
         
-        const getCol = (idx) => idx >= 0 && idx < cols.length ? cols[idx] : '';
+        const getCol = (idx) => {
+          if (idx < 0 || idx >= cols.length) return '';
+          let val = cols[idx];
+          // Remove aspas duplas no início e fim
+          if (val.startsWith('"') && val.endsWith('"')) {
+            val = val.slice(1, -1);
+          }
+          return val;
+        };
         const getNum = (idx) => {
           const val = getCol(idx);
           if (!val) return 0;
