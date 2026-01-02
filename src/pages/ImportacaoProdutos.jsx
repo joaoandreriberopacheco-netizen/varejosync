@@ -103,69 +103,106 @@ export default function ImportacaoProdutos() {
         cacheRef.current.produtos = produtosExistentes;
       }
 
-      setValidationProgress({ step: 'Analisando com IA...', progress: 65 });
+      setValidationProgress({ step: 'Identificando formato com IA...', progress: 65 });
+
+      const linhas = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
+      const amostra = linhas.slice(0, 6).join('\n');
 
       const listaCategorias = categorias.map(c => c.nome).join(', ');
       const listaFornecedores = fornecedores.map(f => `${f.nome} (${f.codigo_interno})`).join(', ');
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um assistente de importação de produtos. Analise o conteúdo CSV abaixo e extraia TODOS os produtos listados.
+      const mapeamento = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analise estas primeiras linhas de CSV e identifique o mapeamento de colunas:
 
-CATEGORIAS DISPONÍVEIS: ${listaCategorias}
-FORNECEDORES DISPONÍVEIS: ${listaFornecedores}
+${amostra}
 
-REGRAS:
-- Nome do produto: obrigatório (extrair e converter para MAIÚSCULAS)
-- Preço de venda: obrigatório (converter para número decimal)
-- Código de barras: extrair se disponível (converter para MAIÚSCULAS)
-- Categoria: mapear para uma das categorias disponíveis pelo nome exato
-- Fornecedor: mapear pelo código se disponível
-- Custos/Percentuais: extrair valores de frete, impostos, descontos como números decimais
-- Estoque: extrair quantidades se disponíveis
-- Tags: extrair e separar por vírgula se disponíveis
+CATEGORIAS: ${listaCategorias}
+FORNECEDORES: ${listaFornecedores}
 
-Retorne TODOS os produtos encontrados no formato JSON.
-
-CONTEÚDO CSV:
-${text}`,
+Retorne o índice (posição) de cada coluna no CSV (começando do 0). Se não existir, retorne -1.`,
         response_json_schema: {
           type: "object",
           properties: {
-            produtos: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  nome: { type: "string" },
-                  preco_venda: { type: "number" },
-                  codigo_barras: { type: "string" },
-                  categoria_nome: { type: "string" },
-                  fornecedor_codigo: { type: "string" },
-                  marca: { type: "string" },
-                  valor_compra: { type: "number" },
-                  frete_percentual: { type: "number" },
-                  imposto1_percentual: { type: "number" },
-                  imposto2_percentual: { type: "number" },
-                  desconto_comercial_percentual: { type: "number" },
-                  outros_custos_percentual: { type: "number" },
-                  estoque_minimo: { type: "number" },
-                  estoque_ideal: { type: "number" },
-                  estoque_maximo: { type: "number" },
-                  estoque_atual: { type: "number" },
-                  unidade_principal: { type: "string" },
-                  tempo_reposicao_dias: { type: "number" },
-                  peso_kg: { type: "number" },
-                  dimensoes_cm: { type: "string" },
-                  tags: { type: "string" }
-                },
-                required: ["nome", "preco_venda"]
-              }
-            }
+            separador: { type: "string" },
+            indice_codigo_barras: { type: "number" },
+            indice_nome: { type: "number" },
+            indice_categoria: { type: "number" },
+            indice_marca: { type: "number" },
+            indice_fornecedor: { type: "number" },
+            indice_valor_compra: { type: "number" },
+            indice_frete: { type: "number" },
+            indice_imposto1: { type: "number" },
+            indice_imposto2: { type: "number" },
+            indice_desconto: { type: "number" },
+            indice_outros: { type: "number" },
+            indice_preco_venda: { type: "number" },
+            indice_estoque_minimo: { type: "number" },
+            indice_estoque_ideal: { type: "number" },
+            indice_estoque_maximo: { type: "number" },
+            indice_estoque_atual: { type: "number" },
+            indice_unidade: { type: "number" },
+            indice_tempo_reposicao: { type: "number" },
+            indice_peso: { type: "number" },
+            indice_dimensoes: { type: "number" },
+            indice_tags: { type: "number" }
           }
         }
       });
 
-      const produtosIA = resultado.produtos || [];
+      setValidationProgress({ step: 'Processando todos os produtos...', progress: 75 });
+
+      const separador = mapeamento.separador || ';';
+      const linhasDados = linhas.slice(1);
+      const produtosIA = [];
+
+      for (let i = 0; i < linhasDados.length; i++) {
+        const cols = linhasDados[i].split(separador).map(c => c.trim());
+        
+        const getCol = (idx) => idx >= 0 && idx < cols.length ? cols[idx] : '';
+        const getNum = (idx) => {
+          const val = getCol(idx);
+          if (!val) return 0;
+          const num = parseFloat(val.replace(',', '.'));
+          return isNaN(num) ? 0 : num;
+        };
+
+        const nome = getCol(mapeamento.indice_nome);
+        const preco = getNum(mapeamento.indice_preco_venda);
+
+        if (!nome || !preco) continue;
+
+        produtosIA.push({
+          nome,
+          preco_venda: preco,
+          codigo_barras: getCol(mapeamento.indice_codigo_barras),
+          categoria_nome: getCol(mapeamento.indice_categoria),
+          fornecedor_codigo: getCol(mapeamento.indice_fornecedor),
+          marca: getCol(mapeamento.indice_marca),
+          valor_compra: getNum(mapeamento.indice_valor_compra),
+          frete_percentual: getNum(mapeamento.indice_frete),
+          imposto1_percentual: getNum(mapeamento.indice_imposto1),
+          imposto2_percentual: getNum(mapeamento.indice_imposto2),
+          desconto_comercial_percentual: getNum(mapeamento.indice_desconto),
+          outros_custos_percentual: getNum(mapeamento.indice_outros),
+          estoque_minimo: getNum(mapeamento.indice_estoque_minimo),
+          estoque_ideal: getNum(mapeamento.indice_estoque_ideal),
+          estoque_maximo: getNum(mapeamento.indice_estoque_maximo),
+          estoque_atual: getNum(mapeamento.indice_estoque_atual),
+          unidade_principal: getCol(mapeamento.indice_unidade),
+          tempo_reposicao_dias: getNum(mapeamento.indice_tempo_reposicao),
+          peso_kg: getNum(mapeamento.indice_peso),
+          dimensoes_cm: getCol(mapeamento.indice_dimensoes),
+          tags: getCol(mapeamento.indice_tags)
+        });
+
+        if (i % 100 === 0) {
+          setValidationProgress({ 
+            step: `Processando ${i}/${linhasDados.length} produtos...`, 
+            progress: 75 + Math.floor((i / linhasDados.length) * 10)
+          });
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      }
       
       setValidationProgress({ step: 'Processando resultados...', progress: 85 });
       
