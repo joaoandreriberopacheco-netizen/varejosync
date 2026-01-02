@@ -226,91 +226,82 @@ ${text}`,
     setIsImporting(true);
 
     try {
-      const text = await file.text();
-      const linhas = text.split('\n').filter(l => l.trim());
-      const headers = linhas[0].split(';').map(h => h.trim());
-
-      const categorias = cacheRef.current.categorias || await base44.entities.Categoria.list();
-      const fornecedores = cacheRef.current.fornecedores || await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
-      const produtosExistentes = cacheRef.current.produtos || await base44.entities.Produto.list();
+      const produtosIA = cacheRef.current.produtosIA || [];
+      const categorias = cacheRef.current.categorias;
+      const fornecedores = cacheRef.current.fornecedores;
+      const produtosExistentes = cacheRef.current.produtos;
       const tenantId = getTenantId();
 
-      const produtosParaImportar = [];
-      const linhasDados = linhas.slice(1);
+      setImportProgress({ current: 0, total: produtosIA.length });
 
-      setImportProgress({ current: 0, total: linhasDados.length });
+      for (let i = 0; i < produtosIA.length; i++) {
+        const prod = produtosIA[i];
+        
+        if (!prod.nome || !prod.preco_venda) continue;
 
-      for (let i = 0; i < linhasDados.length; i++) {
-        const linha = linhasDados[i];
-        const cols = linha.split(';');
-        const obj = {};
-        headers.forEach((h, idx) => { obj[h] = cols[idx]?.trim() || ''; });
+        const codigoBarras = prod.codigo_barras?.toUpperCase() || null;
+        const existe = codigoBarras ? produtosExistentes.find(p => 
+          p.codigo_barras?.toUpperCase() === codigoBarras
+        ) : null;
 
-        const codigoBarras = obj.CODIGO_BARRAS?.toUpperCase();
-        if (!codigoBarras || !obj.NOME) continue;
+        const valorCompra = prod.valor_compra || 0;
+        const fretePerc = prod.frete_percentual || 0;
+        const imp1Perc = prod.imposto1_percentual || 0;
+        const imp2Perc = prod.imposto2_percentual || 0;
+        const descPerc = prod.desconto_comercial_percentual || 0;
+        const outrosPerc = prod.outros_custos_percentual || 0;
 
-        const existe = produtosExistentes.find(p => p.codigo_barras === codigoBarras);
-
-        const parseNum = (val) => {
-          if (!val) return 0;
-          const num = parseFloat(String(val).replace(',', '.'));
-          return isNaN(num) ? 0 : num;
-        };
-
-        const valorCompra = parseNum(obj.VALOR_COMPRA);
-        const fretePercentual = parseNum(obj.FRETE_PERCENTUAL);
-        const imposto1Percentual = parseNum(obj.IMPOSTO1_PERCENTUAL);
-        const imposto2Percentual = parseNum(obj.IMPOSTO2_PERCENTUAL);
-        const descontoComercialPercentual = parseNum(obj.DESCONTO_COMERCIAL_PERCENTUAL);
-        const outrosCustosPercentual = parseNum(obj.OUTROS_CUSTOS_PERCENTUAL);
-        const precoVenda = parseNum(obj.PRECO_VENDA);
-
-        const frete = valorCompra * (fretePercentual / 100);
-        const imposto1 = valorCompra * (imposto1Percentual / 100);
-        const imposto2 = valorCompra * (imposto2Percentual / 100);
-        const desconto = valorCompra * (descontoComercialPercentual / 100);
-        const outros = valorCompra * (outrosCustosPercentual / 100);
-        const custoTotal = valorCompra + frete + imposto1 + imposto2 + outros - desconto;
+        const frete = valorCompra * (fretePerc / 100);
+        const imp1 = valorCompra * (imp1Perc / 100);
+        const imp2 = valorCompra * (imp2Perc / 100);
+        const desc = valorCompra * (descPerc / 100);
+        const outros = valorCompra * (outrosPerc / 100);
+        const custoTotal = valorCompra + frete + imp1 + imp2 + outros - desc;
 
         let precoVendaTipo = 'numerico';
-        let precoVendaPercentual = 0;
-        if (precoVenda > 0 && custoTotal > 0) {
-          precoVendaPercentual = ((precoVenda - custoTotal) / custoTotal) * 100;
+        let precoVendaPerc = 0;
+        if (prod.preco_venda > 0 && custoTotal > 0) {
+          precoVendaPerc = ((prod.preco_venda - custoTotal) / custoTotal) * 100;
           precoVendaTipo = 'percentual';
         }
 
-        const categoria = categorias.find(c => c.nome?.toUpperCase() === obj.CATEGORIA?.toUpperCase());
-        const fornecedor = fornecedores.find(f => f.codigo_interno?.toUpperCase() === obj.FORNECEDOR_CODIGO?.toUpperCase());
+        const categoria = categorias.find(c => 
+          c.nome?.toUpperCase() === prod.categoria_nome?.toUpperCase()
+        );
+        
+        const fornecedor = fornecedores.find(f => 
+          f.codigo_interno === prod.fornecedor_codigo
+        );
 
-        const tags = obj.TAGS ? obj.TAGS.split(',').map(t => t.trim().toUpperCase()).filter(t => t) : [];
+        const tags = prod.tags ? prod.tags.split(',').map(t => t.trim().toUpperCase()).filter(t => t) : [];
 
         const produtoData = {
           empresa_id: tenantId,
           codigo_barras: codigoBarras,
-          nome: obj.NOME?.toUpperCase(),
+          nome: prod.nome.toUpperCase(),
           categoria_id: categoria?.id || null,
           categoria_nome: categoria?.nome || null,
-          marca: obj.MARCA?.toUpperCase() || '',
+          marca: prod.marca?.toUpperCase() || '',
           fornecedor_padrao_id: fornecedor?.id || null,
           fornecedor_padrao_codigo: fornecedor?.codigo_interno || null,
           valor_compra: valorCompra,
-          custo_frete_padrao: fretePercentual,
-          custo_imposto1_padrao: imposto1Percentual,
-          custo_imposto2_padrao: imposto2Percentual,
-          desconto_compra_padrao: descontoComercialPercentual,
-          custo_outros_padrao: outrosCustosPercentual,
+          custo_frete_padrao: fretePerc,
+          custo_imposto1_padrao: imp1Perc,
+          custo_imposto2_padrao: imp2Perc,
+          desconto_compra_padrao: descPerc,
+          custo_outros_padrao: outrosPerc,
           preco_custo_calculado: custoTotal,
-          preco_venda_padrao: precoVenda,
+          preco_venda_padrao: prod.preco_venda,
           preco_venda_tipo: precoVendaTipo,
-          preco_venda_percentual: precoVendaPercentual,
-          estoque_minimo: parseNum(obj.ESTOQUE_MINIMO),
-          estoque_ideal: parseNum(obj.ESTOQUE_IDEAL),
-          estoque_maximo: parseNum(obj.ESTOQUE_MAXIMO),
-          estoque_atual: parseNum(obj.ESTOQUE_ATUAL),
-          unidade_principal: obj.UNIDADE_PRINCIPAL?.toUpperCase() || 'UN',
-          tempo_reposicao_dias: parseNum(obj.TEMPO_REPOSICAO_DIAS),
-          peso_kg: parseNum(obj.PESO_KG),
-          dimensoes_cm: obj.DIMENSOES_CM?.toUpperCase() || '',
+          preco_venda_percentual: precoVendaPerc,
+          estoque_minimo: prod.estoque_minimo || 0,
+          estoque_ideal: prod.estoque_ideal || 0,
+          estoque_maximo: prod.estoque_maximo || 0,
+          estoque_atual: prod.estoque_atual || 0,
+          unidade_principal: prod.unidade_principal?.toUpperCase() || 'UN',
+          tempo_reposicao_dias: prod.tempo_reposicao_dias || 0,
+          peso_kg: prod.peso_kg || 0,
+          dimensoes_cm: prod.dimensoes_cm?.toUpperCase() || '',
           tags,
           tipo: 'Produto',
           ativo: true
@@ -323,7 +314,7 @@ ${text}`,
         }
 
         await new Promise(resolve => setTimeout(resolve, 150));
-        setImportProgress({ current: i + 1, total: linhasDados.length });
+        setImportProgress({ current: i + 1, total: produtosIA.length });
       }
 
       toast({
