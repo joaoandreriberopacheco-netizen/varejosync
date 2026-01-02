@@ -161,10 +161,13 @@ export default function PDVVendedor() {
     try {
       const configs = await base44.entities.ConfiguracoesVenda.list();
       if (configs.length > 0) {
+        console.log('ConfigVenda carregada:', configs[0]);
         setConfigVenda(configs[0]);
         if (configs[0].auto_delivery_balcao) {
           setMetodoEntrega('Retirada');
         }
+      } else {
+        console.log('Nenhuma configuração de venda encontrada');
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -369,7 +372,9 @@ export default function PDVVendedor() {
 
     const quantidade = parseInt(quantidadeAtual) || 1; // Updated state
 
-    if (!configVenda?.vender_sem_estoque && produtoSelecionado.estoque_atual < quantidade) {
+    console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
+    
+    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidade) {
       showFeedback('error', `Estoque insuficiente: ${produtoSelecionado.estoque_atual} disponível`, 3000);
       return;
     }
@@ -434,7 +439,7 @@ export default function PDVVendedor() {
       setCarrinho(carrinho.filter((item) => item.produto_id !== produtoId));
     } else {
       const item = carrinho.find((i) => i.produto_id === produtoId);
-      if (configVenda?.vender_sem_estoque || (item && novaQuantidade <= item.estoque_disponivel)) {
+      if (configVenda?.vender_sem_estoque === true || (item && novaQuantidade <= item.estoque_disponivel)) {
         setCarrinho(carrinho.map((item) =>
         item.produto_id === produtoId ?
         { ...item, quantidade: novaQuantidade, total: novaQuantidade * item.preco_unitario } :
