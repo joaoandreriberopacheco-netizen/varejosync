@@ -13,6 +13,7 @@ export default function ImportacaoProdutos() {
   const [file, setFile] = useState(null);
   const [validationResult, setValidationResult] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [validationProgress, setValidationProgress] = useState({ step: '', progress: 0 });
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -69,14 +70,12 @@ export default function ImportacaoProdutos() {
     }
     
     setIsValidating(true);
+    setValidationProgress({ step: 'Lendo arquivo...', progress: 10 });
 
     try {
       const text = await file.text();
       
-      toast({
-        title: "Analisando com IA...",
-        description: "Interpretando o conteúdo do arquivo"
-      });
+      setValidationProgress({ step: 'Carregando dados do sistema...', progress: 20 });
 
       let categorias = cacheRef.current.categorias;
       let fornecedores = cacheRef.current.fornecedores;
@@ -88,17 +87,23 @@ export default function ImportacaoProdutos() {
         cacheRef.current.categorias = categorias;
       }
 
+      setValidationProgress({ step: 'Carregando fornecedores...', progress: 35 });
+
       if (!fornecedores) {
         await new Promise(resolve => setTimeout(resolve, 300));
         fornecedores = await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
         cacheRef.current.fornecedores = fornecedores;
       }
 
+      setValidationProgress({ step: 'Carregando produtos existentes...', progress: 50 });
+
       if (!produtosExistentes) {
         await new Promise(resolve => setTimeout(resolve, 300));
         produtosExistentes = await base44.entities.Produto.list();
         cacheRef.current.produtos = produtosExistentes;
       }
+
+      setValidationProgress({ step: 'Analisando com IA...', progress: 65 });
 
       const listaCategorias = categorias.map(c => c.nome).join(', ');
       const listaFornecedores = fornecedores.map(f => `${f.nome} (${f.codigo_interno})`).join(', ');
@@ -162,6 +167,8 @@ ${text}`,
 
       const produtosIA = resultado.produtos || [];
       
+      setValidationProgress({ step: 'Processando resultados...', progress: 85 });
+      
       if (produtosIA.length === 0) {
         throw new Error("Nenhum produto reconhecido pela IA");
       }
@@ -182,6 +189,8 @@ ${text}`,
       });
 
       cacheRef.current.produtosIA = produtosIA;
+
+      setValidationProgress({ step: 'Finalizando...', progress: 100 });
 
       setValidationResult({
         success: true,
@@ -445,21 +454,32 @@ ${text}`,
                     </div>
                   )}
 
-                  {file && (
+                  {file && !isValidating && (
                     <Button
                       onClick={handleValidateFile}
-                      disabled={isValidating}
                       className="gap-2 mt-4 w-full"
                     >
-                      {isValidating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Validando...
-                        </>
-                      ) : (
-                        'Validar e Continuar'
-                      )}
+                      Validar e Continuar
                     </Button>
+                  )}
+
+                  {file && isValidating && (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {validationProgress.step}
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {validationProgress.progress}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-gray-800 dark:bg-white h-full transition-all duration-500 rounded-full"
+                          style={{ width: `${validationProgress.progress}%` }}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
