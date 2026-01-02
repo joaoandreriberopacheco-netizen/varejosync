@@ -33,8 +33,7 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete 
 
     const loadProducts = async () => {
         try {
-            const tenantId = getTenantId();
-            const prods = await base44.entities.Produto.filter({ empresa_id: tenantId, tipo: 'Produto', ativo: true });
+            const prods = await base44.entities.Produto.filter({ tipo: 'Produto', ativo: true });
             setProducts(prods);
         } catch (error) {
             console.error("Erro ao carregar produtos:", error);
@@ -179,10 +178,8 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete 
         if (!newProductData.nome) return;
         setIsCreatingProduct(true);
         try {
-            const tenantId = getTenantId();
-            
             // Buscar categorias para classificação inteligente
-            const categorias = await base44.entities.Categoria.filter({ empresa_id: tenantId });
+            const categorias = await base44.entities.Categoria.list();
             let categoria_id = null;
             let categoria_nome = '';
             
@@ -217,7 +214,6 @@ export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete 
             }
             
             const newProd = await base44.entities.Produto.create({
-                empresa_id: tenantId,
                 nome: newProductData.nome,
                 tipo: 'Produto',
                 unidade_principal: newProductData.unidade,

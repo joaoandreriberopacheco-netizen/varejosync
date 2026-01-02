@@ -35,10 +35,9 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             const uploadRes = await base44.integrations.Core.UploadFile({ file });
             const fileUrl = uploadRes.file_url;
 
-            const tenantId = getTenantId();
             const [produtos, fornecedores] = await Promise.all([
-                base44.entities.Produto.filter({ empresa_id: tenantId }),
-                base44.entities.Terceiro.filter({ empresa_id: tenantId, tipo: ['Fornecedor', 'Ambos'] })
+                base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+                base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] })
             ]);
             setProdutosSistema(produtos);
             setFornecedoresSistema(fornecedores);
@@ -158,9 +157,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
             let finalFornecedorId = fornecedorInfo.id;
 
             if (finalFornecedorId === 'new') {
-                const tenantId = getTenantId();
                 const novoFornecedor = await base44.entities.Terceiro.create({
-                    empresa_id: tenantId,
                     nome: fornecedorInfo.nome,
                     cpf_cnpj: fornecedorInfo.cnpj,
                     tipo: 'Fornecedor',
@@ -179,9 +176,7 @@ export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImpor
 
                 if (produtoId === 'create_new') {
                     try {
-                        const tenantId = getTenantId();
                         const novoProduto = await base44.entities.Produto.create({
-                            empresa_id: tenantId,
                             nome: m.descricao_pdf,
                             marca: m.marca_pdf || '',
                             codigo_interno: 'IMP-' + Math.floor(Math.random() * 10000),
