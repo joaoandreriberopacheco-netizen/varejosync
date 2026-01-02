@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Upload, CheckCircle, AlertTriangle, Loader2, FileText, X } from 'lucide-react';
+import { ArrowLeft, Download, Upload, CheckCircle, AlertTriangle, Loader2, FileText, X, History } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import HistoricoImportacoes from '../components/produtos/HistoricoImportacoes';
@@ -18,9 +18,24 @@ export default function ImportacaoProdutos() {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isHistoricoOpen, setIsHistoricoOpen] = useState(false);
+  const [importacoes, setImportacoes] = useState([]);
+  const [isLoadingHistorico, setIsLoadingHistorico] = useState(false);
   const fileInputRef = useRef(null);
   const { toast } = useToast();
   const cacheRef = useRef({ categorias: null, fornecedores: null, produtos: null });
+
+  const loadHistorico = async () => {
+    setIsLoadingHistorico(true);
+    try {
+      const logs = await base44.entities.ImportacaoLog.list('-created_date', 50);
+      setImportacoes(logs);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+    } finally {
+      setIsLoadingHistorico(false);
+    }
+  };
 
   const handleDownloadTemplate = async () => {
     try {
@@ -288,6 +303,9 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
 
       setImportProgress({ current: 0, total: produtosIA.length });
 
+      const produtosCriadosIds = [];
+      const produtosAtualizadosData = [];
+
       for (let i = 0; i < produtosIA.length; i++) {
         const prod = produtosIA[i];
         
@@ -362,14 +380,39 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
         };
 
         if (existe) {
+          produtosAtualizadosData.push({
+            id: existe.id,
+            dados_anteriores: {
+              nome: existe.nome,
+              preco_venda_padrao: existe.preco_venda_padrao,
+              preco_custo_calculado: existe.preco_custo_calculado,
+              valor_compra: existe.valor_compra,
+              estoque_atual: existe.estoque_atual
+            }
+          });
           await base44.entities.Produto.update(existe.id, produtoData);
         } else {
-          await base44.entities.Produto.create(produtoData);
+          const criado = await base44.entities.Produto.create(produtoData);
+          produtosCriadosIds.push(criado.id);
         }
 
         await new Promise(resolve => setTimeout(resolve, 150));
         setImportProgress({ current: i + 1, total: produtosIA.length });
       }
+
+      const allLogs = await base44.entities.ImportacaoLog.list();
+      const nextNumber = allLogs.length + 1;
+
+      await base44.entities.ImportacaoLog.create({
+        numero: `IMP-${String(nextNumber).padStart(5, '0')}`,
+        tipo: 'Produtos',
+        status: 'Concluída',
+        total_novos: validationResult.novos,
+        total_atualizados: validationResult.atualizacoes,
+        produtos_ids: produtosCriadosIds,
+        produtos_atualizados: produtosAtualizadosData,
+        arquivo_nome: file.name
+      });
 
       toast({
         title: "✓ Importação Concluída!",
@@ -400,7 +443,7 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
               Importação de Produtos
             </h1>
@@ -408,6 +451,18 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
               Importe produtos em lote via arquivo CSV
             </p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              loadHistorico();
+              setIsHistoricoOpen(true);
+            }}
+            className="gap-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <History className="w-4 h-4" />
+            Histórico
+          </Button>
         </div>
 
         {/* Progress Steps */}
@@ -641,6 +696,13 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
         onClose={() => setIsAuthOpen(false)}
         onSuccess={handleAuthSuccess}
         operationName="Importação de Produtos"
+      />
+
+      <HistoricoImportacoes
+        isOpen={isHistoricoOpen}
+        onClose={() => setIsHistoricoOpen(false)}
+        importacoes={importacoes}
+        onRefresh={loadHistorico}
       />
     </div>
   );
