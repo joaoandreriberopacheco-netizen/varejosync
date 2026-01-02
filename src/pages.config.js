@@ -6,6 +6,7 @@ import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
 import DebugTenant from './pages/DebugTenant';
 import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
+import EstimativaEmbalagensIA from './pages/EstimativaEmbalagensIA';
 import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
@@ -19,6 +20,7 @@ import Logistica from './pages/Logistica';
 import Manual from './pages/Manual';
 import MapaFuncionalidades from './pages/MapaFuncionalidades';
 import Operacoes from './pages/Operacoes';
+import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
 import PDV from './pages/PDV';
 import Produtos from './pages/Produtos';
 import RelatorioMargem from './pages/RelatorioMargem';
@@ -29,8 +31,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
-import EstimativaEmbalagensIA from './pages/EstimativaEmbalagensIA';
 import __Layout from './Layout.jsx';
 
 
@@ -43,6 +43,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DebugTenant": DebugTenant,
     "EdicaoMassivaCustos": EdicaoMassivaCustos,
+    "EstimativaEmbalagensIA": EstimativaEmbalagensIA,
     "Estoque": Estoque,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
@@ -56,6 +57,7 @@ export const PAGES = {
     "Manual": Manual,
     "MapaFuncionalidades": MapaFuncionalidades,
     "Operacoes": Operacoes,
+    "OtimizacaoEstoqueIA": OtimizacaoEstoqueIA,
     "PDV": PDV,
     "Produtos": Produtos,
     "RelatorioMargem": RelatorioMargem,
@@ -66,8 +68,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "OtimizacaoEstoqueIA": OtimizacaoEstoqueIA,
-    "EstimativaEmbalagensIA": EstimativaEmbalagensIA,
 }
 
 export const pagesConfig = {

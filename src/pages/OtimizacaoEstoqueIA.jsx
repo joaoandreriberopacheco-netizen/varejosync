@@ -56,80 +56,101 @@ export default function OtimizacaoEstoqueIA() {
         tags: p.tags || []
       }));
 
-      const prompt = `Você é um especialista em gestão de estoque e otimização de mix de produtos para materiais de construção.
+      // Processar em lotes de 50 produtos
+      const BATCH_SIZE = 50;
+      const batches = [];
+      for (let i = 0; i < dadosProdutos.length; i += BATCH_SIZE) {
+        batches.push(dadosProdutos.slice(i, i + BATCH_SIZE));
+      }
 
-TAREFA CRÍTICA: Classificar TODOS os ${produtos.length} produtos e distribuir R$ ${valorInvestimento} de investimento em estoque.
+      toast({ 
+        title: "🔄 Processando...", 
+        description: `Analisando ${produtos.length} produtos em ${batches.length} etapas`,
+        className: "bg-blue-100 text-blue-800"
+      });
 
-DADOS COMPLETOS:
-${JSON.stringify(dadosProdutos, null, 2)}
+      const investimentoPorBatch = parseFloat(valorInvestimento) / batches.length;
+      const todasClassificacoes = [];
 
-REGRAS OBRIGATÓRIAS:
-1. ANALISE CADA UM DOS ${produtos.length} PRODUTOS - não pule nenhum
-2. Classifique baseado na importância para o negócio:
-   • Categoria A (60% investimento): Produtos essenciais, alto giro, maior demanda
-   • Categoria B (30% investimento): Produtos intermediários, giro médio
-   • Categoria C (10% investimento): Produtos complementares, baixo giro
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        
+        const prompt = `Você é um especialista em gestão de estoque para materiais de construção.
 
-3. Para CADA produto defina:
-   - classificacao_abc: "A", "B" ou "C"
-   - estoque_minimo: segurança considerando tempo_reposicao_dias
-   - estoque_ideal: ponto de pedido otimizado
-   - estoque_maximo: limite para evitar capital parado
-   - justificativa: explicação concisa (máx 15 palavras)
+TAREFA: Classificar ${batch.length} produtos e distribuir R$ ${investimentoPorBatch.toFixed(2)} de investimento.
 
-4. VALOR TOTAL: estoque_ideal × custo_unitario de TODOS produtos ≈ R$ ${valorInvestimento}
+PRODUTOS (${i + 1}/${batches.length}):
+${JSON.stringify(batch, null, 2)}
 
-FORMATO DE RESPOSTA (JSON puro, sem markdown):
-{
-  "produtos": [${produtos.map(p => `{"produto_id":"${p.id}","classificacao_abc":"A","estoque_minimo":10,"estoque_ideal":25,"estoque_maximo":50,"justificativa":"razão"}`).slice(0, 3).join(',')}],
-  "resumo": {"total_produtos_a":0,"total_produtos_b":0,"total_produtos_c":0,"valor_estimado_estoque":0}
-}`;
+REGRAS:
+• Categoria A (60%): Essenciais, alto giro
+• Categoria B (30%): Intermediários
+• Categoria C (10%): Complementares
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            produtos: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  produto_id: { type: "string" },
-                  classificacao_abc: { type: "string" },
-                  estoque_minimo: { type: "number" },
-                  estoque_ideal: { type: "number" },
-                  estoque_maximo: { type: "number" },
-                  justificativa: { type: "string" }
-                },
-                required: ["produto_id", "classificacao_abc", "estoque_minimo", "estoque_ideal", "estoque_maximo"]
-              }
-            },
-            resumo: {
-              type: "object",
-              properties: {
-                total_produtos_a: { type: "number" },
-                total_produtos_b: { type: "number" },
-                total_produtos_c: { type: "number" },
-                valor_estimado_estoque: { type: "number" }
+Para CADA produto defina:
+- classificacao_abc: "A", "B" ou "C"
+- estoque_minimo: segurança (considere tempo_reposicao_dias)
+- estoque_ideal: ponto de pedido
+- estoque_maximo: limite superior
+- justificativa: breve (máx 15 palavras)
+
+RESPONDA JSON PURO:
+{"produtos":[{"produto_id":"id","classificacao_abc":"A","estoque_minimo":10,"estoque_ideal":25,"estoque_maximo":50,"justificativa":"razão"}]}`;
+
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              produtos: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    produto_id: { type: "string" },
+                    classificacao_abc: { type: "string" },
+                    estoque_minimo: { type: "number" },
+                    estoque_ideal: { type: "number" },
+                    estoque_maximo: { type: "number" },
+                    justificativa: { type: "string" }
+                  }
+                }
               }
             }
           }
-        }
-      });
-
-      // Validar que todos os produtos foram analisados
-      if (response.produtos.length < produtos.length) {
-        toast({ 
-          title: "⚠️ Análise Incompleta", 
-          description: `Apenas ${response.produtos.length} de ${produtos.length} produtos foram classificados. Tente novamente.`,
-          variant: "destructive" 
         });
-        return;
+
+        todasClassificacoes.push(...response.produtos);
+        
+        toast({ 
+          title: `✓ Etapa ${i + 1}/${batches.length}`, 
+          description: `${todasClassificacoes.length} de ${produtos.length} produtos classificados`,
+          className: "bg-blue-100 text-blue-800"
+        });
       }
 
-      setResultados(response);
-      toast({ title: "✨ Análise Concluída!", className: "bg-green-100 text-green-800" });
+      // Consolidar resumo
+      const countA = todasClassificacoes.filter(p => p.classificacao_abc === 'A').length;
+      const countB = todasClassificacoes.filter(p => p.classificacao_abc === 'B').length;
+      const countC = todasClassificacoes.filter(p => p.classificacao_abc === 'C').length;
+      
+      const valorTotal = todasClassificacoes.reduce((sum, p) => {
+        const prod = produtos.find(pr => pr.id === p.produto_id);
+        return sum + (p.estoque_ideal * (prod?.preco_custo_calculado || 0));
+      }, 0);
+
+      const resultadoFinal = {
+        produtos: todasClassificacoes,
+        resumo: {
+          total_produtos_a: countA,
+          total_produtos_b: countB,
+          total_produtos_c: countC,
+          valor_estimado_estoque: valorTotal
+        }
+      };
+
+      setResultados(resultadoFinal);
+      toast({ title: "✨ Análise Concluída!", description: `${todasClassificacoes.length} produtos classificados`, className: "bg-green-100 text-green-800" });
     } catch (error) {
       toast({ title: "Erro na otimização", description: error.message, variant: "destructive" });
     } finally {
