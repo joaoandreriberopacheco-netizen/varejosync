@@ -83,8 +83,8 @@ PRODUTOS (${i + 1}/${batches.length}):
 ${JSON.stringify(batch, null, 2)}
 
 REGRAS:
-• Categoria A (60%): Essenciais, alto giro
-• Categoria B (30%): Intermediários
+• Categoria A (70%): Essenciais, alto giro
+• Categoria B (20%): Intermediários
 • Categoria C (10%): Complementares
 
 Para CADA produto defina:
@@ -239,7 +239,7 @@ RESPONDA JSON PURO:
             </div>
             <div className="flex items-start gap-2">
               <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
-              <p><strong>Distribuição:</strong> 60% categoria A, 30% B, 10% C</p>
+              <p><strong>Distribuição:</strong> 70% categoria A, 20% B, 10% C</p>
             </div>
             <div className="flex items-start gap-2">
               <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
