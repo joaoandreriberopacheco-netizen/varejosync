@@ -274,7 +274,7 @@ JSON:
           </div>
         )}
 
-        {!isProcessing && !resultados ? (
+        {!isProcessing && !resultados && (
           <Button 
             onClick={handleOptimize} 
             disabled={!valorInvestimento}
@@ -283,7 +283,9 @@ JSON:
             <Sparkles className="w-5 h-5 mr-2" />
             Otimizar Estoque
           </Button>
-        ) : !isProcessing ? (
+        )}
+
+        {!isProcessing && resultados && (
           <div className="space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">

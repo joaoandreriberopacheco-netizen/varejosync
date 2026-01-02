@@ -250,7 +250,7 @@ JSON:
           </div>
         )}
 
-        {!isProcessing && Object.keys(estimativas).length === 0 ? (
+        {!isProcessing && Object.keys(estimativas).length === 0 && (
           <Button 
             onClick={handleEstimate} 
             disabled={modoAnalise === 'sem_info' ? produtos.length === 0 : produtosTodos.length === 0}
@@ -259,7 +259,9 @@ JSON:
             <Sparkles className="w-5 h-5 mr-2" />
             Gerar Estimativas
           </Button>
-        ) : !isProcessing ? (
+        )}
+
+        {!isProcessing && Object.keys(estimativas).length > 0 && (
           <div className="space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
               <div className="p-4 border-b border-gray-100 dark:border-gray-700">
