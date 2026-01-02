@@ -9,10 +9,12 @@ import { getTenantId } from '@/components/utils/tenant';
 
 export default function EstimativaEmbalagensIA() {
   const [produtos, setProdutos] = useState([]);
+  const [produtosTodos, setProdutosTodos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [estimativas, setEstimativas] = useState({});
+  const [modoAnalise, setModoAnalise] = useState('sem_info'); // 'sem_info' ou 'todos'
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,14 +24,16 @@ export default function EstimativaEmbalagensIA() {
 
   const loadData = async () => {
     try {
-      const tid = getTenantId();
       const [prods, cats] = await Promise.all([
-        base44.entities.Produto.filter({ empresa_id: tid, tipo: 'Produto', ativo: true }),
-        base44.entities.Categoria.filter({ empresa_id: tid })
+        base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+        base44.entities.Categoria.list()
       ]);
-      setProdutos(prods.filter(p => !p.unidades_por_pacote || p.unidades_por_pacote === 1));
-      setCategorias(cats);
+      const prodsSemInfo = (prods || []).filter(p => !p.unidades_por_pacote || p.unidades_por_pacote === 1);
+      setProdutos(prodsSemInfo);
+      setProdutosTodos(prods || []);
+      setCategorias(cats || []);
     } catch (error) {
+      console.error("Erro ao carregar:", error);
       toast({ title: "Erro ao carregar dados", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -39,7 +43,9 @@ export default function EstimativaEmbalagensIA() {
   const handleEstimate = async () => {
     setIsProcessing(true);
     try {
-      const dadosProdutos = produtos.map(p => ({
+      const prodsParaAnalisar = modoAnalise === 'todos' ? produtosTodos : produtos;
+      
+      const dadosProdutos = prodsParaAnalisar.map(p => ({
         id: p.id,
         nome: p.nome,
         categoria: categorias.find(c => c.id === p.categoria_id)?.nome || 'Sem categoria',
@@ -48,61 +54,87 @@ export default function EstimativaEmbalagensIA() {
         tags: p.tags || []
       }));
 
-      const prompt = `Você é um especialista em logística e embalagens de produtos.
+      const BATCH_SIZE = 50;
+      const batches = [];
+      for (let i = 0; i < dadosProdutos.length; i += BATCH_SIZE) {
+        batches.push(dadosProdutos.slice(i, i + BATCH_SIZE));
+      }
 
-TAREFA: Estimar quantas unidades vêm por pacote/caixa de compra para cada produto.
+      toast({ 
+        title: "🔄 Processando...", 
+        description: `Analisando ${prodsParaAnalisar.length} produtos em ${batches.length} etapas`,
+        className: "bg-blue-100 text-blue-800"
+      });
+
+      const todasEstimativas = [];
+
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        
+        const prompt = `Você é um especialista em logística e embalagens de materiais de construção.
+
+TAREFA: Estimar unidades por pacote/caixa para ${batch.length} produtos (lote ${i + 1}/${batches.length}).
 
 PRODUTOS:
-${JSON.stringify(dadosProdutos, null, 2)}
+${JSON.stringify(batch, null, 2)}
 
-INSTRUÇÕES:
-1. Analise o nome, categoria, dimensões e peso de cada produto
-2. Estime quantas unidades vêm em uma embalagem padrão de compra do fornecedor
-3. Considere padrões de mercado:
-   - Parafusos/pequenos: 50-100 unidades
-   - Torneiras/registros: 6-12 unidades
-   - Tubos PVC: 6 unidades
-   - Tintas: 12-24 latas
-   - Ferramentas manuais: 6-12 unidades
-   - Material elétrico pequeno: 10-50 unidades
+PADRÕES DE MERCADO (guia, não limite rígido):
+- Fixadores pequenos (parafusos, buchas): 50-200 unidades
+- Fixadores médios (chumbadores): 10-50 unidades
+- Metais sanitários (torneiras, registros): 6-12 unidades
+- Tubos/conexões PVC pequenos: 10-20 unidades
+- Tubos/conexões PVC grandes: 6 unidades
+- Tintas/vedantes: 12-24 unidades
+- Ferramentas manuais: 6-12 unidades
+- Material elétrico pequeno (tomadas, interruptores): 10-50 unidades
+- Fios/cabos elétricos: 1 rolo por caixa
+- Caixas d'água, vasos: 1-2 unidades
+- Portas, janelas: 1 unidade
 
-RESPONDA APENAS COM JSON (sem markdown):
-{
-  "estimativas": [
-    {
-      "produto_id": "id",
-      "unidades_por_pacote": 12,
-      "justificativa": "razão da estimativa"
-    }
-  ]
-}`;
+ANÁLISE REQUERIDA:
+1. Leia atentamente o NOME completo do produto
+2. Identifique dimensões/tamanho mencionados no nome
+3. Considere a categoria e tags
+4. Pesquise como o fornecedor normalmente embala esse tipo de produto
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            estimativas: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  produto_id: { type: "string" },
-                  unidades_por_pacote: { type: "number" },
-                  justificativa: { type: "string" }
+RESPONDA JSON PURO:
+{"estimativas":[{"produto_id":"id","unidades_por_pacote":12,"justificativa":"razão concisa"}]}`;
+
+        const response = await base44.integrations.Core.InvokeLLM({
+          prompt,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              estimativas: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    produto_id: { type: "string" },
+                    unidades_por_pacote: { type: "number" },
+                    justificativa: { type: "string" }
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+
+        todasEstimativas.push(...response.estimativas);
+        
+        toast({ 
+          title: `✓ Etapa ${i + 1}/${batches.length}`, 
+          description: `${todasEstimativas.length} de ${prodsParaAnalisar.length} produtos estimados`,
+          className: "bg-blue-100 text-blue-800"
+        });
+      }
 
       const estimativasMap = {};
-      response.estimativas.forEach(e => {
+      todasEstimativas.forEach(e => {
         estimativasMap[e.produto_id] = e;
       });
       setEstimativas(estimativasMap);
-      toast({ title: "✨ Estimativas Geradas!", className: "bg-green-100 text-green-800" });
+      toast({ title: "✨ Análise Concluída!", description: `${todasEstimativas.length} produtos estimados`, className: "bg-green-100 text-green-800" });
     } catch (error) {
       toast({ title: "Erro na estimativa", description: error.message, variant: "destructive" });
     } finally {
@@ -154,13 +186,36 @@ RESPONDA APENAS COM JSON (sem markdown):
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-gray-600" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Produtos sem Embalagem Definida</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white">Escopo da Análise</h3>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>{produtos.length} produtos serão analisados</span>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={() => setModoAnalise('sem_info')}
+              className={`flex-1 p-4 rounded-xl border-2 transition-all ${
+                modoAnalise === 'sem_info' 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="font-medium text-sm text-gray-900 dark:text-white mb-1">Apenas Sem Info</div>
+              <div className="text-xs text-gray-500">{produtos.length} produtos</div>
+            </button>
+            
+            <button
+              onClick={() => setModoAnalise('todos')}
+              className={`flex-1 p-4 rounded-xl border-2 transition-all ${
+                modoAnalise === 'todos' 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="font-medium text-sm text-gray-900 dark:text-white mb-1">Todos os Produtos</div>
+              <div className="text-xs text-gray-500">{produtosTodos.length} produtos</div>
+            </button>
           </div>
         </div>
 
@@ -185,7 +240,7 @@ RESPONDA APENAS COM JSON (sem markdown):
         {Object.keys(estimativas).length === 0 ? (
           <Button 
             onClick={handleEstimate} 
-            disabled={isProcessing || produtos.length === 0}
+            disabled={isProcessing || (modoAnalise === 'sem_info' ? produtos.length === 0 : produtosTodos.length === 0)}
             className="w-full h-14 text-base bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
           >
             {isProcessing ? (
@@ -207,9 +262,9 @@ RESPONDA APENAS COM JSON (sem markdown):
                 <h3 className="font-medium">Estimativas Geradas</h3>
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-96 overflow-y-auto">
-                {Object.entries(estimativas).map(([produtoId, est]) => {
-                  const produto = produtos.find(p => p.id === produtoId);
-                  return (
+               {Object.entries(estimativas).map(([produtoId, est]) => {
+                 const produto = produtosTodos.find(p => p.id === produtoId);
+                 return (
                     <div key={produtoId} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
