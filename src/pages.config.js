@@ -29,6 +29,8 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
+import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
+import EstimativaEmbalagensIA from './pages/EstimativaEmbalagensIA';
 import __Layout from './Layout.jsx';
 
 
@@ -64,6 +66,8 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
+    "OtimizacaoEstoqueIA": OtimizacaoEstoqueIA,
+    "EstimativaEmbalagensIA": EstimativaEmbalagensIA,
 }
 
 export const pagesConfig = {
