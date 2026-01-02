@@ -174,20 +174,37 @@ JSON:
     if (!resultados) return;
     
     try {
-      const updates = resultados.produtos.map(r => {
-        const produto = produtos.find(p => p.id === r.produto_id);
-        if (!produto) return null;
-        
-        return base44.entities.Produto.update(r.produto_id, {
-          estoque_minimo: r.estoque_minimo,
-          estoque_ideal: r.estoque_ideal,
-          estoque_maximo: r.estoque_maximo,
-          tags: [...new Set([...(produto.tags || []), `ABC-${r.classificacao_abc}`])]
-        });
-      }).filter(Boolean);
+      const updateData = resultados.produtos
+        .map(r => {
+          const produto = produtos.find(p => p.id === r.produto_id);
+          if (!produto) return null;
+          return {
+            id: r.produto_id,
+            data: {
+              estoque_minimo: r.estoque_minimo,
+              estoque_ideal: r.estoque_ideal,
+              estoque_maximo: r.estoque_maximo,
+              tags: [...new Set([...(produto.tags || []), `ABC-${r.classificacao_abc}`])]
+            }
+          };
+        })
+        .filter(Boolean);
 
-      await Promise.all(updates);
-      toast({ title: "✓ Aplicado com Sucesso!", description: `${updates.length} produtos atualizados`, className: "bg-green-100 text-green-800" });
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < updateData.length; i += BATCH_SIZE) {
+        const batch = updateData.slice(i, i + BATCH_SIZE);
+        const updates = batch.map(item => 
+          base44.entities.Produto.update(item.id, item.data)
+        );
+        
+        await Promise.all(updates);
+        
+        if (i + BATCH_SIZE < updateData.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      toast({ title: "✓ Aplicado com Sucesso!", description: `${updateData.length} produtos atualizados`, className: "bg-green-100 text-green-800" });
       navigate(-1);
     } catch (error) {
       toast({ title: "Erro ao aplicar", description: error.message, variant: "destructive" });

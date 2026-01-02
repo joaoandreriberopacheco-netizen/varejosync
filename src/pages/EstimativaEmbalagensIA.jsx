@@ -143,14 +143,25 @@ JSON:
 
   const handleApply = async () => {
     try {
-      const updates = Object.entries(estimativas).map(([produtoId, est]) => 
-        base44.entities.Produto.update(produtoId, {
-          unidades_por_pacote: est.unidades_por_pacote
-        })
-      );
+      const entries = Object.entries(estimativas);
+      const BATCH_SIZE = 10;
+      
+      for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+        const batch = entries.slice(i, i + BATCH_SIZE);
+        const updates = batch.map(([produtoId, est]) => 
+          base44.entities.Produto.update(produtoId, {
+            unidades_por_pacote: est.unidades_por_pacote
+          })
+        );
+        
+        await Promise.all(updates);
+        
+        if (i + BATCH_SIZE < entries.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
 
-      await Promise.all(updates);
-      toast({ title: "✓ Aplicado com Sucesso!", description: `${updates.length} produtos atualizados`, className: "bg-green-100 text-green-800" });
+      toast({ title: "✓ Aplicado com Sucesso!", description: `${entries.length} produtos atualizados`, className: "bg-green-100 text-green-800" });
       navigate(-1);
     } catch (error) {
       toast({ title: "Erro ao aplicar", description: error.message, variant: "destructive" });
