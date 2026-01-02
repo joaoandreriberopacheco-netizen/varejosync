@@ -264,11 +264,13 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
       toast({
         title: "Análise IA concluída!",
         description: `${produtosIA.length} produtos reconhecidos`,
-        className: "bg-green-100 text-green-800"
+        className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
       });
 
-      setStep(2);
+      setTimeout(() => setStep(2), 100);
     } catch (error) {
+      console.error('Erro detalhado na validação:', error);
+      
       setValidationResult({
         success: false,
         error: error.message,
@@ -278,10 +280,14 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
       toast({
         title: "Erro na análise",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
+        duration: 5000
       });
+
+      setTimeout(() => setStep(2), 100);
     } finally {
       setIsValidating(false);
+      setValidationProgress({ step: '', progress: 0 });
     }
   };
 
