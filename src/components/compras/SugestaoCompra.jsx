@@ -61,25 +61,32 @@ export default function SugestaoCompra() {
         .filter(p => {
           const estoqueAtual = p.estoque_atual || 0;
           const estoqueMinimo = p.estoque_minimo || 0;
-          // Inclui produtos com estoque abaixo do mínimo OU produtos com estoque zerado mesmo sem mínimo definido
-          return estoqueAtual < estoqueMinimo || (estoqueAtual === 0 && estoqueMinimo === 0);
+          const estoqueIdeal = p.estoque_ideal || 0;
+          const estoqueMaximo = p.estoque_maximo || 0;
+          
+          // Inclui se: estoque abaixo do mínimo OU (estoque zerado E tem algum parâmetro de estoque definido)
+          return estoqueAtual < estoqueMinimo || 
+                 (estoqueAtual === 0 && (estoqueMinimo > 0 || estoqueIdeal > 0 || estoqueMaximo > 0));
         })
         .map(p => {
           // Lógica de Sugestão Aprimorada:
-          // 1. Se tem Ideal definido, usa Ideal.
-          // 2. Se não tem Ideal mas tem Máximo, usa Máximo.
-          // 3. Se não tem nenhum, usa Mínimo * 2 como alvo seguro.
           let estoqueAlvo = p.estoque_ideal || p.estoque_maximo || 0;
-          if (estoqueAlvo === 0 && (p.estoque_minimo || 0) > 0) {
-            estoqueAlvo = (p.estoque_minimo * 2);
+          
+          // Se não tem alvo definido, usa mínimo * 2 ou um padrão
+          if (estoqueAlvo === 0) {
+            if ((p.estoque_minimo || 0) > 0) {
+              estoqueAlvo = p.estoque_minimo * 2;
+            } else {
+              // Produto sem parâmetros: sugere 10 unidades ou 1 pacote
+              estoqueAlvo = Math.max(10, p.unidades_por_pacote || 1);
+            }
           }
 
           let necessidade = estoqueAlvo - (p.estoque_atual || 0);
 
-          // Fallback: Se mesmo assim a necessidade for <= 0 mas o estoque está crítico (abaixo do mínimo),
-          // sugere comprar pelo menos 1 pacote ou a diferença para o mínimo + margem.
-          if (necessidade <= 0 && (p.estoque_atual || 0) <= (p.estoque_minimo || 0)) {
-             necessidade = Math.max(1, ((p.estoque_minimo || 0) - (p.estoque_atual || 0)) + (p.unidades_por_pacote || 1));
+          // Garante mínimo de 1 unidade ou 1 pacote
+          if (necessidade <= 0) {
+            necessidade = p.unidades_por_pacote || 1;
           }
 
           if (necessidade <= 0) return null;
