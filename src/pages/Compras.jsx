@@ -626,6 +626,14 @@ const HubLogisticoTab = () => {
 };
 
 export default function ComprasPage() {
+  const [sugestaoKey, setSugestaoKey] = useState(0);
+
+  const handleTabChange = (value) => {
+    if (value === 'sugestoes') {
+      setSugestaoKey(prev => prev + 1);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 px-2 py-4 md:p-6">
       <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -633,7 +641,7 @@ export default function ComprasPage() {
         <p className="text-sm text-gray-500 font-light">Gestão completa do ciclo de suprimentos</p>
       </div>
 
-      <Tabs defaultValue="sugestoes" className="space-y-6">
+      <Tabs defaultValue="sugestoes" onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="flex w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 gap-2 sm:gap-6 overflow-x-auto no-scrollbar">
           <TabsTrigger 
             value="sugestoes" 
@@ -666,7 +674,7 @@ export default function ComprasPage() {
         </TabsList>
 
         <TabsContent value="sugestoes" className="outline-none animate-in fade-in-50 duration-300">
-          <SugestaoCompra />
+          <SugestaoCompra key={sugestaoKey} />
         </TabsContent>
 
         <TabsContent value="cotacoes" className="outline-none animate-in fade-in-50 duration-300">
