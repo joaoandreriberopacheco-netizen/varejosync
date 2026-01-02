@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from "@/components/ui/checkbox"
@@ -10,60 +10,64 @@ import { ShoppingCart, RefreshCw, Lightbulb, AlertCircle, CheckCircle, FileText,
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast"
 import { getTenantId } from '@/components/utils/tenant';
-import { debounce } from 'lodash';
+
+// Função pura para calcular quantidade sugerida
+const calcularQuantidadeSugerida = (necessidade, fator, roundingMode) => {
+  if (necessidade <= 0) return fator || 1;
+  if (fator <= 1) return necessidade;
+
+  if (roundingMode === 'up') {
+    return Math.ceil(necessidade / fator) * fator;
+  } else if (roundingMode === 'down') {
+    const qtd = Math.floor(necessidade / fator) * fator;
+    return qtd === 0 && necessidade > 0 ? fator : qtd;
+  } else if (roundingMode === 'none') {
+    return necessidade;
+  } else {
+    // Auto / Nearest
+    const qtd = Math.round(necessidade / fator) * fator;
+    return qtd === 0 ? fator : qtd;
+  }
+};
 
 export default function SugestaoCompra() {
-  const [sugestoes, setSugestoes] = useState([]);
+  const [produtosBase, setProdutosBase] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState({});
   const [hidePending, setHidePending] = useState(false);
+  const [qtdPendenteMap, setQtdPendenteMap] = useState({});
   
   // Filtros e Configurações
   const [filterTerm, setFilterTerm] = useState('');
-  const [debouncedFilterTerm, setDebouncedFilterTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterSupplier, setFilterSupplier] = useState('all');
   const [filterTags, setFilterTags] = useState([]);
   const [tagSearchTerm, setTagSearchTerm] = useState('');
   const [allTags, setAllTags] = useState([]);
-  const [roundingMode, setRoundingMode] = useState('auto'); // auto, up, down, none
+  const [roundingMode, setRoundingMode] = useState('auto');
+  const [fornecedoresSelecionados, setFornecedoresSelecionados] = useState({});
   
   const { toast } = useToast();
 
-  // Debounce apenas para a busca/filtragem, não para o input visual
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedFilterTerm(filterTerm);
-    }, 400);
-    
-    return () => clearTimeout(timer);
-  }, [filterTerm]);
-
   const handleRefresh = async () => {
-  setIsLoading(true);
-  try {
+    setIsLoading(true);
+    try {
       const tenantId = getTenantId();
-      // Buscar Produtos, Fornecedores, Categorias e Pedidos em Aberto
       const [produtos, fornecedorData, categoriasData, pedidosAbertos] = await Promise.all([
-          base44.entities.Produto.filter({ empresa_id: tenantId, tipo: 'Produto', ativo: true }),
-          base44.entities.Terceiro.filter({ empresa_id: tenantId }),
-          base44.entities.Categoria.filter({ empresa_id: tenantId }),
-          base44.entities.PedidoCompra.filter({ 
-            empresa_id: tenantId,
-            status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'] 
-          })
+        base44.entities.Produto.filter({ empresa_id: tenantId, tipo: 'Produto', ativo: true }),
+        base44.entities.Terceiro.filter({ empresa_id: tenantId }),
+        base44.entities.Categoria.filter({ empresa_id: tenantId }),
+        base44.entities.PedidoCompra.filter({ 
+          empresa_id: tenantId,
+          status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'] 
+        })
       ]);
       
-      const fornecedorMap = fornecedorData.reduce((acc, f) => {
-          acc[f.id] = f.nome;
-          return acc;
-      }, {});
       setFornecedores(fornecedorData);
       setCategorias(categoriasData);
 
-      // Extrair todas as tags únicas dos produtos
       const tagsSet = new Set();
       produtos.forEach(p => {
         if (p.tags && Array.isArray(p.tags)) {
@@ -72,88 +76,25 @@ export default function SugestaoCompra() {
       });
       setAllTags([...tagsSet].sort());
 
-      // Calcular quantidades pendentes por produto
-      const qtdPendenteMap = {};
+      const pendentes = {};
       pedidosAbertos.forEach(pedido => {
         pedido.itens?.forEach(item => {
-          qtdPendenteMap[item.produto_id] = (qtdPendenteMap[item.produto_id] || 0) + (item.quantidade || 0);
+          pendentes[item.produto_id] = (pendentes[item.produto_id] || 0) + (item.quantidade || 0);
         });
       });
+      setQtdPendenteMap(pendentes);
 
-      const sugestoesGeradas = produtos
-        .filter(p => {
-          const estoqueAtual = p.estoque_atual || 0;
-          const estoqueMinimo = p.estoque_minimo || 0;
-          const estoqueIdeal = p.estoque_ideal || 0;
-          const estoqueMaximo = p.estoque_maximo || 0;
-          
-          // Inclui se: estoque abaixo do mínimo OU (estoque zerado E tem algum parâmetro de estoque definido)
-          return estoqueAtual < estoqueMinimo || 
-                 (estoqueAtual === 0 && (estoqueMinimo > 0 || estoqueIdeal > 0 || estoqueMaximo > 0));
-        })
-        .map(p => {
-          // Lógica de Sugestão Aprimorada:
-          let estoqueAlvo = p.estoque_ideal || p.estoque_maximo || 0;
-          
-          // Se não tem alvo definido, usa mínimo * 2 ou um padrão
-          if (estoqueAlvo === 0) {
-            if ((p.estoque_minimo || 0) > 0) {
-              estoqueAlvo = p.estoque_minimo * 2;
-            } else {
-              // Produto sem parâmetros: sugere 10 unidades ou 1 pacote
-              estoqueAlvo = Math.max(10, p.unidades_por_pacote || 1);
-            }
-          }
+      const produtosFiltrados = produtos.filter(p => {
+        const estoqueAtual = p.estoque_atual || 0;
+        const estoqueMinimo = p.estoque_minimo || 0;
+        const estoqueIdeal = p.estoque_ideal || 0;
+        const estoqueMaximo = p.estoque_maximo || 0;
+        
+        return estoqueAtual < estoqueMinimo || 
+               (estoqueAtual === 0 && (estoqueMinimo > 0 || estoqueIdeal > 0 || estoqueMaximo > 0));
+      }).sort((a, b) => a.nome.localeCompare(b.nome));
 
-          let necessidade = estoqueAlvo - (p.estoque_atual || 0);
-
-          // Garante mínimo de 1 unidade ou 1 pacote
-          if (necessidade <= 0) {
-            necessidade = p.unidades_por_pacote || 1;
-          }
-
-          if (necessidade <= 0) return null;
-
-          // Ajuste para tamanho do pacote de compra (ex: caixa com 12)
-          const fator = p.unidades_por_pacote || 1;
-          let quantidadeSugerida = necessidade;
-
-          if (fator > 1) {
-             if (roundingMode === 'up') {
-                quantidadeSugerida = Math.ceil(necessidade / fator) * fator;
-             } else if (roundingMode === 'down') {
-                quantidadeSugerida = Math.floor(necessidade / fator) * fator;
-                if (quantidadeSugerida === 0 && necessidade > 0) quantidadeSugerida = fator; // Mínimo 1 pacote se precisar
-             } else if (roundingMode === 'none') {
-                quantidadeSugerida = necessidade;
-             } else {
-                // Auto / Nearest
-                quantidadeSugerida = Math.round(necessidade / fator) * fator;
-                if (quantidadeSugerida === 0) quantidadeSugerida = fator;
-             }
-          }
-
-          return {
-            produto_id: p.id,
-            produto_nome: p.nome,
-            categoria_id: p.categoria_id,
-            fornecedor_padrao_id: p.fornecedor_padrao_id,
-            fornecedor_selecionado_id: p.fornecedor_padrao_id, // Inicialmente o padrão, mas editável
-            fornecedor_nome: fornecedorMap[p.fornecedor_padrao_id] || 'Não definido',
-            estoque_atual: p.estoque_atual,
-            estoque_minimo: p.estoque_minimo,
-            estoque_ideal: p.estoque_ideal,
-            quantidade_sugerida: quantidadeSugerida,
-            quantidade_pendente: qtdPendenteMap[p.id] || 0, // Quantidade já comprada aguardando chegada
-            unidade_compra: p.unidade_compra,
-            custo_unitario: p.preco_custo_calculado,
-            tags: p.tags || []
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => a.produto_nome.localeCompare(b.produto_nome)); // Ordenar alfabeticamente
-
-      setSugestoes(sugestoesGeradas);
+      setProdutosBase(produtosFiltrados);
     } catch (error) {
       console.error("Error generating suggestions:", error);
       toast({
@@ -168,36 +109,65 @@ export default function SugestaoCompra() {
 
   useEffect(() => {
     handleRefresh();
-  }, [roundingMode]); // Recalcular quando mudar o modo de arredondamento
+  }, []);
+
+  // Calcular sugestões com base nos produtos e roundingMode
+  const sugestoes = useMemo(() => {
+    const fornecedorMap = fornecedores.reduce((acc, f) => {
+      acc[f.id] = f.nome;
+      return acc;
+    }, {});
+
+    return produtosBase.map(p => {
+      let estoqueAlvo = p.estoque_ideal || p.estoque_maximo || 0;
+      
+      if (estoqueAlvo === 0) {
+        if ((p.estoque_minimo || 0) > 0) {
+          estoqueAlvo = p.estoque_minimo * 2;
+        } else {
+          estoqueAlvo = Math.max(10, p.unidades_por_pacote || 1);
+        }
+      }
+
+      const necessidade = Math.max(estoqueAlvo - (p.estoque_atual || 0), p.unidades_por_pacote || 1);
+      const quantidadeSugerida = calcularQuantidadeSugerida(necessidade, p.unidades_por_pacote || 1, roundingMode);
+
+      return {
+        produto_id: p.id,
+        produto_nome: p.nome,
+        categoria_id: p.categoria_id,
+        fornecedor_padrao_id: p.fornecedor_padrao_id,
+        fornecedor_selecionado_id: fornecedoresSelecionados[p.id] || p.fornecedor_padrao_id,
+        fornecedor_nome: fornecedorMap[fornecedoresSelecionados[p.id] || p.fornecedor_padrao_id] || 'Não definido',
+        estoque_atual: p.estoque_atual,
+        estoque_minimo: p.estoque_minimo,
+        estoque_ideal: p.estoque_ideal,
+        quantidade_sugerida: quantidadeSugerida,
+        quantidade_pendente: qtdPendenteMap[p.id] || 0,
+        unidade_compra: p.unidade_compra,
+        custo_unitario: p.preco_custo_calculado,
+        tags: p.tags || []
+      };
+    });
+  }, [produtosBase, fornecedores, qtdPendenteMap, roundingMode, fornecedoresSelecionados]);
 
   const handleSelectItem = (id, checked) => {
     setSelectedItems(prev => {
-        const newSelection = {...prev};
-        if(checked) {
-            newSelection[id] = true;
-        } else {
-            delete newSelection[id];
-        }
-        return newSelection;
+      const newSelection = {...prev};
+      if(checked) {
+        newSelection[id] = true;
+      } else {
+        delete newSelection[id];
+      }
+      return newSelection;
     });
-  }
-
-  // Funções de edição (Quantidade e Fornecedor)
-  const handleUpdateQuantidade = (produtoId, novaQtd) => {
-    setSugestoes(prev => prev.map(s => 
-      s.produto_id === produtoId ? { ...s, quantidade_sugerida: parseFloat(novaQtd) || 0 } : s
-    ));
   };
 
   const handleUpdateFornecedor = (produtoId, fornecedorId) => {
-    const fornecedor = fornecedores.find(f => f.id === fornecedorId);
-    setSugestoes(prev => prev.map(s => 
-      s.produto_id === produtoId ? { 
-        ...s, 
-        fornecedor_selecionado_id: fornecedorId,
-        fornecedor_nome: fornecedor?.nome || s.fornecedor_nome 
-      } : s
-    ));
+    setFornecedoresSelecionados(prev => ({
+      ...prev,
+      [produtoId]: fornecedorId
+    }));
   };
 
   const handleRemovePending = () => {
@@ -329,22 +299,20 @@ export default function SugestaoCompra() {
     [sugestoes]
   );
   
-  // Aplicar filtros com useMemo para otimização
+  // Aplicar filtros com useMemo
   const sugestoesVisiveis = useMemo(() => {
+    const searchLower = filterTerm.toLowerCase();
+    
     return sugestoes.filter(s => {
-      const matchesPending = hidePending ? s.quantidade_pendente === 0 : true;
-      const matchesTerm = debouncedFilterTerm ? s.produto_nome.toLowerCase().includes(debouncedFilterTerm.toLowerCase()) : true;
-      const matchesCategory = filterCategory === 'all' || s.categoria_id === filterCategory;
-      const matchesSupplier = filterSupplier === 'all' || s.fornecedor_padrao_id === filterSupplier || s.fornecedor_selecionado_id === filterSupplier;
+      if (hidePending && s.quantidade_pendente > 0) return false;
+      if (searchLower && !s.produto_nome.toLowerCase().includes(searchLower)) return false;
+      if (filterCategory !== 'all' && s.categoria_id !== filterCategory) return false;
+      if (filterSupplier !== 'all' && s.fornecedor_padrao_id !== filterSupplier && s.fornecedor_selecionado_id !== filterSupplier) return false;
+      if (filterTags.length > 0 && !filterTags.every(tag => s.tags && s.tags.includes(tag))) return false;
       
-      // Filtro de tags: produto deve ter todas as tags selecionadas
-      const matchesTags = filterTags.length === 0 || filterTags.every(tag => 
-        s.tags && s.tags.includes(tag)
-      );
-
-      return matchesPending && matchesTerm && matchesCategory && matchesSupplier && matchesTags;
+      return true;
     });
-  }, [sugestoes, hidePending, debouncedFilterTerm, filterCategory, filterSupplier, filterTags]);
+  }, [sugestoes, hidePending, filterTerm, filterCategory, filterSupplier, filterTags]);
 
   const selectableItems = sugestoesVisiveis; // Agora permite selecionar mesmo sem fornecedor (usuário pode atribuir depois)
   const selectedSelectableItems = itensSelecionados.filter(s => sugestoesVisiveis.some(v => v.produto_id === s.produto_id));
@@ -638,12 +606,7 @@ export default function SugestaoCompra() {
                         </TableCell>
                         <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                                <Input 
-                                    type="number" 
-                                    className="h-8 w-20 text-right font-bold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
-                                    value={s.quantidade_sugerida}
-                                    onChange={(e) => handleUpdateQuantidade(s.produto_id, e.target.value)}
-                                />
+                                <span className="font-bold text-gray-700 dark:text-gray-200">{s.quantidade_sugerida}</span>
                                 <span className="text-gray-400 text-xs w-8 text-left">{s.unidade_compra}</span>
                             </div>
                         </TableCell>
