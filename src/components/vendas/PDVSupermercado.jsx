@@ -127,7 +127,10 @@ export default function PDVSupermercado() {
       setCurrentUser(userData);
       setClientes(clientesData);
       if (configsVendas.length > 0) {
+        console.log('PDV Supermercado - ConfigVenda carregada:', configsVendas[0]);
         setConfigVenda(configsVendas[0]);
+      } else {
+        console.log('PDV Supermercado - Nenhuma configuração de venda encontrada');
       }
       if (userData.tabela_preco_id) {
         const tabela = await TabelaPreco.get(userData.tabela_preco_id);
@@ -169,6 +172,14 @@ export default function PDVSupermercado() {
     if (!produtoSelecionado) return;
 
     const quantidade = parseInt(quantidadeAtual) || 1;
+    
+    console.log('PDV Supermercado - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
+    
+    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidade) {
+      toast({ title: `Estoque insuficiente: ${produtoSelecionado.estoque_atual} disponível`, variant: "destructive" });
+      return;
+    }
+    
     const preco = produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
     
     const itemExistente = carrinho.find(i => i.produto_id === produtoSelecionado.id);
@@ -461,7 +472,11 @@ export default function PDVSupermercado() {
                         <span className="w-8 font-semibold">{item.quantidade}</span>
                         <button onClick={() => {
                            const newQtd = item.quantidade + 1;
-                           setCarrinho(carrinho.map(i => i.produto_id === item.produto_id ? {...i, quantidade: newQtd, total: newQtd * i.preco_unitario_praticado} : i));
+                           if (configVenda?.vender_sem_estoque === true || newQtd <= item.estoque_disponivel) {
+                             setCarrinho(carrinho.map(i => i.produto_id === item.produto_id ? {...i, quantidade: newQtd, total: newQtd * i.preco_unitario_praticado} : i));
+                           } else {
+                             toast({ title: 'Estoque insuficiente', variant: "destructive" });
+                           }
                         }} className="w-6 h-6 bg-gray-100 rounded hover:bg-gray-200 font-bold">+</button>
                       </div>
                     </td>
