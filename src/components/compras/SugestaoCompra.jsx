@@ -393,137 +393,135 @@ export default function SugestaoCompra() {
         </div>
 
         {/* Barra de Controles Otimizada (Filtros + Ferramentas) */}
-        <div className="flex flex-col gap-3 px-2 md:px-0">
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-            {/* Busca */}
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input 
-                placeholder="Buscar produto..." 
-                value={filterTerm}
-                onChange={(e) => setFilterTerm(e.target.value)}
-                className="pl-9 bg-white dark:bg-gray-900 border-0 h-10"
-              />
-            </div>
+        <div className="flex flex-col gap-4 px-2 md:px-0">
 
-            {/* Seletor de Tags */}
-            <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Tag className="w-3.5 h-3.5 text-gray-500" />
-                <span className="text-xs text-gray-500 uppercase">Filtrar por Tags</span>
-              </div>
-              
-              {/* Tags selecionadas */}
-              {filterTags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {filterTags.map(tag => (
-                    <Badge 
-                      key={tag} 
-                      variant="secondary"
-                      className="bg-gray-700 dark:bg-gray-600 text-white text-xs px-2 py-1 flex items-center gap-1"
-                    >
-                      {tag}
-                      <X 
-                        className="w-3 h-3 cursor-pointer hover:text-gray-300" 
-                        onClick={() => setFilterTags(filterTags.filter(t => t !== tag))}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {/* Input de busca de tags */}
+          {/* Grupo de Filtros - Mobile First */}
+          <div className="w-full space-y-3">
               <div className="relative">
-                <Input 
-                  placeholder="Buscar e adicionar tag..."
-                  value={tagSearchTerm}
-                  onChange={(e) => setTagSearchTerm(e.target.value)}
-                  className="bg-white dark:bg-gray-900 border-0 h-9 text-sm"
-                />
-                {tagSearchTerm && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-40 overflow-y-auto z-10">
-                    {allTags
-                      .filter(tag => 
-                        tag.toLowerCase().includes(tagSearchTerm.toLowerCase()) && 
-                        !filterTags.includes(tag)
-                      )
-                      .slice(0, 10)
-                      .map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => {
-                            setFilterTags([...filterTags, tag]);
-                            setTagSearchTerm('');
-                          }}
-                          className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-gray-700 dark:text-gray-200"
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    {allTags.filter(tag => 
-                      tag.toLowerCase().includes(tagSearchTerm.toLowerCase()) && 
-                      !filterTags.includes(tag)
-                    ).length === 0 && (
-                      <div className="px-3 py-2 text-sm text-gray-400">Nenhuma tag encontrada</div>
-                    )}
-                  </div>
-                )}
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input 
+                      placeholder="Buscar produto..." 
+                      value={filterTerm}
+                      onChange={(e) => setFilterTerm(e.target.value)}
+                      className="pl-9 bg-gray-50 dark:bg-gray-800/50 border-transparent h-11"
+                  />
               </div>
-            </div>
 
-            {/* Filtros em linha compacta */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 h-9 text-xs">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {categorias.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                  ))}
-                </SelectContent>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11 w-full">
+                      <SelectValue placeholder="Todas Categorias" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Todas Categorias</SelectItem>
+                      {categorias.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                      ))}
+                  </SelectContent>
               </Select>
 
               <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 h-9 text-xs">
-                  <SelectValue placeholder="Fornecedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {fornecedores.map(f => (
-                    <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                  ))}
-                </SelectContent>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11 w-full">
+                      <SelectValue placeholder="Todos Fornecedores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Todos Fornecedores</SelectItem>
+                      {fornecedores.map(f => (
+                          <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                  </SelectContent>
               </Select>
-            </div>
 
-            {/* Controles adicionais */}
-            <div className="flex items-center justify-between gap-2">
+              {/* Seletor de Tags */}
+              <div>
+                {/* Tags selecionadas */}
+                {filterTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {filterTags.map(tag => (
+                      <Badge 
+                        key={tag} 
+                        variant="secondary"
+                        className="bg-gray-700 dark:bg-gray-600 text-white text-xs px-2 py-1 flex items-center gap-1"
+                      >
+                        {tag}
+                        <X 
+                          className="w-3 h-3 cursor-pointer hover:text-gray-300" 
+                          onClick={() => setFilterTags(filterTags.filter(t => t !== tag))}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Input de busca de tags */}
+                <div className="relative">
+                  <Input 
+                    placeholder="Buscar e adicionar tag..."
+                    value={tagSearchTerm}
+                    onChange={(e) => setTagSearchTerm(e.target.value)}
+                    className="bg-gray-50 dark:bg-gray-800/50 border-transparent h-11"
+                  />
+                  {tagSearchTerm && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-40 overflow-y-auto z-10">
+                      {allTags
+                        .filter(tag => 
+                          tag.toLowerCase().includes(tagSearchTerm.toLowerCase()) && 
+                          !filterTags.includes(tag)
+                        )
+                        .slice(0, 10)
+                        .map(tag => (
+                          <button
+                            key={tag}
+                            onClick={() => {
+                              setFilterTags([...filterTags, tag]);
+                              setTagSearchTerm('');
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-gray-700 dark:text-gray-200"
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      {allTags.filter(tag => 
+                        tag.toLowerCase().includes(tagSearchTerm.toLowerCase()) && 
+                        !filterTags.includes(tag)
+                      ).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-gray-400">Nenhuma tag encontrada</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <Button 
-                onClick={() => setHidePending(!hidePending)}
-                variant="ghost"
-                size="sm"
-                className={`h-8 text-xs ${hidePending ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500'}`}
+                  onClick={() => setHidePending(!hidePending)}
+                  variant="outline"
+                  className={`w-full h-11 justify-start border-transparent ${hidePending ? 'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-300' : 'text-gray-600 bg-gray-50 dark:bg-gray-800/50'}`}
               >
-                <FilterX className="w-3.5 h-3.5 mr-1.5" />
-                {hidePending ? 'Mostrar' : 'Ocultar'} Pendentes
+                  <FilterX className="w-4 h-4 mr-2" />
+                  <span className="text-sm">{hidePending ? 'Mostrar Pendentes' : 'Ocultar Pendentes'}</span>
               </Button>
+          </div>
 
+          {/* Ferramenta: Otimização de Pacotes */}
+          <div className="w-full bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
+              <div className="flex items-start gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 flex-shrink-0">
+                      <Package className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Otimização de Pacotes</span>
+              </div>
               <Select value={roundingMode} onValueChange={setRoundingMode}>
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-0 h-8 text-xs w-[140px]">
-                  <Package className="w-3.5 h-3.5 mr-1.5" />
+                <SelectTrigger className="w-full h-11 bg-white dark:bg-gray-900 border-transparent">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">Automático</SelectItem>
-                  <SelectItem value="up">Arred. Cima</SelectItem>
-                  <SelectItem value="down">Arred. Baixo</SelectItem>
-                  <SelectItem value="none">Exato</SelectItem>
+                  <SelectItem value="auto">Automático (Mais Próximo)</SelectItem>
+                  <SelectItem value="up">Arredondar p/ Cima</SelectItem>
+                  <SelectItem value="down">Arredondar p/ Baixo</SelectItem>
+                  <SelectItem value="none">Quantidade Exata</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
           </div>
+
         </div>
 
       {produtosSemFornecedor.length > 0 && (
