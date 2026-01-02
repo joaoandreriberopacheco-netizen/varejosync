@@ -55,13 +55,11 @@ export default function SugestaoCompra() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const tid = getTenantId();
       const [prods, forn, cats, pedidos] = await Promise.all([
-        base44.entities.Produto.filter({ empresa_id: tid, tipo: 'Produto', ativo: true }),
-        base44.entities.Terceiro.filter({ empresa_id: tid }),
-        base44.entities.Categoria.filter({ empresa_id: tid }),
+        base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+        base44.entities.Terceiro.list(),
+        base44.entities.Categoria.list(),
         base44.entities.PedidoCompra.filter({ 
-          empresa_id: tid,
           status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'] 
         })
       ]);
@@ -145,15 +143,13 @@ export default function SugestaoCompra() {
     });
 
     try {
-      const tid = getTenantId();
-      const all = await base44.entities.PedidoCompra.filter({ empresa_id: tid });
+      const all = await base44.entities.PedidoCompra.list();
       let num = (all.length > 0 ? Math.max(...all.map(x => parseInt(x.numero?.split('-')[1] || 0))) : 0) + 1;
 
       await Promise.all(Object.values(bySupplier).map(data => {
         const total = data.itens.reduce((sum, i) => sum + i.total, 0);
         return base44.entities.PedidoCompra.create({
           ...data,
-          empresa_id: tid,
           numero: `PC-${String(num++).padStart(5, '0')}`,
           status: 'Rascunho',
           valor_total: total
@@ -173,14 +169,12 @@ export default function SugestaoCompra() {
     if (selected.length === 0) return;
 
     try {
-      const tid = getTenantId();
-      const all = await base44.entities.Cotacao.filter({ empresa_id: tid });
+      const all = await base44.entities.Cotacao.list();
       const num = (all.length > 0 ? Math.max(...all.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
 
       const suppliers = [...new Set(selected.map(p => fornecedorPorProduto[p.id] || p.fornecedor_padrao_id).filter(Boolean))];
       
       await base44.entities.Cotacao.create({
-        empresa_id: tid,
         numero: `COT-${String(num).padStart(5, '0')}`,
         titulo: `Cotação - ${new Date().toLocaleDateString()}`,
         status: 'Rascunho',
