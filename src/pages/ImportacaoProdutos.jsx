@@ -286,10 +286,12 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
   };
 
   const handleInitiateImport = () => {
+    console.log('Iniciando autenticação para importação...');
     setIsAuthOpen(true);
   };
 
   const handleAuthSuccess = async () => {
+    console.log('Autenticação bem-sucedida, iniciando importação...');
     setIsAuthOpen(false);
     setStep(3);
     setIsImporting(true);
@@ -629,11 +631,31 @@ Retorne o índice (posição/número) de cada coluna no CSV começando do 0 (pri
                 </div>
 
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => { setStep(1); setFile(null); setValidationResult(null); }} className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { 
+                      setStep(1); 
+                      setFile(null); 
+                      setValidationResult(null); 
+                    }} 
+                    className="flex-1"
+                    disabled={isImporting}
+                  >
                     Cancelar
                   </Button>
-                  <Button onClick={handleInitiateImport} className="flex-1 gap-2">
-                    Confirmar Importação
+                  <Button 
+                    onClick={handleInitiateImport} 
+                    className="flex-1 gap-2"
+                    disabled={isImporting}
+                  >
+                    {isImporting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      'Confirmar Importação'
+                    )}
                   </Button>
                 </div>
               </>
