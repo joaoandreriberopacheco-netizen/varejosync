@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Search, AlertTriangle, Check, X, Package, Hash, MessageSquare, PackagePlus } from 'lucide-react';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function LostSalesForm({ open, onClose, currentUser }) {
   const [produtos, setProdutos] = useState([]);

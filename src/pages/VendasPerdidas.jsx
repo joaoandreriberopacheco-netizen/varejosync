@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, PackagePlus, AlertTriangle, TrendingDown, RefreshCw, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function VendasPerdidasPage() {
   const [vendasPerdidas, setVendasPerdidas] = useState([]);

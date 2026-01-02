@@ -13,7 +13,6 @@ import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function VendasGestaoPage() {
   const [pedidos, setPedidos] = useState([]);
