@@ -58,7 +58,12 @@ export default function SugestaoCompra() {
       });
 
       const sugestoesGeradas = produtos
-        .filter(p => p.estoque_atual <= p.estoque_minimo)
+        .filter(p => {
+          const estoqueAtual = p.estoque_atual || 0;
+          const estoqueMinimo = p.estoque_minimo || 0;
+          // Inclui produtos com estoque abaixo do mínimo OU produtos com estoque zerado mesmo sem mínimo definido
+          return estoqueAtual < estoqueMinimo || (estoqueAtual === 0 && estoqueMinimo === 0);
+        })
         .map(p => {
           // Lógica de Sugestão Aprimorada:
           // 1. Se tem Ideal definido, usa Ideal.
