@@ -13,7 +13,7 @@ export default function ConfiguracoesVendaManager() {
         fluxo_venda_padrao: 'completo',
         auto_delivery_balcao: true,
         exibir_estoque_pdv: true,
-        permitir_venda_sem_estoque: false,
+        vender_sem_estoque: false,
         bloquear_venda_preco_zero: true
     });
     const [isLoading, setIsLoading] = useState(true);
@@ -150,8 +150,8 @@ export default function ConfiguracoesVendaManager() {
                             </div>
                             <Switch 
                                 id="venda_sem_estoque" 
-                                checked={config.permitir_venda_sem_estoque}
-                                onCheckedChange={(v) => setConfig({...config, permitir_venda_sem_estoque: v})}
+                                checked={config.vender_sem_estoque}
+                                onCheckedChange={(v) => setConfig({...config, vender_sem_estoque: v})}
                             />
                         </div>
 
