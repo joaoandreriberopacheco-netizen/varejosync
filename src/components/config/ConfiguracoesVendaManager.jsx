@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
+
 import { Store, ShoppingBag, Truck, Save, Settings2 } from 'lucide-react';
 
 export default function ConfiguracoesVendaManager() {
@@ -25,10 +25,7 @@ export default function ConfiguracoesVendaManager() {
 
     const loadConfig = async () => {
         try {
-            const tenantId = getTenantId();
-            if (!tenantId) return;
-
-            const configs = await base44.entities.ConfiguracoesVenda.filter({ empresa_id: tenantId });
+            const configs = await base44.entities.ConfiguracoesVenda.list();
             if (configs && configs.length > 0) {
                 setConfig(configs[0]);
             }
@@ -41,22 +38,16 @@ export default function ConfiguracoesVendaManager() {
 
     const handleSave = async () => {
         try {
-            const tenantId = getTenantId();
-            if (!tenantId) {
-                toast({ title: "Erro", description: "Empresa não identificada", variant: "destructive" });
-                return;
-            }
-
-            const configs = await base44.entities.ConfiguracoesVenda.filter({ empresa_id: tenantId });
-            const dataToSave = { ...config, empresa_id: tenantId };
+            const configs = await base44.entities.ConfiguracoesVenda.list();
 
             if (configs && configs.length > 0) {
-                await base44.entities.ConfiguracoesVenda.update(configs[0].id, dataToSave);
+                await base44.entities.ConfiguracoesVenda.update(configs[0].id, config);
             } else {
-                await base44.entities.ConfiguracoesVenda.create(dataToSave);
+                await base44.entities.ConfiguracoesVenda.create(config);
             }
             toast({ title: "Configurações salvas", className: "bg-green-100 text-green-800", duration: 3000 });
         } catch (error) {
+            console.error('Erro detalhado:', error);
             toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
         }
     };
