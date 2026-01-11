@@ -506,15 +506,15 @@ export default function PDVCaixa() {
 
 
 
+
+
+
+
+
+
           // Logic for Balcao with manual delivery (Logistics) could go here
           // For now, we assume default behavior or simple completion
-        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowComprovanteFinal(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}
-
-    setTipoMovimento(tipo);
-    setValorMovimento('');
-    setObservacaoMovimento('');
-    setShowMovimentoDialog(true);
-  };
+        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowComprovanteFinal(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};
 
   const handleSalvarMovimento = async () => {
     if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {
@@ -679,7 +679,7 @@ export default function PDVCaixa() {
               <div className="grid grid-cols-3 gap-3 md:gap-6">
                 <div>
                   <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Dinheiro</div>
-                  <div className="text-lg md:text-2xl font-bold text-gray-800 dark:text-gray-200">
+                  <div className="text-lg md:text-2xl font-\nbold text-gray-800 dark:text-gray-200">
                     {formatValor(caixaData.recebimentos.dinheiro)}
                   </div>
                 </div>
@@ -735,11 +735,11 @@ export default function PDVCaixa() {
             <div className="grid grid-cols-2 gap-3 md:gap-4">
               <Button
               onClick={handleProcessarVendas}
-              size="lg" className="bg-gray-50 text-slate-800 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 h-14 md:h-20 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 flex-col md:flex-row gap-1 md:gap-2">
+              size="lg" className="bg-gray-50 text-slate-50 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 h-14 md:h-20 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 flex-col md:flex-row gap-1 md:gap-2">
 
 
-                <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-                <span className="text-xs font-black md:text-base">Vendas
+                <ShoppingCart className="bg-slate-700 text-slate-700 lucide lucide-shopping-cart w-5 h-5 md:w-6 md:h-6" />
+                <span className="text-slate-800 text-xs font-black md:text-base">Vendas
 
               </span>
               </Button>
