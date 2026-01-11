@@ -732,17 +732,17 @@ export default function PDVCaixa() {
               <Button
               onClick={handleProcessarVendas}
               size="lg"
-              className="bg-gray-50 hover:bg-gray-100 text-gray-800 border-0 shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+              className="bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
 
-                <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+                <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 text-gray-700 dark:text-gray-300" />
                 <span className="text-xs font-semibold md:text-base">Vendas</span>
               </Button>
               <Button
               onClick={handleAbrirBalanco}
               size="lg"
-              className="bg-gray-50 hover:bg-gray-100 text-gray-800 border-0 shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+              className="bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
 
-                <Wallet className="w-5 h-5 md:w-6 md:h-6" />
+                <Wallet className="w-5 h-5 md:w-6 md:h-6 text-gray-700 dark:text-gray-300" />
                 <span className="text-xs md:text-base">Balanço</span>
               </Button>
             </div>
@@ -752,7 +752,7 @@ export default function PDVCaixa() {
               <Button
               onClick={() => handleAbrirMovimento('Reforço')}
               size="sm"
-              className="gap-1 md:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 border-0 shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 h-12 md:h-14"
+              className="gap-1 md:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
               disabled={!contaCaixaPDV}>
 
                 <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
@@ -762,7 +762,7 @@ export default function PDVCaixa() {
               <Button
               onClick={() => handleAbrirMovimento('Sangria')}
               size="sm"
-              className="gap-1 md:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 border-0 shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 h-12 md:h-14"
+              className="gap-1 md:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
               disabled={!contaCaixaPDV}>
 
                 <Minus className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
@@ -772,7 +772,7 @@ export default function PDVCaixa() {
               <Button
               onClick={handleFecharCaixa}
               size="sm"
-              className="gap-1 md:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 border-0 shadow-sm dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 h-12 md:h-14">
+              className="gap-1 md:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14">
 
                 <Lock className="w-4 h-4 text-red-600 dark:text-red-400" />
                 <span className="text-xs md:text-sm">Fechar</span>
