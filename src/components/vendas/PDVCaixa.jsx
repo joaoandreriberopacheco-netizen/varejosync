@@ -679,7 +679,7 @@ export default function PDVCaixa() {
               <div className="grid grid-cols-3 gap-3 md:gap-6">
                 <div>
                   <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Dinheiro</div>
-                  <div className="text-lg md:text-2xl font-\nbold text-gray-800 dark:text-gray-200">
+                  <div className="text-lg md:text-2xl font-bold text-gray-800 dark:text-gray-200">
                     {formatValor(caixaData.recebimentos.dinheiro)}
                   </div>
                 </div>
