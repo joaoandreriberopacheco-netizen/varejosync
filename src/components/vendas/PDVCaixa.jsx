@@ -731,18 +731,18 @@ export default function PDVCaixa() {
             <div className="bg-transparent grid grid-cols-2 gap-3 md:gap-4">
               <Button
               onClick={handleProcessarVendas}
-              size="lg" className="bg-gray-50 text-zinc-50 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 h-14 md:h-20 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 flex-col md:flex-row gap-1 md:gap-2">
+              variant="outline"
+              size="lg"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
 
-
-                <ShoppingCart className="bg-gray-50 text-slate-700 lucide lucide-shopping-cart w-5 h-5 md:w-6 md:h-6" />
-                <span className="text-slate-800 text-xs font-semibold md:text-base">Vendas
-
-              </span>
+                <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+                <span className="text-xs font-semibold md:text-base">Vendas</span>
               </Button>
               <Button
               onClick={handleAbrirBalanco}
-              size="lg" className="bg-gray-50 text-slate-800 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 h-14 md:h-20 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 flex-col md:flex-row gap-1 md:gap-2">
-
+              variant="outline"
+              size="lg"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
 
                 <Wallet className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="text-xs md:text-base">Balanço</span>
