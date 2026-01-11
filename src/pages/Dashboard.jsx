@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
-import CentralAcoes from '../components/dashboard/CentralAcoes';
 import GeralTab from '../components/dashboard/tabs/GeralTab';
 import VendasTab from '../components/dashboard/tabs/VendasTab';
 import ComprasTab from '../components/dashboard/tabs/ComprasTab';
@@ -20,9 +19,6 @@ export default function DashboardPage() {
           Visão geral do seu negócio
         </p>
       </div>
-
-      {/* Central de Ações */}
-      <CentralAcoes />
 
       {/* Tabs - MOBILE: SÓ ÍCONES */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
