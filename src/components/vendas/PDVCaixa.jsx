@@ -34,13 +34,13 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 import { createPageUrl } from '@/utils';
-import { getTenantId } from '@/components/utils/tenant';
+
 
 export default function PDVCaixa() {
   const [configVenda, setConfigVenda] = useState(null);
 
   useEffect(() => {
-    base44.entities.ConfiguracoesVenda.filter({ empresa_id: getTenantId() }).
+    base44.entities.ConfiguracoesVenda.list().
     then((configs) => {
       if (configs.length > 0) setConfigVenda(configs[0]);
     }).
@@ -282,11 +282,10 @@ export default function PDVCaixa() {
 
   const loadData = async () => {
     try {
-      const tenantId = getTenantId();
       const user = await base44.auth.me();
       setCurrentUser(user);
 
-      const todasContas = await base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId });
+      const todasContas = await base44.entities.ContasFinanceiras.list();
       let caixaPDV = todasContas.find((c) =>
       c.ativo && (
       c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV') && (
@@ -295,12 +294,11 @@ export default function PDVCaixa() {
 
       if (!caixaPDV) {
         caixaPDV = await base44.entities.ContasFinanceiras.create({
-          empresa_id: tenantId,
           nome: 'Caixa PDV',
           tipo: 'Caixa Físico',
           saldo_inicial: 500,
           saldo_atual: 500,
-          cor: '#10B981', // Keep initial color for creation, but UI will ignore
+          cor: '#10B981',
           observacoes: 'Conta criada automaticamente para o PDV Caixa',
           ativo: true
         });
@@ -317,7 +315,7 @@ export default function PDVCaixa() {
 
       const hoje = format(new Date(), 'yyyy-MM-dd');
 
-      const todosPedidos = await base44.entities.PedidoVenda.filter({ empresa_id: tenantId });
+      const todosPedidos = await base44.entities.PedidoVenda.list();
 
       const pedidosAguardandoCaixa = todosPedidos.filter((p) =>
       p.status === 'Aguardando Caixa'
@@ -332,7 +330,7 @@ export default function PDVCaixa() {
       );
       setVendasFinalizadas(vendasHoje);
 
-      const todasMovimentacoes = await base44.entities.MovimentosCaixa.filter({ empresa_id: tenantId });
+      const todasMovimentacoes = await base44.entities.MovimentosCaixa.list();
       const movimentosHoje = todasMovimentacoes.filter((m) =>
       m.created_date &&
       m.created_date.startsWith(hoje) &&
@@ -538,13 +536,11 @@ export default function PDVCaixa() {
     try {
       const valorFloat = parseFloat(valorMovimento.replace(',', '.'));
 
-      const tenantId = getTenantId();
-      const todosMovimentos = await base44.entities.MovimentosCaixa.filter({ empresa_id: tenantId });
+      const todosMovimentos = await base44.entities.MovimentosCaixa.list();
       const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;
 
       const movimento = await base44.entities.MovimentosCaixa.create({
-        empresa_id: tenantId,
         numero: numeroMovimento,
         tipo: tipoMovimento,
         valor: valorFloat,
