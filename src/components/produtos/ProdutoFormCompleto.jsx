@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Calendar } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown } from 'lucide-react';
+import { format } from 'date-fns';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
 import { useToast } from "@/components/ui/use-toast";
@@ -787,62 +788,53 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                 <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma movimentação registrada</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {movimentacoes.map((mov) => (
-                  <div key={mov.id} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          {mov.tipo === 'Entrada' ? (
-                            <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
-                          )}
-                          <span className={`text-sm font-semibold ${mov.tipo === 'Entrada' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                            {mov.tipo}
-                          </span>
-                          <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
-                            {mov.motivo}
-                          </Badge>
-                        </div>
-                        
-                        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-2">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(mov.created_date).toLocaleDateString('pt-BR', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-
-                        {mov.observacoes && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                            {mov.observacoes}
-                          </p>
-                        )}
-
-                        {mov.documento_referencia && (
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                            Ref: {mov.documento_referencia}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="text-right">
-                        <div className={`text-lg font-bold ${mov.tipo === 'Entrada' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                          {mov.tipo === 'Entrada' ? '+' : '-'}{mov.quantidade}
-                        </div>
-                        {mov.custo_unitario > 0 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            R$ {mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-gray-300 dark:border-gray-600">
+                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Data</th>
+                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Hora</th>
+                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Tipo</th>
+                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Comprovante</th>
+                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Qtd</th>
+                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Preço Un.</th>
+                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movimentacoes.map((mov, idx) => {
+                      const total = mov.quantidade * (mov.custo_unitario || 0);
+                      const isEntrada = mov.tipo === 'Entrada';
+                      return (
+                        <tr key={mov.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <td className="p-2 text-gray-700 dark:text-gray-300">
+                            {format(new Date(mov.created_date), 'dd/MM/yyyy')}
+                          </td>
+                          <td className="p-2 text-gray-700 dark:text-gray-300">
+                            {format(new Date(mov.created_date), 'HH:mm')}
+                          </td>
+                          <td className="p-2">
+                            <Badge className={`text-[10px] ${isEntrada ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                              {mov.motivo}
+                            </Badge>
+                          </td>
+                          <td className="p-2 text-gray-600 dark:text-gray-400 font-mono text-[10px]">
+                            {mov.documento_referencia || '-'}
+                          </td>
+                          <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                            {isEntrada ? '+' : '-'}{mov.quantidade}
+                          </td>
+                          <td className="p-2 text-right text-gray-700 dark:text-gray-300 tabular-nums">
+                            {mov.custo_unitario > 0 ? `R$ ${mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                          </td>
+                          <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                            {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </TabsContent>
