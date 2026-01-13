@@ -264,8 +264,30 @@ export default function PDVSupermercado() {
         caixa_destino_id: currentUser.caixa_destino_id
       };
 
-      await base44.entities.PedidoVenda.create(pedidoData);
+      const novoPedido = await base44.entities.PedidoVenda.create(pedidoData);
       
+      // Criar movimentações de estoque para cada item vendido
+      for (const item of carrinho) {
+        await base44.entities.MovimentacaoEstoque.create({
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          tipo: 'Saída',
+          motivo: 'Venda',
+          quantidade: item.quantidade,
+          custo_unitario: 0,
+          documento_referencia: novoPedido.numero,
+          usuario_responsavel: currentUser.full_name
+        });
+
+        // Atualizar estoque do produto
+        const produto = await base44.entities.Produto.get(item.produto_id);
+        if (produto) {
+          await base44.entities.Produto.update(item.produto_id, {
+            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade)
+          });
+        }
+      }
+
       toast({ title: "Venda Finalizada!", className: "bg-emerald-100 text-emerald-800" });
       setCarrinho([]);
       setCliente(null);

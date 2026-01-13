@@ -443,6 +443,28 @@ export default function PDVCaixa() {
         pagamentos: pagamentosArray
       });
 
+      // Criar movimentações de estoque para cada item vendido
+      for (const item of pedidoSelecionado.itens) {
+        await base44.entities.MovimentacaoEstoque.create({
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          tipo: 'Saída',
+          motivo: 'Venda',
+          quantidade: item.quantidade,
+          custo_unitario: item.custo_unitario_momento || 0,
+          documento_referencia: pedidoSelecionado.numero,
+          usuario_responsavel: currentUser.full_name
+        });
+
+        // Atualizar estoque do produto
+        const produto = await base44.entities.Produto.get(item.produto_id);
+        if (produto) {
+          await base44.entities.Produto.update(item.produto_id, {
+            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade)
+          });
+        }
+      }
+
       if (pagamentosDinheiro > 0 && contaCaixaPDV) {
         const novoSaldo = contaCaixaPDV.saldo_atual + pagamentosDinheiro;
         await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
