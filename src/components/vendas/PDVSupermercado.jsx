@@ -64,6 +64,7 @@ export default function PDVSupermercado() {
   };
 
   const { toast } = useToast();
+  useUnsavedChangesWarning(carrinho.length > 0);
 
   const totalCarrinho = useMemo(() => carrinho.reduce((acc, item) => acc + item.total, 0), [carrinho]);
   const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito;
@@ -289,6 +290,10 @@ export default function PDVSupermercado() {
       }
 
       toast({ title: "Venda Finalizada!", className: "bg-emerald-100 text-emerald-800" });
+      
+      // Temporariamente desabilita o aviso antes de limpar
+      window.removeEventListener('beforeunload', () => {});
+      
       setCarrinho([]);
       setCliente(null);
       setShowPaymentDialog(false);

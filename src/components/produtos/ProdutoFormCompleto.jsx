@@ -46,7 +46,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [tagInput, setTagInput] = useState('');
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
+  const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
+
+  useUnsavedChangesWarning(temAlteracoesNaoSalvas);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -164,12 +167,16 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     ? ((precoVendaCalculado - precoCustoCalculado) / precoVendaCalculado) * 100
     : 0;
 
-  const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setTemAlteracoesNaoSalvas(true);
+  };
 
   const handleCustoChange = (index, field, value) => {
     const newCustos = [...custos];
     newCustos[index][field] = value;
     setCustos(newCustos);
+    setTemAlteracoesNaoSalvas(true);
   };
 
   const handleAddTag = () => {
@@ -264,6 +271,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
         duration: 3000
       });
 
+      setTemAlteracoesNaoSalvas(false);
       onSave();
       onClose();
     } catch (error) {
