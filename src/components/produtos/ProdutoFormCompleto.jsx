@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Calendar } from 'lucide-react';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
 import { useToast } from "@/components/ui/use-toast";
@@ -42,6 +42,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [movimentacoes, setMovimentacoes] = useState([]);
+  const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const { toast } = useToast();
 
   const handleImageUpload = async (e) => {
@@ -74,6 +76,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     loadDependencies();
     if (produto?.id) {
       loadCustos();
+      loadMovimentacoes();
     } else {
       setCustos([
         { descricao_custo: 'Valor de Compra', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
@@ -108,6 +111,20 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       ]);
     } else {
       setCustos(custosData);
+    }
+  };
+
+  const loadMovimentacoes = async () => {
+    if (!produto?.id) return;
+    
+    setLoadingMovimentacoes(true);
+    try {
+      const movs = await base44.entities.MovimentacaoEstoque.filter({ produto_id: produto.id });
+      setMovimentacoes(movs.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+    } catch (error) {
+      console.error('Erro ao carregar movimentações:', error);
+    } finally {
+      setLoadingMovimentacoes(false);
     }
   };
 
@@ -287,7 +304,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
       {/* Tabs */}
       <Tabs defaultValue="descritivo" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className="grid grid-cols-4 w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex-shrink-0">
+        <TabsList className="grid grid-cols-5 w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex-shrink-0">
           <TabsTrigger value="descritivo" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
             <Package className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
             <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Características</span>
@@ -299,6 +316,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           <TabsTrigger value="logistico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
             <Warehouse className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
             <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Logística</span>
+          </TabsTrigger>
+          <TabsTrigger value="historico" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm" disabled={!produto?.id}>
+            <History className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
+            <span className="hidden sm:inline ml-2 text-gray-700 dark:text-gray-300">Histórico</span>
           </TabsTrigger>
           <TabsTrigger value="sistema" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 text-xs md:text-sm">
             <Settings className="w-4 h-4 md:w-5 md:h-5 text-gray-700 dark:text-gray-400" />
@@ -752,6 +773,78 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          {/* ABA HISTÓRICO */}
+          <TabsContent value="historico" className="space-y-4 mt-0">
+            {loadingMovimentacoes ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              </div>
+            ) : movimentacoes.length === 0 ? (
+              <div className="text-center py-12">
+                <History className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma movimentação registrada</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {movimentacoes.map((mov) => (
+                  <div key={mov.id} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {mov.tipo === 'Entrada' ? (
+                            <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          )}
+                          <span className={`text-sm font-semibold ${mov.tipo === 'Entrada' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                            {mov.tipo}
+                          </span>
+                          <Badge variant="outline" className="text-xs border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400">
+                            {mov.motivo}
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-2">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(mov.created_date).toLocaleDateString('pt-BR', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+
+                        {mov.observacoes && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                            {mov.observacoes}
+                          </p>
+                        )}
+
+                        {mov.documento_referencia && (
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                            Ref: {mov.documento_referencia}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${mov.tipo === 'Entrada' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                          {mov.tipo === 'Entrada' ? '+' : '-'}{mov.quantidade}
+                        </div>
+                        {mov.custo_unitario > 0 && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            R$ {mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* ABA SISTEMA */}
