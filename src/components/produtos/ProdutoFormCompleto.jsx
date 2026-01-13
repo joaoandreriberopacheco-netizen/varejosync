@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
 import { useToast } from "@/components/ui/use-toast";
