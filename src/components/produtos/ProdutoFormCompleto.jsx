@@ -799,40 +799,73 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                       <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Qtd</th>
                       <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Preço Un.</th>
                       <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Total</th>
+                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Estoque</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {movimentacoes.map((mov, idx) => {
-                      const total = mov.quantidade * (mov.custo_unitario || 0);
-                      const isEntrada = mov.tipo === 'Entrada';
-                      return (
-                        <tr key={mov.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                          <td className="p-2 text-gray-700 dark:text-gray-300">
-                            {format(new Date(mov.created_date), 'dd/MM/yyyy')}
-                          </td>
-                          <td className="p-2 text-gray-700 dark:text-gray-300">
-                            {format(new Date(mov.created_date), 'HH:mm')}
-                          </td>
-                          <td className="p-2">
-                            <Badge className={`text-[10px] ${isEntrada ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                              {mov.motivo}
-                            </Badge>
-                          </td>
-                          <td className="p-2 text-gray-600 dark:text-gray-400 font-mono text-[10px]">
-                            {mov.documento_referencia || '-'}
-                          </td>
-                          <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                            {isEntrada ? '+' : '-'}{mov.quantidade}
-                          </td>
-                          <td className="p-2 text-right text-gray-700 dark:text-gray-300 tabular-nums">
-                            {mov.custo_unitario > 0 ? `R$ ${mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
-                          </td>
-                          <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                            {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {(() => {
+                      // Calcular evolução do estoque (do mais antigo para o mais recente)
+                      const movsOrdenadas = [...movimentacoes].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+                      let saldoAtual = produto?.estoque_atual || 0;
+                      
+                      // Calcular saldo inicial (antes de todas as movimentações)
+                      let saldoInicial = saldoAtual;
+                      movsOrdenadas.forEach(mov => {
+                        if (mov.tipo === 'Entrada') {
+                          saldoInicial -= mov.quantidade;
+                        } else {
+                          saldoInicial += mov.quantidade;
+                        }
+                      });
+                      
+                      // Agora calcular para cada linha
+                      let saldoCorrente = saldoInicial;
+                      
+                      return movsOrdenadas.map((mov, idx) => {
+                        const isEntrada = mov.tipo === 'Entrada';
+                        const total = mov.quantidade * (mov.custo_unitario || 0);
+                        
+                        // Aplicar a movimentação
+                        if (isEntrada) {
+                          saldoCorrente += mov.quantidade;
+                        } else {
+                          saldoCorrente -= mov.quantidade;
+                        }
+                        
+                        const saldoAposMovimento = saldoCorrente;
+                        
+                        return (
+                          <tr key={mov.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <td className="p-2 text-gray-700 dark:text-gray-300">
+                              {format(new Date(mov.created_date), 'dd/MM/yyyy')}
+                            </td>
+                            <td className="p-2 text-gray-700 dark:text-gray-300">
+                              {format(new Date(mov.created_date), 'HH:mm')}
+                            </td>
+                            <td className="p-2">
+                              <Badge className={`text-[10px] ${isEntrada ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                {mov.motivo}
+                              </Badge>
+                            </td>
+                            <td className="p-2 text-gray-600 dark:text-gray-400 font-mono text-[10px]">
+                              {mov.documento_referencia || '-'}
+                            </td>
+                            <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                              {isEntrada ? '+' : '-'}{mov.quantidade}
+                            </td>
+                            <td className="p-2 text-right text-gray-700 dark:text-gray-300 tabular-nums">
+                              {mov.custo_unitario > 0 ? `R$ ${mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                            </td>
+                            <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                              {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                            </td>
+                            <td className="p-2 text-right font-bold text-gray-800 dark:text-gray-200 tabular-nums">
+                              {saldoAposMovimento}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
