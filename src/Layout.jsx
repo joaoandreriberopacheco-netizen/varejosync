@@ -469,7 +469,8 @@ export default function Layout({ children, currentPageName }) {
                     <DropdownMenuLabel>Trocar Perfil</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleProfileSwitch('Admin')} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Vendedor Junior')} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor Junior</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleProfileSwitch('Vendedor')} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleProfileSwitch('Operador de Caixa')} className="dark:hover:bg-gray-700 dark:text-gray-200">Operador de Caixa</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleProfileSwitch('Gerente')} className="dark:hover:bg-gray-700 dark:text-gray-200">Gerente</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleProfileSwitch('Estoquista')} className="dark:hover:bg-gray-700 dark:text-gray-200">Estoquista</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleProfileSwitch('Financeiro')} className="dark:hover:bg-gray-700 dark:text-gray-200">Financeiro</DropdownMenuItem>
