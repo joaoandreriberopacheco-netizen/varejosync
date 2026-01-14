@@ -478,7 +478,7 @@ export default function Layout({ children, currentPageName }) {
           {/* User Profile */}
           <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
             {currentUser && (isOpen || isMobile) && (
-              <div className="p-2">
+              <div className="p-2 space-y-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
@@ -508,14 +508,33 @@ export default function Layout({ children, currentPageName }) {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                <button 
+                  onClick={() => base44.auth.logout()}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="text-sm">Sair</span>
+                </button>
               </div>
             )}
-            
+
             {currentUser && !isOpen && !isMobile && (
-              <div className="p-2">
+              <div className="p-2 space-y-1">
                 <div className="w-7 h-7 mx-auto rounded bg-white flex items-center justify-center">
                   <User className="w-4 h-4 text-gray-700" />
                 </div>
+                <button 
+                  onClick={() => base44.auth.logout()}
+                  className="w-full flex items-center justify-center p-2 rounded text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  title="Sair"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
               </div>
             )}
           </div>
