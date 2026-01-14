@@ -11,6 +11,7 @@ import ConfigEstoqueManager from '../components/config/ConfigEstoqueManager';
 import MaquininhasManager from '../components/config/MaquininhasManager';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 import UsuariosManager from '../components/config/UsuariosManager';
+import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
 import DadosEmpresaManager from '../components/config/DadosEmpresaManager';
 import DataAuditor from '../components/config/DataAuditor';
 import SeedDataTool from '../components/config/SeedDataTool';
@@ -143,16 +144,24 @@ export default function ConfiguracoesPage() {
                   <span className="hidden data-[state=active]:inline md:inline">Dados da Empresa</span>
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="usuarios" 
+                  value="usuarios-app" 
                   className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                 >
                   <Users className="w-4 h-4" />
-                  <span className="hidden data-[state=active]:inline md:inline">Cadastro de Usuários</span>
+                  <span className="hidden data-[state=active]:inline md:inline">Usuários do Sistema</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="colaboradores" 
+                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span className="hidden data-[state=active]:inline md:inline">Colaboradores</span>
                 </TabsTrigger>
               </TabsList>
               <div className="mt-6">
                 <TabsContent value="empresa"><DadosEmpresaManager /></TabsContent>
-                <TabsContent value="usuarios"><UsuariosManager /></TabsContent>
+                <TabsContent value="usuarios-app"><ListaUsuariosApp /></TabsContent>
+                <TabsContent value="colaboradores"><UsuariosManager /></TabsContent>
               </div>
             </Tabs>
           </TabsContent>
