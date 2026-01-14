@@ -118,56 +118,83 @@ export default function Layout({ children, currentPageName }) {
     }));
   };
 
-  const menuItems = [
-    { 
-      name: 'PDV', 
-      icon: Monitor, 
-      submenu: [
-        { name: 'Vendedor', page: 'PDV?mode=vendedor' },
-        { name: 'Caixa', page: 'PDV?mode=caixa' },
-        { name: 'Supermercado', page: 'PDV?mode=supermercado' },
-        { name: 'Auto-Atendimento', page: 'AutoAtendimento' }
-      ]
-    },
-    { 
-      name: 'Vendas', 
-      icon: TrendingUp, 
-      submenu: [
-        { name: 'Gestão de Vendas', page: 'VendasGestao' },
-        { name: 'Vendas Perdidas', page: 'VendasPerdidas' }
-      ]
-    },
-    { 
-      name: 'Estoque', 
-      icon: Package, 
-      submenu: [
-        { name: 'Produtos', page: 'Produtos' },
-        { name: 'Compras', page: 'Compras' },
-        { name: 'Logística', page: 'Logistica' },
-        { name: 'Armazenagem', page: 'Estoque' }
-      ]
-    },
-    { 
-      name: 'Financeiro', 
-      icon: DollarSign, 
-      submenu: [
-        { name: 'Caixas Ativos', page: 'CaixasAtivos' },
-        { name: 'Gestão de Contas', page: 'FinanceiroModulo' },
-        { name: 'Formas de Pagamento', page: 'Configuracoes' }
-      ]
-    },
-    { 
-      name: 'Configurações', 
-      icon: Settings, 
-      submenu: [
-        { name: 'Terceiros', page: 'Terceiros' },
-        { name: 'Intervenientes', page: 'Intervenientes' },
-        { name: 'Parâmetros', page: 'Configuracoes' }
-      ]
-    },
-    { name: 'Relatórios', icon: BookOpen, page: 'Relatorios' },
-    { name: 'Manual', icon: BookOpen, page: 'Manual' }
-  ];
+  const getMenuItemsForProfile = () => {
+    const perfil = currentUser?.perfil || 'Admin';
+    
+    const allMenuItems = [
+      { 
+        name: 'PDV', 
+        icon: Monitor, 
+        submenu: [
+          { name: 'Vendedor', page: 'PDV?mode=vendedor', roles: ['Admin', 'Vendedor', 'Gerente'] },
+          { name: 'Caixa', page: 'PDV?mode=caixa', roles: ['Admin', 'Operador de Caixa', 'Gerente'] },
+          { name: 'Supermercado', page: 'PDV?mode=supermercado', roles: ['Admin', 'Gerente'] },
+          { name: 'Auto-Atendimento', page: 'AutoAtendimento', roles: ['Admin', 'Gerente'] }
+        ],
+        roles: ['Admin', 'Vendedor', 'Operador de Caixa', 'Gerente']
+      },
+      { 
+        name: 'Dashboard', 
+        icon: LayoutDashboard, 
+        page: 'Dashboard',
+        roles: ['Admin', 'Vendedor', 'Gerente', 'Financeiro']
+      },
+      { 
+        name: 'Vendas', 
+        icon: TrendingUp, 
+        submenu: [
+          { name: 'Gestão de Vendas', page: 'VendasGestao' },
+          { name: 'Vendas Perdidas', page: 'VendasPerdidas' }
+        ],
+        roles: ['Admin', 'Gerente']
+      },
+      { 
+        name: 'Estoque', 
+        icon: Package, 
+        submenu: [
+          { name: 'Produtos', page: 'Produtos' },
+          { name: 'Compras', page: 'Compras' },
+          { name: 'Logística', page: 'Logistica' },
+          { name: 'Armazenagem', page: 'Estoque' }
+        ],
+        roles: ['Admin', 'Gerente', 'Estoquista']
+      },
+      { 
+        name: 'Financeiro', 
+        icon: DollarSign, 
+        submenu: [
+          { name: 'Caixas Ativos', page: 'CaixasAtivos' },
+          { name: 'Gestão de Contas', page: 'FinanceiroModulo' },
+          { name: 'Formas de Pagamento', page: 'Configuracoes' }
+        ],
+        roles: ['Admin', 'Gerente', 'Financeiro']
+      },
+      { 
+        name: 'Configurações', 
+        icon: Settings, 
+        submenu: [
+          { name: 'Terceiros', page: 'Terceiros' },
+          { name: 'Intervenientes', page: 'Intervenientes' },
+          { name: 'Parâmetros', page: 'Configuracoes' }
+        ],
+        roles: ['Admin', 'Gerente']
+      },
+      { name: 'Relatórios', icon: BookOpen, page: 'Relatorios', roles: ['Admin', 'Gerente', 'Financeiro'] },
+      { name: 'Manual', icon: BookOpen, page: 'Manual', roles: ['Admin', 'Gerente'] }
+    ];
+
+    return allMenuItems.filter(item => {
+      if (!item.roles || item.roles.includes(perfil)) {
+        if (item.submenu) {
+          item.submenu = item.submenu.filter(sub => !sub.roles || sub.roles.includes(perfil));
+        }
+        return true;
+      }
+      return false;
+    });
+  };
+
+  const menuItems = getMenuItemsForProfile();
 
   const allSearchableItems = React.useMemo(() => {
     const items = [];
@@ -466,14 +493,19 @@ export default function Layout({ children, currentPageName }) {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 dark:bg-gray-800 dark:border-gray-700">
-                    <DropdownMenuLabel>Trocar Perfil</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Admin')} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Vendedor')} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Operador de Caixa')} className="dark:hover:bg-gray-700 dark:text-gray-200">Operador de Caixa</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Gerente')} className="dark:hover:bg-gray-700 dark:text-gray-200">Gerente</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Estoquista')} className="dark:hover:bg-gray-700 dark:text-gray-200">Estoquista</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Financeiro')} className="dark:hover:bg-gray-700 dark:text-gray-200">Financeiro</DropdownMenuItem>
+                    <DropdownMenuLabel>Perfil Atual: {currentUser.perfil || 'Admin'}</DropdownMenuLabel>
+                    {currentUser.role === 'admin' && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs text-gray-500">Trocar Perfil (Apenas Admin)</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleProfileSwitch('Admin')} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleProfileSwitch('Vendedor')} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleProfileSwitch('Operador de Caixa')} className="dark:hover:bg-gray-700 dark:text-gray-200">Operador de Caixa</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleProfileSwitch('Gerente')} className="dark:hover:bg-gray-700 dark:text-gray-200">Gerente</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleProfileSwitch('Estoquista')} className="dark:hover:bg-gray-700 dark:text-gray-200">Estoquista</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleProfileSwitch('Financeiro')} className="dark:hover:bg-gray-700 dark:text-gray-200">Financeiro</DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
