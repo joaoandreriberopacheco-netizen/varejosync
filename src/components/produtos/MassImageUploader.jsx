@@ -11,7 +11,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, X, Image as ImageIcon, CheckCircle, AlertCircle, Loader2, FileImage } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function MassImageUploader({ isOpen, onClose, onComplete }) {
   const [files, setFiles] = useState([]);
@@ -87,10 +86,9 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
     };
 
     try {
-      const tenantId = getTenantId();
       // 1. Fetch all products to match efficiently
       // Ideally we should fetch only needed fields to be lighter
-      const allProducts = await base44.entities.Produto.filter({ empresa_id: tenantId });
+      const allProducts = await base44.entities.Produto.list();
       
       // Create lookup maps for O(1) access
       const codigoInternoMap = {};

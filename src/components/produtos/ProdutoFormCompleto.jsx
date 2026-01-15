@@ -14,7 +14,6 @@ import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [formData, setFormData] = useState(produto ? {
@@ -207,16 +206,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       }
 
       const categoria = categorias.find(c => c.id === formData.categoria_id);
-      const tenantId = getTenantId();
-      if (!tenantId) {
-          toast({
-              title: "Erro de Tenant",
-              description: "Não foi possível identificar o ID da empresa. Por favor, recarregue a página e tente novamente.",
-              variant: "destructive",
-          });
-          setIsSaving(false);
-          return;
-      }
 
       // Converte campos de texto para maiúsculas antes de salvar
       const produtoData = {
@@ -229,9 +218,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,
         valor_compra: custoBase,
-        preco_venda_tipo: formData.preco_venda_tipo,
-        empresa_id: tenantId,
-        organization_id: tenantId
+        preco_venda_tipo: formData.preco_venda_tipo
       };
 
       let produtoId = produto?.id;
@@ -250,8 +237,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       const custosParaCriar = custos
         .filter(c => c.descricao_custo)
         .map(c => ({
-          organization_id: getTenantId(),
-          empresa_id: getTenantId(),
           produto_id: produtoId, descricao_custo: c.descricao_custo,
           valor_custo: parseFloat(c.valor_custo) || 0, tipo_valor: c.tipo_valor || 'percentual',
           valor_calculado_reais: c.tipo_valor === 'percentual' 

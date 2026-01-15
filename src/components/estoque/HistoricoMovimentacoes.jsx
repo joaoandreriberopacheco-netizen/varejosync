@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ArrowDownCircle, ArrowUpCircle, Search, Filter } from 'lucide-react';
 import { format } from 'date-fns';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function HistoricoMovimentacoes() {
   const [movimentacoes, setMovimentacoes] = useState([]);
@@ -25,10 +24,9 @@ export default function HistoricoMovimentacoes() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const tenantId = getTenantId();
       const [movData, prodData] = await Promise.all([
-        base44.entities.MovimentacaoEstoque.filter({ empresa_id: tenantId }, '-created_date'),
-        base44.entities.Produto.filter({ empresa_id: tenantId })
+        base44.entities.MovimentacaoEstoque.list('-created_date'),
+        base44.entities.Produto.list()
       ]);
       setMovimentacoes(movData);
       setProdutos(prodData);

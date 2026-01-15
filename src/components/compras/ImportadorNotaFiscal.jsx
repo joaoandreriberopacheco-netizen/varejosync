@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Upload, FileText, Check, AlertTriangle, Loader2, Plus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState('upload'); // upload, review
@@ -125,10 +124,7 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
   const handleCreateProduct = async (index) => {
     const item = items[index];
     try {
-      const tenantId = getTenantId();
       const newProd = await base44.entities.Produto.create({
-        organization_id: tenantId,
-        empresa_id: tenantId,
         nome: item.descricao,
         codigo_barras: item.codigo_produto,
         valor_compra: item.custo_ajustado,
@@ -159,8 +155,6 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
   const handleFinish = async () => {
     setIsProcessing(true);
     try {
-      const tenantId = getTenantId();
-      
       // Find or Create Supplier (Simplified)
       let fornecedorId = null;
       if (extractedData.fornecedor_nome) {
@@ -169,8 +163,6 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
           fornecedorId = existingForn[0].id;
         } else {
           const newForn = await base44.entities.Terceiro.create({
-            organization_id: tenantId,
-            empresa_id: tenantId,
             nome: extractedData.fornecedor_nome,
             documento: extractedData.cnpj_fornecedor,
             tipo: 'Fornecedor'
@@ -189,8 +181,6 @@ export default function ImportadorNotaFiscal({ isOpen, onClose, onSuccess }) {
       }));
 
       await base44.entities.PedidoCompra.create({
-        organization_id: tenantId,
-        empresa_id: tenantId,
         numero: extractedData.numero_nota || `AUT-${Date.now()}`,
         fornecedor_id: fornecedorId,
         fornecedor_nome: extractedData.fornecedor_nome,

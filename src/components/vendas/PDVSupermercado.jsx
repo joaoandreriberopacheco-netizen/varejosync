@@ -13,7 +13,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import BarcodeScanner from './BarcodeScanner';
 import { createPageUrl } from '@/utils';
-import { getTenantId } from '@/components/utils/tenant';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 
