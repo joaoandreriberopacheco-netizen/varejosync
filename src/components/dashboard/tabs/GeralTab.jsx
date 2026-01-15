@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, Package, Calendar } from 'lucide-react';
 import { startOfMonth, endOfMonth, subDays } from 'date-fns';
@@ -21,12 +20,11 @@ export default function GeralTab() {
     const fimMes = endOfMonth(hoje);
     const inicio30Dias = subDays(hoje, 30);
 
-    const tenantId = getTenantId();
     const [vendas, compras, produtos, lancamentos] = await Promise.all([
-      base44.entities.PedidoVenda.filter({ empresa_id: tenantId }),
-      base44.entities.PedidoCompra.filter({ empresa_id: tenantId }),
-      base44.entities.Produto.filter({ empresa_id: tenantId }),
-      base44.entities.LancamentoFinanceiro.filter({ empresa_id: tenantId })
+      base44.entities.PedidoVenda.list(),
+      base44.entities.PedidoCompra.list(),
+      base44.entities.Produto.list(),
+      base44.entities.LancamentoFinanceiro.list()
     ]);
 
     const vendasMes = vendas.filter(v => 

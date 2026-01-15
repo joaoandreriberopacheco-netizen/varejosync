@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -25,10 +24,9 @@ export default function FinanceiroTab() {
         const inicioMes = startOfMonth(hoje);
         const fimMes = endOfMonth(hoje);
 
-        const tenantId = getTenantId();
         const [lancamentos, contas] = await Promise.all([
-          base44.entities.LancamentoFinanceiro.filter({ empresa_id: tenantId }),
-          base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId })
+          base44.entities.LancamentoFinanceiro.list(),
+          base44.entities.ContasFinanceiras.list()
         ]);
 
         const saldoCaixa = contas.reduce((sum, c) => sum + (c.saldo_atual || 0), 0);

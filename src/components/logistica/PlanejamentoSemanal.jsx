@@ -26,7 +26,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function PlanejamentoSemanal() {
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
@@ -51,10 +50,9 @@ export default function PlanejamentoSemanal() {
 
   const loadData = async () => {
     try {
-      const tenantId = getTenantId();
       const [eventsData, ordersData] = await Promise.all([
-        base44.entities.EventosLogisticos.filter({ empresa_id: tenantId }),
-        base44.entities.PedidoCompra.filter({ empresa_id: tenantId })
+        base44.entities.EventosLogisticos.list(),
+        base44.entities.PedidoCompra.list()
       ]);
 
       // Enriquecer eventos com seus pedidos
@@ -74,8 +72,7 @@ export default function PlanejamentoSemanal() {
 
   const handleCreateEvent = async () => {
     try {
-      const tenantId = getTenantId();
-      await base44.entities.EventosLogisticos.create({ ...newEvent, empresa_id: tenantId });
+      await base44.entities.EventosLogisticos.create(newEvent);
       setIsNewEventDialogOpen(false);
       loadData();
       setNewEvent({

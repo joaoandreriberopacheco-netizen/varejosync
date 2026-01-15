@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle } from 'lucide-react';
-import { getTenantId } from '@/components/utils/tenant';
 import GestaoCaixa from '../components/financeiro/GestaoCaixa';
 
 export default function FinanceiroModuloPage() {
@@ -37,10 +36,9 @@ export default function FinanceiroModuloPage() {
 
   const loadInitialData = async () => {
     setIsLoading(true);
-    const tenantId = getTenantId();
     const [accountsData, transactionsData] = await Promise.all([
-    base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId }),
-    base44.entities.LancamentoFinanceiro.filter({ empresa_id: tenantId })]
+    base44.entities.ContasFinanceiras.list(),
+    base44.entities.LancamentoFinanceiro.list()]
     );
     setAccounts(accountsData);
     setTransactions(transactionsData);
@@ -51,10 +49,8 @@ export default function FinanceiroModuloPage() {
     if (selectedAccount) {
       await base44.entities.ContasFinanceiras.update(selectedAccount.id, formData);
     } else {
-      const tenantId = getTenantId();
       await base44.entities.ContasFinanceiras.create({
         ...formData,
-        empresa_id: tenantId,
         saldo_atual: formData.saldo_inicial
       });
     }

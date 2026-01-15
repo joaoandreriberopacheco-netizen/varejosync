@@ -11,7 +11,6 @@ import { FileText, Plus, Users, ShoppingCart, Trophy, CheckCircle, Calendar, Upl
 import { format } from 'date-fns';
 import ImportadorCotacaoPDF from './ImportadorCotacaoPDF';
 import ImportadorListaFoto from './ImportadorListaFoto';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function CotacoesManager() {
   const [cotacoes, setCotacoes] = useState([]);
@@ -33,10 +32,9 @@ export default function CotacoesManager() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const tenantId = getTenantId();
       const [cotacoesData, fornecedoresData] = await Promise.all([
-        base44.entities.Cotacao.filter({ empresa_id: tenantId }, '-created_date'),
-        base44.entities.Terceiro.filter({ empresa_id: tenantId, tipo: ['Fornecedor', 'Ambos'] })
+        base44.entities.Cotacao.list('-created_date'),
+        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] })
       ]);
       setCotacoes(cotacoesData);
       setFornecedores(fornecedoresData);
@@ -73,8 +71,7 @@ export default function CotacoesManager() {
     });
 
     try {
-      const tenantId = getTenantId();
-      const allPOs = await base44.entities.PedidoCompra.filter({ empresa_id: tenantId });
+      const allPOs = await base44.entities.PedidoCompra.list();
       let nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
 
       for (const fornecedorId in itensPorFornecedor) {
@@ -83,7 +80,6 @@ export default function CotacoesManager() {
         const total = itens.reduce((sum, i) => sum + i.total, 0);
 
         await base44.entities.PedidoCompra.create({
-          empresa_id: tenantId,
           numero: `PC-${String(nextNumber++).padStart(5, '0')}`,
           fornecedor_id: fornecedorId,
           fornecedor_nome: fornecedor?.nome || 'Desconhecido',
@@ -217,12 +213,10 @@ export default function CotacoesManager() {
 
   const handleImportFotoComplete = async (novosItens) => {
     try {
-        const tenantId = getTenantId();
-        const allCots = await base44.entities.Cotacao.filter({ empresa_id: tenantId });
+        const allCots = await base44.entities.Cotacao.list();
         let nextNumber = (allCots.length > 0 ? Math.max(...allCots.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
 
         const novaCotacao = {
-            empresa_id: tenantId,
             numero: `COT-${String(nextNumber++).padStart(5, '0')}`,
             titulo: `Cotação via Foto - ${new Date().toLocaleDateString()}`,
             status: 'Rascunho',
@@ -289,12 +283,10 @@ export default function CotacoesManager() {
                         <Button onClick={async () => {
                             if (!novaCotacaoTitulo) return;
                             try {
-                                const tenantId = getTenantId();
-                                const allCots = await base44.entities.Cotacao.filter({ empresa_id: tenantId });
+                                const allCots = await base44.entities.Cotacao.list();
                                 let nextNumber = (allCots.length > 0 ? Math.max(...allCots.map(c => parseInt(c.numero?.split('-')[1] || 0))) : 0) + 1;
 
                                 const nova = await base44.entities.Cotacao.create({
-                                    empresa_id: tenantId,
                                     numero: `COT-${String(nextNumber).padStart(5, '0')}`,
                                     titulo: novaCotacaoTitulo,
                                     status: 'Rascunho',

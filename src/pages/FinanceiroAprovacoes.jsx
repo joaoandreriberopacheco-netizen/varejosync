@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, Clock, AlertCircle, DollarSign, FileText, Eye } from 'lucide-react';
-import { getTenantId } from '@/components/utils/tenant';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -31,14 +30,12 @@ export default function FinanceiroAprovacoesPage() {
 
   const loadData = async () => {
     setIsLoading(true);
-    const tenantId = getTenantId();
     
     const [transactionsData, contasData] = await Promise.all([
       base44.entities.LancamentoFinanceiro.filter({ 
-        empresa_id: tenantId,
         status: 'Aguardando Aprovação Financeira'
       }),
-      base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId, ativo: true })
+      base44.entities.ContasFinanceiras.filter({ ativo: true })
     ]);
 
     setPendingTransactions(transactionsData);

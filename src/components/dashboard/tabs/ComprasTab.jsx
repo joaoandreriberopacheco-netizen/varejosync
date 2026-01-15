@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
 import { format } from 'date-fns';
 import { ShoppingCart, Calendar } from 'lucide-react';
 
@@ -20,8 +19,7 @@ export default function ComprasTab() {
     const loadComprasData = async () => {
       setIsLoading(true);
       try {
-        const tenantId = getTenantId();
-        const todosPedidos = await base44.entities.PedidoCompra.filter({ empresa_id: tenantId });
+        const todosPedidos = await base44.entities.PedidoCompra.list();
         
         const hoje = new Date();
         const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);

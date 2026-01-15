@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck, Save } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AnaliseEntrega from './AnaliseEntrega';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -42,11 +41,10 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
 
   useEffect(() => {
     const loadDependencies = async () => {
-      const tenantId = getTenantId();
       const [clientesData, produtosData, tabelasPrecoData, userData] = await Promise.all([
-        base44.entities.Terceiro.filter({ empresa_id: tenantId, tipo: ['Cliente', 'Ambos'] }),
-        base44.entities.Produto.filter({ empresa_id: tenantId }),
-        base44.entities.TabelaPreco.filter({ empresa_id: tenantId }),
+        base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] }),
+        base44.entities.Produto.list(),
+        base44.entities.TabelaPreco.list(),
         base44.auth.me()
       ]);
       setDependencies({

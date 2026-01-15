@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
 import { startOfDay, startOfWeek } from 'date-fns';
 import { Users, ShoppingBag } from 'lucide-react';
 
@@ -21,12 +20,11 @@ export default function VendasTab() {
         const hoje = startOfDay(new Date()).toISOString();
         const inicioSemana = startOfWeek(new Date()).toISOString();
 
-        const tenantId = getTenantId();
         const [vendasHoje, vendasSemana, orcamentos, aguardandoPagamento] = await Promise.all([
-          base44.entities.PedidoVenda.filter({ empresa_id: tenantId, status: 'Finalizado', created_date: { $gte: hoje } }),
-          base44.entities.PedidoVenda.filter({ empresa_id: tenantId, status: 'Finalizado', created_date: { $gte: inicioSemana } }),
-          base44.entities.PedidoVenda.filter({ empresa_id: tenantId, status: 'Orçamento' }),
-          base44.entities.PedidoVenda.filter({ empresa_id: tenantId, status: 'Aguardando Pagamento' })
+          base44.entities.PedidoVenda.filter({ status: 'Finalizado', created_date: { $gte: hoje } }),
+          base44.entities.PedidoVenda.filter({ status: 'Finalizado', created_date: { $gte: inicioSemana } }),
+          base44.entities.PedidoVenda.filter({ status: 'Orçamento' }),
+          base44.entities.PedidoVenda.filter({ status: 'Aguardando Pagamento' })
         ]);
 
         const faturamentoHoje = vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0);

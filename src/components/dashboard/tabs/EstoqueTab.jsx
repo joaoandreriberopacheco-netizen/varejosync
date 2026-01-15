@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
 import { format } from 'date-fns';
 import { TrendingUp, AlertTriangle } from 'lucide-react';
 
@@ -20,8 +19,7 @@ export default function EstoqueTab() {
     const loadEstoqueData = async () => {
       setIsLoading(true);
       try {
-        const tenantId = getTenantId();
-        const produtos = await base44.entities.Produto.filter({ empresa_id: tenantId });
+        const produtos = await base44.entities.Produto.list();
         
         const valorEstoque = produtos.reduce((sum, p) => 
           sum + ((p.estoque_atual || 0) * (p.preco_custo_calculado || 0)), 0

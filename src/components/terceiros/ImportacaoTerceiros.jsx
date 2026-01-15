@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Upload, CheckCircle, AlertTriangle, Loader2, FileText, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
@@ -76,8 +75,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
 
       if (!terceirosExistentes) {
         await new Promise(resolve => setTimeout(resolve, 300));
-        const tenantId = getTenantId();
-        terceirosExistentes = await base44.entities.Terceiro.filter({ empresa_id: tenantId });
+        terceirosExistentes = await base44.entities.Terceiro.list();
         cacheRef.current.terceiros = terceirosExistentes;
       }
 
@@ -232,7 +230,6 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
     try {
       const terceirosIA = cacheRef.current.terceirosIA || [];
       const terceirosExistentes = cacheRef.current.terceiros;
-      const tenantId = getTenantId();
 
       setImportProgress({ current: 0, total: terceirosIA.length });
 
@@ -250,7 +247,6 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
         ) : null;
 
         const tercData = {
-          empresa_id: tenantId,
           nome: terc.nome,
           cpf_cnpj: terc.cpf_cnpj || null,
           email: terc.email || null,
@@ -268,7 +264,7 @@ export default function ImportacaoTerceiros({ isOpen, onClose, onSuccess }) {
           await base44.entities.Terceiro.update(existe.id, tercData);
           atualizados++;
         } else {
-          const allTerceiros = await base44.entities.Terceiro.filter({ empresa_id: tenantId });
+          const allTerceiros = await base44.entities.Terceiro.list();
           const nextNumber = (allTerceiros.length > 0 
             ? Math.max(...allTerceiros.map(t => parseInt(t.codigo_interno?.split('-')[1] || 0))) 
             : 0) + 1;
