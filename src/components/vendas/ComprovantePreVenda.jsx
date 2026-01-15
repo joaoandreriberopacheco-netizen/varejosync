@@ -37,6 +37,12 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
               <span className="font-semibold">Ticket:</span>
               <span className="font-black">{preVenda.numero}</span>
             </div>
+            {preVenda.senha_atendimento && (
+              <div className="flex justify-between items-center bg-gray-200 -mx-6 px-6 py-3 my-2">
+                <span className="font-black text-xs uppercase tracking-wider">SENHA:</span>
+                <span className="font-black text-4xl font-mono">{preVenda.senha_atendimento}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="font-semibold">Data:</span>
               <span className="font-bold">{format(new Date(preVenda.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span>
