@@ -4,7 +4,6 @@ import Campanhas from './pages/Campanhas';
 import Compras from './pages/Compras';
 import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
-import DebugTenant from './pages/DebugTenant';
 import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
 import EstimativaEmbalagensIA from './pages/EstimativaEmbalagensIA';
 import Estoque from './pages/Estoque';
@@ -43,7 +42,6 @@ export const PAGES = {
     "Compras": Compras,
     "Configuracoes": Configuracoes,
     "Dashboard": Dashboard,
-    "DebugTenant": DebugTenant,
     "EdicaoMassivaCustos": EdicaoMassivaCustos,
     "EstimativaEmbalagensIA": EstimativaEmbalagensIA,
     "Estoque": Estoque,
