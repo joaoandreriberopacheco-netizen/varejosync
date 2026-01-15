@@ -7,7 +7,6 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { ArrowLeft, Sparkles, TrendingUp, DollarSign, Package, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function OtimizacaoEstoqueIA() {
   const [valorInvestimento, setValorInvestimento] = useState('');

@@ -6,7 +6,6 @@ import { CircularProgress } from '@/components/ui/circular-progress';
 import { ArrowLeft, Sparkles, Package, CheckCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function EstimativaEmbalagensIA() {
   const [produtos, setProdutos] = useState([]);

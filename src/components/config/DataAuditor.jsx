@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,7 +28,6 @@ export default function DataAuditor() {
   const scanDatabase = async () => {
     setScanning(true);
     setResults([]);
-    const tenantId = getTenantId();
     const newResults = [];
 
     try {
@@ -40,48 +38,9 @@ export default function DataAuditor() {
           // "Roupa suja se lava em casa" -> Não podemos ver registros de outros tenants.
           // O objetivo agora é encontrar inconsistências DENTRO do próprio tenant (ex: registros corrompidos).
           
-          // Busca 1: Registros do Tenant (Verificar integridade se necessário)
-          // const myRecords = await base44.entities[entityName].filter({ empresa_id: tenantId });
+          const records = await base44.entities[entityName].list();
           
-          // Busca 2: Registros Órfãos (Sem empresa_id) -> Estes podem ser "adotados" ou excluídos
-          // Tentativa de buscar registros nulos (depende do suporte da API, assumindo filter manual se list() trouxer tudo, mas vamos restringir)
-          
-          // Na implementação segura, list() deve trazer apenas o que temos acesso.
-          // Se o backend filtrar por tenant, list() trará apenas os meus.
-          // Se o backend for aberto (admin), list() traz tudo.
-          
-          // Para atender ao pedido de privacidade: Forçamos o filtro pelo ID do tenant.
-          const records = await base44.entities[entityName].filter({ empresa_id: tenantId });
-          
-          // Também tentamos buscar explicitamente os "sem dono" (null) se possível, 
-          // pois esses não pertencem a "outros" (são públicos/órfãos) e podem ser corrigidos.
-          // Nota: A API pode não suportar filtro por null direto, então filtramos manualmente o que vier.
-          
-          // Se quisermos ser estritos:
-          // const records = await base44.entities[entityName].filter({ empresa_id: tenantId });
-          
-          // Mas para detectar "vazamento" (registros que vieram errados mas a query trouxe),
-          // a query filtrada por tenantId NÃO trará registros de outros.
-          // Portanto, a auditoria mostrará "0 problemas" de "Empresa ID Incorreto", o que é o comportamento desejado de privacidade.
-          
-          // Vamos iterar apenas sobre o que "caiu" na nossa rede (que deve ser apenas o nosso).
-          for (const record of records) {
-             // Validação dupla: Se por algum motivo a API retornou algo errado, escondemos ou mostramos?
-             // O usuário pediu para "restringir a escanear elementos dentro do escopo".
-             if (record.empresa_id && record.empresa_id !== tenantId) {
-                 continue; // SILENTLY IGNORE others' data (Privacy First)
-             }
-             
-             if (!record.empresa_id) {
-                newResults.push({
-                  entity: entityName,
-                  id: record.id,
-                  name: record.nome || record.numero || record.descricao || 'Sem identificador',
-                  issue: 'Sem empresa_id (Órfão)',
-                  record: record
-                });
-             }
-          }
+          // Não há mais sistema de tenant, então não verificamos empresa_id
         } catch (err) {
           console.error(`Erro ao escanear ${entityName}:`, err);
         }
@@ -115,15 +74,12 @@ export default function DataAuditor() {
 
   const handleFix = async (item) => {
     try {
-      const tenantId = getTenantId();
-      if (!tenantId) throw new Error("Tenant ID não encontrado");
-
-      await base44.entities[item.entity].update(item.id, { empresa_id: tenantId });
+      await base44.entities[item.entity].update(item.id, {});
       
       setResults(results.filter(r => r.id !== item.id));
       toast({
         title: "Corrigido",
-        description: "Registro atribuído ao seu tenant com sucesso.",
+        description: "Registro atualizado com sucesso.",
         className: "bg-emerald-100 text-emerald-800"
       });
     } catch (error) {

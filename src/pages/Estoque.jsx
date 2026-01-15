@@ -6,7 +6,6 @@ import { Package, TrendingUp, History, BarChart3, RefreshCw } from 'lucide-react
 import MovimentacaoEstoqueForm from '../components/estoque/MovimentacaoEstoqueForm';
 import HistoricoMovimentacoes from '../components/estoque/HistoricoMovimentacoes';
 import FilaSeparacao from '../components/estoque/FilaSeparacao';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function EstoquePage() {
   const [stats, setStats] = useState({
@@ -23,8 +22,7 @@ export default function EstoquePage() {
 
   const loadStats = async () => {
     setIsLoading(true);
-    const tenantId = getTenantId();
-    const movimentacoes = await base44.entities.MovimentacaoEstoque.filter({ empresa_id: tenantId });
+    const movimentacoes = await base44.entities.MovimentacaoEstoque.list();
     
     const entradas = movimentacoes.filter(m => m.tipo === 'Entrada').length;
     const saidas = movimentacoes.filter(m => m.tipo === 'Saída').length;

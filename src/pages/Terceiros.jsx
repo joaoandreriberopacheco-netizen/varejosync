@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, PlusCircle, Edit, Trash2, Search, Download, Upload } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 import ImportacaoTerceiros from '../components/terceiros/ImportacaoTerceiros';
 
 export default function TerceirosPage() {
@@ -38,8 +37,7 @@ export default function TerceirosPage() {
   }, []);
 
   const loadTerceiros = async () => {
-    const tenantId = getTenantId();
-    const data = await base44.entities.Terceiro.filter({ empresa_id: tenantId });
+    const data = await base44.entities.Terceiro.list();
     setTerceiros(data);
   };
 
@@ -52,8 +50,7 @@ export default function TerceirosPage() {
           className: "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700"
         });
       } else {
-        const tenantId = getTenantId();
-        const allTerceiros = await base44.entities.Terceiro.filter({ empresa_id: tenantId });
+        const allTerceiros = await base44.entities.Terceiro.list();
         const nextNumber = (allTerceiros.length > 0 
           ? Math.max(...allTerceiros.map(t => parseInt(t.codigo_interno?.split('-')[1] || 0))) 
           : 0) + 1;
@@ -62,7 +59,6 @@ export default function TerceirosPage() {
         
         await base44.entities.Terceiro.create({
           ...formData,
-          empresa_id: tenantId,
           codigo_interno: codigo
         });
         toast({ 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { getTenantId } from '@/components/utils/tenant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,19 +26,17 @@ const PedidosTab = () => {
   }, []);
 
   const loadPedidos = async () => {
-    const tenantId = getTenantId();
-    const data = await base44.entities.PedidoVenda.filter({ empresa_id: tenantId }, '-created_date');
+    const data = await base44.entities.PedidoVenda.list('-created_date');
     setPedidos(data);
   };
 
   const handleSave = async (data) => {
-    const tenantId = getTenantId();
     if (data.id) {
       await base44.entities.PedidoVenda.update(data.id, data);
     } else {
-      const allPOs = await base44.entities.PedidoVenda.filter({ empresa_id: tenantId });
+      const allPOs = await base44.entities.PedidoVenda.list();
       const nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
-      await base44.entities.PedidoVenda.create({ ...data, empresa_id: tenantId, numero: `PV-${String(nextNumber).padStart(5, '0')}` });
+      await base44.entities.PedidoVenda.create({ ...data, numero: `PV-${String(nextNumber).padStart(5, '0')}` });
     }
     loadPedidos();
     setIsFormOpen(false);

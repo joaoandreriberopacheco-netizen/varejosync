@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Truck, Package, Weight, Calendar, Trash2, Eye, AlertTriangle, RefreshCw } from 'lucide-react';
-import { getTenantId } from '@/components/utils/tenant';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -25,11 +24,7 @@ export default function HubLogistico() {
   const loadManifestos = async () => {
     try {
       setLoading(true);
-      const tenantId = getTenantId();
-      const data = await base44.entities.Supermanifesto.filter(
-        { empresa_id: tenantId },
-        '-eta'
-      );
+      const data = await base44.entities.Supermanifesto.list('-eta');
       setManifestos(data);
     } catch (error) {
       console.error('Erro ao carregar manifestos:', error);

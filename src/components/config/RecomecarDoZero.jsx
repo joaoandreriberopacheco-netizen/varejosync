@@ -6,7 +6,6 @@ import { AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
-import { getTenantId } from '@/components/utils/tenant';
 
 const ENTITIES = [
   { id: 'Produto', label: 'Produtos', description: 'Todos os produtos cadastrados (exclui CustoDetalhado junto)' },

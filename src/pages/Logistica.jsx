@@ -13,7 +13,6 @@ import HistoricoEntregas from '../components/logistica/HistoricoEntregas';
 import PlanejamentoSemanal from '../components/logistica/PlanejamentoSemanal';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function LogisticaPage() {
   const [entregas, setEntregas] = useState([]);
@@ -33,14 +32,12 @@ export default function LogisticaPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const tenantId = getTenantId();
       // Buscar entregas
-      const entregasData = await AgendaLogistica.filter({ empresa_id: tenantId }, '-data_agendada');
+      const entregasData = await AgendaLogistica.list('-data_agendada');
       setEntregas(entregasData);
 
       // Buscar pedidos aprovados que ainda não têm agendamento
       const pedidosAprovados = await PedidoVenda.filter({ 
-        empresa_id: tenantId,
         status: 'Aprovado', 
         metodo_entrega: 'Delivery' 
       });

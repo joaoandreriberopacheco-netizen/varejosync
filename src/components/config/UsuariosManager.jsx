@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Users, Edit, Shield, ShoppingCart, AlertCircle, Info, UserPlus, Plus, Trash2, Check, Mail } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 
 // Preset definitions for Roles
 const ROLES = {
@@ -109,12 +108,9 @@ export default function UsuariosManager() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const tenantId = getTenantId();
-      if (!tenantId) return;
-
       const [data, configs] = await Promise.all([
-        base44.entities.Colaborador.filter({ empresa_id: tenantId }),
-        base44.entities.ConfiguracoesVenda.filter({ empresa_id: tenantId })
+        base44.entities.Colaborador.list(),
+        base44.entities.ConfiguracoesVenda.list()
       ]);
       setColaboradores(data);
       if (configs && configs.length > 0) {
@@ -162,8 +158,7 @@ export default function UsuariosManager() {
     }
 
     try {
-      const tenantId = getTenantId();
-      const dataToSave = { ...formData, empresa_id: tenantId };
+      const dataToSave = { ...formData };
 
       if (currentColab) {
         await base44.entities.Colaborador.update(currentColab.id, dataToSave);

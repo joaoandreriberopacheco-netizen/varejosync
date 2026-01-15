@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Wallet, Edit, Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function ContasFinanceirasManager() {
   const [contas, setContas] = useState([]);
@@ -35,8 +34,7 @@ export default function ContasFinanceirasManager() {
   }, []);
 
   const loadContas = async () => {
-    const tenantId = getTenantId();
-    const data = await base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId });
+    const data = await base44.entities.ContasFinanceiras.list();
     setContas(data);
   };
 
@@ -92,8 +90,7 @@ export default function ContasFinanceirasManager() {
       if (selectedConta) {
         await base44.entities.ContasFinanceiras.update(selectedConta.id, dataToSave);
       } else {
-        const tenantId = getTenantId();
-        await base44.entities.ContasFinanceiras.create({ ...dataToSave, empresa_id: tenantId });
+        await base44.entities.ContasFinanceiras.create(dataToSave);
       }
 
       toast({
