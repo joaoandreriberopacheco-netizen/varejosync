@@ -22,7 +22,6 @@ import LostSalesForm from './LostSalesForm';
 import BarcodeScanner from './BarcodeScanner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createPageUrl } from '@/utils';
-import { getTenantId } from '@/components/utils/tenant';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 

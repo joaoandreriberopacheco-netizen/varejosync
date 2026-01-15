@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Truck, Package, Weight, Calendar, AlertCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.jsx';
-import { getTenantId } from '@/components/utils/tenant';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 
@@ -35,9 +34,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
   const loadTransportadoras = async () => {
     try {
-      const tenantId = getTenantId();
       const data = await base44.entities.Terceiro.filter({
-        empresa_id: tenantId,
         tipo: { $in: ['Fornecedor', 'Ambos'] },
         ativo: true
       });
@@ -55,12 +52,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
     }
 
     try {
-      const tenantId = getTenantId();
       const count = transportadoras.length;
       const codigo = `FOR-${String(count + 1).padStart(5, '0')}`;
 
       const nova = await base44.entities.Terceiro.create({
-        empresa_id: tenantId,
         codigo_interno: codigo,
         nome: novaTransportadora.nome,
         email: novaTransportadora.email || '',
@@ -130,7 +125,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
     setLoading(true);
 
     try {
-      const tenantId = getTenantId();
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
 
       if (!transportadora) {
@@ -145,7 +139,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
       etaEnd.setHours(23, 59, 59, 999);
 
       const manifestos = await base44.entities.Supermanifesto.filter({
-        empresa_id: tenantId,
         transportadora_id: transportadoraId,
         status: { $in: ['Pendente', 'Em Trânsito'] }
       });
@@ -188,11 +181,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
       } else {
         // Criar novo manifesto
-        const todosManifestos = await base44.entities.Supermanifesto.filter({ empresa_id: tenantId });
+        const todosManifestos = await base44.entities.Supermanifesto.list();
         const numero = `SM-${String(todosManifestos.length + 1).padStart(5, '0')}`;
 
         const novoManifesto = await base44.entities.Supermanifesto.create({
-          empresa_id: tenantId,
           numero,
           transportadora_id: transportadoraId,
           transportadora_nome: transportadora.nome,

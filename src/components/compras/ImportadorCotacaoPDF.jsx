@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Loader2, AlertCircle, Check, FileText, X, ArrowLeft, Package } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function ImportadorCotacaoPDF({ isOpen, onClose, cotacao, onImportComplete }) {
     const [step, setStep] = useState('upload');

@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, Loader2, Camera, Image as ImageIcon, Sparkles, Calculator, Check, ChevronDown, Plus, Search, X } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { getTenantId } from '@/components/utils/tenant';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export default function ImportadorListaFoto({ isOpen, onClose, onImportComplete }) {
