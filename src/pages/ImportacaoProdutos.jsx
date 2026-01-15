@@ -7,7 +7,6 @@ import HistoricoImportacoes from '../components/produtos/HistoricoImportacoes';
 import { createPageUrl } from '@/components/utils';
 import { Link } from 'react-router-dom';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
-import { getTenantId } from '@/components/utils/tenant';
 
 export default function ImportacaoProdutos() {
   const [step, setStep] = useState(1); // 1: Upload, 2: Validação, 3: Importação
@@ -319,7 +318,6 @@ export default function ImportacaoProdutos() {
       const categorias = cacheRef.current.categorias;
       const fornecedores = cacheRef.current.fornecedores;
       const produtosExistentes = cacheRef.current.produtos;
-      const tenantId = getTenantId();
 
       setImportProgress({ current: 0, total: produtosIA.length });
 
@@ -368,7 +366,6 @@ export default function ImportacaoProdutos() {
         const tags = prod.tags ? prod.tags.split(',').map(t => t.trim().toUpperCase()).filter(t => t) : [];
 
         const produtoData = {
-          empresa_id: tenantId,
           codigo_barras: codigoBarras,
           nome: prod.nome.toUpperCase(),
           categoria_id: categoria?.id || null,
