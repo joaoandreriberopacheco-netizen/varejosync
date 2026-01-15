@@ -6,17 +6,71 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, Edit, Shield, UserPlus, Mail } from 'lucide-react';
+import { Users, Edit, Shield, UserPlus, Mail, ShoppingCart, Building } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
-const PERFIS_DISPONIVEIS = [
-  { value: 'Admin', label: 'Admin', color: 'bg-red-100 text-red-800', desc: 'Acesso total' },
-  { value: 'Gerente', label: 'Gerente', color: 'bg-purple-100 text-purple-800', desc: 'Gestão completa' },
-  { value: 'Vendedor', label: 'Vendedor', color: 'bg-blue-100 text-blue-800', desc: 'Apenas vendas' },
-  { value: 'Operador de Caixa', label: 'Operador de Caixa', color: 'bg-green-100 text-green-800', desc: 'Caixa e pagamentos' },
-  { value: 'Estoquista', label: 'Estoquista', color: 'bg-orange-100 text-orange-800', desc: 'Produtos e estoque' },
-  { value: 'Financeiro', label: 'Financeiro', color: 'bg-yellow-100 text-yellow-800', desc: 'Contas e fluxo' }
-];
+const PERFIS_EMPRESARIAIS = {
+  'Microempresa': {
+    label: 'Microempresa',
+    icon: ShoppingCart,
+    description: 'Ideal para Dono + Vendedor',
+    color: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+    perfisDisponiveis: ['Admin', 'Vendedor']
+  },
+  'Média Empresa': {
+    label: 'Média Empresa',
+    icon: Shield,
+    description: 'Equipe completa',
+    color: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+    perfisDisponiveis: ['Admin', 'Gerente', 'Vendedor', 'Financeiro']
+  },
+  'Supermercado': {
+    label: 'Supermercado',
+    icon: Users,
+    description: 'Controle total de permissões',
+    color: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
+    perfisDisponiveis: ['Admin', 'Gerente', 'Operador de Caixa', 'Estoquista', 'Vendedor']
+  }
+};
+
+const PERFIS_DISPONIVEIS = {
+  'Admin': { 
+    label: 'Admin', 
+    color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', 
+    desc: 'Acesso total',
+    dashboard: 'Dashboard'
+  },
+  'Gerente': { 
+    label: 'Gerente', 
+    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300', 
+    desc: 'Gestão completa',
+    dashboard: 'Dashboard'
+  },
+  'Vendedor': { 
+    label: 'Vendedor', 
+    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', 
+    desc: 'Apenas vendas',
+    dashboard: 'DashboardVendedor'
+  },
+  'Operador de Caixa': { 
+    label: 'Operador de Caixa', 
+    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', 
+    desc: 'Caixa e pagamentos',
+    dashboard: 'DashboardCaixa'
+  },
+  'Estoquista': { 
+    label: 'Estoquista', 
+    color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300', 
+    desc: 'Produtos e estoque',
+    dashboard: 'Dashboard'
+  },
+  'Financeiro': { 
+    label: 'Financeiro', 
+    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', 
+    desc: 'Contas e fluxo',
+    dashboard: 'Dashboard'
+  }
+};
 
 export default function ListaUsuariosApp() {
   const [usuarios, setUsuarios] = useState([]);
@@ -24,10 +78,13 @@ export default function ListaUsuariosApp() {
   const [editingUser, setEditingUser] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPerfil, setSelectedPerfil] = useState('');
+  const [perfilEmpresarial, setPerfilEmpresarial] = useState(null);
+  const [showPerfilSelector, setShowPerfilSelector] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadUsuarios();
+    loadPerfilEmpresarial();
   }, []);
 
   const loadUsuarios = async () => {
@@ -47,6 +104,42 @@ export default function ListaUsuariosApp() {
     }
   };
 
+  const loadPerfilEmpresarial = async () => {
+    try {
+      const perfis = await base44.entities.PerfilEmpresa.list();
+      if (perfis.length > 0) {
+        setPerfilEmpresarial(perfis[0]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar perfil empresarial:", error);
+    }
+  };
+
+  const handleSelecionarPerfilEmpresarial = async (tipo) => {
+    try {
+      const perfis = await base44.entities.PerfilEmpresa.list();
+      if (perfis.length > 0) {
+        await base44.entities.PerfilEmpresa.update(perfis[0].id, { tipo });
+      } else {
+        await base44.entities.PerfilEmpresa.create({ tipo });
+      }
+      await loadPerfilEmpresarial();
+      setShowPerfilSelector(false);
+      toast({ 
+        title: "Perfil configurado", 
+        description: `Perfil ${tipo} configurado com sucesso`,
+        className: "bg-green-100 text-green-800"
+      });
+    } catch (error) {
+      console.error("Erro ao salvar perfil empresarial:", error);
+      toast({ 
+        title: "Erro ao configurar", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleEditPerfil = (user) => {
     setEditingUser(user);
     setSelectedPerfil(user.perfil || 'Vendedor');
@@ -63,7 +156,7 @@ export default function ListaUsuariosApp() {
 
       toast({ 
         title: "Perfil atualizado", 
-        description: `${editingUser.full_name} agora é ${selectedPerfil}`,
+        description: `${editingUser.full_name} agora é ${selectedPerfil}. Dashboard: ${PERFIS_DISPONIVEIS[selectedPerfil]?.dashboard}`,
         className: "bg-green-100 text-green-800" 
       });
 
@@ -87,9 +180,13 @@ export default function ListaUsuariosApp() {
   };
 
   const getPerfilInfo = (perfil) => {
-    return PERFIS_DISPONIVEIS.find(p => p.value === perfil) || 
-           { value: perfil, label: perfil, color: 'bg-gray-100 text-gray-800', desc: '-' };
+    return PERFIS_DISPONIVEIS[perfil] || 
+           { label: perfil, color: 'bg-gray-100 text-gray-800', desc: '-', dashboard: '-' };
   };
+
+  const perfisDisponiveis = perfilEmpresarial 
+    ? PERFIS_EMPRESARIAIS[perfilEmpresarial.tipo]?.perfisDisponiveis || Object.keys(PERFIS_DISPONIVEIS)
+    : Object.keys(PERFIS_DISPONIVEIS);
 
   if (isLoading) {
     return (
@@ -101,19 +198,61 @@ export default function ListaUsuariosApp() {
 
   return (
     <div className="space-y-4 font-glacial">
+      {/* Seletor de Perfil Empresarial (se não configurado) */}
+      {!perfilEmpresarial && (
+        <Card className="border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                <Building className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Configure o Perfil da sua Empresa</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Escolha o modelo que melhor se encaixa no seu negócio para configurar os perfis de usuário disponíveis.
+                </p>
+                <Button onClick={() => setShowPerfilSelector(true)} className="gap-2 bg-blue-600 hover:bg-blue-700">
+                  <Building className="w-4 h-4" />
+                  Configurar Perfil
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg md:text-2xl font-medium text-gray-800 dark:text-gray-100">Gestão de Usuários</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg md:text-2xl font-medium text-gray-800 dark:text-gray-100">Gestão de Usuários</h2>
+            {perfilEmpresarial && (
+              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-0">
+                {PERFIS_EMPRESARIAIS[perfilEmpresarial.tipo]?.label}
+              </Badge>
+            )}
+          </div>
           <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 font-light">Configure os usuários da empresa e seus perfis de acesso</p>
         </div>
-        <Button 
-          className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white gap-2 shadow-sm"
-          onClick={handleConvidarNovoUsuario}
-        >
-          <UserPlus className="w-4 h-4" />
-          <span className="hidden sm:inline">Novo Usuário</span>
-        </Button>
+        <div className="flex gap-2">
+          {perfilEmpresarial && (
+            <Button 
+              variant="outline"
+              onClick={() => setShowPerfilSelector(true)}
+              className="gap-2"
+            >
+              <Building className="w-4 h-4" />
+              <span className="hidden sm:inline">Alterar Perfil</span>
+            </Button>
+          )}
+          <Button 
+            className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white gap-2 shadow-sm"
+            onClick={handleConvidarNovoUsuario}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span className="hidden sm:inline">Novo Usuário</span>
+          </Button>
+        </div>
       </div>
 
       {/* Informação */}
@@ -126,7 +265,7 @@ export default function ListaUsuariosApp() {
             <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
               <p className="font-medium">Sobre Usuários e Perfis</p>
               <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                Cada email corresponde a um usuário único no sistema. Configure o perfil para definir o que ele pode acessar no menu lateral.
+                Cada email corresponde a um usuário único no sistema. Configure o perfil para definir o que ele pode acessar no menu lateral e qual dashboard visualiza.
               </p>
             </div>
           </div>
@@ -153,7 +292,7 @@ export default function ListaUsuariosApp() {
                 <TableHead className="font-medium text-xs text-gray-500 dark:text-gray-400">Nome</TableHead>
                 <TableHead className="font-medium text-xs text-gray-500 dark:text-gray-400">Email</TableHead>
                 <TableHead className="font-medium text-xs text-gray-500 dark:text-gray-400">Perfil</TableHead>
-                <TableHead className="font-medium text-xs text-gray-500 dark:text-gray-400">Role</TableHead>
+                <TableHead className="font-medium text-xs text-gray-500 dark:text-gray-400">Dashboard</TableHead>
                 <TableHead className="text-right font-medium text-xs text-gray-500 dark:text-gray-400">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -181,9 +320,7 @@ export default function ListaUsuariosApp() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {user.role === 'admin' ? 'Admin' : 'User'}
-                        </Badge>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{perfilInfo.dashboard}</div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button 
@@ -203,6 +340,54 @@ export default function ListaUsuariosApp() {
           </Table>
         </div>
       </Card>
+
+      {/* Dialog Seletor de Perfil Empresarial */}
+      <Dialog open={showPerfilSelector} onOpenChange={setShowPerfilSelector}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Escolha o Perfil da sua Empresa</DialogTitle>
+            <DialogDescription className="text-sm text-gray-500">
+              Selecione o modelo que define quais perfis de usuário estarão disponíveis
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-6">
+            {Object.entries(PERFIS_EMPRESARIAIS).map(([tipo, config]) => {
+              const IconComponent = config.icon;
+              const isSelected = perfilEmpresarial?.tipo === tipo;
+              
+              return (
+                <div
+                  key={tipo}
+                  onClick={() => handleSelecionarPerfilEmpresarial(tipo)}
+                  className={`${config.color} border-2 ${
+                    isSelected 
+                      ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800' 
+                      : 'border-gray-200 dark:border-gray-700'
+                  } rounded-xl p-6 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-all group`}
+                >
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <IconComponent className="w-8 h-8 text-gray-700 dark:text-gray-300" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{config.label}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{config.description}</p>
+                      <div className="text-xs text-gray-500 dark:text-gray-500">
+                        <p className="font-medium mb-1">Sugestão:</p>
+                        <p>{config.perfisDisponiveis.join(', ')}</p>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <Badge className="bg-blue-600 text-white border-0">Selecionado</Badge>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de Edição de Perfil */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -224,27 +409,28 @@ export default function ListaUsuariosApp() {
                   <SelectValue placeholder="Selecione o perfil" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PERFIS_DISPONIVEIS.map(perfil => (
-                    <SelectItem key={perfil.value} value={perfil.value}>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{perfil.label}</span>
-                        <span className="text-xs text-gray-500">- {perfil.desc}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {perfisDisponiveis.map(perfilKey => {
+                    const perfil = PERFIS_DISPONIVEIS[perfilKey];
+                    return (
+                      <SelectItem key={perfilKey} value={perfilKey}>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{perfil.label}</span>
+                          <span className="text-xs text-gray-500">- {perfil.desc}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-800 rounded p-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-              <p className="font-medium text-gray-700 dark:text-gray-300">Sobre o perfil selecionado:</p>
-              {selectedPerfil === 'Admin' && <p>• Acesso completo a todas as funcionalidades</p>}
-              {selectedPerfil === 'Vendedor' && <p>• Acesso ao PDV Vendedor e Dashboard</p>}
-              {selectedPerfil === 'Operador de Caixa' && <p>• Acesso apenas ao PDV Caixa</p>}
-              {selectedPerfil === 'Gerente' && <p>• Acesso a vendas, estoque, relatórios e financeiro</p>}
-              {selectedPerfil === 'Estoquista' && <p>• Acesso a produtos, compras e armazenagem</p>}
-              {selectedPerfil === 'Financeiro' && <p>• Acesso a contas, caixas e financeiro</p>}
-            </div>
+            {selectedPerfil && PERFIS_DISPONIVEIS[selectedPerfil] && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded p-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                <p className="font-medium text-gray-700 dark:text-gray-300">Sobre o perfil selecionado:</p>
+                <p>• {PERFIS_DISPONIVEIS[selectedPerfil].desc}</p>
+                <p className="text-blue-600 dark:text-blue-400">• Dashboard: {PERFIS_DISPONIVEIS[selectedPerfil].dashboard}</p>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="gap-2">
