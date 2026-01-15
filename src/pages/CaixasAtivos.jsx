@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { DollarSign, TrendingUp, TrendingDown, Wallet, RefreshCw, ChevronRight } from 'lucide-react';
-import { getTenantId } from '@/components/utils/tenant';
+
 
 export default function CaixasAtivosPage() {
   const [caixas, setCaixas] = useState([]);

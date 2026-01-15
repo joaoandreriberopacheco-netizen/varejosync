@@ -14,7 +14,7 @@ import {
   AlertCircle,
   Clock
 } from 'lucide-react';
-import { getTenantId } from '@/components/utils/tenant';
+
 import moment from 'moment';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -35,7 +35,6 @@ export default function DashboardVendedor() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const tenantId = getTenantId();
       const user = await base44.auth.me();
       setUserData(user);
 

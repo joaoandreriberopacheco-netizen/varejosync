@@ -45,7 +45,6 @@ export default function Layout({ children, currentPageName }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
-  const [isTenantLoaded, setIsTenantLoaded] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,8 +85,6 @@ export default function Layout({ children, currentPageName }) {
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
       setLoadError(error);
-    } finally {
-      setIsTenantLoaded(true);
     }
   };
 
@@ -260,18 +257,6 @@ export default function Layout({ children, currentPageName }) {
     }
     return false;
   };
-
-  // Bloqueia renderização até carregar o tenant
-  if (!isTenantLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="text-gray-500 dark:text-gray-400 animate-pulse">Carregando ambiente...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (loadError) {
     return (
