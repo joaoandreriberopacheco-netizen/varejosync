@@ -547,9 +547,15 @@ export default function PDVVendedor() {
       const todosPedidos = await PedidoVenda.list();
       const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map((p) => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
       const numeroPedido = `PV-${String(nextNumber).padStart(5, '0')}`;
+      
+      // Gerar senha sequencial diária
+      const hoje = format(new Date(), 'yyyy-MM-dd');
+      const senhasHoje = todosPedidos.filter(p => p.created_date?.startsWith(hoje) && p.senha_atendimento);
+      const proximaSenha = String(senhasHoje.length + 1).padStart(4, '0');
 
       const pedidoData = {
         numero: numeroPedido,
+        senha_atendimento: proximaSenha,
         tipo: 'PDV',
         cliente_id: clienteSelecionado.id,
         cliente_nome: clienteSelecionado.nome,
@@ -594,9 +600,9 @@ export default function PDVVendedor() {
       setValorAjuste(0);
 
       if (currentUser.pode_acessar_caixa) {
-        showFeedback('success', `${numeroPedido} - Prossiga para o pagamento`, 2500);
+        showFeedback('success', `${numeroPedido} - Senha ${proximaSenha} - Prossiga para o pagamento`, 3000);
       } else {
-        showFeedback('success', `Ticket: ${numeroPedido} enviado ao caixa`, 2500);
+        showFeedback('success', `Senha ${proximaSenha} - Ticket ${numeroPedido} enviado ao caixa`, 3000);
       }
 
       setTimeout(() => inputProdutoRef.current?.focus(), 500); // Updated ref

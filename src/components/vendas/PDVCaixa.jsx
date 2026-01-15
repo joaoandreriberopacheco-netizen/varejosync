@@ -841,18 +841,27 @@ export default function PDVCaixa() {
                   {pedidosAguardando.map((pedido) =>
               <div
                 key={pedido.id}
-                className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer border border-gray-100 dark:border-gray-700"
                 onClick={() => handleAbrirPedido(pedido)}>
 
-                      <div className="flex items-center justify-between">
-                        <div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          {pedido.senha_atendimento && (
+                            <div className="inline-flex items-center gap-2 mb-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
+                              <span className="text-2xl font-bold text-gray-800 dark:text-gray-200 font-mono">{pedido.senha_atendimento}</span>
+                            </div>
+                          )}
                           <div className="font-semibold text-base text-gray-800 dark:text-gray-200">{pedido.numero}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{pedido.cliente_nome}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate">{pedido.cliente_nome}</div>
                           <div className="text-xs text-gray-400 dark:text-gray-500">Vendedor: {pedido.vendedor_nome}</div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0">
                           <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
                             R$ {formatarValorExibicao(pedido.valor_total)}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {pedido.itens?.length || 0} {pedido.itens?.length === 1 ? 'item' : 'itens'}
                           </div>
                           <Button
                       size="sm"
@@ -1007,11 +1016,54 @@ export default function PDVCaixa() {
             {pedidoSelecionado &&
             <div className="space-y-4">
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Pedido</div>
-                  <div className="font-bold text-lg text-gray-800 dark:text-gray-200">{pedidoSelecionado.numero}</div>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">{pedidoSelecionado.cliente_nome}</div>
-                  <div className="text-3xl font-bold text-gray-800 dark:text-gray-200 mt-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Pedido</div>
+                      <div className="font-bold text-lg text-gray-800 dark:text-gray-200">{pedidoSelecionado.numero}</div>
+                    </div>
+                    {pedidoSelecionado.senha_atendimento && (
+                      <div className="text-center px-4 py-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-600">
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</div>
+                        <div className="text-3xl font-bold text-gray-800 dark:text-gray-200 font-mono">{pedidoSelecionado.senha_atendimento}</div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">{pedidoSelecionado.cliente_nome}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-500">Vendedor: {pedidoSelecionado.vendedor_nome}</div>
+                  <div className="text-3xl font-bold text-gray-800 dark:text-gray-200 mt-3">
                     {formatValor(pedidoSelecionado.valor_total)}
+                  </div>
+                </div>
+                
+                {/* Detalhes dos Itens */}
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Itens da Venda</span>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {pedidoSelecionado.itens?.map((item, idx) => (
+                      <div key={idx} className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.produto_nome}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {item.quantidade} × R$ {item.preco_unitario_praticado?.toFixed(2)}
+                            </div>
+                          </div>
+                          <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                            R$ {item.total?.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">SUBTOTAL</span>
+                      <span className="text-base font-bold text-gray-800 dark:text-gray-200">
+                        R$ {(pedidoSelecionado.subtotal || pedidoSelecionado.valor_total)?.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
