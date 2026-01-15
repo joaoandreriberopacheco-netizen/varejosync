@@ -32,6 +32,7 @@ import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
 import DashboardVendedor from './pages/DashboardVendedor';
+import DashboardCaixa from './pages/DashboardCaixa';
 import __Layout from './Layout.jsx';
 
 
@@ -70,6 +71,7 @@ export const PAGES = {
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
     "DashboardVendedor": DashboardVendedor,
+    "DashboardCaixa": DashboardCaixa,
 }
 
 export const pagesConfig = {

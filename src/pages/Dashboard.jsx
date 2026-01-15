@@ -8,6 +8,7 @@ import ComprasTab from '../components/dashboard/tabs/ComprasTab';
 import EstoqueTab from '../components/dashboard/tabs/EstoqueTab';
 import FinanceiroTab from '../components/dashboard/tabs/FinanceiroTab';
 import DashboardVendedor from './DashboardVendedor';
+import DashboardCaixa from './DashboardCaixa';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('geral');
@@ -25,9 +26,13 @@ export default function DashboardPage() {
     loadUser();
   }, []);
 
-  // Se for vendedor, mostra dashboard específico
+  // Dashboards específicos por perfil
   if (currentUser?.perfil === 'Vendedor') {
     return <DashboardVendedor />;
+  }
+  
+  if (currentUser?.perfil === 'Caixa' || currentUser?.perfil === 'Operador de Caixa') {
+    return <DashboardCaixa />;
   }
 
   return (
