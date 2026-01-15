@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Percent, Wallet, CreditCard, Smartphone, Bookmark, Wrench } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Percent, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield } from 'lucide-react';
 import TabelasPrecoManager from '../components/config/TabelasPrecoManager';
 import ConfiguracoesVendaManager from '../components/config/ConfiguracoesVendaManager';
 import PoliticasDescontoManager from '../components/config/PoliticasDescontoManager';
