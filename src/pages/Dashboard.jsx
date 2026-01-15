@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import GeralTab from '../components/dashboard/tabs/GeralTab';
@@ -6,9 +7,28 @@ import VendasTab from '../components/dashboard/tabs/VendasTab';
 import ComprasTab from '../components/dashboard/tabs/ComprasTab';
 import EstoqueTab from '../components/dashboard/tabs/EstoqueTab';
 import FinanceiroTab from '../components/dashboard/tabs/FinanceiroTab';
+import DashboardVendedor from './DashboardVendedor';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('geral');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Erro ao carregar usuário:", error);
+      }
+    };
+    loadUser();
+  }, []);
+
+  // Se for vendedor, mostra dashboard específico
+  if (currentUser?.perfil === 'Vendedor') {
+    return <DashboardVendedor />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
