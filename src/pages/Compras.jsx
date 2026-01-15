@@ -17,7 +17,6 @@ import CotacoesManager from '../components/compras/CotacoesManager';
 import DetalhesPedidoCompra from '../components/compras/DetalhesPedidoCompra';
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
 import DetalhesSupermanifesto from '../components/compras/DetalhesSupermanifesto';
-import { getTenantId } from '@/components/utils/tenant';
 
 const getStatusBadge = (status) => {
   const variants = {
@@ -50,8 +49,7 @@ const PedidosCompraTab = () => {
 
   const loadPedidos = async () => {
     try {
-      const tenantId = getTenantId();
-      const data = await base44.entities.PedidoCompra.filter({ empresa_id: tenantId }, '-created_date');
+      const data = await base44.entities.PedidoCompra.list('-created_date');
       setPedidos(data);
     } catch (error) {
       console.error("Erro ao carregar pedidos:", error);
@@ -75,16 +73,13 @@ const PedidosCompraTab = () => {
 
   const handleSave = async (pedidoData) => {
     try {
-      const tenantId = getTenantId();
-      
       // Ensure numeric fields are numbers to prevent "NaN" issues or API errors
       const sanitizedData = {
         ...pedidoData,
         // Ensure numeric fields are actually numbers
         valor_total: Number(pedidoData.valor_total) || 0,
         valor_frete: Number(pedidoData.valor_frete) || 0,
-        valor_desconto: Number(pedidoData.valor_desconto) || 0,
-        empresa_id: tenantId // Ensure tenant linkage
+        valor_desconto: Number(pedidoData.valor_desconto) || 0
       };
 
       if (sanitizedData.id) {
@@ -395,11 +390,7 @@ const HubLogisticoTab = () => {
   const loadManifestos = async () => {
     try {
       setLoading(true);
-      const tenantId = getTenantId();
-      const data = await base44.entities.Supermanifesto.filter(
-        { empresa_id: tenantId },
-        '-eta'
-      );
+      const data = await base44.entities.Supermanifesto.list('-eta');
       setManifestos(data);
     } catch (error) {
       console.error('Erro ao carregar manifestos:', error);
