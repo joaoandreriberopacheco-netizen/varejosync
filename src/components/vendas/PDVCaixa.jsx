@@ -441,7 +441,7 @@ export default function PDVCaixa() {
       }
 
       await base44.entities.PedidoVenda.update(pedidoSelecionado.id, {
-        status: 'Aprovado', // Liberado para separação
+        status: 'Financeiro OK',
         pagamentos: pagamentosArray
       });
 
