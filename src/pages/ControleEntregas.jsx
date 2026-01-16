@@ -26,9 +26,21 @@ import LiberacaoEntrega from '@/components/vendas/LiberacaoEntrega';
 
 export default function ControleEntregas() {
   const queryClient = useQueryClient();
+  const getDefaultDates = () => {
+    const hoje = new Date();
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(hoje.getDate() - 7);
+    return {
+      inicio: seteDiasAtras.toISOString().split('T')[0],
+      fim: hoje.toISOString().split('T')[0]
+    };
+  };
+
+  const defaultDates = getDefaultDates();
+  
   const [filtros, setFiltros] = useState({
-    data_inicio: new Date().toISOString().split('T')[0],
-    data_fim: new Date().toISOString().split('T')[0],
+    data_inicio: defaultDates.inicio,
+    data_fim: defaultDates.fim,
     status: 'todos',
     cliente: '',
     metodo_entrega: 'todos'
@@ -43,30 +55,34 @@ export default function ControleEntregas() {
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ['pedidos-entrega', filtros],
     queryFn: async () => {
-      const dataInicio = new Date(filtros.data_inicio);
-      dataInicio.setHours(0, 0, 0, 0);
-      
-      const dataFim = new Date(filtros.data_fim);
-      dataFim.setHours(23, 59, 59, 999);
+      const query = {};
 
-      const query = {
-        created_date: {
+      // Filtro de data
+      if (filtros.data_inicio && filtros.data_fim) {
+        const dataInicio = new Date(filtros.data_inicio + 'T00:00:00');
+        const dataFim = new Date(filtros.data_fim + 'T23:59:59');
+        
+        query.created_date = {
           $gte: dataInicio.toISOString(),
           $lte: dataFim.toISOString()
-        },
-        status: {
-          $in: ['Financeiro OK', 'Em Separação', 'Aguardando Retirada', 'Em Rota de Entrega', 'Pedido Concluído']
-        }
-      };
-
-      if (filtros.status !== 'todos') {
-        query.status = filtros.status;
+        };
       }
 
+      // Filtro de status
+      if (filtros.status !== 'todos') {
+        query.status = filtros.status;
+      } else {
+        query.status = {
+          $in: ['Financeiro OK', 'Em Separação', 'Aguardando Retirada', 'Em Rota de Entrega', 'Pedido Concluído']
+        };
+      }
+
+      // Filtro de método de entrega
       if (filtros.metodo_entrega !== 'todos') {
         query.metodo_entrega = filtros.metodo_entrega;
       }
 
+      // Filtro de cliente
       if (filtros.cliente) {
         query.cliente_nome = { $regex: filtros.cliente, $options: 'i' };
       }
