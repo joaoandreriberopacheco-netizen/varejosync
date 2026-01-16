@@ -141,7 +141,9 @@ export default function Layout({ children, currentPageName }) {
         icon: TrendingUp, 
         submenu: [
           { name: 'Gestão de Vendas', page: 'VendasGestao' },
-          { name: 'Vendas Perdidas', page: 'VendasPerdidas' }
+          { name: 'Vendas Perdidas', page: 'VendasPerdidas' },
+          { name: 'Controle de Entregas', page: 'ControleEntregas' },
+          { name: 'Painel Gerencial', page: 'PainelGerente' }
         ],
         roles: ['Admin', 'Gerente']
       },
@@ -152,7 +154,8 @@ export default function Layout({ children, currentPageName }) {
           { name: 'Produtos', page: 'Produtos' },
           { name: 'Compras', page: 'Compras' },
           { name: 'Logística', page: 'Logistica' },
-          { name: 'Armazenagem', page: 'Estoque' }
+          { name: 'Armazenagem', page: 'Estoque' },
+          { name: 'Separação de Pedidos', page: 'InterfaceSeparador', roles: ['Admin', 'Gerente', 'Estoquista'] }
         ],
         roles: ['Admin', 'Gerente', 'Estoquista']
       },

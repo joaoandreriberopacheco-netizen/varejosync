@@ -33,6 +33,8 @@ import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
 import ControleEntregas from './pages/ControleEntregas';
+import InterfaceSeparador from './pages/InterfaceSeparador';
+import PainelGerente from './pages/PainelGerente';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +74,8 @@ export const PAGES = {
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
     "ControleEntregas": ControleEntregas,
+    "InterfaceSeparador": InterfaceSeparador,
+    "PainelGerente": PainelGerente,
 }
 
 export const pagesConfig = {
