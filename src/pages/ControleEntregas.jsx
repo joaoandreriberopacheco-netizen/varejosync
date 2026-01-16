@@ -55,7 +55,7 @@ export default function ControleEntregas() {
           $lte: dataFim.toISOString()
         },
         status: {
-          $in: ['Aguardando Caixa', 'Aguardando Pagamento', 'Aprovado', 'Aguardando Retirada', 'Envio Agendado', 'Finalizado']
+          $in: ['Financeiro OK', 'Em Separação', 'Aguardando Retirada', 'Em Rota de Entrega', 'Pedido Concluído']
         }
       };
 
@@ -88,12 +88,11 @@ export default function ControleEntregas() {
 
   const getStatusConfig = (status) => {
     const configs = {
-      'Aguardando Caixa': { cor: 'bg-yellow-100 text-yellow-800', icone: Clock, label: 'AGUARDANDO CAIXA' },
-      'Aguardando Pagamento': { cor: 'bg-orange-100 text-orange-800', icone: DollarSign, label: 'AGUARDANDO PAGAMENTO' },
-      'Aprovado': { cor: 'bg-blue-100 text-blue-800', icone: Package, label: 'EM SEPARAÇÃO' },
+      'Financeiro OK': { cor: 'bg-yellow-100 text-yellow-800', icone: DollarSign, label: 'PAGAMENTO OK' },
+      'Em Separação': { cor: 'bg-blue-100 text-blue-800', icone: Package, label: 'EM SEPARAÇÃO' },
       'Aguardando Retirada': { cor: 'bg-purple-100 text-purple-800', icone: MapPin, label: 'AGUARDANDO RETIRADA' },
-      'Envio Agendado': { cor: 'bg-indigo-100 text-indigo-800', icone: Truck, label: 'EM ROTA DE ENTREGA' },
-      'Finalizado': { cor: 'bg-green-100 text-green-800', icone: CheckCircle, label: 'CONCLUÍDO' }
+      'Em Rota de Entrega': { cor: 'bg-indigo-100 text-indigo-800', icone: Truck, label: 'EM ROTA DE ENTREGA' },
+      'Pedido Concluído': { cor: 'bg-green-100 text-green-800', icone: CheckCircle, label: 'CONCLUÍDO' }
     };
     return configs[status] || { cor: 'bg-gray-100 text-gray-800', icone: Clock, label: status };
   };
@@ -136,9 +135,9 @@ export default function ControleEntregas() {
   // Estatísticas
   const stats = {
     total: pedidos.length,
-    emSeparacao: pedidos.filter(p => p.status === 'Aprovado').length,
-    emRota: pedidos.filter(p => p.status === 'Envio Agendado').length,
-    concluidos: pedidos.filter(p => p.status === 'Finalizado').length,
+    emSeparacao: pedidos.filter(p => p.status === 'Em Separação').length,
+    emRota: pedidos.filter(p => p.status === 'Em Rota de Entrega').length,
+    concluidos: pedidos.filter(p => p.status === 'Pedido Concluído').length,
     valorTotal: pedidos.reduce((sum, p) => sum + (p.valor_total || 0), 0)
   };
 
@@ -218,10 +217,11 @@ export default function ControleEntregas() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">TODOS</SelectItem>
-                  <SelectItem value="Aprovado">EM SEPARAÇÃO</SelectItem>
+                  <SelectItem value="Financeiro OK">PAGAMENTO OK</SelectItem>
+                  <SelectItem value="Em Separação">EM SEPARAÇÃO</SelectItem>
                   <SelectItem value="Aguardando Retirada">AGUARDANDO RETIRADA</SelectItem>
-                  <SelectItem value="Envio Agendado">EM ROTA DE ENTREGA</SelectItem>
-                  <SelectItem value="Finalizado">CONCLUÍDO</SelectItem>
+                  <SelectItem value="Em Rota de Entrega">EM ROTA DE ENTREGA</SelectItem>
+                  <SelectItem value="Pedido Concluído">CONCLUÍDO</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -409,9 +409,9 @@ export default function ControleEntregas() {
                 <CardContent className="p-4">
                   <h3 className="text-sm font-semibold text-gray-500 mb-3">ALTERAR STATUS</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    {pedidoSelecionado.status !== 'Aprovado' && (
+                    {pedidoSelecionado.status !== 'Em Separação' && (
                       <Button
-                        onClick={() => handleAtualizarStatus(pedidoSelecionado.id, 'Aprovado')}
+                        onClick={() => handleAtualizarStatus(pedidoSelecionado.id, 'Em Separação')}
                         size="sm"
                         variant="outline"
                       >
@@ -429,9 +429,9 @@ export default function ControleEntregas() {
                         AGUARDANDO RETIRADA
                       </Button>
                     )}
-                    {pedidoSelecionado.metodo_entrega === 'Delivery' && pedidoSelecionado.status !== 'Envio Agendado' && (
+                    {pedidoSelecionado.metodo_entrega === 'Delivery' && pedidoSelecionado.status !== 'Em Rota de Entrega' && (
                       <Button
-                        onClick={() => handleAtualizarStatus(pedidoSelecionado.id, 'Envio Agendado')}
+                        onClick={() => handleAtualizarStatus(pedidoSelecionado.id, 'Em Rota de Entrega')}
                         size="sm"
                         variant="outline"
                       >
@@ -439,9 +439,9 @@ export default function ControleEntregas() {
                         EM ROTA
                       </Button>
                     )}
-                    {pedidoSelecionado.status !== 'Finalizado' && (
+                    {pedidoSelecionado.status !== 'Pedido Concluído' && (
                       <Button
-                        onClick={() => handleAtualizarStatus(pedidoSelecionado.id, 'Finalizado')}
+                        onClick={() => handleAtualizarStatus(pedidoSelecionado.id, 'Pedido Concluído')}
                         size="sm"
                         variant="outline"
                         className="col-span-2"

@@ -46,9 +46,9 @@ export default function InterfaceSeparador() {
       setItensSeparados([]);
       setErro('');
       
-      // Atualizar status para "Aprovado" (Em Separação)
-      if (pedido.status !== 'Aprovado') {
-        atualizarStatusMutation.mutate({ pedidoId: pedido.id, novoStatus: 'Aprovado' });
+      // Atualizar status para "Em Separação"
+      if (pedido.status !== 'Em Separação') {
+        atualizarStatusMutation.mutate({ pedidoId: pedido.id, novoStatus: 'Em Separação' });
       }
     },
     onError: (error) => {
@@ -135,8 +135,8 @@ export default function InterfaceSeparador() {
     }
 
     const novoStatus = pedidoAtual.metodo_entrega === 'Delivery' 
-      ? 'Envio Agendado' // Em Rota de Entrega
-      : 'Aguardando Retirada'; // Aguardando Retirada
+      ? 'Em Rota de Entrega'
+      : 'Aguardando Retirada';
 
     await atualizarStatusMutation.mutateAsync({ 
       pedidoId: pedidoAtual.id, 
