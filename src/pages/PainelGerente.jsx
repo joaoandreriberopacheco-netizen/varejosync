@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   TrendingUp, 
   Package, 
@@ -13,50 +14,42 @@ import {
   DollarSign,
   Users,
   AlertCircle,
-  ArrowUp,
-  ArrowDown,
-  Calendar
+  Search,
+  Filter
 } from 'lucide-react';
 
 export default function PainelGerente() {
-  const [periodoAtivo, setPeriodoAtivo] = useState('hoje');
+  const [filtros, setFiltros] = useState({
+    data_inicio: new Date().toISOString().split('T')[0],
+    data_fim: new Date().toISOString().split('T')[0],
+    status: 'todos',
+    cliente: ''
+  });
 
-  const getPeriodo = () => {
-    const hoje = new Date();
-    let dataInicio = new Date();
-    
-    switch (periodoAtivo) {
-      case 'hoje':
-        dataInicio.setHours(0, 0, 0, 0);
-        break;
-      case 'semana':
-        dataInicio.setDate(hoje.getDate() - 7);
-        break;
-      case 'mes':
-        dataInicio.setDate(hoje.getDate() - 30);
-        break;
-      default:
-        dataInicio.setHours(0, 0, 0, 0);
-    }
-
-    return {
-      inicio: dataInicio.toISOString(),
-      fim: hoje.toISOString()
-    };
-  };
-
-  const periodo = getPeriodo();
-
-  // Buscar pedidos do período
+  // Buscar pedidos com filtros
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['painel-gerente', periodoAtivo],
+    queryKey: ['painel-gerente', filtros],
     queryFn: async () => {
+      const dataInicio = new Date(filtros.data_inicio);
+      dataInicio.setHours(0, 0, 0, 0);
+      
+      const dataFim = new Date(filtros.data_fim);
+      dataFim.setHours(23, 59, 59, 999);
+
       const query = {
         created_date: {
-          $gte: periodo.inicio,
-          $lte: periodo.fim
+          $gte: dataInicio.toISOString(),
+          $lte: dataFim.toISOString()
         }
       };
+
+      if (filtros.status !== 'todos') {
+        query.status = filtros.status;
+      }
+
+      if (filtros.cliente) {
+        query.cliente_nome = { $regex: filtros.cliente, $options: 'i' };
+      }
 
       return await base44.entities.PedidoVenda.filter(query, '-created_date', 500);
     }
@@ -160,44 +153,67 @@ export default function PainelGerente() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">PAINEL GERENCIAL</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">VISÃO GERAL DAS OPERAÇÕES</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setPeriodoAtivo('hoje')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              periodoAtivo === 'hoje'
-                ? 'bg-gray-800 dark:bg-white text-white dark:text-gray-800 shadow-sm'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            HOJE
-          </button>
-          <button
-            onClick={() => setPeriodoAtivo('semana')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              periodoAtivo === 'semana'
-                ? 'bg-gray-800 dark:bg-white text-white dark:text-gray-800 shadow-sm'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            7 DIAS
-          </button>
-          <button
-            onClick={() => setPeriodoAtivo('mes')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              periodoAtivo === 'mes'
-                ? 'bg-gray-800 dark:bg-white text-white dark:text-gray-800 shadow-sm'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            30 DIAS
-          </button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">PAINEL GERENCIAL</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">VISÃO GERAL DAS OPERAÇÕES</p>
       </div>
+
+      {/* Filtros */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">FILTROS</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">DATA INÍCIO</label>
+              <Input
+                type="date"
+                value={filtros.data_inicio}
+                onChange={(e) => setFiltros({ ...filtros, data_inicio: e.target.value })}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">DATA FIM</label>
+              <Input
+                type="date"
+                value={filtros.data_fim}
+                onChange={(e) => setFiltros({ ...filtros, data_fim: e.target.value })}
+                className="h-9"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">STATUS</label>
+              <Select value={filtros.status} onValueChange={(value) => setFiltros({ ...filtros, status: value })}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">TODOS</SelectItem>
+                  <SelectItem value="Aprovado">EM SEPARAÇÃO</SelectItem>
+                  <SelectItem value="Aguardando Retirada">AGUARDANDO RETIRADA</SelectItem>
+                  <SelectItem value="Envio Agendado">EM ROTA DE ENTREGA</SelectItem>
+                  <SelectItem value="Finalizado">CONCLUÍDO</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">CLIENTE</label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="BUSCAR..."
+                  value={filtros.cliente}
+                  onChange={(e) => setFiltros({ ...filtros, cliente: e.target.value })}
+                  className="h-9 pl-8"
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Métricas Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -230,145 +246,85 @@ export default function PainelGerente() {
         />
       </div>
 
-      {/* Tabs de Detalhamento */}
-      <Tabs defaultValue="operacional" className="space-y-4">
-        <TabsList className="bg-white dark:bg-gray-800 shadow-sm">
-          <TabsTrigger value="operacional">OPERACIONAL</TabsTrigger>
-          <TabsTrigger value="vendedores">VENDEDORES</TabsTrigger>
-          <TabsTrigger value="entrega">ENTREGA</TabsTrigger>
-        </TabsList>
-
-        {/* Aba Operacional */}
-        <TabsContent value="operacional" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                    <Package className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white">{metricas.emSeparacao}</p>
-                    <p className="text-xs text-gray-500">EM SEPARAÇÃO</p>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-full rounded-full transition-all"
-                    style={{ width: `${metricas.total > 0 ? (metricas.emSeparacao / metricas.total) * 100 : 0}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white">{metricas.aguardandoRetirada}</p>
-                    <p className="text-xs text-gray-500">AGUARDANDO RETIRADA</p>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-purple-500 h-full rounded-full transition-all"
-                    style={{ width: `${metricas.total > 0 ? (metricas.aguardandoRetirada / metricas.total) * 100 : 0}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
-                    <Truck className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white">{metricas.emRota}</p>
-                    <p className="text-xs text-gray-500">EM ROTA DE ENTREGA</p>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-indigo-500 h-full rounded-full transition-all"
-                    style={{ width: `${metricas.total > 0 ? (metricas.emRota / metricas.total) * 100 : 0}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Aba Vendedores */}
-        <TabsContent value="vendedores" className="space-y-4">
-          <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <h3 className="text-sm font-semibold text-gray-500 mb-4">PERFORMANCE POR VENDEDOR</h3>
-              <div className="space-y-3">
-                {metricas.porVendedor.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4">NENHUM DADO DISPONÍVEL</p>
+      {/* Tabela de Pedidos */}
+      <Card>
+        <CardContent className="p-4">
+          <h3 className="text-sm font-semibold text-gray-500 mb-4">PEDIDOS DO PERÍODO</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500">PEDIDO</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500">DATA</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500">CLIENTE</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500">VENDEDOR</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-500">VALOR</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500">STATUS</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-500">ENTREGA</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pedidos.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-8 text-gray-500">
+                      NENHUM PEDIDO ENCONTRADO
+                    </td>
+                  </tr>
                 ) : (
-                  metricas.porVendedor.map((vendedor, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800 dark:text-white">{vendedor.nome || 'SEM VENDEDOR'}</p>
-                          <p className="text-xs text-gray-500">{vendedor.total} pedidos</p>
-                        </div>
-                      </div>
-                      <p className="text-lg font-bold text-gray-800 dark:text-white">
-                        {formatValor(vendedor.valor)}
-                      </p>
-                    </div>
+                  pedidos.map((pedido) => (
+                    <tr key={pedido.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="py-3 px-2 font-medium text-gray-800 dark:text-white">
+                        {pedido.numero}
+                      </td>
+                      <td className="py-3 px-2 text-gray-600 dark:text-gray-400">
+                        {new Date(pedido.created_date).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="py-3 px-2 text-gray-600 dark:text-gray-400">
+                        {pedido.cliente_nome}
+                      </td>
+                      <td className="py-3 px-2 text-gray-600 dark:text-gray-400">
+                        {pedido.vendedor_nome || '-'}
+                      </td>
+                      <td className="py-3 px-2 text-right font-semibold text-gray-800 dark:text-white">
+                        {formatValor(pedido.valor_total)}
+                      </td>
+                      <td className="py-3 px-2">
+                        <Badge className={
+                          pedido.status === 'Finalizado' ? 'bg-green-100 text-green-800' :
+                          pedido.status === 'Aprovado' ? 'bg-blue-100 text-blue-800' :
+                          pedido.status === 'Envio Agendado' ? 'bg-indigo-100 text-indigo-800' :
+                          pedido.status === 'Aguardando Retirada' ? 'bg-purple-100 text-purple-800' :
+                          'bg-gray-100 text-gray-800'
+                        }>
+                          {pedido.status === 'Aprovado' ? 'EM SEPARAÇÃO' :
+                           pedido.status === 'Envio Agendado' ? 'EM ROTA' :
+                           pedido.status === 'Aguardando Retirada' ? 'AGUARDANDO' :
+                           pedido.status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-2">
+                        <Badge variant="outline" className="text-xs">
+                          {pedido.metodo_entrega === 'Delivery' ? (
+                            <>
+                              <Truck className="w-3 h-3 mr-1" />
+                              DELIVERY
+                            </>
+                          ) : (
+                            <>
+                              <Package className="w-3 h-3 mr-1" />
+                              RETIRADA
+                            </>
+                          )}
+                        </Badge>
+                      </td>
+                    </tr>
                   ))
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Aba Entrega */}
-        <TabsContent value="entrega" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-3">
-                    <Truck className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white">{metricas.delivery}</p>
-                  <p className="text-sm text-gray-500">PEDIDOS DELIVERY</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {metricas.total > 0 ? Math.round((metricas.delivery / metricas.total) * 100) : 0}% DO TOTAL
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center mx-auto mb-3">
-                    <Package className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white">{metricas.retirada}</p>
-                  <p className="text-sm text-gray-500">PEDIDOS RETIRADA</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    {metricas.total > 0 ? Math.round((metricas.retirada / metricas.total) * 100) : 0}% DO TOTAL
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              </tbody>
+            </table>
           </div>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
