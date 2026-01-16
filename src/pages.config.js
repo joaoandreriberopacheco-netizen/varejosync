@@ -3,6 +3,7 @@ import CaixasAtivos from './pages/CaixasAtivos';
 import Campanhas from './pages/Campanhas';
 import Compras from './pages/Compras';
 import Configuracoes from './pages/Configuracoes';
+import ControleEntregas from './pages/ControleEntregas';
 import Dashboard from './pages/Dashboard';
 import DashboardCaixa from './pages/DashboardCaixa';
 import DashboardVendedor from './pages/DashboardVendedor';
@@ -16,6 +17,7 @@ import FinanceiroModulo from './pages/FinanceiroModulo';
 import Home from './pages/Home';
 import HubLogistico from './pages/HubLogistico';
 import ImportacaoProdutos from './pages/ImportacaoProdutos';
+import InterfaceSeparador from './pages/InterfaceSeparador';
 import Intervenientes from './pages/Intervenientes';
 import Logistica from './pages/Logistica';
 import Manual from './pages/Manual';
@@ -23,6 +25,7 @@ import MapaFuncionalidades from './pages/MapaFuncionalidades';
 import Operacoes from './pages/Operacoes';
 import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
 import PDV from './pages/PDV';
+import PainelGerente from './pages/PainelGerente';
 import Produtos from './pages/Produtos';
 import RelatorioMargem from './pages/RelatorioMargem';
 import Relatorios from './pages/Relatorios';
@@ -32,9 +35,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import ControleEntregas from './pages/ControleEntregas';
-import InterfaceSeparador from './pages/InterfaceSeparador';
-import PainelGerente from './pages/PainelGerente';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +44,7 @@ export const PAGES = {
     "Campanhas": Campanhas,
     "Compras": Compras,
     "Configuracoes": Configuracoes,
+    "ControleEntregas": ControleEntregas,
     "Dashboard": Dashboard,
     "DashboardCaixa": DashboardCaixa,
     "DashboardVendedor": DashboardVendedor,
@@ -57,6 +58,7 @@ export const PAGES = {
     "Home": Home,
     "HubLogistico": HubLogistico,
     "ImportacaoProdutos": ImportacaoProdutos,
+    "InterfaceSeparador": InterfaceSeparador,
     "Intervenientes": Intervenientes,
     "Logistica": Logistica,
     "Manual": Manual,
@@ -64,6 +66,7 @@ export const PAGES = {
     "Operacoes": Operacoes,
     "OtimizacaoEstoqueIA": OtimizacaoEstoqueIA,
     "PDV": PDV,
+    "PainelGerente": PainelGerente,
     "Produtos": Produtos,
     "RelatorioMargem": RelatorioMargem,
     "Relatorios": Relatorios,
@@ -73,9 +76,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "ControleEntregas": ControleEntregas,
-    "InterfaceSeparador": InterfaceSeparador,
-    "PainelGerente": PainelGerente,
 }
 
 export const pagesConfig = {

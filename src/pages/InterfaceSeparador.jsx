@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,11 @@ import {
   MapPin,
   Truck,
   AlertCircle,
-  Clock
+  Clock,
+  Camera,
+  X
 } from 'lucide-react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function InterfaceSeparador() {
   const queryClient = useQueryClient();
@@ -23,6 +26,8 @@ export default function InterfaceSeparador() {
   const [clienteAtual, setClienteAtual] = useState(null);
   const [itensSeparados, setItensSeparados] = useState([]);
   const [erro, setErro] = useState('');
+  const [scannerAtivo, setScannerAtivo] = useState(false);
+  const scannerRef = useRef(null);
 
   const buscarPedidoMutation = useMutation({
     mutationFn: async (pedidoId) => {
@@ -69,6 +74,51 @@ export default function InterfaceSeparador() {
       setQrInput('');
     }
   };
+
+  const iniciarScanner = () => {
+    setScannerAtivo(true);
+  };
+
+  const pararScanner = () => {
+    if (scannerRef.current) {
+      scannerRef.current.clear();
+      scannerRef.current = null;
+    }
+    setScannerAtivo(false);
+  };
+
+  useEffect(() => {
+    if (scannerAtivo && !scannerRef.current) {
+      const scanner = new Html5QrcodeScanner(
+        "qr-reader",
+        { 
+          fps: 10, 
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        },
+        false
+      );
+
+      scanner.render(
+        (decodedText) => {
+          buscarPedidoMutation.mutate(decodedText);
+          pararScanner();
+        },
+        (error) => {
+          // Ignora erros de scan contínuo
+        }
+      );
+
+      scannerRef.current = scanner;
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear();
+        scannerRef.current = null;
+      }
+    };
+  }, [scannerAtivo]);
 
   const handleMarcarItem = (index) => {
     if (itensSeparados.includes(index)) {
@@ -122,34 +172,67 @@ export default function InterfaceSeparador() {
         {/* Scanner QR */}
         <Card className="shadow-lg">
           <CardContent className="p-6">
-            <form onSubmit={handleScanQR} className="space-y-4">
-              <div className="flex items-center justify-center mb-4">
-                <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <QrCode className="w-10 h-10 text-gray-400" />
+            {!scannerAtivo ? (
+              <form onSubmit={handleScanQR} className="space-y-4">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <QrCode className="w-10 h-10 text-gray-400" />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="relative">
-                <Input
-                  placeholder="DIGITE OU ESCANEIE O CÓDIGO DO PEDIDO"
-                  value={qrInput}
-                  onChange={(e) => setQrInput(e.target.value)}
-                  className="text-center text-lg h-14"
-                  autoFocus
-                />
-              </div>
+                
+                <Button
+                  type="button"
+                  onClick={iniciarScanner}
+                  className="w-full h-14 bg-gray-800 hover:bg-gray-700 text-white gap-2"
+                >
+                  <Camera className="w-5 h-5" />
+                  ESCANEAR QR CODE
+                </Button>
 
-              {erro && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-500" />
-                  <span className="text-sm text-red-600 dark:text-red-400">{erro}</span>
+                <div className="relative flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                  <span className="text-xs text-gray-400">OU</span>
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
                 </div>
-              )}
+                
+                <div className="relative">
+                  <Input
+                    placeholder="DIGITE O CÓDIGO DO PEDIDO"
+                    value={qrInput}
+                    onChange={(e) => setQrInput(e.target.value)}
+                    className="text-center text-lg h-14"
+                  />
+                </div>
 
-              <Button type="submit" className="w-full h-12" disabled={buscarPedidoMutation.isPending}>
-                {buscarPedidoMutation.isPending ? 'BUSCANDO...' : 'INICIAR SEPARAÇÃO'}
-              </Button>
-            </form>
+                {erro && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                    <span className="text-sm text-red-600 dark:text-red-400">{erro}</span>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full h-12" disabled={buscarPedidoMutation.isPending}>
+                  {buscarPedidoMutation.isPending ? 'BUSCANDO...' : 'INICIAR SEPARAÇÃO'}
+                </Button>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    POSICIONE O QR CODE NA CÂMERA
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={pararScanner}
+                    className="h-8 w-8"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div id="qr-reader" className="w-full" />
+              </div>
+            )}
           </CardContent>
         </Card>
 
