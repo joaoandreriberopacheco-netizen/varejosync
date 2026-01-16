@@ -34,6 +34,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 import { createPageUrl } from '@/utils';
+import LiberacaoEntrega from './LiberacaoEntrega';
 
 
 export default function PDVCaixa() {
@@ -85,8 +86,9 @@ export default function PDVCaixa() {
     credito: React.useRef(null)
   };
 
-  const [showComprovanteFinal, setShowComprovanteFinal] = useState(false);
+  const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
+  const [clienteVenda, setClienteVenda] = useState(null);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -473,6 +475,13 @@ export default function PDVCaixa() {
         setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
       }
 
+      // Buscar dados do cliente para o documento
+      let cliente = null;
+      if (pedidoSelecionado.cliente_id) {
+        cliente = await base44.entities.Terceiro.get(pedidoSelecionado.cliente_id);
+        setClienteVenda(cliente);
+      }
+
       setVendaFinalizada({
         ...pedidoSelecionado,
         pagamentos: pagamentosArray
@@ -495,7 +504,7 @@ export default function PDVCaixa() {
             }))
           });
           toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
-        } else if (configVenda.fluxo_venda_padrao === 'Balcao' && !configVenda.entrega_automatica_balcao) {
+        } else if (configVenda.fluxo_venda_padrao === 'Balcao' && !configVenda.auto_delivery_balcao) {
 
 
 
@@ -544,7 +553,19 @@ export default function PDVCaixa() {
 
           // Logic for Balcao with manual delivery (Logistics) could go here
           // For now, we assume default behavior or simple completion
-        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowComprovanteFinal(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}
+        }
+      }
+
+      toast({ 
+        title: "✓ Pagamento aprovado!", 
+        description: "Venda finalizada com sucesso.", 
+        className: "bg-emerald-100 text-emerald-800", 
+        duration: 2000 
+      });
+
+      setIsDialogOpen(false);
+      setShowLiberacaoEntrega(true);
+      loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}
 
     if (!contaCaixaPDV) {
       toast({
@@ -1419,80 +1440,13 @@ export default function PDVCaixa() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showComprovanteFinal} onOpenChange={setShowComprovanteFinal}>
-          <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
-            <div className="p-6" style={{ fontFamily: 'Courier New, monospace' }}>
-              <div className="text-center border-b-2 border-dashed border-gray-400 pb-4 mb-4 dark:border-gray-500">
-                <h2 className="text-2xl font-bold">VAREJOSYNC</h2>
-                <p className="text-sm text-gray-700 dark:text-gray-300">Comprovante de Venda</p>
-              </div>
-
-              {vendaFinalizada &&
-              <>
-                  <div className="space-y-2 text-sm mb-4 text-gray-700 dark:text-gray-300">
-                    <div className="flex justify-between">
-                      <span>Pedido:</span>
-                      <span className="font-bold text-gray-800 dark:text-gray-200">{vendaFinalizada.numero}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Data/Hora:</span>
-                      <span className="text-gray-800 dark:text-gray-200">{format(new Date(), 'dd/MM/yyyy HH:mm')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Cliente:</span>
-                      <span className="text-gray-800 dark:text-gray-200">{vendaFinalizada.cliente_nome}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Vendedor:</span>
-                      <span className="text-gray-800 dark:text-gray-200">{vendaFinalizada.vendedor_nome}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Operador:</span>
-                      <span className="text-gray-800 dark:text-gray-200">{currentUser?.full_name}</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t-2 border-b-2 border-dashed border-gray-400 py-4 mb-4 dark:border-gray-500">
-                    <div className="flex justify-between text-xl font-bold mb-2">
-                      <span>TOTAL:</span>
-                      <span className="text-gray-800 dark:text-gray-200">{formatValor(vendaFinalizada.valor_total)}</span>
-                    </div>
-                    
-                    <div className="text-sm space-y-1 pt-2 border-t border-gray-300 dark:border-gray-600">
-                      {vendaFinalizada.pagamentos?.map((pag, idx) =>
-                    <div key={idx} className="flex justify-between text-gray-700 dark:text-gray-300">
-                          <span>{pag.forma_pagamento} {pag.parcelas > 1 && `${pag.parcelas}x`}</span>
-                          <span className="text-gray-800 dark:text-gray-200">{formatValor(pag.valor)}</span>
-                        </div>
-                    )}
-                      {vendaFinalizada.pagamentos?.find((p) => p.troco > 0) &&
-                    <div className="flex justify-between font-bold text-yellow-600 dark:text-yellow-400">
-                          <span>Troco:</span>
-                          <span>{formatValor(vendaFinalizada.pagamentos.find((p) => p.troco > 0).troco)}</span>
-                        </div>
-                    }
-                    </div>
-                  </div>
-
-                  <div className="text-center text-xs border-t-2 border-dashed border-gray-400 pt-4 dark:border-gray-500">
-                    <p className="text-gray-700 dark:text-gray-300">Obrigado pela preferência!</p>
-                    <p className="mt-2 text-gray-700 dark:text-gray-300">Este não é um documento fiscal</p>
-                  </div>
-                </>
-              }
-
-              <div className="mt-6 flex justify-center gap-2 print:hidden">
-                <Button onClick={() => window.print()} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Imprimir
-                </Button>
-                <Button variant="outline" onClick={() => setShowComprovanteFinal(false)} className="border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
-                  Fechar
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Documento de Liberação para Entrega */}
+        <LiberacaoEntrega
+          open={showLiberacaoEntrega}
+          onClose={() => setShowLiberacaoEntrega(false)}
+          pedido={vendaFinalizada}
+          cliente={clienteVenda}
+        />
       </div>
     </div>);
 
