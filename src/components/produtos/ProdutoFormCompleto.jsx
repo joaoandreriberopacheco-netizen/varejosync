@@ -728,10 +728,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                   <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Mínimo</Label>
                   <Input 
                     type="number" 
-                    step="0.01" 
+                    step="0.0001" 
                     value={formData.estoque_minimo} 
                     onChange={e => handleChange('estoque_minimo', parseFloat(e.target.value) || 0)} 
-                    placeholder="0,00"
+                    placeholder="0,0000"
                     className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
@@ -739,10 +739,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                   <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Ideal</Label>
                   <Input 
                     type="number" 
-                    step="0.01" 
+                    step="0.0001" 
                     value={formData.estoque_ideal} 
                     onChange={e => handleChange('estoque_ideal', parseFloat(e.target.value) || 0)} 
-                    placeholder="0,00"
+                    placeholder="0,0000"
                     className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
@@ -750,10 +750,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                   <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Máximo</Label>
                   <Input 
                     type="number" 
-                    step="0.01" 
+                    step="0.0001" 
                     value={formData.estoque_maximo} 
                     onChange={e => handleChange('estoque_maximo', parseFloat(e.target.value) || 0)} 
-                    placeholder="0,00"
+                    placeholder="0,0000"
                     className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                   />
                 </div>
