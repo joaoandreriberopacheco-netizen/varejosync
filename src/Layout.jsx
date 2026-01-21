@@ -537,7 +537,15 @@ export default function Layout({ children, currentPageName }) {
             ? 'ml-0 pt-12' 
             : (isOpen ? 'ml-64' : 'ml-16')
         }`}>
-          <div className="p-4 md:p-6 overflow-x-hidden">
+          <div className="p-4 md:p-6 overflow-x-hidden relative">
+            {/* Logo no canto superior direito */}
+            <div className="absolute top-4 right-6 z-10">
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/79333b87d_Gemini_Generated_Image_5vmp2i5vmp2i5vmp.png" 
+                alt="Manah" 
+                className="h-16 w-auto object-contain opacity-90"
+              />
+            </div>
             {children}
           </div>
         </div>
