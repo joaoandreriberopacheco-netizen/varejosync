@@ -37,6 +37,15 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Logo Manah grande centralizada */}
+      <div className="flex justify-center items-center py-8">
+        <img 
+          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/79333b87d_Gemini_Generated_Image_5vmp2i5vmp2i5vmp.png" 
+          alt="Manah" 
+          className="h-32 w-auto object-contain"
+        />
+      </div>
+
       {/* Header */}
       <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-xl md:text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Dashboard Estratégico</h1>
