@@ -322,11 +322,13 @@ export default function Layout({ children, currentPageName }) {
             {(isOpen || isMobile) ? (
               <>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded bg-white flex items-center justify-center">
-                    <span className="text-gray-700 font-semibold text-sm">VS</span>
-                  </div>
+                  <img 
+                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/79333b87d_Gemini_Generated_Image_5vmp2i5vmp2i5vmp.png" 
+                    alt="Manah" 
+                    className="h-8 w-auto object-contain"
+                  />
                   <div>
-                    <h1 className="text-sm font-medium text-gray-700 dark:text-white">VarejoSync</h1>
+                    <h1 className="text-sm font-medium text-gray-700 dark:text-white">Manah</h1>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400">Sistema ERP</p>
                   </div>
                 </div>
@@ -337,9 +339,11 @@ export default function Layout({ children, currentPageName }) {
                 )}
               </>
             ) : (
-              <div className="w-8 h-8 rounded bg-white flex items-center justify-center mx-auto">
-                <span className="text-gray-700 font-semibold text-sm">VS</span>
-              </div>
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/79333b87d_Gemini_Generated_Image_5vmp2i5vmp2i5vmp.png" 
+                alt="Manah" 
+                className="h-8 w-auto object-contain mx-auto"
+              />
             )}
           </div>
 
