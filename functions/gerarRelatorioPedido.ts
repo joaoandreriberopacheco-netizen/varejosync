@@ -1,6 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
+// Helper para decodificar caracteres especiais do português
+function decodeText(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/Ã§/g, 'ç')
+    .replace(/Ã£/g, 'ã')
+    .replace(/Ã¡/g, 'á')
+    .replace(/Ã©/g, 'é')
+    .replace(/Ã­/g, 'í')
+    .replace(/Ã³/g, 'ó')
+    .replace(/Ãº/g, 'ú')
+    .replace(/Ã¢/g, 'â')
+    .replace(/Ãª/g, 'ê')
+    .replace(/Ã´/g, 'ô')
+    .replace(/Ã /g, 'à')
+    .replace(/Ãµ/g, 'õ')
+    .replace(/Ã/g, 'Ã')
+    .replace(/Â°/g, 'º');
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
