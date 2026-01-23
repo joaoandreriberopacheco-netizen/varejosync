@@ -1001,7 +1001,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   }}
                   className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-base shadow-lg gap-2"
                 >
-                  <PaperPlane className="w-5 h-5" />
+                  <Send className="w-5 h-5" style={{ transform: 'rotate(-45deg)' }} />
                   Enviar para Aprovação Financeira
                 </Button>
               )}
