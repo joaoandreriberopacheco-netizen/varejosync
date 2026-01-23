@@ -23,6 +23,16 @@ export default function MobileProductSelector({
   const quantidadeInputRef = React.useRef(null);
   const custoInputRef = React.useRef(null);
 
+  // Auto-focus ao entrar na tela de edição
+  useEffect(() => {
+    if (view === 'edit' && quantidadeInputRef.current) {
+      setTimeout(() => {
+        quantidadeInputRef.current?.focus();
+        quantidadeInputRef.current?.select();
+      }, 100);
+    }
+  }, [view]);
+
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
     const lower = search.toLowerCase();
@@ -166,16 +176,6 @@ export default function MobileProductSelector({
       </div>
     );
   }
-
-  // Auto-focus ao entrar na tela de edição
-  useEffect(() => {
-    if (view === 'edit' && quantidadeInputRef.current) {
-      setTimeout(() => {
-        quantidadeInputRef.current?.focus();
-        quantidadeInputRef.current?.select();
-      }, 100);
-    }
-  }, [view]);
 
   if (view === 'edit' && editingItem) {
     const total = calculateTotal(editingItem);
