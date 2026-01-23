@@ -33,12 +33,14 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
   const [interveniente, setInterveniente] = useState(null);
   const [intervenientes, setIntervenientes] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [produtos, setProdutos] = useState({});
   const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen && pedido) {
       loadUser();
       loadIntervenientes();
+      loadProdutos();
       inicializarConferencia();
     }
   }, [isOpen, pedido]);
@@ -53,6 +55,14 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
     setIntervenientes(lista);
   };
 
+  const loadProdutos = async () => {
+    const ids = pedido.itens.map(i => i.produto_id);
+    const prods = await base44.entities.Produto.filter({ id: { $in: ids } });
+    const map = {};
+    prods.forEach(p => { map[p.id] = p; });
+    setProdutos(map);
+  };
+
   const inicializarConferencia = () => {
     if (modo === 'cega') {
       setItensConferidos([]);
@@ -65,7 +75,8 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
         divergencia: false,
         tipo_divergencia: null,
         observacao: '',
-        fotos: []
+        fotos: [],
+        lotes: []
       }));
       setItensConferidos(itens);
     }
@@ -79,8 +90,70 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
       divergencia: false,
       tipo_divergencia: null,
       observacao: '',
-      fotos: []
+      fotos: [],
+      lotes: []
     }]);
+  };
+
+  const adicionarLote = (itemIndex) => {
+    const novosItens = [...itensConferidos];
+    if (!novosItens[itemIndex].lotes) novosItens[itemIndex].lotes = [];
+    novosItens[itemIndex].lotes.push({
+      numero_lote: '',
+      data_validade: '',
+      quantidade: 0,
+      numeros_serie: []
+    });
+    setItensConferidos(novosItens);
+  };
+
+  const validarDadosRastreabilidade = () => {
+    for (const item of itensConferidos) {
+      const produto = produtos[item.produto_id];
+      if (!produto) continue;
+
+      if (produto.controla_validade || produto.controla_lote) {
+        if (!item.lotes || item.lotes.length === 0) {
+          toast({ 
+            title: `${item.produto_nome} requer lote/validade`, 
+            variant: 'destructive' 
+          });
+          return false;
+        }
+
+        const totalLote = item.lotes.reduce((sum, l) => sum + (parseInt(l.quantidade) || 0), 0);
+        if (totalLote !== item.quantidade_conferida) {
+          toast({ 
+            title: `${item.produto_nome}: soma dos lotes (${totalLote}) diferente da quantidade (${item.quantidade_conferida})`, 
+            variant: 'destructive' 
+          });
+          return false;
+        }
+
+        for (const lote of item.lotes) {
+          if (produto.controla_lote && !lote.numero_lote) {
+            toast({ title: `Lote obrigatório para ${item.produto_nome}`, variant: 'destructive' });
+            return false;
+          }
+          if (produto.controla_validade && !lote.data_validade) {
+            toast({ title: `Validade obrigatória para ${item.produto_nome}`, variant: 'destructive' });
+            return false;
+          }
+        }
+      }
+
+      if (produto.controla_serial) {
+        const totalSerial = item.lotes?.reduce((sum, l) => sum + (l.numeros_serie?.length || 0), 0) || 0;
+        if (totalSerial !== item.quantidade_conferida) {
+          toast({ 
+            title: `${item.produto_nome}: quantidade de séries (${totalSerial}) diferente da quantidade (${item.quantidade_conferida})`, 
+            variant: 'destructive' 
+          });
+          return false;
+        }
+      }
+    }
+    return true;
   };
 
   const handleUploadFoto = async (index, file) => {
@@ -109,6 +182,7 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
   };
 
   const compararComPedido = () => {
+    if (!validarDadosRastreabilidade()) return;
     const novosItens = itensConferidos.map(conferido => {
       const itemPedido = pedido.itens.find(p => p.produto_id === conferido.produto_id);
       
@@ -191,6 +265,36 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
           descricao: item.observacao,
           fotos_urls: item.fotos || []
         });
+      }
+
+      // Criar movimentações de estoque com lote/validade/serial
+      for (const item of itensConferidos.filter(i => !i.divergencia && i.quantidade_conferida > 0)) {
+        if (item.lotes && item.lotes.length > 0) {
+          for (const lote of item.lotes) {
+            await base44.entities.MovimentacaoEstoque.create({
+              tipo: 'Entrada',
+              produto_id: item.produto_id,
+              produto_nome: item.produto_nome,
+              quantidade: lote.quantidade,
+              referencia_tipo: 'PedidoCompra',
+              referencia_id: pedido.id,
+              referencia_numero: pedido.numero,
+              numero_lote: lote.numero_lote,
+              data_validade: lote.data_validade,
+              numeros_serie: lote.numeros_serie
+            });
+          }
+        } else {
+          await base44.entities.MovimentacaoEstoque.create({
+            tipo: 'Entrada',
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            quantidade: item.quantidade_conferida,
+            referencia_tipo: 'PedidoCompra',
+            referencia_id: pedido.id,
+            referencia_numero: pedido.numero
+          });
+        }
       }
 
       // Atualizar status do pedido
@@ -325,64 +429,144 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
                     <p className="text-sm text-gray-600">
                       Confira cada item do pedido marcando quantidade e condição
                     </p>
-                    {itensConferidos.map((item, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-3 p-4 bg-gray-50 rounded-lg">
-                        <div className="col-span-4">
-                          <Label>Produto</Label>
-                          <div className="font-medium">{item.produto_nome}</div>
-                          <div className="text-xs text-gray-500">Esperado: {item.quantidade_pedido}</div>
-                        </div>
-                        <div className="col-span-2">
-                          <Label>Recebido</Label>
-                          <Input
-                            type="number"
-                            value={item.quantidade_conferida}
-                            onChange={e => {
-                              const novos = [...itensConferidos];
-                              novos[idx].quantidade_conferida = parseInt(e.target.value) || 0;
-                              setItensConferidos(novos);
-                            }}
-                          />
-                        </div>
-                        <div className="col-span-3">
-                          <Label>Problema</Label>
-                          <Select
-                            value={item.tipo_divergencia || 'ok'}
-                            onValueChange={v => {
-                              const novos = [...itensConferidos];
-                              novos[idx].tipo_divergencia = v === 'ok' ? null : v;
-                              novos[idx].divergencia = v !== 'ok';
-                              setItensConferidos(novos);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ok">Tudo OK</SelectItem>
-                              <SelectItem value="Avaria">Avaria</SelectItem>
-                              <SelectItem value="Pedido Diferente">Item Errado</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-3 flex items-end gap-2">
-                          <label className="cursor-pointer flex-1">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={e => handleUploadFoto(idx, e.target.files[0])}
-                            />
-                            <Button type="button" variant="outline" size="sm" className="w-full">
-                              <Camera className="w-4 h-4" />
-                            </Button>
-                          </label>
-                          {item.fotos?.length > 0 && (
-                            <Badge variant="outline">{item.fotos.length}</Badge>
+                    {itensConferidos.map((item, idx) => {
+                      const produto = produtos[item.produto_id];
+                      const precisaLote = produto?.controla_lote || produto?.controla_validade;
+                      const precisaSerial = produto?.controla_serial;
+
+                      return (
+                        <div key={idx} className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                          <div className="grid grid-cols-12 gap-3">
+                            <div className="col-span-4">
+                              <Label>Produto</Label>
+                              <div className="font-medium">{item.produto_nome}</div>
+                              <div className="text-xs text-gray-500">Esperado: {item.quantidade_pedido}</div>
+                            </div>
+                            <div className="col-span-2">
+                              <Label>Recebido</Label>
+                              <Input
+                                type="number"
+                                value={item.quantidade_conferida}
+                                onChange={e => {
+                                  const novos = [...itensConferidos];
+                                  novos[idx].quantidade_conferida = parseInt(e.target.value) || 0;
+                                  setItensConferidos(novos);
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <Label>Problema</Label>
+                              <Select
+                                value={item.tipo_divergencia || 'ok'}
+                                onValueChange={v => {
+                                  const novos = [...itensConferidos];
+                                  novos[idx].tipo_divergencia = v === 'ok' ? null : v;
+                                  novos[idx].divergencia = v !== 'ok';
+                                  setItensConferidos(novos);
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="ok">Tudo OK</SelectItem>
+                                  <SelectItem value="Avaria">Avaria</SelectItem>
+                                  <SelectItem value="Pedido Diferente">Item Errado</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-3 flex items-end gap-2">
+                              <label className="cursor-pointer flex-1">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={e => handleUploadFoto(idx, e.target.files[0])}
+                                />
+                                <Button type="button" variant="outline" size="sm" className="w-full">
+                                  <Camera className="w-4 h-4" />
+                                </Button>
+                              </label>
+                              {item.fotos?.length > 0 && (
+                                <Badge variant="outline">{item.fotos.length}</Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {(precisaLote || precisaSerial) && (
+                            <div className="pl-4 border-l-2 border-indigo-200 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs text-indigo-700">
+                                  {produto.controla_lote && 'Lote'}
+                                  {produto.controla_lote && produto.controla_validade && ' / '}
+                                  {produto.controla_validade && 'Validade'}
+                                  {produto.controla_serial && ' / Serial'}
+                                </Label>
+                                <Button type="button" size="sm" variant="outline" onClick={() => adicionarLote(idx)}>
+                                  + Lote
+                                </Button>
+                              </div>
+
+                              {item.lotes?.map((lote, loteIdx) => (
+                                <div key={loteIdx} className="grid grid-cols-12 gap-2 p-2 bg-white rounded">
+                                  {produto.controla_lote && (
+                                    <div className="col-span-3">
+                                      <Input
+                                        placeholder="Nº Lote"
+                                        value={lote.numero_lote}
+                                        onChange={e => {
+                                          const novos = [...itensConferidos];
+                                          novos[idx].lotes[loteIdx].numero_lote = e.target.value;
+                                          setItensConferidos(novos);
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                  {produto.controla_validade && (
+                                    <div className="col-span-3">
+                                      <Input
+                                        type="date"
+                                        value={lote.data_validade}
+                                        onChange={e => {
+                                          const novos = [...itensConferidos];
+                                          novos[idx].lotes[loteIdx].data_validade = e.target.value;
+                                          setItensConferidos(novos);
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="col-span-2">
+                                    <Input
+                                      type="number"
+                                      placeholder="Qtd"
+                                      value={lote.quantidade}
+                                      onChange={e => {
+                                        const novos = [...itensConferidos];
+                                        novos[idx].lotes[loteIdx].quantidade = parseInt(e.target.value) || 0;
+                                        setItensConferidos(novos);
+                                      }}
+                                    />
+                                  </div>
+                                  {produto.controla_serial && (
+                                    <div className="col-span-4">
+                                      <Input
+                                        placeholder="Séries (sep. vírgula)"
+                                        value={lote.numeros_serie?.join(', ') || ''}
+                                        onChange={e => {
+                                          const novos = [...itensConferidos];
+                                          novos[idx].lotes[loteIdx].numeros_serie = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                          setItensConferidos(novos);
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
