@@ -789,40 +789,40 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
             <TabsTrigger 
               value="dados-gerais" 
-              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
             >
-              <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-[9px] text-gray-600 dark:text-gray-400">Geral</span>
+              <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">Geral</span>
             </TabsTrigger>
             <TabsTrigger 
               value="itens" 
-              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
             >
-              <Package className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-[9px] text-gray-600 dark:text-gray-400">Itens</span>
+              <Package className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">Itens</span>
             </TabsTrigger>
             <TabsTrigger 
               value="pagamento" 
-              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
             >
-              <DollarSign className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-[9px] text-gray-600 dark:text-gray-400">Pgto</span>
+              <DollarSign className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">Pgto</span>
             </TabsTrigger>
             <TabsTrigger 
               value="logistica" 
-              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
               disabled={!isLogisticaEnabled && pedido}
             >
-              <Ship className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-[9px] text-gray-600 dark:text-gray-400">Log</span>
+              <Ship className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">Log</span>
             </TabsTrigger>
             <TabsTrigger 
               value="pendencias" 
-              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
               disabled={!pedido}
             >
-              <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-[9px] text-gray-600 dark:text-gray-400">Pend</span>
+              <AlertCircle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">Pend</span>
             </TabsTrigger>
           </TabsList>
 
