@@ -17,7 +17,14 @@ Deno.serve(async (req) => {
 
     // Buscar arquivo
     const fileResponse = await fetch(file_url);
-    const text = await fileResponse.text();
+    const arrayBuffer = await fileResponse.arrayBuffer();
+    const decoder = new TextDecoder('utf-8');
+    let text = decoder.decode(arrayBuffer);
+    
+    // Remove BOM se existir
+    if (text.charCodeAt(0) === 0xFEFF) {
+      text = text.slice(1);
+    }
 
     // Parse CSV (separado por ; ou ,)
     const lines = text.trim().split('\n');

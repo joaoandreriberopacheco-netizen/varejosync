@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit3, Trash2, MapPin, Download, Upload, Loader2, FileUp } from 'lucide-react';
+import { Plus, Edit3, Trash2, MapPin, Download, Upload, Loader2, FileUp, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function AreasManager() {
@@ -94,10 +94,27 @@ export default function AreasManager() {
       ...areas.map(a => [a.codigo, a.nome, a.descricao || '', a.cor || '#3b82f6', a.ordem || 0, a.ativo ? 'Sim' : 'Não'])
     ].map(row => row.join(';')).join('\n');
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'areas.csv';
+    link.click();
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = [
+      ['Código', 'Nome', 'Descrição', 'Cor', 'Ordem', 'Ativo'],
+      ['A1', 'SETOR HIDRÁULICA', 'TORNEIRAS E METAIS', '#3b82f6', '1', 'Sim'],
+      ['A2', 'SETOR ELÉTRICA', 'CABOS E DISJUNTORES', '#10b981', '2', 'Sim'],
+      ['A3', 'SETOR CONSTRUÇÃO', 'CIMENTO E ARGAMASSA', '#f59e0b', '3', 'Sim']
+    ].map(row => row.join(';')).join('\n');
+
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + template], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'template_areas.csv';
     link.click();
   };
 
@@ -135,7 +152,10 @@ export default function AreasManager() {
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie as áreas da loja</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleDownloadTemplate} className="gap-2 border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20">
+            <FileText className="w-4 h-4" /> Template CSV
+          </Button>
           <Button variant="outline" onClick={handleExport} className="gap-2">
             <Download className="w-4 h-4" /> Exportar
           </Button>
