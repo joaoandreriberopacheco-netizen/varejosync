@@ -733,61 +733,67 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   if (isMobile) {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
-        <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
-            <X className="w-4 h-4" />
-          </Button>
-          <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-            {pedido?.numero || 'Novo'}
-          </span>
-          <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-9 w-9">
-            <Undo className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-9 w-9">
-            <Redo className="w-4 h-4" />
-          </Button>
-          {!isLocked && (
-            <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-9 w-9">
-              <Save className="w-4 h-4" />
+        <div className="flex-shrink-0">
+          {/* Header compacto */}
+          <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+              <X className="w-4 h-4" />
             </Button>
-          )}
-        </div>
-        
-        <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
+              {pedido?.numero || 'Novo'}
+            </span>
+            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8">
+              <Undo className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8">
+              <Redo className="w-4 h-4" />
+            </Button>
+            {!isLocked && (
+              <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8">
+                <Save className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
 
-        {/* MOBILE: Tabs com Ícones */}
-        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 rounded-none h-auto p-0 grid grid-cols-4 shadow-sm">
+          {/* Timeline compacta */}
+          <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+
+          {/* MOBILE: Tabs com Ícones */}
+          <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-4">
             <TabsTrigger 
               value="dados-gerais" 
-              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
             >
-              <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              <span className="text-[10px] text-gray-600 dark:text-gray-400">Geral</span>
+              <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-[9px] text-gray-600 dark:text-gray-400">Geral</span>
             </TabsTrigger>
             <TabsTrigger 
               value="itens" 
-              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
             >
-              <Package className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              <span className="text-[10px] text-gray-600 dark:text-gray-400">Itens</span>
+              <Package className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-[9px] text-gray-600 dark:text-gray-400">Itens</span>
             </TabsTrigger>
             <TabsTrigger 
               value="pagamento" 
-              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
             >
-              <DollarSign className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              <span className="text-[10px] text-gray-600 dark:text-gray-400">Pgto</span>
+              <DollarSign className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-[9px] text-gray-600 dark:text-gray-400">Pgto</span>
             </TabsTrigger>
             <TabsTrigger 
               value="logistica" 
-              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
-              disabled={!isLogisticaEnabled && !pedido}
+              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              disabled={!isLogisticaEnabled && pedido}
             >
-              <Ship className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              <span className="text-[10px] text-gray-600 dark:text-gray-400">Log</span>
+              <Ship className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-[9px] text-gray-600 dark:text-gray-400">Log</span>
             </TabsTrigger>
           </TabsList>
+        </div>
+
+        {/* MOBILE: Tabs com Ícones */}
+        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
 
           <div className="flex-1 overflow-y-auto">
             <TabsContent value="dados-gerais" className="mt-0 px-3 py-6 space-y-6 border-0">
@@ -1166,48 +1172,52 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   return (
     <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-2xl">
-      <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
-          <X className="w-4 h-4" />
-        </Button>
-        <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-          {pedido?.numero || 'Novo Pedido'}
-        </span>
-        <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-9 w-9">
-          <Undo className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-9 w-9">
-          <Redo className="w-4 h-4" />
-        </Button>
-        {!isLocked && (
-          <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-9 w-9">
-            <Save className="w-4 h-4" />
+      <div className="flex-shrink-0">
+        {/* Header compacto */}
+        <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="w-4 h-4" />
           </Button>
-        )}
-        {canReopen && isLocked && (
-          <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-9 text-xs">
-            Reabrir
+          <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
+            {pedido?.numero || 'Novo Pedido'}
+          </span>
+          <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8">
+            <Undo className="w-4 h-4" />
           </Button>
-        )}
-      </div>
+          <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8">
+            <Redo className="w-4 h-4" />
+          </Button>
+          {!isLocked && (
+            <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8">
+              <Save className="w-4 h-4" />
+            </Button>
+          )}
+          {canReopen && isLocked && (
+            <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-8 text-xs px-2">
+              Reabrir
+            </Button>
+          )}
+        </div>
 
-      <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+        {/* Timeline compacta */}
+        <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+      </div>
 
       {/* DESKTOP: Tabs Originais */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 sm:px-6">
-            <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-6">
+            <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
               <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              <span className="hidden sm:inline">Dados Gerais</span>
+              Dados Gerais
             </TabsTrigger>
-            <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
+            <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
               <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              <span className="hidden sm:inline">Pagamento</span>
+              Pagamento
             </TabsTrigger>
-            <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none" disabled={!isLogisticaEnabled && !pedido}>
+            <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!isLogisticaEnabled && pedido}>
               <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              <span className="hidden sm:inline">Logística</span>
+              Logística
             </TabsTrigger>
           </TabsList>
 
