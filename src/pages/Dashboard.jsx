@@ -40,7 +40,7 @@ export default function DashboardPage() {
       {/* Logo Manah grande centralizada */}
       <div className="flex justify-center items-center py-8">
         <img 
-          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/67b143a01_generated_image.png" 
+          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/38881a93d_generated_image.png" 
           alt="Manah" 
           className="h-40 w-auto object-contain"
         />

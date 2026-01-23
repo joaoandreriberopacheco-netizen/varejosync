@@ -323,7 +323,7 @@ export default function Layout({ children, currentPageName }) {
               <>
                 <div className="flex items-center gap-3">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/67b143a01_generated_image.png" 
+                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/38881a93d_generated_image.png" 
                     alt="Manah" 
                     className="h-12 w-auto object-contain"
                   />
@@ -340,7 +340,7 @@ export default function Layout({ children, currentPageName }) {
               </>
             ) : (
               <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/67b143a01_generated_image.png" 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/38881a93d_generated_image.png" 
                 alt="Manah" 
                 className="h-10 w-auto object-contain mx-auto"
               />
