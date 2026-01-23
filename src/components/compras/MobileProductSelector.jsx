@@ -329,17 +329,25 @@ export default function MobileProductSelector({
               </div>
             </div>
           ) : (
-            <Button 
-              variant="outline"
-              className="w-full h-12 text-sm text-gray-500 dark:text-gray-400"
-              onClick={() => {
-                setEditingItem(null);
-                setEditingIndex(-1);
-                setView('catalog');
-              }}
-            >
-              Cancelar
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline"
+                className="flex-1 h-14 text-base"
+                onClick={() => {
+                  setEditingItem(null);
+                  setEditingIndex(-1);
+                  setView('catalog');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                className="flex-1 h-14 text-base"
+                onClick={handleSaveEdit}
+              >
+                OK
+              </Button>
+            </div>
           )}
         </div>
       </div>
