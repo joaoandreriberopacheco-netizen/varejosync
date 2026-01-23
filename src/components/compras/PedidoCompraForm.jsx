@@ -776,29 +776,58 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
         <div className="flex-shrink-0">
-          {/* Header compacto */}
-          <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-              <X className="w-4 h-4" />
+          {/* Header simples */}
+          <div className="px-4 py-3 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10">
+              <X className="w-5 h-5" />
             </Button>
-            <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-              {pedido?.numero || 'Novo'}
-            </span>
-            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {pedido?.numero || 'Novo'}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {formData.itens.length} {formData.itens.length === 1 ? 'item' : 'itens'}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
+                <span className="text-xs font-medium text-gray-900 dark:text-white">
+                  {formatCurrency(valorTotal)}
+                </span>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-10 w-10">
               <Undo className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-10 w-10">
               <Redo className="w-4 h-4" />
             </Button>
+            {pedido?.id && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                    <Printer className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="dark:bg-gray-800">
+                  <DropdownMenuItem onClick={() => handlePrintReport('pedido')}>
+                    Relatório do Pedido
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handlePrintReport('precificacao')}>
+                    Análise de Precificação
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handlePrintReport('pendencias')}>
+                    Relatório de Pendências
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             {!isLocked && (
-              <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-10 w-10">
                 <Save className="w-4 h-4" />
               </Button>
             )}
           </div>
-
-          {/* Timeline */}
-          <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
         </div>
 
         {/* MOBILE: Tabs com Ícones */}
@@ -1123,13 +1152,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </TabsContent>
           </div>
 
-          {/* Footer fixo no mobile - simplificado */}
-          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-              <div className="text-right">
-                <span className="text-xs text-gray-500 dark:text-gray-400 block">Total</span>
-                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+          {/* Footer fixo no mobile */}
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <ShoppingCart className="w-4 h-4" />
+                <span>{formData.itens.length}</span>
+              </div>
+              <div className="text-right flex-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</div>
               </div>
             </div>
           </div>

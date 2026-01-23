@@ -72,35 +72,14 @@ export default function MobileProductSelector({
       // Update existing
       onUpdateItem(editingIndex, editingItem);
     } else {
-      // Add new (using the special behavior of handleAddItem or we can construct it here and push)
-      // The parent handleAddItem creates a default item from product. 
-      // We need to pass the full editingItem. 
-      // Since parent handleAddItem doesn't support passing full item overrides easily (it generates them),
-      // we can call onAddItem(product) to create it, then immediately update it? 
-      // Or better, let's look at parent handleAddItem again. 
-      // Parent handleAddItem takes (product).
-      // We can use onAddItem(null) then update the last item? Risky.
-      // Let's manually invoke the logic similar to onAddItem but using onUpdateItem mechanism isn't possible for *new*.
-      // Wait, onAddItem in parent:
-      // const handleAddItem = (product = null) => { ... logic to create item from product ... setFormData ... }
-      
-      // I should have refactored handleAddItem to accept a full item, but I didn't.
-      // Workaround: Call onAddItem with a "mock" product that has the values we want? 
-      // Or we can assume onAddItem returns nothing and we can't get the index.
-      // Actually, since I am in a component, I can't easily change parent state "atomically" to add and then update.
-      
-      // Let's adapt: The user wants to "Select Product" -> "Edit" -> "Save".
-      // We can just add the item to the list in parent.
-      // I'll assume onAddItem can handle a raw item object if I pass it, or I modify parent to handle it.
-      // Let's modify parent handleAddItem slightly to accept a full item object if provided.
-      // I'll do that via find_replace in a second. 
-      // For now, let's assume onAddItem(editingItem) works if I change parent.
+      // Add new - pass complete item
       onAddItem(editingItem); 
     }
-    setView('menu');
+    
+    // Reset form but stay in catalog view for quick additions
     setEditingItem(null);
     setEditingIndex(-1);
-    setSearch('');
+    setView('catalog');
   };
 
   const calculateTotal = (item) => {
@@ -295,20 +274,19 @@ export default function MobileProductSelector({
 
         <div className="p-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
           <Button 
-            className="w-full" 
+            className="w-full h-12" 
             onClick={handleSaveEdit}
           >
-            <Save className="w-4 h-4 mr-2" />
-            Confirmar
+            {editingIndex >= 0 ? 'Salvar Alterações' : 'Adicionar ao Carrinho'}
           </Button>
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              className="flex-1"
+              className="flex-1 h-12"
               onClick={() => {
-                setView('menu');
                 setEditingItem(null);
                 setEditingIndex(-1);
+                setView('catalog');
               }}
             >
               Cancelar
@@ -316,12 +294,12 @@ export default function MobileProductSelector({
             {editingIndex >= 0 && (
                <Button 
                   variant="destructive" 
-                  className="flex-1"
+                  className="flex-1 h-12"
                   onClick={() => {
                      onRemoveItem(editingIndex);
-                     setView('menu');
                      setEditingItem(null);
                      setEditingIndex(-1);
+                     setView('catalog');
                   }}
                >
                   <Trash2 className="w-4 h-4 mr-2" />
@@ -348,19 +326,21 @@ export default function MobileProductSelector({
           <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
         </div>
 
-        <div className="flex-1 p-4 overflow-y-auto">
-          <div className="relative sticky top-0 bg-white dark:bg-gray-900 pb-3 z-10">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              placeholder="Buscar produto..."
-              className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              autoFocus
-            />
+        <div className="flex-1 overflow-y-auto">
+          <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                placeholder="Buscar produto..."
+                className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                autoFocus
+              />
+            </div>
           </div>
 
-          <div className="space-y-2 mt-2">
+          <div className="px-4 pb-4 space-y-2">
             {search.trim() === '' ? (
               <div className="text-center py-16 text-gray-400 dark:text-gray-500">
                 <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
@@ -413,10 +393,16 @@ export default function MobileProductSelector({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
-            <span className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</span>
+        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
+          <div className="flex justify-between items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <ShoppingCart className="w-4 h-4" />
+              <span>{totalItems}</span>
+            </div>
+            <div className="text-right flex-1">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
+            </div>
           </div>
         </div>
       </div>
