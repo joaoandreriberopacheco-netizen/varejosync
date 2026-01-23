@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit3, Trash2, MapPin, Download, Upload, Loader2 } from 'lucide-react';
+import { Plus, Edit3, Trash2, MapPin, Download, Upload, Loader2, FileUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function AreasManager() {
@@ -14,6 +14,9 @@ export default function AreasManager() {
   const [loading, setLoading] = useState(true);
   const [editingArea, setEditingArea] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const [formData, setFormData] = useState({
     codigo: '',
     nome: '',
@@ -98,6 +101,31 @@ export default function AreasManager() {
     link.click();
   };
 
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { data } = await base44.functions.invoke('importarAreas', { file_url });
+      
+      setImportResult(data);
+      loadAreas();
+      toast({ 
+        title: 'Importação concluída!',
+        description: `${data.criadas} criadas, ${data.atualizadas} atualizadas, ${data.produtosAtualizados} produtos atualizados`
+      });
+    } catch (error) {
+      toast({ title: 'Erro na importação', description: error.message, variant: 'destructive' });
+    }
+    
+    setImporting(false);
+    e.target.value = '';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -111,6 +139,25 @@ export default function AreasManager() {
           <Button variant="outline" onClick={handleExport} className="gap-2">
             <Download className="w-4 h-4" /> Exportar
           </Button>
+          <div className="relative">
+            <input
+              type="file"
+              id="import-areas"
+              className="hidden"
+              accept=".csv,.txt"
+              onChange={handleImport}
+              disabled={importing}
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => document.getElementById('import-areas').click()}
+              disabled={importing}
+              className="gap-2"
+            >
+              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+              Importar CSV
+            </Button>
+          </div>
           <Button onClick={() => setShowDialog(true)} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
             <Plus className="w-4 h-4" /> Nova Área
           </Button>
@@ -160,6 +207,17 @@ export default function AreasManager() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {importResult && importResult.erros > 0 && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <h4 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Avisos de Importação</h4>
+          <ul className="text-sm text-yellow-700 dark:text-yellow-400 list-disc list-inside">
+            {importResult.detalhes?.erros?.map((erro, i) => (
+              <li key={i}>{erro}</li>
+            ))}
+          </ul>
         </div>
       )}
 
