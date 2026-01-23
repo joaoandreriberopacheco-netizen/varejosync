@@ -447,6 +447,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   const isLocked = pedido && (
+    pedido.status === 'Enviado' ||
+    pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
     pedido.status_aprovacao_financeira === 'Aprovado' || 
     pedido.status_aprovacao_financeira === 'Rejeitado'
   );
@@ -1244,9 +1246,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
           <X className="w-4 h-4" />
         </Button>
-        <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-          {pedido?.numero || 'Novo Pedido'}
-        </span>
+        <div className="flex-1 flex items-center justify-between min-w-0">
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            {pedido?.numero || 'Novo Pedido'}
+          </span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-4">
+            {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
+          </span>
+        </div>
         <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8" title="Desfazer">
           <Undo className="w-4 h-4" />
         </Button>
@@ -1993,12 +2000,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         </Tabs>
       </div>
 
-      {/* Footer simples */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex-shrink-0">
-        <div className="flex items-center justify-start">
-          <span className="text-sm text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-        </div>
-      </div>
+
       
       <OperacaoAuthenticator 
         isOpen={isAuthOpen}
