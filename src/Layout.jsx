@@ -49,6 +49,7 @@ export default function Layout({ children, currentPageName }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const [isHovering, setIsHovering] = useState(false);
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
@@ -207,7 +208,7 @@ export default function Layout({ children, currentPageName }) {
       }
     });
     return items;
-  }, []);
+  }, [menuItems]);
 
   const filteredSearchItems = React.useMemo(() => {
     if (!searchQuery) return [];
@@ -229,17 +230,19 @@ export default function Layout({ children, currentPageName }) {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = React.useCallback(() => {
     if (!isMobile) {
+      setIsHovering(true);
       setIsOpen(true);
     }
-  };
+  }, [isMobile]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = React.useCallback(() => {
     if (!isMobile) {
+      setIsHovering(false);
       setIsOpen(false);
     }
-  };
+  }, [isMobile]);
 
   const handleMobileMenuToggle = () => {
     setIsOpen(!isOpen);
@@ -309,11 +312,12 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <aside
-          className={`fixed left-0 top-0 h-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 transition-all duration-300 z-50 flex flex-col ${
+          className={`fixed left-0 top-0 h-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 transition-[width,transform] duration-200 ease-out z-50 flex flex-col ${
             isMobile 
               ? (isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full') 
               : (isOpen ? 'w-64' : 'w-16')
           } ${isMobile && !isOpen ? 'overflow-hidden' : ''}`}
+          style={{ willChange: isMobile ? 'transform' : 'width' }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
@@ -532,11 +536,14 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </aside>
 
-        <div className={`flex-1 transition-all duration-300 ${
-          isMobile 
-            ? 'ml-0 pt-12' 
-            : (isOpen ? 'ml-64' : 'ml-16')
-        }`}>
+        <div 
+          className={`flex-1 transition-[margin] duration-200 ease-out ${
+            isMobile 
+              ? 'ml-0 pt-12' 
+              : (isOpen ? 'ml-64' : 'ml-16')
+          }`}
+          style={{ willChange: 'margin' }}
+        >
           <div className="p-4 md:p-6 overflow-x-hidden">
             {children}
           </div>

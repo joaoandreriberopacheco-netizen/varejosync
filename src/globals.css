@@ -136,10 +136,15 @@ textarea,
 [role="button"],
 [role="menuitem"],
 [role="option"] {
-  transition: all 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out, transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
 }
 
 /* Hover suave em cards */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
+}
+
 .card-hover:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
