@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Ship,
   MapPin,
-  ClipboardCheck
+  ClipboardCheck,
+  Printer
 } from 'lucide-react';
 import { format } from 'date-fns';
 import InformarEmbarque from './InformarEmbarque';
@@ -34,6 +35,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
   const [supermanifesto, setSupermanifesto] = useState(null);
   const [showInformarEmbarque, setShowInformarEmbarque] = useState(false);
   const [showConferencia, setShowConferencia] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     if (pedido && isOpen) {
@@ -95,15 +97,51 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
     return statusMap[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const handleGerarPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      const response = await base44.functions.invoke('gerarRelatorioPedido', {
+        pedido_id: pedido.id
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `pedido_${pedido.numero || 'compra'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar relatório');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="bg-white p-6 z-50 grid w-full !max-w-[95vw] !w-[95vw] gap-4 border shadow-lg duration-200 sm:rounded-lg dark:bg-gray-900 max-h-[95vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <ShoppingCart className="w-6 h-6 text-teal-600" />
-              Detalhes do Pedido de Compra
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <ShoppingCart className="w-6 h-6 text-teal-600" />
+                Detalhes do Pedido de Compra
+              </DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGerarPDF}
+                disabled={isGeneratingPDF}
+                className="gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                {isGeneratingPDF ? 'Gerando...' : 'Imprimir'}
+              </Button>
+            </div>
           </DialogHeader>
 
           {/* Cabeçalho Compacto */}
