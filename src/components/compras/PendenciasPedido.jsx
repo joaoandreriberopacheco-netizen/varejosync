@@ -62,9 +62,15 @@ export default function PendenciasPedido({ pedido }) {
         data_resolucao: new Date().toISOString()
       });
 
-      const divRestantes = divergencias.filter(d => 
-        d.id !== selectedDiv.id && d.status !== 'Resolvida'
-      );
+      // Recarregar todas as divergências após salvar
+      await loadDivergencias();
+      
+      // Verificar se todas foram resolvidas
+      const todasDivergencias = await base44.entities.DivergenciaCompra.filter({
+        pedido_compra_id: pedido.id
+      });
+      
+      const divRestantes = todasDivergencias.filter(d => d.status !== 'Resolvida');
 
       if (divRestantes.length === 0) {
         await base44.entities.PedidoCompra.update(pedido.id, {
@@ -72,15 +78,15 @@ export default function PendenciasPedido({ pedido }) {
           tem_divergencias: false,
           data_conclusao: new Date().toISOString()
         });
+        toast({ title: 'Todas as pendências resolvidas! Pedido concluído.' });
       } else {
         await base44.entities.PedidoCompra.update(pedido.id, {
-          tem_divergencias: divRestantes.length > 0
+          tem_divergencias: true
         });
+        toast({ title: 'Divergência resolvida com sucesso!' });
       }
 
-      toast({ title: 'Divergência resolvida com sucesso!' });
       setShowDialog(false);
-      loadDivergencias();
     } catch (error) {
       toast({ title: 'Erro ao resolver divergência', variant: 'destructive' });
     }
