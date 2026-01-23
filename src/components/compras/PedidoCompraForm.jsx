@@ -9,12 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import MobileProductSelector from './MobileProductSelector';
-
+import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
@@ -62,6 +62,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isReopenAuthOpen, setIsReopenAuthOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -116,7 +118,33 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   }, [formData.itens, formData.valor_frete, formData.valor_desconto]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      saveToHistory(newData);
+      return newData;
+    });
+  };
+
+  const saveToHistory = (newData) => {
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      return [...newHistory, newData];
+    });
+    setHistoryIndex(prev => prev + 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(prev => prev - 1);
+      setFormData(history[historyIndex - 1]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(prev => prev + 1);
+      setFormData(history[historyIndex + 1]);
+    }
   };
   
   const handleFornecedorChange = (id) => {
@@ -179,7 +207,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     item.subtotal = qty * cost;
     item.total = custoFinalUnitario * qty;
 
-    setFormData(prev => ({ ...prev, itens: newItems }));
+    const newData = { ...formData, itens: newItems };
+    saveToHistory(newData);
+    setFormData(newData);
   };
 
   const handleAddItem = (product = null) => {
@@ -217,10 +247,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         newItem = calculateItemTotals(newItem);
     }
 
-    setFormData(prev => ({
-      ...prev,
-      itens: [...prev.itens, newItem],
-    }));
+    const newData = {
+      ...formData,
+      itens: [...formData.itens, newItem],
+    };
+    saveToHistory(newData);
+    setFormData(newData);
   };
 
   const handleExportModel = async () => {
@@ -352,7 +384,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const handleRemoveItem = (index) => {
     const newItems = [...formData.itens];
     newItems.splice(index, 1);
-    setFormData(prev => ({ ...prev, itens: newItems }));
+    const newData = { ...formData, itens: newItems };
+    saveToHistory(newData);
+    setFormData(newData);
   };
 
   const handleInitiateSave = () => {
@@ -699,14 +733,27 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   if (isMobile) {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
-        <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10">
-            <X className="w-5 h-5" />
+        <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
+            <X className="w-4 h-4" />
           </Button>
-          <h1 className="text-lg font-medium text-gray-800 dark:text-gray-200 flex-1">
-            {pedido?.id ? pedido.numero : 'Novo Pedido de Compra'}
-          </h1>
+          <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
+            {pedido?.numero || 'Novo'}
+          </span>
+          <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-9 w-9">
+            <Undo className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-9 w-9">
+            <Redo className="w-4 h-4" />
+          </Button>
+          {!isLocked && (
+            <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-9 w-9">
+              <Save className="w-4 h-4" />
+            </Button>
+          )}
         </div>
+        
+        <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
 
         {/* MOBILE: Tabs com Ícones */}
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
@@ -1076,38 +1123,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </TabsContent>
           </div>
 
-          {/* Footer fixo no mobile */}
-          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
+          {/* Footer fixo no mobile - simplificado */}
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
               <div className="text-right">
                 <span className="text-xs text-gray-500 dark:text-gray-400 block">Total</span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
               </div>
             </div>
-            {isLocked ? (
-              canReopen ? (
-                <Button 
-                  onClick={() => setIsReopenAuthOpen(true)} 
-                  variant="outline"
-                  className="w-full border-0 shadow-sm h-12"
-                >
-                  Reabrir para Edição (Admin)
-                </Button>
-              ) : (
-                <div className="text-center py-3 text-sm text-gray-500 dark:text-gray-400">
-                  Pedido bloqueado - {pedido.status_aprovacao_financeira}
-                </div>
-              )
-            ) : (
-              <Button 
-                onClick={handleInitiateSave} 
-                disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                className="w-full bg-gray-700 hover:bg-gray-600 h-12"
-              >
-                {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
-              </Button>
-            )}
           </div>
         </Tabs>
 
@@ -1142,14 +1166,62 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   return (
     <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-2xl">
-      <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-4">
-        <DialogTitle className="text-lg sm:text-xl font-normal text-gray-800 dark:text-gray-200">
-          {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Compra'}
-        </DialogTitle>
-      </DialogHeader>
+      <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
+          <X className="w-4 h-4" />
+        </Button>
+        <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
+          {pedido?.numero || 'Novo Pedido'}
+        </span>
+        <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-9 w-9">
+          <Undo className="w-4 h-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-9 w-9">
+          <Redo className="w-4 h-4" />
+        </Button>
+        {!isLocked && (
+          <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-9 w-9">
+            <Save className="w-4 h-4" />
+          </Button>
+        )}
+        {canReopen && isLocked && (
+          <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-9 text-xs">
+            Reabrir
+          </Button>
+        )}
+      </div>
+
+      <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
 
       {/* DESKTOP: Tabs Originais */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
+            <X className="w-4 h-4" />
+          </Button>
+          <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
+            {pedido?.numero || 'Novo Pedido'}
+          </span>
+          <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-9 w-9">
+            <Undo className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-9 w-9">
+            <Redo className="w-4 h-4" />
+          </Button>
+          {!isLocked && (
+            <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-9 w-9">
+              <Save className="w-4 h-4" />
+            </Button>
+          )}
+          {canReopen && isLocked && (
+            <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-9 text-xs">
+              Reabrir
+            </Button>
+          )}
+        </div>
+
+        <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 sm:px-6">
             <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
@@ -1920,41 +1992,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         </Tabs>
       </div>
 
-      <div className="p-4 space-y-3 border-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div className="p-3 border-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">{formData.itens.length} item(s)</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
             <div className="text-right">
-              <span className="text-gray-600 dark:text-gray-400 text-xs block">Total</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 block">Total</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
             </div>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1 border-0 shadow-sm">
-              Cancelar
-            </Button>
-            {isLocked ? (
-              canReopen ? (
-                <Button 
-                  onClick={() => setIsReopenAuthOpen(true)} 
-                  variant="outline"
-                  className="flex-1 border-0 shadow-sm"
-                >
-                  Reabrir para Edição (Admin)
-                </Button>
-              ) : (
-                <div className="flex-1 text-center py-3 text-sm text-gray-500 dark:text-gray-400">
-                  Bloqueado - {pedido.status_aprovacao_financeira}
-                </div>
-              )
-            ) : (
-              <Button 
-                onClick={handleInitiateSave} 
-                disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} 
-                className="flex-1 bg-gray-700 hover:bg-gray-600 shadow-sm"
-              >
-                {isSaving ? 'Salvando...' : 'Autenticar e Salvar'}
-              </Button>
-            )}
           </div>
         </div>
       
