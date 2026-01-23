@@ -4,22 +4,22 @@ import { Check } from 'lucide-react';
 export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
   const stages = [
     { key: 'Rascunho', label: 'Rascunho' },
-    { key: 'Enviado', label: 'Enviado' },
     { key: 'Aprovado', label: 'Aprovado' },
     { key: 'Despachado', label: 'Despachado' },
-    { key: 'Em Trânsito', label: 'Em Trânsito' },
+    { key: 'Entregue', label: 'Entregue' },
+    { key: 'Pendência', label: 'Pendência' },
     { key: 'Concluído', label: 'Concluído' }
   ];
 
   const getStageIndex = (status, aprovacao) => {
     if (status === 'Cancelado') return -1;
-    if (status === 'Rascunho') return 0;
-    if (status === 'Enviado') return 1;
-    if (aprovacao === 'Aprovado') return 2;
-    if (status === 'Despachado') return 3;
-    if (status === 'Em Trânsito') return 4;
-    if (status === 'Concluído' || status === 'Pendências') return 5;
-    return 1;
+    if (status === 'Rascunho' || status === 'Enviado') return 0;
+    if (aprovacao === 'Aprovado') return 1;
+    if (status === 'Despachado') return 2;
+    if (status === 'Em Trânsito' || status === 'Aguardando Recepção') return 3;
+    if (status === 'Pendências') return 4;
+    if (status === 'Concluído') return 5;
+    return 0;
   };
 
   const currentIndex = getStageIndex(currentStatus, aprovacaoFinanceira);
