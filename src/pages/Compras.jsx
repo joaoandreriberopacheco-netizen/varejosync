@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import PedidoCompraForm from '../components/compras/PedidoCompraForm';
 import SugestaoCompra from '../components/compras/SugestaoCompra';
 import CotacoesManager from '../components/compras/CotacoesManager';
-import DetalhesPedidoCompra from '../components/compras/DetalhesPedidoCompra';
+
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
 import DetalhesSupermanifesto from '../components/compras/DetalhesSupermanifesto';
 
@@ -39,8 +39,6 @@ const PedidosCompraTab = () => {
   const [statusFiltro, setStatusFiltro] = useState('todos');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
-  const [showDetalhes, setShowDetalhes] = useState(false);
-  const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
   const [showImportador, setShowImportador] = useState(false);
 
   useEffect(() => {
@@ -67,8 +65,8 @@ const PedidosCompraTab = () => {
   };
 
   const handleVerDetalhes = (pedido) => {
-    setPedidoDetalhes(pedido);
-    setShowDetalhes(true);
+    setPedidoSelecionado(pedido);
+    setIsFormOpen(true);
   };
 
   const handleSave = async (pedidoData) => {
@@ -355,15 +353,6 @@ const PedidosCompraTab = () => {
           />
         </Dialog>
       )}
-
-      <DetalhesPedidoCompra
-        pedido={pedidoDetalhes}
-        isOpen={showDetalhes}
-        onClose={() => {
-          setShowDetalhes(false);
-          setPedidoDetalhes(null);
-        }}
-      />
 
       <ImportadorNotaFiscal 
         isOpen={showImportador}
