@@ -1195,33 +1195,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
       {/* DESKTOP: Tabs Originais */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
-            <X className="w-4 h-4" />
-          </Button>
-          <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-            {pedido?.numero || 'Novo Pedido'}
-          </span>
-          <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-9 w-9">
-            <Undo className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-9 w-9">
-            <Redo className="w-4 h-4" />
-          </Button>
-          {!isLocked && (
-            <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-9 w-9">
-              <Save className="w-4 h-4" />
-            </Button>
-          )}
-          {canReopen && isLocked && (
-            <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-9 text-xs">
-              Reabrir
-            </Button>
-          )}
-        </div>
-
-        <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
-
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 sm:px-6">
             <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm flex-1 sm:flex-none">
@@ -1929,6 +1902,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       checked={formData.nfe_emitida || false} 
                       onChange={e => handleChange('nfe_emitida', e.target.checked)}
                       className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      disabled={!isLogisticaEnabled}
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Nota Fiscal Emitida</span>
                   </label>
@@ -1938,6 +1912,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       checked={formData.manifesto_conferido || false} 
                       onChange={e => handleChange('manifesto_conferido', e.target.checked)}
                       className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      disabled={!isLogisticaEnabled}
                     />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Manifesto Conferido</span>
                   </label>
@@ -1954,6 +1929,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm" 
                       value={formData.qtd_volumes} 
                       onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
+                      disabled={!isLogisticaEnabled}
                     />
                   </div>
                   <div>
@@ -1961,6 +1937,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     <Select 
                       value={formData.tipo_volume} 
                       onValueChange={v => handleChange('tipo_volume', v)}
+                      disabled={!isLogisticaEnabled}
                     >
                       <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm">
                         <SelectValue />
@@ -1982,6 +1959,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm" 
                       value={formData.peso_total_kg} 
                       onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
+                      disabled={!isLogisticaEnabled}
                     />
                   </div>
                 </div>
