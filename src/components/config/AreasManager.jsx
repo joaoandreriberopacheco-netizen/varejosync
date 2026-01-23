@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit3, Trash2, MapPin, Download, Upload, Loader2, FileUp, FileText } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit3, Trash2, MapPin, Download, Upload, Loader2, FileUp, FileText, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function AreasManager() {
@@ -17,6 +18,7 @@ export default function AreasManager() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
+  const [sortBy, setSortBy] = useState('nome');
   const [formData, setFormData] = useState({
     codigo: '',
     nome: '',
@@ -33,12 +35,21 @@ export default function AreasManager() {
     setLoading(true);
     try {
       const data = await base44.entities.Area.list();
-      setAreas(data.sort((a, b) => a.nome.localeCompare(b.nome)));
+      setAreas(data);
     } catch (error) {
       toast({ title: 'Erro ao carregar áreas', description: error.message, variant: 'destructive' });
     }
     setLoading(false);
   };
+
+  const sortedAreas = React.useMemo(() => {
+    const sorted = [...areas];
+    if (sortBy === 'nome') {
+      return sorted.sort((a, b) => a.nome.localeCompare(b.nome));
+    } else {
+      return sorted.sort((a, b) => a.codigo.localeCompare(b.codigo));
+    }
+  }, [areas, sortBy]);
 
   const handleSave = async () => {
     try {
@@ -141,14 +152,26 @@ export default function AreasManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
             <MapPin className="w-5 h-5" /> Áreas / Setores
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie as áreas da loja</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="w-4 h-4 text-gray-500" />
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-36 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nome">Por Nome</SelectItem>
+                <SelectItem value="codigo">Por Código</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Button variant="outline" onClick={handleDownloadTemplate} className="gap-2 border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20">
             <FileText className="w-4 h-4" /> Template CSV
           </Button>
@@ -185,40 +208,33 @@ export default function AreasManager() {
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {areas.map(area => (
+        <div className="space-y-2">
+          {sortedAreas.map(area => (
             <div 
               key={area.id} 
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm"
+              className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-indigo-600 text-white font-bold text-sm">
+                  {area.codigo}
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-200">{area.nome}</h4>
+                  {area.descricao && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{area.descricao}</p>
+                  )}
+                </div>
                 <div className="flex items-center gap-3">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center bg-indigo-600 text-white font-bold"
-                  >
-                    {area.codigo}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">{area.nome}</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{area.codigo}</p>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => handleEdit(area)} className="h-8 w-8">
-                    <Edit3 className="w-4 h-4 text-gray-500" />
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${area.ativo ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500'}`}>
+                    {area.ativo ? 'Ativo' : 'Inativo'}
+                  </span>
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(area)} className="h-9 w-9">
+                    <Edit3 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(area.id)} className="h-8 w-8">
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(area.id)} className="h-9 w-9">
+                    <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
                   </Button>
                 </div>
-              </div>
-              {area.descricao && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{area.descricao}</p>
-              )}
-              <div className="flex items-center gap-2 text-xs">
-                <span className={`px-2 py-1 rounded-full ${area.ativo ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500'}`}>
-                  {area.ativo ? 'Ativo' : 'Inativo'}
-                </span>
               </div>
             </div>
           ))}
