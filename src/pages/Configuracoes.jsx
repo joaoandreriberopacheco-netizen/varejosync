@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Percent, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Percent, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin } from 'lucide-react';
 import TabelasPrecoManager from '../components/config/TabelasPrecoManager';
 import ConfiguracoesVendaManager from '../components/config/ConfiguracoesVendaManager';
 import PoliticasDescontoManager from '../components/config/PoliticasDescontoManager';
+import AreasManager from '../components/config/AreasManager';
 import ContasFinanceirasManager from '../components/config/ContasFinanceirasManager';
 import CategoriasFinanceirasManager from '../components/config/CategoriasFinanceirasManager';
 import ConfigEstoqueManager from '../components/config/ConfigEstoqueManager';
@@ -97,7 +98,20 @@ export default function ConfiguracoesPage() {
           </TabsContent>
 
           <TabsContent value="operacoes" className="mt-0">
-            <ConfigEstoqueManager />
+            <Tabs defaultValue="estoque" className="w-full">
+              <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex overflow-x-auto overflow-y-hidden no-scrollbar" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <TabsTrigger value="estoque" className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2">
+                  <Package className="w-4 h-4" />
+                  <span className="hidden data-[state=active]:inline md:inline">Estoque</span>
+                </TabsTrigger>
+                <TabsTrigger value="areas" className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  <span className="hidden data-[state=active]:inline md:inline">Áreas/Setores</span>
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="estoque"><ConfigEstoqueManager /></TabsContent>
+              <TabsContent value="areas"><AreasManager /></TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="financeiro" className="mt-0">
