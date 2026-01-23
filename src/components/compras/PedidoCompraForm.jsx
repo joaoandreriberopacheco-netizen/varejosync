@@ -782,8 +782,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
           {/* Timeline */}
           <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+        </div>
 
-          {/* MOBILE: Tabs com Ícones */}
+        {/* MOBILE: Tabs com Ícones */}
+        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
             <TabsTrigger 
               value="dados-gerais" 
@@ -823,10 +825,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <span className="text-[9px] text-gray-600 dark:text-gray-400">Pend</span>
             </TabsTrigger>
           </TabsList>
-        </div>
-
-        {/* MOBILE: Tabs com Ícones */}
-        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
 
           <div className="flex-1 overflow-y-auto">
             <TabsContent value="dados-gerais" className="mt-0 px-3 py-6 space-y-6 border-0">
