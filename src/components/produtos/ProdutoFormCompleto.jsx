@@ -34,7 +34,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     unidade_principal: 'UN', unidades_por_pacote: 1, unidades_alternativas: [],
     estoque_atual: 0, estoque_minimo: 0, estoque_ideal: 0, estoque_maximo: 0, estoque_avariado: 0,
     tempo_reposicao_dias: 0, fornecedor_padrao_id: '', fornecedor_padrao_codigo: '',
-    controla_serial: false, controla_lote_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
+    controla_serial: false, controla_lote: false, controla_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
   });
 
   const [custos, setCustos] = useState([]);
@@ -986,12 +986,21 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                 </div>
                 <div className="flex items-center gap-3">
                   <Checkbox
-                    checked={formData.controla_lote_validade}
-                    onCheckedChange={v => handleChange('controla_lote_validade', v)}
+                    checked={formData.controla_lote}
+                    onCheckedChange={v => handleChange('controla_lote', v)}
                     id="lote"
                     className="dark:border-gray-500 h-5 w-5"
                   />
-                  <Label htmlFor="lote" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Lote e Validade</Label>
+                  <Label htmlFor="lote" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Lote</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={formData.controla_validade}
+                    onCheckedChange={v => handleChange('controla_validade', v)}
+                    id="validade"
+                    className="dark:border-gray-500 h-5 w-5"
+                  />
+                  <Label htmlFor="validade" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Controla Validade</Label>
                 </div>
               </div>
             </div>
