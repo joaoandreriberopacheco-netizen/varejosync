@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 
 export default function PendenciasPedido({ pedido }) {
   const [divergencias, setDivergencias] = useState([]);
+  const [conferencia, setConferencia] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDiv, setSelectedDiv] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
@@ -38,6 +39,13 @@ export default function PendenciasPedido({ pedido }) {
         pedido_compra_id: pedido.id
       });
       setDivergencias(lista);
+
+      // Verificar se há conferência finalizada
+      const conferencias = await base44.entities.ConferenciaCompra.filter({
+        pedido_compra_id: pedido.id,
+        status: 'Finalizada'
+      });
+      setConferencia(conferencias.length > 0 ? conferencias[0] : null);
     } catch (error) {
       console.error('Erro ao carregar divergências:', error);
     }
@@ -65,30 +73,24 @@ export default function PendenciasPedido({ pedido }) {
       // Recarregar todas as divergências após salvar
       await loadDivergencias();
       
-      // Verificar se todas foram resolvidas
-      const todasDivergencias = await base44.entities.DivergenciaCompra.filter({
-        pedido_compra_id: pedido.id
-      });
-      
-      const divRestantes = todasDivergencias.filter(d => d.status !== 'Resolvida');
-
-      if (divRestantes.length === 0) {
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          status: 'Concluído',
-          tem_divergencias: false,
-          data_conclusao: new Date().toISOString()
-        });
-        toast({ title: 'Todas as pendências resolvidas! Pedido concluído.' });
-      } else {
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          tem_divergencias: true
-        });
-        toast({ title: 'Divergência resolvida com sucesso!' });
-      }
-
+      toast({ title: 'Divergência resolvida com sucesso!' });
       setShowDialog(false);
     } catch (error) {
       toast({ title: 'Erro ao resolver divergência', variant: 'destructive' });
+    }
+  };
+
+  const handleConcluirPedido = async () => {
+    try {
+      await base44.entities.PedidoCompra.update(pedido.id, {
+        status: 'Concluído',
+        tem_divergencias: false,
+        data_conclusao: new Date().toISOString()
+      });
+      toast({ title: 'Pedido concluído com sucesso!' });
+      window.location.reload();
+    } catch (error) {
+      toast({ title: 'Erro ao concluir pedido', variant: 'destructive' });
     }
   };
 
@@ -115,13 +117,43 @@ export default function PendenciasPedido({ pedido }) {
 
   if (loading) return <div>Carregando...</div>;
 
-  if (divergencias.length === 0) {
+  // Verifica se há conferência finalizada
+  if (!conferencia) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-gray-500">
+      <Card className="border-0 shadow-sm">
+        <CardContent className="py-12 text-center text-gray-500 dark:text-gray-400">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <FileText className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="font-semibold text-lg text-gray-700 dark:text-gray-300">Aguardando Resultado da Conferência</p>
+          <p className="text-sm mt-1">A conferência ainda não foi finalizada</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Conferência finalizada mas sem divergências
+  const pendentesCount = divergencias.filter(d => d.status !== 'Resolvida').length;
+  const todasResolvidas = divergencias.length > 0 && pendentesCount === 0;
+  const semDivergencias = divergencias.length === 0;
+
+  if (semDivergencias) {
+    return (
+      <Card className="border-0 shadow-sm">
+        <CardContent className="py-12 text-center">
           <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-500" />
-          <p className="font-semibold text-lg">Nenhuma Pendência</p>
-          <p className="text-sm">Todos os itens foram conferidos sem divergências</p>
+          <p className="font-semibold text-lg text-gray-900 dark:text-gray-100">Nenhuma Pendência</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Todos os itens foram conferidos sem divergências</p>
+          
+          {pedido.status !== 'Concluído' && (
+            <Button 
+              onClick={handleConcluirPedido}
+              className="bg-green-600 hover:bg-green-700 shadow-lg"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Concluir Pedido
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -129,11 +161,22 @@ export default function PendenciasPedido({ pedido }) {
 
   return (
     <>
-      <Card>
+      <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
-            Pendências de Conferência
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-600" />
+              Pendências de Conferência
+            </div>
+            {todasResolvidas && pedido.status !== 'Concluído' && (
+              <Button 
+                onClick={handleConcluirPedido}
+                className="bg-green-600 hover:bg-green-700 shadow-lg"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Concluir Pedido
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
