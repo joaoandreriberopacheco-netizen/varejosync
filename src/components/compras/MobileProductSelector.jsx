@@ -480,23 +480,35 @@ export default function MobileProductSelector({
             {items.map((item, index) => (
               <div 
                 key={index} 
-                onClick={() => handleEditItem(index)}
-                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
+                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0 cursor-pointer active:scale-[0.98] transition-transform" onClick={() => handleEditItem(index)}>
                     <div className="font-medium text-gray-800 dark:text-gray-100 line-clamp-1">{item.produto_nome || "Produto"}</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
                     </div>
                   </div>
-                  <div className="text-right ml-3">
-                    <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
-                    {item.valor_desconto_item > 0 && (
-                      <div className="text-xs text-green-600 dark:text-green-500">
-                        -Desc: {formatCurrency(item.valor_desconto_item)}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="text-right">
+                      <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
+                      {item.valor_desconto_item > 0 && (
+                        <div className="text-xs text-green-600 dark:text-green-500">
+                          -Desc: {formatCurrency(item.valor_desconto_item)}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveItem(index);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
