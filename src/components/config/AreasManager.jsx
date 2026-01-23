@@ -21,8 +21,6 @@ export default function AreasManager() {
     codigo: '',
     nome: '',
     descricao: '',
-    cor: '#3b82f6',
-    ordem: 0,
     ativo: true
   });
   const { toast } = useToast();
@@ -35,7 +33,7 @@ export default function AreasManager() {
     setLoading(true);
     try {
       const data = await base44.entities.Area.list();
-      setAreas(data.sort((a, b) => (a.ordem || 0) - (b.ordem || 0)));
+      setAreas(data.sort((a, b) => a.nome.localeCompare(b.nome)));
     } catch (error) {
       toast({ title: 'Erro ao carregar áreas', description: error.message, variant: 'destructive' });
     }
@@ -82,16 +80,14 @@ export default function AreasManager() {
       codigo: '',
       nome: '',
       descricao: '',
-      cor: '#3b82f6',
-      ordem: 0,
       ativo: true
     });
   };
 
   const handleExport = () => {
     const csv = [
-      ['Código', 'Nome', 'Descrição', 'Cor', 'Ordem', 'Ativo'],
-      ...areas.map(a => [a.codigo, a.nome, a.descricao || '', a.cor || '#3b82f6', a.ordem || 0, a.ativo ? 'Sim' : 'Não'])
+      ['Código', 'Nome', 'Descrição', 'Ativo'],
+      ...areas.map(a => [a.codigo, a.nome, a.descricao || '', a.ativo ? 'Sim' : 'Não'])
     ].map(row => row.join(';')).join('\n');
 
     const BOM = '\uFEFF';
@@ -104,10 +100,10 @@ export default function AreasManager() {
 
   const handleDownloadTemplate = () => {
     const template = [
-      ['Código', 'Nome', 'Descrição', 'Cor', 'Ordem', 'Ativo'],
-      ['A1', 'SETOR HIDRÁULICA', 'TORNEIRAS E METAIS', '#3b82f6', '1', 'Sim'],
-      ['A2', 'SETOR ELÉTRICA', 'CABOS E DISJUNTORES', '#10b981', '2', 'Sim'],
-      ['A3', 'SETOR CONSTRUÇÃO', 'CIMENTO E ARGAMASSA', '#f59e0b', '3', 'Sim']
+      ['Código', 'Nome', 'Descrição', 'Ativo'],
+      ['A1', 'HIDRÁULICA', 'Produtos de hidráulica', 'Sim'],
+      ['A2', 'ELÉTRICA', 'Produtos de elétrica', 'Sim'],
+      ['A3', 'CONSTRUÇÃO', 'Materiais de construção', 'Sim']
     ].map(row => row.join(';')).join('\n');
 
     const BOM = '\uFEFF';
@@ -198,14 +194,13 @@ export default function AreasManager() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-                    style={{ backgroundColor: area.cor || '#3b82f6' }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center bg-indigo-600 text-white font-bold"
                   >
                     {area.codigo}
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-800 dark:text-gray-200">{area.nome}</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Ordem: {area.ordem || 0}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{area.codigo}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -249,25 +244,14 @@ export default function AreasManager() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="dark:text-gray-300">Código *</Label>
-                <Input
-                  value={formData.codigo}
-                  onChange={e => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
-                  placeholder="A1"
-                  className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                />
-              </div>
-              <div>
-                <Label className="dark:text-gray-300">Ordem</Label>
-                <Input
-                  type="number"
-                  value={formData.ordem}
-                  onChange={e => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })}
-                  className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                />
-              </div>
+            <div>
+              <Label className="dark:text-gray-300">Código *</Label>
+              <Input
+                value={formData.codigo}
+                onChange={e => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
+                placeholder="A1"
+                className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              />
             </div>
 
             <div>
@@ -275,7 +259,7 @@ export default function AreasManager() {
               <Input
                 value={formData.nome}
                 onChange={e => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="Setor de Construção"
+                placeholder="Hidráulica"
                 className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               />
             </div>
@@ -288,24 +272,6 @@ export default function AreasManager() {
                 placeholder="Descrição opcional..."
                 className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               />
-            </div>
-
-            <div>
-              <Label className="dark:text-gray-300">Cor</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="color"
-                  value={formData.cor}
-                  onChange={e => setFormData({ ...formData, cor: e.target.value })}
-                  className="w-16 h-10 dark:bg-gray-800 dark:border-gray-700"
-                />
-                <Input
-                  value={formData.cor}
-                  onChange={e => setFormData({ ...formData, cor: e.target.value })}
-                  placeholder="#3b82f6"
-                  className="flex-1 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                />
-              </div>
             </div>
 
             <div className="flex items-center gap-2">
