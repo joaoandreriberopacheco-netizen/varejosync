@@ -20,6 +20,7 @@ export default function MobileProductSelector({
   const [editingIndex, setEditingIndex] = useState(-1);
   const [quantidadeInput, setQuantidadeInput] = useState('');
   const [custoInput, setCustoInput] = useState('');
+  const quantidadeInputRef = React.useRef(null);
   const custoInputRef = React.useRef(null);
 
   const filteredProducts = useMemo(() => {
@@ -76,10 +77,17 @@ export default function MobileProductSelector({
       onAddItem(editingItem); 
     }
     
-    // Reset form but stay in catalog view for quick additions
+    // Reset form and return to catalog for quick next product
     setEditingItem(null);
     setEditingIndex(-1);
+    setSearch('');
     setView('catalog');
+    
+    // Small delay to ensure state is updated before next action
+    setTimeout(() => {
+      const searchInput = document.querySelector('[placeholder="Buscar produto..."]');
+      searchInput?.focus();
+    }, 100);
   };
 
   const calculateTotal = (item) => {
@@ -159,15 +167,25 @@ export default function MobileProductSelector({
     );
   }
 
+  // Auto-focus ao entrar na tela de edição
+  useEffect(() => {
+    if (view === 'edit' && quantidadeInputRef.current) {
+      setTimeout(() => {
+        quantidadeInputRef.current?.focus();
+        quantidadeInputRef.current?.select();
+      }, 100);
+    }
+  }, [view]);
+
   if (view === 'edit' && editingItem) {
     const total = calculateTotal(editingItem);
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
         <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <Button variant="ghost" size="icon" onClick={() => {
-            setView('menu');
             setEditingItem(null);
             setEditingIndex(-1);
+            setView('catalog');
           }} className="h-10 w-10">
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -190,33 +208,35 @@ export default function MobileProductSelector({
                  <Minus className="w-5 h-5" />
                 </Button>
                 <Input 
-                  type="text"
-                  inputMode="decimal"
-                  className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
-                  value={quantidadeInput}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (/^[\d.,]*$/.test(val)) {
-                      setQuantidadeInput(val);
-                      const numVal = parseFloat(val.replace(',', '.'));
-                      if (!isNaN(numVal)) {
-                        setEditingItem(prev => ({ ...prev, quantidade: numVal }));
-                      }
-                    }
-                  }}
-                  onFocus={e => e.target.select()}
-                  onBlur={() => {
-                    const num = parseFloat(quantidadeInput.replace(',', '.')) || 0;
-                    setQuantidadeInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                    setEditingItem(prev => ({ ...prev, quantidade: num }));
-                  }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      custoInputRef.current?.focus();
-                    }
-                  }}
-                  placeholder="0,00"
+                 ref={quantidadeInputRef}
+                 type="text"
+                 inputMode="decimal"
+                 className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                 value={quantidadeInput}
+                 onChange={e => {
+                   const val = e.target.value;
+                   if (/^[\d.,]*$/.test(val)) {
+                     setQuantidadeInput(val);
+                     const numVal = parseFloat(val.replace(',', '.'));
+                     if (!isNaN(numVal)) {
+                       setEditingItem(prev => ({ ...prev, quantidade: numVal }));
+                     }
+                   }
+                 }}
+                 onFocus={e => e.target.select()}
+                 onBlur={() => {
+                   const num = parseFloat(quantidadeInput.replace(',', '.')) || 1;
+                   setQuantidadeInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                   setEditingItem(prev => ({ ...prev, quantidade: num }));
+                 }}
+                 onKeyDown={e => {
+                   if (e.key === 'Enter') {
+                     e.preventDefault();
+                     custoInputRef.current?.focus();
+                     custoInputRef.current?.select();
+                   }
+                 }}
+                 placeholder="0,00"
                 />
                 <Button 
                  variant="default" size="icon" className="h-11 w-11 rounded-full"
@@ -231,9 +251,9 @@ export default function MobileProductSelector({
              </div>
           </div>
 
-          {/* Pricing Field - Somente Custo Unitário */}
+          {/* Pricing Field */}
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2.5 block">Custo Unitário (R$)</Label>
+            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2.5 block">Preço de Compra (R$)</Label>
             <Input 
               ref={custoInputRef}
               type="text"
@@ -259,7 +279,7 @@ export default function MobileProductSelector({
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  e.target.blur();
+                  handleSaveEdit();
                 }
               }}
               placeholder="0,00"
@@ -272,27 +292,28 @@ export default function MobileProductSelector({
           </div>
         </div>
 
-        <div className="p-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-          <Button 
-            className="w-full h-12" 
-            onClick={handleSaveEdit}
-          >
-            {editingIndex >= 0 ? 'Salvar Alterações' : 'Adicionar ao Carrinho'}
-          </Button>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              className="flex-1 h-12"
-              onClick={() => {
-                setEditingItem(null);
-                setEditingIndex(-1);
-                setView('catalog');
-              }}
-            >
-              Cancelar
-            </Button>
-            {editingIndex >= 0 && (
-               <Button 
+        <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+          {editingIndex >= 0 ? (
+            <div className="space-y-2">
+              <Button 
+                className="w-full h-12" 
+                onClick={handleSaveEdit}
+              >
+                Salvar Alterações
+              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-12"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setEditingIndex(-1);
+                    setView('catalog');
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
                   variant="destructive" 
                   className="flex-1 h-12"
                   onClick={() => {
@@ -301,12 +322,25 @@ export default function MobileProductSelector({
                      setEditingIndex(-1);
                      setView('catalog');
                   }}
-               >
+                >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Remover
-               </Button>
-            )}
-          </div>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button 
+              variant="outline"
+              className="w-full h-12 text-sm text-gray-500 dark:text-gray-400"
+              onClick={() => {
+                setEditingItem(null);
+                setEditingIndex(-1);
+                setView('catalog');
+              }}
+            >
+              Cancelar
+            </Button>
+          )}
         </div>
       </div>
     );
