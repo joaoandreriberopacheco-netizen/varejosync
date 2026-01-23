@@ -270,7 +270,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.valor_compra || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'valor_compra', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm"
+                        className="h-9 text-sm border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
                     </div>
                     <div>
@@ -280,7 +280,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.desconto_compra_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'desconto_compra_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm"
+                        className="h-9 text-sm border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
                     </div>
                     <div>
@@ -290,7 +290,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_frete_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_frete_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm"
+                        className="h-9 text-sm border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
                     </div>
                     <div>
@@ -300,7 +300,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_imposto1_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto1_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm"
+                        className="h-9 text-sm border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
                     </div>
                     <div>
@@ -310,7 +310,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_imposto2_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto2_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm"
+                        className="h-9 text-sm border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
                     </div>
                     <div>
@@ -320,7 +320,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_outros_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_outros_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm"
+                        className="h-9 text-sm border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
                     </div>
                   </div>
@@ -338,7 +338,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={item.costs?.preco_venda_percentual || 40}
                         onChange={(e) => handleCostChange(item.produto_id, 'preco_venda_percentual', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm flex-1"
+                        className="h-9 text-sm flex-1 border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
                     </div>
                     <div className="flex justify-between items-center text-sm pt-1">
@@ -413,7 +413,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.valor_compra || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'valor_compra', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -423,7 +423,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.desconto_compra_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'desconto_compra_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -433,7 +433,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_frete_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_frete_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -443,7 +443,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_imposto1_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto1_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -453,7 +453,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_imposto2_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto2_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -463,7 +463,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_outros_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_outros_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -479,7 +479,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={item.costs?.preco_venda_percentual || 40}
                         onChange={(e) => handleCostChange(item.produto_id, 'preco_venda_percentual', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                       />
                     </td>
                     <td className="p-2 bg-gray-50 dark:bg-gray-800">
