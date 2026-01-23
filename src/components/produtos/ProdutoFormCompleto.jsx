@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
@@ -47,6 +47,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
+  
+  // Histórico de undo/redo
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   useUnsavedChangesWarning(temAlteracoesNaoSalvas);
 
@@ -166,17 +170,74 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     ? ((precoVendaCalculado - precoCustoCalculado) / precoVendaCalculado) * 100
     : 0;
 
+  const saveToHistory = (newData) => {
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(newData);
+      if (newHistory.length > 50) newHistory.shift();
+      return newHistory;
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, 49));
+  };
+
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      saveToHistory(prev);
+      return newData;
+    });
     setTemAlteracoesNaoSalvas(true);
   };
 
   const handleCustoChange = (index, field, value) => {
+    saveToHistory({ formData, custos });
     const newCustos = [...custos];
     newCustos[index][field] = value;
     setCustos(newCustos);
     setTemAlteracoesNaoSalvas(true);
   };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const previousState = history[historyIndex - 1];
+      setHistoryIndex(prev => prev - 1);
+      if (previousState.formData) {
+        setFormData(previousState.formData);
+        if (previousState.custos) setCustos(previousState.custos);
+      } else {
+        setFormData(previousState);
+      }
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setHistoryIndex(prev => prev + 1);
+      if (nextState.formData) {
+        setFormData(nextState.formData);
+        if (nextState.custos) setCustos(nextState.custos);
+      } else {
+        setFormData(nextState);
+      }
+    }
+  };
+
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      if ((e.ctrlKey && e.key === 'y') || e.key === 'F4') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [historyIndex, history]);
 
   const handleAddTag = () => {
     const currentTags = Array.isArray(formData.tags) ? formData.tags : [];
@@ -286,6 +347,26 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
               </p>
             </div>
             <div className="flex gap-2 flex-shrink-0">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleUndo} 
+                disabled={isSaving || historyIndex <= 0}
+                className="h-10 w-10"
+                title="Desfazer (Ctrl+Z)"
+              >
+                <Undo2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleRedo} 
+                disabled={isSaving || historyIndex >= history.length - 1}
+                className="h-10 w-10"
+                title="Refazer (Ctrl+Y / F4)"
+              >
+                <Redo2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
                 <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </Button>
