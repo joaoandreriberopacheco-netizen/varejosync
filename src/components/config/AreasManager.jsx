@@ -1,0 +1,254 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Edit3, Trash2, MapPin, Download, Upload, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+
+export default function AreasManager() {
+  const [areas, setAreas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingArea, setEditingArea] = useState(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [formData, setFormData] = useState({
+    codigo: '',
+    nome: '',
+    descricao: '',
+    cor: '#3b82f6',
+    ordem: 0,
+    ativo: true
+  });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadAreas();
+  }, []);
+
+  const loadAreas = async () => {
+    setLoading(true);
+    try {
+      const data = await base44.entities.Area.list();
+      setAreas(data.sort((a, b) => (a.ordem || 0) - (b.ordem || 0)));
+    } catch (error) {
+      toast({ title: 'Erro ao carregar áreas', description: error.message, variant: 'destructive' });
+    }
+    setLoading(false);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editingArea) {
+        await base44.entities.Area.update(editingArea.id, formData);
+        toast({ title: 'Área atualizada com sucesso!' });
+      } else {
+        await base44.entities.Area.create(formData);
+        toast({ title: 'Área criada com sucesso!' });
+      }
+      loadAreas();
+      handleClose();
+    } catch (error) {
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Deseja realmente excluir esta área?')) return;
+    try {
+      await base44.entities.Area.delete(id);
+      toast({ title: 'Área excluída com sucesso!' });
+      loadAreas();
+    } catch (error) {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleEdit = (area) => {
+    setEditingArea(area);
+    setFormData(area);
+    setShowDialog(true);
+  };
+
+  const handleClose = () => {
+    setShowDialog(false);
+    setEditingArea(null);
+    setFormData({
+      codigo: '',
+      nome: '',
+      descricao: '',
+      cor: '#3b82f6',
+      ordem: 0,
+      ativo: true
+    });
+  };
+
+  const handleExport = () => {
+    const csv = [
+      ['Código', 'Nome', 'Descrição', 'Cor', 'Ordem', 'Ativo'],
+      ...areas.map(a => [a.codigo, a.nome, a.descricao || '', a.cor || '#3b82f6', a.ordem || 0, a.ativo ? 'Sim' : 'Não'])
+    ].map(row => row.join(';')).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'areas.csv';
+    link.click();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <MapPin className="w-5 h-5" /> Áreas / Setores
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie as áreas da loja</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="w-4 h-4" /> Exportar
+          </Button>
+          <Button onClick={() => setShowDialog(true)} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Plus className="w-4 h-4" /> Nova Área
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {areas.map(area => (
+            <div 
+              key={area.id} 
+              className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-sm"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                    style={{ backgroundColor: area.cor || '#3b82f6' }}
+                  >
+                    {area.codigo}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-200">{area.nome}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Ordem: {area.ordem || 0}</p>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(area)} className="h-8 w-8">
+                    <Edit3 className="w-4 h-4 text-gray-500" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(area.id)} className="h-8 w-8">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                </div>
+              </div>
+              {area.descricao && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{area.descricao}</p>
+              )}
+              <div className="flex items-center gap-2 text-xs">
+                <span className={`px-2 py-1 rounded-full ${area.ativo ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500'}`}>
+                  {area.ativo ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="dark:bg-gray-900 dark:border-gray-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="dark:text-white">
+              {editingArea ? 'Editar Área' : 'Nova Área'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="dark:text-gray-300">Código *</Label>
+                <Input
+                  value={formData.codigo}
+                  onChange={e => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
+                  placeholder="A1"
+                  className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <Label className="dark:text-gray-300">Ordem</Label>
+                <Input
+                  type="number"
+                  value={formData.ordem}
+                  onChange={e => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })}
+                  className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="dark:text-gray-300">Nome *</Label>
+              <Input
+                value={formData.nome}
+                onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                placeholder="Setor de Construção"
+                className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <Label className="dark:text-gray-300">Descrição</Label>
+              <Textarea
+                value={formData.descricao || ''}
+                onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+                placeholder="Descrição opcional..."
+                className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <Label className="dark:text-gray-300">Cor</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={formData.cor}
+                  onChange={e => setFormData({ ...formData, cor: e.target.value })}
+                  className="w-16 h-10 dark:bg-gray-800 dark:border-gray-700"
+                />
+                <Input
+                  value={formData.cor}
+                  onChange={e => setFormData({ ...formData, cor: e.target.value })}
+                  placeholder="#3b82f6"
+                  className="flex-1 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.ativo}
+                onCheckedChange={v => setFormData({ ...formData, ativo: v })}
+                id="area-ativo"
+              />
+              <Label htmlFor="area-ativo" className="cursor-pointer dark:text-gray-300">Área Ativa</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={handleClose} className="dark:text-gray-300">
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

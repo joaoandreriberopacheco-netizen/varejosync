@@ -105,7 +105,7 @@ export default function AutoShop({
       if (p.marca) allBrands.add(p.marca);
 
       // Categorias Hierárquicas
-      const rawCat = p.categoria || 'Outros';
+      const rawCat = p.categoria_nome || p.categoria || 'Outros';
       const parts = rawCat.split(' > '); // Suporta "Hidráulica > Conexões"
       const mainCat = parts[0];
       const subCat = parts[1] || null;
@@ -157,9 +157,10 @@ export default function AutoShop({
                           (p.codigo_barras && p.codigo_barras.includes(search));
       
       // Categoria (Suporta hierarquia)
+      const catName = p.categoria_nome || p.categoria || 'Outros';
       const matchCat = selectedCategory === 'Todos' || 
-                       (p.categoria || 'Outros') === selectedCategory || 
-                       (p.categoria && p.categoria.startsWith(selectedCategory + ' > ')); // Se selecionou "Hidráulica", mostra "Hidráulica > Conexões"
+                       catName === selectedCategory || 
+                       catName.startsWith(selectedCategory + ' > '); // Se selecionou "Hidráulica", mostra "Hidráulica > Conexões"
       
       // Preço
       const price = p.preco_venda_padrao || 0;
