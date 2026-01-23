@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -446,6 +446,30 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const isLogisticaEnabled = pedido && pedido.status_aprovacao_financeira === 'Aprovado';
 
   const canReopen = currentUser?.role === 'admin' && isLocked;
+
+  const handlePrintReport = async () => {
+    if (!pedido?.id) {
+      toast({ title: 'Salve o pedido antes de imprimir', variant: 'destructive' });
+      return;
+    }
+    
+    try {
+      const response = await base44.functions.invoke('gerarRelatorioPedido', { pedido_id: pedido.id });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Pedido_${pedido.numero}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast({ title: 'Relatório gerado com sucesso!' });
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      toast({ title: 'Erro ao gerar relatório', variant: 'destructive' });
+    }
+  };
 
   const handleAuthSuccess = async (authData) => {
     setIsSaving(true);
@@ -1172,54 +1196,65 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   return (
     <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-2xl">
-      <div className="flex-shrink-0">
-        {/* Header compacto */}
-        <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-            <X className="w-4 h-4" />
-          </Button>
-          <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
-            {pedido?.numero || 'Novo Pedido'}
-          </span>
-          <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8">
-            <Undo className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8">
-            <Redo className="w-4 h-4" />
-          </Button>
-          {!isLocked && (
-            <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8">
-              <Save className="w-4 h-4" />
-            </Button>
-          )}
-          {canReopen && isLocked && (
-            <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-8 text-xs px-2">
-              Reabrir
-            </Button>
-          )}
-        </div>
-
-        {/* Timeline compacta */}
-        <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
-      </div>
-
-      {/* DESKTOP: Tabs Originais */}
+      {/* DESKTOP: Header + Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-6">
-            <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-              <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Dados Gerais
-            </TabsTrigger>
-            <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-              <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Pagamento
-            </TabsTrigger>
-            <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!isLogisticaEnabled && pedido}>
-              <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Logística
-            </TabsTrigger>
-          </TabsList>
+          {/* Header integrado com Tabs */}
+          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-3 flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+                <X className="w-4 h-4" />
+              </Button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {pedido?.numero || 'Novo Pedido'}
+              </span>
+              
+              {/* Tabs no meio */}
+              <TabsList className="flex-1 bg-transparent border-0 rounded-none h-auto p-0 flex justify-center gap-1">
+                <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm">
+                  <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+                  Dados Gerais
+                </TabsTrigger>
+                <TabsTrigger value="itens" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm">
+                  <ShoppingCart className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+                  Itens
+                </TabsTrigger>
+                <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm">
+                  <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+                  Pagamento
+                </TabsTrigger>
+                <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm" disabled={!isLogisticaEnabled && pedido}>
+                  <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+                  Logística
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Ações à direita */}
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8" title="Desfazer">
+                  <Undo className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8" title="Refazer">
+                  <Redo className="w-4 h-4" />
+                </Button>
+                {pedido?.id && (
+                  <Button variant="ghost" size="icon" onClick={handlePrintReport} className="h-8 w-8" title="Imprimir">
+                    <Printer className="w-4 h-4" />
+                  </Button>
+                )}
+                {!isLocked && (
+                  <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8" title="Salvar">
+                    <Save className="w-4 h-4" />
+                  </Button>
+                )}
+                {canReopen && isLocked && (
+                  <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-8 text-xs px-2">
+                    Reabrir
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div className="flex-1 overflow-y-auto p-6">
             <TabsContent value="dados-gerais" className="mt-0 space-y-8">
@@ -1313,216 +1348,188 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
               </div>
 
-              {/* Seção de Itens */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Itens do Pedido</h3>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setShowAtualizarPrecos(true)} 
-                      className="h-8 text-xs border-0 shadow-sm"
-                      disabled={formData.itens.length === 0 || isLocked}
-                    >
-                      <DollarSign className="h-3.5 w-3.5 mr-1.5" /> 
-                      Ajustar Preços
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleExportModel} 
-                      className="h-8 text-xs border-0 shadow-sm"
-                    >
-                      <FileDown className="h-3.5 w-3.5 mr-1.5" /> 
-                      Baixar Modelo
-                    </Button>
-                    <div className="relative">
-                      <input 
-                        type="file" 
-                        accept=".csv" 
-                        onChange={handleImportCSV}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 text-xs border-0 shadow-sm"
-                      >
-                        <FileUp className="h-3.5 w-3.5 mr-1.5" /> 
-                        Importar CSV
-                      </Button>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleAddItem()} 
-                      className="h-8 text-xs"
-                      disabled={isLocked}
-                    >
-                      <PlusCircle className="h-4 w-4 mr-1" /> 
-                      Adicionar
-                    </Button>
-                  </div>
-                </div>
 
-                <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-gray-50 dark:bg-gray-800">
-                  <div className="overflow-x-auto">
-                    <Table className="w-full min-w-[1400px]">
-                      <TableHeader className="bg-white/80 dark:bg-gray-900/80">
-                        <TableRow className="border-0 hover:bg-transparent">
-                          <TableHead className="w-[40px] text-center text-gray-400 sticky left-0 z-20 bg-white dark:bg-gray-900">#</TableHead>
-                          <TableHead className="min-w-[250px] text-gray-700 dark:text-gray-300 sticky left-[40px] z-20 bg-white dark:bg-gray-900">Produto</TableHead>
-                          <TableHead className="min-w-[80px] text-gray-700 dark:text-gray-300">Código</TableHead>
-                          <TableHead className="min-w-[70px] text-gray-700 dark:text-gray-300">Qtd</TableHead>
-                          <TableHead className="min-w-[60px] text-gray-700 dark:text-gray-300">U/M</TableHead>
-                          <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300">Preço Un</TableHead>
-                          <TableHead className="min-w-[100px] text-green-600 dark:text-green-500">Desconto</TableHead>
-                          <TableHead className="min-w-[120px] text-right text-gray-700 dark:text-gray-300 sticky right-0 z-10 bg-white dark:bg-gray-900">Total</TableHead>
-                          <TableHead className="w-[40px] text-center"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {formData.itens.length === 0 ? (
-                          <TableRow className="border-0">
-                            <TableCell colSpan={9} className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
-                              <div className="flex flex-col items-center justify-center gap-3">
-                                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                                  <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
-                                  <p className="text-xs text-gray-400 mt-1">Clique em "Adicionar" para começar</p>
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          formData.itens.map((item, index) => {
-                            const selectedProduct = produtos.find(p => p.id === item.produto_id);
-                            return (
-                              <TableRow key={index} className="border-0 hover:bg-white/50 dark:hover:bg-gray-900/50 transition-colors group">
-                                <TableCell className="text-center text-gray-400 font-mono text-xs sticky left-0 z-10 bg-gray-50 dark:bg-gray-800">
-                                  {String(index + 1).padStart(2, '0')}
-                                </TableCell>
-                                <TableCell className="sticky left-[40px] z-10 bg-gray-50 dark:bg-gray-800">
-                                  <Select 
-                                    value={item.produto_id} 
-                                    onValueChange={v => handleItemChange(index, 'produto_id', v)}
-                                    disabled={isLocked}
-                                  >
-                                    <SelectTrigger className="h-9 bg-transparent border-0 hover:bg-white dark:hover:bg-gray-900 rounded-lg px-2 text-sm shadow-none text-gray-900 dark:text-white">
-                                      <span className="truncate block text-left w-full">
-                                        {selectedProduct ? selectedProduct.nome : "Selecione..."}
-                                      </span>
-                                    </SelectTrigger>
-                                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg max-h-[300px] z-[9999]">
-                                      {produtos.map(p => (
-                                        <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 text-sm cursor-pointer">
-                                          {p.nome}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Input 
-                                    className="h-9 text-xs font-mono bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
-                                    value={item.codigo_produto}
-                                    onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
-                                    placeholder="Código"
-                                    disabled={isLocked}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Input 
-                                    type="number" 
-                                    className="h-9 bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
-                                    value={item.quantidade}
-                                    onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
-                                    disabled={isLocked}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Input 
-                                    className="h-9 text-xs bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
-                                    value={item.unidade_medida}
-                                    onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
-                                    disabled={isLocked}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Input 
-                                    type="number" step="0.01"
-                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 font-medium text-gray-900 dark:text-white" 
-                                    value={item.custo_unitario} 
-                                    onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
-                                    disabled={isLocked}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Input 
-                                    type="number" step="0.01"
-                                    className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-green-600 dark:text-green-500" 
-                                    value={item.valor_desconto_item || 0} 
-                                    onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
-                                    disabled={isLocked}
-                                  />
-                                </TableCell>
-                                <TableCell className="text-right font-bold text-gray-900 dark:text-white text-sm sticky right-0 z-10 bg-gray-50 dark:bg-gray-800">
-                                  {formatCurrency(item.total || 0)}
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
-                                    onClick={() => handleRemoveItem(index)}
-                                    disabled={isLocked}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-
-                {/* Totalizadores */}
-                {formData.itens.length > 0 && (
-                  <div className="mt-8 pt-6 space-y-4">
-                    <div className="grid grid-cols-5 gap-6">
-                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Itens</div>
-                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formData.itens.length}</div>
-                      </div>
-                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Subtotal</div>
-                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(valorItens)}</div>
-                      </div>
-                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Frete</div>
-                        <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">{formatCurrency(formData.valor_frete)}</div>
-                      </div>
-                      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Desconto</div>
-                        <div className="text-2xl font-medium text-green-600 dark:text-green-500">-{formatCurrency(formData.valor_desconto)}</div>
-                      </div>
-                      <div className="bg-gray-700 dark:bg-gray-800 rounded-xl p-4 shadow-sm text-right">
-                        <div className="text-xs text-gray-300 mb-1">TOTAL</div>
-                        <div className="text-3xl font-bold text-white">{formatCurrency(valorTotal)}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
             </TabsContent>
 
+            {/* ABA: ITENS */}
+            <TabsContent value="itens" className="mt-0 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Itens do Pedido</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowAtualizarPrecos(true)} 
+                    className="h-8 text-xs border-0 shadow-sm"
+                    disabled={formData.itens.length === 0 || isLocked}
+                  >
+                    <DollarSign className="h-3.5 w-3.5 mr-1.5" /> 
+                    Ajustar Preços
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleExportModel} 
+                    className="h-8 text-xs border-0 shadow-sm"
+                  >
+                    <FileDown className="h-3.5 w-3.5 mr-1.5" /> 
+                    Baixar Modelo
+                  </Button>
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      accept=".csv" 
+                      onChange={handleImportCSV}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 text-xs border-0 shadow-sm"
+                    >
+                      <FileUp className="h-3.5 w-3.5 mr-1.5" /> 
+                      Importar CSV
+                    </Button>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleAddItem()} 
+                    className="h-8 text-xs"
+                    disabled={isLocked}
+                  >
+                    <PlusCircle className="h-4 w-4 mr-1" /> 
+                    Adicionar
+                  </Button>
+                </div>
+              </div>
 
+              <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-gray-50 dark:bg-gray-800">
+                <div className="overflow-x-auto">
+                  <Table className="w-full min-w-[1400px]">
+                    <TableHeader className="bg-white/80 dark:bg-gray-900/80">
+                      <TableRow className="border-0 hover:bg-transparent">
+                        <TableHead className="w-[40px] text-center text-gray-400 sticky left-0 z-20 bg-white dark:bg-gray-900">#</TableHead>
+                        <TableHead className="min-w-[250px] text-gray-700 dark:text-gray-300 sticky left-[40px] z-20 bg-white dark:bg-gray-900">Produto</TableHead>
+                        <TableHead className="min-w-[80px] text-gray-700 dark:text-gray-300">Código</TableHead>
+                        <TableHead className="min-w-[70px] text-gray-700 dark:text-gray-300">Qtd</TableHead>
+                        <TableHead className="min-w-[60px] text-gray-700 dark:text-gray-300">U/M</TableHead>
+                        <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300">Preço Un</TableHead>
+                        <TableHead className="min-w-[100px] text-green-600 dark:text-green-500">Desconto</TableHead>
+                        <TableHead className="min-w-[120px] text-right text-gray-700 dark:text-gray-300 sticky right-0 z-10 bg-white dark:bg-gray-900">Total</TableHead>
+                        <TableHead className="w-[40px] text-center"><X className="w-4 h-4 mx-auto opacity-0" /></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {formData.itens.length === 0 ? (
+                        <TableRow className="border-0">
+                          <TableCell colSpan={9} className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">
+                            <div className="flex flex-col items-center justify-center gap-3">
+                              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
+                                <p className="text-xs text-gray-400 mt-1">Clique em "Adicionar" para começar</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        formData.itens.map((item, index) => {
+                          const selectedProduct = produtos.find(p => p.id === item.produto_id);
+                          return (
+                            <TableRow key={index} className="border-0 hover:bg-white/50 dark:hover:bg-gray-900/50 transition-colors group">
+                              <TableCell className="text-center text-gray-400 font-mono text-xs sticky left-0 z-10 bg-gray-50 dark:bg-gray-800">
+                                {String(index + 1).padStart(2, '0')}
+                              </TableCell>
+                              <TableCell className="sticky left-[40px] z-10 bg-gray-50 dark:bg-gray-800">
+                                <Select 
+                                  value={item.produto_id} 
+                                  onValueChange={v => handleItemChange(index, 'produto_id', v)}
+                                  disabled={isLocked}
+                                >
+                                  <SelectTrigger className="h-9 bg-transparent border-0 hover:bg-white dark:hover:bg-gray-900 rounded-lg px-2 text-sm shadow-none text-gray-900 dark:text-white">
+                                    <span className="truncate block text-left w-full">
+                                      {selectedProduct ? selectedProduct.nome : "Selecione..."}
+                                    </span>
+                                  </SelectTrigger>
+                                  <SelectContent className="dark:bg-gray-800 border-0 shadow-lg max-h-[300px] z-[9999]">
+                                    {produtos.map(p => (
+                                      <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 text-sm cursor-pointer">
+                                        {p.nome}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  className="h-9 text-xs font-mono bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
+                                  value={item.codigo_produto}
+                                  onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
+                                  placeholder="Código"
+                                  disabled={isLocked}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" 
+                                  className="h-9 bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
+                                  value={item.quantidade}
+                                  onChange={e => handleItemChange(index, 'quantidade', e.target.value)} 
+                                  disabled={isLocked}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  className="h-9 text-xs bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
+                                  value={item.unidade_medida}
+                                  onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
+                                  disabled={isLocked}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" step="0.01"
+                                  className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 font-medium text-gray-900 dark:text-white" 
+                                  value={item.custo_unitario} 
+                                  onChange={e => handleItemChange(index, 'custo_unitario', e.target.value)} 
+                                  disabled={isLocked}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input 
+                                  type="number" step="0.01"
+                                  className="h-9 min-w-[90px] bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-green-600 dark:text-green-500" 
+                                  value={item.valor_desconto_item || 0} 
+                                  onChange={e => handleItemChange(index, 'valor_desconto_item', e.target.value)} 
+                                  disabled={isLocked}
+                                />
+                              </TableCell>
+                              <TableCell className="text-right font-bold text-gray-900 dark:text-white text-sm sticky right-0 z-10 bg-gray-50 dark:bg-gray-800">
+                                {formatCurrency(item.total || 0)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
+                                  onClick={() => handleRemoveItem(index)}
+                                  disabled={isLocked}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </TabsContent>
 
           {/* ABA: PAGAMENTO */}
           <TabsContent value="pagamento" className="mt-0 space-y-8">
@@ -1980,15 +1987,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         </Tabs>
       </div>
 
-      <div className="p-3 border-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-            <div className="text-right">
-              <span className="text-xs text-gray-500 dark:text-gray-400 block">Total</span>
-              <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
-            </div>
+      {/* Footer fixo - Total em destaque */}
+      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
+          <div className="text-right">
+            <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
           </div>
         </div>
+      </div>
       
       <OperacaoAuthenticator 
         isOpen={isAuthOpen}
