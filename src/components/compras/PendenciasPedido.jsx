@@ -72,6 +72,10 @@ export default function PendenciasPedido({ pedido }) {
           tem_divergencias: false,
           data_conclusao: new Date().toISOString()
         });
+      } else {
+        await base44.entities.PedidoCompra.update(pedido.id, {
+          tem_divergencias: divRestantes.length > 0
+        });
       }
 
       toast({ title: 'Divergência resolvida com sucesso!' });

@@ -303,6 +303,7 @@ export default function ConferenciaCega({ pedido, isOpen, onClose, onSuccess }) 
         status: novoStatus,
         conferencia_id: conferencia.id,
         tem_divergencias: totalDivergencias > 0,
+        data_chegada: new Date().toISOString(),
         data_conclusao: totalDivergencias === 0 ? new Date().toISOString() : null
       });
 
