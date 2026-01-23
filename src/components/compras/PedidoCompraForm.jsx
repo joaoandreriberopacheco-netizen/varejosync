@@ -513,19 +513,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const mudouParaEnviado = dataToSave.status === 'Enviado' && (
         !pedido || pedido.status !== 'Enviado'
       );
-      
+
       if (mudouParaEnviado) {
-        // Atualizar status de aprovação financeira
-        await base44.entities.PedidoCompra.update(pedidoSalvo?.id || pedido?.id, {
-          status_aprovacao_financeira: 'Aguardando Aprovação Financeira'
-        });
         // Pegar o ID do pedido salvo
         const pedidoId = pedidoSalvo?.id || pedido?.id;
-        
+
         // Buscar o pedido atualizado para ter certeza que tem todos os dados
         const pedidosAtualizados = await base44.entities.PedidoCompra.filter({ id: pedidoId });
         const currentPO = pedidosAtualizados[0];
-        
+
         if (currentPO) {
           // 1. Criar Lançamentos Financeiros (Aguardando Aprovação Financeira)
           if (formData.forma_pagamento_compra === 'À Vista') {
@@ -536,7 +532,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               terceiro_nome: formData.fornecedor_nome,
               valor: valorTotal,
               data_vencimento: formData.data_primeiro_vencimento || format(new Date(), 'yyyy-MM-dd'),
-              status: 'Liberado para Pagamento',
+              status: 'Aguardando Aprovação Financeira',
               categoria: 'Compra de Mercadoria',
               referencia_id: currentPO.id,
               referencia_tipo: 'PedidoCompra',
@@ -550,7 +546,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             const dataBase = formData.data_primeiro_vencimento ? 
               new Date(formData.data_primeiro_vencimento) : 
               addDays(new Date(), 30);
-            
+
             for (let i = 0; i < numParcelas; i++) {
               const dataVencimento = addDays(dataBase, i * (formData.intervalo_parcelas_dias || 30));
               await base44.entities.LancamentoFinanceiro.create({
@@ -560,7 +556,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 terceiro_nome: formData.fornecedor_nome,
                 valor: valorParcela,
                 data_vencimento: format(dataVencimento, 'yyyy-MM-dd'),
-                status: 'Liberado para Pagamento',
+                status: 'Aguardando Aprovação Financeira',
                 categoria: 'Compra de Mercadoria',
                 referencia_id: currentPO.id,
                 referencia_tipo: 'PedidoCompra',
@@ -569,6 +565,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               });
             }
           }
+
+          // 2. Atualizar status de aprovação financeira do pedido
+          await base44.entities.PedidoCompra.update(currentPO.id, {
+            status_aprovacao_financeira: 'Aguardando Aprovação'
+          });
           
           // 2. Criar Tarefa para o Comprador
           await base44.entities.Tarefa.create({
