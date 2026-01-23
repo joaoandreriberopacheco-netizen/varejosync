@@ -25,7 +25,7 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
   const currentIndex = getStageIndex(currentStatus, aprovacaoFinanceira);
 
   return (
-    <div className="flex items-center gap-0.5 px-3 py-2">
+    <div className="flex items-center gap-1 px-3 py-3">
       {stages.map((stage, idx) => {
         const isCompleted = idx <= currentIndex;
         const isActive = idx === currentIndex;
@@ -34,20 +34,20 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
           <React.Fragment key={stage.key}>
             <div className="flex flex-col items-center">
               <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                   isCompleted
                     ? 'bg-gray-700 dark:bg-gray-600'
                     : 'bg-gray-200 dark:bg-gray-700'
                 }`}
               >
                 {isCompleted ? (
-                  <Check className="w-3 h-3 text-white" />
+                  <Check className="w-4 h-4 text-white" />
                 ) : (
-                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+                  <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
                 )}
               </div>
               <span
-                className={`text-[8px] mt-0.5 ${
+                className={`text-[10px] mt-1 ${
                   isActive
                     ? 'font-semibold text-gray-800 dark:text-gray-200'
                     : 'text-gray-500 dark:text-gray-400'
@@ -58,12 +58,12 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
             </div>
             {idx < stages.length - 1 && (
               <div
-                className={`flex-1 h-0.5 mx-0.5 transition-all ${
+                className={`flex-1 h-0.5 mx-1 transition-all ${
                   isCompleted && idx < currentIndex
                     ? 'bg-gray-700 dark:bg-gray-600'
                     : 'bg-gray-200 dark:bg-gray-700'
                 }`}
-                style={{ minWidth: '12px' }}
+                style={{ minWidth: '16px' }}
               />
             )}
           </React.Fragment>
