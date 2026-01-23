@@ -840,6 +840,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Timeline Mobile */}
+          {pedido && (
+            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+              <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+            </div>
+          )}
         </div>
 
         {/* MOBILE: Tabs com Ícones */}
@@ -986,10 +993,44 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
             <TabsContent value="pagamento" className="mt-0 px-3 py-6 space-y-6 border-0">
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm border-0">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Ao marcar como "Enviado", as contas a pagar serão criadas e enviadas para aprovação do Financeiro
-                </p>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1 text-sm">Gestão completa do ciclo de suprimentos</h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Ao marcar como "Enviado", as contas a pagar serão criadas e enviadas para aprovação do Financeiro
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              {/* Botão Enviar para Aprovação Financeira */}
+              {pedido && pedido.status === 'Rascunho' && formData.itens.length > 0 && !isLocked && (
+                <Button 
+                  onClick={() => {
+                    handleChange('status', 'Enviado');
+                    setTimeout(() => handleInitiateSave(), 100);
+                  }}
+                  className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-base shadow-lg gap-2"
+                >
+                  <Ship className="w-5 h-5" />
+                  Enviar para Aprovação Financeira
+                </Button>
+              )}
+
+              {pedido && pedido.status === 'Enviado' && pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' && (
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border-0 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1 text-sm">Aguardando Aprovação</h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Este pedido está aguardando aprovação do setor financeiro. Edição bloqueada.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Forma de Pagamento *</Label>
