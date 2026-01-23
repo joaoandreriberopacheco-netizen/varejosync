@@ -58,20 +58,20 @@ Deno.serve(async (req) => {
     // Header
     doc.setFontSize(20);
     doc.setFont(undefined, 'bold');
-    doc.text('RELATÓRIO DE PENDÊNCIAS', 105, y, { align: 'center' });
+    doc.text(decodeText('RELATORIO DE PENDENCIAS'), 105, y, { align: 'center' });
     y += 10;
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(`Pedido: ${pedido.numero || 'N/A'}`, 20, y);
-    doc.text(`Fornecedor: ${pedido.fornecedor_nome || 'N/A'}`, 20, y + 5);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 150, y);
+    doc.text(decodeText(`Pedido: ${pedido.numero || 'N/A'}`), 20, y);
+    doc.text(decodeText(`Fornecedor: ${pedido.fornecedor_nome || 'N/A'}`), 20, y + 5);
+    doc.text(decodeText(`Data: ${new Date().toLocaleDateString('pt-BR')}`), 150, y);
     y += 20;
 
     // Resumo
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text('RESUMO DAS PENDÊNCIAS', 20, y);
+    doc.text(decodeText('RESUMO DAS PENDENCIAS'), 20, y);
     y += 8;
 
     const pendentes = divergencias.filter(d => d.status === 'Pendente').length;
@@ -79,17 +79,17 @@ Deno.serve(async (req) => {
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(`• Total de divergências: ${divergencias.length}`, 25, y);
+    doc.text(decodeText(`• Total de divergencias: ${divergencias.length}`), 25, y);
     y += 6;
-    doc.text(`• Pendentes: ${pendentes}`, 25, y);
+    doc.text(decodeText(`• Pendentes: ${pendentes}`), 25, y);
     y += 6;
-    doc.text(`• Resolvidas: ${resolvidas}`, 25, y);
+    doc.text(decodeText(`• Resolvidas: ${resolvidas}`), 25, y);
     y += 12;
 
     // Detalhamento
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text('DETALHAMENTO DAS DIVERGÊNCIAS', 20, y);
+    doc.text(decodeText('DETALHAMENTO DAS DIVERGENCIAS'), 20, y);
     y += 8;
 
     divergencias.forEach((div, index) => {
@@ -100,42 +100,42 @@ Deno.serve(async (req) => {
 
       doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text(`${index + 1}. ${div.produto_nome || 'Produto não identificado'}`, 20, y);
+      doc.text(decodeText(`${index + 1}. ${div.produto_nome || 'Produto nao identificado'}`), 20, y);
       y += 6;
 
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9);
       
-      doc.text(`Tipo: ${div.tipo_divergencia}`, 25, y);
+      doc.text(decodeText(`Tipo: ${div.tipo_divergencia}`), 25, y);
       y += 5;
       
       if (div.quantidade_esperada !== undefined) {
-        doc.text(`Quantidade esperada: ${div.quantidade_esperada}`, 25, y);
+        doc.text(decodeText(`Quantidade esperada: ${div.quantidade_esperada}`), 25, y);
         y += 5;
       }
       
       if (div.quantidade_recebida !== undefined) {
-        doc.text(`Quantidade recebida: ${div.quantidade_recebida}`, 25, y);
+        doc.text(decodeText(`Quantidade recebida: ${div.quantidade_recebida}`), 25, y);
         y += 5;
       }
       
-      doc.text(`Status: ${div.status}`, 25, y);
+      doc.text(decodeText(`Status: ${div.status}`), 25, y);
       y += 5;
       
       if (div.observacoes) {
-        doc.text(`Observações: ${div.observacoes}`, 25, y);
+        doc.text(decodeText(`Observacoes: ${div.observacoes}`), 25, y);
         y += 5;
       }
 
       if (div.resolucao && div.status === 'Resolvido') {
         doc.setTextColor(0, 150, 0);
-        doc.text(`Resolução: ${div.resolucao}`, 25, y);
+        doc.text(decodeText(`Resolucao: ${div.resolucao}`), 25, y);
         doc.setTextColor(0, 0, 0);
         y += 5;
       }
 
       if (div.imagem_url) {
-        doc.text('Evidência fotográfica anexada', 25, y);
+        doc.text(decodeText('Evidencia fotografica anexada'), 25, y);
         y += 5;
       }
 
@@ -151,18 +151,18 @@ Deno.serve(async (req) => {
 
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text('AÇÕES NECESSÁRIAS', 20, y);
+      doc.text(decodeText('ACOES NECESSARIAS'), 20, y);
       y += 8;
 
       doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-      doc.text('• Contatar fornecedor para resolução das pendências', 25, y);
+      doc.text(decodeText('• Contatar fornecedor para resolucao das pendencias'), 25, y);
       y += 6;
-      doc.text('• Aguardar reenvio de produtos faltantes ou danificados', 25, y);
+      doc.text(decodeText('• Aguardar reenvio de produtos faltantes ou danificados'), 25, y);
       y += 6;
-      doc.text('• Solicitar nota de crédito para itens não recebidos', 25, y);
+      doc.text(decodeText('• Solicitar nota de credito para itens nao recebidos'), 25, y);
       y += 6;
-      doc.text('• Atualizar status após resolução de cada item', 25, y);
+      doc.text(decodeText('• Atualizar status apos resolucao de cada item'), 25, y);
     }
 
     // Assinaturas
@@ -176,8 +176,8 @@ Deno.serve(async (req) => {
     doc.text('_'.repeat(40), 20, y);
     doc.text('_'.repeat(40), 120, y);
     y += 5;
-    doc.text('Responsável pela Conferência', 22, y);
-    doc.text('Gestor de Compras', 135, y);
+    doc.text(decodeText('Responsavel pela Conferencia'), 22, y);
+    doc.text(decodeText('Gestor de Compras'), 135, y);
 
     const pdfBytes = doc.output('arraybuffer');
     

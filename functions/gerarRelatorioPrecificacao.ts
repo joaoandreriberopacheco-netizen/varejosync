@@ -98,38 +98,38 @@ Deno.serve(async (req) => {
     // Header
     doc.setFontSize(20);
     doc.setFont(undefined, 'bold');
-    doc.text('RELATÓRIO DE IMPACTO DE PRECIFICAÇÃO', 105, y, { align: 'center' });
+    doc.text(decodeText('RELATORIO DE IMPACTO DE PRECIFICACAO'), 105, y, { align: 'center' });
     y += 10;
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(`Pedido: ${pedido.numero || 'N/A'}`, 20, y);
-    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 150, y);
+    doc.text(decodeText(`Pedido: ${pedido.numero || 'N/A'}`), 20, y);
+    doc.text(decodeText(`Data: ${new Date().toLocaleDateString('pt-BR')}`), 150, y);
     y += 15;
 
     // Resumo Executivo
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('RESUMO EXECUTIVO', 20, y);
+    doc.text(decodeText('RESUMO EXECUTIVO'), 20, y);
     y += 8;
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     
     if (analise.produtosAfetados === 0) {
-      doc.text('• Nenhuma alteração de custo detectada neste pedido', 25, y);
+      doc.text(decodeText('• Nenhuma alteracao de custo detectada neste pedido'), 25, y);
       y += 6;
-      doc.text('• Os preços de venda atuais permanecem inalterados', 25, y);
+      doc.text(decodeText('• Os precos de venda atuais permanecem inalterados'), 25, y);
     } else {
-      doc.text(`• Produtos afetados: ${analise.produtosAfetados}`, 25, y);
+      doc.text(decodeText(`• Produtos afetados: ${analise.produtosAfetados}`), 25, y);
       y += 6;
-      doc.text(`• Aumentos de custo: ${analise.aumentosPreco.length} produto(s)`, 25, y);
+      doc.text(decodeText(`• Aumentos de custo: ${analise.aumentosPreco.length} produto(s)`), 25, y);
       y += 6;
-      doc.text(`• Reduções de custo: ${analise.reducoesPreco.length} produto(s)`, 25, y);
+      doc.text(decodeText(`• Reducoes de custo: ${analise.reducoesPreco.length} produto(s)`), 25, y);
       y += 6;
-      doc.text(`• Impacto médio por produto: R$ ${analise.impactoMedio.toFixed(2)}`, 25, y);
+      doc.text(decodeText(`• Impacto medio por produto: R$ ${analise.impactoMedio.toFixed(2)}`), 25, y);
       y += 6;
-      doc.text(`• Impacto total estimado: R$ ${analise.impactoTotal.toFixed(2)}`, 25, y);
+      doc.text(decodeText(`• Impacto total estimado: R$ ${analise.impactoTotal.toFixed(2)}`), 25, y);
     }
     
     y += 12;
@@ -137,16 +137,16 @@ Deno.serve(async (req) => {
     if (analise.aumentosPreco.length > 0) {
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text('PRODUTOS COM AUMENTO DE CUSTO', 20, y);
+      doc.text(decodeText('PRODUTOS COM AUMENTO DE CUSTO'), 20, y);
       y += 8;
 
       doc.setFontSize(8);
       doc.setFont(undefined, 'bold');
-      doc.text('Produto', 20, y);
-      doc.text('Custo Atual', 100, y);
-      doc.text('Novo Custo', 130, y);
-      doc.text('Variação', 160, y);
-      doc.text('% Impacto', 185, y);
+      doc.text(decodeText('Produto'), 20, y);
+      doc.text(decodeText('Custo Atual'), 100, y);
+      doc.text(decodeText('Novo Custo'), 130, y);
+      doc.text(decodeText('Variacao'), 160, y);
+      doc.text(decodeText('% Impacto'), 185, y);
       y += 5;
 
       doc.setFont(undefined, 'normal');
@@ -157,12 +157,12 @@ Deno.serve(async (req) => {
         }
         
         const nome = item.nome.length > 45 ? item.nome.substring(0, 45) + '...' : item.nome;
-        doc.text(nome, 20, y);
-        doc.text(`R$ ${item.custoAtual.toFixed(2)}`, 100, y);
-        doc.text(`R$ ${item.novoCusto.toFixed(2)}`, 130, y);
+        doc.text(decodeText(nome), 20, y);
+        doc.text(decodeText(`R$ ${item.custoAtual.toFixed(2)}`), 100, y);
+        doc.text(decodeText(`R$ ${item.novoCusto.toFixed(2)}`), 130, y);
         doc.setTextColor(200, 0, 0);
-        doc.text(`+R$ ${item.diferenca.toFixed(2)}`, 160, y);
-        doc.text(`+${item.percentual.toFixed(1)}%`, 185, y);
+        doc.text(decodeText(`+R$ ${item.diferenca.toFixed(2)}`), 160, y);
+        doc.text(decodeText(`+${item.percentual.toFixed(1)}%`), 185, y);
         doc.setTextColor(0, 0, 0);
         y += 5;
       });
@@ -178,16 +178,16 @@ Deno.serve(async (req) => {
 
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text('PRODUTOS COM REDUÇÃO DE CUSTO', 20, y);
+      doc.text(decodeText('PRODUTOS COM REDUCAO DE CUSTO'), 20, y);
       y += 8;
 
       doc.setFontSize(8);
       doc.setFont(undefined, 'bold');
-      doc.text('Produto', 20, y);
-      doc.text('Custo Atual', 100, y);
-      doc.text('Novo Custo', 130, y);
-      doc.text('Variação', 160, y);
-      doc.text('% Impacto', 185, y);
+      doc.text(decodeText('Produto'), 20, y);
+      doc.text(decodeText('Custo Atual'), 100, y);
+      doc.text(decodeText('Novo Custo'), 130, y);
+      doc.text(decodeText('Variacao'), 160, y);
+      doc.text(decodeText('% Impacto'), 185, y);
       y += 5;
 
       doc.setFont(undefined, 'normal');
@@ -198,12 +198,12 @@ Deno.serve(async (req) => {
         }
         
         const nome = item.nome.length > 45 ? item.nome.substring(0, 45) + '...' : item.nome;
-        doc.text(nome, 20, y);
-        doc.text(`R$ ${item.custoAtual.toFixed(2)}`, 100, y);
-        doc.text(`R$ ${item.novoCusto.toFixed(2)}`, 130, y);
+        doc.text(decodeText(nome), 20, y);
+        doc.text(decodeText(`R$ ${item.custoAtual.toFixed(2)}`), 100, y);
+        doc.text(decodeText(`R$ ${item.novoCusto.toFixed(2)}`), 130, y);
         doc.setTextColor(0, 150, 0);
-        doc.text(`-R$ ${Math.abs(item.diferenca).toFixed(2)}`, 160, y);
-        doc.text(`${item.percentual.toFixed(1)}%`, 185, y);
+        doc.text(decodeText(`-R$ ${Math.abs(item.diferenca).toFixed(2)}`), 160, y);
+        doc.text(decodeText(`${item.percentual.toFixed(1)}%`), 185, y);
         doc.setTextColor(0, 0, 0);
         y += 5;
       });
@@ -219,29 +219,29 @@ Deno.serve(async (req) => {
 
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text('RECOMENDAÇÕES', 20, y);
+    doc.text(decodeText('RECOMENDACOES'), 20, y);
     y += 8;
 
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
     
     if (analise.aumentosPreco.length > 0) {
-      doc.text('• Revisar preços de venda dos produtos com aumento de custo', 25, y);
+      doc.text(decodeText('• Revisar precos de venda dos produtos com aumento de custo'), 25, y);
       y += 6;
-      doc.text('• Comunicar aumentos ao time comercial antes de atualizar', 25, y);
+      doc.text(decodeText('• Comunicar aumentos ao time comercial antes de atualizar'), 25, y);
       y += 6;
-      doc.text('• Avaliar impacto na competitividade dos produtos afetados', 25, y);
+      doc.text(decodeText('• Avaliar impacto na competitividade dos produtos afetados'), 25, y);
       y += 6;
     }
     
     if (analise.reducoesPreco.length > 0) {
-      doc.text('• Considerar manter preços atuais para melhorar margem', 25, y);
+      doc.text(decodeText('• Considerar manter precos atuais para melhorar margem'), 25, y);
       y += 6;
-      doc.text('• Avaliar oportunidades de promoções estratégicas', 25, y);
+      doc.text(decodeText('• Avaliar oportunidades de promocoes estrategicas'), 25, y);
       y += 6;
     }
 
-    doc.text('• Atualizar sistema de gestão após conferência da mercadoria', 25, y);
+    doc.text(decodeText('• Atualizar sistema de gestao apos conferencia da mercadoria'), 25, y);
     y += 10;
 
     // Assinatura
@@ -250,8 +250,8 @@ Deno.serve(async (req) => {
     doc.text('_'.repeat(40), 20, y);
     doc.text('_'.repeat(40), 120, y);
     y += 5;
-    doc.text('Responsável pela Compra', 30, y);
-    doc.text('Gestor Comercial', 135, y);
+    doc.text(decodeText('Responsavel pela Compra'), 30, y);
+    doc.text(decodeText('Gestor Comercial'), 135, y);
 
     const pdfBytes = doc.output('arraybuffer');
     

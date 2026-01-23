@@ -93,41 +93,41 @@ Deno.serve(async (req) => {
     // Cabeçalho
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
-    doc.text('PEDIDO DE COMPRA', 105, y, { align: 'center' });
+    doc.text(decodeText('PEDIDO DE COMPRA'), 105, y, { align: 'center' });
     y += 10;
 
     doc.setFontSize(12);
-    doc.text(pedido.numero || 'N/A', 105, y, { align: 'center' });
+    doc.text(decodeText(pedido.numero || 'N/A'), 105, y, { align: 'center' });
     y += 15;
 
     // Dados Gerais
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('DADOS GERAIS', 14, y);
+    doc.text(decodeText('DADOS GERAIS'), 14, y);
     y += 8;
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(`Fornecedor: ${pedido.fornecedor_nome || 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Fornecedor: ${pedido.fornecedor_nome || 'Pendente'}`), 14, y);
     y += 6;
-    doc.text(`Status: ${pedido.status || 'Rascunho'}`, 14, y);
+    doc.text(decodeText(`Status: ${pedido.status || 'Rascunho'}`), 14, y);
     y += 6;
-    doc.text(`Status Financeiro: ${pedido.status_aprovacao_financeira || 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Status Financeiro: ${pedido.status_aprovacao_financeira || 'Pendente'}`), 14, y);
     y += 6;
-    doc.text(`Criado em: ${pedido.created_date ? new Date(pedido.created_date).toLocaleDateString('pt-BR') : 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Criado em: ${pedido.created_date ? new Date(pedido.created_date).toLocaleDateString('pt-BR') : 'Pendente'}`), 14, y);
     y += 6;
-    doc.text(`Criado por: ${pedido.created_by || 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Criado por: ${pedido.created_by || 'Pendente'}`), 14, y);
     y += 6;
-    doc.text(`Data Prevista Entrega: ${pedido.data_prevista_entrega ? new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR') : 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Data Prevista Entrega: ${pedido.data_prevista_entrega ? new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR') : 'Pendente'}`), 14, y);
     y += 6;
     
     if (pedido.observacoes) {
-      doc.text(`Observações: ${pedido.observacoes}`, 14, y);
+      doc.text(decodeText(`Observacoes: ${pedido.observacoes}`), 14, y);
       y += 6;
     }
     
     if (pedido.tags && pedido.tags.length > 0) {
-      doc.text(`Tags: ${pedido.tags.join(', ')}`, 14, y);
+      doc.text(decodeText(`Tags: ${pedido.tags.join(', ')}`), 14, y);
       y += 6;
     }
 
@@ -136,15 +136,15 @@ Deno.serve(async (req) => {
     // Itens
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('ITENS DO PEDIDO', 14, y);
+    doc.text(decodeText('ITENS DO PEDIDO'), 14, y);
     y += 8;
 
     doc.setFontSize(9);
     doc.setFont(undefined, 'bold');
-    doc.text('Produto', 14, y);
-    doc.text('Qtd', 120, y);
-    doc.text('Custo Unit.', 145, y);
-    doc.text('Total', 175, y);
+    doc.text(decodeText('Produto'), 14, y);
+    doc.text(decodeText('Qtd'), 120, y);
+    doc.text(decodeText('Custo Unit.'), 145, y);
+    doc.text(decodeText('Total'), 175, y);
     y += 6;
 
     doc.setFont(undefined, 'normal');
@@ -154,17 +154,17 @@ Deno.serve(async (req) => {
           doc.addPage();
           y = 20;
         }
-        doc.text(item.produto_nome?.substring(0, 40) || 'N/A', 14, y);
-        doc.text(String(item.quantidade || 0), 120, y);
-        doc.text(`R$ ${(item.custo_unitario || 0).toFixed(2)}`, 145, y);
-        doc.text(`R$ ${(item.total || 0).toFixed(2)}`, 175, y);
+        doc.text(decodeText(item.produto_nome?.substring(0, 40) || 'N/A'), 14, y);
+        doc.text(decodeText(String(item.quantidade || 0)), 120, y);
+        doc.text(decodeText(`R$ ${(item.custo_unitario || 0).toFixed(2)}`), 145, y);
+        doc.text(decodeText(`R$ ${(item.total || 0).toFixed(2)}`), 175, y);
         y += 6;
       });
     }
 
     y += 4;
     doc.setFont(undefined, 'bold');
-    doc.text(`VALOR TOTAL: R$ ${(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 145, y);
+    doc.text(decodeText(`VALOR TOTAL: R$ ${(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`), 145, y);
     y += 10;
 
     // Financeiro
@@ -175,26 +175,26 @@ Deno.serve(async (req) => {
 
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('FINANCEIRO', 14, y);
+    doc.text(decodeText('FINANCEIRO'), 14, y);
     y += 8;
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(`Forma de Pagamento: ${pedido.forma_pagamento_compra || 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Forma de Pagamento: ${pedido.forma_pagamento_compra || 'Pendente'}`), 14, y);
     y += 6;
     
     if (pedido.forma_pagamento_compra === 'Parcelado') {
-      doc.text(`Número de Parcelas: ${pedido.num_parcelas || 'Pendente'}`, 14, y);
+      doc.text(decodeText(`Numero de Parcelas: ${pedido.num_parcelas || 'Pendente'}`), 14, y);
       y += 6;
-      doc.text(`Intervalo: ${pedido.intervalo_parcelas_dias || 'Pendente'} dias`, 14, y);
+      doc.text(decodeText(`Intervalo: ${pedido.intervalo_parcelas_dias || 'Pendente'} dias`), 14, y);
       y += 6;
     }
     
-    doc.text(`Primeiro Vencimento: ${pedido.data_primeiro_vencimento ? new Date(pedido.data_primeiro_vencimento).toLocaleDateString('pt-BR') : 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Primeiro Vencimento: ${pedido.data_primeiro_vencimento ? new Date(pedido.data_primeiro_vencimento).toLocaleDateString('pt-BR') : 'Pendente'}`), 14, y);
     y += 6;
     
     if (pedido.condicoes_pagamento) {
-      doc.text(`Condições: ${pedido.condicoes_pagamento}`, 14, y);
+      doc.text(decodeText(`Condicoes: ${pedido.condicoes_pagamento}`), 14, y);
       y += 6;
     }
     y += 4;
@@ -202,10 +202,10 @@ Deno.serve(async (req) => {
     if (lancamentos.length > 0) {
       doc.setFontSize(9);
       doc.setFont(undefined, 'bold');
-      doc.text('Descrição', 14, y);
-      doc.text('Vencimento', 110, y);
-      doc.text('Status', 150, y);
-      doc.text('Valor', 175, y);
+      doc.text(decodeText('Descricao'), 14, y);
+      doc.text(decodeText('Vencimento'), 110, y);
+      doc.text(decodeText('Status'), 150, y);
+      doc.text(decodeText('Valor'), 175, y);
       y += 6;
 
       doc.setFont(undefined, 'normal');
@@ -214,14 +214,14 @@ Deno.serve(async (req) => {
           doc.addPage();
           y = 20;
         }
-        doc.text(lanc.descricao?.substring(0, 30) || 'N/A', 14, y);
-        doc.text(lanc.data_vencimento ? new Date(lanc.data_vencimento).toLocaleDateString('pt-BR') : 'Pendente', 110, y);
-        doc.text(lanc.status || 'Pendente', 150, y);
-        doc.text(`R$ ${(lanc.valor || 0).toFixed(2)}`, 175, y);
+        doc.text(decodeText(lanc.descricao?.substring(0, 30) || 'N/A'), 14, y);
+        doc.text(decodeText(lanc.data_vencimento ? new Date(lanc.data_vencimento).toLocaleDateString('pt-BR') : 'Pendente'), 110, y);
+        doc.text(decodeText(lanc.status || 'Pendente'), 150, y);
+        doc.text(decodeText(`R$ ${(lanc.valor || 0).toFixed(2)}`), 175, y);
         y += 6;
       });
     } else {
-      doc.text('Nenhum lançamento financeiro gerado ainda.', 14, y);
+      doc.text(decodeText('Nenhum lancamento financeiro gerado ainda.'), 14, y);
       y += 6;
     }
     y += 6;
@@ -234,33 +234,33 @@ Deno.serve(async (req) => {
 
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('LOGÍSTICA', 14, y);
+    doc.text(decodeText('LOGISTICA'), 14, y);
     y += 8;
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     
     if (supermanifesto) {
-      doc.text(`Supermanifesto: ${supermanifesto.numero}`, 14, y);
+      doc.text(decodeText(`Supermanifesto: ${supermanifesto.numero}`), 14, y);
       y += 6;
-      doc.text(`Transportadora: ${supermanifesto.transportadora_nome}`, 14, y);
+      doc.text(decodeText(`Transportadora: ${supermanifesto.transportadora_nome}`), 14, y);
       y += 6;
-      doc.text(`ETA: ${supermanifesto.eta ? new Date(supermanifesto.eta).toLocaleString('pt-BR') : 'Pendente'}`, 14, y);
+      doc.text(decodeText(`ETA: ${supermanifesto.eta ? new Date(supermanifesto.eta).toLocaleString('pt-BR') : 'Pendente'}`), 14, y);
       y += 6;
-      doc.text(`Status: ${supermanifesto.status || 'Pendente'}`, 14, y);
+      doc.text(decodeText(`Status: ${supermanifesto.status || 'Pendente'}`), 14, y);
       y += 6;
     } else {
-      doc.text('Supermanifesto: Pendente', 14, y);
+      doc.text(decodeText('Supermanifesto: Pendente'), 14, y);
       y += 6;
     }
     
-    doc.text(`Volumes: ${pedido.qtd_volumes || 0} ${pedido.tipo_volume || 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Volumes: ${pedido.qtd_volumes || 0} ${pedido.tipo_volume || 'Pendente'}`), 14, y);
     y += 6;
-    doc.text(`Peso Total: ${pedido.peso_total_kg || 0} kg`, 14, y);
+    doc.text(decodeText(`Peso Total: ${pedido.peso_total_kg || 0} kg`), 14, y);
     y += 6;
-    doc.text(`NF Emitida: ${pedido.nfe_emitida ? 'Sim' : 'Pendente'}`, 14, y);
+    doc.text(decodeText(`NF Emitida: ${pedido.nfe_emitida ? 'Sim' : 'Pendente'}`), 14, y);
     y += 6;
-    doc.text(`Manifesto Conferido: ${pedido.manifesto_conferido ? 'Sim' : 'Pendente'}`, 14, y);
+    doc.text(decodeText(`Manifesto Conferido: ${pedido.manifesto_conferido ? 'Sim' : 'Pendente'}`), 14, y);
     y += 8;
 
     // Conferência
@@ -272,14 +272,14 @@ Deno.serve(async (req) => {
 
       doc.setFontSize(14);
       doc.setFont(undefined, 'bold');
-      doc.text('RESULTADO DA CONFERÊNCIA', 14, y);
+      doc.text(decodeText('RESULTADO DA CONFERENCIA'), 14, y);
       y += 8;
 
       doc.setFontSize(9);
-      doc.text('Produto', 14, y);
-      doc.text('Tipo', 100, y);
-      doc.text('Esperado', 135, y);
-      doc.text('Recebido', 165, y);
+      doc.text(decodeText('Produto'), 14, y);
+      doc.text(decodeText('Tipo'), 100, y);
+      doc.text(decodeText('Esperado'), 135, y);
+      doc.text(decodeText('Recebido'), 165, y);
       y += 6;
 
       doc.setFont(undefined, 'normal');
@@ -288,15 +288,15 @@ Deno.serve(async (req) => {
           doc.addPage();
           y = 20;
         }
-        doc.text(div.produto_nome?.substring(0, 30) || 'N/A', 14, y);
-        doc.text(div.tipo || 'N/A', 100, y);
-        doc.text(String(div.quantidade_esperada || 0), 135, y);
-        doc.text(String(div.quantidade_recebida || 0), 165, y);
+        doc.text(decodeText(div.produto_nome?.substring(0, 30) || 'N/A'), 14, y);
+        doc.text(decodeText(div.tipo || 'N/A'), 100, y);
+        doc.text(decodeText(String(div.quantidade_esperada || 0)), 135, y);
+        doc.text(decodeText(String(div.quantidade_recebida || 0)), 165, y);
         y += 6;
       });
       y += 6;
     } else {
-      doc.text('Conferência: Pendente', 14, y);
+      doc.text(decodeText('Conferencia: Pendente'), 14, y);
       y += 8;
     }
 
@@ -311,11 +311,11 @@ Deno.serve(async (req) => {
     doc.text('_'.repeat(40), 14, y);
     doc.text('_'.repeat(40), 115, y);
     y += 5;
-    doc.text('Responsável pela Compra', 20, y);
-    doc.text('Gestor de Compras', 130, y);
+    doc.text(decodeText('Responsavel pela Compra'), 20, y);
+    doc.text(decodeText('Gestor de Compras'), 130, y);
     y += 10;
-    doc.text('Data: ____/____/________', 20, y);
-    doc.text('Data: ____/____/________', 115, y);
+    doc.text(decodeText('Data: ____/____/________'), 20, y);
+    doc.text(decodeText('Data: ____/____/________'), 115, y);
 
     const pdfBytes = doc.output('arraybuffer');
 
