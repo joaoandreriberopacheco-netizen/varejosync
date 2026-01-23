@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown, MoreVertical, Clock } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown, MoreVertical, Clock, Send } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1001,7 +1001,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   }}
                   className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-base shadow-lg gap-2"
                 >
-                  <Ship className="w-5 h-5" />
+                  <PaperPlane className="w-5 h-5" />
                   Enviar para Aprovação Financeira
                 </Button>
               )}
@@ -1543,34 +1543,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
           {/* ABA: PAGAMENTO */}
           <TabsContent value="pagamento" className="mt-0 space-y-8">
-            {/* Botão Enviar para Aprovação Financeira - Desktop */}
-            {pedido && pedido.status === 'Rascunho' && formData.itens.length > 0 && !isLocked && (
-              <Button 
-                onClick={() => {
-                  handleChange('status', 'Enviado');
-                  setTimeout(() => handleInitiateSave(), 100);
-                }}
-                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-base shadow-lg gap-2"
-              >
-                <Ship className="w-5 h-5" />
-                Enviar para Aprovação Financeira
-              </Button>
-            )}
-
-            {pedido && pedido.status === 'Enviado' && pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' && (
-              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border-0 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Aguardando Aprovação</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Este pedido está aguardando aprovação do setor financeiro. Edição bloqueada.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Forma de Pagamento *</Label>
@@ -1999,29 +1971,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         </Tabs>
       </div>
 
-      {/* Footer fixo - Total + Botão Circular */}
+      {/* Footer simples */}
       <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex-shrink-0">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-start">
           <span className="text-sm text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total</span>
-              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
-            </div>
-            {pedido && pedido.status === 'Rascunho' && formData.itens.length > 0 && !isLocked && (
-              <Button
-                onClick={() => {
-                  handleChange('status', 'Enviado');
-                  setTimeout(() => handleInitiateSave(), 100);
-                }}
-                className="flex-shrink-0 w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 shadow-lg flex items-center justify-center"
-                size="icon"
-                title="Enviar para Aprovação Financeira"
-              >
-                <Ship className="w-8 h-8 text-white" style={{ transform: 'rotate(-45deg)' }} />
-              </Button>
-            )}
-          </div>
         </div>
       </div>
       
