@@ -16,6 +16,7 @@ import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import MobileProductSelector from './MobileProductSelector';
 import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
+import PendenciasPedido from './PendenciasPedido';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -779,11 +780,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             )}
           </div>
 
-          {/* Timeline compacta */}
+          {/* Timeline */}
           <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
 
           {/* MOBILE: Tabs com Ícones */}
-          <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-4">
+          <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
             <TabsTrigger 
               value="dados-gerais" 
               className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
@@ -813,6 +814,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <Ship className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="text-[9px] text-gray-600 dark:text-gray-400">Log</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="pendencias" 
+              className="flex flex-col items-center gap-1 py-2 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              disabled={!pedido}
+            >
+              <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-[9px] text-gray-600 dark:text-gray-400">Pend</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -821,36 +830,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
           <div className="flex-1 overflow-y-auto">
             <TabsContent value="dados-gerais" className="mt-0 px-3 py-6 space-y-6 border-0">
-              {/* Número do Pedido */}
-              {pedido?.numero && (
-                <div className="flex items-center justify-between pb-4">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Número do Pedido</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{pedido.numero}</span>
-                </div>
-              )}
-
-              {/* Badge de Status Financeiro */}
-              {pedido?.status_aprovacao_financeira && pedido.status_aprovacao_financeira !== 'Pendente de Envio' && (
-                <div className="mb-6">
-                  <div className={`p-4 rounded-xl shadow-sm ${
-                    pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
-                    pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
-                    pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ? 'bg-gray-50 dark:bg-gray-800' :
-                    'bg-gray-50 dark:bg-gray-800'
-                  }`}>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Status Financeiro</div>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-600' :
-                        pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-400' :
-                        'bg-gray-400'
-                      }`}></div>
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{pedido.status_aprovacao_financeira}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Fornecedor com ícone */}
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Fornecedor *</Label>
@@ -911,30 +890,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{f.nome}</span>
                       </div>
                     ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Status</Label>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl h-12 px-4 flex items-center shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        formData.status === 'Concluído' ? 'bg-gray-600' :
-                        formData.status === 'Cancelado' ? 'bg-gray-400' :
-                        'bg-gray-400'
-                      }`}></div>
-                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{formData.status || 'Rascunho'}</span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Criado em</Label>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl h-12 px-4 flex items-center shadow-sm">
-                    <span className="text-sm text-gray-800 dark:text-gray-200">
-                      {pedido?.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : format(new Date(), 'dd/MM/yyyy')}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -1196,94 +1151,71 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   return (
     <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-2xl">
-      {/* DESKTOP: Header + Tabs */}
+      {/* Header compacto */}
+      <div className="flex-shrink-0 px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
+        <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+          <X className="w-4 h-4" />
+        </Button>
+        <span className="text-xs text-gray-500 dark:text-gray-400 flex-1">
+          {pedido?.numero || 'Novo Pedido'}
+        </span>
+        <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8" title="Desfazer">
+          <Undo className="w-4 h-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8" title="Refazer">
+          <Redo className="w-4 h-4" />
+        </Button>
+        {pedido?.id && (
+          <Button variant="ghost" size="icon" onClick={handlePrintReport} className="h-8 w-8" title="Imprimir">
+            <Printer className="w-4 h-4" />
+          </Button>
+        )}
+        {!isLocked && (
+          <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8" title="Salvar">
+            <Save className="w-4 h-4" />
+          </Button>
+        )}
+        {canReopen && isLocked && (
+          <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-8 text-xs px-2">
+            Reabrir
+          </Button>
+        )}
+      </div>
+
+      {/* Timeline */}
+      <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+
+      {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-          {/* Header integrado com Tabs */}
-          <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
-            <div className="px-6 py-3 flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-                <X className="w-4 h-4" />
-              </Button>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {pedido?.numero || 'Novo Pedido'}
-              </span>
-              
-              {/* Tabs no meio */}
-              <TabsList className="flex-1 bg-transparent border-0 rounded-none h-auto p-0 flex justify-center gap-1">
-                <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm">
-                  <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-                  Dados Gerais
-                </TabsTrigger>
-                <TabsTrigger value="itens" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm">
-                  <ShoppingCart className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-                  Itens
-                </TabsTrigger>
-                <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm">
-                  <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-                  Pagamento
-                </TabsTrigger>
-                <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-4 text-sm" disabled={!isLogisticaEnabled && pedido}>
-                  <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-                  Logística
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Ações à direita */}
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8" title="Desfazer">
-                  <Undo className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8" title="Refazer">
-                  <Redo className="w-4 h-4" />
-                </Button>
-                {pedido?.id && (
-                  <Button variant="ghost" size="icon" onClick={handlePrintReport} className="h-8 w-8" title="Imprimir">
-                    <Printer className="w-4 h-4" />
-                  </Button>
-                )}
-                {!isLocked && (
-                  <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8" title="Salvar">
-                    <Save className="w-4 h-4" />
-                  </Button>
-                )}
-                {canReopen && isLocked && (
-                  <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-8 text-xs px-2">
-                    Reabrir
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
+          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-6">
+            <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
+              <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              Dados Gerais
+            </TabsTrigger>
+            <TabsTrigger value="itens" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
+              <ShoppingCart className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              Itens
+            </TabsTrigger>
+            <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
+              <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              Pagamento
+            </TabsTrigger>
+            <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!isLogisticaEnabled && pedido}>
+              <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              Logística
+            </TabsTrigger>
+            <TabsTrigger value="pendencias" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!pedido?.id}>
+              <AlertCircle className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              Pendências
+            </TabsTrigger>
+          </TabsList>
 
           <div className="flex-1 overflow-y-auto p-6">
-            <TabsContent value="dados-gerais" className="mt-0 space-y-8">
-              {/* Badge de Status Financeiro */}
-              {pedido?.status_aprovacao_financeira && pedido.status_aprovacao_financeira !== 'Pendente de Envio' && (
-                <div className="mb-6">
-                  <div className={`p-5 rounded-xl shadow-sm border-0 ${
-                    pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
-                    pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-50 dark:bg-gray-800' :
-                    pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ? 'bg-gray-50 dark:bg-gray-800' :
-                    'bg-gray-50 dark:bg-gray-800'
-                  }`}>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Status Financeiro</div>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${
-                        pedido.status_aprovacao_financeira === 'Aprovado Financeiramente' ? 'bg-gray-600' :
-                        pedido.status_aprovacao_financeira === 'Rejeitado Financeiramente' ? 'bg-gray-400' :
-                        'bg-gray-400'
-                      }`}></div>
-                      <span className="font-medium text-lg text-gray-800 dark:text-gray-200">{pedido.status_aprovacao_financeira}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Header Compacto - Grid Principal */}
+            <TabsContent value="dados-gerais" className="mt-0 space-y-6">
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}
-                <div className="col-span-12 lg:col-span-4">
+                <div className="col-span-12 lg:col-span-6">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Fornecedor *</Label>
                   <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
                     <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white">
@@ -1297,33 +1229,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </Select>
                 </div>
 
-                {/* Status (Read-only) */}
-                <div className="col-span-6 lg:col-span-4">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Status</Label>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg h-11 px-4 flex items-center shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        formData.status === 'Concluído' ? 'bg-gray-600' :
-                        formData.status === 'Cancelado' ? 'bg-gray-400' :
-                        'bg-gray-400'
-                      }`}></div>
-                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{formData.status || 'Rascunho'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Data Criação (Read-only) */}
-                <div className="col-span-6 lg:col-span-4">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Criado em</Label>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg h-11 px-4 flex items-center shadow-sm">
-                    <span className="text-sm text-gray-800 dark:text-gray-200">
-                      {pedido?.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm') : format(new Date(), 'dd/MM/yyyy HH:mm')}
-                    </span>
-                  </div>
-                </div>
-
                 {/* Tags */}
-                <div className="col-span-12 lg:col-span-4">
+                <div className="col-span-12 lg:col-span-6">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Tags</Label>
                   <Input 
                     className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400" 
@@ -1983,6 +1890,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
             </div>
           </TabsContent>
+
+            {/* ABA: PENDÊNCIAS */}
+            <TabsContent value="pendencias" className="mt-0">
+              {pedido?.id && (
+                <PendenciasPedido pedido={pedido} />
+              )}
+            </TabsContent>
           </div>
         </Tabs>
       </div>
