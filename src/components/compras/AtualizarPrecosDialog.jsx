@@ -197,7 +197,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {itensComComparacao.length} produto(s) no pedido
               {qtdItensComDiferenca > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded text-[10px] font-medium">
+                <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded text-[10px] font-medium">
                   {qtdItensComDiferenca} com alteração
                 </span>
               )}
@@ -228,16 +228,14 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                   <th className="text-center p-2 w-[90px]">Outros</th>
                   <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">Custo Total</th>
                   <th className="text-center p-2 w-[80px]">Markup %</th>
-                  <th className="text-center p-2 w-[110px] bg-teal-50 dark:bg-teal-900/20 font-bold">Preço Venda</th>
+                  <th className="text-center p-2 w-[110px] bg-gray-100 dark:bg-gray-700 font-bold">Preço Venda</th>
                 </tr>
               </thead>
               <tbody>
                 {itensComComparacao.map(item => (
                   <tr
                     key={item.produto_id}
-                    className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                      item.temDiferenca ? 'bg-amber-50/30 dark:bg-amber-900/5' : ''
-                    }`}
+                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="p-2 text-center">
                       {item.temDiferenca && (
@@ -287,7 +285,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.desconto_compra_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'desconto_compra_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm text-green-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -297,7 +295,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_frete_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_frete_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm text-blue-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -307,7 +305,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_imposto1_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto1_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm text-orange-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -317,7 +315,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         value={formatMoney(item.costs?.custo_imposto2_padrao || 0)}
                         onChange={(e) => handleMoneyChange(item.produto_id, 'custo_imposto2_padrao', e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="h-8 text-center text-sm text-orange-600 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                        className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                         placeholder="R$ 0,00"
                       />
                     </td>
@@ -346,8 +344,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         className="h-8 text-center text-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
                       />
                     </td>
-                    <td className="p-2 bg-teal-50 dark:bg-teal-900/20">
-                      <div className="text-center font-bold text-teal-700 dark:text-teal-400">
+                    <td className="p-2 bg-gray-50 dark:bg-gray-800">
+                      <div className="text-center font-bold text-gray-900 dark:text-gray-100">
                         R$ {formatMoney(item.precoVendaSugerido)}
                       </div>
                     </td>
@@ -370,7 +368,6 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             <Button
               onClick={handleInitiateUpdate}
               disabled={processando || Object.keys(selecionados).filter(k => selecionados[k]).length === 0}
-              className="bg-teal-600 hover:bg-teal-700"
             >
               {processando ? 'Aplicando...' : `Autenticar e Aplicar ${Object.keys(selecionados).filter(k => selecionados[k]).length} Selecionado(s)`}
             </Button>
