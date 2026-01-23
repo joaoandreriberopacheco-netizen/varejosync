@@ -42,8 +42,6 @@ Deno.serve(async (req) => {
     }
 
     const descricaoIndex = headers.findIndex(h => h.includes('descri') && h !== headers[nomeIndex]);
-    const corIndex = headers.findIndex(h => h.includes('cor'));
-    const ordemIndex = headers.findIndex(h => h.includes('ordem'));
     const ativoIndex = headers.findIndex(h => h.includes('ativo'));
 
     // Buscar áreas existentes
@@ -82,8 +80,6 @@ Deno.serve(async (req) => {
         codigo,
         nome: nome.toUpperCase(),
         descricao: descricaoIndex !== -1 ? cols[descricaoIndex]?.toUpperCase() : '',
-        cor: corIndex !== -1 && cols[corIndex] ? cols[corIndex] : '#3b82f6',
-        ordem: ordemIndex !== -1 && cols[ordemIndex] ? parseInt(cols[ordemIndex]) || 0 : 0,
         ativo: ativoIndex !== -1 && cols[ativoIndex] ? (cols[ativoIndex].toLowerCase() === 'sim' || cols[ativoIndex] === '1') : true
       };
 
