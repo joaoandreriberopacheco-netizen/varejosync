@@ -735,6 +735,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             <TabsTrigger 
               value="logistica" 
               className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              disabled={!isLogisticaEnabled && !pedido}
             >
               <Ship className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               <span className="text-[10px] text-gray-600 dark:text-gray-400">Log</span>
@@ -904,7 +905,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Forma de Pagamento *</Label>
-                <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
+                <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)} disabled={isLocked}>
                   <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
                     <SelectValue />
                   </SelectTrigger>
@@ -926,6 +927,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                         value={formData.num_parcelas} 
                         onChange={e => handleChange('num_parcelas', parseInt(e.target.value) || 1)} 
+                        disabled={isLocked}
                       />
                     </div>
                     <div>
@@ -936,6 +938,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                         value={formData.intervalo_parcelas_dias} 
                         onChange={e => handleChange('intervalo_parcelas_dias', parseInt(e.target.value) || 30)} 
+                        disabled={isLocked}
                       />
                     </div>
                   </div>
@@ -951,6 +954,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                   value={formData.data_primeiro_vencimento} 
                   onChange={e => handleChange('data_primeiro_vencimento', e.target.value)} 
+                  disabled={isLocked}
                 />
               </div>
 
@@ -962,13 +966,26 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   rows={3}
                   value={formData.condicoes_pagamento} 
                   onChange={e => handleChange('condicoes_pagamento', e.target.value)} 
+                  disabled={isLocked}
                 />
               </div>
 
             </TabsContent>
 
             <TabsContent value="logistica" className="mt-0 px-3 py-6 space-y-6 border-0">
-              {supermanifesto ? (
+              {!isLogisticaEnabled && pedido ? (
+                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Aba Bloqueada</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Esta seção estará disponível após a aprovação financeira do pedido.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : supermanifesto ? (
                 <div className="p-4 bg-teal-50 rounded-xl shadow-sm border-0 dark:bg-teal-900/20">
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
@@ -985,7 +1002,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 <>
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Transportadora</Label>
-                    <Select value={formData.transportadora_embarque_id} onValueChange={v => handleChange('transportadora_embarque_id', v)}>
+                    <Select value={formData.transportadora_embarque_id} onValueChange={v => handleChange('transportadora_embarque_id', v)} disabled={!isLogisticaEnabled}>
                       <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
@@ -1004,6 +1021,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       value={formData.eta_embarque || ''}
                       onChange={(e) => handleChange('eta_embarque', e.target.value)}
                       className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12"
+                      disabled={!isLogisticaEnabled}
                     />
                   </div>
 
@@ -1014,6 +1032,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                       value={formData.data_prevista_entrega} 
                       onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
+                      disabled={!isLogisticaEnabled}
                     />
                   </div>
 
@@ -1025,11 +1044,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                         value={formData.qtd_volumes} 
                         onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
+                        disabled={!isLogisticaEnabled}
                       />
                     </div>
                     <div>
                       <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Tipo</Label>
-                      <Select value={formData.tipo_volume} onValueChange={v => handleChange('tipo_volume', v)}>
+                      <Select value={formData.tipo_volume} onValueChange={v => handleChange('tipo_volume', v)} disabled={!isLogisticaEnabled}>
                         <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
                           <SelectValue />
                         </SelectTrigger>
@@ -1046,6 +1066,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
                         value={formData.peso_total_kg} 
                         onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
+                        disabled={!isLogisticaEnabled}
                       />
                     </div>
                   </div>
@@ -1247,7 +1268,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       size="sm" 
                       onClick={() => setShowAtualizarPrecos(true)} 
                       className="h-8 text-xs border-0 shadow-sm"
-                      disabled={formData.itens.length === 0}
+                      disabled={formData.itens.length === 0 || isLocked}
                     >
                       <DollarSign className="h-3.5 w-3.5 mr-1.5" /> 
                       Ajustar Preços
@@ -1355,6 +1376,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                     value={item.codigo_produto}
                                     onChange={e => handleItemChange(index, 'codigo_produto', e.target.value)}
                                     placeholder="Código"
+                                    disabled={isLocked}
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -1371,6 +1393,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                                     className="h-9 text-xs bg-transparent border-0 rounded-lg px-2 hover:bg-white dark:hover:bg-gray-900 text-gray-900 dark:text-white" 
                                     value={item.unidade_medida}
                                     onChange={e => handleItemChange(index, 'unidade_medida', e.target.value)}
+                                    disabled={isLocked}
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -1689,6 +1712,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       size="sm"
                       onClick={handleAddVolume}
                       className="h-7 text-xs gap-1"
+                      disabled={!isLogisticaEnabled}
                     >
                       <PlusCircle className="w-3 h-3" />
                       Adicionar
