@@ -476,6 +476,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       }
 
       const response = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
+      
+      // Verificar se a resposta é um erro
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -488,7 +494,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       toast({ title: 'Relatório gerado com sucesso!' });
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
-      toast({ title: error.response?.data?.error || 'Erro ao gerar relatório', variant: 'destructive' });
+      const errorMsg = error?.message || error?.response?.data?.error || 'Erro ao gerar relatório';
+      toast({ title: errorMsg, variant: 'destructive' });
     }
   };
 
