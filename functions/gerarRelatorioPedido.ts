@@ -45,6 +45,31 @@ Deno.serve(async (req) => {
     const doc = new jsPDF();
     let y = 20;
 
+    // Timeline no topo
+    const timeline = [
+      { label: 'Rascunho', date: pedido.created_date },
+      { label: 'Aprovado', date: pedido.data_aprovacao_financeira },
+      { label: 'Despachado', date: pedido.data_despacho },
+      { label: 'Entregue', date: pedido.data_chegada },
+      { label: 'Concluído', date: pedido.data_conclusao }
+    ];
+
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    let xPos = 20;
+    timeline.forEach((stage, idx) => {
+      doc.text(stage.label, xPos, y);
+      if (stage.date) {
+        doc.text(new Date(stage.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), xPos, y + 4);
+      } else {
+        doc.setTextColor(150, 150, 150);
+        doc.text('Pendente', xPos, y + 4);
+        doc.setTextColor(0, 0, 0);
+      }
+      xPos += 37;
+    });
+    y += 12;
+
     // Cabeçalho
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
@@ -63,29 +88,26 @@ Deno.serve(async (req) => {
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text(`Fornecedor: ${pedido.fornecedor_nome || 'N/A'}`, 14, y);
+    doc.text(`Fornecedor: ${pedido.fornecedor_nome || 'Pendente'}`, 14, y);
     y += 6;
-    doc.text(`Status: ${pedido.status || 'N/A'}`, 14, y);
+    doc.text(`Status: ${pedido.status || 'Rascunho'}`, 14, y);
     y += 6;
-    doc.text(`Criado em: ${pedido.created_date ? new Date(pedido.created_date).toLocaleDateString('pt-BR') : 'N/A'}`, 14, y);
+    doc.text(`Status Financeiro: ${pedido.status_aprovacao_financeira || 'Pendente'}`, 14, y);
     y += 6;
-    doc.text(`Criado por: ${pedido.created_by || 'N/A'}`, 14, y);
+    doc.text(`Criado em: ${pedido.created_date ? new Date(pedido.created_date).toLocaleDateString('pt-BR') : 'Pendente'}`, 14, y);
     y += 6;
-
-    if (pedido.data_aprovacao_financeira) {
-      doc.text(`Aprovação Financeira: ${new Date(pedido.data_aprovacao_financeira).toLocaleDateString('pt-BR')}`, 14, y);
+    doc.text(`Criado por: ${pedido.created_by || 'Pendente'}`, 14, y);
+    y += 6;
+    doc.text(`Data Prevista Entrega: ${pedido.data_prevista_entrega ? new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR') : 'Pendente'}`, 14, y);
+    y += 6;
+    
+    if (pedido.observacoes) {
+      doc.text(`Observações: ${pedido.observacoes}`, 14, y);
       y += 6;
     }
-    if (pedido.data_despacho) {
-      doc.text(`Despacho: ${new Date(pedido.data_despacho).toLocaleDateString('pt-BR')}`, 14, y);
-      y += 6;
-    }
-    if (pedido.data_chegada) {
-      doc.text(`Chegada: ${new Date(pedido.data_chegada).toLocaleDateString('pt-BR')}`, 14, y);
-      y += 6;
-    }
-    if (pedido.data_conclusao) {
-      doc.text(`Conclusão: ${new Date(pedido.data_conclusao).toLocaleDateString('pt-BR')}`, 14, y);
+    
+    if (pedido.tags && pedido.tags.length > 0) {
+      doc.text(`Tags: ${pedido.tags.join(', ')}`, 14, y);
       y += 6;
     }
 
@@ -126,17 +148,40 @@ Deno.serve(async (req) => {
     y += 10;
 
     // Financeiro
+    if (y > 250) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('FINANCEIRO', 14, y);
+    y += 8;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Forma de Pagamento: ${pedido.forma_pagamento_compra || 'Pendente'}`, 14, y);
+    y += 6;
+    
+    if (pedido.forma_pagamento_compra === 'Parcelado') {
+      doc.text(`Número de Parcelas: ${pedido.num_parcelas || 'Pendente'}`, 14, y);
+      y += 6;
+      doc.text(`Intervalo: ${pedido.intervalo_parcelas_dias || 'Pendente'} dias`, 14, y);
+      y += 6;
+    }
+    
+    doc.text(`Primeiro Vencimento: ${pedido.data_primeiro_vencimento ? new Date(pedido.data_primeiro_vencimento).toLocaleDateString('pt-BR') : 'Pendente'}`, 14, y);
+    y += 6;
+    
+    if (pedido.condicoes_pagamento) {
+      doc.text(`Condições: ${pedido.condicoes_pagamento}`, 14, y);
+      y += 6;
+    }
+    y += 4;
+
     if (lancamentos.length > 0) {
-      if (y > 250) {
-        doc.addPage();
-        y = 20;
-      }
-
-      doc.setFontSize(14);
-      doc.text('FINANCEIRO', 14, y);
-      y += 8;
-
       doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
       doc.text('Descrição', 14, y);
       doc.text('Vencimento', 110, y);
       doc.text('Status', 150, y);
@@ -150,46 +195,53 @@ Deno.serve(async (req) => {
           y = 20;
         }
         doc.text(lanc.descricao?.substring(0, 30) || 'N/A', 14, y);
-        doc.text(lanc.data_vencimento ? new Date(lanc.data_vencimento).toLocaleDateString('pt-BR') : 'N/A', 110, y);
-        doc.text(lanc.status || 'N/A', 150, y);
+        doc.text(lanc.data_vencimento ? new Date(lanc.data_vencimento).toLocaleDateString('pt-BR') : 'Pendente', 110, y);
+        doc.text(lanc.status || 'Pendente', 150, y);
         doc.text(`R$ ${(lanc.valor || 0).toFixed(2)}`, 175, y);
         y += 6;
       });
+    } else {
+      doc.text('Nenhum lançamento financeiro gerado ainda.', 14, y);
       y += 6;
     }
+    y += 6;
 
     // Logística
-    if (supermanifesto || pedido.qtd_volumes) {
-      if (y > 240) {
-        doc.addPage();
-        y = 20;
-      }
-
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'bold');
-      doc.text('LOGÍSTICA', 14, y);
-      y += 8;
-
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      if (supermanifesto) {
-        doc.text(`Supermanifesto: ${supermanifesto.numero}`, 14, y);
-        y += 6;
-        doc.text(`Transportadora: ${supermanifesto.transportadora_nome}`, 14, y);
-        y += 6;
-        doc.text(`ETA: ${supermanifesto.eta ? new Date(supermanifesto.eta).toLocaleString('pt-BR') : 'N/A'}`, 14, y);
-        y += 6;
-      }
-      if (pedido.qtd_volumes) {
-        doc.text(`Volumes: ${pedido.qtd_volumes} ${pedido.tipo_volume || ''}`, 14, y);
-        y += 6;
-      }
-      if (pedido.peso_total_kg) {
-        doc.text(`Peso Total: ${pedido.peso_total_kg} kg`, 14, y);
-        y += 6;
-      }
-      y += 4;
+    if (y > 240) {
+      doc.addPage();
+      y = 20;
     }
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('LOGÍSTICA', 14, y);
+    y += 8;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    
+    if (supermanifesto) {
+      doc.text(`Supermanifesto: ${supermanifesto.numero}`, 14, y);
+      y += 6;
+      doc.text(`Transportadora: ${supermanifesto.transportadora_nome}`, 14, y);
+      y += 6;
+      doc.text(`ETA: ${supermanifesto.eta ? new Date(supermanifesto.eta).toLocaleString('pt-BR') : 'Pendente'}`, 14, y);
+      y += 6;
+      doc.text(`Status: ${supermanifesto.status || 'Pendente'}`, 14, y);
+      y += 6;
+    } else {
+      doc.text('Supermanifesto: Pendente', 14, y);
+      y += 6;
+    }
+    
+    doc.text(`Volumes: ${pedido.qtd_volumes || 0} ${pedido.tipo_volume || 'Pendente'}`, 14, y);
+    y += 6;
+    doc.text(`Peso Total: ${pedido.peso_total_kg || 0} kg`, 14, y);
+    y += 6;
+    doc.text(`NF Emitida: ${pedido.nfe_emitida ? 'Sim' : 'Pendente'}`, 14, y);
+    y += 6;
+    doc.text(`Manifesto Conferido: ${pedido.manifesto_conferido ? 'Sim' : 'Pendente'}`, 14, y);
+    y += 8;
 
     // Conferência
     if (divergencias.length > 0) {
@@ -222,7 +274,28 @@ Deno.serve(async (req) => {
         doc.text(String(div.quantidade_recebida || 0), 165, y);
         y += 6;
       });
+      y += 6;
+    } else {
+      doc.text('Conferência: Pendente', 14, y);
+      y += 8;
     }
+
+    // Assinaturas
+    if (y > 240) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('_'.repeat(40), 14, y);
+    doc.text('_'.repeat(40), 115, y);
+    y += 5;
+    doc.text('Responsável pela Compra', 20, y);
+    doc.text('Gestor de Compras', 130, y);
+    y += 10;
+    doc.text('Data: ____/____/________', 20, y);
+    doc.text('Data: ____/____/________', 115, y);
 
     const pdfBytes = doc.output('arraybuffer');
 

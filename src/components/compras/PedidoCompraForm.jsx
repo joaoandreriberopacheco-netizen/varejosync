@@ -9,7 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -448,19 +454,30 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   const canReopen = currentUser?.role === 'admin' && isLocked;
 
-  const handlePrintReport = async () => {
+  const handlePrintReport = async (tipo = 'pedido') => {
     if (!pedido?.id) {
       toast({ title: 'Salve o pedido antes de imprimir', variant: 'destructive' });
       return;
     }
-    
+
     try {
-      const response = await base44.functions.invoke('gerarRelatorioPedido', { pedido_id: pedido.id });
+      let functionName = 'gerarRelatorioPedido';
+      let fileName = `Pedido_${pedido.numero}.pdf`;
+
+      if (tipo === 'precificacao') {
+        functionName = 'gerarRelatorioPrecificacao';
+        fileName = `Precificacao_${pedido.numero}.pdf`;
+      } else if (tipo === 'pendencias') {
+        functionName = 'gerarRelatorioPendencias';
+        fileName = `Pendencias_${pedido.numero}.pdf`;
+      }
+
+      const response = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Pedido_${pedido.numero}.pdf`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -468,7 +485,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       toast({ title: 'Relatório gerado com sucesso!' });
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
-      toast({ title: 'Erro ao gerar relatório', variant: 'destructive' });
+      toast({ title: error.response?.data?.error || 'Erro ao gerar relatório', variant: 'destructive' });
     }
   };
 
@@ -1164,9 +1181,24 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           <Redo className="w-4 h-4" />
         </Button>
         {pedido?.id && (
-          <Button variant="ghost" size="icon" onClick={handlePrintReport} className="h-8 w-8" title="Imprimir">
-            <Printer className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" title="Relatórios">
+                <Printer className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="dark:bg-gray-800">
+              <DropdownMenuItem onClick={() => handlePrintReport('pedido')}>
+                Relatório do Pedido
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePrintReport('precificacao')}>
+                Análise de Precificação
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePrintReport('pendencias')}>
+                Relatório de Pendências
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
         {!isLocked && (
           <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-8 w-8" title="Salvar">
