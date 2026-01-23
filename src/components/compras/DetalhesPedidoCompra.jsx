@@ -19,10 +19,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Ship,
-  MapPin } from
-'lucide-react';
+  MapPin,
+  ClipboardCheck
+} from 'lucide-react';
 import { format } from 'date-fns';
 import InformarEmbarque from './InformarEmbarque';
+import ConferenciaCega from './ConferenciaCega';
+import PendenciasPedido from './PendenciasPedido';
 
 export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
   const [lancamentosFinanceiros, setLancamentosFinanceiros] = useState([]);
@@ -30,6 +33,7 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
   const [eventoLogistico, setEventoLogistico] = useState(null);
   const [supermanifesto, setSupermanifesto] = useState(null);
   const [showInformarEmbarque, setShowInformarEmbarque] = useState(false);
+  const [showConferencia, setShowConferencia] = useState(false);
 
   useEffect(() => {
     if (pedido && isOpen) {
@@ -81,11 +85,12 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
     const statusMap = {
       'Rascunho': 'bg-gray-100 text-gray-800',
       'Enviado': 'bg-blue-100 text-blue-800',
-      'Aguardando Recepção': 'bg-yellow-100 text-yellow-800',
-      'Recebido Parcialmente': 'bg-orange-100 text-orange-800',
-      'Recebido': 'bg-emerald-100 text-emerald-800',
-      'Recebido com Discrepância': 'bg-red-100 text-red-800',
-      'Cancelado': 'bg-red-100 text-red-800'
+      'Aprovado Financeiramente': 'bg-emerald-100 text-emerald-800',
+      'Despachado': 'bg-purple-100 text-purple-800',
+      'Em Trânsito': 'bg-indigo-100 text-indigo-800',
+      'Pendências': 'bg-red-100 text-red-800',
+      'Concluído': 'bg-green-100 text-green-800',
+      'Cancelado': 'bg-gray-100 text-gray-800'
     };
     return statusMap[status] || 'bg-gray-100 text-gray-800';
   };
@@ -196,12 +201,40 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
             </div>
           )}
 
+          {/* Botão de Conferência */}
+          {pedido.supermanifesto_id && pedido.status !== 'Concluído' && pedido.status !== 'Pendências' && (
+            <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-1">
+                    Iniciar Conferência
+                  </h4>
+                  <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                    Realize a conferência cega dos produtos recebidos
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowConferencia(true)}
+                  className="bg-indigo-600 hover:bg-indigo-700 gap-2"
+                  size="sm"
+                >
+                  <ClipboardCheck className="w-4 h-4" />
+                  Conferir
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Abas de Conteúdo */}
           <Tabs defaultValue="detalhes" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-100">
+            <TabsList className="grid w-full grid-cols-5 bg-gray-100">
               <TabsTrigger value="detalhes" className="gap-2">
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">Detalhes</span>
+              </TabsTrigger>
+              <TabsTrigger value="pendencias" className="gap-2">
+                <AlertCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Pendências</span>
               </TabsTrigger>
               <TabsTrigger value="financeiro" className="gap-2">
                 <Wallet className="w-4 h-4" />
@@ -298,6 +331,11 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
                   </CardContent>
                 </Card>
               }
+            </TabsContent>
+
+            {/* ABA: PENDÊNCIAS */}
+            <TabsContent value="pendencias" className="space-y-4 mt-4">
+              <PendenciasPedido pedido={pedido} />
             </TabsContent>
 
             {/* ABA: FINANCEIRO */}
@@ -566,6 +604,16 @@ export default function DetalhesPedidoCompra({ pedido, isOpen, onClose }) {
         onSuccess={() => {
           loadDadosAdicionais();
           setShowInformarEmbarque(false);
+        }}
+      />
+
+      <ConferenciaCega
+        pedido={pedido}
+        isOpen={showConferencia}
+        onClose={() => setShowConferencia(false)}
+        onSuccess={() => {
+          loadDadosAdicionais();
+          setShowConferencia(false);
         }}
       />
     </>
