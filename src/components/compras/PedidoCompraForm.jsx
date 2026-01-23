@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown, MoreVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
@@ -776,57 +777,68 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
         <div className="flex-shrink-0">
-          {/* Header simples */}
-          <div className="px-4 py-3 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10">
-              <X className="w-5 h-5" />
+          {/* Header compacto com menu */}
+          <div className="px-3 py-2.5 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 flex-shrink-0">
+              <X className="w-4 h-4" />
             </Button>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="font-medium text-gray-900 dark:text-white truncate">
                   {pedido?.numero || 'Novo'}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-gray-400">•</span>
+                <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
                   {formData.itens.length} {formData.itens.length === 1 ? 'item' : 'itens'}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
-                <span className="text-xs font-medium text-gray-900 dark:text-white">
+                <span className="text-gray-400">•</span>
+                <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
                   {formatCurrency(valorTotal)}
                 </span>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-10 w-10">
-              <Undo className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-10 w-10">
-              <Redo className="w-4 h-4" />
-            </Button>
-            {pedido?.id && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
-                    <Printer className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-gray-800">
-                  <DropdownMenuItem onClick={() => handlePrintReport('pedido')}>
-                    Relatório do Pedido
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handlePrintReport('precificacao')}>
-                    Análise de Precificação
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handlePrintReport('pendencias')}>
-                    Relatório de Pendências
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {!isLocked && (
-              <Button variant="ghost" size="icon" onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0} className="h-10 w-10">
-                <Save className="w-4 h-4" />
-              </Button>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="dark:bg-gray-800">
+                {!isLocked && (
+                  <>
+                    <DropdownMenuItem onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleUndo} disabled={historyIndex <= 0}>
+                      <Undo className="w-4 h-4 mr-2" />
+                      Desfazer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
+                      <Redo className="w-4 h-4 mr-2" />
+                      Refazer
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {pedido?.id && (
+                  <>
+                    <DropdownMenuItem onClick={() => handlePrintReport('pedido')}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Relatório do Pedido
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePrintReport('precificacao')}>
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Análise de Precificação
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePrintReport('pendencias')}>
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      Relatório de Pendências
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
