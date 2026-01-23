@@ -215,7 +215,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                 variant="ghost"
                 size="sm"
                 onClick={handleSelecionarTodos}
-                className="text-xs h-7"
+                className="text-xs h-7 shadow-sm"
               >
                 Selecionar Alterados
               </Button>
@@ -500,6 +500,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             variant="outline"
             onClick={() => onClose(false)}
             disabled={processando}
+            className="border-0 shadow-sm"
           >
             {qtdItensComDiferenca > 0 ? 'Ignorar' : 'Fechar'}
           </Button>
@@ -507,6 +508,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             <Button
               onClick={handleInitiateUpdate}
               disabled={processando || Object.keys(selecionados).filter(k => selecionados[k]).length === 0}
+              className="shadow-sm"
             >
               {processando ? 'Aplicando...' : `Autenticar e Aplicar ${Object.keys(selecionados).filter(k => selecionados[k]).length} Selecionado(s)`}
             </Button>
