@@ -1,14 +1,14 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, FileText, CheckCircle, Send, Package, AlertCircle, Flag } from 'lucide-react';
 
 export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
   const stages = [
-    { key: 'Rascunho', label: 'Rascunho' },
-    { key: 'Aprovado', label: 'Aprovado' },
-    { key: 'Despachado', label: 'Despachado' },
-    { key: 'Entregue', label: 'Entregue' },
-    { key: 'Pendência', label: 'Pendência' },
-    { key: 'Concluído', label: 'Concluído' }
+    { key: 'Rascunho', label: 'Rascunho', icon: FileText },
+    { key: 'Aprovado', label: 'Aprovado', icon: CheckCircle },
+    { key: 'Despachado', label: 'Despachado', icon: Send },
+    { key: 'Entregue', label: 'Entregue', icon: Package },
+    { key: 'Pendência', label: 'Pendência', icon: AlertCircle },
+    { key: 'Concluído', label: 'Concluído', icon: Flag }
   ];
 
   const getStageIndex = (status, aprovacao) => {
@@ -25,45 +25,33 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
   const currentIndex = getStageIndex(currentStatus, aprovacaoFinanceira);
 
   return (
-    <div className="flex items-center gap-1 px-3 py-3">
+    <div className="flex items-center gap-1 px-2 py-3">
       {stages.map((stage, idx) => {
         const isCompleted = idx <= currentIndex;
         const isActive = idx === currentIndex;
+        const Icon = stage.icon;
         
         return (
           <React.Fragment key={stage.key}>
             <div className="flex flex-col items-center">
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                   isCompleted
                     ? 'bg-gray-700 dark:bg-gray-600'
                     : 'bg-gray-200 dark:bg-gray-700'
                 }`}
               >
-                {isCompleted ? (
-                  <Check className="w-4 h-4 text-white" />
-                ) : (
-                  <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
-                )}
+                <Icon className={`w-4 h-4 ${isCompleted ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
               </div>
-              <span
-                className={`text-[10px] mt-1 ${
-                  isActive
-                    ? 'font-semibold text-gray-800 dark:text-gray-200'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {stage.label}
-              </span>
             </div>
             {idx < stages.length - 1 && (
               <div
-                className={`flex-1 h-0.5 mx-1 transition-all ${
+                className={`flex-1 h-0.5 mx-0.5 transition-all ${
                   isCompleted && idx < currentIndex
                     ? 'bg-gray-700 dark:bg-gray-600'
                     : 'bg-gray-200 dark:bg-gray-700'
                 }`}
-                style={{ minWidth: '16px' }}
+                style={{ minWidth: '8px' }}
               />
             )}
           </React.Fragment>
