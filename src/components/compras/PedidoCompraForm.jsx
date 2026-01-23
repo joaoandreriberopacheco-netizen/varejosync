@@ -838,25 +838,24 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Status</Label>
-                  <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
-                      {['Rascunho', 'Enviado', 'Aguardando Recepção', 'Recebido'].map(s => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl h-12 px-4 flex items-center shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        formData.status === 'Concluído' ? 'bg-gray-600' :
+                        formData.status === 'Cancelado' ? 'bg-gray-400' :
+                        'bg-gray-400'
+                      }`}></div>
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{formData.status || 'Rascunho'}</span>
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Emissão</Label>
-                  <Input 
-                    type="date" 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
-                    value={formData.data_emissao} 
-                    onChange={e => handleChange('data_emissao', e.target.value)} 
-                  />
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Criado em</Label>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl h-12 px-4 flex items-center shadow-sm">
+                    <span className="text-sm text-gray-800 dark:text-gray-200">
+                      {pedido?.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy') : format(new Date(), 'dd/MM/yyyy')}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1185,30 +1184,29 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </Select>
                 </div>
 
-                {/* Status */}
-                <div className="col-span-6 lg:col-span-2">
+                {/* Status (Read-only) */}
+                <div className="col-span-6 lg:col-span-4">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Status</Label>
-                  <Select value={formData.status} onValueChange={value => handleChange('status', value)}>
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
-                      {['Rascunho', 'Enviado', 'Aguardando Recepção', 'Recebido Parcialmente', 'Recebido', 'Cancelado'].map(s => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg h-11 px-4 flex items-center shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        formData.status === 'Concluído' ? 'bg-gray-600' :
+                        formData.status === 'Cancelado' ? 'bg-gray-400' :
+                        'bg-gray-400'
+                      }`}></div>
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{formData.status || 'Rascunho'}</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Data Emissão */}
-                <div className="col-span-6 lg:col-span-2">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Emissão</Label>
-                  <Input 
-                    type="date" 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white" 
-                    value={formData.data_emissao} 
-                    onChange={e => handleChange('data_emissao', e.target.value)} 
-                  />
+                {/* Data Criação (Read-only) */}
+                <div className="col-span-6 lg:col-span-4">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Criado em</Label>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg h-11 px-4 flex items-center shadow-sm">
+                    <span className="text-sm text-gray-800 dark:text-gray-200">
+                      {pedido?.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm') : format(new Date(), 'dd/MM/yyyy HH:mm')}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Tags */}
