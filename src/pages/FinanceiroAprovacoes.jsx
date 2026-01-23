@@ -10,7 +10,7 @@ import { CheckCircle, XCircle, Clock, AlertCircle, DollarSign, FileText, Eye } f
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
-import DetalhesPedidoCompra from '@/components/compras/DetalhesPedidoCompra';
+import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 
 export default function FinanceiroAprovacoesPage() {
   const [pendingTransactions, setPendingTransactions] = useState([]);
@@ -400,14 +400,19 @@ export default function FinanceiroAprovacoesPage() {
         operationName={`${actionType === 'approve' ? 'Aprovar' : 'Rejeitar'} Pagamento ${selectedTransaction?.referencia_numero || ''}`}
       />
 
-      <DetalhesPedidoCompra 
-        pedido={selectedPedido}
-        isOpen={showPedidoDetails}
-        onClose={() => {
-          setShowPedidoDetails(false);
-          setSelectedPedido(null);
-        }}
-      />
+      <Dialog open={showPedidoDetails} onOpenChange={setShowPedidoDetails}>
+        <PedidoCompraForm 
+          pedido={selectedPedido}
+          onClose={() => {
+            setShowPedidoDetails(false);
+            setSelectedPedido(null);
+          }}
+          onSave={async () => {
+            setShowPedidoDetails(false);
+            setSelectedPedido(null);
+          }}
+        />
+      </Dialog>
     </div>
   );
 }
