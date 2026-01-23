@@ -1638,28 +1638,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
-              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Valor Total</div>
-                <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</div>
-              </div>
-              {formData.forma_pagamento_compra === 'Parcelado' && (
-                <>
-                  <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Valor por Parcela</div>
-                    <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">
-                      {formatCurrency(valorTotal / (formData.num_parcelas || 1))}
-                    </div>
-                  </div>
-                  <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Parcelas</div>
-                    <div className="text-2xl font-medium text-gray-800 dark:text-gray-200">
-                      {formData.num_parcelas || 1}x
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+
           </TabsContent>
 
           {/* ABA: LOGÍSTICA */}
@@ -2020,13 +1999,28 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         </Tabs>
       </div>
 
-      {/* Footer fixo - Total em destaque */}
+      {/* Footer fixo - Total + Botão Circular */}
       <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500 dark:text-gray-400">{formData.itens.length} item(s)</span>
-          <div className="text-right">
-            <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total</span>
-            <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
+            </div>
+            {pedido && pedido.status === 'Rascunho' && formData.itens.length > 0 && !isLocked && (
+              <Button
+                onClick={() => {
+                  handleChange('status', 'Enviado');
+                  setTimeout(() => handleInitiateSave(), 100);
+                }}
+                className="flex-shrink-0 w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 shadow-lg flex items-center justify-center"
+                size="icon"
+                title="Enviar para Aprovação Financeira"
+              >
+                <Ship className="w-8 h-8 text-white" style={{ transform: 'rotate(-45deg)' }} />
+              </Button>
+            )}
           </div>
         </div>
       </div>
