@@ -441,11 +441,8 @@ export default function FinanceiroModuloPage() {
                             <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200">
                               {formatCurrency(totalGrupo)}
                             </TableCell>
-                            <TableCell className="text-center">
-                              <Badge className="bg-yellow-100 text-yellow-800 border-0">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Aguardando
-                              </Badge>
+                            <TableCell className="text-center text-gray-600 dark:text-gray-400">
+                              Aguardando
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex gap-2 justify-end">
