@@ -201,7 +201,7 @@ export default function FinanceiroAprovacoesPage() {
       </div>
 
       {/* Lista de Aprovações */}
-      <div className="space-y-4">
+      <div>
         {isLoading ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <Clock className="w-12 h-12 mx-auto mb-3 animate-spin" />
@@ -214,90 +214,176 @@ export default function FinanceiroAprovacoesPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Todas as contas estão aprovadas ou não há solicitações no momento</p>
           </div>
         ) : (
-          Object.entries(groupedTransactions).map(([refNumber, transactions]) => {
-            const firstTransaction = transactions[0];
-            const totalGrupo = transactions.reduce((sum, t) => sum + (t.valor || 0), 0);
-            
-            return (
-              <Card key={refNumber} className="p-6 hover:shadow-lg transition-shadow border-0 shadow-sm bg-white dark:bg-gray-800">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                        {firstTransaction.referencia_numero || 'Lançamento Avulso'}
-                      </h3>
-                      <Badge className="bg-yellow-100 text-yellow-800 border-0">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Aguardando
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                      <p><span className="font-medium">Fornecedor:</span> {firstTransaction.terceiro_nome}</p>
-                      <p><span className="font-medium">Descrição:</span> {firstTransaction.descricao}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
-                    <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(totalGrupo)}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {transactions.length} {transactions.length === 1 ? 'lançamento' : 'lançamentos'}
-                    </div>
-                  </div>
-                </div>
+          <>
+            {/* Desktop: Tabela */}
+            <div className="hidden md:block border-0 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+              <Table>
+                <TableHeader className="bg-gray-50 dark:bg-gray-900/80">
+                  <TableRow className="border-0">
+                    <TableHead className="text-gray-700 dark:text-gray-300">Pedido</TableHead>
+                    <TableHead className="text-gray-700 dark:text-gray-300">Fornecedor</TableHead>
+                    <TableHead className="text-gray-700 dark:text-gray-300">Descrição</TableHead>
+                    <TableHead className="text-center text-gray-700 dark:text-gray-300">Lançamentos</TableHead>
+                    <TableHead className="text-right text-gray-700 dark:text-gray-300">Valor Total</TableHead>
+                    <TableHead className="text-center text-gray-700 dark:text-gray-300">Status</TableHead>
+                    <TableHead className="text-right text-gray-700 dark:text-gray-300">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(groupedTransactions).map(([refNumber, transactions]) => {
+                    const firstTransaction = transactions[0];
+                    const totalGrupo = transactions.reduce((sum, t) => sum + (t.valor || 0), 0);
+                    
+                    return (
+                      <TableRow key={refNumber} className="border-0 hover:bg-gray-50 dark:hover:bg-gray-900/50">
+                        <TableCell className="font-medium text-gray-800 dark:text-gray-200">
+                          {firstTransaction.referencia_numero || 'Avulso'}
+                        </TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-400">
+                          {firstTransaction.terceiro_nome}
+                        </TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                          {firstTransaction.descricao}
+                        </TableCell>
+                        <TableCell className="text-center text-gray-600 dark:text-gray-400">
+                          {transactions.length}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200">
+                          {formatCurrency(totalGrupo)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className="bg-yellow-100 text-yellow-800 border-0">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Aguardando
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleViewPedido(transactions[0])}
+                              title="Ver Detalhes"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => {
+                                setSelectedTransaction(transactions[0]);
+                                setActionType('reject');
+                                setIsAuthOpen(true);
+                              }}
+                              title="Rejeitar"
+                            >
+                              <XCircle className="w-4 h-4 text-red-600" />
+                            </Button>
+                            <Button 
+                              size="icon"
+                              className="bg-gray-700 hover:bg-gray-600"
+                              onClick={() => handleOpenDialog(transactions[0])}
+                              title="Aprovar"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
 
-                {/* Lista de Parcelas/Lançamentos */}
-                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Detalhamento:</div>
-                  <div className="space-y-2">
-                    {transactions.map((t, idx) => (
-                      <div key={t.id} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {t.descricao}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Venc: {format(new Date(t.data_vencimento), 'dd/MM/yyyy')}
-                          </span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200">{formatCurrency(t.valor)}</span>
+            {/* Mobile: Cards */}
+            <div className="md:hidden space-y-4">
+              {Object.entries(groupedTransactions).map(([refNumber, transactions]) => {
+                const firstTransaction = transactions[0];
+                const totalGrupo = transactions.reduce((sum, t) => sum + (t.valor || 0), 0);
+                
+                return (
+                  <Card key={refNumber} className="p-6 hover:shadow-lg transition-shadow border-0 shadow-sm bg-white dark:bg-gray-800">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                            {firstTransaction.referencia_numero || 'Lançamento Avulso'}
+                          </h3>
+                          <Badge className="bg-yellow-100 text-yellow-800 border-0">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Aguardando
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                          <p><span className="font-medium">Fornecedor:</span> {firstTransaction.terceiro_nome}</p>
+                          <p><span className="font-medium">Descrição:</span> {firstTransaction.descricao}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
+                        <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(totalGrupo)}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {transactions.length} {transactions.length === 1 ? 'lançamento' : 'lançamentos'}
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="flex gap-3 justify-end">
-                  <Button 
-                    variant="outline" 
-                    className="gap-2 border-0 shadow-sm"
-                    onClick={() => handleViewPedido(transactions[0])}
-                  >
-                    <Eye className="w-4 h-4" />
-                    Ver Detalhes
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="gap-2 border-0 shadow-sm"
-                    onClick={() => {
-                      setSelectedTransaction(transactions[0]);
-                      setActionType('reject');
-                      setIsAuthOpen(true);
-                    }}
-                  >
-                    <XCircle className="w-4 h-4" />
-                    Rejeitar
-                  </Button>
-                  <Button 
-                    className="gap-2 bg-gray-700 hover:bg-gray-600"
-                    onClick={() => handleOpenDialog(transactions[0])}
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Aprovar
-                  </Button>
-                </div>
-              </Card>
-            );
-          })
+                    {/* Lista de Parcelas/Lançamentos */}
+                    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Detalhamento:</div>
+                      <div className="space-y-2">
+                        {transactions.map((t, idx) => (
+                          <div key={t.id} className="flex items-center justify-between text-sm">
+                            <span className="text-gray-700 dark:text-gray-300">
+                              {t.descricao}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                Venc: {format(new Date(t.data_vencimento), 'dd/MM/yyyy')}
+                              </span>
+                              <span className="font-medium text-gray-800 dark:text-gray-200">{formatCurrency(t.valor)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 justify-end">
+                      <Button 
+                        variant="outline" 
+                        className="gap-2 border-0 shadow-sm"
+                        onClick={() => handleViewPedido(transactions[0])}
+                      >
+                        <Eye className="w-4 h-4" />
+                        Ver Detalhes
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="gap-2 border-0 shadow-sm"
+                        onClick={() => {
+                          setSelectedTransaction(transactions[0]);
+                          setActionType('reject');
+                          setIsAuthOpen(true);
+                        }}
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Rejeitar
+                      </Button>
+                      <Button 
+                        className="gap-2 bg-gray-700 hover:bg-gray-600"
+                        onClick={() => handleOpenDialog(transactions[0])}
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Aprovar
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
