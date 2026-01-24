@@ -483,14 +483,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         fileName = `Pendencias_${pedido.numero}.pdf`;
       }
 
-      const response = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
-      
-      // Verificar se a resposta é um erro
-      if (response.data?.error) {
-        throw new Error(response.data.error);
+      const result = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
+
+      // Verificar se houve erro
+      if (result.error) {
+        throw new Error(result.error);
       }
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      // result.data já é um ArrayBuffer diretamente
+      const blob = new Blob([result.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -502,7 +503,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       toast({ title: 'Relatório gerado com sucesso!' });
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
-      const errorMsg = error?.message || error?.response?.data?.error || 'Erro ao gerar relatório';
+      const errorMsg = error?.message || 'Erro ao gerar relatório';
       toast({ title: errorMsg, variant: 'destructive' });
     }
   };
