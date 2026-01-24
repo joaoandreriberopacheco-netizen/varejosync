@@ -130,33 +130,6 @@ export default function FinanceiroModuloPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo de Caixa, Contas e Projeções</p>
       </div>
 
-      {/* KPIs - SEM CORES, SEM CARDS */}
-      <div className="grid grid-cols-4 gap-8 pb-6 border-b border-gray-200 dark:border-gray-700">
-        <div>
-          <div className="text-gray-500 mb-1 px-5 text-xs dark:text-gray-400">Saldo Total</div>
-          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(saldoTotal)}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{accounts.length} conta(s)</p>
-        </div>
-
-        <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Receitas (Mês)</div>
-          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(receitasMes)}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Recebidas</p>
-        </div>
-
-        <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Despesas (Mês)</div>
-          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(despesasMes)}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pagas</p>
-        </div>
-
-        <div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo do Mês</div>
-          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(saldoMes)}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Resultado</p>
-        </div>
-      </div>
-
       <Tabs defaultValue="caixa" className="w-full">
         <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
           <div className="flex w-full">
