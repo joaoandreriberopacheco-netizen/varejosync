@@ -12,7 +12,8 @@ export default function MobileProductSelector({
   onUpdateItem, 
   onRemoveItem,
   formatCurrency,
-  onOpenAdjustPrices
+  onOpenAdjustPrices,
+  isLocked
 }) {
   const [view, setView] = useState('menu'); // 'menu' | 'catalog' | 'cart' | 'edit'
   const [search, setSearch] = useState('');
@@ -322,6 +323,7 @@ export default function MobileProductSelector({
                      setEditingIndex(-1);
                      setView('catalog');
                   }}
+                  disabled={isLocked}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Remover
@@ -506,6 +508,7 @@ export default function MobileProductSelector({
                         e.stopPropagation();
                         onRemoveItem(index);
                       }}
+                      disabled={isLocked}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

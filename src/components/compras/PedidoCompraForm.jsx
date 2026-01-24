@@ -1007,6 +1007,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 onRemoveItem={handleRemoveItem}
                 formatCurrency={formatCurrency}
                 onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
+                isLocked={isLocked}
               />
             </TabsContent>
 
