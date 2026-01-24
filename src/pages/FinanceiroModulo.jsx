@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle } from 'lucide-react';
 import GestaoCaixa from '../components/financeiro/GestaoCaixa';
+import FinanceiroAprovacoesPage from './FinanceiroAprovacoes';
+import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 
 export default function FinanceiroModuloPage() {
   const [accounts, setAccounts] = useState([]);
@@ -121,53 +123,12 @@ export default function FinanceiroModuloPage() {
   };
 
   return (
-    <div className="flex gap-6 max-w-7xl mx-auto">
-      {/* Sidebar de Navegação */}
-      <aside className="w-56 flex-shrink-0 space-y-1">
-        <div className="pb-3 mb-3 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-sm font-medium text-gray-800 dark:text-gray-200">Financeiro</h2>
-        </div>
-        
-        <Link
-          to={createPageUrl('CaixasAtivos')}
-          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-
-          <Wallet className="w-4 h-4" />
-          Caixas Ativos
-        </Link>
-        
-        <Link
-          to={createPageUrl('FinanceiroModulo')}
-          className="flex items-center gap-3 px-3 py-2 rounded text-sm bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium">
-
-          <DollarSign className="w-4 h-4" />
-          Gestão de Contas
-        </Link>
-        
-        <Link
-          to={createPageUrl('FinanceiroAprovacoes')}
-          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-
-          <AlertCircle className="w-4 h-4" />
-          Aprovações Pendentes
-        </Link>
-        
-        <Link
-          to={createPageUrl('Configuracoes')}
-          className="flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-
-          <CreditCard className="w-4 h-4" />
-          Formas de Pagamento
-        </Link>
-      </aside>
-
-      {/* Conteúdo Principal */}
-      <div className="flex-1 space-y-6">
-        {/* Header - SEM CORES */}
-        <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Gestão de Contas</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo de Caixa, Contas e Projeções</p>
-        </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+        <h1 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Gestão Financeira</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo de Caixa, Contas e Projeções</p>
+      </div>
 
       {/* KPIs - SEM CORES, SEM CARDS */}
       <div className="grid grid-cols-4 gap-8 pb-6 border-b border-gray-200 dark:border-gray-700">
@@ -213,6 +174,20 @@ export default function FinanceiroModuloPage() {
               <Wallet className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Contas</span>
             </TabsTrigger>
+            <TabsTrigger
+                value="aprovacoes"
+                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
+              <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Aprovações</span>
+            </TabsTrigger>
+            <TabsTrigger
+                value="pagamentos"
+                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
+              <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Pagamentos</span>
+            </TabsTrigger>
           </div>
         </TabsList>
 
@@ -221,86 +196,88 @@ export default function FinanceiroModuloPage() {
             <GestaoCaixa />
           </TabsContent>
 
-          <TabsContent value="contas" className="mt-0">
-            <div className="space-y-4">
-              {/* Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-                <div>
-                  <h3 className="text-base font-normal text-gray-800 dark:text-gray-200">Contas Financeiras (Cofres)</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie suas contas, caixas e cofres</p>
-                </div>
-                <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500">
-                  <PlusCircle className="w-4 h-4" /> Nova Conta
+          <TabsContent value="contas" className="mt-0 space-y-4">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-base font-normal text-gray-800 dark:text-gray-200">Contas Financeiras (Cofres)</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Gerencie suas contas, caixas e cofres</p>
+              </div>
+              <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500">
+                <PlusCircle className="w-4 h-4" /> Nova Conta
+              </Button>
+            </div>
+
+            {accounts.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-800 border-0 shadow-sm rounded-xl">
+                <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-gray-500 dark:text-gray-400 mb-4">Nenhuma conta cadastrada</p>
+                <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600">
+                  <PlusCircle className="w-4 h-4" /> Criar Primeira Conta
                 </Button>
               </div>
-
-              {/* Lista de Contas */}
-              {accounts.length === 0 ?
-                <div className="text-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
-                  <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">Nenhuma conta cadastrada</p>
-                  <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600">
-                    <PlusCircle className="w-4 h-4" /> Criar Primeira Conta
-                  </Button>
-                </div> :
-
-                <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden bg-white dark:bg-gray-800">
-                  <Table>
-                    <TableHeader className="bg-gray-50 dark:bg-gray-700">
-                      <TableRow className="border-b border-gray-200 dark:border-gray-700">
-                        <TableHead className="text-gray-700 dark:text-gray-300">Nome</TableHead>
-                        <TableHead className="text-gray-700 dark:text-gray-300">Tipo</TableHead>
-                        <TableHead className="text-gray-700 dark:text-gray-300">Banco</TableHead>
-                        <TableHead className="text-right text-gray-700 dark:text-gray-300">Saldo Atual</TableHead>
-                        <TableHead className="text-gray-700 dark:text-gray-300">Status</TableHead>
-                        <TableHead className="text-right text-gray-700 dark:text-gray-300">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {accounts.map((account) =>
-                      <TableRow key={account.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <TableCell className="font-medium text-gray-800 dark:text-gray-200">{account.nome}</TableCell>
-                          <TableCell className="text-gray-600 dark:text-gray-400">{account.tipo}</TableCell>
-                          <TableCell className="text-gray-600 dark:text-gray-400">{account.banco || '-'}</TableCell>
-                          <TableCell className="text-right font-medium text-gray-800 dark:text-gray-200">
-                            {formatCurrency(account.saldo_atual)}
-                          </TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded text-xs ${
-                          account.ativo ?
-                          'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' :
-                          'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-500'}`
-                          }>
-                              {account.ativo ? 'Ativa' : 'Inativa'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-2 justify-end">
-                              <Button
+            ) : (
+              <div className="border-0 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+                <Table>
+                  <TableHeader className="bg-gray-50 dark:bg-gray-700">
+                    <TableRow className="border-0">
+                      <TableHead className="text-gray-700 dark:text-gray-300">Nome</TableHead>
+                      <TableHead className="text-gray-700 dark:text-gray-300">Tipo</TableHead>
+                      <TableHead className="text-gray-700 dark:text-gray-300">Banco</TableHead>
+                      <TableHead className="text-right text-gray-700 dark:text-gray-300">Saldo Atual</TableHead>
+                      <TableHead className="text-gray-700 dark:text-gray-300">Status</TableHead>
+                      <TableHead className="text-right text-gray-700 dark:text-gray-300">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {accounts.map((account) => (
+                      <TableRow key={account.id} className="border-0 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <TableCell className="font-medium text-gray-800 dark:text-gray-200">{account.nome}</TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-400">{account.tipo}</TableCell>
+                        <TableCell className="text-gray-600 dark:text-gray-400">{account.banco || '-'}</TableCell>
+                        <TableCell className="text-right font-medium text-gray-800 dark:text-gray-200">
+                          {formatCurrency(account.saldo_atual)}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            account.ativo ?
+                            'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' :
+                            'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-500'
+                          }`}>
+                            {account.ativo ? 'Ativa' : 'Inativa'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEditAccount(account)}
                               className="hover:bg-gray-100 dark:hover:bg-gray-600">
-
-                                <Edit className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                              </Button>
-                              <Button
+                              <Edit className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                            </Button>
+                            <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDeleteAccount(account.id)}
                               className="hover:bg-gray-100 dark:hover:bg-gray-600">
+                              <Trash2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </TabsContent>
 
-                                <Trash2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-                }
-            </div>
+          <TabsContent value="aprovacoes" className="mt-0">
+            <FinanceiroAprovacoesPage />
+          </TabsContent>
+
+          <TabsContent value="pagamentos" className="mt-0">
+            <FormasPagamentoManager />
           </TabsContent>
         </div>
       </Tabs>
@@ -359,7 +336,6 @@ export default function FinanceiroModuloPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
-    </div>);
-
+    </div>
+  );
 }
