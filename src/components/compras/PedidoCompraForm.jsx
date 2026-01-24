@@ -82,6 +82,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   }, []);
 
   useEffect(() => {
+    if (pedido) {
+      setFormData(pedido);
+      setHistory([pedido]);
+      setHistoryIndex(0);
+    }
+  }, [pedido]);
+
+  useEffect(() => {
     const loadDependencies = async () => {
       const user = await base44.auth.me();
       setCurrentUser(user);
