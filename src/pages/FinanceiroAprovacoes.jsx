@@ -95,7 +95,7 @@ export default function FinanceiroAprovacoesPage() {
 
 
   const handleInitiateApproval = () => {
-    if (!selectedAccount) {
+    if (!contaSelecionada) {
       toast({
         title: "Conta obrigatória",
         description: "Selecione uma conta para realizar o pagamento.",
@@ -107,7 +107,7 @@ export default function FinanceiroAprovacoesPage() {
     setIsAuthOpen(true);
   };
 
-  const selectedAccount = contaSelecionada;
+
 
   const handleConfirmReject = () => {
     if (!motivoRejeicao.trim()) {
@@ -221,7 +221,7 @@ export default function FinanceiroAprovacoesPage() {
     );
   });
 
-  const totalPendente = pendingTransactions.reduce((sum, t) => sum + (t.valor || 0), 0);
+  const totalPendente = pendingTransactions.reduce((sum, p) => sum + (p.valor_total || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -276,97 +276,190 @@ export default function FinanceiroAprovacoesPage() {
           />
         </div>
 
-  const handleAuthSuccess = async (authData) => {
-    try {
-      if (actionType === 'approve') {
-        const pedido = selectedTransaction;
-        const authNote = `\n[Aprovado Financeiramente: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
-        
-        // Atualizar pedido
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          status: 'Aguardando Recepção',
-          status_aprovacao_financeira: 'Aprovado',
-          data_aprovacao_financeira: new Date().toISOString(),
-          conta_pagamento_id: contaSelecionada,
-          historico: (pedido.historico || '') + authNote
-        });
+        <TabsContent value={activeTab} className="mt-0">
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <Clock className="w-12 h-12 mx-auto mb-3 animate-spin" />
+              <p>Carregando...</p>
+            </div>
+          ) : filteredPedidos.length === 0 ? (
+            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
+                {searchTerm ? 'Nenhum resultado encontrado' : `Nenhum pedido ${activeTab === 'pendentes' ? 'pendente' : activeTab === 'aprovados' ? 'aprovado' : 'rejeitado'}`}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {searchTerm ? 'Tente outro termo de busca' : `Não há pedidos ${activeTab} no momento`}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="hidden md:block border-0 shadow-sm rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+                <Table>
+                  <TableHeader className="bg-gray-50 dark:bg-gray-900/80">
+                    <TableRow className="border-0">
+                      <TableHead className="text-gray-700 dark:text-gray-300">Pedido</TableHead>
+                      <TableHead className="text-gray-700 dark:text-gray-300">Fornecedor</TableHead>
+                      <TableHead className="text-center text-gray-700 dark:text-gray-300">Itens</TableHead>
+                      <TableHead className="text-right text-gray-700 dark:text-gray-300">Valor Total</TableHead>
+                      {activeTab === 'aprovados' && (
+                        <TableHead className="text-gray-700 dark:text-gray-300">Data Aprovação</TableHead>
+                      )}
+                      {activeTab === 'rejeitados' && (
+                        <TableHead className="text-gray-700 dark:text-gray-300">Motivo</TableHead>
+                      )}
+                      <TableHead className="text-right text-gray-700 dark:text-gray-300">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPedidos.map((pedido) => {
+                      return (
+                        <TableRow key={pedido.id} className={`border-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${
+                          activeTab === 'aprovados' ? 'bg-green-50/50 dark:bg-green-900/10' :
+                          activeTab === 'rejeitados' ? 'bg-red-50/50 dark:bg-red-900/10' : ''
+                        }`}>
+                          <TableCell className="font-medium text-gray-800 dark:text-gray-200">
+                            {pedido.numero}
+                          </TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">
+                            {pedido.fornecedor_nome}
+                          </TableCell>
+                          <TableCell className="text-center text-gray-600 dark:text-gray-400">
+                            {pedido.itens?.length || 0}
+                          </TableCell>
+                          <TableCell className="text-right font-bold text-gray-800 dark:text-gray-200">
+                            {formatCurrency(pedido.valor_total)}
+                          </TableCell>
+                          {activeTab === 'aprovados' && (
+                            <TableCell className="text-gray-600 dark:text-gray-400 text-xs">
+                              {pedido.data_aprovacao_financeira ? format(new Date(pedido.data_aprovacao_financeira), 'dd/MM/yyyy HH:mm') : '-'}
+                            </TableCell>
+                          )}
+                          {activeTab === 'rejeitados' && (
+                            <TableCell className="text-gray-600 dark:text-gray-400 max-w-xs truncate text-xs">
+                              {pedido.motivo_rejeicao_financeira || 'Sem motivo'}
+                            </TableCell>
+                          )}
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={async () => {
+                                  const pedidos = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+                                  setSelectedPedido(pedidos[0]);
+                                  setShowPedidoDetails(true);
+                                }}
+                                title="Ver Detalhes"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              {activeTab === 'pendentes' && (
+                                <>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    onClick={() => handleReject(pedido)}
+                                    title="Rejeitar"
+                                  >
+                                    <XCircle className="w-4 h-4 text-red-600" />
+                                  </Button>
+                                  <Button 
+                                    size="icon"
+                                    className="bg-gray-700 hover:bg-gray-600"
+                                    onClick={() => handleApprove(pedido)}
+                                    title="Aprovar"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
 
-        // Atualizar todos os lançamentos financeiros associados
-        const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
-          referencia_id: pedido.id,
-          referencia_tipo: 'PedidoCompra'
-        });
+              <div className="md:hidden space-y-4">
+                {filteredPedidos.map((pedido) => {
+                  return (
+                    <Card key={pedido.id} className={`p-6 hover:shadow-lg transition-shadow border-0 shadow-sm ${
+                      activeTab === 'aprovados' ? 'bg-green-50 dark:bg-green-900/20' :
+                      activeTab === 'rejeitados' ? 'bg-red-50 dark:bg-red-900/20' :
+                      'bg-white dark:bg-gray-800'
+                    }`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                              {pedido.numero}
+                            </h3>
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                            <p><span className="font-medium">Fornecedor:</span> {pedido.fornecedor_nome}</p>
+                            <p><span className="font-medium">Itens:</span> {pedido.itens?.length || 0}</p>
+                            {activeTab === 'aprovados' && pedido.data_aprovacao_financeira && (
+                              <p className="text-green-600 dark:text-green-400">
+                                <span className="font-medium">Aprovado em:</span> {format(new Date(pedido.data_aprovacao_financeira), 'dd/MM/yyyy HH:mm')}
+                              </p>
+                            )}
+                            {activeTab === 'rejeitados' && (
+                              <p className="text-red-600 dark:text-red-400">
+                                <span className="font-medium">Motivo:</span> {pedido.motivo_rejeicao_financeira || 'Sem motivo'}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Valor Total</div>
+                          <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{formatCurrency(pedido.valor_total)}</div>
+                        </div>
+                      </div>
 
-        await Promise.all(
-          lancamentos.map(lancamento =>
-            base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-              status: 'Em Aberto',
-              conta_pagamento_id: contaSelecionada
-            })
-          )
-        );
-
-        toast({
-          title: "✓ Pagamento aprovado",
-          description: "Pedido aprovado. Logística liberada.",
-          className: "bg-gray-100 text-gray-800"
-        });
-      } else if (actionType === 'reject') {
-        const pedido = selectedTransaction;
-
-        // Atualizar pedido
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          status: 'Cancelado',
-          status_aprovacao_financeira: 'Rejeitado',
-          motivo_rejeicao_financeira: motivoRejeicao,
-          data_rejeicao_financeira: new Date().toISOString(),
-          historico: (pedido.historico || '') + `\n[Rejeitado Financeiramente: ${motivoRejeicao} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
-        });
-
-        // Cancelar todos os lançamentos financeiros associados
-        const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
-          referencia_id: pedido.id,
-          referencia_tipo: 'PedidoCompra'
-        });
-
-        await Promise.all(
-          lancamentos.map(lancamento =>
-            base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-              status: 'Cancelado'
-            })
-          )
-        );
-
-        toast({
-          title: "Pedido rejeitado",
-          description: "Feedback registrado para o setor de compras.",
-          variant: "destructive"
-        });
-      }
-
-      loadData();
-      setSelectedTransaction(null);
-      setIsAuthOpen(false);
-      setMotivoRejeicao('');
-      setContaSelecionada('');
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
-  const filteredPedidos = pendingTransactions.filter(pedido => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    return (
-      pedido.numero?.toLowerCase().includes(search) ||
-      pedido.fornecedor_nome?.toLowerCase().includes(search) ||
-      pedido.observacoes?.toLowerCase().includes(search)
-    );
-  });
+                      <div className="flex gap-3 justify-end">
+                        <Button 
+                          variant="outline" 
+                          className="gap-2 border-0 shadow-sm"
+                          onClick={async () => {
+                            const pedidos = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+                            setSelectedPedido(pedidos[0]);
+                            setShowPedidoDetails(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                          Ver
+                        </Button>
+                        {activeTab === 'pendentes' && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              className="gap-2 border-0 shadow-sm"
+                              onClick={() => handleReject(pedido)}
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Rejeitar
+                            </Button>
+                            <Button 
+                              className="gap-2 bg-gray-700 hover:bg-gray-600"
+                              onClick={() => handleApprove(pedido)}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              Aprovar
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </TabsContent>
       </Tabs>
 
       <Dialog open={!!selectedTransaction && !isAuthOpen && !isRejectDialogOpen} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
