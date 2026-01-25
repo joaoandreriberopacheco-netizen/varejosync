@@ -373,7 +373,7 @@ export default function PDVVendedor() {
     const quantidade = parseInt(quantidadeAtual) || 1; // Updated state
 
     console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
-    
+
     if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidade) {
       showFeedback('error', `Estoque insuficiente: ${produtoSelecionado.estoque_atual} disponível`, 3000);
       return;
@@ -439,7 +439,7 @@ export default function PDVVendedor() {
       setCarrinho(carrinho.filter((item) => item.produto_id !== produtoId));
     } else {
       const item = carrinho.find((i) => i.produto_id === produtoId);
-      if (configVenda?.vender_sem_estoque === true || (item && novaQuantidade <= item.estoque_disponivel)) {
+      if (configVenda?.vender_sem_estoque === true || item && novaQuantidade <= item.estoque_disponivel) {
         setCarrinho(carrinho.map((item) =>
         item.produto_id === produtoId ?
         { ...item, quantidade: novaQuantidade, total: novaQuantidade * item.preco_unitario } :
@@ -548,10 +548,10 @@ export default function PDVVendedor() {
       const todosPedidos = await PedidoVenda.list();
       const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map((p) => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
       const numeroPedido = `PV-${String(nextNumber).padStart(5, '0')}`;
-      
+
       // Gerar senha sequencial diária
       const hoje = format(new Date(), 'yyyy-MM-dd');
-      const senhasHoje = todosPedidos.filter(p => p.created_date?.startsWith(hoje) && p.senha_atendimento);
+      const senhasHoje = todosPedidos.filter((p) => p.created_date?.startsWith(hoje) && p.senha_atendimento);
       const proximaSenha = String(senhasHoje.length + 1).padStart(4, '0');
 
       const pedidoData = {
@@ -736,25 +736,25 @@ export default function PDVVendedor() {
 
                         {/* Mobile Layout */}
                         <div className="flex md:hidden items-start gap-3">
-                          {produto.imagem_url ? (
-                            <img 
-                              src={produto.imagem_url} 
-                              alt={produto.nome}
-                              className="flex-shrink-0 w-10 h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-700"
-                            />
-                          ) : (
-                            <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                              estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
-                              estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                              'bg-gray-100 dark:bg-gray-700'}`
-                            }>
+                          {produto.imagem_url ?
+                      <img
+                        src={produto.imagem_url}
+                        alt={produto.nome}
+                        className="flex-shrink-0 w-10 h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-700" /> :
+
+
+                      <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                      estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
+                      estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
+                      'bg-gray-100 dark:bg-gray-700'}`
+                      }>
                               <Package className={`w-5 h-5 ${
-                                estoqueStatus === 'sem' ? 'text-red-500' :
-                                estoqueStatus === 'baixo' ? 'text-amber-500' :
-                                'text-gray-500 dark:text-gray-400'}`
-                              } />
+                        estoqueStatus === 'sem' ? 'text-red-500' :
+                        estoqueStatus === 'baixo' ? 'text-amber-500' :
+                        'text-gray-500 dark:text-gray-400'}`
+                        } />
                             </div>
-                          )}
+                      }
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight">
@@ -781,25 +781,25 @@ export default function PDVVendedor() {
 
                         {/* Desktop Layout */}
                         <div className="hidden md:flex items-start gap-4">
-                          {produto.imagem_url ? (
-                            <img 
-                              src={produto.imagem_url} 
-                              alt={produto.nome}
-                              className="flex-shrink-0 w-12 h-12 rounded-xl object-cover bg-gray-100 dark:bg-gray-700"
-                            />
-                          ) : (
-                            <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-                              estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
-                              estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                              'bg-gray-100 dark:bg-gray-700'}`
-                            }>
+                          {produto.imagem_url ?
+                      <img
+                        src={produto.imagem_url}
+                        alt={produto.nome}
+                        className="flex-shrink-0 w-12 h-12 rounded-xl object-cover bg-gray-100 dark:bg-gray-700" /> :
+
+
+                      <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                      estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
+                      estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
+                      'bg-gray-100 dark:bg-gray-700'}`
+                      }>
                               <Package className={`w-6 h-6 ${
-                                estoqueStatus === 'sem' ? 'text-red-500' :
-                                estoqueStatus === 'baixo' ? 'text-amber-500' :
-                                'text-gray-500 dark:text-gray-400'}`
-                              } />
+                        estoqueStatus === 'sem' ? 'text-red-500' :
+                        estoqueStatus === 'baixo' ? 'text-amber-500' :
+                        'text-gray-500 dark:text-gray-400'}`
+                        } />
                             </div>
-                          )}
+                      }
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-tight mb-1">
                               {produto.nome}
@@ -835,17 +835,17 @@ export default function PDVVendedor() {
             <div className="mt-3 p-3 md:p-4 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1">
-                    {produtoSelecionado.imagem_url ? (
-                      <img 
-                        src={produtoSelecionado.imagem_url} 
-                        alt={produtoSelecionado.nome}
-                        className="w-10 h-10 rounded-lg object-cover bg-gray-200 dark:bg-gray-700"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    {produtoSelecionado.imagem_url ?
+                  <img
+                    src={produtoSelecionado.imagem_url}
+                    alt={produtoSelecionado.nome}
+                    className="w-10 h-10 rounded-lg object-cover bg-gray-200 dark:bg-gray-700" /> :
+
+
+                  <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                         <Package className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       </div>
-                    )}
+                  }
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -900,17 +900,17 @@ export default function PDVVendedor() {
                     className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm">
 
                         <div className="flex items-center gap-2 min-w-0">
-                          {prod.imagem_url ? (
-                            <img 
-                              src={prod.imagem_url} 
-                              alt={prod.nome}
-                              className="w-8 h-8 rounded object-cover bg-gray-100 dark:bg-gray-700 flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-500">
+                          {prod.imagem_url ?
+                      <img
+                        src={prod.imagem_url}
+                        alt={prod.nome}
+                        className="w-8 h-8 rounded object-cover bg-gray-100 dark:bg-gray-700 flex-shrink-0" /> :
+
+
+                      <div className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-500">
                               <Package className="w-4 h-4" />
                             </div>
-                          )}
+                      }
                           <div className="min-w-0">
                             <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
                               {prod.nome}
@@ -1010,7 +1010,7 @@ export default function PDVVendedor() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowLostSalesForm(true)} className="bg-zinc-800 text-red-400 px-3 text-xs font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 w-full hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-2">
+              onClick={() => setShowLostSalesForm(true)} className="bg-[#fff0f0] text-red-400 px-3 text-xs font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-full hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-2">
 
 
               <AlertCircle className="w-3.5 h-3.5" />
@@ -1024,8 +1024,8 @@ export default function PDVVendedor() {
               </div>
 
               {/* Seção de Desconto Comercial - se permitido pela tabela */}
-              {tabelaPreco?.permite_desconto_comercial && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
+              {tabelaPreco?.permite_desconto_comercial &&
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
                   <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Desconto Comercial</Label>
                   <div className="flex gap-1">
                     <Select value={tipoValorAjuste} onValueChange={setTipoValorAjuste}>
@@ -1038,38 +1038,38 @@ export default function PDVVendedor() {
                       </SelectContent>
                     </Select>
                     <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      max={tipoValorAjuste === 'percentual' ? (tabelaPreco?.percentual_desconto_maximo || 100) : undefined}
-                      value={valorAjuste}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value) || 0;
-                        if (tipoValorAjuste === 'percentual' && tabelaPreco?.percentual_desconto_maximo) {
-                          setValorAjuste(Math.min(val, tabelaPreco.percentual_desconto_maximo));
-                        } else {
-                          setValorAjuste(val);
-                        }
-                      }}
-                      className="flex-1 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
-                      placeholder="0"
-                    />
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    max={tipoValorAjuste === 'percentual' ? tabelaPreco?.percentual_desconto_maximo || 100 : undefined}
+                    value={valorAjuste}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (tipoValorAjuste === 'percentual' && tabelaPreco?.percentual_desconto_maximo) {
+                        setValorAjuste(Math.min(val, tabelaPreco.percentual_desconto_maximo));
+                      } else {
+                        setValorAjuste(val);
+                      }
+                    }}
+                    className="flex-1 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
+                    placeholder="0" />
+
                   </div>
-                  {ajusteExcedido && (
-                    <p className="text-[10px] text-red-500">
+                  {ajusteExcedido &&
+                <p className="text-[10px] text-red-500">
                       Excede limite de {currentUser?.limite_desconto || 0}%
                     </p>
-                  )}
-                  {valorAjusteCalculado > 0 && !ajusteExcedido && (
-                    <p className="text-[10px] text-gray-500">
+                }
+                  {valorAjusteCalculado > 0 && !ajusteExcedido &&
+                <p className="text-[10px] text-gray-500">
                       - R$ {valorAjusteCalculado.toFixed(2)} ({percentualAjuste.toFixed(1)}%)
                     </p>
-                  )}
+                }
                 </div>
-              )}
+              }
 
               {/* Seção de Ajuste Manual - Clean Style */}
-              {!tabelaPreco?.permite_desconto_comercial && (
+              {!tabelaPreco?.permite_desconto_comercial &&
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
                 <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ajuste</Label>
                 <div className="flex gap-1">
@@ -1112,7 +1112,7 @@ export default function PDVVendedor() {
                   </p>
                 }
               </div>
-              )}
+              }
 
               <div className="flex justify-between items-baseline pt-3 border-t border-gray-200 dark:border-gray-700">
                 <span className="text-xs text-gray-500">Total</span>
