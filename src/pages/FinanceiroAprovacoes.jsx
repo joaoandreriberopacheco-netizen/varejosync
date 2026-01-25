@@ -42,25 +42,39 @@ export default function FinanceiroAprovacoesPage() {
   const loadData = async () => {
     setIsLoading(true);
     
-    let statusFilter;
+    let pedidoStatusFilter;
     if (activeTab === 'pendentes') {
-      statusFilter = 'Aguardando Aprovação Financeira';
+      pedidoStatusFilter = 'Aguardando Aprovação';
     } else if (activeTab === 'aprovados') {
-      statusFilter = { $in: ['Em Aberto', 'Pago'] };
+      pedidoStatusFilter = 'Aprovado';
     } else if (activeTab === 'rejeitados') {
-      statusFilter = 'Cancelado';
+      pedidoStatusFilter = 'Rejeitado';
     }
 
-    const [transactionsData, contasData, solicitacoesData] = await Promise.all([
-      base44.entities.LancamentoFinanceiro.filter({ 
-        status: statusFilter,
-        referencia_tipo: 'PedidoCompra'
+    const [pedidosData, contasData, solicitacoesData] = await Promise.all([
+      base44.entities.PedidoCompra.filter({ 
+        status_aprovacao_financeira: pedidoStatusFilter
       }),
       base44.entities.ContasFinanceiras.filter({ ativo: true }),
       base44.entities.PedidoCompra.filter({
         status_aprovacao_financeira: 'Solicitação de Edição Pendente'
       })
     ]);
+
+    // Para cada pedido, buscar os lançamentos financeiros associados
+    const transactionsData = await Promise.all(
+      pedidosData.map(async (pedido) => {
+        const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
+          referencia_id: pedido.id,
+          referencia_tipo: 'PedidoCompra'
+        });
+        return {
+          ...pedido,
+          lancamentos_financeiros: lancamentos,
+          valor_total_lancamentos: lancamentos.reduce((sum, l) => sum + (l.valor || 0), 0)
+        };
+      })
+    );
 
     setPendingTransactions(transactionsData);
     setContas(contasData);
