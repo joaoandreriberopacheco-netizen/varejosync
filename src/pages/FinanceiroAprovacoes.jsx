@@ -30,6 +30,9 @@ export default function FinanceiroAprovacoesPage() {
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [solicitacoesEdicao, setSolicitacoesEdicao] = useState([]);
+  const [selectedSolicitacao, setSelectedSolicitacao] = useState(null);
+  const [isAprovacaoEdicaoAuthOpen, setIsAprovacaoEdicaoAuthOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,16 +51,20 @@ export default function FinanceiroAprovacoesPage() {
       statusFilter = 'Cancelado';
     }
 
-    const [transactionsData, contasData] = await Promise.all([
+    const [transactionsData, contasData, solicitacoesData] = await Promise.all([
       base44.entities.LancamentoFinanceiro.filter({ 
         status: statusFilter,
         referencia_tipo: 'PedidoCompra'
       }),
-      base44.entities.ContasFinanceiras.filter({ ativo: true })
+      base44.entities.ContasFinanceiras.filter({ ativo: true }),
+      base44.entities.PedidoCompra.filter({
+        status_aprovacao_financeira: 'Solicitação de Edição Pendente'
+      })
     ]);
 
     setPendingTransactions(transactionsData);
     setContas(contasData);
+    setSolicitacoesEdicao(solicitacoesData);
     setIsLoading(false);
   };
 
@@ -239,20 +246,29 @@ export default function FinanceiroAprovacoesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-          <TabsTrigger value="pendentes" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
-            <Clock className="w-4 h-4 mr-2" />
-            Pendentes
-          </TabsTrigger>
-          <TabsTrigger value="aprovados" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Aprovados
-          </TabsTrigger>
-          <TabsTrigger value="rejeitados" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
-            <XCircle className="w-4 h-4 mr-2" />
-            Rejeitados
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-4">
+          <TabsList className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            <TabsTrigger value="pendentes" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+              <Clock className="w-4 h-4 mr-2" />
+              Pendentes
+            </TabsTrigger>
+            <TabsTrigger value="aprovados" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Aprovados
+            </TabsTrigger>
+            <TabsTrigger value="rejeitados" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+              <XCircle className="w-4 h-4 mr-2" />
+              Rejeitados
+            </TabsTrigger>
+          </TabsList>
+
+          {solicitacoesEdicao.length > 0 && (
+            <Badge className="bg-orange-100 text-orange-800 border-0 shadow-sm">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              {solicitacoesEdicao.length} {solicitacoesEdicao.length === 1 ? 'solicitação' : 'solicitações'} de edição
+            </Badge>
+          )}
+        </div>
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -610,6 +626,101 @@ export default function FinanceiroAprovacoesPage() {
           }}
         />
       </Dialog>
+
+      {/* Solicitações de Edição */}
+      {solicitacoesEdicao.length > 0 && (
+        <div className="mt-8 pt-8 border-t-2 border-orange-200 dark:border-orange-800">
+          <div className="flex items-center gap-3 mb-6">
+            <AlertCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <h2 className="text-xl font-medium text-gray-800 dark:text-gray-200">Solicitações de Edição</h2>
+          </div>
+
+          <div className="space-y-4">
+            {solicitacoesEdicao.map(pedido => (
+              <Card key={pedido.id} className="p-6 border-0 shadow-sm bg-orange-50 dark:bg-orange-900/20">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
+                      {pedido.numero}
+                    </h3>
+                    <div className="space-y-1 text-sm">
+                      <p className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Solicitante:</span> {pedido.solicitacao_edicao_solicitante}
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Data:</span> {pedido.solicitacao_edicao_data ? format(new Date(pedido.solicitacao_edicao_data), 'dd/MM/yyyy HH:mm') : '-'}
+                      </p>
+                      <p className="text-orange-700 dark:text-orange-300 font-medium">
+                        <span className="text-gray-600 dark:text-gray-400 font-medium">Motivo:</span> {pedido.solicitacao_edicao_motivo}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const pedidos = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+                        setSelectedPedido(pedidos[0]);
+                        setShowPedidoDetails(true);
+                      }}
+                      className="border-0 shadow-sm"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedSolicitacao(pedido);
+                        setIsAprovacaoEdicaoAuthOpen(true);
+                      }}
+                      className="bg-gray-700 text-white hover:bg-gray-600 border-0"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Liberar Edição
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Dialog de Autenticação para Liberar Edição */}
+      <OperacaoAuthenticator 
+        isOpen={isAprovacaoEdicaoAuthOpen}
+        onClose={() => setIsAprovacaoEdicaoAuthOpen(false)}
+        onSuccess={async (authData) => {
+          try {
+            await base44.entities.PedidoCompra.update(selectedSolicitacao.id, {
+              status_aprovacao_financeira: 'Pendente',
+              status: 'Rascunho',
+              historico: (selectedSolicitacao.historico || '') + 
+                `\n[Liberado para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
+            });
+
+            toast({
+              title: "Edição liberada",
+              description: "O pedido foi liberado para edição pelo setor de compras.",
+              className: "bg-gray-100 text-gray-800"
+            });
+
+            loadData();
+            setIsAprovacaoEdicaoAuthOpen(false);
+            setSelectedSolicitacao(null);
+          } catch (error) {
+            toast({
+              title: "Erro",
+              description: error.message,
+              variant: "destructive"
+            });
+          }
+        }}
+        operationName={`Liberar Edição - ${selectedSolicitacao?.numero}`}
+      />
     </div>
   );
 }

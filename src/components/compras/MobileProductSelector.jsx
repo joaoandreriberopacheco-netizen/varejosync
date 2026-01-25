@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
@@ -119,6 +119,7 @@ export default function MobileProductSelector({
           <button
             onClick={() => setView('catalog')}
             className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            disabled={isLocked}
           >
             <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
               <Search className="w-6 h-6 text-gray-700 dark:text-gray-300" />
@@ -194,6 +195,16 @@ export default function MobileProductSelector({
         </div>
         
         <div className="flex-1 overflow-y-auto p-3 space-y-5">
+          {isLocked && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                  <span className="font-medium">Edição bloqueada.</span> Pedido em aprovação financeira.
+                </p>
+              </div>
+            </div>
+          )}
           {/* Quantity Stepper */}
           <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
              <Label className="mb-3 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Quantidade ({editingItem.unidade_medida})</Label>
@@ -205,39 +216,41 @@ export default function MobileProductSelector({
                    setEditingItem(prev => ({ ...prev, quantidade: newVal }));
                    setQuantidadeInput(newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                  }}
+                 disabled={isLocked}
                 >
                  <Minus className="w-5 h-5" />
                 </Button>
                 <Input 
-                 ref={quantidadeInputRef}
-                 type="text"
-                 inputMode="decimal"
-                 className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
-                 value={quantidadeInput}
-                 onChange={e => {
-                   const val = e.target.value;
-                   if (/^[\d.,]*$/.test(val)) {
-                     setQuantidadeInput(val);
-                     const numVal = parseFloat(val.replace(',', '.'));
-                     if (!isNaN(numVal)) {
-                       setEditingItem(prev => ({ ...prev, quantidade: numVal }));
-                     }
-                   }
-                 }}
-                 onFocus={e => e.target.select()}
-                 onBlur={() => {
-                   const num = parseFloat(quantidadeInput.replace(',', '.')) || 1;
-                   setQuantidadeInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                   setEditingItem(prev => ({ ...prev, quantidade: num }));
-                 }}
-                 onKeyDown={e => {
-                   if (e.key === 'Enter') {
-                     e.preventDefault();
-                     custoInputRef.current?.focus();
-                     custoInputRef.current?.select();
-                   }
-                 }}
-                 placeholder="0,00"
+                ref={quantidadeInputRef}
+                type="text"
+                inputMode="decimal"
+                className="w-20 text-center h-11 text-2xl font-bold bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                value={quantidadeInput}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (/^[\d.,]*$/.test(val)) {
+                    setQuantidadeInput(val);
+                    const numVal = parseFloat(val.replace(',', '.'));
+                    if (!isNaN(numVal)) {
+                      setEditingItem(prev => ({ ...prev, quantidade: numVal }));
+                    }
+                  }
+                }}
+                onFocus={e => e.target.select()}
+                onBlur={() => {
+                  const num = parseFloat(quantidadeInput.replace(',', '.')) || 1;
+                  setQuantidadeInput(num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                  setEditingItem(prev => ({ ...prev, quantidade: num }));
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    custoInputRef.current?.focus();
+                    custoInputRef.current?.select();
+                  }
+                }}
+                placeholder="0,00"
+                disabled={isLocked}
                 />
                 <Button 
                  variant="default" size="icon" className="h-11 w-11 rounded-full"
@@ -246,6 +259,7 @@ export default function MobileProductSelector({
                    setEditingItem(prev => ({ ...prev, quantidade: newVal }));
                    setQuantidadeInput(newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                  }}
+                 disabled={isLocked}
                 >
                  <Plus className="w-5 h-5" />
                 </Button>
@@ -284,6 +298,7 @@ export default function MobileProductSelector({
                 }
               }}
               placeholder="0,00"
+              disabled={isLocked}
             />
           </div>
 
@@ -299,6 +314,7 @@ export default function MobileProductSelector({
               <Button 
                 className="w-full h-12" 
                 onClick={handleSaveEdit}
+                disabled={isLocked}
               >
                 Salvar Alterações
               </Button>
@@ -346,6 +362,7 @@ export default function MobileProductSelector({
               <Button 
                 className="flex-1 h-14 text-base"
                 onClick={handleSaveEdit}
+                disabled={isLocked}
               >
                 OK
               </Button>
