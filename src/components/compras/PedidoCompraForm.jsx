@@ -522,15 +522,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         fileName = `Pendencias_${pedido.numero}.pdf`;
       }
 
-      const result = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
+      const response = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
 
-      // Verificar se houve erro
-      if (result.error) {
-        throw new Error(result.error);
+      if (!response || !response.data) {
+        throw new Error('Resposta inválida do servidor');
       }
 
-      // result.data já é um ArrayBuffer diretamente
-      const blob = new Blob([result.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
