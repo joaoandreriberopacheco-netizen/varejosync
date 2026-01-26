@@ -44,11 +44,11 @@ export default function FinanceiroAprovacoesPage() {
     
     let pedidoStatusFilter;
     if (activeTab === 'pendentes') {
-      pedidoStatusFilter = 'Aguardando Aprovação';
+      pedidoStatusFilter = 'Aguardando Aprovação Financeira';
     } else if (activeTab === 'aprovados') {
-      pedidoStatusFilter = 'Aprovado';
+      pedidoStatusFilter = 'Aprovado Financeiramente';
     } else if (activeTab === 'rejeitados') {
-      pedidoStatusFilter = 'Rejeitado';
+      pedidoStatusFilter = 'Rejeitado Financeiramente';
     }
 
     const [pedidosData, contasData, solicitacoesData] = await Promise.all([
@@ -132,7 +132,7 @@ export default function FinanceiroAprovacoesPage() {
         // Atualizar pedido
         await base44.entities.PedidoCompra.update(pedido.id, {
           status: 'Aguardando Recepção',
-          status_aprovacao_financeira: 'Aprovado',
+          status_aprovacao_financeira: 'Aprovado Financeiramente',
           data_aprovacao_financeira: new Date().toISOString(),
           conta_pagamento_id: contaSelecionada,
           historico: (pedido.historico || '') + authNote
@@ -164,7 +164,7 @@ export default function FinanceiroAprovacoesPage() {
         // Atualizar pedido
         await base44.entities.PedidoCompra.update(pedido.id, {
           status: 'Cancelado',
-          status_aprovacao_financeira: 'Rejeitado',
+          status_aprovacao_financeira: 'Rejeitado Financeiramente',
           motivo_rejeicao_financeira: motivoRejeicao,
           data_rejeicao_financeira: new Date().toISOString(),
           historico: (pedido.historico || '') + `\n[Rejeitado Financeiramente: ${motivoRejeicao} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
