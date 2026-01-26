@@ -20,6 +20,7 @@ import ImportacaoProdutos from './pages/ImportacaoProdutos';
 import InterfaceSeparador from './pages/InterfaceSeparador';
 import Intervenientes from './pages/Intervenientes';
 import Logistica from './pages/Logistica';
+import LogsAutenticacao from './pages/LogsAutenticacao';
 import Manual from './pages/Manual';
 import MapaFuncionalidades from './pages/MapaFuncionalidades';
 import Operacoes from './pages/Operacoes';
@@ -35,7 +36,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import LogsAutenticacao from './pages/LogsAutenticacao';
 import __Layout from './Layout.jsx';
 
 
@@ -62,6 +62,7 @@ export const PAGES = {
     "InterfaceSeparador": InterfaceSeparador,
     "Intervenientes": Intervenientes,
     "Logistica": Logistica,
+    "LogsAutenticacao": LogsAutenticacao,
     "Manual": Manual,
     "MapaFuncionalidades": MapaFuncionalidades,
     "Operacoes": Operacoes,
@@ -77,7 +78,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "LogsAutenticacao": LogsAutenticacao,
 }
 
 export const pagesConfig = {
