@@ -1580,7 +1580,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
               {/* Busca Incremental de Produtos */}
               {search.trim() && filteredProducts.length > 0 && (
-                <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-900 max-h-48 overflow-y-auto">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-lg bg-white dark:bg-gray-900 max-h-48 overflow-y-auto">
                   {filteredProducts.map(product => (
                     <div
                       key={product.id}
@@ -1588,15 +1588,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         handleAddItem(product);
                         setSearch('');
                       }}
-                      className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-0 flex items-center justify-between group"
+                      className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-0 flex items-center justify-between group transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm text-gray-900 dark:text-white truncate">{product.nome}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                        <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{product.nome}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 truncate mt-0.5">
                           {product.codigo_interno || 'S/CÓD'} • {formatCurrency(product.valor_compra)}
                         </div>
                       </div>
-                      <Plus className="w-4 h-4 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 ml-3 flex-shrink-0" />
+                      <Plus className="w-5 h-5 text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white ml-3 flex-shrink-0" />
                     </div>
                   ))}
                 </div>
