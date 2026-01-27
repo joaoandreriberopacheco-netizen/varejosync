@@ -258,7 +258,91 @@ Deno.serve(async (req) => {
     doc.text(safeText(`Manifesto Conferido: ${pedido.manifesto_conferido ? 'Sim' : 'Pendente'}`), 10, y);
     y += 6;
     doc.text(safeText(`Conferencia: ${pedido.conferencia_id ? 'Realizada' : 'Pendente'}`), 10, y);
-    y += 15;
+    y += 6;
+    
+    if (pedido.data_despacho) {
+      doc.text(safeText(`Despachado em: ${formatDate(pedido.data_despacho)}`), 10, y);
+      y += 6;
+    }
+    
+    if (pedido.data_chegada) {
+      doc.text(safeText(`Chegada em: ${formatDate(pedido.data_chegada)}`), 10, y);
+      y += 6;
+    }
+    
+    if (pedido.tem_divergencias) {
+      doc.setTextColor(200, 100, 0);
+      doc.text(safeText('ATENCAO: Pedido com divergencias na conferencia'), 10, y);
+      y += 6;
+      doc.setTextColor(0);
+    }
+    
+    y += 6;
+    
+    // Secao PENDENCIAS
+    if (pedido.solicitacao_edicao_motivo || pedido.motivo_rejeicao_financeira) {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(safeText('PENDENCIAS'), 10, y);
+      y += 7;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      if (pedido.solicitacao_edicao_motivo) {
+        doc.text(safeText(`Solicitacao de Edicao em: ${formatDate(pedido.solicitacao_edicao_data)}`), 10, y);
+        y += 6;
+        doc.text(safeText(`Solicitante: ${pedido.solicitacao_edicao_solicitante || 'N/A'}`), 10, y);
+        y += 6;
+        doc.text(safeText(`Motivo: ${pedido.solicitacao_edicao_motivo}`), 10, y, { maxWidth: 190 });
+        y += 8;
+      }
+      
+      y += 6;
+    }
+    
+    // Secao OBSERVACOES
+    if (pedido.observacoes) {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(safeText('OBSERVACOES'), 10, y);
+      y += 7;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(safeText(pedido.observacoes), 10, y, { maxWidth: 190 });
+      y += 15;
+    }
+    
+    // Secao CONCLUSAO
+    if (pedido.data_conclusao) {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(safeText('CONCLUSAO'), 10, y);
+      y += 7;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(safeText(`Concluido em: ${formatDate(pedido.data_conclusao)}`), 10, y);
+      y += 15;
+    }
+    
+    // Garantir espaco para assinaturas
+    if (y > 240) {
+      doc.addPage();
+      y = 20;
+    }
+    
+    y += 10;
 
     // Linhas de assinatura
     doc.setLineWidth(0.5);
