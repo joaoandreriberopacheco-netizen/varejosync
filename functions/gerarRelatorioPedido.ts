@@ -67,15 +67,15 @@ Deno.serve(async (req) => {
     doc.setFont('helvetica');
     doc.setFontSize(10);
 
-    let y = 20;
+    let y = 15;
 
-    // Timeline gráfica no topo
+    // Timeline grafica no topo
     const stages = [
       { key: 'Rascunho', label: 'Rascunho', x: 30 },
-      { key: 'Aprovado', label: 'Aprovado', x: 70 },
-      { key: 'Despachado', label: 'Despachado', x: 110 },
-      { key: 'Entregue', label: 'Entregue', x: 150 },
-      { key: 'Concluído', label: 'Concluído', x: 190 }
+      { key: 'Aprovado', label: 'Aprovado', x: 72 },
+      { key: 'Despachado', label: 'Despachado', x: 114 },
+      { key: 'Entregue', label: 'Entregue', x: 156 },
+      { key: 'Concluido', label: 'Concluido', x: 198 }
     ];
 
     const getStageIndex = (status, aprovacao) => {
@@ -83,37 +83,45 @@ Deno.serve(async (req) => {
       if (status === 'Rascunho' || status === 'Enviado') return 0;
       if (aprovacao === 'Aprovado') return 1;
       if (status === 'Despachado') return 2;
-      if (status === 'Em Trânsito' || status === 'Aguardando Recepção') return 3;
-      if (status === 'Pendências') return 3;
-      if (status === 'Concluído') return 4;
+      if (status === 'Em Transito' || status === 'Aguardando Recepcao') return 3;
+      if (status === 'Pendencias') return 3;
+      if (status === 'Concluido') return 4;
       return 0;
     };
 
     const currentIndex = getStageIndex(pedido.status, pedido.status_aprovacao_financeira);
 
-    // Desenhar timeline
+    // Desenhar timeline com icones
     doc.setFontSize(8);
     stages.forEach((stage, idx) => {
       const isCompleted = idx <= currentIndex;
       
-      // Linha conectando ao próximo
+      // Linha conectando ao proximo
       if (idx < stages.length - 1) {
-        doc.setDrawColor(isCompleted ? 60 : 200);
-        doc.setLineWidth(0.5);
-        doc.line(stage.x + 3, y, stages[idx + 1].x - 3, y);
+        doc.setDrawColor(isCompleted ? 80 : 200);
+        doc.setLineWidth(0.8);
+        doc.line(stage.x + 4, y + 3, stages[idx + 1].x - 4, y + 3);
       }
       
-      // Círculo do estágio
-      doc.setFillColor(isCompleted ? 60 : 220);
-      doc.circle(stage.x, y, 3, 'F');
+      // Circulo do estagio
+      if (isCompleted) {
+        doc.setFillColor(70, 70, 70);
+        doc.setDrawColor(70, 70, 70);
+      } else {
+        doc.setFillColor(220, 220, 220);
+        doc.setDrawColor(200, 200, 200);
+      }
+      doc.circle(stage.x, y + 3, 4, 'FD');
       
-      // Label
-      doc.setTextColor(isCompleted ? 60 : 150);
+      // Label acima
+      doc.setTextColor(isCompleted ? 0 : 150);
+      doc.setFontSize(8);
       const textWidth = doc.getTextWidth(safeText(stage.label));
-      doc.text(safeText(stage.label), stage.x - textWidth / 2, y - 6);
+      doc.text(safeText(stage.label), stage.x - textWidth / 2, y - 2);
       
-      // Data ou status
+      // Data ou status abaixo
       doc.setFontSize(7);
+      doc.setTextColor(isCompleted ? 0 : 150);
       let dateText = 'Pendente';
       if (idx === 0 && pedido.created_date) {
         dateText = formatDate(pedido.created_date).substring(0, 5);
@@ -121,17 +129,18 @@ Deno.serve(async (req) => {
         dateText = formatDate(new Date()).substring(0, 5);
       }
       const dateWidth = doc.getTextWidth(safeText(dateText));
-      doc.text(safeText(dateText), stage.x - dateWidth / 2, y + 6);
+      doc.text(safeText(dateText), stage.x - dateWidth / 2, y + 10);
     });
 
     doc.setTextColor(0);
-    doc.setFontSize(10);
     y += 20;
 
     doc.setFontSize(16);
-    doc.text(safeText(`PEDIDO DE COMPRA`), 105, y, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(safeText('PEDIDO DE COMPRA'), 105, y, { align: 'center' });
     y += 8;
-    doc.setFontSize(14);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
     doc.text(safeText(pedido.numero || 'N/A'), 105, y, { align: 'center' });
     y += 12;
 
