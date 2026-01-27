@@ -249,10 +249,8 @@ const PedidosCompraTab = () => {
                       <TableCell className="font-medium text-gray-900 dark:text-white">
                         {pedido.numero}
                       </TableCell>
-                      <TableCell>
-                         <Badge className={`${getStatusBadge(pedido.status)} border-0 font-normal px-2.5 py-0.5 text-xs shadow-none`}>
-                          {pedido.status}
-                        </Badge>
+                      <TableCell className="text-gray-600 dark:text-gray-300">
+                        {pedido.status}
                       </TableCell>
                       <TableCell className="text-gray-600 dark:text-gray-300">
                         {pedido.fornecedor_nome}
@@ -295,9 +293,7 @@ const PedidosCompraTab = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1.5">
                             <span className="font-medium text-gray-900 dark:text-gray-100">{pedido.numero}</span>
-                            <Badge className={`${getStatusBadge(pedido.status)} border-0 font-normal px-2 py-0.5 text-xs`}>
-                              {pedido.status}
-                            </Badge>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">{pedido.status}</span>
                           </div>
                           <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                             <User className="w-3.5 h-3.5" />
@@ -510,9 +506,7 @@ const HubLogisticoTab = () => {
                   <div>
                     <div className="flex items-center gap-3">
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white">{manifesto.numero}</h3>
-                      <Badge className={`${getStatusBadge(manifesto.status)} border-0`}>
-                        {manifesto.status}
-                      </Badge>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{manifesto.status}</span>
                     </div>
                     <p className="text-sm text-gray-500 mt-0.5">{manifesto.transportadora_nome}</p>
                   </div>
