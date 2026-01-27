@@ -312,7 +312,7 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <aside
-          className={`fixed left-0 top-0 h-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 transition-[width,transform] duration-200 ease-out z-50 flex flex-col ${
+          className={`fixed left-0 top-0 h-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 transition-[width,transform] duration-200 ease-out z-40 flex flex-col ${
             isMobile 
               ? (isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full') 
               : (isOpen ? 'w-64' : 'w-16')
