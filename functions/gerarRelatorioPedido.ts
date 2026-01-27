@@ -25,7 +25,7 @@ const safeText = (text) => {
 const formatCurrency = (value) => {
   if (value === undefined || value === null) return 'R$ 0,00';
   const num = parseFloat(value);
-  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return 'R$ ' + num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const formatDate = (dateString) => {
