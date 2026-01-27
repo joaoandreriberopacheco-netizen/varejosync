@@ -217,10 +217,28 @@ Deno.serve(async (req) => {
     doc.text(safeText(`Forma de Pagamento: ${pedido.forma_pagamento || 'Pendente'}`), 10, y);
     y += 6;
     doc.text(safeText(`Primeiro Vencimento: ${formatDate(pedido.primeiro_vencimento) || 'Pendente'}`), 10, y);
-    y += 8;
-    doc.setFontSize(9);
-    doc.text(safeText('Nenhum lancamento financeiro gerado ainda.'), 10, y);
-    y += 12;
+    y += 6;
+    
+    if (pedido.conta_pagamento_id) {
+      doc.text(safeText(`Conta Aprovada: ${pedido.conta_pagamento_id}`), 10, y);
+      y += 6;
+    }
+    
+    if (pedido.data_aprovacao_financeira) {
+      doc.text(safeText(`Aprovado em: ${formatDate(pedido.data_aprovacao_financeira)}`), 10, y);
+      y += 6;
+    }
+    
+    if (pedido.motivo_rejeicao_financeira) {
+      doc.setTextColor(200, 0, 0);
+      doc.text(safeText(`Rejeitado em: ${formatDate(pedido.data_rejeicao_financeira)}`), 10, y);
+      y += 6;
+      doc.text(safeText(`Motivo: ${pedido.motivo_rejeicao_financeira}`), 10, y, { maxWidth: 190 });
+      y += 6;
+      doc.setTextColor(0);
+    }
+    
+    y += 6;
 
     // Secao LOGISTICA
     doc.setFontSize(12);
