@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown, MoreVertical, Clock, Send } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown, MoreVertical, Clock, Send, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +60,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   });
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
+  
+  const filteredProducts = useMemo(() => {
+    if (!search.trim()) return [];
+    const lower = search.toLowerCase();
+    return produtos.filter(p => 
+      p.nome.toLowerCase().includes(lower) || 
+      (p.codigo_interno && p.codigo_interno.toLowerCase().includes(lower)) ||
+      (p.codigo_barras && p.codigo_barras.includes(lower))
+    ).slice(0, 30);
+  }, [produtos, search]);
   const [supermanifesto, setSupermanifesto] = useState(null);
   const [contas, setContas] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -74,6 +85,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isSolicitarEdicaoOpen, setIsSolicitarEdicaoOpen] = useState(false);
   const [motivoEdicao, setMotivoEdicao] = useState('');
+  const [search, setSearch] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -1514,9 +1526,19 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </TabsContent>
 
             {/* ABA: ITENS */}
-            <TabsContent value="itens" className="mt-0 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Itens do Pedido</h3>
+            <TabsContent value="itens" className="mt-0 space-y-4">
+              {/* Header com ações */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar produto para adicionar..."
+                    className="pl-10 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-10 text-sm"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    disabled={isLocked}
+                  />
+                </div>
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
@@ -1535,7 +1557,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     className="h-8 text-xs border-0 shadow-sm"
                   >
                     <FileDown className="h-3.5 w-3.5 mr-1.5" /> 
-                    Baixar Modelo
+                    Baixar
                   </Button>
                   <div className="relative">
                     <input 
@@ -1550,22 +1572,37 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       className="h-8 text-xs border-0 shadow-sm"
                     >
                       <FileUp className="h-3.5 w-3.5 mr-1.5" /> 
-                      Importar CSV
+                      Importar
                     </Button>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleAddItem()} 
-                    className="h-8 text-xs"
-                    disabled={isLocked}
-                  >
-                    <PlusCircle className="h-4 w-4 mr-1" /> 
-                    Adicionar
-                  </Button>
                 </div>
               </div>
 
+              {/* Busca Incremental de Produtos */}
+              {search.trim() && filteredProducts.length > 0 && (
+                <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-900 max-h-48 overflow-y-auto">
+                  {filteredProducts.map(product => (
+                    <div
+                      key={product.id}
+                      onClick={() => {
+                        handleAddItem(product);
+                        setSearch('');
+                      }}
+                      className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-0 flex items-center justify-between group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm text-gray-900 dark:text-white truncate">{product.nome}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          {product.codigo_interno || 'S/CÓD'} • {formatCurrency(product.valor_compra)}
+                        </div>
+                      </div>
+                      <Plus className="w-4 h-4 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 ml-3 flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Tabela de Itens */}
               <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-gray-50 dark:bg-gray-800">
                 <div className="overflow-x-auto">
                   <Table className="w-full min-w-[1400px]">
@@ -1592,38 +1629,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                               </div>
                               <div>
                                 <p className="font-medium text-gray-600 dark:text-gray-300">Lista de itens vazia</p>
-                                <p className="text-xs text-gray-400 mt-1">Clique em "Adicionar" para começar</p>
+                                <p className="text-xs text-gray-400 mt-1">Use a busca acima para adicionar produtos</p>
                               </div>
                             </div>
                           </TableCell>
                         </TableRow>
                       ) : (
                         formData.itens.map((item, index) => {
-                          const selectedProduct = produtos.find(p => p.id === item.produto_id);
                           return (
                             <TableRow key={index} className="border-0 hover:bg-white/50 dark:hover:bg-gray-900/50 transition-colors group">
                               <TableCell className="text-center text-gray-400 font-mono text-xs sticky left-0 z-10 bg-gray-50 dark:bg-gray-800">
                                 {String(index + 1).padStart(2, '0')}
                               </TableCell>
-                              <TableCell className="sticky left-[40px] z-10 bg-gray-50 dark:bg-gray-800">
-                                <Select 
-                                  value={item.produto_id} 
-                                  onValueChange={v => handleItemChange(index, 'produto_id', v)}
-                                  disabled={isLocked}
-                                >
-                                  <SelectTrigger className="h-9 bg-transparent border-0 hover:bg-white dark:hover:bg-gray-900 rounded-lg px-2 text-sm shadow-none text-gray-900 dark:text-white">
-                                    <span className="truncate block text-left w-full">
-                                      {selectedProduct ? selectedProduct.nome : "Selecione..."}
-                                    </span>
-                                  </SelectTrigger>
-                                  <SelectContent className="dark:bg-gray-800 border-0 shadow-lg max-h-[300px] z-[9999]">
-                                    {produtos.map(p => (
-                                      <SelectItem key={p.id} value={p.id} className="dark:text-gray-200 text-sm cursor-pointer">
-                                        {p.nome}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                              <TableCell className="sticky left-[40px] z-10 bg-gray-50 dark:bg-gray-800 font-medium text-gray-900 dark:text-white text-sm">
+                                {item.produto_nome}
                               </TableCell>
                               <TableCell>
                                 <Input 
