@@ -634,7 +634,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
           // 2. Atualizar status de aprovação financeira do pedido
           await base44.entities.PedidoCompra.update(currentPO.id, {
-            status_aprovacao_financeira: 'Aguardando Aprovação'
+            status_aprovacao_financeira: 'Aguardando Aprovação Financeira'
           });
           
           // 2. Criar Tarefa para o Comprador
