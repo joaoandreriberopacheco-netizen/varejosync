@@ -165,57 +165,94 @@ Deno.serve(async (req) => {
     doc.text(safeText(`Data Prevista Entrega: ${formatDate(pedido.data_prevista_entrega) || 'Pendente'}`), 10, y);
     y += 10;
 
+    // Secao ITENS DO PEDIDO
     doc.setFontSize(12);
-    doc.text(safeText('Itens do Pedido:'), 10, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(safeText('ITENS DO PEDIDO'), 10, y);
     y += 7;
 
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
     doc.setFillColor(230, 230, 230);
     doc.rect(10, y, 190, 7, 'F');
     doc.text(safeText('Produto'), 12, y + 5);
-    doc.text(safeText('Qtd'), 100, y + 5);
-    doc.text(safeText('Custo Un.'), 120, y + 5);
+    doc.text(safeText('Qtd'), 120, y + 5);
+    doc.text(safeText('Custo Un.'), 145, y + 5);
     doc.text(safeText('Total'), 175, y + 5);
     y += 7;
 
     pedido.itens?.forEach(item => {
-      if (y > 280) {
+      if (y > 265) {
         doc.addPage();
         y = 20;
         doc.setFontSize(10);
         doc.setFillColor(230, 230, 230);
         doc.rect(10, y, 190, 7, 'F');
         doc.text(safeText('Produto'), 12, y + 5);
-        doc.text(safeText('Qtd'), 100, y + 5);
-        doc.text(safeText('Custo Un.'), 120, y + 5);
+        doc.text(safeText('Qtd'), 120, y + 5);
+        doc.text(safeText('Custo Un.'), 145, y + 5);
         doc.text(safeText('Total'), 175, y + 5);
         y += 7;
       }
-      doc.text(safeText(item.produto_nome), 12, y + 5);
-      doc.text(safeText(item.quantidade?.toString() || '0'), 100, y + 5);
-      doc.text(safeText(formatCurrency(item.custo_final_unitario)), 120, y + 5);
+      doc.text(safeText(item.produto_nome || ''), 12, y + 5);
+      doc.text(safeText(item.quantidade?.toString() || '0'), 120, y + 5);
+      doc.text(safeText(formatCurrency(item.custo_unitario || item.custo_final_unitario)), 145, y + 5);
       doc.text(safeText(formatCurrency(item.total)), 175, y + 5);
       y += 7;
     });
-    y += 5;
+    y += 3;
 
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text(safeText(`VALOR TOTAL: ${formatCurrency(pedido.valor_total)}`), 120, y);
+    y += 12;
+
+    // Secao FINANCEIRO
     doc.setFontSize(12);
-    doc.text(safeText(`Valor Itens: ${formatCurrency(pedido.valor_itens)}`), 140, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(safeText('FINANCEIRO'), 10, y);
     y += 7;
-    doc.text(safeText(`Frete: ${formatCurrency(pedido.valor_frete)}`), 140, y);
-    y += 7;
-    doc.text(safeText(`Desconto: ${formatCurrency(pedido.valor_desconto)}`), 140, y);
-    y += 7;
-    doc.setFontSize(14);
-    doc.text(safeText(`Valor Total: ${formatCurrency(pedido.valor_total)}`), 140, y);
-    y += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(safeText(`Forma de Pagamento: ${pedido.forma_pagamento || 'Pendente'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Primeiro Vencimento: ${formatDate(pedido.primeiro_vencimento) || 'Pendente'}`), 10, y);
+    y += 8;
+    doc.setFontSize(9);
+    doc.text(safeText('Nenhum lancamento financeiro gerado ainda.'), 10, y);
+    y += 12;
 
-    if (pedido.observacoes) {
-      doc.setFontSize(10);
-      doc.text(safeText('Observações:'), 10, y);
-      y += 5;
-      doc.text(safeText(pedido.observacoes), 10, y, { maxWidth: 190 });
-    }
+    // Secao LOGISTICA
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(safeText('LOGISTICA'), 10, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(safeText(`Supermanifesto: ${pedido.supermanifesto_id ? 'Vinculado' : 'Pendente'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Volumes: ${pedido.qtd_volumes || 0} ${pedido.tipo_volume || 'Caixas'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Peso Total: ${pedido.peso_total_kg || 0} kg`), 10, y);
+    y += 6;
+    doc.text(safeText(`NF Emitida: ${pedido.nfe_emitida ? 'Sim' : 'Pendente'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Manifesto Conferido: ${pedido.manifesto_conferido ? 'Sim' : 'Pendente'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Conferencia: ${pedido.conferencia_id ? 'Realizada' : 'Pendente'}`), 10, y);
+    y += 15;
+
+    // Linhas de assinatura
+    doc.setLineWidth(0.5);
+    doc.line(10, y, 90, y);
+    doc.line(120, y, 200, y);
+    y += 5;
+    doc.setFontSize(9);
+    doc.text(safeText('Responsavel pela Compra'), 10, y);
+    doc.text(safeText('Gestor de Compras'), 120, y);
+    y += 8;
+    doc.text(safeText('Data: ____/____/________'), 10, y);
+    doc.text(safeText('Data: ____/____/________'), 120, y);
 
     const pdfBytes = doc.output('arraybuffer');
 
