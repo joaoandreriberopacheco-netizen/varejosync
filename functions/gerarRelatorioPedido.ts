@@ -144,30 +144,26 @@ Deno.serve(async (req) => {
     doc.text(safeText(pedido.numero || 'N/A'), 105, y, { align: 'center' });
     y += 12;
 
-    doc.setFontSize(10);
-    doc.text(safeText(`Data Emissão: ${formatDate(pedido.created_date)}`), 10, y);
-    y += 7;
-    doc.text(safeText(`Data Prev. Entrega: ${formatDate(pedido.data_prevista_entrega)}`), 10, y);
-    y += 10;
-
+    // Secao DADOS GERAIS
     doc.setFontSize(12);
-    doc.text(safeText('Fornecedor:'), 10, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(safeText('DADOS GERAIS'), 10, y);
     y += 7;
+    
     doc.setFontSize(10);
-    doc.text(safeText(`Nome: ${fornecedor?.nome || pedido.fornecedor_nome}`), 10, y);
-    y += 7;
-    if (fornecedor?.cpf_cnpj) {
-      doc.text(safeText(`CPF/CNPJ: ${fornecedor.cpf_cnpj}`), 10, y);
-      y += 7;
-    }
-    if (fornecedor?.telefone) {
-      doc.text(safeText(`Telefone: ${fornecedor.telefone}`), 10, y);
-      y += 7;
-    }
-    if (fornecedor?.email) {
-      doc.text(safeText(`Email: ${fornecedor.email}`), 10, y);
-      y += 10;
-    }
+    doc.setFont('helvetica', 'normal');
+    doc.text(safeText(`Fornecedor: ${fornecedor?.nome || pedido.fornecedor_nome || 'N/A'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Status: ${pedido.status || 'N/A'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Status Financeiro: ${pedido.status_aprovacao_financeira || 'Pendente'}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Criado em: ${formatDate(pedido.created_date)}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Criado por: ${pedido.created_by || user.email}`), 10, y);
+    y += 6;
+    doc.text(safeText(`Data Prevista Entrega: ${formatDate(pedido.data_prevista_entrega) || 'Pendente'}`), 10, y);
+    y += 10;
 
     doc.setFontSize(12);
     doc.text(safeText('Itens do Pedido:'), 10, y);
