@@ -60,6 +60,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   });
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
+  const [search, setSearch] = useState('');
   
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
@@ -85,7 +86,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isSolicitarEdicaoOpen, setIsSolicitarEdicaoOpen] = useState(false);
   const [motivoEdicao, setMotivoEdicao] = useState('');
-  const [search, setSearch] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
