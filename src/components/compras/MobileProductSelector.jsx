@@ -131,7 +131,7 @@ export default function MobileProductSelector({
             <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
           </button>
 
-          {/* Carrinho */}
+          {/* Resumo do Pedido */}
           <button
             onClick={() => setView('cart')}
             className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
@@ -145,7 +145,7 @@ export default function MobileProductSelector({
               )}
             </div>
             <div className="flex-1 text-left">
-              <div className="font-medium text-gray-900 dark:text-white">Carrinho de Itens</div>
+              <div className="font-medium text-gray-900 dark:text-white">Resumo do Pedido</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 {items.length > 0 ? `${items.length} ${items.length === 1 ? 'item' : 'itens'}` : 'Nenhum item adicionado'}
               </div>
@@ -477,7 +477,7 @@ export default function MobileProductSelector({
         <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Carrinho de Itens</div>
+        <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Resumo do Pedido</div>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto">
