@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package, AlertCircle } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package, AlertCircle, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
@@ -387,7 +387,7 @@ export default function MobileProductSelector({
           <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-2">
           <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -397,11 +397,12 @@ export default function MobileProductSelector({
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 autoFocus
+                disabled={isLocked}
               />
             </div>
           </div>
 
-          <div className="px-4 pb-4 space-y-2">
+          <div className="px-4 space-y-2">
             {search.trim() === '' ? (
               <div className="text-center py-16 text-gray-400 dark:text-gray-500">
                 <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
@@ -416,12 +417,14 @@ export default function MobileProductSelector({
                 return (
                   <div 
                     key={product.id} 
-                    onClick={() => handleSelectProduct(product)}
+                    onClick={() => {
+                      if (!isLocked) handleSelectProduct(product);
+                    }}
                     className={`p-4 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
                         isSelected 
                         ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
                         : 'bg-gray-50 dark:bg-gray-800'
-                    }`}
+                    } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className={`font-medium truncate ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
@@ -454,101 +457,124 @@ export default function MobileProductSelector({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
-          <div className="flex justify-between items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <ShoppingCart className="w-4 h-4" />
-              <span>{totalItems}</span>
+        {/* Painel de Itens Adicionados */}
+        {items.length > 0 && (
+          <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0 max-h-[35vh] flex flex-col">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {items.map((item, index) => (
+                <div 
+                  key={index} 
+                  className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg flex items-center gap-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm text-gray-900 dark:text-white truncate">{item.produto_nome}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="font-bold text-sm text-gray-900 dark:text-white">
+                      {formatCurrency(item.total || 0)}
+                    </div>
+                  </div>
+                  {!isLocked && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                      onClick={() => onRemoveItem(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
-            <div className="text-right flex-1">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
-              <div className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
+            <div className="bg-gray-100 dark:bg-gray-900 p-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <ShoppingCart className="w-4 h-4" />
+                  <span>{totalItems}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
+                  <div className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
 
-  // View: Cart (Carrinho)
+  // View: Cart (Resumo - Apenas Visualização)
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
-      <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
         <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />
         </Button>
         <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Resumo do Pedido</div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => {
+            window.print();
+          }}
+          className="h-9 text-xs border-0 shadow-sm"
+        >
+          <FileText className="w-4 h-4 mr-1.5" />
+          Imprimir
+        </Button>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
             <ShoppingCart className="w-16 h-16 mb-4 opacity-20" />
-            <p className="font-medium mb-1">Carrinho vazio</p>
+            <p className="font-medium mb-1">Nenhum item adicionado</p>
             <p className="text-sm mb-6">Adicione produtos ao pedido</p>
             <Button 
               onClick={() => setView('catalog')}
               className="bg-gray-700 hover:bg-gray-600"
+              disabled={isLocked}
             >
               <Plus className="w-4 h-4 mr-2" />
               Buscar Produtos
             </Button>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {items.map((item, index) => (
               <div 
                 key={index} 
                 className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm"
               >
-                <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1 min-w-0 cursor-pointer active:scale-[0.98] transition-transform" onClick={() => handleEditItem(index)}>
-                    <div className="font-medium text-gray-800 dark:text-gray-100 line-clamp-1">{item.produto_nome || "Produto"}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <div className="text-right">
-                      <div className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.total)}</div>
-                      {item.valor_desconto_item > 0 && (
-                        <div className="text-xs text-green-600 dark:text-green-500">
-                          -Desc: {formatCurrency(item.valor_desconto_item)}
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemoveItem(index);
-                      }}
-                      disabled={isLocked}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                <div className="font-medium text-gray-900 dark:text-white mb-2 line-clamp-2">
+                  {item.produto_nome || "Produto"}
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
+                  </span>
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    {formatCurrency(item.total || 0)}
+                  </span>
                 </div>
               </div>
             ))}
-            <Button 
-              className="w-full mt-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border-0 shadow-sm" 
-              variant="outline"
-              onClick={() => setView('catalog')}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Mais Produtos
-            </Button>
           </div>
         )}
       </div>
 
       <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500 dark:text-gray-400">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
-          <span className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
+          <div className="text-right">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
+          </div>
         </div>
       </div>
     </div>
