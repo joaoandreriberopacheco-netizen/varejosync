@@ -55,9 +55,71 @@ Deno.serve(async (req) => {
 
     let y = 20;
 
+    // Timeline gráfica no topo
+    const stages = [
+      { key: 'Rascunho', label: 'Rascunho', x: 30 },
+      { key: 'Aprovado', label: 'Aprovado', x: 70 },
+      { key: 'Despachado', label: 'Despachado', x: 110 },
+      { key: 'Entregue', label: 'Entregue', x: 150 },
+      { key: 'Concluído', label: 'Concluído', x: 190 }
+    ];
+
+    const getStageIndex = (status, aprovacao) => {
+      if (status === 'Cancelado') return -1;
+      if (status === 'Rascunho' || status === 'Enviado') return 0;
+      if (aprovacao === 'Aprovado') return 1;
+      if (status === 'Despachado') return 2;
+      if (status === 'Em Trânsito' || status === 'Aguardando Recepção') return 3;
+      if (status === 'Pendências') return 3;
+      if (status === 'Concluído') return 4;
+      return 0;
+    };
+
+    const currentIndex = getStageIndex(pedido.status, pedido.status_aprovacao_financeira);
+
+    // Desenhar timeline
+    doc.setFontSize(8);
+    stages.forEach((stage, idx) => {
+      const isCompleted = idx <= currentIndex;
+      
+      // Linha conectando ao próximo
+      if (idx < stages.length - 1) {
+        doc.setDrawColor(isCompleted ? 60 : 200);
+        doc.setLineWidth(0.5);
+        doc.line(stage.x + 3, y, stages[idx + 1].x - 3, y);
+      }
+      
+      // Círculo do estágio
+      doc.setFillColor(isCompleted ? 60 : 220);
+      doc.circle(stage.x, y, 3, 'F');
+      
+      // Label
+      doc.setTextColor(isCompleted ? 60 : 150);
+      const textWidth = doc.getTextWidth(safeText(stage.label));
+      doc.text(safeText(stage.label), stage.x - textWidth / 2, y - 6);
+      
+      // Data ou status
+      doc.setFontSize(7);
+      let dateText = 'Pendente';
+      if (idx === 0 && pedido.created_date) {
+        dateText = formatDate(pedido.created_date).substring(0, 5);
+      } else if (isCompleted && idx === currentIndex) {
+        dateText = formatDate(new Date()).substring(0, 5);
+      }
+      const dateWidth = doc.getTextWidth(safeText(dateText));
+      doc.text(safeText(dateText), stage.x - dateWidth / 2, y + 6);
+    });
+
+    doc.setTextColor(0);
+    doc.setFontSize(10);
+    y += 20;
+
     doc.setFontSize(16);
-    doc.text(safeText(`Pedido de Compra - ${pedido.numero || 'N/A'}`), 10, y);
-    y += 10;
+    doc.text(safeText(`PEDIDO DE COMPRA`), 105, y, { align: 'center' });
+    y += 8;
+    doc.setFontSize(14);
+    doc.text(safeText(pedido.numero || 'N/A'), 105, y, { align: 'center' });
+    y += 12;
 
     doc.setFontSize(10);
     doc.text(safeText(`Data Emissão: ${formatDate(pedido.created_date)}`), 10, y);
