@@ -511,6 +511,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     }
 
     try {
+      toast({ title: 'Gerando relatório...', description: 'Aguarde...' });
+
       let functionName = 'gerarRelatorioPedido';
       let fileName = `Pedido_${pedido.numero}.pdf`;
 
@@ -523,6 +525,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       }
 
       const response = await base44.functions.invoke(functionName, { pedido_id: pedido.id });
+
+      console.log('Response completa:', response);
+      console.log('Response status:', response?.status);
+      console.log('Response data type:', typeof response?.data);
 
       if (!response || !response.data) {
         throw new Error('Resposta inválida do servidor');
@@ -539,9 +545,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       window.URL.revokeObjectURL(url);
       toast({ title: 'Relatório gerado com sucesso!' });
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      const errorMsg = error?.message || 'Erro ao gerar relatório';
-      toast({ title: errorMsg, variant: 'destructive' });
+      console.error('Erro completo:', error);
+      console.error('Erro message:', error?.message);
+      console.error('Erro stack:', error?.stack);
+      const errorMsg = error?.message || error?.toString() || 'Erro desconhecido ao gerar relatório';
+      toast({ 
+        title: 'Erro ao gerar relatório', 
+        description: errorMsg,
+        variant: 'destructive',
+        duration: 10000
+      });
     }
   };
 
