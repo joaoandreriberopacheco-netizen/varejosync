@@ -26,7 +26,7 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira, dat
   const currentIndex = getStageIndex(currentStatus, aprovacaoFinanceira);
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1">
+    <div className="flex items-center gap-1 px-1 py-0.5">
       {stages.map((stage, idx) => {
         const isCompleted = idx <= currentIndex;
         const isActive = idx === currentIndex;

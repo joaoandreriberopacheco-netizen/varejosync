@@ -952,7 +952,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           {/* MOBILE: Timeline + Tabs */}
           <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
             {/* Timeline sobre as Tabs */}
-            <div className="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+            <div className="px-3 py-1 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
               <StatusTimeline 
                 currentStatus={formData.status} 
                 aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
