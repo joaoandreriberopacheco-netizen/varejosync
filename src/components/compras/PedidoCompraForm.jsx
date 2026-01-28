@@ -909,7 +909,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="dark:bg-gray-800">
+              <DropdownMenuContent align="end" className="dark:bg-gray-800 border-0 shadow-lg">
                 {!isLocked && (
                   <>
                     <DropdownMenuItem onClick={handleInitiateSave} disabled={isSaving || !formData.fornecedor_id || formData.itens.length === 0}>
@@ -944,8 +944,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   </>
                 )}
               </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              </DropdownMenu>
+              </div>
 
           </div>
 
