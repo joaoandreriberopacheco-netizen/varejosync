@@ -21,6 +21,7 @@ export default function MobileProductSelector({
   const [editingIndex, setEditingIndex] = useState(-1);
   const [quantidadeInput, setQuantidadeInput] = useState('');
   const [custoInput, setCustoInput] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const quantidadeInputRef = React.useRef(null);
   const custoInputRef = React.useRef(null);
 
@@ -408,7 +409,34 @@ export default function MobileProductSelector({
                 placeholder="Buscar produto..."
                 className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => {
+                  setSearch(e.target.value);
+                  setSelectedIndex(-1);
+                }}
+                onKeyDown={e => {
+                  if (!filteredProducts.length) return;
+                  
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => 
+                      prev < filteredProducts.length - 1 ? prev + 1 : 0
+                    );
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => 
+                      prev > 0 ? prev - 1 : filteredProducts.length - 1
+                    );
+                  } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    handleSelectProduct(filteredProducts[selectedIndex]);
+                    setSelectedIndex(-1);
+                  } else if (e.key === 'Tab' && filteredProducts.length > 0) {
+                    e.preventDefault();
+                    setSelectedIndex(prev => 
+                      prev < filteredProducts.length - 1 ? prev + 1 : 0
+                    );
+                  }
+                }}
                 autoFocus
                 disabled={isLocked}
               />
@@ -423,8 +451,9 @@ export default function MobileProductSelector({
                 <p className="text-sm mt-1">Ex: areia, tinta, tubo...</p>
               </div>
             ) : filteredProducts.length > 0 ? (
-              filteredProducts.map(product => {
+              filteredProducts.map((product, idx) => {
                 const inCart = items.find(i => i.produto_id === product.id);
+                const isSelected = idx === selectedIndex;
                 
                 return (
                   <div 
@@ -433,7 +462,9 @@ export default function MobileProductSelector({
                       if (!isLocked) handleSelectProduct(product);
                     }}
                     className={`p-4 rounded-xl shadow-sm cursor-pointer transition-all active:scale-[0.98] ${
-                        inCart
+                        isSelected
+                        ? 'bg-indigo-100 border-2 border-indigo-400 dark:bg-indigo-900/40 dark:border-indigo-600'
+                        : inCart
                         ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
                         : 'bg-gray-50 dark:bg-gray-800'
                     } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}

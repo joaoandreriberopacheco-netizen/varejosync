@@ -62,6 +62,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [produtos, setProdutos] = useState([]);
   const [search, setSearch] = useState('');
   const [searchFornecedor, setSearchFornecedor] = useState('');
+  const [selectedProductIndex, setSelectedProductIndex] = useState(-1);
+  const [selectedFornecedorIndex, setSelectedFornecedorIndex] = useState(-1);
   
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
@@ -1518,13 +1520,47 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                             placeholder="Buscar..."
                             className="pl-8 h-8 text-xs bg-white dark:bg-gray-900 border-0"
                             value={searchFornecedor}
-                            onChange={e => setSearchFornecedor(e.target.value)}
+                            onChange={e => {
+                              setSearchFornecedor(e.target.value);
+                              setSelectedFornecedorIndex(-1);
+                            }}
                             onClick={e => e.stopPropagation()}
+                            onKeyDown={e => {
+                              if (!filteredFornecedores.length) return;
+                              
+                              if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                setSelectedFornecedorIndex(prev => 
+                                  prev < filteredFornecedores.length - 1 ? prev + 1 : 0
+                                );
+                              } else if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                setSelectedFornecedorIndex(prev => 
+                                  prev > 0 ? prev - 1 : filteredFornecedores.length - 1
+                                );
+                              } else if (e.key === 'Enter' && selectedFornecedorIndex >= 0) {
+                                e.preventDefault();
+                                handleFornecedorChange(filteredFornecedores[selectedFornecedorIndex].id);
+                                setSearchFornecedor('');
+                                setSelectedFornecedorIndex(-1);
+                              } else if (e.key === 'Tab' && filteredFornecedores.length > 0) {
+                                e.preventDefault();
+                                setSelectedFornecedorIndex(prev => 
+                                  prev < filteredFornecedores.length - 1 ? prev + 1 : 0
+                                );
+                              }
+                            }}
                           />
                         </div>
                       </div>
-                      {filteredFornecedores.map(f => (
-                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      {filteredFornecedores.map((f, idx) => (
+                        <SelectItem 
+                          key={f.id} 
+                          value={f.id}
+                          className={idx === selectedFornecedorIndex ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}
+                        >
+                          {f.nome}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1569,7 +1605,35 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     placeholder="Buscar produto para adicionar..."
                     className="pl-10 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-10 text-sm"
                     value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    onChange={e => {
+                      setSearch(e.target.value);
+                      setSelectedProductIndex(-1);
+                    }}
+                    onKeyDown={e => {
+                      if (!filteredProducts.length) return;
+
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setSelectedProductIndex(prev => 
+                          prev < filteredProducts.length - 1 ? prev + 1 : 0
+                        );
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setSelectedProductIndex(prev => 
+                          prev > 0 ? prev - 1 : filteredProducts.length - 1
+                        );
+                      } else if (e.key === 'Enter' && selectedProductIndex >= 0) {
+                        e.preventDefault();
+                        handleAddItem(filteredProducts[selectedProductIndex]);
+                        setSearch('');
+                        setSelectedProductIndex(-1);
+                      } else if (e.key === 'Tab' && filteredProducts.length > 0) {
+                        e.preventDefault();
+                        setSelectedProductIndex(prev => 
+                          prev < filteredProducts.length - 1 ? prev + 1 : 0
+                        );
+                      }
+                    }}
                     disabled={isLocked}
                   />
                 </div>
@@ -1615,22 +1679,35 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               {/* Busca Incremental de Produtos */}
               {search.trim() && filteredProducts.length > 0 && (
                 <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-900 max-h-48 overflow-y-auto">
-                  {filteredProducts.map(product => (
+                  {filteredProducts.map((product, idx) => (
                     <div
                       key={product.id}
                       onClick={() => {
                         handleAddItem(product);
                         setSearch('');
+                        setSelectedProductIndex(-1);
                       }}
-                      className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-0 flex items-center justify-between group"
+                      className={`p-3 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-0 flex items-center justify-between group ${
+                        idx === selectedProductIndex 
+                          ? 'bg-indigo-50 dark:bg-indigo-900/20' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm text-gray-900 dark:text-white truncate">{product.nome}</div>
+                        <div className={`font-medium text-sm truncate ${
+                          idx === selectedProductIndex 
+                            ? 'text-indigo-900 dark:text-indigo-200' 
+                            : 'text-gray-900 dark:text-white'
+                        }`}>{product.nome}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
                           {product.codigo_interno || 'S/CÓD'} • {formatCurrency(product.valor_compra)}
                         </div>
                       </div>
-                      <Plus className="w-4 h-4 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 ml-3 flex-shrink-0" />
+                      <Plus className={`w-4 h-4 ml-3 flex-shrink-0 ${
+                        idx === selectedProductIndex 
+                          ? 'text-indigo-600 dark:text-indigo-400' 
+                          : 'text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'
+                      }`} />
                     </div>
                   ))}
                 </div>
