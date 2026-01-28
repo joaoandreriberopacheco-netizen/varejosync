@@ -25,7 +25,7 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
   const currentIndex = getStageIndex(currentStatus, aprovacaoFinanceira);
 
   return (
-    <div className="flex items-center gap-1 px-2 py-3">
+    <div className="flex items-center gap-1 px-2 py-2">
       {stages.map((stage, idx) => {
         const isCompleted = idx <= currentIndex;
         const isActive = idx === currentIndex;
@@ -33,7 +33,10 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
         
         return (
           <React.Fragment key={stage.key}>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center gap-1">
+              <div className="text-[9px] text-gray-600 dark:text-gray-400 font-medium text-center leading-tight">
+                {stage.label}
+              </div>
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                   isCompleted
