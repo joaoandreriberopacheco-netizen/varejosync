@@ -1363,21 +1363,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
             </TabsContent>
           </div>
-
-          {/* Footer fixo no mobile */}
-          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <ShoppingCart className="w-4 h-4" />
-                <span>{formData.itens.length}</span>
-              </div>
-              <div className="text-right flex-1">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
-                <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</div>
-              </div>
-            </div>
-          </div>
-        </Tabs>
+          </Tabs>
 
         <OperacaoAuthenticator 
           isOpen={isAuthOpen}
