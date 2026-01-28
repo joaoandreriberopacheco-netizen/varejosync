@@ -886,7 +886,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           {/* Header compacto com menu */}
           <div className="px-3 py-2.5 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
             <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 flex-shrink-0">
-              <X className="w-4 h-4" />
+              <ChevronDown className="w-5 h-5 rotate-90" />
             </Button>
             <div className="flex-1 min-w-0 overflow-hidden">
               <div className="flex items-center gap-1.5 text-xs">
@@ -952,7 +952,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           {/* MOBILE: Timeline + Tabs */}
           <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
             {/* Timeline sobre as Tabs */}
-            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
               <StatusTimeline 
                 currentStatus={formData.status} 
                 aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
