@@ -380,15 +380,28 @@ export default function MobileProductSelector({
   if (view === 'catalog') {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
-        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
+          {items.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setView('cart')}
+              className="h-10 w-10 relative"
+            >
+              <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                {items.length}
+              </div>
+            </Button>
+          )}
         </div>
 
-        <div className="flex-1 overflow-y-auto pb-2">
-          <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3">
+        <div className="flex-1 overflow-y-auto">
+          <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3 border-b border-gray-100 dark:border-gray-800">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
@@ -402,7 +415,7 @@ export default function MobileProductSelector({
             </div>
           </div>
 
-          <div className="px-4 space-y-2">
+          <div className="p-4 space-y-2">
             {search.trim() === '' ? (
               <div className="text-center py-16 text-gray-400 dark:text-gray-500">
                 <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
@@ -411,8 +424,7 @@ export default function MobileProductSelector({
               </div>
             ) : filteredProducts.length > 0 ? (
               filteredProducts.map(product => {
-                const inCartCount = items.filter(i => i.produto_id === product.id).length;
-                const isSelected = inCartCount > 0;
+                const inCart = items.find(i => i.produto_id === product.id);
                 
                 return (
                   <div 
@@ -420,28 +432,37 @@ export default function MobileProductSelector({
                     onClick={() => {
                       if (!isLocked) handleSelectProduct(product);
                     }}
-                    className={`p-4 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
-                        isSelected 
+                    className={`p-4 rounded-xl shadow-sm cursor-pointer transition-all active:scale-[0.98] ${
+                        inCart
                         ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
                         : 'bg-gray-50 dark:bg-gray-800'
                     } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className={`font-medium truncate ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
-                        {product.nome}
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
+                          {product.nome}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
+                          {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
-                        {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
-                      </div>
+                      
+                      {inCart && (
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200 border-0">
+                            {inCart.quantidade} {inCart.unidade_medida}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                     
-                    {isSelected ? (
-                      <Badge className="bg-indigo-600 hover:bg-indigo-700 ml-3 flex-shrink-0">
-                        {inCartCount > 1 ? `${inCartCount}x` : '✓'}
-                      </Badge>
-                    ) : (
-                      <div className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 flex-shrink-0 ml-3">
-                        <Plus className="w-5 h-5" />
+                    {inCart && (
+                      <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800 flex justify-between items-center">
+                        <span className="text-xs text-indigo-700 dark:text-indigo-300">Total do item</span>
+                        <span className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
+                          {formatCurrency(inCart.total || 0)}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -456,77 +477,18 @@ export default function MobileProductSelector({
             )}
           </div>
         </div>
-
-        {/* Painel de Itens Adicionados */}
-        {items.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0 max-h-[35vh] flex flex-col">
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {items.map((item, index) => (
-                <div 
-                  key={index} 
-                  className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg flex items-center gap-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-gray-900 dark:text-white truncate">{item.produto_nome}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="font-bold text-sm text-gray-900 dark:text-white">
-                      {formatCurrency(item.total || 0)}
-                    </div>
-                  </div>
-                  {!isLocked && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
-                      onClick={() => onRemoveItem(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-900 p-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <ShoppingCart className="w-4 h-4" />
-                  <span>{totalItems}</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
-                  <div className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
 
-  // View: Cart (Resumo - Apenas Visualização)
+  // View: Cart (Resumo com edição de itens)
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
       <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
-        <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
+        <Button variant="ghost" size="icon" onClick={() => setView('catalog')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Resumo do Pedido</div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => {
-            window.print();
-          }}
-          className="h-9 text-xs border-0 shadow-sm"
-        >
-          <FileText className="w-4 h-4 mr-1.5" />
-          Imprimir
-        </Button>
+        <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Carrinho</div>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto">
@@ -549,18 +511,39 @@ export default function MobileProductSelector({
             {items.map((item, index) => (
               <div 
                 key={index} 
-                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm"
+                onClick={() => {
+                  if (!isLocked) handleEditItem(index);
+                }}
+                className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
               >
-                <div className="font-medium text-gray-900 dark:text-white mb-2 line-clamp-2">
-                  {item.produto_nome || "Produto"}
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
-                  </span>
-                  <span className="font-bold text-gray-900 dark:text-white">
-                    {formatCurrency(item.total || 0)}
-                  </span>
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 dark:text-white mb-2 line-clamp-2">
+                      {item.produto_nome || "Produto"}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                      {item.quantidade} {item.unidade_medida} × {formatCurrency(item.custo_unitario)}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Total</span>
+                      <span className="font-bold text-gray-900 dark:text-white">
+                        {formatCurrency(item.total || 0)}
+                      </span>
+                    </div>
+                  </div>
+                  {!isLocked && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveItem(index);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
