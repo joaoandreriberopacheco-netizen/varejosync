@@ -868,8 +868,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   if (isMobile) {
-    return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+      return (
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[9999] flex flex-col h-[100dvh] overflow-hidden">
         <div className="flex-shrink-0">
           {/* Alerta de Bloqueio */}
           {isLocked && (
@@ -948,8 +948,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
           {/* Timeline Mobile */}
           {pedido && (
-            <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+            <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">STATUS</div>
               <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+              {formData.data_emissao && (
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                  {format(new Date(formData.data_emissao), 'dd/MM/yyyy')}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -997,7 +1003,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           </TabsList>
 
           <div className="flex-1 overflow-y-auto">
-            <TabsContent value="dados-gerais" className="mt-0 px-3 py-6 space-y-6 border-0">
+            <TabsContent value="dados-gerais" className="mt-0 px-3 py-4 space-y-5 border-0">
               {/* Fornecedor com ícone */}
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Fornecedor *</Label>
@@ -1029,7 +1035,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               {/* Modal de Seleção de Fornecedor */}
               <div 
                 id="fornecedor-selector-mobile"
-                className="hidden fixed inset-0 bg-black/50 z-[9999] flex items-end"
+                className="hidden fixed inset-0 bg-white dark:bg-gray-900 z-[10000] flex flex-col"
                 onClick={(e) => {
                   if (e.target.id === 'fornecedor-selector-mobile') {
                     e.target.classList.add('hidden');
@@ -1037,9 +1043,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   }
                 }}
               >
-                <div className="bg-white dark:bg-gray-900 w-full rounded-t-2xl max-h-[70vh] flex flex-col shadow-2xl">
+                <div className="bg-white dark:bg-gray-900 w-full h-full flex flex-col">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-center gap-3">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => {
+                        document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
+                        setSearchFornecedor('');
+                      }}
+                      className="h-10 w-10"
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 flex-1">Selecionar Fornecedor</h3>
+                  </div>
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Selecionar Fornecedor</h3>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <Input
