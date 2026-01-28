@@ -21,6 +21,7 @@ export default function MobileProductSelector({
   const [editingIndex, setEditingIndex] = useState(-1);
   const [quantidadeInput, setQuantidadeInput] = useState('');
   const [custoInput, setCustoInput] = useState('');
+  const [showCartModal, setShowCartModal] = useState(false);
   const quantidadeInputRef = React.useRef(null);
   const custoInputRef = React.useRef(null);
 
