@@ -870,7 +870,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   if (isMobile) {
       return (
         <Dialog open={true} onOpenChange={onClose}>
-          <DialogContent className="!fixed !inset-0 !max-w-none !w-full !h-full !p-0 !m-0 !rounded-none border-0 shadow-none bg-white dark:bg-gray-900 z-[9999] flex flex-col overflow-hidden">
+          <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-white !dark:bg-gray-900 z-[9999] flex flex-col overflow-hidden">
         <div className="flex-shrink-0">
           {/* Alerta de Bloqueio */}
           {isLocked && (
@@ -1440,7 +1440,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       }
 
   return (
-    <DialogContent className="!max-w-[100vw] !w-[100vw] !h-[100vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-none !rounded-none">
+    <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none flex flex-col dark:bg-gray-900 dark:text-gray-200 overflow-hidden">
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && (
         <div className="px-4 py-2.5 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-100 dark:border-yellow-800 flex-shrink-0">
