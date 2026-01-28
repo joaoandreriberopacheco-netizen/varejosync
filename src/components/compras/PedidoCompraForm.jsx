@@ -61,6 +61,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [search, setSearch] = useState('');
+  const [searchFornecedor, setSearchFornecedor] = useState('');
   
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
@@ -71,6 +72,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       (p.codigo_barras && p.codigo_barras.includes(lower))
     ).slice(0, 30);
   }, [produtos, search]);
+
+  const filteredFornecedores = useMemo(() => {
+    const sorted = [...fornecedores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    if (!searchFornecedor.trim()) return sorted;
+    const lower = searchFornecedor.toLowerCase();
+    return sorted.filter(f => 
+      f.nome.toLowerCase().includes(lower) || 
+      (f.codigo_interno && f.codigo_interno.toLowerCase().includes(lower))
+    );
+  }, [fornecedores, searchFornecedor]);
   const [supermanifesto, setSupermanifesto] = useState(null);
   const [contas, setContas] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
