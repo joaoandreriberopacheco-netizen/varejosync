@@ -869,7 +869,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   if (isMobile) {
       return (
-        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[9999] flex flex-col h-[100dvh] overflow-hidden">
+        <Dialog open={true} onOpenChange={onClose}>
+          <DialogContent className="!fixed !inset-0 !max-w-none !w-full !h-full !p-0 !m-0 !rounded-none border-0 shadow-none bg-white dark:bg-gray-900 z-[9999] flex flex-col overflow-hidden">
         <div className="flex-shrink-0">
           {/* Alerta de Bloqueio */}
           {isLocked && (
@@ -946,23 +947,24 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </DropdownMenu>
           </div>
 
-          {/* Timeline Mobile */}
-          {pedido && (
-            <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">STATUS</div>
-              <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
-              {formData.data_emissao && (
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                  {format(new Date(formData.data_emissao), 'dd/MM/yyyy')}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
 
-        {/* MOBILE: Tabs com Ícones */}
-        <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
+          {/* MOBILE: Timeline + Tabs */}
+          <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
+            {/* Timeline sobre as Tabs */}
+            {pedido && (
+              <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">STATUS</div>
+                <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+                {formData.data_emissao && (
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                    {format(new Date(formData.data_emissao), 'dd/MM/yyyy')}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
             <TabsTrigger 
               value="dados-gerais" 
               className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
@@ -1029,21 +1031,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       <div className="text-xs text-gray-500 dark:text-gray-400">Toque para escolher</div>
                     )}
                   </div>
-                </div>
-              </div>
+                  </div>
+                  </div>
 
-              {/* Modal de Seleção de Fornecedor */}
-              <div 
-                id="fornecedor-selector-mobile"
-                className="hidden fixed inset-0 bg-white dark:bg-gray-900 z-[10000] flex flex-col"
-                onClick={(e) => {
+                  {/* Modal de Seleção de Fornecedor */}
+                  <div 
+                  id="fornecedor-selector-mobile"
+                  className="hidden fixed inset-0 bg-white dark:bg-gray-900 z-[10000] flex flex-col"
+                  onClick={(e) => {
                   if (e.target.id === 'fornecedor-selector-mobile') {
                     e.target.classList.add('hidden');
                     setSearchFornecedor('');
+                    setSelectedFornecedorIndex(-1);
                   }
-                }}
-              >
-                <div className="bg-white dark:bg-gray-900 w-full h-full flex flex-col">
+                  }}
+                  >
+                  <div className="bg-white dark:bg-gray-900 w-full h-full flex flex-col">
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-center gap-3">
                     <Button 
                       variant="ghost" 
@@ -1051,6 +1054,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       onClick={() => {
                         document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
                         setSearchFornecedor('');
+                        setSelectedFornecedorIndex(-1);
                       }}
                       className="h-10 w-10"
                     >
@@ -1065,21 +1069,55 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         placeholder="Buscar fornecedor..."
                         className="pl-10 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-11"
                         value={searchFornecedor}
-                        onChange={e => setSearchFornecedor(e.target.value)}
+                        onChange={e => {
+                          setSearchFornecedor(e.target.value);
+                          setSelectedFornecedorIndex(-1);
+                        }}
+                        onKeyDown={e => {
+                          if (!filteredFornecedores.length) return;
+
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setSelectedFornecedorIndex(prev => 
+                              prev < filteredFornecedores.length - 1 ? prev + 1 : 0
+                            );
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setSelectedFornecedorIndex(prev => 
+                              prev > 0 ? prev - 1 : filteredFornecedores.length - 1
+                            );
+                          } else if (e.key === 'Enter' && selectedFornecedorIndex >= 0) {
+                            e.preventDefault();
+                            handleFornecedorChange(filteredFornecedores[selectedFornecedorIndex].id);
+                            document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
+                            setSearchFornecedor('');
+                            setSelectedFornecedorIndex(-1);
+                          } else if (e.key === 'Tab' && filteredFornecedores.length > 0) {
+                            e.preventDefault();
+                            setSelectedFornecedorIndex(prev => 
+                              prev < filteredFornecedores.length - 1 ? prev + 1 : 0
+                            );
+                          }
+                        }}
                       />
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-3">
-                    {filteredFornecedores.map(f => (
+                    {filteredFornecedores.map((f, idx) => (
                       <div
                         key={f.id}
                         onClick={() => {
                           handleFornecedorChange(f.id);
                           document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
                           setSearchFornecedor('');
+                          setSelectedFornecedorIndex(-1);
                         }}
                         className={`p-4 rounded-xl mb-3 flex items-center gap-3 active:scale-[0.98] transition-transform shadow-sm ${
-                          formData.fornecedor_id === f.id ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          idx === selectedFornecedorIndex
+                            ? 'bg-indigo-100 border-2 border-indigo-400 dark:bg-indigo-900/40 dark:border-indigo-600'
+                            : formData.fornecedor_id === f.id 
+                            ? 'bg-gray-100 dark:bg-gray-800' 
+                            : 'bg-gray-50 dark:bg-gray-800/50'
                         }`}
                       >
                         <div className="w-9 h-9 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -1089,8 +1127,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
+                  </div>
+                  </div>
 
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Tags</Label>
