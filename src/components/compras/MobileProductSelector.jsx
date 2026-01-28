@@ -41,7 +41,7 @@ export default function MobileProductSelector({
       p.nome.toLowerCase().includes(lower) || 
       (p.codigo_interno && p.codigo_interno.toLowerCase().includes(lower)) ||
       (p.codigo_barras && p.codigo_barras.includes(lower))
-    ).slice(0, 50);
+    ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 50);
   }, [products, search]);
 
   const handleSelectProduct = (product) => {
@@ -482,6 +482,10 @@ export default function MobileProductSelector({
   }
 
   // View: Cart (Resumo com edição de itens)
+  const sortedItems = [...items].sort((a, b) => 
+    (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR')
+  );
+
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
       <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
@@ -508,11 +512,13 @@ export default function MobileProductSelector({
           </div>
         ) : (
           <div className="space-y-3">
-            {items.map((item, index) => (
+            {sortedItems.map((item, index) => {
+              const originalIndex = items.findIndex(i => i.produto_id === item.produto_id && i.quantidade === item.quantidade);
+              return (
               <div 
-                key={index} 
+                key={originalIndex} 
                 onClick={() => {
-                  if (!isLocked) handleEditItem(index);
+                  if (!isLocked) handleEditItem(originalIndex);
                 }}
                 className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
               >
@@ -538,7 +544,7 @@ export default function MobileProductSelector({
                       className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onRemoveItem(index);
+                        onRemoveItem(originalIndex);
                       }}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -546,7 +552,8 @@ export default function MobileProductSelector({
                   )}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>

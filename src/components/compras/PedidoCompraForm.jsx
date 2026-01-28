@@ -70,7 +70,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       p.nome.toLowerCase().includes(lower) || 
       (p.codigo_interno && p.codigo_interno.toLowerCase().includes(lower)) ||
       (p.codigo_barras && p.codigo_barras.includes(lower))
-    ).slice(0, 30);
+    ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 30);
   }, [produtos, search]);
 
   const filteredFornecedores = useMemo(() => {
@@ -1035,8 +1035,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   }
                 }}
               >
-                <div className="bg-white dark:bg-gray-900 w-full rounded-t-2xl max-h-[80vh] flex flex-col shadow-2xl">
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-900 w-full rounded-t-2xl max-h-[70vh] flex flex-col shadow-2xl">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Selecionar Fornecedor</h3>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
