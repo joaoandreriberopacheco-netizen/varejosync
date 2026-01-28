@@ -61,6 +61,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
   const [search, setSearch] = useState('');
+  const [fornecedorSearch, setFornecedorSearch] = useState('');
   
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return [];
@@ -1020,31 +1021,45 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 onClick={(e) => {
                   if (e.target.id === 'fornecedor-selector-mobile') {
                     e.target.classList.add('hidden');
+                    setFornecedorSearch('');
                   }
                 }}
               >
                 <div className="bg-white dark:bg-gray-900 w-full rounded-t-2xl max-h-[80vh] flex flex-col shadow-2xl">
-                  <div className="p-4 border-b-0">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Selecionar Fornecedor</h3>
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Selecionar Fornecedor</h3>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder="Buscar fornecedor..."
+                        className="pl-10 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-11 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
+                        value={fornecedorSearch}
+                        onChange={e => setFornecedorSearch(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-3">
-                    {fornecedores.map(f => (
-                      <div
-                        key={f.id}
-                        onClick={() => {
-                          handleFornecedorChange(f.id);
-                          document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
-                        }}
-                        className={`p-4 rounded-xl mb-3 flex items-center gap-3 active:scale-[0.98] transition-transform shadow-sm ${
-                          formData.fornecedor_id === f.id ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
-                        }`}
-                      >
-                        <div className="w-9 h-9 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
-                          <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    {fornecedores
+                      .filter(f => f.nome.toLowerCase().includes(fornecedorSearch.toLowerCase()))
+                      .map(f => (
+                        <div
+                          key={f.id}
+                          onClick={() => {
+                            handleFornecedorChange(f.id);
+                            document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
+                            setFornecedorSearch('');
+                          }}
+                          className={`p-4 rounded-xl mb-3 flex items-center gap-3 active:scale-[0.98] transition-transform shadow-sm ${
+                            formData.fornecedor_id === f.id ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          }`}
+                        >
+                          <div className="w-9 h-9 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </div>
+                          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{f.nome}</span>
                         </div>
-                        <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{f.nome}</span>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>

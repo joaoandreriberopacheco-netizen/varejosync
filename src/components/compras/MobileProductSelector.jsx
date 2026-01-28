@@ -379,132 +379,159 @@ export default function MobileProductSelector({
   // View: Catalog (Busca de Produtos)
   if (view === 'catalog') {
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
-        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
-        </div>
+      <>
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+          <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
+          </div>
 
-        <div className="flex-1 overflow-y-auto pb-2">
-          <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                placeholder="Buscar produto..."
-                className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                autoFocus
-                disabled={isLocked}
-              />
+          <div className="flex-1 overflow-y-auto pb-20">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Buscar produto..."
+                  className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  autoFocus
+                  disabled={isLocked}
+                />
+              </div>
+            </div>
+
+            <div className="px-4 space-y-2">
+              {search.trim() === '' ? (
+                <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+                  <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium">Digite para buscar</p>
+                  <p className="text-sm mt-1">Ex: areia, tinta, tubo...</p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                filteredProducts.map(product => {
+                  const inCartCount = items.filter(i => i.produto_id === product.id).length;
+                  const isSelected = inCartCount > 0;
+                  
+                  return (
+                    <div 
+                      key={product.id} 
+                      onClick={() => {
+                        if (!isLocked) handleSelectProduct(product);
+                      }}
+                      className={`p-4 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
+                          isSelected 
+                          ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
+                          : 'bg-gray-50 dark:bg-gray-800'
+                      } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-medium truncate ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
+                          {product.nome}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
+                          {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
+                        </div>
+                      </div>
+                      
+                      {isSelected ? (
+                        <Badge className="bg-indigo-600 hover:bg-indigo-700 ml-3 flex-shrink-0">
+                          {inCartCount > 1 ? `${inCartCount}x` : '✓'}
+                        </Badge>
+                      ) : (
+                        <div className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 flex-shrink-0 ml-3">
+                          <Plus className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                  <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium">Nenhum produto encontrado</p>
+                  <p className="text-sm mt-1">para "{search}"</p>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="px-4 space-y-2">
-            {search.trim() === '' ? (
-              <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-                <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p className="font-medium">Digite para buscar</p>
-                <p className="text-sm mt-1">Ex: areia, tinta, tubo...</p>
+          {/* Botão Flutuante do Carrinho */}
+          {items.length > 0 && (
+            <button
+              onClick={() => setShowCartModal(true)}
+              className="fixed bottom-6 right-6 w-16 h-16 bg-gray-900 dark:bg-gray-700 text-white rounded-full shadow-2xl flex items-center justify-center z-20 active:scale-95 transition-transform"
+            >
+              <div className="relative">
+                <ShoppingCart className="w-7 h-7" />
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                  {items.length}
+                </div>
               </div>
-            ) : filteredProducts.length > 0 ? (
-              filteredProducts.map(product => {
-                const inCartCount = items.filter(i => i.produto_id === product.id).length;
-                const isSelected = inCartCount > 0;
-                
-                return (
-                  <div 
-                    key={product.id} 
-                    onClick={() => {
-                      if (!isLocked) handleSelectProduct(product);
-                    }}
-                    className={`p-4 rounded-xl shadow-sm flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
-                        isSelected 
-                        ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
-                        : 'bg-gray-50 dark:bg-gray-800'
-                    } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className={`font-medium truncate ${isSelected ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
-                        {product.nome}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
-                        {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
-                      </div>
-                    </div>
-                    
-                    {isSelected ? (
-                      <Badge className="bg-indigo-600 hover:bg-indigo-700 ml-3 flex-shrink-0">
-                        {inCartCount > 1 ? `${inCartCount}x` : '✓'}
-                      </Badge>
-                    ) : (
-                      <div className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 flex-shrink-0 ml-3">
-                        <Plus className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                )
-              })
-            ) : (
-              <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p className="font-medium">Nenhum produto encontrado</p>
-                <p className="text-sm mt-1">para "{search}"</p>
-              </div>
-            )}
-          </div>
+            </button>
+          )}
         </div>
 
-        {/* Painel de Itens Adicionados */}
-        {items.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0 max-h-[35vh] flex flex-col">
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {/* Modal de Itens Adicionados */}
+        {showCartModal && (
+          <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
+            <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <Button variant="ghost" size="icon" onClick={() => setShowCartModal(false)} className="h-10 w-10">
+                <X className="w-5 h-5" />
+              </Button>
+              <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Itens Adicionados</div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {items.map((item, index) => (
                 <div 
                   key={index} 
-                  className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg flex items-center gap-3"
+                  className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl shadow-sm"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-gray-900 dark:text-white truncate">{item.produto_nome}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 dark:text-white line-clamp-2">{item.produto_nome}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {item.quantidade} {item.unidade_medida} x {formatCurrency(item.custo_unitario)}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="font-bold text-sm text-gray-900 dark:text-white">
-                      {formatCurrency(item.total || 0)}
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-bold text-gray-900 dark:text-white">
+                        {formatCurrency(item.total || 0)}
+                      </div>
                     </div>
+                    {!isLocked && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                        onClick={() => onRemoveItem(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
-                  {!isLocked && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
-                      onClick={() => onRemoveItem(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
               ))}
             </div>
-            <div className="bg-gray-100 dark:bg-gray-900 p-3 border-t border-gray-200 dark:border-gray-700">
+
+            <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <ShoppingCart className="w-4 h-4" />
-                  <span>{totalItems}</span>
+                  <span>{totalItems} {totalItems === 1 ? 'item' : 'itens'}</span>
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</div>
-                  <div className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</div>
                 </div>
               </div>
             </div>
           </div>
         )}
-      </div>
+      </>
     );
   }
 
