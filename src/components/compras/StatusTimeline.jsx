@@ -1,7 +1,8 @@
 import React from 'react';
 import { Check, FileText, CheckCircle, Send, Package, AlertCircle, Flag } from 'lucide-react';
+import { format } from 'date-fns';
 
-export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
+export default function StatusTimeline({ currentStatus, aprovacaoFinanceira, dataEmissao, isMobile = false }) {
   const stages = [
     { key: 'Rascunho', label: 'Rascunho', icon: FileText },
     { key: 'Aprovado', label: 'Aprovado', icon: CheckCircle },
@@ -34,9 +35,11 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
         return (
           <React.Fragment key={stage.key}>
             <div className="flex flex-col items-center gap-1">
-              <div className="text-[9px] text-gray-600 dark:text-gray-400 font-medium text-center leading-tight">
-                {stage.label}
-              </div>
+              {!isMobile && (
+                <div className="text-[9px] text-gray-600 dark:text-gray-400 font-medium text-center leading-tight">
+                  {stage.label}
+                </div>
+              )}
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                   isCompleted
@@ -46,6 +49,11 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira }) {
               >
                 <Icon className={`w-4 h-4 ${isCompleted ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
               </div>
+              {isActive && dataEmissao && (
+                <div className="text-[9px] text-gray-400 dark:text-gray-500 text-center leading-tight mt-0.5">
+                  {format(new Date(dataEmissao), 'dd/MM/yyyy')}
+                </div>
+              )}
             </div>
             {idx < stages.length - 1 && (
               <div

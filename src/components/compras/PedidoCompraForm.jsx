@@ -953,12 +953,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
             {/* Timeline sobre as Tabs */}
             <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-              <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
-              {formData.data_emissao && (
-                <div className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 text-center">
-                  {format(new Date(formData.data_emissao), 'dd/MM/yyyy')}
-                </div>
-              )}
+              <StatusTimeline 
+                currentStatus={formData.status} 
+                aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
+                dataEmissao={formData.data_emissao}
+                isMobile={true}
+              />
             </div>
 
             <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
@@ -1529,7 +1529,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       </div>
 
       {/* Timeline */}
-      <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+      <StatusTimeline 
+        currentStatus={formData.status} 
+        aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
+        dataEmissao={formData.data_emissao}
+        isMobile={false}
+      />
 
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
