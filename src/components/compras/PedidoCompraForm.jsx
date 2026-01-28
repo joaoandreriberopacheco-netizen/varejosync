@@ -1397,7 +1397,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         }
 
   return (
-    <DialogContent className="!max-w-[98vw] !w-[98vw] h-[95vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-2xl">
+    <DialogContent className="!max-w-[100vw] !w-[100vw] !h-[100vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-none !rounded-none">
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && (
         <div className="px-4 py-2.5 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-100 dark:border-yellow-800 flex-shrink-0">
