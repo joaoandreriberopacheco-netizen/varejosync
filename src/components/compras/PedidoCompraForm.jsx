@@ -952,17 +952,15 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           {/* MOBILE: Timeline + Tabs */}
           <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
             {/* Timeline sobre as Tabs */}
-            {pedido && (
-              <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">STATUS</div>
-                <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
-                {formData.data_emissao && (
-                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                    {format(new Date(formData.data_emissao), 'dd/MM/yyyy')}
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">STATUS</div>
+              <StatusTimeline currentStatus={formData.status} aprovacaoFinanceira={pedido?.status_aprovacao_financeira} />
+              {formData.data_emissao && (
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                  {format(new Date(formData.data_emissao), 'dd/MM/yyyy')}
+                </div>
+              )}
+            </div>
 
             <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
             <TabsTrigger 
