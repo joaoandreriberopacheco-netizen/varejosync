@@ -1026,7 +1026,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 }}
               >
                 <div className="bg-white dark:bg-gray-900 w-full rounded-t-2xl max-h-[80vh] flex flex-col shadow-2xl">
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                  <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 rounded-t-2xl">
                     <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Selecionar Fornecedor</h3>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
