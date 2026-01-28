@@ -1451,9 +1451,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        </div>
-        );
-        }
+        </DialogContent>
+      </Dialog>
+      );
+      }
 
   return (
     <DialogContent className="!max-w-[100vw] !w-[100vw] !h-[100vh] p-0 overflow-hidden flex flex-col dark:bg-gray-900 dark:text-gray-200 border-0 shadow-none !rounded-none">
@@ -2360,6 +2361,50 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         itens={formData.itens || []}
         produtos={produtos}
       />
+
+      <Dialog open={isSolicitarEdicaoOpen} onOpenChange={setIsSolicitarEdicaoOpen}>
+        <DialogContent className="dark:bg-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-gray-800 dark:text-gray-200">Solicitar Edição do Pedido</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                    Justificativa necessária
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Informe o motivo para que o financeiro possa avaliar a solicitação (ex: produto indisponível no fornecedor, erro de quantidade, etc.)
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Motivo da Solicitação *</Label>
+              <Textarea
+                placeholder="Ex: Fornecedor informou que o produto X está em falta..."
+                className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm resize-none"
+                rows={4}
+                value={motivoEdicao}
+                onChange={(e) => setMotivoEdicao(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsSolicitarEdicaoOpen(false);
+              setMotivoEdicao('');
+            }} className="border-0 shadow-sm">
+              Cancelar
+            </Button>
+            <Button onClick={handleSolicitarEdicao} disabled={!motivoEdicao.trim()}>
+              Enviar Solicitação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DialogContent>
   );
 }
