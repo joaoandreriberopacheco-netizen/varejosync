@@ -1031,20 +1031,31 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 onClick={(e) => {
                   if (e.target.id === 'fornecedor-selector-mobile') {
                     e.target.classList.add('hidden');
+                    setSearchFornecedor('');
                   }
                 }}
               >
                 <div className="bg-white dark:bg-gray-900 w-full rounded-t-2xl max-h-[80vh] flex flex-col shadow-2xl">
-                  <div className="p-4 border-b-0">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Selecionar Fornecedor</h3>
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Selecionar Fornecedor</h3>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder="Buscar fornecedor..."
+                        className="pl-10 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-11"
+                        value={searchFornecedor}
+                        onChange={e => setSearchFornecedor(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-3">
-                    {fornecedores.map(f => (
+                    {filteredFornecedores.map(f => (
                       <div
                         key={f.id}
                         onClick={() => {
                           handleFornecedorChange(f.id);
                           document.getElementById('fornecedor-selector-mobile').classList.add('hidden');
+                          setSearchFornecedor('');
                         }}
                         className={`p-4 rounded-xl mb-3 flex items-center gap-3 active:scale-[0.98] transition-transform shadow-sm ${
                           formData.fornecedor_id === f.id ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
@@ -1499,8 +1510,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white">
                       <SelectValue placeholder="Selecione o fornecedor..." />
                     </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
-                      {fornecedores.map(f => (
+                    <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999] max-h-[300px]">
+                      <div className="sticky top-0 bg-gray-50 dark:bg-gray-800 p-2 border-b border-gray-200 dark:border-gray-700 z-10">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                          <Input
+                            placeholder="Buscar..."
+                            className="pl-8 h-8 text-xs bg-white dark:bg-gray-900 border-0"
+                            value={searchFornecedor}
+                            onChange={e => setSearchFornecedor(e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+                      {filteredFornecedores.map(f => (
                         <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
                       ))}
                     </SelectContent>
