@@ -15,8 +15,10 @@ import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
+import AprovacaoPedidoMobile from '@/components/compras/AprovacaoPedidoMobile';
 
 export default function FinanceiroAprovacoesPage() {
+  const [isMobile, setIsMobile] = useState(false);
   const [pendingTransactions, setPendingTransactions] = useState([]);
   const [contas, setContas] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -38,6 +40,13 @@ export default function FinanceiroAprovacoesPage() {
   useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -618,19 +627,44 @@ export default function FinanceiroAprovacoesPage() {
         operationName={`${actionType === 'approve' ? 'Aprovar' : 'Rejeitar'} Pagamento ${selectedTransaction?.numero || ''}`}
       />
 
-      <Dialog open={showPedidoDetails} onOpenChange={setShowPedidoDetails}>
-        <PedidoCompraForm 
+      {isMobile && selectedPedido && showPedidoDetails && activeTab === 'pendentes' ? (
+        <AprovacaoPedidoMobile
           pedido={selectedPedido}
+          contas={contas}
+          onApprove={(pedido, contaId) => {
+            setSelectedTransaction(pedido);
+            setContaSelecionada(contaId);
+            setShowPedidoDetails(false);
+            setActionType('approve');
+            setIsAuthOpen(true);
+          }}
+          onReject={(pedido, motivo) => {
+            setSelectedTransaction(pedido);
+            setMotivoRejeicao(motivo);
+            setShowPedidoDetails(false);
+            setActionType('reject');
+            setIsAuthOpen(true);
+          }}
           onClose={() => {
             setShowPedidoDetails(false);
             setSelectedPedido(null);
           }}
-          onSave={async () => {
-            setShowPedidoDetails(false);
-            setSelectedPedido(null);
-          }}
         />
-      </Dialog>
+      ) : showPedidoDetails && selectedPedido ? (
+        <Dialog open={showPedidoDetails} onOpenChange={setShowPedidoDetails}>
+          <PedidoCompraForm 
+            pedido={selectedPedido}
+            onClose={() => {
+              setShowPedidoDetails(false);
+              setSelectedPedido(null);
+            }}
+            onSave={async () => {
+              setShowPedidoDetails(false);
+              setSelectedPedido(null);
+            }}
+          />
+        </Dialog>
+      ) : null}
 
       {/* Solicitações de Edição */}
       {solicitacoesEdicao.length > 0 && (
