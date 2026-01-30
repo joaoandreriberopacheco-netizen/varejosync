@@ -138,13 +138,15 @@ export default function DiscriminarVolumes() {
 
       toast.success('Volumes salvos com sucesso!');
       
-      // Aguarda 1 segundo antes de voltar para dar sensação de conclusão
-      setTimeout(() => {
-        navigate(createPageUrl('Compras'));
-      }, 1000);
+      // Limpa os campos para adicionar novos volumes
+      setDescricao('');
+      setQuantidade('');
+      setPeso('');
+      descricaoRef.current?.focus();
     } catch (error) {
       console.error('Erro ao salvar:', error);
       toast.error('Erro ao salvar volumes');
+    } finally {
       setSaving(false);
     }
   };
