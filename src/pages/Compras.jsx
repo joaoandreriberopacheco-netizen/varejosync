@@ -93,7 +93,7 @@ const PedidosCompraTab = () => {
         await base44.entities.PedidoCompra.create(newPedido);
       }
       await loadPedidos();
-      setIsFormOpen(false);
+      // setIsFormOpen(false); // Mantendo aberto para feedback
     } catch (error) {
       console.error("Erro ao salvar pedido:", error);
       throw error; 

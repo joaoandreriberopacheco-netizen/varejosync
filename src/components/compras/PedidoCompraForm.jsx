@@ -597,6 +597,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       
       // Salvar pedido primeiro
       const pedidoSalvo = await onSave(dataToSave);
+
+      toast({
+        title: "Sucesso",
+        description: "Pedido salvo com sucesso!",
+        className: "bg-green-100 text-green-800 border-green-200"
+      });
       
       // Verificar se mudou para "Enviado" APÓS salvar
       const mudouParaEnviado = dataToSave.status === 'Enviado' && (
