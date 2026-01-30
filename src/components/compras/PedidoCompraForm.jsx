@@ -46,9 +46,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     tags: [],
     // Logística
     evento_logistico_id: '',
-    qtd_volumes: 0,
-    tipo_volume: 'Caixas',
-    peso_total_kg: 0,
     nfe_emitida: false,
     manifesto_conferido: false,
     // Financeiro
@@ -135,11 +132,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const transportadoras = transportadoraData.filter(t => (t.tipo === 'Fornecedor' || t.tipo === 'Ambos') && t.ativo);
       setFornecedores(prev => transportadoras); // Reutiliza a lista
 
-      // Carregar supermanifesto se existir
-      if (pedido?.supermanifesto_id) {
-        const manifestoData = await base44.entities.Supermanifesto.filter({ id: pedido.supermanifesto_id });
-        if (manifestoData && manifestoData.length > 0) {
-          setSupermanifesto(manifestoData[0]);
+      // Carregar supermanifesto se existir (via manifesto_entrada)
+      if (pedido?.manifesto_entrada_id) {
+        const manifestoEntrada = await base44.entities.ManifestoEntrada.filter({ id: pedido.manifesto_entrada_id });
+        if (manifestoEntrada && manifestoEntrada.length > 0 && manifestoEntrada[0].supermanifesto_id) {
+          const manifestoData = await base44.entities.Supermanifesto.filter({ id: manifestoEntrada[0].supermanifesto_id });
+          if (manifestoData && manifestoData.length > 0) {
+            setSupermanifesto(manifestoData[0]);
+          }
         }
       }
     };
@@ -773,7 +773,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         throw new Error('Transportadora não encontrada');
       }
 
-      const pesoNumerico = parseFloat(formData.peso_total_kg) || 0;
+      // Calcular peso dos volumes informados
+      const pesoNumerico = volumes.reduce((sum, v) => sum + (parseFloat(v.quantidade) || 0), 0);
 
       const etaDate = new Date(formData.eta_embarque);
       const etaStart = new Date(etaDate);
@@ -846,10 +847,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         manifestoId = novoManifesto.id;
       }
 
-      // Atualizar o pedido com manifesto vinculado
+      // Atualizar o pedido - não vincula mais supermanifesto diretamente
       await base44.entities.PedidoCompra.update(pedidoAtualizado.id, {
-        status: 'Aguardando Recepção',
-        supermanifesto_id: manifestoId
+        status: 'Aguardando Recepção'
       });
 
     } catch (error) {
@@ -859,10 +859,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   const reloadSupermanifesto = async () => {
-    if (formData.supermanifesto_id) {
-      const manifestoData = await base44.entities.Supermanifesto.filter({ id: formData.supermanifesto_id });
-      if (manifestoData && manifestoData.length > 0) {
-        setSupermanifesto(manifestoData[0]);
+    if (formData.manifesto_entrada_id) {
+      const manifestoEntrada = await base44.entities.ManifestoEntrada.filter({ id: formData.manifesto_entrada_id });
+      if (manifestoEntrada && manifestoEntrada.length > 0 && manifestoEntrada[0].supermanifesto_id) {
+        const manifestoData = await base44.entities.Supermanifesto.filter({ id: manifestoEntrada[0].supermanifesto_id });
+        if (manifestoData && manifestoData.length > 0) {
+          setSupermanifesto(manifestoData[0]);
+        }
       }
     }
   };
@@ -1322,41 +1325,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
                       disabled={!isLogisticaEnabled}
                     />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Volumes</Label>
-                      <Input 
-                        type="number" 
-                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
-                        value={formData.qtd_volumes} 
-                        onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
-                        disabled={!isLogisticaEnabled}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Tipo</Label>
-                      <Select value={formData.tipo_volume} onValueChange={v => handleChange('tipo_volume', v)} disabled={!isLogisticaEnabled}>
-                        <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
-                          <SelectItem value="Caixas">Caixas</SelectItem>
-                          <SelectItem value="Pallets">Pallets</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Peso (kg)</Label>
-                      <Input 
-                        type="number" step="0.1"
-                        className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
-                        value={formData.peso_total_kg} 
-                        onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
-                        disabled={!isLogisticaEnabled}
-                      />
-                    </div>
                   </div>
                 </>
               )}
@@ -2263,51 +2231,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-4 block">Informações de Carga</Label>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Volumes</Label>
-                    <Input 
-                      type="number" 
-                      className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm" 
-                      value={formData.qtd_volumes} 
-                      onChange={e => handleChange('qtd_volumes', parseFloat(e.target.value) || 0)} 
-                      disabled={!isLogisticaEnabled}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Tipo</Label>
-                    <Select 
-                      value={formData.tipo_volume} 
-                      onValueChange={v => handleChange('tipo_volume', v)}
-                      disabled={!isLogisticaEnabled}
-                    >
-                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
-                        <SelectItem value="Caixas">Caixas</SelectItem>
-                        <SelectItem value="Pallets">Pallets</SelectItem>
-                        <SelectItem value="Sacos">Sacos</SelectItem>
-                        <SelectItem value="Unidades">Unidades</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Peso (kg)</Label>
-                    <Input 
-                      type="number" 
-                      step="0.1"
-                      className="bg-gray-50 dark:bg-gray-800 border-0 h-10 text-sm shadow-sm" 
-                      value={formData.peso_total_kg} 
-                      onChange={e => handleChange('peso_total_kg', parseFloat(e.target.value) || 0)} 
-                      disabled={!isLogisticaEnabled}
-                    />
-                  </div>
-                </div>
-              </div>
+
             </div>
           </TabsContent>
 
