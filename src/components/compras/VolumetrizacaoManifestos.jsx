@@ -3,9 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Package, Edit, RefreshCw, Weight } from 'lucide-react';
+import { Search, Package, Edit, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import DiscriminarVolumesManifesto from './DiscriminarVolumesManifesto';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/components/utils';
 
 const getStatusBadge = (status) => {
   const variants = {
@@ -19,11 +20,10 @@ const getStatusBadge = (status) => {
 };
 
 export default function VolumetrizacaoManifestos() {
+  const navigate = useNavigate();
   const [manifestos, setManifestos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedManifesto, setSelectedManifesto] = useState(null);
-  const [showDiscriminarVolumes, setShowDiscriminarVolumes] = useState(false);
 
   useEffect(() => {
     loadManifestos();
@@ -49,28 +49,8 @@ export default function VolumetrizacaoManifestos() {
     }
   };
 
-  const handleDiscriminarVolumes = async (manifesto) => {
-    // Buscar pedido de compra vinculado
-    try {
-      const pedido = await base44.entities.PedidoCompra.filter({ id: manifesto.pedido_compra_id });
-      if (pedido && pedido.length > 0) {
-        // Criar estrutura compatível com DiscriminarVolumesManifesto
-        const manifestoComPedidos = {
-          ...manifesto,
-          pedidos_vinculados: [{
-            pedido_id: pedido[0].id,
-            pedido_numero: pedido[0].numero,
-            descritivo_volumes: '',
-            peso_informado_kg: 0
-          }]
-        };
-        setSelectedManifesto(manifestoComPedidos);
-        setShowDiscriminarVolumes(true);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar pedido:", error);
-      toast.error("Erro ao carregar dados do pedido");
-    }
+  const handleDiscriminarVolumes = (manifesto) => {
+    navigate(createPageUrl(`DiscriminarVolumes?id=${manifesto.id}&tipo=manifesto`));
   };
 
   const manifestosFiltrados = manifestos.filter(m => {
@@ -154,20 +134,6 @@ export default function VolumetrizacaoManifestos() {
           ))
         )}
       </div>
-
-      {/* Modal Discriminar Volumes */}
-      {showDiscriminarVolumes && selectedManifesto && (
-        <DiscriminarVolumesManifesto
-          manifesto={selectedManifesto}
-          isOpen={showDiscriminarVolumes}
-          onClose={() => {
-            setShowDiscriminarVolumes(false);
-            setSelectedManifesto(null);
-            loadManifestos();
-          }}
-          onSuccess={loadManifestos}
-        />
-      )}
     </div>
   );
 }

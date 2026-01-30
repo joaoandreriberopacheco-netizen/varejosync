@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Search, Package, Eye, Edit, Truck, Weight, Calendar, RefreshCw, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/components/utils';
 import DetalhesSupermanifesto from './DetalhesSupermanifesto';
-import DiscriminarVolumesManifesto from './DiscriminarVolumesManifesto';
 import VincularManifestosSupermanifestos from './VincularManifestosSupermanifestos';
 
 const getStatusBadge = (status) => {
@@ -23,13 +24,13 @@ const getStatusBadge = (status) => {
 };
 
 export default function GestaoSupermanifestos() {
+  const navigate = useNavigate();
   const [supermanifestos, setSupermanifestos] = useState([]);
   const [manifestosAguardando, setManifestosAguardando] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSupermanifesto, setSelectedSupermanifesto] = useState(null);
   const [showDetalhes, setShowDetalhes] = useState(false);
-  const [showDiscriminarVolumes, setShowDiscriminarVolumes] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -72,8 +73,7 @@ export default function GestaoSupermanifestos() {
   };
 
   const handleDiscriminarVolumes = (supermanifesto) => {
-    setSelectedSupermanifesto(supermanifesto);
-    setShowDiscriminarVolumes(true);
+    navigate(createPageUrl(`DiscriminarVolumes?id=${supermanifesto.id}&tipo=supermanifesto`));
   };
 
   const supermanifestosFiltrados = supermanifestos.filter(sm => {
