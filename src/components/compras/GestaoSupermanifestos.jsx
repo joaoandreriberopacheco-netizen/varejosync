@@ -253,20 +253,6 @@ export default function GestaoSupermanifestos() {
           }}
         />
       )}
-
-      {/* Modal Discriminar Volumes */}
-      {showDiscriminarVolumes && selectedSupermanifesto && (
-        <DiscriminarVolumesManifesto
-          manifesto={selectedSupermanifesto}
-          isOpen={showDiscriminarVolumes}
-          onClose={() => {
-            setShowDiscriminarVolumes(false);
-            setSelectedSupermanifesto(null);
-            loadSupermanifestos();
-          }}
-          onSuccess={loadSupermanifestos}
-        />
-      )}
     </div>
   );
 }
