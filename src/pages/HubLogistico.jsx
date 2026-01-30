@@ -7,6 +7,7 @@ import { Truck, Package, Weight, Calendar, Trash2, Eye, AlertTriangle, RefreshCw
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import GestaoCodigosConferencia from '@/components/logistica/GestaoCodigosConferencia';
 
 export default function HubLogistico() {
   const [manifestos, setManifestos] = useState([]);
@@ -282,6 +283,17 @@ export default function HubLogistico() {
                   </p>
                 </div>
               )}
+
+              <div>
+                <h4 className="text-sm font-semibold mb-3">Conferência Cega</h4>
+                <div className="grid gap-3">
+                  <GestaoCodigosConferencia 
+                    manifesto={manifestoSelecionado} 
+                    tipo="volumes"
+                    onUpdate={loadManifestos}
+                  />
+                </div>
+              </div>
             </div>
 
             <DialogFooter>
