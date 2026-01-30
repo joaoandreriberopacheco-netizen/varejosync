@@ -85,6 +85,7 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
+import ConferenciaEntrada from './pages/ConferenciaEntrada';
 import __Layout from './Layout.jsx';
 
 
@@ -127,6 +128,7 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
+    "ConferenciaEntrada": ConferenciaEntrada,
 }
 
 export const pagesConfig = {
