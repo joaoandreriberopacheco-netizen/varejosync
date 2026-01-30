@@ -360,9 +360,14 @@ const PedidosCompraTab = () => {
 };
 
 import GestaoManifestos from '../components/compras/GestaoManifestos';
+import GestaoSupermanifestos from '../components/compras/GestaoSupermanifestos';
 
 const HubLogisticoTab = () => {
   return <GestaoManifestos />;
+};
+
+const SupermanifestosTab = () => {
+  return <GestaoSupermanifestos />;
 };
 
 export default function ComprasPage() {
@@ -409,7 +414,14 @@ export default function ComprasPage() {
             className="flex-1 sm:flex-none border-b-2 border-transparent data-[state=active]:border-teal-600 rounded-none py-3 px-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-teal-700 font-medium transition-all flex items-center justify-center sm:justify-start gap-2"
           >
             <Truck className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Logística</span>
+            <span className="hidden sm:inline">Manifestos</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="supermanifestos" 
+            className="flex-1 sm:flex-none border-b-2 border-transparent data-[state=active]:border-teal-600 rounded-none py-3 px-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-teal-700 font-medium transition-all flex items-center justify-center sm:justify-start gap-2"
+          >
+            <PackageIcon className="w-5 h-5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Supermanifestos</span>
           </TabsTrigger>
         </TabsList>
 
@@ -427,6 +439,10 @@ export default function ComprasPage() {
 
         <TabsContent value="hub-logistico" className="outline-none animate-in fade-in-50 duration-300">
           <HubLogisticoTab />
+        </TabsContent>
+
+        <TabsContent value="supermanifestos" className="outline-none animate-in fade-in-50 duration-300">
+          <SupermanifestosTab />
         </TabsContent>
       </Tabs>
     </div>
