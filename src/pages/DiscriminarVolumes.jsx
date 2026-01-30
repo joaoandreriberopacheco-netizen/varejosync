@@ -1,29 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, Save, Package } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 
 export default function DiscriminarVolumes() {
   const navigate = useNavigate();
+  const descricaoRef = useRef(null);
+  const quantidadeRef = useRef(null);
+  const pesoRef = useRef(null);
+
   const [manifesto, setManifesto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [volumes, setVolumes] = useState({
-    quantidade: '',
-    descricao: '',
-    peso_kg: ''
-  });
+  
+  const [descricao, setDescricao] = useState('');
+  const [quantidade, setQuantidade] = useState('');
+  const [peso, setPeso] = useState('');
+  const [volumes, setVolumes] = useState([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const manifestoId = params.get('id');
-    const tipo = params.get('tipo'); // 'manifesto' ou 'supermanifesto'
+    const tipo = params.get('tipo');
 
     if (manifestoId && tipo) {
       loadManifesto(manifestoId, tipo);
@@ -32,6 +34,12 @@ export default function DiscriminarVolumes() {
       navigate(createPageUrl('Compras'));
     }
   }, []);
+
+  useEffect(() => {
+    if (!loading && descricaoRef.current) {
+      descricaoRef.current.focus();
+    }
+  }, [loading]);
 
   const loadManifesto = async (id, tipo) => {
     try {
@@ -42,11 +50,13 @@ export default function DiscriminarVolumes() {
         data = await base44.entities.Supermanifesto.filter({ id });
         if (data && data.length > 0) {
           setManifesto({ ...data[0], tipo: 'supermanifesto' });
+          setVolumes(data[0].volumes || []);
         }
       } else {
         data = await base44.entities.ManifestoEntrada.filter({ id });
         if (data && data.length > 0) {
           setManifesto({ ...data[0], tipo: 'manifesto' });
+          setVolumes(data[0].volumes || []);
         }
       }
 
@@ -62,30 +72,63 @@ export default function DiscriminarVolumes() {
     }
   };
 
+  const handleAddVolume = () => {
+    if (!descricao.trim()) {
+      toast.error('Informe a descrição do volume');
+      descricaoRef.current?.focus();
+      return;
+    }
+
+    if (!quantidade || isNaN(quantidade) || parseInt(quantidade) <= 0) {
+      toast.error('Informe uma quantidade válida');
+      quantidadeRef.current?.focus();
+      return;
+    }
+
+    if (peso && (isNaN(peso) || parseFloat(peso) < 0)) {
+      toast.error('Informe um peso válido');
+      pesoRef.current?.focus();
+      return;
+    }
+
+    const novoVolume = {
+      descricao: descricao.trim(),
+      quantidade: parseInt(quantidade),
+      peso_kg: peso ? parseFloat(peso) : null
+    };
+
+    setVolumes([...volumes, novoVolume]);
+    setDescricao('');
+    setQuantidade('');
+    setPeso('');
+    descricaoRef.current?.focus();
+  };
+
+  const handleRemoveVolume = (index) => {
+    setVolumes(volumes.filter((_, i) => i !== index));
+  };
+
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === 'Tab' || e.key === 'Enter') {
+      e.preventDefault();
+      if (nextRef === 'add') {
+        handleAddVolume();
+      } else {
+        nextRef?.current?.focus();
+      }
+    }
+  };
+
   const handleSave = async () => {
-    if (!volumes.quantidade || !volumes.descricao) {
-      toast.error('Preencha quantidade e descrição');
-      return;
-    }
-
-    if (isNaN(volumes.quantidade) || parseInt(volumes.quantidade) <= 0) {
-      toast.error('Quantidade deve ser um número maior que zero');
-      return;
-    }
-
-    if (volumes.peso_kg && (isNaN(volumes.peso_kg) || parseFloat(volumes.peso_kg) < 0)) {
-      toast.error('Peso deve ser um número válido');
+    if (volumes.length === 0) {
+      toast.error('Adicione pelo menos um volume');
       return;
     }
 
     try {
       setSaving(true);
 
-      const updateData = {
-        volumes_quantidade: parseInt(volumes.quantidade),
-        volumes_descricao: volumes.descricao,
-        volumes_peso_kg: volumes.peso_kg ? parseFloat(volumes.peso_kg) : null
-      };
+      const updateData = { volumes };
 
       if (manifesto.tipo === 'supermanifesto') {
         await base44.entities.Supermanifesto.update(manifesto.id, updateData);
@@ -93,15 +136,18 @@ export default function DiscriminarVolumes() {
         await base44.entities.ManifestoEntrada.update(manifesto.id, updateData);
       }
 
-      toast.success('Volumetrização salva com sucesso');
+      toast.success('Volumes salvos com sucesso');
       navigate(createPageUrl('Compras'));
     } catch (error) {
       console.error('Erro ao salvar:', error);
-      toast.error('Erro ao salvar volumetrização');
+      toast.error('Erro ao salvar volumes');
     } finally {
       setSaving(false);
     }
   };
+
+  const totalVolumes = volumes.reduce((sum, v) => sum + v.quantidade, 0);
+  const pesoTotal = volumes.reduce((sum, v) => sum + (v.peso_kg || 0), 0);
 
   if (loading) {
     return (
@@ -116,11 +162,11 @@ export default function DiscriminarVolumes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+      <div className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -130,102 +176,128 @@ export default function DiscriminarVolumes() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Package className="w-5 h-5 text-gray-400" />
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Discriminar Volumes
-                </h1>
-              </div>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Discriminar Volumes
+              </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {manifesto.numero}
               </p>
             </div>
+            <Button
+              onClick={handleSave}
+              disabled={saving || volumes.length === 0}
+              className="bg-gray-900 hover:bg-gray-800 text-white gap-2 rounded-lg"
+            >
+              <Save className="w-4 h-4" />
+              Salvar
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="space-y-6">
-            {/* Quantidade */}
-            <div>
-              <Label htmlFor="quantidade" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                Quantidade de Volumes *
-              </Label>
+      {/* Form */}
+      <div className="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-4">
+          <div className="grid gap-3">
+            <Input
+              ref={descricaoRef}
+              placeholder="Descrição do volume (ex: Caixas de papelão)"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, quantidadeRef)}
+              className="text-base"
+            />
+            
+            <div className="grid grid-cols-2 gap-3">
               <Input
-                id="quantidade"
+                ref={quantidadeRef}
                 type="number"
-                min="1"
-                placeholder="Ex: 15"
-                value={volumes.quantidade}
-                onChange={(e) => setVolumes({ ...volumes, quantidade: e.target.value })}
+                inputMode="numeric"
+                placeholder="Quantidade"
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, pesoRef)}
                 className="text-base"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Quantos volumes/caixas/pacotes esse manifesto possui
-              </p>
-            </div>
-
-            {/* Descrição */}
-            <div>
-              <Label htmlFor="descricao" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                Descrição dos Volumes *
-              </Label>
-              <Textarea
-                id="descricao"
-                rows={4}
-                placeholder="Ex: 15 caixas de papelão 60x40x30cm"
-                value={volumes.descricao}
-                onChange={(e) => setVolumes({ ...volumes, descricao: e.target.value })}
-                className="text-base resize-none"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Descreva como os volumes estão organizados
-              </p>
-            </div>
-
-            {/* Peso */}
-            <div>
-              <Label htmlFor="peso" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                Peso Total (kg) - Opcional
-              </Label>
+              
               <Input
-                id="peso"
+                ref={pesoRef}
                 type="number"
+                inputMode="decimal"
                 step="0.01"
-                min="0"
-                placeholder="Ex: 150.5"
-                value={volumes.peso_kg}
-                onChange={(e) => setVolumes({ ...volumes, peso_kg: e.target.value })}
+                placeholder="Peso (kg) - Opcional"
+                value={peso}
+                onChange={(e) => setPeso(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, 'add')}
                 className="text-base"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Peso total de todos os volumes em quilogramas
-              </p>
             </div>
-          </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
             <Button
-              variant="outline"
-              onClick={() => navigate(createPageUrl('Compras'))}
-              className="flex-1"
-              disabled={saving}
+              onClick={handleAddVolume}
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white gap-2 rounded-lg"
             >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="flex-1 bg-teal-600 hover:bg-teal-700 text-white gap-2"
-              disabled={saving}
-            >
-              <Save className="w-4 h-4" />
-              {saving ? 'Salvando...' : 'Salvar Discriminação'}
+              <Plus className="w-4 h-4" />
+              Adicionar Volume
             </Button>
           </div>
         </div>
+
+        {/* Resumo */}
+        {volumes.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <Package className="w-4 h-4" />
+                <span>Total de Volumes</span>
+              </div>
+              <span className="font-semibold text-gray-900 dark:text-white">{totalVolumes}</span>
+            </div>
+            {pesoTotal > 0 && (
+              <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <span className="text-gray-600 dark:text-gray-400">Peso Total</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{pesoTotal.toFixed(2)} kg</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Lista de Volumes */}
+        {volumes.length > 0 ? (
+          <div className="space-y-2">
+            {volumes.map((vol, index) => (
+              <div
+                key={index}
+                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-start justify-between gap-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {vol.descricao}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <span>Qtd: {vol.quantidade}</span>
+                    {vol.peso_kg && <span>Peso: {vol.peso_kg} kg</span>}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveVolume(index)}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
+            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Nenhum volume adicionado ainda
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
