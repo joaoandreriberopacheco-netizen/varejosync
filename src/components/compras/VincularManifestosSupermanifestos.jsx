@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -227,6 +227,24 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Discriminar Volumes - importado dinamicamente */}
+      {showDiscriminarVolumes && (
+        <DiscriminarVolumesManifesto
+          manifesto={createdSupermanifesto}
+          isOpen={showDiscriminarVolumes}
+          onClose={() => {
+            setShowDiscriminarVolumes(false);
+            setCreatedSupermanifesto(null);
+          }}
+          onSuccess={onRefresh}
+        />
+      )}
     </div>
   );
 }
+
+// Import dinâmico do componente
+const DiscriminarVolumesManifesto = React.lazy(() => 
+  import('./DiscriminarVolumesManifesto')
+);
