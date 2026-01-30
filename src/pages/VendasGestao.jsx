@@ -113,7 +113,7 @@ export default function VendasGestaoPage() {
       await base44.entities.PedidoVenda.create({ ...data, numero: `PV-${String(nextNumber).padStart(5, '0')}` });
     }
     loadPedidos();
-    setIsFormOpen(false);
+    // setIsFormOpen(false); // Mantendo aberto para feedback
   };
 
   const handleEdit = (pedido) => {

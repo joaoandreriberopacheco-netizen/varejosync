@@ -319,7 +319,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
       setTemAlteracoesNaoSalvas(false);
       onSave();
-      onClose();
+      // onClose(); // Mantendo aberto para feedback
     } catch (error) {
       toast({ title: "Erro ao salvar produto", description: error.message, variant: "destructive", duration: 5000 });
     }

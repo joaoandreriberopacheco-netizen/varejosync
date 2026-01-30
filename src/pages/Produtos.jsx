@@ -162,7 +162,7 @@ export default function ProdutosPage() {
 
   const handleSave = async () => {
     await loadData();
-    setIsFormOpen(false);
+    // setIsFormOpen(false); // Mantendo aberto para feedback
   };
 
   const handleEdit = (produto) => {
