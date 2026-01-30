@@ -136,12 +136,15 @@ export default function DiscriminarVolumes() {
         await base44.entities.ManifestoEntrada.update(manifesto.id, updateData);
       }
 
-      toast.success('Volumes salvos com sucesso');
-      navigate(createPageUrl('Compras'));
+      toast.success('Volumes salvos com sucesso!');
+      
+      // Aguarda 1 segundo antes de voltar para dar sensação de conclusão
+      setTimeout(() => {
+        navigate(createPageUrl('Compras'));
+      }, 1000);
     } catch (error) {
       console.error('Erro ao salvar:', error);
       toast.error('Erro ao salvar volumes');
-    } finally {
       setSaving(false);
     }
   };
