@@ -3,13 +3,16 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Truck, Package, Weight, Calendar, Trash2, Eye, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Truck, Package, Weight, Calendar, Trash2, Eye, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/components/utils';
 import GestaoCodigosConferencia from '@/components/logistica/GestaoCodigosConferencia';
 
 export default function HubLogistico() {
+  const navigate = useNavigate();
   const [manifestos, setManifestos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -119,15 +122,25 @@ export default function HubLogistico() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 md:p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-light text-gray-800 dark:text-gray-200">Hub Logístico Inbound</h1>
           <p className="text-sm text-gray-500">Gestão de manifestos e planejamento de recebimento</p>
         </div>
-        <Button onClick={loadManifestos} variant="outline" size="sm" className="gap-2">
-          <RefreshCw className="w-4 h-4" />
-          Atualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={loadManifestos} variant="outline" size="sm" className="gap-2 border-0 shadow-sm">
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
+          <Button
+            onClick={() => navigate(createPageUrl('ConferenciaEntrada'))}
+            className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg gap-2"
+            size="sm"
+          >
+            <QrCode className="w-4 h-4" />
+            Conferência
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
