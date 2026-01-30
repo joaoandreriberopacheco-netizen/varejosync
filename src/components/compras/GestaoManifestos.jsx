@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
 import { Package, Truck, AlertCircle, Search, PlusCircle, RefreshCw, FileText } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
 import VincularPedidosManifestos from './VincularPedidosManifestos';
 import VincularManifestosSupermanifestos from './VincularManifestosSupermanifestos';
