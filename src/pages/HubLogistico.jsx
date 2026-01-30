@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import GestaoCodigosConferencia from '@/components/logistica/GestaoCodigosConferencia';
+import DiscriminarVolumesManifesto from '@/components/compras/DiscriminarVolumesManifesto';
 
 export default function HubLogistico() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function HubLogistico() {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoParaRemover, setPedidoParaRemover] = useState(null);
   const [showConfirmRemocao, setShowConfirmRemocao] = useState(false);
+  const [showDiscriminarVolumes, setShowDiscriminarVolumes] = useState(false);
 
   useEffect(() => {
     loadManifestos();
@@ -297,15 +299,29 @@ export default function HubLogistico() {
                 </div>
               )}
 
-              <div>
-                <h4 className="text-sm font-semibold mb-3">Conferência Cega</h4>
-                <div className="grid gap-3">
-                  <GestaoCodigosConferencia 
-                    manifesto={manifestoSelecionado} 
-                    tipo="volumes"
-                    onUpdate={loadManifestos}
-                  />
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Conferência Cega</h4>
+                  <div className="grid gap-3">
+                    <GestaoCodigosConferencia 
+                      manifesto={manifestoSelecionado} 
+                      tipo="volumes"
+                      onUpdate={loadManifestos}
+                    />
+                  </div>
                 </div>
+                
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 border-teal-200 text-teal-700 hover:bg-teal-50"
+                  onClick={() => {
+                    setShowDetalhes(false);
+                    setShowDiscriminarVolumes(true);
+                  }}
+                >
+                  <Package className="w-4 h-4" />
+                  Discriminar Volumes dos Pedidos
+                </Button>
               </div>
             </div>
 
@@ -317,6 +333,14 @@ export default function HubLogistico() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal Discriminar Volumes */}
+      <DiscriminarVolumesManifesto
+        manifesto={manifestoSelecionado}
+        isOpen={showDiscriminarVolumes}
+        onClose={() => setShowDiscriminarVolumes(false)}
+        onSuccess={loadManifestos}
+      />
 
       {/* Modal de Confirmação de Remoção */}
       {showConfirmRemocao && pedidoParaRemover && (
