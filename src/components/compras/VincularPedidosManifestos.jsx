@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
 import { Package, User, DollarSign, Calendar, PlusCircle, CheckCircle, AlertTriangle, Search, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 
 export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh }) {
