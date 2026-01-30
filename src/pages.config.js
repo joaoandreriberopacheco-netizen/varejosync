@@ -59,6 +59,7 @@ import ControleEntregas from './pages/ControleEntregas';
 import Dashboard from './pages/Dashboard';
 import DashboardCaixa from './pages/DashboardCaixa';
 import DashboardVendedor from './pages/DashboardVendedor';
+import DiscriminarVolumes from './pages/DiscriminarVolumes';
 import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
 import EstimativaEmbalagensIA from './pages/EstimativaEmbalagensIA';
 import Estoque from './pages/Estoque';
@@ -88,7 +89,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import DiscriminarVolumes from './pages/DiscriminarVolumes';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +105,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DashboardCaixa": DashboardCaixa,
     "DashboardVendedor": DashboardVendedor,
+    "DiscriminarVolumes": DiscriminarVolumes,
     "EdicaoMassivaCustos": EdicaoMassivaCustos,
     "EstimativaEmbalagensIA": EstimativaEmbalagensIA,
     "Estoque": Estoque,
@@ -134,7 +135,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "DiscriminarVolumes": DiscriminarVolumes,
 }
 
 export const pagesConfig = {

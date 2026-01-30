@@ -164,138 +164,151 @@ export default function DiscriminarVolumes() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="bg-white dark:bg-gray-800">
+        <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(createPageUrl('Compras'))}
-              className="text-gray-600 dark:text-gray-400"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h1 className="text-xl font-medium text-gray-700 dark:text-gray-300">
                 Discriminar Volumes
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-400 dark:text-gray-500">
                 {manifesto.numero}
               </p>
             </div>
-            <Button
-              onClick={handleSave}
-              disabled={saving || volumes.length === 0}
-              className="bg-gray-900 hover:bg-gray-800 text-white gap-2 rounded-lg"
-            >
-              <Save className="w-4 h-4" />
-              Salvar
-            </Button>
           </div>
         </div>
       </div>
 
       {/* Form */}
-      <div className="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-4">
-          <div className="grid gap-3">
-            <Input
-              ref={descricaoRef}
-              placeholder="Descrição do volume (ex: Caixas de papelão)"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, quantidadeRef)}
-              className="text-base"
-            />
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                ref={quantidadeRef}
-                type="number"
-                inputMode="numeric"
-                placeholder="Quantidade"
-                value={quantidade}
-                onChange={(e) => setQuantidade(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, pesoRef)}
-                className="text-base"
-              />
-              
-              <Input
-                ref={pesoRef}
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                placeholder="Peso (kg) - Opcional"
-                value={peso}
-                onChange={(e) => setPeso(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, 'add')}
-                className="text-base"
-              />
-            </div>
+      <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 space-y-6">
+        {/* Input de Descrição */}
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4">
+          <Input
+            ref={descricaoRef}
+            placeholder="Nome, código ou descrição do volume"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, quantidadeRef)}
+            className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-gray-400"
+          />
+        </div>
 
-            <Button
-              onClick={handleAddVolume}
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white gap-2 rounded-lg"
-            >
-              <Plus className="w-4 h-4" />
-              Adicionar Volume
-            </Button>
+        {/* Quantidade e Peso */}
+        <div className="flex gap-3">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex-1">
+            <Input
+              ref={quantidadeRef}
+              type="number"
+              inputMode="numeric"
+              placeholder="Quantidade"
+              value={quantidade}
+              onChange={(e) => setQuantidade(e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, pesoRef)}
+              className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-gray-400 text-center font-medium"
+            />
+          </div>
+          
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex-1">
+            <Input
+              ref={pesoRef}
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              placeholder="Peso (kg)"
+              value={peso}
+              onChange={(e) => setPeso(e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, 'add')}
+              className="text-base bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-gray-400 text-center"
+            />
           </div>
         </div>
 
+        {/* Botão Adicionar */}
+        <Button
+          onClick={handleAddVolume}
+          className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl py-6 text-base font-medium"
+        >
+          Adicionar
+        </Button>
+
         {/* Resumo */}
         {volumes.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm mb-4">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                <Package className="w-4 h-4" />
-                <span>Total de Volumes</span>
+          <div className="flex items-center justify-between px-2 py-4">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
+            <div className="text-right">
+              <div className="text-2xl font-semibold text-gray-900 dark:text-white">
+                {totalVolumes} {totalVolumes === 1 ? 'volume' : 'volumes'}
               </div>
-              <span className="font-semibold text-gray-900 dark:text-white">{totalVolumes}</span>
+              {pesoTotal > 0 && (
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {pesoTotal.toFixed(2)} kg
+                </div>
+              )}
             </div>
-            {pesoTotal > 0 && (
-              <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Peso Total</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{pesoTotal.toFixed(2)} kg</span>
-              </div>
-            )}
           </div>
         )}
 
         {/* Lista de Volumes */}
         {volumes.length > 0 ? (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {volumes.map((vol, index) => (
               <div
                 key={index}
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-start justify-between gap-3"
+                className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-4"
               >
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                  <Package className="w-5 h-5 text-gray-400" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <p className="font-medium text-gray-900 dark:text-white">
                     {vol.descricao}
                   </p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span>Qtd: {vol.quantidade}</span>
-                    {vol.peso_kg && <span>Peso: {vol.peso_kg} kg</span>}
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                    <span>{vol.quantidade} un.</span>
+                    {vol.peso_kg && <span>• {vol.peso_kg} kg</span>}
                   </div>
                 </div>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={() => handleRemoveVolume(index)}
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                  className="text-gray-400 hover:text-red-500 hover:bg-transparent"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  Remover
                 </Button>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-center py-16">
+            <Package className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+            <p className="text-gray-400 dark:text-gray-500">
               Nenhum volume adicionado ainda
             </p>
+          </div>
+        )}
+
+        {/* Botão Salvar Fixo */}
+        {volumes.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            <div className="max-w-2xl mx-auto">
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl py-6 text-base font-medium"
+              >
+                <Save className="w-5 h-5 mr-2" />
+                Salvar Volumes
+              </Button>
+            </div>
           </div>
         )}
       </div>
