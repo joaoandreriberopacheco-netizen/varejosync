@@ -18,6 +18,8 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
   const [transportadoraSelecionada, setTransportadoraSelecionada] = useState('');
   const [eta, setEta] = useState('');
   const [showNovoSupermanifesto, setShowNovoSupermanifesto] = useState(false);
+  const [showDiscriminarVolumes, setShowDiscriminarVolumes] = useState(false);
+  const [createdSupermanifesto, setCreatedSupermanifesto] = useState(null);
 
   useEffect(() => {
     loadTransportadoras();
