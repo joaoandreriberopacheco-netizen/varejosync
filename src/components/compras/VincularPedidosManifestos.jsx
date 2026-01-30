@@ -52,6 +52,11 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
   };
 
   const confirmarVinculacao = async () => {
+    if (selectedPedidos.length === 0) {
+      toast.error('Selecione pelo menos um pedido');
+      return;
+    }
+
     try {
       // Buscar os pedidos selecionados
       const pedidosSelecionadosData = pedidosAguardando.filter(p => selectedPedidos.includes(p.id));
@@ -60,6 +65,7 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
       const fornecedorIds = [...new Set(pedidosSelecionadosData.map(p => p.fornecedor_id))];
       if (fornecedorIds.length > 1) {
         toast.error('Todos os pedidos devem ser do mesmo fornecedor');
+        setShowConfirm(false);
         return;
       }
 
@@ -92,7 +98,7 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
 
       const novoManifesto = await base44.entities.ManifestoEntrada.create({
         numero,
-        pedido_compra_id: pedidosSelecionadosData[0].id, // Principal (primeiro)
+        pedido_compra_id: pedidosSelecionadosData[0].id,
         pedido_numero: pedidosSelecionadosData[0].numero,
         fornecedor_id: fornecedorId,
         fornecedor_nome: fornecedorNome,
@@ -102,12 +108,14 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
       });
 
       // Atualizar todos os pedidos com o manifesto_entrada_id
-      for (const pedido of pedidosSelecionadosData) {
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          manifesto_entrada_id: novoManifesto.id,
-          status: 'Em Trânsito'
-        });
-      }
+      await Promise.all(
+        pedidosSelecionadosData.map(pedido =>
+          base44.entities.PedidoCompra.update(pedido.id, {
+            manifesto_entrada_id: novoManifesto.id,
+            status: 'Em Trânsito'
+          })
+        )
+      );
 
       toast.success(`Manifesto ${numero} criado com ${selectedPedidos.length} pedido(s)`);
       setSelectedPedidos([]);
@@ -116,6 +124,7 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
     } catch (error) {
       console.error('Erro ao vincular:', error);
       toast.error('Erro ao criar manifesto');
+      setShowConfirm(false);
     }
   };
 
