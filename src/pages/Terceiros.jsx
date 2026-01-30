@@ -67,8 +67,8 @@ export default function TerceirosPage() {
         });
       }
       loadTerceiros();
-      setIsDialogOpen(false);
-      resetForm();
+      // setIsDialogOpen(false); // Mantendo aberto para feedback ou cadastro contínuo
+      if (!selectedTerceiro) resetForm(); // Limpa apenas se for novo cadastro (Save & New)
     } catch (error) {
       toast({ 
         title: "Erro ao salvar", 
