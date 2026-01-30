@@ -52,14 +52,26 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
   };
 
   const confirmarVinculacao = async () => {
+    console.log('Iniciando vinculação, pedidos selecionados:', selectedPedidos);
+    
     if (selectedPedidos.length === 0) {
       toast.error('Selecione pelo menos um pedido');
+      setShowConfirm(false);
       return;
     }
 
     try {
+      toast.loading('Criando manifesto...');
+      
       // Buscar os pedidos selecionados
       const pedidosSelecionadosData = pedidosAguardando.filter(p => selectedPedidos.includes(p.id));
+      console.log('Pedidos encontrados:', pedidosSelecionadosData);
+      
+      if (pedidosSelecionadosData.length === 0) {
+        toast.error('Nenhum pedido encontrado');
+        setShowConfirm(false);
+        return;
+      }
       
       // Verificar se todos são do mesmo fornecedor
       const fornecedorIds = [...new Set(pedidosSelecionadosData.map(p => p.fornecedor_id))];
@@ -75,6 +87,7 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
       // Gerar número do manifesto
       const todosManifestos = await base44.entities.ManifestoEntrada.list();
       const numero = `ME-${String(todosManifestos.length + 1).padStart(5, '0')}`;
+      console.log('Número do manifesto:', numero);
 
       // Criar um único ManifestoEntrada para os pedidos selecionados
       const itensEsperados = [];
@@ -96,6 +109,8 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
         }
       }
 
+      console.log('Criando manifesto com itens:', itensEsperados);
+
       const novoManifesto = await base44.entities.ManifestoEntrada.create({
         numero,
         pedido_compra_id: pedidosSelecionadosData[0].id,
@@ -107,6 +122,8 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
         itens_esperados: itensEsperados
       });
 
+      console.log('Manifesto criado:', novoManifesto);
+
       // Atualizar todos os pedidos com o manifesto_entrada_id
       await Promise.all(
         pedidosSelecionadosData.map(pedido =>
@@ -117,13 +134,16 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
         )
       );
 
-      toast.success(`Manifesto ${numero} criado com ${selectedPedidos.length} pedido(s)`);
+      console.log('Pedidos atualizados com sucesso');
+      toast.dismiss();
+      toast.success(`Manifesto ${numero} criado com sucesso!`);
       setSelectedPedidos([]);
       setShowConfirm(false);
-      onRefresh();
+      await onRefresh();
     } catch (error) {
-      console.error('Erro ao vincular:', error);
-      toast.error('Erro ao criar manifesto');
+      console.error('Erro completo ao vincular:', error);
+      toast.dismiss();
+      toast.error(`Erro ao criar manifesto: ${error.message}`);
       setShowConfirm(false);
     }
   };
