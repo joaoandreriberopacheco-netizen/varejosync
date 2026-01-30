@@ -85,9 +85,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [contas, setContas] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [showNovaTransportadora, setShowNovaTransportadora] = useState(false);
-  const [novaTransportadora, setNovaTransportadora] = useState({ nome: '', email: '', telefone: '' });
-  const [volumes, setVolumes] = useState([]);
+
   const [showAtualizarPrecos, setShowAtualizarPrecos] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isReopenAuthOpen, setIsReopenAuthOpen] = useState(false);
@@ -678,10 +676,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             data_vencimento: format(new Date(formData.data_prevista_entrega || new Date()), 'yyyy-MM-dd')
           });
           
-          // Processar Embarque se informado na aba Logística
-          if (formData.transportadora_embarque_id && formData.eta_embarque) {
-            await processarEmbarque(currentPO);
-          }
+
 
           toast({
             title: "✓ PO Enviado com Sucesso!",
@@ -706,157 +701,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
-  const handleCriarTransportadora = async () => {
-    if (!novaTransportadora.nome?.trim()) {
-      toast({ title: 'Nome da transportadora é obrigatório', variant: 'destructive' });
-      return;
-    }
 
-    try {
-      const count = fornecedores.length;
-      const codigo = `FOR-${String(count + 1).padStart(5, '0')}`;
 
-      const nova = await base44.entities.Terceiro.create({
-        codigo_interno: codigo,
-        nome: novaTransportadora.nome,
-        email: novaTransportadora.email || '',
-        telefone: novaTransportadora.telefone || '',
-        tipo: 'Fornecedor',
-        ativo: true
-      });
 
-      setFornecedores([...fornecedores, nova]);
-      handleChange('transportadora_embarque_id', nova.id);
-      setShowNovaTransportadora(false);
-      setNovaTransportadora({ nome: '', email: '', telefone: '' });
-      toast({ title: 'Transportadora criada com sucesso' });
-    } catch (error) {
-      console.error('Erro ao criar transportadora:', error);
-      toast({ title: 'Erro ao criar transportadora', variant: 'destructive' });
-    }
-  };
-
-  const handleAddVolume = () => {
-    setVolumes([...volumes, { quantidade: '', descricao: '', preco_unit_frete: '', observacoes: '' }]);
-  };
-
-  const handleRemoveVolume = (index) => {
-    setVolumes(volumes.filter((_, i) => i !== index));
-  };
-
-  const handleVolumeChange = (index, field, value) => {
-    const newVolumes = [...volumes];
-    newVolumes[index][field] = value;
-    setVolumes(newVolumes);
-  };
-
-  const calcularTotalFrete = () => {
-    return volumes.reduce((sum, v) => {
-      const qty = parseFloat(v.quantidade) || 0;
-      const price = parseFloat(v.preco_unit_frete) || 0;
-      return sum + (qty * price);
-    }, 0);
-  };
-
-  const gerarDescritivoVolumes = () => {
-    return volumes
-      .map(v => `${v.quantidade || 0}x ${v.descricao || ''}`)
-      .filter(d => d.trim() !== 'x' && d.trim() !== '0x')
-      .join(', ');
-  };
-
-  const processarEmbarque = async (pedidoAtualizado) => {
-    try {
-      const transportadora = fornecedores.find(t => t.id === formData.transportadora_embarque_id);
-
-      if (!transportadora) {
-        throw new Error('Transportadora não encontrada');
-      }
-
-      // Calcular peso dos volumes informados
-      const pesoNumerico = volumes.reduce((sum, v) => sum + (parseFloat(v.quantidade) || 0), 0);
-
-      const etaDate = new Date(formData.eta_embarque);
-      const etaStart = new Date(etaDate);
-      etaStart.setHours(0, 0, 0, 0);
-      const etaEnd = new Date(etaDate);
-      etaEnd.setHours(23, 59, 59, 999);
-
-      const manifestos = await base44.entities.Supermanifesto.filter({
-        transportadora_id: formData.transportadora_embarque_id,
-        status: { $in: ['Pendente', 'Em Trânsito'] }
-      });
-
-      const manifestoExistente = manifestos.find(m => {
-        const manifestoEta = new Date(m.eta);
-        return manifestoEta >= etaStart && manifestoEta <= etaEnd;
-      });
-
-      let manifestoId;
-
-      if (manifestoExistente) {
-        // Adicionar ao manifesto existente
-        manifestoId = manifestoExistente.id;
-        
-        const pedidosVinculados = manifestoExistente.pedidos_vinculados || [];
-        pedidosVinculados.push({
-          pedido_id: pedidoAtualizado.id,
-          pedido_numero: pedidoAtualizado.numero,
-          descritivo_volumes: gerarDescritivoVolumes(),
-          peso_informado_kg: pesoNumerico,
-          volumes: volumes,
-          total_frete: calcularTotalFrete()
-        });
-
-        const observacoesConsolidadas = pedidosVinculados
-          .map(p => `${p.pedido_numero}: ${p.descritivo_volumes}`)
-          .filter(o => o.trim() && o.trim() !== ':')
-          .join(' | ');
-
-        const pesoTotal = pedidosVinculados.reduce((sum, p) => sum + (p.peso_informado_kg || 0), 0);
-
-        await base44.entities.Supermanifesto.update(manifestoId, {
-          pedidos_vinculados: pedidosVinculados,
-          peso_total_bruto_kg: pesoTotal,
-          observacoes_consolidadas: observacoesConsolidadas
-        });
-
-      } else {
-        // Criar novo manifesto
-        const todosManifestos = await base44.entities.Supermanifesto.list();
-        const numero = `SM-${String(todosManifestos.length + 1).padStart(5, '0')}`;
-
-        const novoManifesto = await base44.entities.Supermanifesto.create({
-          numero,
-          transportadora_id: formData.transportadora_embarque_id,
-          transportadora_nome: transportadora.nome,
-          eta: formData.eta_embarque,
-          status: 'Pendente',
-          peso_total_bruto_kg: pesoNumerico,
-          pedidos_vinculados: [{
-            pedido_id: pedidoAtualizado.id,
-            pedido_numero: pedidoAtualizado.numero,
-            descritivo_volumes: gerarDescritivoVolumes(),
-            peso_informado_kg: pesoNumerico,
-            volumes: volumes,
-            total_frete: calcularTotalFrete()
-          }],
-          observacoes_consolidadas: `${pedidoAtualizado.numero}: ${gerarDescritivoVolumes()}`
-        });
-
-        manifestoId = novoManifesto.id;
-      }
-
-      // Atualizar o pedido - não vincula mais supermanifesto diretamente
-      await base44.entities.PedidoCompra.update(pedidoAtualizado.id, {
-        status: 'Aguardando Recepção'
-      });
-
-    } catch (error) {
-      console.error('Erro ao processar embarque:', error);
-      throw error;
-    }
-  };
 
   const reloadSupermanifesto = async () => {
     if (formData.manifesto_entrada_id) {
@@ -1264,71 +1111,62 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </TabsContent>
 
             <TabsContent value="logistica" className="mt-0 px-3 py-6 space-y-6 border-0">
-              {!isLogisticaEnabled && pedido ? (
-                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow-sm">
+              {!pedido ? (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-sm">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <Ship className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Aba Bloqueada</h4>
+                      <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Tela de Aeroporto</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Esta seção estará disponível após a aprovação financeira do pedido.
+                        Salve o pedido primeiro. Informações logísticas aparecerão aqui após vinculação no Hub Logístico.
                       </p>
                     </div>
                   </div>
                 </div>
               ) : supermanifesto ? (
-                <div className="p-4 bg-teal-50 rounded-xl shadow-sm border-0 dark:bg-teal-900/20">
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-teal-700 dark:text-teal-300">Manifesto</span>
-                      <span className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-teal-700 dark:text-teal-300">Transportadora</span>
-                      <span className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.transportadora_nome}</span>
+                <div className="space-y-4">
+                  <div className="p-4 bg-teal-50 rounded-xl shadow-sm border-0 dark:bg-teal-900/20">
+                    <h4 className="font-medium text-teal-900 dark:text-teal-200 mb-3 flex items-center gap-2">
+                      <Ship className="w-5 h-5" />
+                      Informações de Transporte
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">Supermanifesto</p>
+                        <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">Transportadora</p>
+                        <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.transportadora_nome}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">ETA</p>
+                        <p className="font-medium text-teal-900 dark:text-teal-100">
+                          {supermanifesto.eta ? format(new Date(supermanifesto.eta), 'dd/MM/yyyy HH:mm') : 'Não informado'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">Status</p>
+                        <Badge className="bg-teal-100 text-teal-800 border-0">
+                          {supermanifesto.status}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <>
-                  <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Transportadora</Label>
-                    <Select value={formData.transportadora_embarque_id} onValueChange={v => handleChange('transportadora_embarque_id', v)} disabled={!isLogisticaEnabled}>
-                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12">
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
-                        {fornecedores.map(t => (
-                          <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">Aguardando Vinculação</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Este pedido ainda não foi vinculado a um supermanifesto. Acesse o Hub Logístico para realizar a vinculação.
+                      </p>
+                    </div>
                   </div>
-
-                  <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Data de Chegada (ETA)</Label>
-                    <Input
-                      type="datetime-local"
-                      value={formData.eta_embarque || ''}
-                      onChange={(e) => handleChange('eta_embarque', e.target.value)}
-                      className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12"
-                      disabled={!isLogisticaEnabled}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Entrega Prevista</Label>
-                    <Input 
-                      type="date" 
-                      className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
-                      value={formData.data_prevista_entrega} 
-                      onChange={e => handleChange('data_prevista_entrega', e.target.value)} 
-                      disabled={!isLogisticaEnabled}
-                    />
-                  </div>
-                </>
+                </div>
               )}
-
             </TabsContent>
           </div>
           </Tabs>
@@ -1931,308 +1769,64 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
             </TabsContent>
 
-          {/* ABA: LOGÍSTICA */}
+          {/* ABA: LOGÍSTICA - APENAS VISUALIZAÇÃO */}
           <TabsContent value="logistica" className="mt-0 space-y-8">
-            {!isLogisticaEnabled && pedido ? (
-              <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow-sm">
+            {!pedido ? (
+              <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-sm border-0">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <Ship className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Aba Bloqueada</h4>
+                    <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Tela de Aeroporto</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Esta seção estará disponível após a aprovação financeira do pedido.
+                      Salve o pedido primeiro. Informações logísticas aparecerão aqui após vinculação no Hub Logístico.
                     </p>
                   </div>
                 </div>
               </div>
-            ) : !supermanifesto ? (
-              <>
-                <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-sm border-0">
-                  <div className="flex items-start gap-3">
-                    <Ship className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            ) : supermanifesto ? (
+              <div className="space-y-6">
+                <div className="p-5 bg-teal-50 dark:bg-teal-900/20 rounded-xl shadow-sm border-0">
+                  <h4 className="font-medium text-teal-900 dark:text-teal-200 mb-4 flex items-center gap-2">
+                    <Ship className="w-5 h-5" />
+                    Informações de Transporte
+                  </h4>
+                  <div className="grid grid-cols-2 gap-6 text-sm">
                     <div>
-                      <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Rastreamento de Entrada</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Preencha os campos abaixo para vincular este pedido a um supermanifesto.
+                      <p className="text-xs text-teal-700 dark:text-teal-300">Supermanifesto</p>
+                      <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-teal-700 dark:text-teal-300">Transportadora</p>
+                      <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.transportadora_nome}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-teal-700 dark:text-teal-300">ETA</p>
+                      <p className="font-medium text-teal-900 dark:text-teal-100">
+                        {supermanifesto.eta ? format(new Date(supermanifesto.eta), 'dd/MM/yyyy HH:mm') : 'Não informado'}
                       </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-teal-700 dark:text-teal-300">Status</p>
+                      <Badge className="bg-teal-100 text-teal-800 border-0">
+                        {supermanifesto.status}
+                      </Badge>
                     </div>
                   </div>
                 </div>
-
-                {/* Transportadora */}
-                <div className="space-y-3">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold flex items-center justify-between">
-                    <span>Transportadora</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowNovaTransportadora(!showNovaTransportadora)}
-                      className="h-7 text-xs gap-1 text-teal-600 hover:text-teal-700"
-                    >
-                      <PlusCircle className="w-3 h-3" />
-                      Nova
-                    </Button>
-                  </Label>
-                  
-                  {showNovaTransportadora ? (
-                    <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border-0 shadow-sm">
-                      <Input
-                        placeholder="Nome da transportadora *"
-                        className="h-11"
-                        value={novaTransportadora.nome}
-                        onChange={(e) => setNovaTransportadora({ ...novaTransportadora, nome: e.target.value })}
-                      />
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          placeholder="Email"
-                          type="email"
-                          className="h-11"
-                          value={novaTransportadora.email}
-                          onChange={(e) => setNovaTransportadora({ ...novaTransportadora, email: e.target.value })}
-                        />
-                        <Input
-                          placeholder="Telefone"
-                          className="h-11"
-                          value={novaTransportadora.telefone}
-                          onChange={(e) => setNovaTransportadora({ ...novaTransportadora, telefone: e.target.value })}
-                        />
-                      </div>
-                      <div className="flex gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setShowNovaTransportadora(false);
-                            setNovaTransportadora({ nome: '', email: '', telefone: '' });
-                          }}
-                          className="flex-1 border-0 shadow-sm"
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={handleCriarTransportadora}
-                          className="flex-1 bg-teal-600 hover:bg-teal-700 shadow-sm"
-                        >
-                          Criar
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Select value={formData.transportadora_embarque_id} onValueChange={v => handleChange('transportadora_embarque_id', v)} disabled={!isLogisticaEnabled}>
-                      <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm">
-                        <SelectValue placeholder="Selecione a transportadora" />
-                      </SelectTrigger>
-                      <SelectContent className="dark:bg-gray-800 border-0 shadow-lg">
-                        {fornecedores.map(t => (
-                          <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-
-                {/* Data ETA */}
-                <div className="space-y-3">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Data de Chegada (ETA)</Label>
-                  <Input
-                    type="datetime-local"
-                    value={formData.eta_embarque || ''}
-                    onChange={(e) => handleChange('eta_embarque', e.target.value)}
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm"
-                    disabled={!isLogisticaEnabled}
-                  />
-                </div>
-
-                {/* Entrega Prevista */}
-                <div className="space-y-3">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Entrega Prevista</Label>
-                  <Input
-                    type="date"
-                    value={formData.data_prevista_entrega || ''}
-                    onChange={(e) => handleChange('data_prevista_entrega', e.target.value)}
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm"
-                    disabled={!isLogisticaEnabled}
-                  />
-                </div>
-
-                {/* Descritivo de Volumes */}
-                <div className="space-y-3">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold flex items-center justify-between">
-                    <span>Descritivo de Volumes</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleAddVolume}
-                      className="h-7 text-xs gap-1"
-                      disabled={!isLogisticaEnabled}
-                    >
-                      <PlusCircle className="w-3 h-3" />
-                      Adicionar
-                    </Button>
-                  </Label>
-
-                  {volumes.length > 0 && (
-                    <div className="border-0 rounded-xl overflow-hidden shadow-sm bg-gray-50 dark:bg-gray-800">
-                      <Table>
-                        <TableHeader className="bg-white/80 dark:bg-gray-900/80">
-                          <TableRow className="border-0">
-                            <TableHead className="w-20 text-xs text-gray-700 dark:text-gray-300">Qtd</TableHead>
-                            <TableHead className="text-xs text-gray-700 dark:text-gray-300">Volumes</TableHead>
-                            <TableHead className="text-xs text-gray-700 dark:text-gray-300">Observações</TableHead>
-                            <TableHead className="w-28 text-xs text-right text-gray-700 dark:text-gray-300">R$ Frete Un</TableHead>
-                            <TableHead className="w-28 text-xs text-right text-gray-700 dark:text-gray-300">Total</TableHead>
-                            <TableHead className="w-10"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {volumes.map((volume, idx) => (
-                            <TableRow key={idx} className="border-0 hover:bg-white/50 dark:hover:bg-gray-900/50">
-                              <TableCell className="p-2">
-                                <Input
-                                  type="text"
-                                  inputMode="decimal"
-                                  placeholder="0,00"
-                                  value={volume.quantidade}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(',', '.');
-                                    handleVolumeChange(idx, 'quantidade', val);
-                                  }}
-                                  className="h-9 text-sm w-full bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
-                                />
-                              </TableCell>
-                              <TableCell className="p-2">
-                                <Input
-                                  placeholder="Ex: Caixas, Pallets..."
-                                  value={volume.descricao}
-                                  onChange={(e) => handleVolumeChange(idx, 'descricao', e.target.value)}
-                                  className="h-9 text-sm w-full bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
-                                />
-                              </TableCell>
-                              <TableCell className="p-2">
-                                <Input
-                                  placeholder="Observações..."
-                                  value={volume.observacoes}
-                                  onChange={(e) => handleVolumeChange(idx, 'observacoes', e.target.value)}
-                                  className="h-9 text-sm w-full bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
-                                />
-                              </TableCell>
-                              <TableCell className="p-2">
-                                <Input
-                                  type="text"
-                                  inputMode="decimal"
-                                  placeholder="0,00"
-                                  value={volume.preco_unit_frete}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(',', '.');
-                                    handleVolumeChange(idx, 'preco_unit_frete', val);
-                                  }}
-                                  className="h-9 text-sm w-full text-right bg-transparent border-0 rounded-lg hover:bg-white dark:hover:bg-gray-900"
-                                />
-                              </TableCell>
-                              <TableCell className="p-2 text-right text-sm font-medium">
-                                {((parseFloat(volume.quantidade) || 0) * (parseFloat(volume.preco_unit_frete) || 0)).toLocaleString('pt-BR', {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2
-                                })}
-                              </TableCell>
-                              <TableCell className="p-2">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleRemoveVolume(idx)}
-                                  className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          <TableRow className="bg-white dark:bg-gray-900 font-medium border-0">
-                            <TableCell colSpan={4} className="text-right text-sm">Total Frete:</TableCell>
-                            <TableCell className="text-right text-sm">
-                              R$ {calcularTotalFrete().toLocaleString('pt-BR', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                              })}
-                            </TableCell>
-                            <TableCell></TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              </>
+              </div>
             ) : (
-              <div className="p-5 bg-teal-50 dark:bg-teal-900/20 rounded-xl shadow-sm border-0">
-                <div className="flex items-start justify-between">
+              <div className="p-5 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-teal-900 dark:text-teal-200 mb-3 flex items-center gap-2">
-                      <Ship className="w-5 h-5" />
-                      Supermanifesto Vinculado
-                    </h4>
-                    <div className="grid grid-cols-2 gap-6 text-sm">
-                      <div>
-                        <p className="text-xs text-teal-700 dark:text-teal-300">Número</p>
-                        <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-teal-700 dark:text-teal-300">Transportadora</p>
-                        <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.transportadora_nome}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-teal-700 dark:text-teal-300">ETA</p>
-                        <p className="font-medium text-teal-900 dark:text-teal-100">
-                          {supermanifesto.eta ? format(new Date(supermanifesto.eta), 'dd/MM/yyyy HH:mm') : 'Não informado'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-teal-700 dark:text-teal-300">Status</p>
-                        <Badge className="bg-teal-100 text-teal-800 border-0">
-                          {supermanifesto.status}
-                        </Badge>
-                      </div>
-                    </div>
+                    <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">Aguardando Vinculação</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Este pedido ainda não foi vinculado a um supermanifesto. Acesse o <strong>Hub Logístico</strong> na aba "Logística" do Módulo de Compras para realizar a vinculação.
+                    </p>
                   </div>
                 </div>
               </div>
             )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-4 block">Status Documental</Label>
-                <div className="flex flex-col gap-4">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={formData.nfe_emitida || false} 
-                      onChange={e => handleChange('nfe_emitida', e.target.checked)}
-                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      disabled={!isLogisticaEnabled}
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Nota Fiscal Emitida</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={formData.manifesto_conferido || false} 
-                      onChange={e => handleChange('manifesto_conferido', e.target.checked)}
-                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      disabled={!isLogisticaEnabled}
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Manifesto Conferido</span>
-                  </label>
-                </div>
-              </div>
-
-
-            </div>
           </TabsContent>
 
             {/* ABA: PENDÊNCIAS */}
