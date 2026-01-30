@@ -25,10 +25,11 @@ export default function GestaoManifestos() {
       setLoading(true);
       
       // Buscar pedidos aprovados sem manifesto_entrada_id
-      const pedidos = await base44.entities.PedidoCompra.filter({
-        status_aprovacao_financeira: 'Aprovado',
-        manifesto_entrada_id: null
-      });
+      const todosPedidos = await base44.entities.PedidoCompra.list();
+      const pedidos = todosPedidos.filter(p => 
+        p.status_aprovacao_financeira === 'Aprovado' && 
+        !p.manifesto_entrada_id
+      );
       
       // Buscar manifestos sem supermanifesto_id
       const manifestos = await base44.entities.ManifestoEntrada.filter({
