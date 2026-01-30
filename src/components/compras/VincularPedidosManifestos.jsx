@@ -61,7 +61,7 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
     }
 
     try {
-      toast.loading('Criando manifesto...');
+      toast.loading('Criando manifesto(s)...');
       
       // Buscar os pedidos selecionados
       const pedidosSelecionadosData = pedidosAguardando.filter(p => selectedPedidos.includes(p.id));
@@ -73,77 +73,98 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
         return;
       }
       
-      // Verificar se todos são do mesmo fornecedor
-      const fornecedorIds = [...new Set(pedidosSelecionadosData.map(p => p.fornecedor_id))];
-      if (fornecedorIds.length > 1) {
-        toast.error('Todos os pedidos devem ser do mesmo fornecedor');
-        setShowConfirm(false);
-        return;
-      }
+      // Agrupar pedidos por fornecedor
+      const pedidosPorFornecedor = pedidosSelecionadosData.reduce((acc, pedido) => {
+        const fornecedorId = pedido.fornecedor_id;
+        if (!acc[fornecedorId]) {
+          acc[fornecedorId] = {
+            fornecedor_id: fornecedorId,
+            fornecedor_nome: pedido.fornecedor_nome,
+            pedidos: []
+          };
+        }
+        acc[fornecedorId].pedidos.push(pedido);
+        return acc;
+      }, {});
 
-      const fornecedorId = fornecedorIds[0];
-      const fornecedorNome = pedidosSelecionadosData[0].fornecedor_nome;
+      const gruposFornecedores = Object.values(pedidosPorFornecedor);
+      console.log(`Criando ${gruposFornecedores.length} manifesto(s) para ${gruposFornecedores.length} fornecedor(es)`);
 
-      // Gerar número do manifesto
+      // Gerar números dos manifestos
       const todosManifestos = await base44.entities.ManifestoEntrada.list();
-      const numero = `ME-${String(todosManifestos.length + 1).padStart(5, '0')}`;
-      console.log('Número do manifesto:', numero);
+      let contadorManifestos = todosManifestos.length + 1;
 
-      // Criar um único ManifestoEntrada para os pedidos selecionados
-      const itensEsperados = [];
-      
-      for (const pedido of pedidosSelecionadosData) {
-        for (const item of pedido.itens || []) {
-          const existente = itensEsperados.find(ie => ie.produto_id === item.produto_id);
-          if (existente) {
-            existente.quantidade_esperada += (item.quantidade || 0);
-          } else {
-            itensEsperados.push({
-              produto_id: item.produto_id,
-              produto_nome: item.produto_nome,
-              quantidade_esperada: item.quantidade || 0,
-              quantidade_conferida: 0,
-              divergencia: false
-            });
+      const manifestosCriados = [];
+
+      // Criar um manifesto para cada fornecedor
+      for (const grupo of gruposFornecedores) {
+        const numero = `ME-${String(contadorManifestos).padStart(5, '0')}`;
+        console.log(`Criando manifesto ${numero} para fornecedor ${grupo.fornecedor_nome}`);
+
+        // Consolidar itens dos pedidos deste fornecedor
+        const itensEsperados = [];
+        
+        for (const pedido of grupo.pedidos) {
+          for (const item of pedido.itens || []) {
+            const existente = itensEsperados.find(ie => ie.produto_id === item.produto_id);
+            if (existente) {
+              existente.quantidade_esperada += (item.quantidade || 0);
+            } else {
+              itensEsperados.push({
+                produto_id: item.produto_id,
+                produto_nome: item.produto_nome,
+                quantidade_esperada: item.quantidade || 0,
+                quantidade_conferida: 0,
+                divergencia: false
+              });
+            }
           }
         }
+
+        // Criar o manifesto
+        const novoManifesto = await base44.entities.ManifestoEntrada.create({
+          numero,
+          pedido_compra_id: grupo.pedidos[0].id,
+          pedido_numero: grupo.pedidos[0].numero,
+          fornecedor_id: grupo.fornecedor_id,
+          fornecedor_nome: grupo.fornecedor_nome,
+          data_recebimento: new Date().toISOString(),
+          status: 'Aguardando Conferência',
+          itens_esperados: itensEsperados
+        });
+
+        console.log('Manifesto criado:', novoManifesto);
+        manifestosCriados.push(novoManifesto);
+
+        // Atualizar pedidos deste fornecedor com o manifesto_entrada_id
+        await Promise.all(
+          grupo.pedidos.map(pedido =>
+            base44.entities.PedidoCompra.update(pedido.id, {
+              manifesto_entrada_id: novoManifesto.id,
+              status: 'Em Trânsito'
+            })
+          )
+        );
+
+        contadorManifestos++;
       }
 
-      console.log('Criando manifesto com itens:', itensEsperados);
-
-      const novoManifesto = await base44.entities.ManifestoEntrada.create({
-        numero,
-        pedido_compra_id: pedidosSelecionadosData[0].id,
-        pedido_numero: pedidosSelecionadosData[0].numero,
-        fornecedor_id: fornecedorId,
-        fornecedor_nome: fornecedorNome,
-        data_recebimento: new Date().toISOString(),
-        status: 'Aguardando Conferência',
-        itens_esperados: itensEsperados
-      });
-
-      console.log('Manifesto criado:', novoManifesto);
-
-      // Atualizar todos os pedidos com o manifesto_entrada_id
-      await Promise.all(
-        pedidosSelecionadosData.map(pedido =>
-          base44.entities.PedidoCompra.update(pedido.id, {
-            manifesto_entrada_id: novoManifesto.id,
-            status: 'Em Trânsito'
-          })
-        )
-      );
-
-      console.log('Pedidos atualizados com sucesso');
+      console.log('Todos os manifestos criados com sucesso:', manifestosCriados);
       toast.dismiss();
-      toast.success(`Manifesto ${numero} criado com sucesso!`);
+      
+      if (manifestosCriados.length === 1) {
+        toast.success(`Manifesto ${manifestosCriados[0].numero} criado com sucesso!`);
+      } else {
+        toast.success(`${manifestosCriados.length} manifestos criados com sucesso!`);
+      }
+      
       setSelectedPedidos([]);
       setShowConfirm(false);
       await onRefresh();
     } catch (error) {
       console.error('Erro completo ao vincular:', error);
       toast.dismiss();
-      toast.error(`Erro ao criar manifesto: ${error.message}`);
+      toast.error(`Erro ao criar manifesto(s): ${error.message}`);
       setShowConfirm(false);
     }
   };
@@ -274,12 +295,34 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
           </DialogHeader>
 
           <div className="py-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Será criado um novo <strong>Manifesto de Entrada</strong> agrupando os {selectedPedidos.length} pedido(s) selecionado(s).
-            </p>
-            <p className="text-xs text-gray-500 mt-3">
-              Os itens de todos os pedidos serão consolidados no manifesto para conferência única.
-            </p>
+            {(() => {
+              const pedidosSelecionadosData = pedidosAguardando.filter(p => selectedPedidos.includes(p.id));
+              const fornecedoresUnicos = [...new Set(pedidosSelecionadosData.map(p => p.fornecedor_id))];
+              
+              if (fornecedoresUnicos.length === 1) {
+                return (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Será criado um novo <strong>Manifesto de Entrada</strong> agrupando os {selectedPedidos.length} pedido(s) selecionado(s).
+                    </p>
+                    <p className="text-xs text-gray-500 mt-3">
+                      Os itens de todos os pedidos serão consolidados no manifesto para conferência única.
+                    </p>
+                  </>
+                );
+              } else {
+                return (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Serão criados <strong>{fornecedoresUnicos.length} Manifestos de Entrada</strong>, um para cada fornecedor.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-3">
+                      Total de {selectedPedidos.length} pedido(s) selecionado(s) de {fornecedoresUnicos.length} fornecedor(es) diferentes.
+                    </p>
+                  </>
+                );
+              }
+            })()}
           </div>
 
           <DialogFooter>
