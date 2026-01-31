@@ -68,6 +68,18 @@ export default function GestaoSupermanifestos() {
     }
   };
 
+  const handleRecalcularTotais = async () => {
+    try {
+      toast.info('Recalculando totais...');
+      await base44.functions.invoke('recalcularSupermanifestos', {});
+      await loadData();
+      toast.success('Totais atualizados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao recalcular:', error);
+      toast.error('Erro ao recalcular totais');
+    }
+  };
+
   const handleVerDetalhes = (supermanifesto) => {
     setSelectedSupermanifesto(supermanifesto);
     setShowDetalhes(true);
@@ -130,6 +142,15 @@ export default function GestaoSupermanifestos() {
             <span className="hidden sm:inline">Visualizar Supermanifestos</span>
             <span className="sm:hidden">Visualizar</span>
           </TabsTrigger>
+          
+          <Button
+            variant="ghost"
+            onClick={handleRecalcularTotais}
+            className="rounded-xl px-3 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+            title="Forçar atualização dos totais"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
         </TabsList>
 
         <TabsContent value="vincular" className="outline-none mt-6">
