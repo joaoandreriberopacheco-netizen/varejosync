@@ -40,10 +40,36 @@ const PedidosCompraTab = () => {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [showImportador, setShowImportador] = useState(false);
+  const [statusPedidoCompra, setStatusPedidoCompra] = useState([]);
+  const [statusAprovacaoFinanceira, setStatusAprovacaoFinanceira] = useState([]);
 
   useEffect(() => {
     loadPedidos();
+    loadStatus();
   }, []);
+
+  const loadStatus = async () => {
+    try {
+      const [statusPC, statusAF] = await Promise.all([
+        base44.entities.StatusPedidoCompra.list('ordem'),
+        base44.entities.StatusAprovacaoFinanceira.list('ordem')
+      ]);
+      setStatusPedidoCompra(statusPC);
+      setStatusAprovacaoFinanceira(statusAF);
+    } catch (error) {
+      console.error("Erro ao carregar status:", error);
+    }
+  };
+
+  const getStatusNome = (codigo) => {
+    const status = statusPedidoCompra.find(s => s.codigo === codigo);
+    return status?.nome || codigo;
+  };
+
+  const getStatusFinanceiroNome = (codigo) => {
+    const status = statusAprovacaoFinanceira.find(s => s.codigo === codigo);
+    return status?.nome || codigo;
+  };
 
   const loadPedidos = async () => {
     try {
@@ -160,12 +186,9 @@ const PedidosCompraTab = () => {
               </SelectTrigger>
               <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                 <SelectItem value="todos">Todos os Status</SelectItem>
-                <SelectItem value="Rascunho">Rascunho</SelectItem>
-                <SelectItem value="Enviado">Enviado</SelectItem>
-                <SelectItem value="Aguardando Recepção">Aguardando Recepção</SelectItem>
-                <SelectItem value="Recebido Parcialmente">Recebido Parcialmente</SelectItem>
-                <SelectItem value="Recebido">Recebido</SelectItem>
-                <SelectItem value="Cancelado">Cancelado</SelectItem>
+                {statusPedidoCompra.filter(s => s.ativo).map(status => (
+                  <SelectItem key={status.codigo} value={status.codigo}>{status.nome}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             
@@ -250,7 +273,7 @@ const PedidosCompraTab = () => {
                         {pedido.numero}
                       </TableCell>
                       <TableCell className="text-gray-600 dark:text-gray-300">
-                        {pedido.status}
+                        {getStatusNome(pedido.status)}
                       </TableCell>
                       <TableCell className="text-gray-600 dark:text-gray-300">
                         {pedido.fornecedor_nome}
@@ -293,7 +316,7 @@ const PedidosCompraTab = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1.5">
                             <span className="font-medium text-gray-900 dark:text-gray-100">{pedido.numero}</span>
-                            <span className="text-xs text-gray-600 dark:text-gray-400">{pedido.status}</span>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">{getStatusNome(pedido.status)}</span>
                           </div>
                           <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                             <User className="w-3.5 h-3.5" />
