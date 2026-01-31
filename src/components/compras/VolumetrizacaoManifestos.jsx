@@ -9,14 +9,15 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 
 const getStatusBadge = (status) => {
+  // Glacial Palette
   const variants = {
-    'Aguardando Conferência': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    'Em Conferência': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-    'Conferido': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    'Com Divergências': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-    'Finalizado': 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+    'Aguardando Conferência': 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
+    'Em Conferência': 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+    'Conferido': 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
+    'Com Divergências': 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+    'Finalizado': 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
   };
-  return variants[status] || 'bg-gray-100 text-gray-800';
+  return variants[status] || 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-300';
 };
 
 export default function VolumetrizacaoManifestos() {
@@ -70,50 +71,50 @@ export default function VolumetrizacaoManifestos() {
 
   return (
     <div className="space-y-6">
-      {/* Filtros */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 md:p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Buscar por número, pedido ou fornecedor..." 
-            className="pl-9 bg-gray-50 border-transparent focus:bg-white transition-all dark:bg-gray-900 dark:text-gray-200 rounded-lg" 
-            value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
-          />
-        </div>
+      {/* Filtros - Glacial */}
+      <div className="relative w-full mb-6">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input 
+          placeholder="Buscar por número, pedido ou fornecedor..." 
+          className="h-12 pl-11 bg-white dark:bg-gray-800 border-0 ring-1 ring-gray-100 dark:ring-gray-700 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-600 rounded-xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
+          value={searchTerm} 
+          onChange={e => setSearchTerm(e.target.value)} 
+        />
       </div>
 
-      {/* Lista de Manifestos */}
-      <div className="grid gap-3 md:gap-4">
+      {/* Lista de Manifestos - Glacial */}
+      <div className="grid gap-4">
         {manifestosFiltrados.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400">Nenhum manifesto encontrado</p>
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-100 dark:ring-gray-700">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center">
+              <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-light">Nenhum manifesto encontrado</p>
           </div>
         ) : (
           manifestosFiltrados.map(m => (
-            <div key={m.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-200 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div key={m.id} className="group bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm hover:shadow-md ring-1 ring-gray-100 dark:ring-gray-700 transition-all duration-300">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 {/* Informações */}
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400 shadow-sm">
-                    <Package className="w-5 h-5" />
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-500">
+                    <Package className="w-6 h-6 stroke-[1.5]" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <span className="font-semibold text-gray-900 dark:text-gray-100">{m.numero}</span>
-                      <Badge className={getStatusBadge(m.status)}>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex items-center gap-3 flex-wrap mb-2">
+                      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{m.numero}</span>
+                      <Badge className={`font-normal rounded-full px-3 ${getStatusBadge(m.status)}`}>
                         {m.status}
                       </Badge>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Pedido:</span>
-                        <span className="font-medium">{m.pedido_numero}</span>
+                        <span className="text-gray-400 text-xs uppercase tracking-wider">Pedido</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">{m.pedido_numero}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Fornecedor:</span>
-                        <span className="truncate">{m.fornecedor_nome}</span>
+                        <span className="text-gray-400 text-xs uppercase tracking-wider">Fornecedor</span>
+                        <span className="truncate text-gray-700 dark:text-gray-300">{m.fornecedor_nome}</span>
                       </div>
                     </div>
                   </div>
@@ -122,11 +123,10 @@ export default function VolumetrizacaoManifestos() {
                 {/* Ação */}
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => handleDiscriminarVolumes(m)}
-                  className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg w-full md:w-auto"
+                  className="gap-2 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl h-11 px-6 w-full md:w-auto font-medium"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-4 h-4 text-gray-500" />
                   Discriminar Volumes
                 </Button>
               </div>
