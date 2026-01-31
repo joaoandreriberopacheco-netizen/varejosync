@@ -34,7 +34,11 @@ Deno.serve(async (req) => {
     doc.text(`Supermanifesto: ${supermanifesto.numero}`, 14, 34);
     doc.text(`Transportadora: ${supermanifesto.transportadora_nome}`, 14, 40);
     
-    let yPos = 50;
+    if (supermanifesto.eta) {
+        doc.text(`ETA: ${new Date(supermanifesto.eta).toLocaleString('pt-BR')}`, 14, 46);
+    }
+    
+    let yPos = 54;
 
     // --- LÓGICA DO RELATÓRIO DE CARGA ---
     if (tipo === 'carga') {
@@ -120,14 +124,14 @@ Deno.serve(async (req) => {
     else {
       // Totais de Volumes
       doc.setFillColor(240, 240, 240);
-      doc.rect(14, 46, 182, 14, 'F');
+      doc.rect(14, yPos, 182, 14, 'F');
       doc.setFontSize(10);
       
       doc.setFont(undefined, 'bold');
-      doc.text(`Volumes Totais: ${supermanifesto.quantidade_volumes_estimada || 0}`, 18, 55);
-      doc.text(`Peso Total: ${(supermanifesto.peso_total_bruto_kg || 0).toFixed(2)} kg`, 80, 55);
+      doc.text(`Volumes Totais: ${supermanifesto.quantidade_volumes_estimada || 0}`, 18, yPos + 9);
+      doc.text(`Peso Total: ${(supermanifesto.peso_total_bruto_kg || 0).toFixed(2)} kg`, 80, yPos + 9);
       
-      yPos = 70;
+      yPos += 24;
 
       for (const m of manifestos) {
         // Box do Manifesto
