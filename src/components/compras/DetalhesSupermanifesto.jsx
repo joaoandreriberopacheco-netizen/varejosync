@@ -3,12 +3,14 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Calendar, Weight, Package as PackageIcon, User } from 'lucide-react';
+import { Truck, Calendar, Weight, Package as PackageIcon, User, Printer } from 'lucide-react';
+import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 
 export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
   const [manifestosVinculados, setManifestosVinculados] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   useEffect(() => {
     if (isOpen && manifesto) {
@@ -27,6 +29,30 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
       console.error('Erro ao carregar manifestos vinculados:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    try {
+      setPrinting(true);
+      const { data } = await base44.functions.invoke('gerarRelatorioSupermanifesto', {
+        supermanifesto_id: manifesto.id
+      });
+
+      if (data.pdfBase64) {
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${data.pdfBase64}`;
+        link.download = `Relatorio_Supermanifesto_${manifesto.numero}.pdf`;
+        link.click();
+        toast.success('Relatório gerado com sucesso!');
+      } else {
+        throw new Error('Falha ao gerar PDF');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      toast.error('Erro ao gerar relatório');
+    } finally {
+      setPrinting(false);
     }
   };
 
@@ -174,7 +200,16 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
           )}
         </div>
 
-        <DialogFooter className="border-t border-gray-100 dark:border-gray-700 pt-4">
+        <DialogFooter className="border-t border-gray-100 dark:border-gray-700 pt-4 flex justify-between sm:justify-between w-full">
+          <Button 
+            variant="ghost" 
+            onClick={handlePrint} 
+            disabled={printing}
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white gap-2"
+          >
+            {printing ? <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" /> : <Printer className="w-4 h-4" />}
+            {printing ? 'Gerando...' : 'Imprimir Relatório'}
+          </Button>
           <Button variant="outline" onClick={onClose} className="rounded-lg">
             Fechar
           </Button>
