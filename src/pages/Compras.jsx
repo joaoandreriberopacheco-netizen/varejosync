@@ -433,17 +433,17 @@ export default function ComprasPage() {
         <TabsContent value="hub-logistico" className="outline-none animate-in fade-in-50 duration-300">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-100 dark:border-gray-700 shadow-sm mt-4">
             <Tabs defaultValue="manifestos" className="w-full">
-              <TabsList className="w-full justify-start border-b bg-gray-50/50 dark:bg-gray-900/50 h-auto p-1 rounded-t-lg">
+              <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-6 border-b border-gray-100 dark:border-gray-800 rounded-none mb-4">
                 <TabsTrigger 
                   value="manifestos" 
-                  className="px-4 py-2 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-teal-700 data-[state=active]:shadow-sm rounded-md transition-all flex items-center gap-2"
+                  className="px-4 py-3 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center gap-2"
                 >
                   <Truck className="w-4 h-4" />
                   Manifestos
                 </TabsTrigger>
                 <TabsTrigger 
                   value="supermanifestos" 
-                  className="px-4 py-2 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-teal-700 data-[state=active]:shadow-sm rounded-md transition-all flex items-center gap-2"
+                  className="px-4 py-3 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center gap-2"
                 >
                   <PackageIcon className="w-4 h-4" />
                   Supermanifestos

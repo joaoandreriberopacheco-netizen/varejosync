@@ -50,38 +50,42 @@ export default function GestaoManifestos() {
 
   return (
     <div className="space-y-6">
-      {/* Alerta de Pendências */}
+      {/* Alerta de Pendências - Estilo Glacial */}
       {pedidosAguardando.length > 0 && (
-        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-0 ring-1 ring-gray-100 dark:ring-gray-700">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
+               <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
             <div>
-              <h4 className="font-medium text-amber-900 dark:text-amber-200 mb-1">Pedidos Aguardando Vinculação</h4>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
-                {pedidosAguardando.length} pedido(s) aprovado(s) aguardando vinculação a manifestos
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Pedidos Aguardando Vinculação</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                <span className="font-semibold text-orange-600 dark:text-orange-400">{pedidosAguardando.length} pedido(s)</span> aprovado(s) aguardando vinculação a manifestos.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Sub-abas de Gestão */}
+      {/* Sub-abas de Gestão - Estilo Glacial */}
       <Tabs defaultValue="vincular-pedidos" className="space-y-6">
-        <TabsList className="flex w-full bg-gray-50 dark:bg-gray-800 border-0 rounded-lg h-auto p-1 gap-1">
+        <TabsList className="flex w-full bg-transparent p-0 gap-4 mb-6">
           <TabsTrigger 
             value="vincular-pedidos" 
-            className="flex-1 border-0 rounded-md py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-sm font-medium transition-all flex items-center justify-center gap-2"
+            className="flex-1 rounded-xl py-3 bg-gray-50 dark:bg-gray-800/50 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-100 dark:data-[state=active]:ring-gray-700 text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
           >
             <Package className="w-4 h-4" />
             <span className="hidden sm:inline">Vincular Pedidos</span>
             <span className="sm:hidden">Vincular</span>
             {pedidosAguardando.length > 0 && (
-              <Badge className="bg-amber-500 text-white ml-1 text-xs">{pedidosAguardando.length}</Badge>
+              <div className="bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-1.5 py-0.5 rounded-full text-[10px] font-bold min-w-[18px] text-center">
+                {pedidosAguardando.length}
+              </div>
             )}
           </TabsTrigger>
           <TabsTrigger 
             value="volumetrizacao" 
-            className="flex-1 border-0 rounded-md py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-sm font-medium transition-all flex items-center justify-center gap-2"
+            className="flex-1 rounded-xl py-3 bg-gray-50 dark:bg-gray-800/50 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-100 dark:data-[state=active]:ring-gray-700 text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
           >
             <Package className="w-4 h-4" />
             <span className="hidden sm:inline">Volumetrização</span>

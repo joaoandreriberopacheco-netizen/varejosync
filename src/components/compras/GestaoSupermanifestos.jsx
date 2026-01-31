@@ -14,13 +14,14 @@ import DetalhesSupermanifesto from './DetalhesSupermanifesto';
 import VincularManifestosSupermanifestos from './VincularManifestosSupermanifestos';
 
 const getStatusBadge = (status) => {
+  // Glacial Palette: Subtle backgrounds, clean text
   const variants = {
-    'Pendente': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    'Em Trânsito': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-    'Recebido': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    'Cancelado': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+    'Pendente': 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
+    'Em Trânsito': 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+    'Recebido': 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
+    'Cancelado': 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
   };
-  return variants[status] || 'bg-gray-100 text-gray-800';
+  return variants[status] || 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-300';
 };
 
 export default function GestaoSupermanifestos() {
@@ -92,38 +93,42 @@ export default function GestaoSupermanifestos() {
 
   return (
     <div className="space-y-6">
-      {/* Alerta de Pendências */}
+      {/* Alerta de Pendências - Estilo Glacial */}
       {manifestosAguardando.length > 0 && (
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-0 ring-1 ring-gray-100 dark:ring-gray-700">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+               <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
             <div>
-              <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-1">Manifestos Aguardando Vinculação</h4>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                {manifestosAguardando.length} manifesto(s) aguardando vinculação a supermanifestos
+              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Manifestos Aguardando Vinculação</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                <span className="font-semibold text-blue-600 dark:text-blue-400">{manifestosAguardando.length} manifesto(s)</span> aguardando vinculação a supermanifestos.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Sub-abas */}
+      {/* Sub-abas - Estilo Glacial */}
       <Tabs defaultValue="vincular" className="space-y-6">
-        <TabsList className="flex w-full bg-gray-50 dark:bg-gray-800 border-0 rounded-lg h-auto p-1 gap-1">
+        <TabsList className="flex w-full bg-transparent p-0 gap-4 mb-6">
           <TabsTrigger 
             value="vincular" 
-            className="flex-1 border-0 rounded-md py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-sm font-medium transition-all flex items-center justify-center gap-2"
+            className="flex-1 rounded-xl py-3 bg-gray-50 dark:bg-gray-800/50 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-100 dark:data-[state=active]:ring-gray-700 text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
           >
             <Truck className="w-4 h-4" />
             <span className="hidden sm:inline">Vincular Manifestos</span>
             <span className="sm:hidden">Vincular</span>
             {manifestosAguardando.length > 0 && (
-              <Badge className="bg-blue-500 text-white ml-1 text-xs">{manifestosAguardando.length}</Badge>
+               <div className="bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-1.5 py-0.5 rounded-full text-[10px] font-bold min-w-[18px] text-center">
+                {manifestosAguardando.length}
+              </div>
             )}
           </TabsTrigger>
           <TabsTrigger 
             value="lista" 
-            className="flex-1 border-0 rounded-md py-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm text-sm font-medium transition-all flex items-center justify-center gap-2"
+            className="flex-1 rounded-xl py-3 bg-gray-50 dark:bg-gray-800/50 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-100 dark:data-[state=active]:ring-gray-700 text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
           >
             <Package className="w-4 h-4" />
             <span className="hidden sm:inline">Visualizar Supermanifestos</span>
@@ -139,55 +144,55 @@ export default function GestaoSupermanifestos() {
         </TabsContent>
 
         <TabsContent value="lista" className="outline-none mt-6">
-          {/* Filtros */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 md:p-4 border border-gray-100 dark:border-gray-700 shadow-sm mb-6">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input 
-                placeholder="Buscar por número ou transportadora..." 
-                className="pl-9 bg-gray-50 border-transparent focus:bg-white transition-all dark:bg-gray-900 dark:text-gray-200 rounded-lg" 
-                value={searchTerm} 
-                onChange={e => setSearchTerm(e.target.value)} 
-              />
-            </div>
+          {/* Filtros - Glacial: Input limpo, sem bordas pesadas */}
+          <div className="relative w-full mb-6">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input 
+              placeholder="Buscar por número ou transportadora..." 
+              className="h-12 pl-11 bg-white dark:bg-gray-800 border-0 ring-1 ring-gray-100 dark:ring-gray-700 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-600 rounded-xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
+              value={searchTerm} 
+              onChange={e => setSearchTerm(e.target.value)} 
+            />
           </div>
 
-          {/* Lista de Supermanifestos */}
-          <div className="grid gap-3 md:gap-4">
+          {/* Lista de Supermanifestos - Glacial Cards */}
+          <div className="grid gap-4">
         {supermanifestosFiltrados.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-            <Package className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400">Nenhum supermanifesto encontrado</p>
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-100 dark:ring-gray-700">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center">
+               <Package className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-light">Nenhum supermanifesto encontrado</p>
           </div>
         ) : (
           supermanifestosFiltrados.map(sm => (
-            <div key={sm.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200 shadow-sm">
-              <div className="flex flex-col gap-4">
+            <div key={sm.id} className="group bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm hover:shadow-md ring-1 ring-gray-100 dark:ring-gray-700 transition-all duration-300">
+              <div className="flex flex-col gap-5">
                 {/* Header */}
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-11 h-11 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center flex-shrink-0 text-teal-600 dark:text-teal-400 shadow-sm">
-                      <Package className="w-5 h-5" />
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/10 flex items-center justify-center flex-shrink-0 text-teal-600 dark:text-teal-400">
+                      <Package className="w-6 h-6 stroke-[1.5]" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">{sm.numero}</span>
-                        <Badge className={getStatusBadge(sm.status)}>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex items-center gap-3 flex-wrap mb-1">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{sm.numero}</span>
+                        <Badge className={`font-normal rounded-full px-3 ${getStatusBadge(sm.status)}`}>
                           {sm.status}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                        <Truck className="w-3.5 h-3.5" />
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <Truck className="w-4 h-4 text-gray-400" />
                         <span className="truncate">{sm.transportadora_nome}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Informações */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                {/* Informações Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-5 border-t border-gray-50 dark:border-gray-700/50">
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5 flex items-center gap-1">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                       <Calendar className="w-3 h-3" />
                       ETA
                     </p>
@@ -196,7 +201,7 @@ export default function GestaoSupermanifestos() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5 flex items-center gap-1">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                       <Package className="w-3 h-3" />
                       Pedidos
                     </p>
@@ -205,7 +210,7 @@ export default function GestaoSupermanifestos() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1.5 flex items-center gap-1">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                       <Weight className="w-3 h-3" />
                       Peso Total
                     </p>
@@ -213,24 +218,24 @@ export default function GestaoSupermanifestos() {
                       {sm.peso_total_bruto_kg || 0} kg
                     </p>
                   </div>
-                  <div className="flex items-end gap-2 justify-end">
+                  <div className="flex items-end gap-3 justify-end">
                     <Button 
-                      variant="outline" 
+                      variant="ghost" 
                       size="sm" 
                       onClick={() => handleDiscriminarVolumes(sm)}
-                      className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                      className="h-9 w-9 p-0 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                      title="Volumes"
                     >
                       <Edit className="w-4 h-4" />
-                      <span className="hidden sm:inline">Volumes</span>
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => handleVerDetalhes(sm)}
-                      className="gap-2 text-gray-600 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg"
+                      className="h-9 w-9 p-0 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                      title="Detalhes"
                     >
                       <Eye className="w-4 h-4" />
-                      <span className="hidden sm:inline">Detalhes</span>
                     </Button>
                   </div>
                 </div>
