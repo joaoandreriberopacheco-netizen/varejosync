@@ -43,11 +43,11 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira, dat
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                   isCompleted
-                    ? 'bg-gray-700 dark:bg-gray-600'
-                    : 'bg-gray-200 dark:bg-gray-700'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isCompleted ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
+                <Icon className="w-4 h-4" />
               </div>
               {isActive && dataEmissao && (
                 <div className="text-[9px] text-gray-400 dark:text-gray-500 text-center leading-tight mt-0.5">
@@ -59,8 +59,8 @@ export default function StatusTimeline({ currentStatus, aprovacaoFinanceira, dat
               <div
                 className={`flex-1 h-0.5 mx-0.5 transition-all ${
                   isCompleted && idx < currentIndex
-                    ? 'bg-gray-700 dark:bg-gray-600'
-                    : 'bg-gray-200 dark:bg-gray-700'
+                    ? 'bg-gray-900 dark:bg-gray-100'
+                    : 'bg-gray-100 dark:bg-gray-800'
                 }`}
                 style={{ minWidth: '8px' }}
               />

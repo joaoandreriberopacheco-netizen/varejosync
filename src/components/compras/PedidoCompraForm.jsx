@@ -726,7 +726,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   if (isMobile) {
       return (
         <Dialog open={true} onOpenChange={onClose}>
-          <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-white !dark:bg-gray-900 z-[9999] flex flex-col overflow-hidden">
+          <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-white !dark:bg-gray-950 z-[9999] flex flex-col overflow-hidden">
         <div className="flex-shrink-0">
           {/* Alerta de Bloqueio */}
           {isLocked && (
@@ -740,7 +740,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </div>
           )}
           {/* Header compacto com menu */}
-          <div className="px-3 py-2.5 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
+          <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
             <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 flex-shrink-0">
               <ChevronDown className="w-5 h-5 rotate-90" />
             </Button>
@@ -806,9 +806,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           </div>
 
           {/* MOBILE: Timeline + Tabs */}
-          <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
+          <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-gray-950">
             {/* Timeline sobre as Tabs */}
-            <div className="px-3 py-1 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+            <div className="px-3 py-2 border-b border-gray-50 dark:border-gray-900 flex-shrink-0 bg-white dark:bg-gray-950">
               <StatusTimeline 
                 currentStatus={formData.status} 
                 aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
@@ -817,7 +817,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               />
             </div>
 
-            <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 grid grid-cols-5">
+            <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900/50 border-0 border-b border-gray-100 dark:border-gray-800 rounded-none h-auto p-0 grid grid-cols-5">
             <TabsTrigger 
               value="dados-gerais" 
               className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
@@ -869,7 +869,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                       if (modal) modal.classList.remove('hidden');
                     }
                   }}
-                  className={`bg-gray-50 dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center gap-3 transition-transform ${
+                  className={`bg-gray-50 dark:bg-gray-900 rounded-xl p-4 shadow-sm flex items-center gap-3 transition-transform ${
                     isLocked ? 'opacity-50' : 'active:scale-[0.98]'
                   }`}
                 >
@@ -986,7 +986,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Tags</Label>
                 <Input 
-                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12" 
+                  className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm h-12" 
                   placeholder="Ex: Urgente, Reposição..."
                   value={formData.tags?.join(', ') || ''} 
                   onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
@@ -996,7 +996,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-3 block">Observações</Label>
                 <Textarea 
-                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
+                  className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm resize-none" 
                   placeholder="Observações do pedido..."
                   rows={3}
                   value={formData.observacoes} 
