@@ -73,10 +73,6 @@ export default function GestaoSupermanifestos() {
     setShowDetalhes(true);
   };
 
-  const handleDiscriminarVolumes = (supermanifesto) => {
-    navigate(createPageUrl(`DiscriminarVolumes?id=${supermanifesto.id}&tipo=supermanifesto`));
-  };
-
   const supermanifestosFiltrados = supermanifestos.filter(sm => {
     const matchSearch = sm.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        sm.transportadora_nome?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -222,20 +218,12 @@ export default function GestaoSupermanifestos() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => handleDiscriminarVolumes(sm)}
-                      className="h-9 w-9 p-0 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-                      title="Volumes"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
                       onClick={() => handleVerDetalhes(sm)}
-                      className="h-9 w-9 p-0 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-                      title="Detalhes"
+                      className="h-10 px-4 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium text-sm flex items-center gap-2"
+                      title="Ver Detalhes Consolidados"
                     >
                       <Eye className="w-4 h-4" />
+                      Detalhes
                     </Button>
                   </div>
                 </div>
@@ -250,7 +238,7 @@ export default function GestaoSupermanifestos() {
       {/* Modal Detalhes */}
       {showDetalhes && selectedSupermanifesto && (
         <DetalhesSupermanifesto
-          supermanifesto={selectedSupermanifesto}
+          manifesto={selectedSupermanifesto}
           isOpen={showDetalhes}
           onClose={() => {
             setShowDetalhes(false);

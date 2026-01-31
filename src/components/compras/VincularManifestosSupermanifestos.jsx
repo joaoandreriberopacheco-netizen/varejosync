@@ -20,8 +20,6 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
   const [novaTransportadora, setNovaTransportadora] = useState('');
   const [eta, setEta] = useState('');
   const [showNovoSupermanifesto, setShowNovoSupermanifesto] = useState(false);
-  const [showDiscriminarVolumes, setShowDiscriminarVolumes] = useState(false);
-  const [createdSupermanifesto, setCreatedSupermanifesto] = useState(null);
 
   useEffect(() => {
     loadTransportadoras();
@@ -294,23 +292,6 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
         </DialogContent>
       </Dialog>
 
-      {/* Modal Discriminar Volumes - importado dinamicamente */}
-      {showDiscriminarVolumes && (
-        <DiscriminarVolumesManifesto
-          manifesto={createdSupermanifesto}
-          isOpen={showDiscriminarVolumes}
-          onClose={() => {
-            setShowDiscriminarVolumes(false);
-            setCreatedSupermanifesto(null);
-          }}
-          onSuccess={onRefresh}
-        />
-      )}
     </div>
   );
 }
-
-// Import dinâmico do componente
-const DiscriminarVolumesManifesto = React.lazy(() => 
-  import('./DiscriminarVolumesManifesto')
-);
