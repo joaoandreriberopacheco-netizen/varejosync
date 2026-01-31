@@ -116,6 +116,15 @@ export default function VolumetrizacaoManifestos() {
                         <span className="text-gray-400 text-xs uppercase tracking-wider">Fornecedor</span>
                         <span className="truncate text-gray-700 dark:text-gray-300">{m.fornecedor_nome}</span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 text-xs uppercase tracking-wider">Volumes</span>
+                        <span className="truncate text-gray-700 dark:text-gray-300">
+                          {(() => {
+                            const qtd = m.volumes?.reduce((acc, v) => acc + (v.quantidade || 0), 0) || 0;
+                            return qtd > 0 ? qtd : 'Não informado';
+                          })()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

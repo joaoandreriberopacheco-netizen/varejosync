@@ -223,7 +223,7 @@ export default function GestaoSupermanifestos() {
                       Volumes
                     </p>
                     <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                      {sm.quantidade_volumes_estimada || 0}
+                      {sm.quantidade_volumes_estimada || 'Não informado'}
                     </p>
                   </div>
                    <div>
