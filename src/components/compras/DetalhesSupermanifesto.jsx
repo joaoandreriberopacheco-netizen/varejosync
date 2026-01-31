@@ -32,19 +32,21 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
     }
   };
 
-  const handlePrint = async () => {
+  const handlePrint = async (tipo) => {
     try {
       setPrinting(true);
       const { data } = await base44.functions.invoke('gerarRelatorioSupermanifesto', {
-        supermanifesto_id: manifesto.id
+        supermanifesto_id: manifesto.id,
+        tipo: tipo // 'volumes' ou 'carga'
       });
 
       if (data.pdfBase64) {
         const link = document.createElement('a');
         link.href = `data:application/pdf;base64,${data.pdfBase64}`;
-        link.download = `Relatorio_Supermanifesto_${manifesto.numero}.pdf`;
+        const sufixo = tipo === 'carga' ? 'Carga' : 'Volumes';
+        link.download = `Relatorio_${sufixo}_${manifesto.numero}.pdf`;
         link.click();
-        toast.success('Relatório gerado com sucesso!');
+        toast.success(`Relatório de ${sufixo} gerado com sucesso!`);
       } else {
         throw new Error('Falha ao gerar PDF');
       }
@@ -200,17 +202,28 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
           )}
         </div>
 
-        <DialogFooter className="border-t border-gray-100 dark:border-gray-700 pt-4 flex justify-between sm:justify-between w-full">
-          <Button 
-            variant="ghost" 
-            onClick={handlePrint} 
-            disabled={printing}
-            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white gap-2"
-          >
-            {printing ? <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" /> : <Printer className="w-4 h-4" />}
-            {printing ? 'Gerando...' : 'Imprimir Relatório'}
-          </Button>
-          <Button variant="outline" onClick={onClose} className="rounded-lg">
+        <DialogFooter className="border-t border-gray-100 dark:border-gray-700 pt-4 flex flex-col sm:flex-row gap-3 sm:justify-between w-full">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+             <Button 
+              variant="outline" 
+              onClick={() => handlePrint('volumes')} 
+              disabled={printing}
+              className="gap-2 w-full sm:w-auto justify-center rounded-lg border-gray-200 dark:border-gray-700"
+            >
+              {printing ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <PackageIcon className="w-4 h-4" />}
+              Relatório de Volumes
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => handlePrint('carga')} 
+              disabled={printing}
+              className="gap-2 w-full sm:w-auto justify-center rounded-lg border-gray-200 dark:border-gray-700"
+            >
+              {printing ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Printer className="w-4 h-4" />}
+              Relatório de Carga
+            </Button>
+          </div>
+          <Button variant="ghost" onClick={onClose} className="rounded-lg w-full sm:w-auto">
             Fechar
           </Button>
         </DialogFooter>
