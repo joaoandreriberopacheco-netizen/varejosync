@@ -7,32 +7,24 @@ import { Truck, Calendar, Weight, Package as PackageIcon, User } from 'lucide-re
 import { format, parseISO } from 'date-fns';
 
 export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
-  const [pedidosComDetalhes, setPedidosComDetalhes] = useState([]);
+  const [manifestosVinculados, setManifestosVinculados] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && manifesto) {
-      loadPedidosDetalhados();
+      loadManifestosVinculados();
     }
   }, [isOpen, manifesto]);
 
-  const loadPedidosDetalhados = async () => {
-    if (!manifesto?.pedidos_vinculados) return;
-    
+  const loadManifestosVinculados = async () => {
     setLoading(true);
     try {
-      const pedidosIds = manifesto.pedidos_vinculados.map(p => p.pedido_id);
-      const pedidosCompletos = await Promise.all(
-        pedidosIds.map(id => base44.entities.PedidoCompra.filter({ id }))
-      );
-      
-      const pedidosData = pedidosCompletos
-        .map(arr => arr[0])
-        .filter(Boolean);
-      
-      setPedidosComDetalhes(pedidosData);
+      const manifestos = await base44.entities.ManifestoEntrada.filter({ 
+        supermanifesto_id: manifesto.id 
+      });
+      setManifestosVinculados(manifestos);
     } catch (error) {
-      console.error('Erro ao carregar pedidos:', error);
+      console.error('Erro ao carregar manifestos vinculados:', error);
     } finally {
       setLoading(false);
     }
@@ -48,23 +40,9 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
     return variants[status] || 'bg-gray-100 text-gray-800';
   };
 
-  // Agrupar pedidos por fornecedor
-  const pedidosPorFornecedor = pedidosComDetalhes.reduce((acc, pedido) => {
-    const fornecedorId = pedido.fornecedor_id;
-    if (!acc[fornecedorId]) {
-      acc[fornecedorId] = {
-        nome: pedido.fornecedor_nome,
-        pedidos: []
-      };
-    }
-    acc[fornecedorId].pedidos.push(pedido);
-    return acc;
-  }, {});
-
-  const totalVolumes = manifesto?.pedidos_vinculados?.reduce((sum, p) => {
-    const match = p.descritivo_volumes?.match(/^(\d+)/);
-    return sum + (match ? parseInt(match[1]) : 0);
-  }, 0) || 0;
+  const totalVolumes = manifestosVinculados.reduce((acc, m) => {
+    return acc + (m.volumes?.reduce((sum, v) => sum + (v.quantidade || 0), 0) || 0);
+  }, 0);
 
   if (!manifesto) return null;
 
@@ -107,74 +85,75 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
             </div>
           </div>
 
-          {/* Total de Volumes */}
-          <div className="flex items-center justify-between p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-100 dark:border-teal-800">
-            <div className="flex items-center gap-2">
-              <PackageIcon className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-              <span className="text-sm font-medium text-teal-900 dark:text-teal-100">Total de Volumes</span>
+          {/* Total de Volumes - PDV Style */}
+          <div className="flex items-center justify-between p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
+                 <PackageIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              </div>
+              <span className="text-base font-medium text-gray-600 dark:text-gray-300">Total de Volumes</span>
             </div>
-            <span className="text-lg font-bold text-teal-700 dark:text-teal-300">{totalVolumes}</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">{totalVolumes}</span>
           </div>
 
-          {/* Pedidos Agrupados por Fornecedor */}
-          <div className="space-y-5">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Relação por Fornecedor
+          {/* Manifestos Vinculados */}
+          <div className="space-y-6">
+            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-2 px-1">
+              Manifestos Vinculados
             </h4>
             
             {loading ? (
-              <div className="text-center py-8 text-gray-400 text-sm">Carregando detalhes...</div>
-            ) : Object.keys(pedidosPorFornecedor).length === 0 ? (
-              <div className="text-center py-8 text-gray-400 text-sm">Nenhum pedido vinculado</div>
+              <div className="text-center py-12 text-gray-400">Carregando manifestos...</div>
+            ) : manifestosVinculados.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-100 dark:border-gray-700">
+                Nenhum manifesto vinculado
+              </div>
             ) : (
-              <div className="space-y-5">
-                {Object.values(pedidosPorFornecedor).map((fornecedor, idx) => (
-                  <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-                    {/* Header do Fornecedor */}
-                    <div className="bg-gray-100 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="font-semibold text-gray-900 dark:text-white">{fornecedor.nome}</span>
+              <div className="grid gap-4">
+                {manifestosVinculados.map((m, idx) => (
+                  <div key={idx} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
+                    <div className="flex flex-col gap-4">
+                      {/* Cabeçalho Manifesto */}
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h5 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                            {m.numero}
+                          </h5>
+                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                            <User className="w-4 h-4" />
+                            <span className="text-sm font-medium">{m.fornecedor_nome}</span>
+                          </div>
+                        </div>
+                        <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border-0 px-3 py-1">
+                          {m.pedido_numero || 'S/ Pedido'}
+                        </Badge>
                       </div>
-                    </div>
 
-                    {/* Pedidos do Fornecedor */}
-                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                      {fornecedor.pedidos.map((pedido) => {
-                        const pedidoManifesto = manifesto.pedidos_vinculados?.find(
-                          p => p.pedido_id === pedido.id
-                        );
-                        
-                        return (
-                          <div key={pedido.id} className="p-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                            <div className="flex items-start justify-between mb-3">
-                              <div>
-                                <p className="font-semibold text-gray-900 dark:text-white mb-1">{pedido.numero}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {pedido.itens?.length || 0} {pedido.itens?.length === 1 ? 'item' : 'itens'}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs text-gray-400 dark:text-gray-500 uppercase mb-1">Peso</p>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {pedidoManifesto?.peso_informado_kg || 0} kg
-                                </p>
+                      {/* Lista de Volumes */}
+                      {m.volumes && m.volumes.length > 0 ? (
+                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 space-y-3">
+                          <p className="text-xs uppercase text-gray-400 font-semibold tracking-wider mb-2">Volumes Discriminados</p>
+                          {m.volumes.map((vol, vIdx) => (
+                            <div key={vIdx} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                              <span className="text-gray-700 dark:text-gray-200 font-medium">
+                                {vol.descricao}
+                              </span>
+                              <div className="flex gap-4 text-sm">
+                                <span className="text-gray-500">
+                                  Qtd: <strong className="text-gray-900 dark:text-white">{vol.quantidade}</strong>
+                                </span>
+                                <span className="text-gray-500">
+                                  Peso: <strong className="text-gray-900 dark:text-white">{vol.peso_kg}kg</strong>
+                                </span>
                               </div>
                             </div>
-
-                            {/* Descritivo de Volumes */}
-                            {pedidoManifesto?.descritivo_volumes && (
-                              <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
-                                <p className="text-xs text-amber-700 dark:text-amber-300 font-medium mb-1">Volumes:</p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300">
-                                  {pedidoManifesto.descritivo_volumes}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-400 italic px-2">
+                          Nenhum volume discriminado.
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

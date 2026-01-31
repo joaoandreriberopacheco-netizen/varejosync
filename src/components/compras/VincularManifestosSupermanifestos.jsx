@@ -16,6 +16,8 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
   const [showVincularDialog, setShowVincularDialog] = useState(false);
   const [transportadoras, setTransportadoras] = useState([]);
   const [transportadoraSelecionada, setTransportadoraSelecionada] = useState('');
+  const [isCreatingTransportadora, setIsCreatingTransportadora] = useState(false);
+  const [novaTransportadora, setNovaTransportadora] = useState('');
   const [eta, setEta] = useState('');
   const [showNovoSupermanifesto, setShowNovoSupermanifesto] = useState(false);
   const [showDiscriminarVolumes, setShowDiscriminarVolumes] = useState(false);
@@ -34,6 +36,33 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
       setTransportadoras(data);
     } catch (error) {
       console.error('Erro ao carregar transportadoras:', error);
+    }
+  };
+
+  const handleCriarTransportadora = async () => {
+    if (!novaTransportadora.trim()) return;
+    try {
+      const allTerceiros = await base44.entities.Terceiro.list();
+      const nextNumber = (allTerceiros.length > 0 
+        ? Math.max(...allTerceiros.map(t => parseInt(t.codigo_interno?.split('-')[1] || 0))) 
+        : 0) + 1;
+      const codigo = `FOR-${String(nextNumber).padStart(5, '0')}`;
+
+      const novoTerceiro = await base44.entities.Terceiro.create({
+        nome: novaTransportadora,
+        tipo: 'Fornecedor',
+        codigo_interno: codigo,
+        ativo: true
+      });
+
+      setTransportadoras([...transportadoras, novoTerceiro]);
+      setTransportadoraSelecionada(novoTerceiro.id);
+      setIsCreatingTransportadora(false);
+      setNovaTransportadora('');
+      toast.success('Transportadora criada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar transportadora:', error);
+      toast.error('Erro ao criar transportadora');
     }
   };
 
@@ -194,37 +223,72 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
               </p>
             </div>
 
-            <div>
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Transportadora *</Label>
-              <Select value={transportadoraSelecionada} onValueChange={setTransportadoraSelecionada}>
-                <SelectTrigger className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm">
-                  <SelectValue placeholder="Selecione a transportadora..." />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800">
-                  {transportadoras.map(t => (
-                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-3">
+              <Label className="text-base font-medium text-gray-700 dark:text-gray-300 block">Transportadora *</Label>
+              
+              {!isCreatingTransportadora ? (
+                <div className="flex gap-2">
+                  <Select value={transportadoraSelecionada} onValueChange={setTransportadoraSelecionada}>
+                    <SelectTrigger className="h-12 text-lg bg-gray-50 dark:bg-gray-700 border-0 shadow-sm flex-1">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent className="dark:bg-gray-800">
+                      {transportadoras.map(t => (
+                        <SelectItem key={t.id} value={t.id} className="text-base py-3">{t.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={() => setIsCreatingTransportadora(true)}
+                    className="h-12 w-12 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 rounded-lg"
+                    title="Nova Transportadora"
+                  >
+                    <PlusCircle className="w-6 h-6" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2 animate-in fade-in slide-in-from-left-2">
+                  <Input 
+                    autoFocus
+                    placeholder="Nome da nova transportadora"
+                    value={novaTransportadora}
+                    onChange={e => setNovaTransportadora(e.target.value)}
+                    className="h-12 text-lg bg-white dark:bg-gray-800 border-2 border-blue-500 shadow-sm"
+                  />
+                  <Button 
+                    onClick={handleCriarTransportadora}
+                    className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  >
+                    Salvar
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    onClick={() => setIsCreatingTransportadora(false)}
+                    className="h-12 px-4 text-gray-500"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div>
-              <Label className="text-sm text-gray-700 dark:text-gray-300 mb-2 block">Data de Chegada (ETA) *</Label>
+              <Label className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2 block">Data de Chegada (ETA) *</Label>
               <Input
                 type="datetime-local"
                 value={eta}
                 onChange={(e) => setEta(e.target.value)}
-                className="bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
+                className="h-12 text-lg bg-gray-50 dark:bg-gray-700 border-0 shadow-sm w-full"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowVincularDialog(false)} className="border-0 shadow-sm">
+          <DialogFooter className="gap-3 sm:gap-0">
+            <Button variant="ghost" onClick={() => setShowVincularDialog(false)} className="h-12 px-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100">
               Cancelar
             </Button>
-            <Button onClick={confirmarVinculacao} className="bg-blue-600 hover:bg-blue-700">
-              Criar Supermanifesto
+            <Button onClick={confirmarVinculacao} className="h-12 px-8 text-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md transition-all hover:scale-[1.02]">
+              Confirmar Criação
             </Button>
           </DialogFooter>
         </DialogContent>
