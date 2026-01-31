@@ -186,7 +186,7 @@ export default function GestaoSupermanifestos() {
                 </div>
 
                 {/* Informações Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-5 border-t border-gray-50 dark:border-gray-700/50">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6 pt-5 border-t border-gray-50 dark:border-gray-700/50">
                   <div>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                       <Calendar className="w-3 h-3" />
@@ -199,19 +199,28 @@ export default function GestaoSupermanifestos() {
                   <div>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                       <Package className="w-3 h-3" />
-                      Pedidos
+                      Volumes
                     </p>
                     <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                      {sm.pedidos_vinculados?.length || 0}
+                      {sm.quantidade_volumes_estimada || 0}
                     </p>
                   </div>
-                  <div>
+                   <div>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                       <Weight className="w-3 h-3" />
                       Peso Total
                     </p>
                     <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                      {sm.peso_total_bruto_kg || 0} kg
+                      {sm.peso_total_bruto_kg ? sm.peso_total_bruto_kg.toFixed(2) : '0.00'} kg
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <span className="text-green-600 dark:text-green-400">$</span>
+                      Valor Carga
+                    </p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 font-bold">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sm.valor_total_estimado || 0)}
                     </p>
                   </div>
                   <div className="flex items-end gap-3 justify-end">
