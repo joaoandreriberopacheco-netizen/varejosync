@@ -726,8 +726,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   if (isMobile) {
       return (
         <Dialog open={true} onOpenChange={onClose}>
-          <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-white !dark:bg-gray-950 z-[9999] flex flex-col overflow-hidden">
-        <div className="flex-shrink-0">
+          <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-gray-50 !dark:bg-gray-950 z-[9999] flex flex-col overflow-hidden">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-900">
           {/* Alerta de Bloqueio */}
           {isLocked && (
             <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-100 dark:border-yellow-800">
