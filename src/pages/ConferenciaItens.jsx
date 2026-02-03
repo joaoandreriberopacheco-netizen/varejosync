@@ -17,7 +17,6 @@ export default function ConferenciaItens() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [itensConferidos, setItensConferidos] = useState([]);
-  const [busca, setBusca] = useState('');
   const [finalizando, setFinalizando] = useState(false);
   const [modalLote, setModalLote] = useState({ open: false, itemIndex: null });
 
@@ -48,9 +47,30 @@ export default function ConferenciaItens() {
         return;
       }
 
-      setManifestoEntrada(responseValidacao.data.manifesto_entrada);
+      const me = responseValidacao.data.manifesto_entrada;
+      setManifestoEntrada(me);
       setConferente(responseValidacao.data.conferente);
       setProdutos(produtosData);
+
+      // Inicializar itens esperados do manifesto
+      if (me.itens_esperados && me.itens_esperados.length > 0) {
+        const itensIniciais = me.itens_esperados.map(item => {
+          const produto = produtosData.find(p => p.id === item.produto_id);
+          return {
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            produto: produto,
+            quantidade_esperada: item.quantidade_esperada,
+            quantidade_conferida: '',
+            lotes: [],
+            fotos: [],
+            divergencia: false,
+            tipo_divergencia: null,
+            observacao: ''
+          };
+        });
+        setItensConferidos(itensIniciais);
+      }
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao carregar dados');
@@ -60,38 +80,7 @@ export default function ConferenciaItens() {
     }
   };
 
-  const produtosFiltrados = produtos.filter(p => {
-    if (!busca.trim()) return false;
-    const lower = busca.toLowerCase();
-    return (
-      p.nome.toLowerCase().includes(lower) ||
-      (p.codigo_interno && p.codigo_interno.toLowerCase().includes(lower)) ||
-      (p.codigo_barras && p.codigo_barras.includes(lower))
-    );
-  }).slice(0, 20);
 
-  const handleAdicionarItem = (produto) => {
-    const existe = itensConferidos.find(i => i.produto_id === produto.id);
-    if (existe) {
-      toast.error('Produto já adicionado');
-      return;
-    }
-
-    const novoItem = {
-      produto_id: produto.id,
-      produto_nome: produto.nome,
-      produto: produto,
-      quantidade_conferida: '',
-      lotes: [],
-      fotos: [],
-      divergencia: false,
-      tipo_divergencia: null,
-      observacao: ''
-    };
-
-    setItensConferidos([...itensConferidos, novoItem]);
-    setBusca('');
-  };
 
   const handleQuantidadeChange = (index, valor) => {
     const novosItens = [...itensConferidos];
@@ -299,63 +288,27 @@ export default function ConferenciaItens() {
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700 dark:text-blue-300">
-                Conferência cega ativa. Registre apenas o que você recebeu fisicamente.
+                Confira as quantidades dos itens recebidos. Os itens esperados já estão listados abaixo.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Busca de Produtos */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              placeholder="BUSCAR PRODUTO..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-12 h-14 text-base bg-gray-50 dark:bg-gray-900 border-0 shadow-sm"
-              autoFocus
-            />
-          </div>
-
-          {busca.trim() && produtosFiltrados.length > 0 && (
-            <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
-              {produtosFiltrados.map((produto) => (
-                <button
-                  key={produto.id}
-                  onClick={() => handleAdicionarItem(produto)}
-                  className="w-full p-4 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-colors"
-                >
-                  <div className="font-medium text-sm text-gray-900 dark:text-white">{produto.nome}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {produto.codigo_interno || produto.codigo_barras || 'S/CÓD'}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Itens Conferidos */}
+        {/* Itens a Conferir */}
         {itensConferidos.map((item, index) => (
           <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="font-medium text-sm text-gray-900 dark:text-white">{item.produto_nome}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Esperado: {item.quantidade_esperada}
+                </div>
                 {item.lotes.length > 0 && (
                   <div className="text-xs text-green-600 dark:text-green-400 mt-1">
                     {item.lotes.length} lote(s) informado(s)
                   </div>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRemoverItem(index)}
-                className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

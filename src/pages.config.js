@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Armazenagem from './pages/Armazenagem';
 import AutoAtendimento from './pages/AutoAtendimento';
 import CaixasAtivos from './pages/CaixasAtivos';
 import Campanhas from './pages/Campanhas';
@@ -89,11 +90,11 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import Armazenagem from './pages/Armazenagem';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Armazenagem": Armazenagem,
     "AutoAtendimento": AutoAtendimento,
     "CaixasAtivos": CaixasAtivos,
     "Campanhas": Campanhas,
@@ -136,7 +137,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "Armazenagem": Armazenagem,
 }
 
 export const pagesConfig = {
