@@ -47,10 +47,17 @@ export default function LogisticaPage() {
         end: endOfWeek(dataAtual, { weekStartsOn: 0 })
       });
     }
-    return eachDayOfInterval({
-      start: startOfMonth(dataAtual),
-      end: endOfMonth(dataAtual)
-    });
+    
+    // Para o mês, precisamos adicionar células vazias no início
+    const primeiroDia = startOfMonth(dataAtual);
+    const ultimoDia = endOfMonth(dataAtual);
+    const diasDoMes = eachDayOfInterval({ start: primeiroDia, end: ultimoDia });
+    
+    // Adicionar células vazias no início para alinhar com o dia da semana
+    const diaSemanaInicio = primeiroDia.getDay(); // 0 = domingo
+    const celulasVazias = Array(diaSemanaInicio).fill(null);
+    
+    return [...celulasVazias, ...diasDoMes];
   };
 
   const getChegadasDia = (dia) => {
@@ -177,6 +184,11 @@ export default function LogisticaPage() {
               <div key={d} className="text-center text-[10px] lg:text-xs font-medium text-gray-500 dark:text-gray-400 py-2">{d}</div>
             ))}
             {dias.map((dia, idx) => {
+              if (dia === null) {
+                // Célula vazia para alinhar o calendário
+                return <div key={`vazio-${idx}`} className="min-h-[100px] lg:min-h-[120px]" />;
+              }
+              
               const chegadas = getChegadasDia(dia);
               const entregasD = getEntregasDia(dia);
               const volumes = getTotalVolumes(dia);
