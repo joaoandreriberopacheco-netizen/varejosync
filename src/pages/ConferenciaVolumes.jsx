@@ -49,8 +49,9 @@ export default function ConferenciaVolumes() {
       setConferente(response.data.conferente);
 
       // Inicializar volumes com descrições esperadas mas quantidades vazias (cega)
+      let volumesIniciais = [];
       if (manifestoData.volumes && manifestoData.volumes.length > 0) {
-        const volumesIniciais = manifestoData.volumes.map(v => ({
+        volumesIniciais = manifestoData.volumes.map(v => ({
           descricao: v.descricao,
           quantidade: '',
           quantidadeEsperada: v.quantidade
@@ -58,11 +59,12 @@ export default function ConferenciaVolumes() {
         setVolumes(volumesIniciais);
       } else {
         // Fallback caso não tenha volumes cadastrados
-        setVolumes([{ descricao: 'Volumes diversos', quantidade: '' }]);
+        volumesIniciais = [{ descricao: 'Volumes diversos', quantidade: '' }];
+        setVolumes(volumesIniciais);
       }
       
       console.log('Volumes carregados:', manifestoData.volumes);
-      console.log('Volumes state:', volumesIniciais || [{ descricao: 'Volumes diversos', quantidade: '' }]);
+      console.log('Volumes state:', volumesIniciais);
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao carregar dados');
