@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
-import { ShoppingCart, PlusCircle, Search, Edit, Eye, User, Truck, DollarSign, CalendarRange, FileText, Weight, Package as PackageIcon, Calendar, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ShoppingCart, PlusCircle, Search, Edit, Eye, User, Truck, DollarSign, CalendarRange, FileText, Weight, Package as PackageIcon, Calendar, Trash2, AlertTriangle, RefreshCw, QrCode } from 'lucide-react';
 import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import PedidoCompraForm from '../components/compras/PedidoCompraForm';
@@ -384,6 +384,7 @@ const PedidosCompraTab = () => {
 
 import GestaoManifestos from '../components/compras/GestaoManifestos';
 import GestaoSupermanifestos from '../components/compras/GestaoSupermanifestos';
+import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
 
 const HubLogisticoTab = () => {
   return <GestaoManifestos />;
@@ -471,6 +472,13 @@ export default function ComprasPage() {
                   <PackageIcon className="w-4 h-4" />
                   Supermanifestos
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="conferencia" 
+                  className="px-4 py-3 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center gap-2"
+                >
+                  <QrCode className="w-4 h-4" />
+                  Conferência
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="manifestos" className="p-2 mt-0">
@@ -480,10 +488,123 @@ export default function ComprasPage() {
               <TabsContent value="supermanifestos" className="p-2 mt-0">
                 <GestaoSupermanifestos />
               </TabsContent>
+              
+              <TabsContent value="conferencia" className="p-2 mt-0">
+                <ConferenciaTab />
+              </TabsContent>
             </Tabs>
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function ConferenciaTab() {
+  const [supermanifestos, setSupermanifestos] = useState([]);
+  const [manifestos, setManifestos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  const carregarDados = async () => {
+    try {
+      const [smData, meData] = await Promise.all([
+        base44.entities.Supermanifesto.list('-created_date', 50),
+        base44.entities.ManifestoEntrada.list('-created_date', 50)
+      ]);
+      setSupermanifestos(smData);
+      setManifestos(meData);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  if (carregando) {
+    return <div className="text-center py-12 text-gray-500">Carregando...</div>;
+  }
+
+  const manifestosPendentes = manifestos.filter(m => 
+    m.status_codigo_conferencia_itens !== 'Concluído'
+  );
+
+  const supermanifestosPendentes = supermanifestos.filter(s => 
+    s.status_codigo_conferencia_volumes !== 'Concluído'
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <QrCode className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
+              Geração de Códigos para Conferência
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              Gere códigos únicos para conferência de volumes e itens. Os conferentes usarão estes códigos na armazenagem.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {supermanifestosPendentes.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">SUPERMANIFESTOS</h3>
+          <div className="grid gap-3">
+            {supermanifestosPendentes.map((sm) => (
+              <div key={sm.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="font-medium text-sm">{sm.numero}</div>
+                    <div className="text-xs text-gray-500">{sm.transportadora_nome}</div>
+                  </div>
+                  <Badge variant="outline">{sm.status}</Badge>
+                </div>
+                <GestaoCodigosConferencia 
+                  manifesto={sm} 
+                  tipo="volumes" 
+                  onUpdate={carregarDados}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {manifestosPendentes.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">MANIFESTOS DE ENTRADA</h3>
+          <div className="grid gap-3">
+            {manifestosPendentes.map((me) => (
+              <div key={me.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="font-medium text-sm">{me.numero}</div>
+                    <div className="text-xs text-gray-500">Pedido: {me.pedido_numero}</div>
+                  </div>
+                  <Badge variant="outline">{me.status}</Badge>
+                </div>
+                <GestaoCodigosConferencia 
+                  manifesto={me} 
+                  tipo="itens" 
+                  onUpdate={carregarDados}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {manifestosPendentes.length === 0 && supermanifestosPendentes.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          Nenhum manifesto aguardando conferência
+        </div>
+      )}
     </div>
   );
 }
