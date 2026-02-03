@@ -34,6 +34,15 @@ export default function ConferenciaVolumes() {
       return;
     }
     carregarDados();
+
+    // Expirar código ao sair da página
+    return () => {
+      if (manifesto && manifesto.status_codigo_conferencia_volumes === 'Em Uso') {
+        base44.entities.Supermanifesto.update(manifesto.id, {
+          status_codigo_conferencia_volumes: 'Expirado'
+        }).catch(err => console.error('Erro ao expirar código:', err));
+      }
+    };
   }, [codigo]);
 
   const carregarDados = async () => {
