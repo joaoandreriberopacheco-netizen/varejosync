@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Package, CheckCircle, AlertCircle, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Package, CheckCircle, AlertCircle, Loader2, Camera, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -16,6 +17,8 @@ export default function ConferenciaVolumes() {
   const [carregando, setCarregando] = useState(true);
   const [volumes, setVolumes] = useState([]);
   const [finalizando, setFinalizando] = useState(false);
+  const [ocorrencias, setOcorrencias] = useState([]);
+  const [uploadandoMidia, setUploadandoMidia] = useState(false);
 
   useEffect(() => {
     if (!codigo) {
@@ -50,12 +53,16 @@ export default function ConferenciaVolumes() {
         const volumesIniciais = manifestoData.volumes.map(v => ({
           descricao: v.descricao,
           quantidade: '',
-          quantidadeEsperada: v.quantidade // Apenas para referência interna, não mostrar
+          quantidadeEsperada: v.quantidade
         }));
         setVolumes(volumesIniciais);
       } else {
-        setVolumes([{ descricao: '', quantidade: '' }]);
+        // Fallback caso não tenha volumes cadastrados
+        setVolumes([{ descricao: 'Volumes diversos', quantidade: '' }]);
       }
+      
+      console.log('Volumes carregados:', manifestoData.volumes);
+      console.log('Volumes state:', volumesIniciais || [{ descricao: 'Volumes diversos', quantidade: '' }]);
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao carregar dados');
@@ -81,6 +88,38 @@ export default function ConferenciaVolumes() {
     setVolumes(novosVolumes);
   };
 
+  const handleAdicionarOcorrencia = () => {
+    setOcorrencias([...ocorrencias, { descricao: '', midias: [] }]);
+  };
+
+  const handleOcorrenciaChange = (index, value) => {
+    const novasOcorrencias = [...ocorrencias];
+    novasOcorrencias[index].descricao = value;
+    setOcorrencias(novasOcorrencias);
+  };
+
+  const handleUploadMidia = async (index, file) => {
+    try {
+      setUploadandoMidia(true);
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      
+      const novasOcorrencias = [...ocorrencias];
+      novasOcorrencias[index].midias.push(file_url);
+      setOcorrencias(novasOcorrencias);
+      
+      toast.success('Mídia adicionada');
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast.error('Erro ao enviar arquivo');
+    } finally {
+      setUploadandoMidia(false);
+    }
+  };
+
+  const handleRemoverOcorrencia = (index) => {
+    setOcorrencias(ocorrencias.filter((_, i) => i !== index));
+  };
+
   const handleFinalizar = async () => {
     // Validar
     const volumesValidos = volumes.filter(v => v.descricao.trim() && v.quantidade);
@@ -100,6 +139,7 @@ export default function ConferenciaVolumes() {
 
       await base44.entities.Supermanifesto.update(manifesto.id, {
         volumes_conferidos: volumesConferidos,
+        ocorrencias_conferencia: ocorrencias.filter(o => o.descricao.trim()),
         data_conferencia_volumes: new Date().toISOString(),
         conferente_volumes_id: conferente.id,
         conferente_volumes_nome: conferente.full_name,
@@ -185,6 +225,83 @@ export default function ConferenciaVolumes() {
             </div>
           ))}
 
+        </div>
+
+        {/* Ocorrências */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">OCORRÊNCIAS (OPCIONAL)</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAdicionarOcorrencia}
+              className="text-gray-600 dark:text-gray-400"
+            >
+              <Camera className="w-4 h-4 mr-1" />
+              Registrar Ocorrência
+            </Button>
+          </div>
+
+          {ocorrencias.map((ocorrencia, index) => (
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-3">
+              <Textarea
+                placeholder="Descreva a ocorrência (ex: Caixa avariada, volume faltando...)"
+                value={ocorrencia.descricao}
+                onChange={(e) => handleOcorrenciaChange(index, e.target.value)}
+                className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm min-h-[80px]"
+              />
+              
+              <div className="flex items-center gap-2">
+                <label className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={(e) => {
+                      if (e.target.files[0]) {
+                        handleUploadMidia(index, e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                    disabled={uploadandoMidia}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={uploadandoMidia}
+                    onClick={(e) => e.currentTarget.previousElementSibling.click()}
+                  >
+                    {uploadandoMidia ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    Adicionar Foto/Vídeo
+                  </Button>
+                </label>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoverOcorrencia(index)}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  Remover
+                </Button>
+              </div>
+
+              {ocorrencia.midias.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {ocorrencia.midias.map((url, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900">
+                      <img src={url} alt="Evidência" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Ações */}
