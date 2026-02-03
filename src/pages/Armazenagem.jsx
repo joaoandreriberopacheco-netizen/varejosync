@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, TrendingUp, History, BarChart3, ClipboardCheck } from 'lucide-react';
+import { Package, TrendingUp, History, BarChart3, ClipboardCheck, QrCode, Plus, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/components/utils';
+import { toast } from 'sonner';
 import FilaSeparacao from '@/components/estoque/FilaSeparacao';
 import MovimentacaoEstoqueForm from '@/components/estoque/MovimentacaoEstoqueForm';
 import HistoricoMovimentacoes from '@/components/estoque/HistoricoMovimentacoes';
-import GestaoCodigosConferencia from '@/components/logistica/GestaoCodigosConferencia';
 
 export default function Armazenagem() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -91,7 +95,7 @@ export default function Armazenagem() {
           </TabsContent>
 
           <TabsContent value="conferencia" className="mt-6">
-            <GestaoCodigosConferencia />
+            <ConferenciaManagement />
           </TabsContent>
         </Tabs>
       </div>
