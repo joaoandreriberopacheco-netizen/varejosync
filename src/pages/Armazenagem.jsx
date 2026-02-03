@@ -103,6 +103,225 @@ export default function Armazenagem() {
   );
 }
 
+function ConferenciaManagement() {
+  const [supermanifestos, setSupermanifestos] = useState([]);
+  const [manifestos, setManifestos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  const carregarDados = async () => {
+    try {
+      const [smData, meData] = await Promise.all([
+        base44.entities.Supermanifesto.list('-created_date', 50),
+        base44.entities.ManifestoEntrada.list('-created_date', 50)
+      ]);
+      setSupermanifestos(smData);
+      setManifestos(meData);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast.error('Erro ao carregar manifestos');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const handleGerarCodigo = async (tipo, id, entidade) => {
+    try {
+      const response = await base44.functions.invoke('generateConferenceCode', {
+        tipo,
+        manifesto_id: id
+      });
+
+      if (response.data.success) {
+        toast.success('Código gerado com sucesso!');
+        carregarDados();
+      } else {
+        toast.error(response.data.error || 'Erro ao gerar código');
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error('Erro ao gerar código');
+    }
+  };
+
+  if (carregando) {
+    return (
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        Carregando dados de conferência...
+      </div>
+    );
+  }
+
+  const manifestosPendentes = manifestos.filter(m => 
+    m.status_codigo_conferencia_itens === 'Pendente Geração' || 
+    m.status_codigo_conferencia_itens === 'Gerado'
+  );
+
+  const supermanifestosPendentes = supermanifestos.filter(s => 
+    s.status_codigo_conferencia_volumes === 'Pendente Geração' || 
+    s.status_codigo_conferencia_volumes === 'Gerado'
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header com instrução */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <ClipboardCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+              Gerenciamento de Conferências
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              Gere códigos para conferência cega de volumes (Supermanifestos) e itens (Manifestos de Entrada).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Supermanifestos - Conferência de Volumes */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+          <Package className="w-4 h-4" />
+          CONFERÊNCIA DE VOLUMES (SUPERMANIFESTOS)
+        </h3>
+        
+        {supermanifestosPendentes.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Nenhum supermanifesto aguardando conferência
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {supermanifestosPendentes.map((sm) => (
+              <div key={sm.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="font-medium text-sm text-gray-900 dark:text-white">{sm.numero}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{sm.transportadora_nome}</div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {sm.status}
+                  </Badge>
+                </div>
+
+                {sm.codigo_conferencia_volumes ? (
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <QrCode className="w-4 h-4 text-gray-500" />
+                    <code className="flex-1 font-mono text-sm font-bold text-gray-900 dark:text-white">
+                      {sm.codigo_conferencia_volumes}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(sm.codigo_conferencia_volumes);
+                        toast.success('Código copiado!');
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGerarCodigo('volumes', sm.id, 'Supermanifesto')}
+                    className="w-full"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Gerar Código de Volumes
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Manifestos de Entrada - Conferência de Itens */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+          <ClipboardCheck className="w-4 h-4" />
+          CONFERÊNCIA DE ITENS (MANIFESTOS)
+        </h3>
+        
+        {manifestosPendentes.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Nenhum manifesto aguardando conferência
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {manifestosPendentes.map((me) => (
+              <div key={me.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="font-medium text-sm text-gray-900 dark:text-white">{me.numero}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Pedido: {me.pedido_numero} • {me.fornecedor_nome}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {me.status}
+                  </Badge>
+                </div>
+
+                {me.codigo_conferencia_itens ? (
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <QrCode className="w-4 h-4 text-gray-500" />
+                    <code className="flex-1 font-mono text-sm font-bold text-gray-900 dark:text-white">
+                      {me.codigo_conferencia_itens}
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(me.codigo_conferencia_itens);
+                        toast.success('Código copiado!');
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGerarCodigo('itens', me.id, 'ManifestoEntrada')}
+                    className="w-full"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Gerar Código de Itens
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Link para Entrada de Conferência */}
+      <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Após gerar o código, o conferente deve acessar:
+        </p>
+        <Link to={createPageUrl('ConferenciaEntrada')}>
+          <Button variant="outline" className="gap-2">
+            <ExternalLink className="w-4 h-4" />
+            Ir para Tela de Conferência
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function InventarioAtual({ produtos }) {
   const [inventario, setInventario] = useState([]);
   const [carregando, setCarregando] = useState(true);
