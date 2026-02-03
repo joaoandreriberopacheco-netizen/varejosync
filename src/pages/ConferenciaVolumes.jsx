@@ -14,7 +14,7 @@ export default function ConferenciaVolumes() {
   const [manifesto, setManifesto] = useState(null);
   const [conferente, setConferente] = useState(null);
   const [carregando, setCarregando] = useState(true);
-  const [volumes, setVolumes] = useState([{ descricao: '', quantidade: '' }]);
+  const [volumes, setVolumes] = useState([]);
   const [finalizando, setFinalizando] = useState(false);
 
   useEffect(() => {
@@ -41,8 +41,21 @@ export default function ConferenciaVolumes() {
         return;
       }
 
-      setManifesto(response.data.manifesto);
+      const manifestoData = response.data.manifesto;
+      setManifesto(manifestoData);
       setConferente(response.data.conferente);
+
+      // Inicializar volumes com descrições esperadas mas quantidades vazias (cega)
+      if (manifestoData.volumes && manifestoData.volumes.length > 0) {
+        const volumesIniciais = manifestoData.volumes.map(v => ({
+          descricao: v.descricao,
+          quantidade: '',
+          quantidadeEsperada: v.quantidade // Apenas para referência interna, não mostrar
+        }));
+        setVolumes(volumesIniciais);
+      } else {
+        setVolumes([{ descricao: '', quantidade: '' }]);
+      }
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao carregar dados');
@@ -130,9 +143,9 @@ export default function ConferenciaVolumes() {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">Conferência Cega Ativa</p>
+                <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">Conferência Cega de Quantidade</p>
                 <p className="text-xs text-blue-700 dark:text-blue-300">
-                  Registre APENAS o que você está recebendo fisicamente, sem consultar documentos.
+                  Os tipos de volumes esperados estão listados abaixo. Informe a quantidade REAL recebida de cada tipo sem consultar documentos.
                 </p>
               </div>
             </div>
@@ -147,51 +160,31 @@ export default function ConferenciaVolumes() {
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
-                      Descrição
+                      Tipo de Volume
                     </label>
-                    <Input
-                      placeholder="Ex: Caixas de papelão"
-                      value={volume.descricao}
-                      onChange={(e) => handleVolumeChange(index, 'descricao', e.target.value)}
-                      className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm h-11"
-                    />
+                    <div className="bg-gray-100 dark:bg-gray-900 rounded-lg px-4 h-11 flex items-center text-gray-700 dark:text-gray-300 font-medium">
+                      {volume.descricao || 'Volume sem descrição'}
+                    </div>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
-                      Quantidade
+                      Quantidade Recebida
                     </label>
                     <Input
                       type="number"
                       step="0.01"
-                      placeholder="0"
+                      placeholder="Informe a quantidade"
                       value={volume.quantidade}
                       onChange={(e) => handleVolumeChange(index, 'quantidade', e.target.value)}
                       className="bg-gray-50 dark:bg-gray-900 border-0 shadow-sm h-11"
+                      autoFocus={index === 0}
                     />
                   </div>
                 </div>
-                {volumes.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveVolume(index)}
-                    className="mt-7 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
               </div>
             </div>
           ))}
 
-          <Button
-            variant="outline"
-            onClick={handleAddVolume}
-            className="w-full h-12 border-0 bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Volume
-          </Button>
         </div>
 
         {/* Ações */}
