@@ -144,7 +144,7 @@ export default function LogisticaPage() {
             dataAtual={dataAtual} 
             onNavegar={navegar} 
           />
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-3 lg:gap-4">
             {dias.map((dia, idx) => {
               const chegadas = getChegadasDia(dia);
               const entregasD = getEntregasDia(dia);
@@ -172,9 +172,9 @@ export default function LogisticaPage() {
             dataAtual={dataAtual} 
             onNavegar={navegar} 
           />
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-2 lg:gap-3">
             {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'].map(d => (
-              <div key={d} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2">{d}</div>
+              <div key={d} className="text-center text-[10px] lg:text-xs font-medium text-gray-500 dark:text-gray-400 py-2">{d}</div>
             ))}
             {dias.map((dia, idx) => {
               const chegadas = getChegadasDia(dia);
@@ -288,31 +288,31 @@ function DiaCard({ dia, chegadas, entregas, volumes, compacto, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`relative p-3 rounded-xl text-left transition-all hover:bg-gray-100 dark:hover:bg-gray-700 ${
-        hoje ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'
-      } ${compacto ? 'min-h-[80px]' : 'min-h-[100px]'}`}
+      className={`relative p-4 lg:p-5 rounded-xl text-left transition-all hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm ${
+        hoje ? 'bg-gray-100 dark:bg-gray-700 ring-2 ring-gray-300 dark:ring-gray-600' : 'bg-white dark:bg-gray-800'
+      } ${compacto ? 'min-h-[100px] lg:min-h-[120px]' : 'min-h-[130px] lg:min-h-[150px]'}`}
     >
-      <div className={`text-sm font-medium ${hoje ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
+      <div className={`text-base lg:text-lg font-medium mb-2 ${hoje ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
         {format(dia, compacto ? 'd' : 'EEE d', { locale: ptBR })}
       </div>
       
       {volumes > 0 && (
-        <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+        <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold rounded-full min-w-[24px] h-6 px-2 flex items-center justify-center shadow-md">
           {volumes > 99 ? '99+' : volumes}
         </div>
       )}
 
       {(chegadas > 0 || entregas > 0) && (
-        <div className="mt-2 space-y-1">
+        <div className="mt-3 space-y-2">
           {chegadas > 0 && (
-            <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-              <Truck className="w-3 h-3" />
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Truck className="w-4 h-4" />
               <span>{chegadas}</span>
             </div>
           )}
           {entregas > 0 && (
-            <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-              <Package className="w-3 h-3" />
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Package className="w-4 h-4" />
               <span>{entregas}</span>
             </div>
           )}
