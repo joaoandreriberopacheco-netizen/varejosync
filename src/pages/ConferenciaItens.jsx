@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Package, CheckCircle, AlertCircle, Loader2, Search, Plus, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Package, CheckCircle, AlertCircle, Loader2, Search, Camera, Plus, Trash2, Calendar, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -19,6 +19,7 @@ export default function ConferenciaItens() {
   const [itensConferidos, setItensConferidos] = useState([]);
   const [busca, setBusca] = useState('');
   const [finalizando, setFinalizando] = useState(false);
+  const [modalLote, setModalLote] = useState({ open: false, itemIndex: null });
 
   useEffect(() => {
     if (!codigo) {
@@ -76,11 +77,19 @@ export default function ConferenciaItens() {
       return;
     }
 
-    setItensConferidos([...itensConferidos, {
+    const novoItem = {
       produto_id: produto.id,
       produto_nome: produto.nome,
-      quantidade_conferida: ''
-    }]);
+      produto: produto,
+      quantidade_conferida: '',
+      lotes: [],
+      fotos: [],
+      divergencia: false,
+      tipo_divergencia: null,
+      observacao: ''
+    };
+
+    setItensConferidos([...itensConferidos, novoItem]);
     setBusca('');
   };
 
@@ -94,19 +103,104 @@ export default function ConferenciaItens() {
     setItensConferidos(itensConferidos.filter((_, i) => i !== index));
   };
 
+  const abrirModalLotes = (index) => {
+    setModalLote({ open: true, itemIndex: index });
+  };
+
+  const adicionarLote = () => {
+    const { itemIndex } = modalLote;
+    const novosItens = [...itensConferidos];
+    novosItens[itemIndex].lotes.push({
+      numero_lote: '',
+      data_validade: '',
+      quantidade: '',
+      numeros_serie: ''
+    });
+    setItensConferidos(novosItens);
+  };
+
+  const atualizarLote = (loteIndex, campo, valor) => {
+    const { itemIndex } = modalLote;
+    const novosItens = [...itensConferidos];
+    novosItens[itemIndex].lotes[loteIndex][campo] = valor;
+    setItensConferidos(novosItens);
+  };
+
+  const removerLote = (loteIndex) => {
+    const { itemIndex } = modalLote;
+    const novosItens = [...itensConferidos];
+    novosItens[itemIndex].lotes = novosItens[itemIndex].lotes.filter((_, i) => i !== loteIndex);
+    setItensConferidos(novosItens);
+  };
+
+  const handleUploadFoto = async (index, file) => {
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const novosItens = [...itensConferidos];
+      novosItens[index].fotos.push(file_url);
+      setItensConferidos(novosItens);
+      toast.success('Foto anexada');
+    } catch (error) {
+      toast.error('Erro ao fazer upload da foto');
+    }
+  };
+
+  const validarLotes = () => {
+    for (const item of itensConferidos) {
+      const produto = item.produto;
+      const qtdTotal = parseFloat(item.quantidade_conferida) || 0;
+
+      if (qtdTotal <= 0) continue;
+
+      if (produto?.controla_lote || produto?.controla_validade) {
+        if (item.lotes.length === 0) {
+          toast.error(`${item.produto_nome} requer informação de lote/validade`);
+          return false;
+        }
+
+        const somaLotes = item.lotes.reduce((sum, l) => sum + (parseFloat(l.quantidade) || 0), 0);
+        if (somaLotes !== qtdTotal) {
+          toast.error(`${item.produto_nome}: soma dos lotes (${somaLotes}) diferente da quantidade total (${qtdTotal})`);
+          return false;
+        }
+
+        for (const lote of item.lotes) {
+          if (produto.controla_lote && !lote.numero_lote) {
+            toast.error(`Lote obrigatório para ${item.produto_nome}`);
+            return false;
+          }
+          if (produto.controla_validade && !lote.data_validade) {
+            toast.error(`Validade obrigatória para ${item.produto_nome}`);
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
   const handleFinalizar = async () => {
-    const itensValidos = itensConferidos.filter(i => i.quantidade_conferida > 0);
+    const itensValidos = itensConferidos.filter(i => parseFloat(i.quantidade_conferida) > 0);
     if (itensValidos.length === 0) {
       toast.error('Adicione pelo menos um item com quantidade');
       return;
     }
+
+    if (!validarLotes()) return;
 
     try {
       setFinalizando(true);
 
       // Atualizar manifesto de entrada
       await base44.entities.ManifestoEntrada.update(manifestoEntrada.id, {
-        itens_conferidos: itensValidos,
+        itens_conferidos: itensValidos.map(i => ({
+          produto_id: i.produto_id,
+          produto_nome: i.produto_nome,
+          quantidade_conferida: parseFloat(i.quantidade_conferida),
+          lotes: i.lotes,
+          fotos: i.fotos,
+          observacao: i.observacao
+        })),
         data_conferencia: new Date().toISOString(),
         conferente_id: conferente.id,
         conferente_nome: conferente.full_name,
@@ -114,20 +208,56 @@ export default function ConferenciaItens() {
         status_codigo_conferencia_itens: 'Concluído'
       });
 
-      // Criar movimentações de estoque
+      // Criar lotes de estoque e movimentações
       for (const item of itensValidos) {
-        await base44.entities.MovimentacaoEstoque.create({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          tipo: 'Entrada',
-          motivo: 'Compra',
-          quantidade: parseFloat(item.quantidade_conferida),
-          referencia_tipo: 'ManifestoEntrada',
-          referencia_id: manifestoEntrada.id,
-          referencia_numero: manifestoEntrada.numero,
-          usuario_responsavel: conferente.full_name,
-          observacoes: `Conferência cega - Código: ${codigo}`
-        });
+        if (item.lotes.length > 0) {
+          // Produto com controle de lote
+          for (const lote of item.lotes) {
+            const qtdLote = parseFloat(lote.quantidade);
+            
+            // Criar/atualizar LoteEstoque
+            const loteEstoque = await base44.entities.LoteEstoque.create({
+              produto_id: item.produto_id,
+              produto_nome: item.produto_nome,
+              numero_lote: lote.numero_lote,
+              data_validade: lote.data_validade || null,
+              quantidade_atual: qtdLote,
+              status: 'Disponível',
+              data_entrada_no_lote: new Date().toISOString(),
+              numeros_serie: lote.numeros_serie ? lote.numeros_serie.split(',').map(s => s.trim()).filter(Boolean) : []
+            });
+
+            // Criar movimentação
+            await base44.entities.MovimentacaoEstoque.create({
+              produto_id: item.produto_id,
+              produto_nome: item.produto_nome,
+              tipo: 'Entrada',
+              motivo: 'Compra',
+              quantidade: qtdLote,
+              referencia_tipo: 'ManifestoEntrada',
+              referencia_id: manifestoEntrada.id,
+              referencia_numero: manifestoEntrada.numero,
+              usuario_responsavel: conferente.full_name,
+              numero_lote: lote.numero_lote,
+              data_validade: lote.data_validade || null,
+              observacoes: `Conferência cega - Código: ${codigo} - Lote: ${loteEstoque.id}`
+            });
+          }
+        } else {
+          // Produto sem controle de lote
+          await base44.entities.MovimentacaoEstoque.create({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            tipo: 'Entrada',
+            motivo: 'Compra',
+            quantidade: parseFloat(item.quantidade_conferida),
+            referencia_tipo: 'ManifestoEntrada',
+            referencia_id: manifestoEntrada.id,
+            referencia_numero: manifestoEntrada.numero,
+            usuario_responsavel: conferente.full_name,
+            observacoes: `Conferência cega - Código: ${codigo}`
+          });
+        }
       }
 
       toast.success('Conferência concluída e estoque atualizado!');
@@ -148,147 +278,254 @@ export default function ConferenciaItens() {
     );
   }
 
+  const itemAtual = modalLote.itemIndex !== null ? itensConferidos[modalLote.itemIndex] : null;
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="max-w-2xl mx-auto space-y-4">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Package className="w-7 h-7 text-gray-700 dark:text-gray-300" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Package className="w-6 h-6 text-gray-700 dark:text-gray-300" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Conferência de Itens</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Registre os produtos recebidos</p>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">CONFERÊNCIA DE ITENS</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Registre o que está recebendo</p>
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">Conferência Cega Ativa</p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  Registre APENAS o que você está recebendo fisicamente. Busque produtos e informe quantidades.
-                </p>
-              </div>
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Conferência cega ativa. Registre apenas o que você recebeu fisicamente.
+              </p>
             </div>
           </div>
         </div>
 
         {/* Busca de Produtos */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-          <label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-3 block">
-            Buscar Produto
-          </label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
-              placeholder="Digite nome ou código..."
+              placeholder="BUSCAR PRODUTO..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="pl-10 bg-gray-50 dark:bg-gray-900 border-0 shadow-sm h-11"
+              className="pl-12 h-14 text-base bg-gray-50 dark:bg-gray-900 border-0 shadow-sm"
               autoFocus
             />
           </div>
 
           {busca.trim() && produtosFiltrados.length > 0 && (
-            <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border-0 shadow-sm">
+            <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
               {produtosFiltrados.map((produto) => (
-                <div
+                <button
                   key={produto.id}
                   onClick={() => handleAdicionarItem(produto)}
-                  className="p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center justify-between"
+                  className="w-full p-4 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 transition-colors"
                 >
-                  <div>
-                    <div className="font-medium text-sm text-gray-900 dark:text-white">{produto.nome}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {produto.codigo_interno || produto.codigo_barras || 'S/CÓD'}
-                    </div>
+                  <div className="font-medium text-sm text-gray-900 dark:text-white">{produto.nome}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {produto.codigo_interno || produto.codigo_barras || 'S/CÓD'}
                   </div>
-                  <Plus className="w-4 h-4 text-gray-400" />
-                </div>
+                </button>
               ))}
             </div>
           )}
         </div>
 
         {/* Itens Conferidos */}
-        {itensConferidos.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-gray-50 dark:bg-gray-900">
-                  <TableRow className="border-0">
-                    <TableHead className="text-gray-700 dark:text-gray-300">Produto</TableHead>
-                    <TableHead className="text-gray-700 dark:text-gray-300 w-32">Quantidade</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {itensConferidos.map((item, index) => (
-                    <TableRow key={index} className="border-0 hover:bg-gray-50 dark:hover:bg-gray-900">
-                      <TableCell className="font-medium text-gray-900 dark:text-white">
-                        {item.produto_nome}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0"
-                          value={item.quantidade_conferida}
-                          onChange={(e) => handleQuantidadeChange(index, e.target.value)}
-                          className="h-9 bg-gray-50 dark:bg-gray-900 border-0 shadow-sm"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoverItem(index)}
-                          className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        {itensConferidos.map((item, index) => (
+          <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="font-medium text-sm text-gray-900 dark:text-white">{item.produto_nome}</div>
+                {item.lotes.length > 0 && (
+                  <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    {item.lotes.length} lote(s) informado(s)
+                  </div>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleRemoverItem(index)}
+                className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">QUANTIDADE</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0"
+                  value={item.quantidade_conferida}
+                  onChange={(e) => handleQuantidadeChange(index, e.target.value)}
+                  className="h-12 text-base bg-gray-50 dark:bg-gray-900 border-0 shadow-sm"
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <label className="cursor-pointer flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleUploadFoto(index, e.target.files[0])}
+                  />
+                  <Button type="button" className="w-full h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">
+                    <Camera className="w-5 h-5" />
+                    {item.fotos.length > 0 && (
+                      <span className="ml-2 text-xs">({item.fotos.length})</span>
+                    )}
+                  </Button>
+                </label>
+              </div>
+            </div>
+
+            {(item.produto?.controla_lote || item.produto?.controla_validade) && (
+              <Button
+                onClick={() => abrirModalLotes(index)}
+                variant="outline"
+                className="w-full h-12 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+              >
+                <Hash className="w-4 h-4 mr-2" />
+                GERENCIAR LOTES/VALIDADE
+              </Button>
+            )}
           </div>
-        )}
+        ))}
 
         {/* Ações */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+        <div className="sticky bottom-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4">
           <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={() => navigate('/HubLogistico')}
-              className="flex-1 h-12 border-0 shadow-sm"
+              className="flex-1 h-14 text-base border-0 shadow-sm"
             >
-              Cancelar
+              CANCELAR
             </Button>
             <Button
               onClick={handleFinalizar}
               disabled={finalizando || itensConferidos.length === 0}
-              className="flex-1 h-12 bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg"
+              className="flex-1 h-14 text-base bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg"
             >
               {finalizando ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Finalizando...
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  FINALIZANDO...
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Finalizar Conferência
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  FINALIZAR
                 </>
               )}
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Modal de Lotes */}
+      <Dialog open={modalLote.open} onOpenChange={(open) => setModalLote({ ...modalLote, open })}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Hash className="w-5 h-5" />
+              LOTES - {itemAtual?.produto_nome}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {itemAtual?.lotes.map((lote, loteIndex) => (
+              <div key={loteIndex} className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">LOTE {loteIndex + 1}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removerLote(loteIndex)}
+                    className="h-8 w-8 text-gray-400 hover:text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {itemAtual.produto?.controla_lote && (
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">NÚMERO DO LOTE *</label>
+                    <Input
+                      placeholder="Ex: L20260203"
+                      value={lote.numero_lote}
+                      onChange={(e) => atualizarLote(loteIndex, 'numero_lote', e.target.value)}
+                      className="h-12 text-base"
+                    />
+                  </div>
+                )}
+
+                {itemAtual.produto?.controla_validade && (
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">DATA DE VALIDADE *</label>
+                    <Input
+                      type="date"
+                      value={lote.data_validade}
+                      onChange={(e) => atualizarLote(loteIndex, 'data_validade', e.target.value)}
+                      className="h-12 text-base"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">QUANTIDADE NESTE LOTE *</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    value={lote.quantidade}
+                    onChange={(e) => atualizarLote(loteIndex, 'quantidade', e.target.value)}
+                    className="h-12 text-base"
+                  />
+                </div>
+
+                {itemAtual.produto?.controla_serial && (
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">NÚMEROS DE SÉRIE (separados por vírgula)</label>
+                    <Input
+                      placeholder="S001, S002, S003"
+                      value={lote.numeros_serie}
+                      onChange={(e) => atualizarLote(loteIndex, 'numeros_serie', e.target.value)}
+                      className="h-12 text-base"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <Button
+              onClick={adicionarLote}
+              variant="outline"
+              className="w-full h-12 border-2 border-dashed"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              ADICIONAR OUTRO LOTE
+            </Button>
+
+            <Button
+              onClick={() => setModalLote({ ...modalLote, open: false })}
+              className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              CONFIRMAR LOTES
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
