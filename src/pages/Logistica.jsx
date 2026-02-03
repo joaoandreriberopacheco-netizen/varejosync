@@ -5,12 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Truck, MapPin, Clock, CheckCircle, AlertCircle, QrCode } from 'lucide-react';
-import AgendamentoForm from '../components/logistica/AgendamentoForm';
+import { Calendar, Truck, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import RotaEntregasHoje from '../components/logistica/RotaEntregasHoje';
 import HistoricoEntregas from '../components/logistica/HistoricoEntregas';
 import PlanejamentoSemanal from '../components/logistica/PlanejamentoSemanal';
-import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -131,17 +129,13 @@ export default function LogisticaPage() {
         {/* Tabs */}
         <Tabs defaultValue="planejamento" className="space-y-6">
           <TabsList className="flex w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 overflow-x-auto">
-            <TabsTrigger value="conferencia" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 gap-2 min-w-[140px]">
-              <QrCode className="w-4 h-4 text-gray-700 dark:text-gray-400"/> 
-              <span className="text-sm">Conferência</span>
-            </TabsTrigger>
             <TabsTrigger value="planejamento" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 gap-2 min-w-[140px]">
               <Clock className="w-4 h-4 text-gray-700 dark:text-gray-400"/> 
-              <span className="text-sm">Planejamento (Inbound)</span>
+              <span className="text-sm">Planejamento Inbound</span>
             </TabsTrigger>
-            <TabsTrigger value="agendar" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 gap-2 min-w-[140px]">
+            <TabsTrigger value="rotas" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 gap-2 min-w-[140px]">
               <Calendar className="w-4 h-4 text-gray-700 dark:text-gray-400"/> 
-              <span className="text-sm">Agendar (Outbound)</span>
+              <span className="text-sm">Agendamentos Outbound</span>
             </TabsTrigger>
             <TabsTrigger value="rota-hoje" className="flex-1 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 gap-2 min-w-[140px]">
               <Truck className="w-4 h-4 text-gray-700 dark:text-gray-400"/> 
@@ -153,19 +147,43 @@ export default function LogisticaPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="conferencia">
-            <GestaoCodigosConferenciaHub />
-          </TabsContent>
-
           <TabsContent value="planejamento">
             <PlanejamentoSemanal />
           </TabsContent>
 
-          <TabsContent value="agendar">
-            <AgendamentoForm 
-              pedidosPendentes={pedidosPendentes}
-              onSuccess={loadData}
-            />
+          <TabsContent value="rotas">
+            <div className="space-y-4">
+              {pedidosPendentes.length > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    {pedidosPendentes.length} pedido(s) aguardando programação de entrega
+                  </p>
+                </div>
+              )}
+              <div className="grid gap-4">
+                {entregas
+                  .filter(e => e.status === 'Agendado' || e.status === 'Aguardando Programação')
+                  .map(entrega => (
+                    <div key={entrega.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium text-sm">{entrega.pedido_numero || 'Pedido'}</div>
+                        <Badge variant="outline">{entrega.status}</Badge>
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-1">
+                        <div>{entrega.cliente_nome}</div>
+                        <div>{entrega.endereco_entrega}</div>
+                        {entrega.data_agendada && (
+                          <div className="flex items-center gap-1 mt-2">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(entrega.data_agendada), 'dd/MM/yyyy', { locale: ptBR })}
+                            {entrega.turno_entrega && ` - ${entrega.turno_entrega}`}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="rota-hoje">
@@ -181,115 +199,6 @@ export default function LogisticaPage() {
             />
           </TabsContent>
         </Tabs>
-    </div>
-  );
-}
-
-function GestaoCodigosConferenciaHub() {
-  const [supermanifestos, setSupermanifestos] = useState([]);
-  const [manifestos, setManifestos] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    carregarDados();
-  }, []);
-
-  const carregarDados = async () => {
-    try {
-      const [smData, meData] = await Promise.all([
-        base44.entities.Supermanifesto.list('-created_date', 50),
-        base44.entities.ManifestoEntrada.list('-created_date', 50)
-      ]);
-      setSupermanifestos(smData);
-      setManifestos(meData);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  if (carregando) {
-    return <div className="text-center py-12 text-gray-500">Carregando...</div>;
-  }
-
-  const manifestosPendentes = manifestos.filter(m => 
-    m.status_codigo_conferencia_itens !== 'Concluído'
-  );
-
-  const supermanifestosPendentes = supermanifestos.filter(s => 
-    s.status_codigo_conferencia_volumes !== 'Concluído'
-  );
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <QrCode className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
-              Geração de Códigos para Conferência
-            </p>
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              Gere códigos únicos para conferência cega de volumes e itens. Os conferentes usarão estes códigos na tela de armazenagem.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {supermanifestosPendentes.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">SUPERMANIFESTOS</h3>
-          <div className="grid gap-3">
-            {supermanifestosPendentes.map((sm) => (
-              <div key={sm.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="font-medium text-sm">{sm.numero}</div>
-                    <div className="text-xs text-gray-500">{sm.transportadora_nome}</div>
-                  </div>
-                  <Badge variant="outline">{sm.status}</Badge>
-                </div>
-                <GestaoCodigosConferencia 
-                  manifesto={sm} 
-                  tipo="volumes" 
-                  onUpdate={carregarDados}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {manifestosPendentes.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">MANIFESTOS DE ENTRADA</h3>
-          <div className="grid gap-3">
-            {manifestosPendentes.map((me) => (
-              <div key={me.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="font-medium text-sm">{me.numero}</div>
-                    <div className="text-xs text-gray-500">Pedido: {me.pedido_numero}</div>
-                  </div>
-                  <Badge variant="outline">{me.status}</Badge>
-                </div>
-                <GestaoCodigosConferencia 
-                  manifesto={me} 
-                  tipo="itens" 
-                  onUpdate={carregarDados}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {manifestosPendentes.length === 0 && supermanifestosPendentes.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          Nenhum manifesto aguardando conferência
-        </div>
-      )}
     </div>
   );
 }
