@@ -491,7 +491,20 @@ export default function ComprasPage() {
               </TabsContent>
               
               <TabsContent value="conferencia" className="p-2 mt-0">
-                <ConferenciaTab />
+                <Tabs defaultValue="codigos" className="w-full">
+                  <TabsList className="grid grid-cols-2 mb-4">
+                    <TabsTrigger value="codigos">GERAR CÓDIGOS</TabsTrigger>
+                    <TabsTrigger value="fiscalizacao">FISCALIZAÇÃO</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="codigos">
+                    <ConferenciaTab />
+                  </TabsContent>
+
+                  <TabsContent value="fiscalizacao">
+                    <PainelConferencias />
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </Tabs>
           </div>

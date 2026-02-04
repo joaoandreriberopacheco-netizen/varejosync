@@ -19,6 +19,12 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
     : manifesto.status_codigo_conferencia_itens;
 
   const handleGerarCodigo = async () => {
+    // Verificar se já foi conferido
+    if (status === 'Concluído') {
+      toast.error('Esta conferência já foi finalizada');
+      return;
+    }
+
     try {
       setGerando(true);
       
