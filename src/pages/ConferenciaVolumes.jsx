@@ -264,7 +264,7 @@ export default function ConferenciaVolumes() {
       });
 
       toast.success('Conferência finalizada com sucesso!');
-      navigate('/HubLogistico');
+      navigate('/ConferenciaEntrada');
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao finalizar conferência');
@@ -453,7 +453,7 @@ export default function ConferenciaVolumes() {
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate('/HubLogistico')}
+              onClick={() => navigate('/ConferenciaEntrada')}
               className="flex-1 h-12 border-0 shadow-sm"
             >
               Cancelar
