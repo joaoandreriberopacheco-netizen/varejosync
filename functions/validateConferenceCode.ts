@@ -73,7 +73,9 @@ Deno.serve(async (req) => {
           status: manifesto.status,
           peso_total_bruto_kg: manifesto.peso_total_bruto_kg,
           pedidos_vinculados: manifesto.pedidos_vinculados,
-          observacoes_consolidadas: manifesto.observacoes_consolidadas
+          observacoes_consolidadas: manifesto.observacoes_consolidadas,
+          volumes: manifesto.volumes,
+          status_codigo_conferencia_volumes: manifesto.status_codigo_conferencia_volumes
         },
         conferente: {
           id: user.id,
