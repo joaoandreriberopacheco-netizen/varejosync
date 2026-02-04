@@ -250,7 +250,7 @@ export default function ConferenciaItens() {
       }
 
       toast.success('Conferência concluída e estoque atualizado!');
-      navigate('/HubLogistico');
+      navigate('/ConferenciaEntrada');
     } catch (error) {
       console.error('Erro:', error);
       toast.error('Erro ao finalizar conferência');
@@ -359,7 +359,7 @@ export default function ConferenciaItens() {
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate('/HubLogistico')}
+              onClick={() => navigate('/ConferenciaEntrada')}
               className="flex-1 h-14 text-base border-0 shadow-sm"
             >
               CANCELAR
