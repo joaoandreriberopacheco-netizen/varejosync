@@ -71,27 +71,15 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
 
-    // Atualiza o manifesto com o novo código
+    // Atualiza o manifesto com o novo código e invalida o anterior
     const updateData = {};
     
     if (tipo === 'volumes') {
-      // Invalida código anterior se existir
-      const manifestoAtual = await base44.asServiceRole.entities.Supermanifesto.filter({ id: manifesto_id });
-      if (manifestoAtual.length > 0 && manifestoAtual[0].codigo_conferencia_volumes) {
-        updateData.codigo_conferencia_volumes_anterior = manifestoAtual[0].codigo_conferencia_volumes;
-      }
-      
       updateData.codigo_conferencia_volumes = codigo;
       updateData.status_codigo_conferencia_volumes = 'Gerado';
       
       await base44.asServiceRole.entities.Supermanifesto.update(manifesto_id, updateData);
     } else {
-      // Invalida código anterior se existir
-      const manifestoAtual = await base44.asServiceRole.entities.ManifestoEntrada.filter({ id: manifesto_id });
-      if (manifestoAtual.length > 0 && manifestoAtual[0].codigo_conferencia_itens) {
-        updateData.codigo_conferencia_itens_anterior = manifestoAtual[0].codigo_conferencia_itens;
-      }
-      
       updateData.codigo_conferencia_itens = codigo;
       updateData.status_codigo_conferencia_itens = 'Gerado';
       
