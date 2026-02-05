@@ -133,7 +133,7 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
             </p>
           )}
 
-          {(status === 'Expirado' || status === 'Concluído') && (
+          {(status === 'Em Uso' || status === 'Expirado' || status === 'Concluído') && (
             <Button
               variant="outline"
               size="sm"
@@ -142,8 +142,14 @@ export default function GestaoCodigosConferencia({ manifesto, tipo = 'volumes', 
               className="w-full gap-2"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${gerando ? 'animate-spin' : ''}`} />
-              Gerar Novo Código
+              {status === 'Em Uso' ? 'Renovar Código' : 'Gerar Novo Código'}
             </Button>
+          )}
+          
+          {status === 'Em Uso' && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Código em uso. Gerar novo irá invalidar o código atual.
+            </p>
           )}
         </div>
       ) : (
