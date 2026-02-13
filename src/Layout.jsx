@@ -326,11 +326,12 @@ export default function Layout({ children, currentPageName }) {
             {(isOpen || isMobile) ? (
               <>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">VS</span>
+                  <div className="h-12 w-12 rounded-xl bg-white border border-gray-200 dark:border-gray-700 flex items-center justify-center shadow-sm relative overflow-hidden">
+                    <ShoppingCart className="w-5 h-5 text-gray-900 dark:text-white absolute" strokeWidth={2.5} />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-tl-lg"></div>
                   </div>
                   <div>
-                    <h1 className="text-base font-semibold text-gray-700 dark:text-white">VarejoSync</h1>
+                    <h1 className="text-base font-semibold text-gray-900 dark:text-white font-glacial">VarejoSync</h1>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Sistema ERP</p>
                   </div>
                 </div>
@@ -341,8 +342,9 @@ export default function Layout({ children, currentPageName }) {
                 )}
               </>
             ) : (
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto">
-                <span className="text-white font-bold text-lg">VS</span>
+              <div className="h-10 w-10 rounded-xl bg-white border border-gray-200 dark:border-gray-700 flex items-center justify-center mx-auto shadow-sm relative overflow-hidden">
+                <ShoppingCart className="w-4 h-4 text-gray-900 dark:text-white" strokeWidth={2.5} />
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-tl-lg"></div>
               </div>
             )}
           </div>
