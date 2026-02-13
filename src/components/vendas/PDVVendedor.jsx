@@ -64,6 +64,7 @@ export default function PDVVendedor() {
   const [configVenda, setConfigVenda] = useState(null);
   const [showReeditarDialog, setShowReeditarDialog] = useState(false);
   const [senhaReeditar, setSenhaReeditar] = useState('');
+  const [rascunhoEmEdicaoId, setRascunhoEmEdicaoId] = useState(null);
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -199,6 +200,7 @@ export default function PDVVendedor() {
           }));
           
           setCarrinho(itensCarrinho);
+          setRascunhoEmEdicaoId(rascunho.id);
           
           // Carregar cliente se existir
           if (rascunho.cliente_id) {
@@ -512,6 +514,7 @@ export default function PDVVendedor() {
     setCarrinho([]);
     setProdutoSelecionado(null);
     setValorAjuste(0);
+    setRascunhoEmEdicaoId(null);
     showFeedback('info', 'Carrinho limpo', 2000);
   };
 
@@ -598,53 +601,86 @@ export default function PDVVendedor() {
     setIsProcessing(true);
 
     try {
-      // Gerar senha de atendimento no formato AAMMDD###
-      const hoje = new Date();
-      const ano = String(hoje.getFullYear()).slice(-2);
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      const prefixoData = `${ano}${mes}${dia}`;
+      let rascunhoFinal;
 
-      // Buscar rascunhos de hoje para gerar o próximo número sequencial
-      const todosRascunhos = await base44.entities.RascunhoPedidoVenda.list();
-      const rascunhosHoje = todosRascunhos.filter(r => 
-        r.senha_atendimento?.startsWith(prefixoData)
-      );
-      const proximoSequencial = rascunhosHoje.length + 1;
-      const senhaAtendimento = `${prefixoData}${String(proximoSequencial).padStart(3, '0')}`;
+      // Se está editando um rascunho existente, atualizar
+      if (rascunhoEmEdicaoId) {
+        const rascunhoExistente = await base44.entities.RascunhoPedidoVenda.get(rascunhoEmEdicaoId);
+        
+        const rascunhoData = {
+          cliente_id: clienteSelecionado.id,
+          cliente_nome: clienteSelecionado.nome,
+          vendedor_id: currentUser.id,
+          vendedor_nome: currentUser.full_name,
+          tabela_preco_id: tabelaPreco?.id,
+          status: 'Aguardando Caixa',
+          metodo_entrega: metodoEntrega,
+          itens: carrinho.map((item) => ({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            quantidade: item.quantidade,
+            preco_unitario_praticado: item.preco_unitario_praticado,
+            custo_unitario_momento: item.custo_unitario_momento || 0,
+            total: item.total
+          })),
+          subtotal,
+          valor_desconto: tipoAjuste === 'desconto' ? valorAjusteCalculado : 0,
+          valor_frete: 0,
+          valor_total: valorTotal
+        };
 
-      const rascunhoData = {
-        senha_atendimento: senhaAtendimento,
-        tipo: 'PDV',
-        cliente_id: clienteSelecionado.id,
-        cliente_nome: clienteSelecionado.nome,
-        vendedor_id: currentUser.id,
-        vendedor_nome: currentUser.full_name,
-        tabela_preco_id: tabelaPreco?.id,
-        status: 'Aguardando Caixa',
-        metodo_entrega: metodoEntrega,
-        itens: carrinho.map((item) => ({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade: item.quantidade,
-          preco_unitario_praticado: item.preco_unitario_praticado,
-          custo_unitario_momento: item.custo_unitario_momento || 0,
-          total: item.total
-        })),
-        subtotal,
-        valor_desconto: tipoAjuste === 'desconto' ? valorAjusteCalculado : 0,
-        valor_frete: 0,
-        valor_total: valorTotal
-      };
+        await base44.entities.RascunhoPedidoVenda.update(rascunhoEmEdicaoId, rascunhoData);
+        rascunhoFinal = {
+          ...rascunhoExistente,
+          ...rascunhoData,
+          id: rascunhoEmEdicaoId
+        };
 
-      console.log('Criando rascunho com senha:', senhaAtendimento);
-      const novoRascunho = await base44.entities.RascunhoPedidoVenda.create(rascunhoData);
-      console.log('Rascunho criado:', novoRascunho);
+        showFeedback('success', `Senha ${rascunhoExistente.senha_atendimento.slice(-4)} atualizada`, 3000);
+      } else {
+        // Criar novo rascunho
+        const hoje = new Date();
+        const ano = String(hoje.getFullYear()).slice(-2);
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        const prefixoData = `${ano}${mes}${dia}`;
 
-      setUltimaPreVenda({
-        ...novoRascunho,
-        ...rascunhoData
-      });
+        const todosRascunhos = await base44.entities.RascunhoPedidoVenda.list();
+        const rascunhosHoje = todosRascunhos.filter(r => 
+          r.senha_atendimento?.startsWith(prefixoData)
+        );
+        const proximoSequencial = rascunhosHoje.length + 1;
+        const senhaAtendimento = `${prefixoData}${String(proximoSequencial).padStart(3, '0')}`;
+
+        const rascunhoData = {
+          senha_atendimento: senhaAtendimento,
+          tipo: 'PDV',
+          cliente_id: clienteSelecionado.id,
+          cliente_nome: clienteSelecionado.nome,
+          vendedor_id: currentUser.id,
+          vendedor_nome: currentUser.full_name,
+          tabela_preco_id: tabelaPreco?.id,
+          status: 'Aguardando Caixa',
+          metodo_entrega: metodoEntrega,
+          itens: carrinho.map((item) => ({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            quantidade: item.quantidade,
+            preco_unitario_praticado: item.preco_unitario_praticado,
+            custo_unitario_momento: item.custo_unitario_momento || 0,
+            total: item.total
+          })),
+          subtotal,
+          valor_desconto: tipoAjuste === 'desconto' ? valorAjusteCalculado : 0,
+          valor_frete: 0,
+          valor_total: valorTotal
+        };
+
+        rascunhoFinal = await base44.entities.RascunhoPedidoVenda.create(rascunhoData);
+        showFeedback('success', `Senha ${senhaAtendimento.slice(-4)} enviada ao caixa`, 3000);
+      }
+
+      setUltimaPreVenda(rascunhoFinal);
       setShowComprovante(true);
 
       setCarrinho([]);
@@ -652,8 +688,7 @@ export default function PDVVendedor() {
       setShowClienteDialog(false);
       setMetodoEntrega('Retirada');
       setValorAjuste(0);
-
-      showFeedback('success', `Senha ${senhaAtendimento.slice(-4)} enviada ao caixa`, 3000);
+      setRascunhoEmEdicaoId(null);
 
       setTimeout(() => inputProdutoRef.current?.focus(), 500);
     } catch (error) {
@@ -731,6 +766,9 @@ export default function PDVVendedor() {
         setTipoValorAjuste('valor');
       }
 
+      // Armazenar ID para atualização posterior
+      setRascunhoEmEdicaoId(rascunhoEncontrado.id);
+      
       // Atualizar status do rascunho para "Em Edição"
       await base44.entities.RascunhoPedidoVenda.update(rascunhoEncontrado.id, {
         status: 'Em Edição'
