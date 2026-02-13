@@ -29,7 +29,8 @@ import {
   Lock,
   Printer,
   Keyboard,
-  AlertCircle } from
+  AlertCircle,
+  Edit } from
 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
@@ -90,6 +91,8 @@ export default function PDVCaixa() {
   const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
   const [clienteVenda, setClienteVenda] = useState(null);
+  const [showRetornoDialog, setShowRetornoDialog] = useState(false);
+  const [motivoRetorno, setMotivoRetorno] = useState('');
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -390,6 +393,42 @@ export default function PDVCaixa() {
   const handleAbrirPedido = (pedido) => {
     setPedidoSelecionado(pedido);
     setIsDialogOpen(true);
+  };
+
+  const handleRetornarParaEdicao = async () => {
+    if (!motivoRetorno.trim()) {
+      toast({
+        title: "Motivo obrigatório",
+        description: "Informe o motivo do retorno para edição.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await base44.entities.RascunhoPedidoVenda.update(pedidoSelecionado.id, {
+        status: 'Retornado para Edição',
+        motivo_retorno: motivoRetorno,
+        data_retorno: new Date().toISOString()
+      });
+
+      toast({
+        title: "✓ Retornado para edição",
+        description: "O rascunho foi devolvido ao vendedor.",
+        className: "bg-emerald-100 text-emerald-800"
+      });
+
+      setShowRetornoDialog(false);
+      setIsDialogOpen(false);
+      setMotivoRetorno('');
+      loadData();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleFinalizarVenda = async () => {
@@ -893,12 +932,25 @@ export default function PDVCaixa() {
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
                           </div>
-                          <Button
-                      size="sm"
-                      className="mt-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white">
-
-                            Confirmar
-                          </Button>
+                          <div className="flex gap-2 mt-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowRetornoDialog(true);
+                                setPedidoSelecionado(rascunho);
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600"
+                            >
+                              <Edit className="w-4 h-4 text-gray-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white">
+                              Confirmar
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1256,14 +1308,22 @@ export default function PDVCaixa() {
                   </div>
                 </div>
 
-                <Button
-                onClick={handleFinalizarVenda}
-                disabled={!pagamentoValido}
-                className="w-full h-14 text-lg font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl">
-
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Aprovar Pagamento {pagamentoValido && '(Enter)'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRetornoDialog(true)}
+                    className="flex-1 h-12 gap-2 border-gray-300 dark:border-gray-600">
+                    <Edit className="w-4 h-4" />
+                    Retornar para Edição
+                  </Button>
+                  <Button
+                    onClick={handleFinalizarVenda}
+                    disabled={!pagamentoValido}
+                    className="flex-1 h-14 text-lg font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl">
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    Aprovar {pagamentoValido && '(Enter)'}
+                  </Button>
+                </div>
               </div>
             }
           </DialogContent>
@@ -1456,6 +1516,52 @@ export default function PDVCaixa() {
           pedido={vendaFinalizada}
           cliente={clienteVenda}
         />
+
+        {/* Dialog de Retorno para Edição */}
+        <Dialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog}>
+          <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
+            <DialogHeader>
+              <DialogTitle className="text-base flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                <Edit className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                Retornar para Edição
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                <p className="text-xs text-amber-800 dark:text-amber-300">
+                  O rascunho será devolvido ao vendedor para correção.
+                </p>
+              </div>
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300">Motivo do retorno *</Label>
+                <Textarea
+                  placeholder="Ex: Cliente solicitou alteração de produto, erro no valor..."
+                  value={motivoRetorno}
+                  onChange={(e) => setMotivoRetorno(e.target.value)}
+                  rows={3}
+                  className="dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowRetornoDialog(false);
+                    setMotivoRetorno('');
+                  }} 
+                  className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleRetornarParaEdicao}
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600">
+                  Confirmar Retorno
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>);
 
