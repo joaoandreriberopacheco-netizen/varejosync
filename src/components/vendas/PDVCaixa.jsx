@@ -652,21 +652,21 @@ export default function PDVCaixa() {
 
 
 
+
+
+
+
+
+
+
+
+
+
           // Logic for Balcao with manual delivery (Logistics) could go here
           // For now, we assume default behavior or simple completion
-        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowLiberacaoEntrega(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível identificar a conta do caixa.", variant: "destructive" });return;}try {const valorFloat = parseFloat(valorMovimento.replace(',', '.'));const todosMovimentos = await base44.entities.MovimentosCaixa.list();
-      const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
-      const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;
-
-      const movimento = await base44.entities.MovimentosCaixa.create({
-        numero: numeroMovimento,
-        tipo: tipoMovimento,
-        valor: valorFloat,
-        observacao: observacaoMovimento,
-        conta_id: contaCaixaPDV.id,
-        usuario_responsavel_id: currentUser.id,
-        usuario_responsavel_nome: currentUser.full_name
-      });
+        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowLiberacaoEntrega(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível identificar a conta do caixa.", variant: "destructive" });return;}try {const valorFloat = parseFloat(valorMovimento.replace(',', '.'));const todosMovimentos = await base44.entities.MovimentosCaixa.list();const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;const movimento = await base44.entities.MovimentosCaixa.create({ numero: numeroMovimento, tipo: tipoMovimento, valor: valorFloat, observacao: observacaoMovimento, conta_id: contaCaixaPDV.id, usuario_responsavel_id: currentUser.id,
+          usuario_responsavel_nome: currentUser.full_name
+        });
 
       const novoSaldo = tipoMovimento === 'Sangria' ?
       contaCaixaPDV.saldo_atual - valorFloat :
@@ -853,7 +853,7 @@ export default function PDVCaixa() {
 
 
                 <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 text-gray-800 dark:text-gray-300" />
-                <span className="text-xs font-semibold md:text-base">Vendas</span>
+                <span className="text-slate-800 text-xs font-semibold md:text-base">Vendas</span>
               </Button>
               <Button
               onClick={handleAbrirBalanco}
@@ -861,7 +861,7 @@ export default function PDVCaixa() {
 
 
                 <Wallet className="w-5 h-5 md:w-6 md:h-6 text-gray-800 dark:text-gray-300" />
-                <span className="text-xs md:text-base">Balanço</span>
+                <span className="text-slate-800 text-xs md:text-base">Balanço</span>
               </Button>
             </div>
 
@@ -874,7 +874,7 @@ export default function PDVCaixa() {
               disabled={!contaCaixaPDV}>
 
                 <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                <span className="text-xs md:text-sm">Reforço</span>
+                <span className="text-slate-800 text-xs md:text-sm">Reforço</span>
               </Button>
               
               <Button
@@ -884,7 +884,7 @@ export default function PDVCaixa() {
               disabled={!contaCaixaPDV}>
 
                 <Minus className="text-red-500 lucide lucide-minus w-4 h-4 dark:text-yellow-400" />
-                <span className="text-xs md:text-sm">Sangria</span>
+                <span className="text-slate-800 text-xs md:text-sm">Sangria</span>
               </Button>
 
               <Button
@@ -893,7 +893,7 @@ export default function PDVCaixa() {
 
 
                 <Lock className="text-gray-800 lucide lucide-lock w-4 h-4 dark:text-red-400" />
-                <span className="text-black text-xs md:text-sm">Fechar</span>
+                <span className="text-slate-800 text-xs md:text-sm">Fechar</span>
               </Button>
             </div>
           </div>
