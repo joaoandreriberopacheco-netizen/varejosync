@@ -17,11 +17,9 @@ export default function CaixasAtivosPage() {
 
   const loadData = async () => {
     setIsLoading(true);
-    
-    const tenantId = getTenantId();
 
     // Buscar todos os caixas físicos ativos
-    const todasContas = await base44.entities.ContasFinanceiras.filter({ empresa_id: tenantId });
+    const todasContas = await base44.entities.ContasFinanceiras.list();
     const caixasFisicos = todasContas.filter(c => c.tipo === 'Caixa Físico' && c.ativo);
     
     setCaixas(caixasFisicos);
@@ -33,9 +31,9 @@ export default function CaixasAtivosPage() {
     
     // Carregar dados em paralelo para performance
     const [todosLancamentos, todosMovimentos, todosPedidos] = await Promise.all([
-      base44.entities.LancamentoFinanceiro.filter({ empresa_id: tenantId }),
-      base44.entities.MovimentosCaixa.filter({ empresa_id: tenantId }),
-      base44.entities.PedidoVenda.filter({ empresa_id: tenantId })
+      base44.entities.LancamentoFinanceiro.list(),
+      base44.entities.MovimentosCaixa.list(),
+      base44.entities.PedidoVenda.list()
     ]);
 
     for (const caixa of caixasFisicos) {
