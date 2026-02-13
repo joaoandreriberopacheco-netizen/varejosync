@@ -35,6 +35,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 import { createPageUrl } from '@/utils';
+import { useNavigate } from 'react-router-dom';
 import LiberacaoEntrega from './LiberacaoEntrega';
 
 
@@ -938,10 +939,10 @@ export default function PDVCaixa() {
                               variant="ghost"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setShowRetornoDialog(true);
-                                setPedidoSelecionado(rascunho);
+                                window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
                               }}
                               className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600"
+                              title="Editar rascunho"
                             >
                               <Edit className="w-4 h-4 text-gray-500" />
                             </Button>

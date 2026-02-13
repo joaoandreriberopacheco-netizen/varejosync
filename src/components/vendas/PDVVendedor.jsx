@@ -154,6 +154,7 @@ export default function PDVVendedor() {
   useEffect(() => {
     loadDependencies();
     loadConfiguracoesVenda();
+    verificarRascunhoParaEdicao();
   }, []);
 
   const loadConfiguracoesVenda = async () => {
@@ -170,6 +171,57 @@ export default function PDVVendedor() {
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
+    }
+  };
+
+  const verificarRascunhoParaEdicao = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const rascunhoId = urlParams.get('rascunho_id');
+    
+    if (rascunhoId) {
+      try {
+        const rascunho = await base44.entities.RascunhoPedidoVenda.get(rascunhoId);
+        
+        if (rascunho && rascunho.status === 'Retornado para Edição') {
+          // Recarregar o carrinho com os itens do rascunho
+          const itensCarrinho = rascunho.itens.map(item => ({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            codigo_interno: item.codigo_interno || '001',
+            quantidade: item.quantidade,
+            preco_unitario: item.preco_unitario_praticado,
+            preco_unitario_praticado: item.preco_unitario_praticado,
+            custo_unitario_momento: item.custo_unitario_momento || 0,
+            total: item.total,
+            estoque_disponivel: 999
+          }));
+          
+          setCarrinho(itensCarrinho);
+          
+          // Carregar cliente se existir
+          if (rascunho.cliente_id) {
+            const cliente = await base44.entities.Terceiro.get(rascunho.cliente_id);
+            setClienteSelecionado(cliente);
+          }
+          
+          // Definir método de entrega
+          if (rascunho.metodo_entrega) {
+            setMetodoEntrega(rascunho.metodo_entrega);
+          }
+          
+          // Definir desconto se houver
+          if (rascunho.valor_desconto > 0) {
+            setTipoAjuste('desconto');
+            setValorAjuste(rascunho.valor_desconto);
+            setTipoValorAjuste('valor');
+          }
+          
+          showFeedback('info', `Editando rascunho - Senha ${rascunho.senha_atendimento.slice(-4)}`, 3000);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar rascunho:', error);
+        showFeedback('error', 'Erro ao carregar rascunho para edição', 3000);
+      }
     }
   };
 
