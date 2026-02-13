@@ -601,7 +601,7 @@ export default function VendasGestaoPage() {
               </Table>
             </div>
 
-            {/* Subtotal */}
+            {/* Subtotal Pedidos */}
             <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
               <span className="text-sm text-gray-500">Subtotal ({quantidadeFiltrada})</span>
               <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
@@ -609,6 +609,8 @@ export default function VendasGestaoPage() {
           </>
         )}
       </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog de Formulário */}
       {isFormOpen && (
