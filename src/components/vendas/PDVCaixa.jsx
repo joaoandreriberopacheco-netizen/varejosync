@@ -489,7 +489,7 @@ export default function PDVCaixa() {
 
       // Converter rascunho para PedidoVenda
       const todosPedidos = await base44.entities.PedidoVenda.list();
-      const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map(p => parseInt(p.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
+      const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map((p) => parseInt(p.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroPedido = `PV-${String(nextNumber).padStart(5, '0')}`;
 
       const pedidoVenda = await base44.entities.PedidoVenda.create({
@@ -626,21 +626,21 @@ export default function PDVCaixa() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
           // Logic for Balcao with manual delivery (Logistics) could go here
           // For now, we assume default behavior or simple completion
-        }
-      }
-
-      toast({ 
-        title: "✓ Pagamento aprovado!", 
-        description: "Venda finalizada com sucesso.", 
-        className: "bg-emerald-100 text-emerald-800", 
-        duration: 2000 
-      });
-
-      setIsDialogOpen(false);
-      setShowLiberacaoEntrega(true);
-      loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}
+        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowLiberacaoEntrega(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}
 
     if (!contaCaixaPDV) {
       toast({
@@ -849,16 +849,16 @@ export default function PDVCaixa() {
             <div className="bg-transparent grid grid-cols-2 gap-3 md:gap-4">
               <Button
               onClick={handleProcessarVendas}
-              size="lg"
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+              size="lg" className="bg-slate-50 text-gray-800 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+
 
                 <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 text-gray-800 dark:text-gray-300" />
                 <span className="text-xs font-semibold md:text-base">Vendas</span>
               </Button>
               <Button
               onClick={handleAbrirBalanco}
-              size="lg"
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+              size="lg" className="bg-slate-50 text-slate-700 px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+
 
                 <Wallet className="w-5 h-5 md:w-6 md:h-6 text-gray-800 dark:text-gray-300" />
                 <span className="text-xs md:text-base">Balanço</span>
@@ -869,8 +869,8 @@ export default function PDVCaixa() {
             <div className="grid grid-cols-3 gap-2">
               <Button
               onClick={() => handleAbrirMovimento('Reforço')}
-              size="sm"
-              className="gap-1 md:gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
+              size="sm" className="bg-slate-50 text-gray-800 px-3 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-9 gap-1 md:gap-2 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
+
               disabled={!contaCaixaPDV}>
 
                 <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
@@ -879,8 +879,8 @@ export default function PDVCaixa() {
               
               <Button
               onClick={() => handleAbrirMovimento('Sangria')}
-              size="sm"
-              className="gap-1 md:gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
+              size="sm" className="bg-slate-50 text-gray-800 px-3 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-9 gap-1 md:gap-2 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
+
               disabled={!contaCaixaPDV}>
 
                 <Minus className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
@@ -889,10 +889,10 @@ export default function PDVCaixa() {
 
               <Button
               onClick={handleFecharCaixa}
-              size="sm"
-              className="gap-1 md:gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14">
+              size="sm" className="bg-slate-50 text-gray-800 px-3 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-9 gap-1 md:gap-2 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14">
 
-                <Lock className="w-4 h-4 text-red-600 dark:text-red-400" />
+
+                <Lock className="text-gray-800 lucide lucide-lock w-4 h-4 dark:text-red-400" />
                 <span className="text-xs md:text-sm">Fechar</span>
               </Button>
             </div>
@@ -942,15 +942,15 @@ export default function PDVCaixa() {
 
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          {rascunho.senha_atendimento && (
-                            <div className="inline-flex flex-col items-start gap-1 mb-2">
+                          {rascunho.senha_atendimento &&
+                    <div className="inline-flex flex-col items-start gap-1 mb-2">
                               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                 <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
                                 <span className="text-3xl font-bold text-gray-800 dark:text-gray-200 font-mono">{rascunho.senha_atendimento.slice(-4)}</span>
                               </div>
                               <span className="text-xs text-gray-400 font-mono">{rascunho.senha_atendimento}</span>
                             </div>
-                          )}
+                    }
                           <div className="text-sm text-gray-600 dark:text-gray-400 truncate">{rascunho.cliente_nome}</div>
                           <div className="text-xs text-gray-400 dark:text-gray-500">Vendedor: {rascunho.vendedor_nome}</div>
                         </div>
@@ -963,20 +963,20 @@ export default function PDVCaixa() {
                           </div>
                           <div className="flex gap-2 mt-2">
                             <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
-                              }}
-                              className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600"
-                              title="Editar rascunho"
-                            >
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        title="Editar rascunho">
+
                               <Edit className="w-4 h-4 text-gray-500" />
                             </Button>
                             <Button
-                              size="sm"
-                              className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white">
+                        size="sm"
+                        className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white">
                               Confirmar
                             </Button>
                           </div>
@@ -1132,12 +1132,12 @@ export default function PDVCaixa() {
                       <div className="text-xs text-gray-600 dark:text-gray-400">Pedido</div>
                       <div className="font-bold text-lg text-gray-800 dark:text-gray-200">{pedidoSelecionado.numero}</div>
                     </div>
-                    {pedidoSelecionado.senha_atendimento && (
-                      <div className="text-center px-4 py-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-600">
+                    {pedidoSelecionado.senha_atendimento &&
+                  <div className="text-center px-4 py-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-600">
                         <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</div>
                         <div className="text-3xl font-bold text-gray-800 dark:text-gray-200 font-mono">{pedidoSelecionado.senha_atendimento}</div>
                       </div>
-                    )}
+                  }
                   </div>
                   <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">{pedidoSelecionado.cliente_nome}</div>
                   <div className="text-xs text-gray-500 dark:text-gray-500">Vendedor: {pedidoSelecionado.vendedor_nome}</div>
@@ -1152,8 +1152,8 @@ export default function PDVCaixa() {
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Itens da Venda</span>
                   </div>
                   <div className="max-h-48 overflow-y-auto">
-                    {pedidoSelecionado.itens?.map((item, idx) => (
-                      <div key={idx} className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                    {pedidoSelecionado.itens?.map((item, idx) =>
+                  <div key={idx} className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.produto_nome}</div>
@@ -1166,7 +1166,7 @@ export default function PDVCaixa() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                  )}
                   </div>
                   <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-center">
@@ -1339,16 +1339,16 @@ export default function PDVCaixa() {
 
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
-                    onClick={() => setShowRetornoDialog(true)}
-                    className="flex-1 h-12 gap-2 border-gray-300 dark:border-gray-600">
+                  variant="outline"
+                  onClick={() => setShowRetornoDialog(true)}
+                  className="flex-1 h-12 gap-2 border-gray-300 dark:border-gray-600">
                     <Edit className="w-4 h-4" />
                     Retornar para Edição
                   </Button>
                   <Button
-                    onClick={handleFinalizarVenda}
-                    disabled={!pagamentoValido}
-                    className="flex-1 h-14 text-lg font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl">
+                  onClick={handleFinalizarVenda}
+                  disabled={!pagamentoValido}
+                  className="flex-1 h-14 text-lg font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl">
                     <CheckCircle2 className="w-5 h-5 mr-2" />
                     Aprovar {pagamentoValido && '(Enter)'}
                   </Button>
@@ -1543,8 +1543,8 @@ export default function PDVCaixa() {
           open={showLiberacaoEntrega}
           onClose={() => setShowLiberacaoEntrega(false)}
           pedido={vendaFinalizada}
-          cliente={clienteVenda}
-        />
+          cliente={clienteVenda} />
+
 
         {/* Dialog de Retorno para Edição */}
         <Dialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog}>
@@ -1569,16 +1569,16 @@ export default function PDVCaixa() {
                   onChange={(e) => setMotivoRetorno(e.target.value)}
                   rows={3}
                   className="dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                  autoFocus
-                />
+                  autoFocus />
+
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setShowRetornoDialog(false);
                     setMotivoRetorno('');
-                  }} 
+                  }}
                   className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
                   Cancelar
                 </Button>
