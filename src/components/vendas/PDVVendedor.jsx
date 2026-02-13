@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Camera, Undo2, X } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Camera, Undo2, X, Edit } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 
@@ -62,6 +62,8 @@ export default function PDVVendedor() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [sugestoesContextuais, setSugestoesContextuais] = useState([]);
   const [configVenda, setConfigVenda] = useState(null);
+  const [showReeditarDialog, setShowReeditarDialog] = useState(false);
+  const [senhaReeditar, setSenhaReeditar] = useState('');
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -669,6 +671,79 @@ export default function PDVVendedor() {
     }
   };
 
+  const handleReeditarRascunho = async () => {
+    if (!senhaReeditar || senhaReeditar.length < 4) {
+      showFeedback('error', 'Digite os 4 últimos dígitos da senha', 3000);
+      return;
+    }
+
+    try {
+      // Buscar todos os rascunhos
+      const todosRascunhos = await base44.entities.RascunhoPedidoVenda.list();
+      
+      // Filtrar pela senha (últimos 4 dígitos)
+      const rascunhoEncontrado = todosRascunhos.find(r => 
+        r.senha_atendimento?.slice(-4) === senhaReeditar
+      );
+
+      if (!rascunhoEncontrado) {
+        showFeedback('error', 'Senha não encontrada', 3000);
+        return;
+      }
+
+      if (rascunhoEncontrado.status !== 'Aguardando Caixa' && rascunhoEncontrado.status !== 'Retornado para Edição') {
+        showFeedback('error', 'Este rascunho não pode ser editado', 3000);
+        return;
+      }
+
+      // Recarregar o carrinho com os itens do rascunho
+      const itensCarrinho = rascunhoEncontrado.itens.map(item => ({
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        codigo_interno: item.codigo_interno || '001',
+        quantidade: item.quantidade,
+        preco_unitario: item.preco_unitario_praticado,
+        preco_unitario_praticado: item.preco_unitario_praticado,
+        custo_unitario_momento: item.custo_unitario_momento || 0,
+        total: item.total,
+        estoque_disponivel: 999
+      }));
+      
+      setCarrinho(itensCarrinho);
+      
+      // Carregar cliente se existir
+      if (rascunhoEncontrado.cliente_id) {
+        const cliente = await base44.entities.Terceiro.get(rascunhoEncontrado.cliente_id);
+        setClienteSelecionado(cliente);
+      }
+      
+      // Definir método de entrega
+      if (rascunhoEncontrado.metodo_entrega) {
+        setMetodoEntrega(rascunhoEncontrado.metodo_entrega);
+      }
+      
+      // Definir desconto se houver
+      if (rascunhoEncontrado.valor_desconto > 0) {
+        setTipoAjuste('desconto');
+        setValorAjuste(rascunhoEncontrado.valor_desconto);
+        setTipoValorAjuste('valor');
+      }
+
+      // Atualizar status do rascunho para "Em Edição"
+      await base44.entities.RascunhoPedidoVenda.update(rascunhoEncontrado.id, {
+        status: 'Em Edição'
+      });
+      
+      setShowReeditarDialog(false);
+      setSenhaReeditar('');
+      showFeedback('success', `Editando senha ${senhaReeditar}`, 3000);
+      setTimeout(() => inputProdutoRef.current?.focus(), 500);
+    } catch (error) {
+      console.error('Erro ao buscar rascunho:', error);
+      showFeedback('error', 'Erro ao buscar rascunho', 3000);
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 relative">
       {/* Feedback Inline - Glacial Style */}
@@ -706,6 +781,15 @@ export default function PDVVendedor() {
             <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F3 Avançar</span>
             <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F4 Limpar</span>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowReeditarDialog(true)}
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8 rounded-lg"
+            title="Reeditar rascunho">
+
+            <Edit className="w-5 h-5 md:w-4 md:h-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -1623,6 +1707,66 @@ export default function PDVVendedor() {
             handleSelecionarProduto(produto);
           }
         }} />
+
+      {/* Dialog de Reeditar Rascunho */}
+      <Dialog open={showReeditarDialog} onOpenChange={setShowReeditarDialog}>
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 rounded-3xl border-0 shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-gray-100 dark:border-gray-800">
+            <DialogTitle className="text-xl font-medium text-gray-900 dark:text-white">Reeditar Rascunho</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-sm font-normal text-gray-500 dark:text-gray-400 mb-2 block">
+                Digite os 4 últimos dígitos da senha
+              </Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                placeholder="0000"
+                maxLength={4}
+                value={senhaReeditar}
+                onChange={(e) => {
+                  const value = e.target.value.slice(0, 4);
+                  setSenhaReeditar(value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleReeditarRascunho();
+                  }
+                }}
+                className="h-16 text-center text-2xl font-bold tracking-widest bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-xl"
+                autoFocus
+              />
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              A senha está impressa no comprovante do cliente
+            </p>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowReeditarDialog(false);
+                setSenhaReeditar('');
+              }}
+              className="w-full sm:w-auto h-12 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-base font-medium rounded-xl">
+
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleReeditarRascunho}
+              disabled={senhaReeditar.length < 4}
+              className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white w-full sm:w-auto h-12 text-base font-medium rounded-xl disabled:opacity-50">
+
+              Carregar Rascunho
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       </div>);
 
