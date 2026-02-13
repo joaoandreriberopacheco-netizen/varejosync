@@ -49,6 +49,7 @@ export default function PDVCaixa() {
   }, []);
   const [currentUser, setCurrentUser] = useState(null);
   const [pedidosAguardando, setPedidosAguardando] = useState([]);
+  const [rascunhosAguardando, setRascunhosAguardando] = useState([]);
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
   const [contaCaixaPDV, setContaCaixaPDV] = useState(null);
@@ -318,12 +319,18 @@ export default function PDVCaixa() {
       const hoje = format(new Date(), 'yyyy-MM-dd');
 
       const todosPedidos = await base44.entities.PedidoVenda.list();
+      const todosRascunhos = await base44.entities.RascunhoPedidoVenda.list();
 
       const pedidosAguardandoCaixa = todosPedidos.filter((p) =>
       p.status === 'Aguardando Caixa'
       );
 
+      const rascunhosAguardandoCaixa = todosRascunhos.filter((r) =>
+      r.status === 'Aguardando Caixa'
+      );
+
       setPedidosAguardando(pedidosAguardandoCaixa);
+      setRascunhosAguardando(rascunhosAguardandoCaixa);
 
       const vendasHoje = todosPedidos.filter((p) =>
       p.status === 'Finalizado' &&
@@ -839,7 +846,7 @@ export default function PDVCaixa() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                  Vendas Aguardando Confirmação ({pedidosAguardando.length})
+                  Vendas Aguardando Confirmação ({rascunhosAguardando.length})
                 </h2>
                 <Button
                 variant="ghost"
@@ -851,38 +858,40 @@ export default function PDVCaixa() {
                 </Button>
               </div>
 
-              {pedidosAguardando.length === 0 ?
+              {rascunhosAguardando.length === 0 ?
             <div className="py-16 text-center">
                   <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhum pedido aguardando confirmação</p>
+                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma venda aguardando confirmação</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui automaticamente</p>
                 </div> :
 
             <div className="space-y-3">
-                  {pedidosAguardando.map((pedido) =>
+                  {rascunhosAguardando.map((rascunho) =>
               <div
-                key={pedido.id}
+                key={rascunho.id}
                 className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer border border-gray-100 dark:border-gray-700"
-                onClick={() => handleAbrirPedido(pedido)}>
+                onClick={() => handleAbrirPedido(rascunho)}>
 
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          {pedido.senha_atendimento && (
-                            <div className="inline-flex items-center gap-2 mb-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                              <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
-                              <span className="text-2xl font-bold text-gray-800 dark:text-gray-200 font-mono">{pedido.senha_atendimento}</span>
+                          {rascunho.senha_atendimento && (
+                            <div className="inline-flex flex-col items-start gap-1 mb-2">
+                              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
+                                <span className="text-3xl font-bold text-gray-800 dark:text-gray-200 font-mono">{rascunho.senha_atendimento.slice(-4)}</span>
+                              </div>
+                              <span className="text-xs text-gray-400 font-mono">{rascunho.senha_atendimento}</span>
                             </div>
                           )}
-                          <div className="font-semibold text-base text-gray-800 dark:text-gray-200">{pedido.numero}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate">{pedido.cliente_nome}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">Vendedor: {pedido.vendedor_nome}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate">{rascunho.cliente_nome}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">Vendedor: {rascunho.vendedor_nome}</div>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                            R$ {formatarValorExibicao(pedido.valor_total)}
+                            R$ {formatarValorExibicao(rascunho.valor_total)}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {pedido.itens?.length || 0} {pedido.itens?.length === 1 ? 'item' : 'itens'}
+                            {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
                           </div>
                           <Button
                       size="sm"
@@ -895,7 +904,7 @@ export default function PDVCaixa() {
                     </div>
               )}
                   <p className="text-xs text-gray-400 text-center pt-2">
-                    Enter para processar o primeiro pedido
+                    Enter para processar a primeira venda
                   </p>
                 </div>
             }
