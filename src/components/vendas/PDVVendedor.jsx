@@ -691,8 +691,10 @@ export default function PDVVendedor() {
         return;
       }
 
-      if (rascunhoEncontrado.status !== 'Retornado para Edição') {
-        showFeedback('error', 'Esta senha não foi liberada pelo caixa para edição', 3000);
+      // Permitir edição apenas se ainda não foi convertido, cancelado ou expirado
+      const statusEditaveis = ['Aguardando Caixa', 'Em Edição', 'Retornado para Edição', 'Criado'];
+      if (!statusEditaveis.includes(rascunhoEncontrado.status)) {
+        showFeedback('error', 'Esta senha não pode mais ser editada', 3000);
         return;
       }
 
