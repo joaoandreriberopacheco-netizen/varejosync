@@ -487,9 +487,35 @@ export default function PDVCaixa() {
         });
       }
 
-      await base44.entities.PedidoVenda.update(pedidoSelecionado.id, {
+      // Converter rascunho para PedidoVenda
+      const todosPedidos = await base44.entities.PedidoVenda.list();
+      const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map(p => parseInt(p.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
+      const numeroPedido = `PV-${String(nextNumber).padStart(5, '0')}`;
+
+      const pedidoVenda = await base44.entities.PedidoVenda.create({
+        numero: numeroPedido,
+        senha_atendimento: pedidoSelecionado.senha_atendimento,
+        cliente_id: pedidoSelecionado.cliente_id,
+        cliente_nome: pedidoSelecionado.cliente_nome,
+        vendedor_id: pedidoSelecionado.vendedor_id,
+        vendedor_nome: pedidoSelecionado.vendedor_nome,
+        tabela_preco_id: pedidoSelecionado.tabela_preco_id,
+        tipo: pedidoSelecionado.tipo,
         status: 'Financeiro OK',
-        pagamentos: pagamentosArray
+        metodo_entrega: pedidoSelecionado.metodo_entrega,
+        itens: pedidoSelecionado.itens,
+        subtotal: pedidoSelecionado.subtotal,
+        valor_desconto: pedidoSelecionado.valor_desconto,
+        valor_frete: pedidoSelecionado.valor_frete,
+        valor_total: pedidoSelecionado.valor_total,
+        pagamentos: pagamentosArray,
+        observacoes: pedidoSelecionado.observacoes
+      });
+
+      // Atualizar rascunho como convertido
+      await base44.entities.RascunhoPedidoVenda.update(pedidoSelecionado.id, {
+        status: 'Convertido',
+        pedido_venda_final_id: pedidoVenda.id
       });
 
       // Criar movimentações de estoque para cada item vendido
@@ -501,7 +527,9 @@ export default function PDVCaixa() {
           motivo: 'Venda',
           quantidade: item.quantidade,
           custo_unitario: item.custo_unitario_momento || 0,
-          documento_referencia: pedidoSelecionado.numero,
+          referencia_tipo: 'PedidoVenda',
+          referencia_id: pedidoVenda.id,
+          referencia_numero: numeroPedido,
           usuario_responsavel: currentUser.full_name
         });
 
@@ -530,7 +558,7 @@ export default function PDVCaixa() {
       }
 
       setVendaFinalizada({
-        ...pedidoSelecionado,
+        ...pedidoVenda,
         pagamentos: pagamentosArray
       });
 
@@ -539,8 +567,8 @@ export default function PDVCaixa() {
         if (configVenda.fluxo_venda_padrao === 'Completo') {
           // Create OrdemSeparacao
           await base44.entities.OrdemSeparacao.create({
-            pedido_venda_id: pedidoSelecionado.id,
-            pedido_numero: pedidoSelecionado.numero,
+            pedido_venda_id: pedidoVenda.id,
+            pedido_numero: numeroPedido,
             status: 'Pendente',
             itens: pedidoSelecionado.itens.map((item) => ({
               produto_id: item.produto_id,
