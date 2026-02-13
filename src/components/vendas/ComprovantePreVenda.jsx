@@ -26,23 +26,22 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
         <div className="bg-white p-6 text-black" style={{ fontFamily: 'Courier New, monospace', fontSize: '13px', fontWeight: 500 }}>
           {/* Cabeçalho */}
           <div className="text-center border-b-2 border-dashed border-black pb-4 mb-4">
-            <h1 className="text-2xl font-black tracking-tight">VAREJOSYNC</h1>
+            <h1 className="text-2xl font-black tracking-tight">MANAH ERP</h1>
             <p className="text-xs font-semibold">Sistema de Gestão Integrada</p>
-            <p className="text-sm font-bold mt-2">PRÉ-VENDA / TICKET</p>
+            <p className="text-sm font-bold mt-2">SENHA DE ATENDIMENTO</p>
           </div>
 
-          {/* Informações da Pré-Venda */}
-          <div className="space-y-1.5 text-sm mb-4">
-            <div className="flex justify-between">
-              <span className="font-semibold">Ticket:</span>
-              <span className="font-black">{preVenda.numero}</span>
+          {/* Senha de Atendimento em Destaque */}
+          {preVenda.senha_atendimento && (
+            <div className="text-center bg-gray-200 border-2 border-black rounded-lg py-6 mb-4">
+              <p className="text-xs font-black uppercase tracking-widest mb-2">SENHA</p>
+              <p className="text-6xl font-black font-mono tracking-tight">{preVenda.senha_atendimento.slice(-4)}</p>
+              <p className="text-xs font-semibold mt-2 text-gray-600">{preVenda.senha_atendimento}</p>
             </div>
-            {preVenda.senha_atendimento && (
-              <div className="flex justify-between items-center bg-gray-200 -mx-6 px-6 py-3 my-2">
-                <span className="font-black text-xs uppercase tracking-wider">SENHA:</span>
-                <span className="font-black text-4xl font-mono">{preVenda.senha_atendimento}</span>
-              </div>
-            )}
+          )}
+
+          {/* Informações Resumidas */}
+          <div className="space-y-1.5 text-sm mb-4">
             <div className="flex justify-between">
               <span className="font-semibold">Data:</span>
               <span className="font-bold">{format(new Date(preVenda.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span>
@@ -61,31 +60,19 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
             </div>
           </div>
 
-          {/* Itens */}
+          {/* Resumo de Itens */}
           <div className="border-t-2 border-b-2 border-dashed border-black py-3 mb-3">
-            <div className="text-sm font-black mb-3">ITENS</div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-black">
-                  <th className="text-left font-bold pb-1 w-10">QTD</th>
-                  <th className="text-left font-bold pb-1">DESCRIÇÃO</th>
-                  <th className="text-right font-bold pb-1 w-20">PREÇO</th>
-                  <th className="text-right font-bold pb-1 w-24">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...(preVenda.itens || [])]
-                  .sort((a, b) => a.produto_nome.localeCompare(b.produto_nome))
-                  .map((item, idx) => (
-                  <tr key={idx} className="border-b border-gray-300 last:border-b-0">
-                    <td className="font-semibold py-1">{item.quantidade}</td>
-                    <td className="font-semibold py-1">{item.produto_nome}</td>
-                    <td className="text-right font-semibold py-1">R$ {formatValor(item.preco_unitario_praticado)}</td>
-                    <td className="text-right font-black py-1">R$ {formatValor(item.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="text-sm font-black mb-2">RESUMO DO PEDIDO</div>
+            <div className="text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="font-semibold">Total de itens:</span>
+                <span className="font-bold">{preVenda.itens?.reduce((acc, item) => acc + item.quantidade, 0) || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">Produtos diferentes:</span>
+                <span className="font-bold">{preVenda.itens?.length || 0}</span>
+              </div>
+            </div>
           </div>
 
           {/* Totais */}
@@ -113,11 +100,9 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
           {/* Status */}
           <div className="bg-gray-100 border-2 border-black rounded p-3 mb-4 text-center">
             <p className="font-black text-sm">
-              {preVenda.status === 'Aguardando Caixa' 
-                ? '⏳ AGUARDANDO PAGAMENTO NO CAIXA' 
-                : '✓ PRONTO PARA PAGAMENTO'}
+              ⏳ AGUARDANDO ATENDIMENTO NO CAIXA
             </p>
-            <p className="text-xs font-semibold mt-1">Apresente este ticket no caixa</p>
+            <p className="text-xs font-semibold mt-1">Apresente esta senha no caixa para pagamento</p>
           </div>
 
           {/* Rodapé */}

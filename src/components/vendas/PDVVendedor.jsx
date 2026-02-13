@@ -3,8 +3,7 @@ import { Produto } from '@/entities/Produto';
 import { Terceiro } from '@/entities/Terceiro';
 import { TabelaPreco } from '@/entities/TabelaPreco';
 import { User } from '@/entities/User';
-import { PedidoVenda } from '@/entities/PedidoVenda';
-import { OrdemSeparacao } from '@/entities/OrdemSeparacao';
+import { RascunhoPedidoVenda } from '@/entities/RascunhoPedidoVenda';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -545,25 +544,30 @@ export default function PDVVendedor() {
     setIsProcessing(true);
 
     try {
-      const todosPedidos = await PedidoVenda.list();
-      const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map((p) => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
-      const numeroPedido = `PV-${String(nextNumber).padStart(5, '0')}`;
+      // Gerar senha de atendimento no formato AAMMDD###
+      const hoje = new Date();
+      const ano = String(hoje.getFullYear()).slice(-2);
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const prefixoData = `${ano}${mes}${dia}`;
 
-      // Gerar senha sequencial diária
-      const hoje = format(new Date(), 'yyyy-MM-dd');
-      const senhasHoje = todosPedidos.filter((p) => p.created_date?.startsWith(hoje) && p.senha_atendimento);
-      const proximaSenha = String(senhasHoje.length + 1).padStart(4, '0');
+      // Buscar rascunhos de hoje para gerar o próximo número sequencial
+      const todosRascunhos = await base44.entities.RascunhoPedidoVenda.list();
+      const rascunhosHoje = todosRascunhos.filter(r => 
+        r.senha_atendimento?.startsWith(prefixoData)
+      );
+      const proximoSequencial = rascunhosHoje.length + 1;
+      const senhaAtendimento = `${prefixoData}${String(proximoSequencial).padStart(3, '0')}`;
 
-      const pedidoData = {
-        numero: numeroPedido,
-        senha_atendimento: proximaSenha,
+      const rascunhoData = {
+        senha_atendimento: senhaAtendimento,
         tipo: 'PDV',
         cliente_id: clienteSelecionado.id,
         cliente_nome: clienteSelecionado.nome,
         vendedor_id: currentUser.id,
         vendedor_nome: currentUser.full_name,
         tabela_preco_id: tabelaPreco?.id,
-        status: currentUser.pode_acessar_caixa ? 'Aguardando Pagamento' : 'Aguardando Caixa',
+        status: 'Aguardando Caixa',
         metodo_entrega: metodoEntrega,
         itens: carrinho.map((item) => ({
           produto_id: item.produto_id,
@@ -575,22 +579,17 @@ export default function PDVVendedor() {
         })),
         subtotal,
         valor_desconto: tipoAjuste === 'desconto' ? valorAjusteCalculado : 0,
-        valor_acrescimo: tipoAjuste === 'acrescimo' ? valorAjusteCalculado : 0,
         valor_frete: 0,
-        valor_total: valorTotal,
-        caixa_destino_id: currentUser.caixa_destino_id
+        valor_total: valorTotal
       };
 
-      console.log('Criando pedido com status:', pedidoData.status);
-      const novoPedido = await PedidoVenda.create(pedidoData);
-      console.log('Pedido criado:', novoPedido);
-
-      // Removed automatic OrdemSeparacao creation to respect the separation module flow.
-      // It will be created by the cashier or a specific logistics trigger if needed.
+      console.log('Criando rascunho com senha:', senhaAtendimento);
+      const novoRascunho = await base44.entities.RascunhoPedidoVenda.create(rascunhoData);
+      console.log('Rascunho criado:', novoRascunho);
 
       setUltimaPreVenda({
-        ...novoPedido,
-        ...pedidoData
+        ...novoRascunho,
+        ...rascunhoData
       });
       setShowComprovante(true);
 
@@ -600,13 +599,9 @@ export default function PDVVendedor() {
       setMetodoEntrega('Retirada');
       setValorAjuste(0);
 
-      if (currentUser.pode_acessar_caixa) {
-        showFeedback('success', `${numeroPedido} - Senha ${proximaSenha} - Prossiga para o pagamento`, 3000);
-      } else {
-        showFeedback('success', `Senha ${proximaSenha} - Ticket ${numeroPedido} enviado ao caixa`, 3000);
-      }
+      showFeedback('success', `Senha ${senhaAtendimento.slice(-4)} enviada ao caixa`, 3000);
 
-      setTimeout(() => inputProdutoRef.current?.focus(), 500); // Updated ref
+      setTimeout(() => inputProdutoRef.current?.focus(), 500);
     } catch (error) {
       console.error('Erro ao finalizar venda:', error);
       showFeedback('error', `Erro: ${error.message}`, 3000);
