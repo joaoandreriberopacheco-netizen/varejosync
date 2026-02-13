@@ -691,8 +691,8 @@ export default function PDVVendedor() {
         return;
       }
 
-      if (rascunhoEncontrado.status !== 'Aguardando Caixa' && rascunhoEncontrado.status !== 'Retornado para Edição') {
-        showFeedback('error', 'Este rascunho não pode ser editado', 3000);
+      if (rascunhoEncontrado.status !== 'Retornado para Edição') {
+        showFeedback('error', 'Esta senha não foi liberada pelo caixa para edição', 3000);
         return;
       }
 
