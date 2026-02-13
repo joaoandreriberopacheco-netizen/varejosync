@@ -662,15 +662,15 @@ export default function PDVCaixa() {
 
 
 
+
+
+
+
+
+
           // Logic for Balcao with manual delivery (Logistics) could go here
           // For now, we assume default behavior or simple completion
-        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowLiberacaoEntrega(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível identificar a conta do caixa.", variant: "destructive" });return;}try {const valorFloat = parseFloat(valorMovimento.replace(',', '.'));const todosMovimentos = await base44.entities.MovimentosCaixa.list();const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;const movimento = await base44.entities.MovimentosCaixa.create({ numero: numeroMovimento, tipo: tipoMovimento, valor: valorFloat, observacao: observacaoMovimento, conta_id: contaCaixaPDV.id, usuario_responsavel_id: currentUser.id,
-          usuario_responsavel_nome: currentUser.full_name
-        });
-
-      const novoSaldo = tipoMovimento === 'Sangria' ?
-      contaCaixaPDV.saldo_atual - valorFloat :
-      contaCaixaPDV.saldo_atual + valorFloat;
+        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowLiberacaoEntrega(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível identificar a conta do caixa.", variant: "destructive" });return;}try {const valorFloat = parseFloat(valorMovimento.replace(',', '.'));const todosMovimentos = await base44.entities.MovimentosCaixa.list();const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;const movimento = await base44.entities.MovimentosCaixa.create({ numero: numeroMovimento, tipo: tipoMovimento, valor: valorFloat, observacao: observacaoMovimento, conta_id: contaCaixaPDV.id, usuario_responsavel_id: currentUser.id, usuario_responsavel_nome: currentUser.full_name });const novoSaldo = tipoMovimento === 'Sangria' ? contaCaixaPDV.saldo_atual - valorFloat : contaCaixaPDV.saldo_atual + valorFloat;
 
       await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
         saldo_atual: novoSaldo
@@ -849,7 +849,7 @@ export default function PDVCaixa() {
             <div className="bg-transparent grid grid-cols-2 gap-3 md:gap-4">
               <Button
               onClick={handleProcessarVendas}
-              size="lg" className="bg-slate-50 text-black px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+              size="lg" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-md px-8 bg-slate-50 text-black px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
 
 
                 <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 text-gray-800 dark:text-gray-300" />
@@ -857,7 +857,7 @@ export default function PDVCaixa() {
               </Button>
               <Button
               onClick={handleAbrirBalanco}
-              size="lg" className="bg-slate-50 text-black px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
+              size="lg" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-md px-8 bg-slate-50 text-black px-8 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-11 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-100 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2">
 
 
                 <Wallet className="w-5 h-5 md:w-6 md:h-6 text-gray-800 dark:text-gray-300" />
@@ -869,7 +869,7 @@ export default function PDVCaixa() {
             <div className="grid grid-cols-3 gap-2">
               <Button
               onClick={() => handleAbrirMovimento('Reforço')}
-              size="sm" className="bg-slate-50 text-black px-3 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-9 gap-1 md:gap-2 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
+              size="sm" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-md px-3 bg-slate-50 text-black px-3 text-sm font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-primary/90 h-9 gap-1 md:gap-2 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-100 h-12 md:h-14"
 
               disabled={!contaCaixaPDV}>
 
