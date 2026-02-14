@@ -322,10 +322,9 @@ export default function ControleCaixasAtivos() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Coluna 1: Movimentos */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Resumo de Movimentos */}
+          <div>
             <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -457,8 +456,8 @@ export default function ControleCaixasAtivos() {
             </Card>
           </div>
 
-          {/* Coluna 2: Formas de Pagamento */}
-          <div>
+          {/* Coluna 2: Formas de Pagamento e Saldo Total */}
+          <div className="space-y-4">
             <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -469,36 +468,31 @@ export default function ControleCaixasAtivos() {
                 {Object.entries(formasPagamento).map(([forma, valores]) => {
                   const saldo = valores.entradas - valores.saidas;
                   return (
-                    <div key={forma} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div key={forma} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                      <div className="flex items-center gap-2">
                         {getIconeFormaPagamento(forma)}
-                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {forma}
-                        </span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{forma}</span>
                       </div>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                          <span>Entradas:</span>
-                          <span className="text-emerald-600 dark:text-emerald-400">
-                            {formatValor(valores.entradas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                          <span>Saídas:</span>
-                          <span className="text-red-600 dark:text-red-400">
-                            {formatValor(valores.saidas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-600">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Saldo:</span>
-                          <span className={`font-bold ${saldo >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {formatValor(saldo)}
-                          </span>
-                        </div>
-                      </div>
+                      <span className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                        {formatValor(saldo)}
+                      </span>
                     </div>
                   );
                 })}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Saldo</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    {formatValor(resumo.saldoAtual)}
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </div>
