@@ -1,280 +1,318 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  Eye, 
-  Printer, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign,
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  Eye,
+  Printer,
+  ChevronDown,
   Wallet,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
   CreditCard,
   Banknote,
   Smartphone,
-  Clock,
-  ShoppingCart,
-  Plus,
-  Minus,
-  ChevronDown,
-  Receipt
+  ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function ControleCaixasAtivosPage() {
+export default function ControleCaixasAtivos() {
   const [caixas, setCaixas] = useState([]);
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
-  const [movimentos, setMovimentos] = useState([]);
+  const [movimentosCaixa, setMovimentosCaixa] = useState([]);
   const [vendas, setVendas] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [detalhesVenda, setDetalhesVenda] = useState(null);
-  const [showDetalhesDialog, setShowDetalhesDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [resumo, setResumo] = useState({
-    saldoInicial: 0,
-    totalEntradas: 0,
-    totalSaidas: 0,
-    saldoAtual: 0
-  });
-
-  const [formasPagamento, setFormasPagamento] = useState({
-    dinheiro: { entradas: 0, saidas: 0, saldo: 0 },
-    pix: { entradas: 0, saidas: 0, saldo: 0 },
-    cartaoDebito: { entradas: 0, saidas: 0, saldo: 0 },
-    cartaoCredito: { entradas: 0, saidas: 0, saldo: 0 }
-  });
-
-  const [entradasDetalhadas, setEntradasDetalhadas] = useState([]);
-  const [saidasDetalhadas, setSaidasDetalhadas] = useState([]);
+  const [showEntradasDetails, setShowEntradasDetails] = useState(false);
+  const [showSaidasDetails, setShowSaidasDetails] = useState(false);
+  const [vendaSelecionada, setVendaSelecionada] = useState(null);
+  const [showVendaDialog, setShowVendaDialog] = useState(false);
 
   useEffect(() => {
-    carregarCaixas();
+    loadCaixas();
   }, []);
 
   useEffect(() => {
     if (caixaSelecionado) {
-      carregarDadosCaixa(caixaSelecionado);
+      loadMovimentos();
     }
   }, [caixaSelecionado]);
 
-  const carregarCaixas = async () => {
+  const loadCaixas = async () => {
     try {
+      setLoading(true);
       const todasContas = await base44.entities.ContasFinanceiras.list();
       const caixasAtivos = todasContas.filter(c => 
         c.ativo && (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
       );
       setCaixas(caixasAtivos);
+      
       if (caixasAtivos.length > 0) {
-        setCaixaSelecionado(caixasAtivos[0].id);
+        setCaixaSelecionado(caixasAtivos[0]);
       }
     } catch (error) {
       console.error('Erro ao carregar caixas:', error);
-    }
-  };
-
-  const carregarDadosCaixa = async (caixaId) => {
-    setLoading(true);
-    try {
-      const hoje = format(new Date(), 'yyyy-MM-dd');
-      
-      // Buscar conta selecionada
-      const conta = caixas.find(c => c.id === caixaId);
-      if (!conta) return;
-
-      // Buscar movimentos do dia
-      const todosMovimentos = await base44.entities.MovimentosCaixa.list();
-      const movimentosDia = todosMovimentos.filter(m => 
-        m.conta_id === caixaId && 
-        m.created_date?.startsWith(hoje)
-      );
-
-      // Buscar vendas do dia
-      const todasVendas = await base44.entities.PedidoVenda.list();
-      const vendasDia = todasVendas.filter(v => 
-        v.created_date?.startsWith(hoje) &&
-        (v.status === 'Financeiro OK' || v.status === 'Finalizado')
-      );
-
-      setMovimentos(movimentosDia);
-      setVendas(vendasDia);
-
-      // Calcular resumo
-      const reforcos = movimentosDia.filter(m => m.tipo === 'Reforço');
-      const sangrias = movimentosDia.filter(m => m.tipo === 'Sangria');
-
-      const totalReforcos = reforcos.reduce((sum, m) => sum + (m.valor || 0), 0);
-      const totalSangrias = sangrias.reduce((sum, m) => sum + (m.valor || 0), 0);
-
-      // Calcular total de vendas por forma de pagamento
-      let totalVendasDinheiro = 0;
-      let totalVendasPix = 0;
-      let totalVendasDebito = 0;
-      let totalVendasCredito = 0;
-
-      vendasDia.forEach(venda => {
-        if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
-          venda.pagamentos.forEach(pag => {
-            if (pag.forma_pagamento === 'Dinheiro') {
-              totalVendasDinheiro += pag.valor || 0;
-            } else if (pag.forma_pagamento === 'PIX') {
-              totalVendasPix += pag.valor || 0;
-            } else if (pag.forma_pagamento?.includes('Débito')) {
-              totalVendasDebito += pag.valor || 0;
-            } else if (pag.forma_pagamento?.includes('Crédito')) {
-              totalVendasCredito += pag.valor || 0;
-            }
-          });
-        }
-      });
-
-      const totalEntradas = totalVendasDinheiro + totalVendasPix + totalVendasDebito + totalVendasCredito + totalReforcos;
-      const totalSaidas = totalSangrias;
-
-      setResumo({
-        saldoInicial: conta.saldo_inicial || 0,
-        totalEntradas,
-        totalSaidas,
-        saldoAtual: conta.saldo_atual || 0
-      });
-
-      // Calcular por forma de pagamento (considerando apenas dinheiro para sangrias/reforços)
-      setFormasPagamento({
-        dinheiro: {
-          entradas: totalVendasDinheiro + totalReforcos,
-          saidas: totalSangrias,
-          saldo: totalVendasDinheiro + totalReforcos - totalSangrias
-        },
-        pix: {
-          entradas: totalVendasPix,
-          saidas: 0,
-          saldo: totalVendasPix
-        },
-        cartaoDebito: {
-          entradas: totalVendasDebito,
-          saidas: 0,
-          saldo: totalVendasDebito
-        },
-        cartaoCredito: {
-          entradas: totalVendasCredito,
-          saidas: 0,
-          saldo: totalVendasCredito
-        }
-      });
-
-      // Preparar lista detalhada de entradas
-      const entradas = [];
-      
-      // Adicionar vendas
-      vendasDia.forEach(venda => {
-        if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
-          venda.pagamentos.forEach(pag => {
-            entradas.push({
-              tipo: 'Venda',
-              hora: format(new Date(venda.created_date), 'HH:mm'),
-              formaPagamento: pag.forma_pagamento || 'N/A',
-              valor: pag.valor || 0,
-              referencia: venda.numero || 'S/N',
-              detalhes: venda
-            });
-          });
-        }
-      });
-
-      // Adicionar reforços
-      reforcos.forEach(ref => {
-        entradas.push({
-          tipo: 'Reforço',
-          hora: format(new Date(ref.created_date), 'HH:mm'),
-          formaPagamento: 'Dinheiro',
-          valor: ref.valor || 0,
-          referencia: ref.numero || 'S/N',
-          detalhes: ref
-        });
-      });
-
-      // Ordenar por hora
-      entradas.sort((a, b) => a.hora.localeCompare(b.hora));
-      setEntradasDetalhadas(entradas);
-
-      // Preparar lista detalhada de saídas
-      const saidas = [];
-      sangrias.forEach(sang => {
-        saidas.push({
-          tipo: 'Sangria',
-          hora: format(new Date(sang.created_date), 'HH:mm'),
-          formaPagamento: 'Dinheiro',
-          valor: sang.valor || 0,
-          referencia: sang.numero || 'S/N',
-          detalhes: sang
-        });
-      });
-      saidas.sort((a, b) => a.hora.localeCompare(b.hora));
-      setSaidasDetalhadas(saidas);
-
-    } catch (error) {
-      console.error('Erro ao carregar dados do caixa:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerDetalhesVenda = (venda) => {
-    setDetalhesVenda(venda);
-    setShowDetalhesDialog(true);
+  const loadMovimentos = async () => {
+    if (!caixaSelecionado) return;
+
+    try {
+      setLoading(true);
+      const hoje = format(new Date(), 'yyyy-MM-dd');
+
+      // Carregar movimentos de caixa (reforços e sangrias)
+      const todosMovimentos = await base44.entities.MovimentosCaixa.list();
+      const movimentosHoje = todosMovimentos.filter(m =>
+        m.conta_id === caixaSelecionado.id &&
+        m.created_date &&
+        m.created_date.startsWith(hoje)
+      );
+      setMovimentosCaixa(movimentosHoje);
+
+      // Carregar vendas do dia
+      const todasVendas = await base44.entities.PedidoVenda.list();
+      const vendasHoje = todasVendas.filter(v =>
+        v.created_date &&
+        v.created_date.startsWith(hoje) &&
+        (v.status === 'Financeiro OK' || v.status === 'Finalizado' || v.status === 'Pedido Concluído')
+      );
+      setVendas(vendasHoje);
+    } catch (error) {
+      console.error('Erro ao carregar movimentos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calcularResumo = () => {
+    if (!caixaSelecionado) return {
+      saldoInicial: 0,
+      totalEntradas: 0,
+      totalSaidas: 0,
+      saldoAtual: 0
+    };
+
+    const saldoInicial = caixaSelecionado.saldo_inicial || 0;
+    
+    // Entradas: Vendas em dinheiro + Reforços
+    const vendasDinheiro = vendas.reduce((sum, v) => {
+      if (v.pagamentos && Array.isArray(v.pagamentos)) {
+        return sum + v.pagamentos
+          .filter(p => p.forma_pagamento === 'Dinheiro')
+          .reduce((s, p) => s + (p.valor || 0), 0);
+      }
+      return sum;
+    }, 0);
+
+    const reforcos = movimentosCaixa
+      .filter(m => m.tipo === 'Reforço')
+      .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+    const totalEntradas = vendasDinheiro + reforcos;
+
+    // Saídas: Sangrias
+    const totalSaidas = movimentosCaixa
+      .filter(m => m.tipo === 'Sangria')
+      .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+    const saldoAtual = caixaSelecionado.saldo_atual || 0;
+
+    return {
+      saldoInicial,
+      totalEntradas,
+      totalSaidas,
+      saldoAtual
+    };
+  };
+
+  const calcularFormasPagamento = () => {
+    const formas = {
+      'Dinheiro': { entradas: 0, saidas: 0 },
+      'PIX': { entradas: 0, saidas: 0 },
+      'Cartão Crédito': { entradas: 0, saidas: 0 },
+      'Cartão Débito': { entradas: 0, saidas: 0 }
+    };
+
+    // Processar vendas
+    vendas.forEach(venda => {
+      if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
+        venda.pagamentos.forEach(pag => {
+          const forma = pag.forma_pagamento;
+          if (formas[forma]) {
+            formas[forma].entradas += pag.valor || 0;
+          }
+        });
+      }
+    });
+
+    // Processar movimentos de caixa (reforços e sangrias são apenas em dinheiro)
+    movimentosCaixa.forEach(mov => {
+      if (mov.tipo === 'Reforço') {
+        formas['Dinheiro'].entradas += mov.valor || 0;
+      } else if (mov.tipo === 'Sangria') {
+        formas['Dinheiro'].saidas += mov.valor || 0;
+      }
+    });
+
+    return formas;
+  };
+
+  const getEntradasDetalhadas = () => {
+    const entradas = [];
+
+    // Vendas
+    vendas.forEach(venda => {
+      if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
+        venda.pagamentos.forEach(pag => {
+          entradas.push({
+            tipo: 'Venda',
+            descricao: `${venda.numero || 'S/N'} - ${venda.cliente_nome || 'Cliente'}`,
+            valor: pag.valor || 0,
+            forma: pag.forma_pagamento,
+            horario: venda.created_date,
+            referencia: venda
+          });
+        });
+      }
+    });
+
+    // Reforços
+    movimentosCaixa
+      .filter(m => m.tipo === 'Reforço')
+      .forEach(mov => {
+        entradas.push({
+          tipo: 'Reforço',
+          descricao: mov.observacao || 'Reforço de caixa',
+          valor: mov.valor || 0,
+          forma: 'Dinheiro',
+          horario: mov.created_date,
+          referencia: mov
+        });
+      });
+
+    return entradas.sort((a, b) => new Date(b.horario) - new Date(a.horario));
+  };
+
+  const getSaidasDetalhadas = () => {
+    const saidas = [];
+
+    // Sangrias
+    movimentosCaixa
+      .filter(m => m.tipo === 'Sangria')
+      .forEach(mov => {
+        saidas.push({
+          tipo: 'Sangria',
+          descricao: mov.observacao || 'Sangria de caixa',
+          valor: mov.valor || 0,
+          forma: 'Dinheiro',
+          horario: mov.created_date,
+          referencia: mov
+        });
+      });
+
+    return saidas.sort((a, b) => new Date(b.horario) - new Date(a.horario));
   };
 
   const formatValor = (valor) => {
     return `R$ ${(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const formatHora = (datetime) => {
+    if (!datetime) return '--:--';
+    return format(new Date(datetime), 'HH:mm');
+  };
+
+  const getIconeFormaPagamento = (forma) => {
+    switch (forma) {
+      case 'Dinheiro':
+        return <Banknote className="w-4 h-4" />;
+      case 'PIX':
+        return <Smartphone className="w-4 h-4" />;
+      case 'Cartão Crédito':
+      case 'Cartão Débito':
+        return <CreditCard className="w-4 h-4" />;
+      default:
+        return <DollarSign className="w-4 h-4" />;
+    }
+  };
+
+  const handleVerDetalhesVenda = (venda) => {
+    setVendaSelecionada(venda);
+    setShowVendaDialog(true);
+  };
+
   const handleImprimir = () => {
     window.print();
   };
 
-  const caixaAtual = caixas.find(c => c.id === caixaSelecionado);
+  const resumo = calcularResumo();
+  const formasPagamento = calcularFormasPagamento();
+  const entradasDetalhadas = getEntradasDetalhadas();
+  const saidasDetalhadas = getSaidasDetalhadas();
+
+  if (loading && !caixaSelecionado) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-6"></div>
+          <div className="h-64 bg-white dark:bg-gray-800 rounded-xl shadow-sm animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-glacial">
               Controle de Caixas Ativos
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Análise detalhada dos movimentos do dia
+              Análise detalhada dos movimentos de caixa
             </p>
           </div>
-          <Button 
+          <Button
             onClick={handleImprimir}
             variant="outline"
-            className="gap-2 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800">
+            className="gap-2 print:hidden border-gray-200 dark:border-gray-700">
             <Printer className="w-4 h-4" />
-            Imprimir Relatório
+            Imprimir
           </Button>
         </div>
 
         {/* Seletor de Caixa */}
-        <Card className="shadow-sm border-0 dark:bg-gray-800">
+        <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700 print:shadow-none">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <Wallet className="w-5 h-5 text-gray-400" />
               <div className="flex-1">
                 <label className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1 block">
-                  Selecione o Caixa
+                  Caixa Selecionado
                 </label>
-                <Select value={caixaSelecionado} onValueChange={setCaixaSelecionado}>
-                  <SelectTrigger className="h-12 border-0 bg-gray-50 dark:bg-gray-900">
-                    <SelectValue placeholder="Selecione um caixa" />
+                <Select
+                  value={caixaSelecionado?.id}
+                  onValueChange={(id) => {
+                    const caixa = caixas.find(c => c.id === id);
+                    setCaixaSelecionado(caixa);
+                  }}>
+                  <SelectTrigger className="w-full md:w-64 border-0 bg-gray-50 dark:bg-gray-700 dark:text-gray-200">
+                    <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                     {caixas.map(caixa => (
-                      <SelectItem key={caixa.id} value={caixa.id}>
-                        {caixa.nome} - {formatValor(caixa.saldo_atual)}
+                      <SelectItem key={caixa.id} value={caixa.id} className="dark:hover:bg-gray-700">
+                        {caixa.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -284,392 +322,268 @@ export default function ControleCaixasAtivosPage() {
           </CardContent>
         </Card>
 
-        {caixaAtual && !loading && (
-          <>
-            {/* Grid Principal: Movimentos e Formas de Pagamento */}
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Coluna Esquerda: Movimentos */}
-              <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Coluna 1: Movimentos */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Resumo de Movimentos */}
+            <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Movimentos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 {/* Saldo Inicial */}
-                <Card className="shadow-sm border-0 dark:bg-gray-800">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Eye className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                          Saldo Inicial
-                        </span>
-                      </div>
-                      <span className="text-xl font-bold text-gray-900 dark:text-white">
-                        {formatValor(resumo.saldoInicial)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Saldo Inicial</span>
+                  </div>
+                  <span className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                    {formatValor(resumo.saldoInicial)}
+                  </span>
+                </div>
 
                 {/* Entradas */}
-                <Collapsible>
-                  <Card className="shadow-sm border-0 dark:bg-gray-800">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 flex-1">
-                          <CollapsibleTrigger asChild>
-                            <button className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
-                              <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                              <ChevronDown className="w-4 h-4 text-gray-400" />
-                            </button>
-                          </CollapsibleTrigger>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                            Entradas
-                          </span>
+                <Collapsible open={showEntradasDetails} onOpenChange={setShowEntradasDetails}>
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Entradas</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                        {formatValor(resumo.totalEntradas)}
+                      </span>
+                      <CollapsibleTrigger asChild>
+                        <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                          <Eye className="w-4 h-4 text-gray-500" />
+                        </button>
+                      </CollapsibleTrigger>
+                    </div>
+                  </div>
+                  <CollapsibleContent className="pt-3 space-y-2">
+                    {entradasDetalhadas.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-2">Nenhuma entrada registrada</p>
+                    ) : (
+                      entradasDetalhadas.map((entrada, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-xs">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              {getIconeFormaPagamento(entrada.forma)}
+                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                                {entrada.tipo}
+                              </span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-500 dark:text-gray-400">{formatHora(entrada.horario)}</span>
+                            </div>
+                            <div className="text-gray-600 dark:text-gray-400">{entrada.descricao}</div>
+                            <div className="text-gray-500 dark:text-gray-500">{entrada.forma}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                              {formatValor(entrada.valor)}
+                            </span>
+                            {entrada.tipo === 'Venda' && (
+                              <button
+                                onClick={() => handleVerDetalhesVenda(entrada.referencia)}
+                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+                                <Eye className="w-3 h-3 text-gray-500" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                          {formatValor(resumo.totalEntradas)}
-                        </span>
-                      </div>
-
-                      <CollapsibleContent className="mt-4">
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                          {entradasDetalhadas.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">
-                              Nenhuma entrada registrada
-                            </p>
-                          ) : (
-                            entradasDetalhadas.map((entrada, idx) => (
-                              <div 
-                                key={idx}
-                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                      {entrada.hora} - {entrada.tipo}
-                                    </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      {entrada.formaPagamento} • {entrada.referencia}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                                    {formatValor(entrada.valor)}
-                                  </span>
-                                  {entrada.tipo === 'Venda' && (
-                                    <button
-                                      onClick={() => handleVerDetalhesVenda(entrada.detalhes)}
-                                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
-                                      <Eye className="w-4 h-4 text-gray-400" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </CollapsibleContent>
-                    </CardContent>
-                  </Card>
+                      ))
+                    )}
+                  </CollapsibleContent>
                 </Collapsible>
 
                 {/* Saídas */}
-                <Collapsible>
-                  <Card className="shadow-sm border-0 dark:bg-gray-800">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 flex-1">
-                          <CollapsibleTrigger asChild>
-                            <button className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
-                              <Eye className="w-4 h-4 text-red-600 dark:text-red-400" />
-                              <ChevronDown className="w-4 h-4 text-gray-400" />
-                            </button>
-                          </CollapsibleTrigger>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                            Saídas
+                <Collapsible open={showSaidasDetails} onOpenChange={setShowSaidasDetails}>
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Saídas</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-base font-semibold text-red-600 dark:text-red-400">
+                        {formatValor(resumo.totalSaidas)}
+                      </span>
+                      <CollapsibleTrigger asChild>
+                        <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                          <Eye className="w-4 h-4 text-gray-500" />
+                        </button>
+                      </CollapsibleTrigger>
+                    </div>
+                  </div>
+                  <CollapsibleContent className="pt-3 space-y-2">
+                    {saidasDetalhadas.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-2">Nenhuma saída registrada</p>
+                    ) : (
+                      saidasDetalhadas.map((saida, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded text-xs">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              {getIconeFormaPagamento(saida.forma)}
+                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                                {saida.tipo}
+                              </span>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-500 dark:text-gray-400">{formatHora(saida.horario)}</span>
+                            </div>
+                            <div className="text-gray-600 dark:text-gray-400">{saida.descricao}</div>
+                            <div className="text-gray-500 dark:text-gray-500">{saida.forma}</div>
+                          </div>
+                          <span className="font-semibold text-red-600 dark:text-red-400">
+                            {formatValor(saida.valor)}
                           </span>
                         </div>
-                        <span className="text-xl font-bold text-red-600 dark:text-red-400">
-                          {formatValor(resumo.totalSaidas)}
-                        </span>
-                      </div>
-
-                      <CollapsibleContent className="mt-4">
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                          {saidasDetalhadas.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">
-                              Nenhuma saída registrada
-                            </p>
-                          ) : (
-                            saidasDetalhadas.map((saida, idx) => (
-                              <div 
-                                key={idx}
-                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                  <div className="min-w-0">
-                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                      {saida.hora} - {saida.tipo}
-                                    </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      {saida.formaPagamento} • {saida.referencia}
-                                    </div>
-                                  </div>
-                                </div>
-                                <span className="text-sm font-semibold text-red-600 dark:text-red-400">
-                                  {formatValor(saida.valor)}
-                                </span>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </CollapsibleContent>
-                    </CardContent>
-                  </Card>
+                      ))
+                    )}
+                  </CollapsibleContent>
                 </Collapsible>
 
-                {/* Saldo Atual */}
-                <Card className="shadow-sm border-0 bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wide font-semibold">
-                          Saldo Atual
-                        </span>
-                      </div>
-                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {formatValor(resumo.saldoAtual)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Coluna Direita: Formas de Pagamento */}
-              <div className="space-y-4">
-                <Card className="shadow-sm border-0 dark:bg-gray-800">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-gray-400" />
-                      Resumo por Forma de Pagamento
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {/* Dinheiro */}
-                    <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Banknote className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white uppercase tracking-wide">
-                          Dinheiro
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Entradas:</span>
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            +{formatValor(formasPagamento.dinheiro.entradas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Saídas:</span>
-                          <span className="font-medium text-red-600 dark:text-red-400">
-                            -{formatValor(formasPagamento.dinheiro.saidas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-base pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <span className="font-semibold text-gray-900 dark:text-white">Saldo:</span>
-                          <span className="font-bold text-gray-900 dark:text-white">
-                            {formatValor(formasPagamento.dinheiro.saldo)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* PIX */}
-                    <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white uppercase tracking-wide">
-                          PIX
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Entradas:</span>
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            +{formatValor(formasPagamento.pix.entradas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Saídas:</span>
-                          <span className="font-medium text-red-600 dark:text-red-400">
-                            -{formatValor(formasPagamento.pix.saidas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-base pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <span className="font-semibold text-gray-900 dark:text-white">Saldo:</span>
-                          <span className="font-bold text-gray-900 dark:text-white">
-                            {formatValor(formasPagamento.pix.saldo)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cartão Débito */}
-                    <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <CreditCard className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white uppercase tracking-wide">
-                          Cartão Débito
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Entradas:</span>
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            +{formatValor(formasPagamento.cartaoDebito.entradas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Saídas:</span>
-                          <span className="font-medium text-red-600 dark:text-red-400">
-                            -{formatValor(formasPagamento.cartaoDebito.saidas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-base pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <span className="font-semibold text-gray-900 dark:text-white">Saldo:</span>
-                          <span className="font-bold text-gray-900 dark:text-white">
-                            {formatValor(formasPagamento.cartaoDebito.saldo)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cartão Crédito */}
-                    <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <CreditCard className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white uppercase tracking-wide">
-                          Cartão Crédito
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Entradas:</span>
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                            +{formatValor(formasPagamento.cartaoCredito.entradas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Saídas:</span>
-                          <span className="font-medium text-red-600 dark:text-red-400">
-                            -{formatValor(formasPagamento.cartaoCredito.saidas)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-base pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <span className="font-semibold text-gray-900 dark:text-white">Saldo:</span>
-                          <span className="font-bold text-gray-900 dark:text-white">
-                            {formatValor(formasPagamento.cartaoCredito.saldo)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </>
-        )}
-
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">Carregando dados...</p>
-            </div>
+                {/* Saldo */}
+                <div className="flex items-center justify-between py-2 pt-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Saldo</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    {formatValor(resumo.saldoAtual)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
+
+          {/* Coluna 2: Formas de Pagamento */}
+          <div>
+            <Card className="shadow-sm border-0 dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Formas de Pagamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Object.entries(formasPagamento).map(([forma, valores]) => {
+                  const saldo = valores.entradas - valores.saidas;
+                  return (
+                    <div key={forma} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded">
+                      <div className="flex items-center gap-2 mb-2">
+                        {getIconeFormaPagamento(forma)}
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {forma}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                          <span>Entradas:</span>
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            {formatValor(valores.entradas)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                          <span>Saídas:</span>
+                          <span className="text-red-600 dark:text-red-400">
+                            {formatValor(valores.saidas)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-600">
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">Saldo:</span>
+                          <span className={`font-bold ${saldo >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {formatValor(saldo)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* Dialog de Detalhes da Venda */}
-      <Dialog open={showDetalhesDialog} onOpenChange={setShowDetalhesDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900">
+      <Dialog open={showVendaDialog} onOpenChange={setShowVendaDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-lg text-gray-900 dark:text-white">
-              Detalhes da Venda
-            </DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-gray-100">Detalhes da Venda</DialogTitle>
           </DialogHeader>
-          {detalhesVenda && (
+          {vendaSelecionada && (
             <div className="space-y-4">
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Pedido</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">{detalhesVenda.numero || 'S/N'}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Cliente</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">{detalhesVenda.cliente_nome || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Vendedor</div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300">{detalhesVenda.vendedor_nome || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Total</div>
-                    <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                      {formatValor(detalhesVenda.valor_total)}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Pedido:</span>
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">
+                    {vendaSelecionada.numero || 'S/N'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Cliente:</span>
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">
+                    {vendaSelecionada.cliente_nome || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Vendedor:</span>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {vendaSelecionada.vendedor_nome || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Horário:</span>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {vendaSelecionada.created_date ? format(new Date(vendaSelecionada.created_date), 'HH:mm') : '--:--'}
+                  </p>
                 </div>
               </div>
 
-              {detalhesVenda.itens && detalhesVenda.itens.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 uppercase tracking-wide">
-                    Produtos
-                  </h4>
-                  <div className="space-y-2">
-                    {detalhesVenda.itens.map((item, idx) => (
-                      <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {item.produto_nome}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {item.quantidade} × {formatValor(item.preco_unitario_praticado)}
-                            </div>
-                          </div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {formatValor(item.total)}
-                          </div>
-                        </div>
+              {/* Itens */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-200">Itens</h4>
+                <div className="space-y-2">
+                  {vendaSelecionada.itens?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800 dark:text-gray-200">{item.produto_nome}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {item.quantidade} × {formatValor(item.preco_unitario_praticado)}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <p className="font-semibold text-gray-800 dark:text-gray-200">
+                        {formatValor(item.total)}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {detalhesVenda.pagamentos && detalhesVenda.pagamentos.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 uppercase tracking-wide">
-                    Formas de Pagamento
-                  </h4>
-                  <div className="space-y-2">
-                    {detalhesVenda.pagamentos.map((pag, idx) => (
-                      <div key={idx} className="flex justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {pag.forma_pagamento}
-                          {pag.parcelas > 1 && ` (${pag.parcelas}x)`}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {formatValor(pag.valor)}
-                        </span>
+              {/* Pagamentos */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-200">Formas de Pagamento</h4>
+                <div className="space-y-2">
+                  {vendaSelecionada.pagamentos?.map((pag, idx) => (
+                    <div key={idx} className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
+                      <div className="flex items-center gap-2">
+                        {getIconeFormaPagamento(pag.forma_pagamento)}
+                        <span className="text-gray-700 dark:text-gray-300">{pag.forma_pagamento}</span>
                       </div>
-                    ))}
-                  </div>
+                      <p className="font-semibold text-gray-800 dark:text-gray-200">
+                        {formatValor(pag.valor)}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between text-lg">
+                <span className="font-semibold text-gray-700 dark:text-gray-300">Total:</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">
+                  {formatValor(vendaSelecionada.valor_total)}
+                </span>
+              </div>
             </div>
           )}
         </DialogContent>
