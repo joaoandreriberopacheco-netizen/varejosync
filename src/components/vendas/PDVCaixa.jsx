@@ -847,49 +847,44 @@ export default function PDVCaixa() {
 
             {/* Botões de Ação Principais */}
             <div className="bg-transparent grid grid-cols-2 gap-3 md:gap-4">
-              <Button
+              <button
               onClick={handleProcessarVendas}
-              size="lg"
-              className="pdv-button-static border-0 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2 pointer-events-auto cursor-pointer">
-                <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+              className="pdv-button-static border-0 h-14 md:h-20 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 rounded-md">
+                <ShoppingCart size={20} />
                 <span className="text-xs font-semibold md:text-base">Vendas</span>
-              </Button>
-              <Button
+              </button>
+              <button
               onClick={handleAbrirBalanco}
-              size="lg"
-              className="pdv-button-static border-0 h-14 md:h-20 flex-col md:flex-row gap-1 md:gap-2 pointer-events-auto cursor-pointer">
-                <Wallet className="w-5 h-5 md:w-6 md:h-6" />
+              className="pdv-button-static border-0 h-14 md:h-20 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 rounded-md">
+                <Wallet size={20} />
                 <span className="text-xs md:text-base">Balanço</span>
-              </Button>
+              </button>
             </div>
 
             {/* Botões Secundários */}
             <div className="grid grid-cols-3 gap-2">
-              <Button
+              <button
               onClick={() => handleAbrirMovimento('Reforço')}
-              size="sm"
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14"
+              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
               disabled={!contaCaixaPDV}>
-                <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <Plus size={16} className="text-teal-600 dark:text-teal-400" />
                 <span className="text-xs md:text-sm">Reforço</span>
-              </Button>
+              </button>
               
-              <Button
+              <button
               onClick={() => handleAbrirMovimento('Sangria')}
-              size="sm"
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14"
+              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
               disabled={!contaCaixaPDV}>
-                <Minus className="w-4 h-4 text-red-500 dark:text-yellow-400" />
+                <Minus size={16} className="text-red-500 dark:text-yellow-400" />
                 <span className="text-xs md:text-sm">Sangria</span>
-              </Button>
+              </button>
 
-              <Button
+              <button
               onClick={handleFecharCaixa}
-              size="sm"
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14">
-                <Lock className="w-4 h-4" />
+              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md">
+                <Lock size={16} />
                 <span className="text-xs md:text-sm">Fechar</span>
-              </Button>
+              </button>
             </div>
           </div>
         }
