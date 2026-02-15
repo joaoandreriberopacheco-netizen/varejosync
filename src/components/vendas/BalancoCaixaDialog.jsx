@@ -77,6 +77,8 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
   };
 
   const calcularComposicaoSaldo = () => {
+    if (!contaCaixa) return { 'Dinheiro': 0, 'PIX': 0, 'Cartão Crédito': 0, 'Cartão Débito': 0 };
+    
     const composicao = {
       'Dinheiro': 0,
       'PIX': 0,
@@ -122,6 +124,8 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
   };
 
   const gerarExtratoTurno = () => {
+    if (!contaCaixa) return [];
+    
     const extrato = [];
 
     // Adicionar saldo inicial
