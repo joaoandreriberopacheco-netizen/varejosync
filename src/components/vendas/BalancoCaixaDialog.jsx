@@ -295,56 +295,6 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                 {/* Layout Responsivo: Mobile = Stacked, Desktop = Duas Colunas */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   
-                  {/* Coluna Esquerda - Movimentações do Turno */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Movimentações do Turno
-                    </h3>
-                    <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
-                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                        {extratoTurno.map((item, idx) => {
-                          const Icon = item.icone;
-                          return (
-                            <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                              <div className="flex items-start gap-3">
-                                <div className={`w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${item.cor}`}>
-                                  <Icon className="w-4 h-4" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                      {item.tipo}
-                                    </span>
-                                    {item.horario && (
-                                      <>
-                                        <span className="text-gray-300">•</span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                          {formatHora(item.horario)}
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                                    {item.descricao}
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                                    {item.sinal && item.sinal} {formatValor(item.valor)}
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Saldo: {formatValor(item.saldoAcumulado)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </Card>
-                  </div>
-
                   {/* Coluna Direita - Recebimentos do Turno */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
@@ -397,6 +347,56 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                             </div>
                           </div>
                         </div>
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Coluna Esquerda - Movimentações do Turno */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Movimentações do Turno
+                    </h3>
+                    <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
+                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {extratoTurno.map((item, idx) => {
+                          const Icon = item.icone;
+                          return (
+                            <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${item.cor}`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                      {item.tipo}
+                                    </span>
+                                    {item.horario && (
+                                      <>
+                                        <span className="text-gray-300">•</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                          {formatHora(item.horario)}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                    {item.descricao}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                                    {item.sinal && item.sinal} {formatValor(item.valor)}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Saldo: {formatValor(item.saldoAcumulado)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </Card>
                   </div>
