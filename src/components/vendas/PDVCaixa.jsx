@@ -95,6 +95,7 @@ export default function PDVCaixa() {
   const [clienteVenda, setClienteVenda] = useState(null);
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
+  const [showBalancoDialog, setShowBalancoDialog] = useState(false);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
