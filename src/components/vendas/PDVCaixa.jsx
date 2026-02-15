@@ -37,7 +37,6 @@ import { format } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import LiberacaoEntrega from './LiberacaoEntrega';
-import BalancoCaixaDialog from './BalancoCaixaDialog';
 
 
 export default function PDVCaixa() {
@@ -95,7 +94,7 @@ export default function PDVCaixa() {
   const [clienteVenda, setClienteVenda] = useState(null);
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
-  const [showBalancoDialog, setShowBalancoDialog] = useState(false);
+  const [showVendasDialog, setShowVendasDialog] = useState(false);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -237,11 +236,7 @@ export default function PDVCaixa() {
         return;
       }
 
-      if (e.key === 'F3' && view === 'dashboard') {// Updated telaAtual to view
-        e.preventDefault();
-        handleAbrirBalanco(); // Changed to new function
-        return;
-      }
+      // F3 removed - balance is now always visible on dashboard
 
       if (e.key === 'F4' && view === 'dashboard') {// Updated telaAtual to view
         e.preventDefault();
@@ -710,13 +705,14 @@ export default function PDVCaixa() {
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
+  const formatHora = (datetime) => {
+    if (!datetime) return '--:--';
+    return format(new Date(datetime), 'HH:mm');
+  };
+
   // New helper functions for view navigation
   const handleProcessarVendas = () => {
     setView('processar');
-  };
-
-  const handleAbrirBalanco = () => {
-    setShowBalancoDialog(true);
   };
 
   return (
@@ -735,7 +731,6 @@ export default function PDVCaixa() {
           <div className="hidden lg:block text-xs text-gray-300 dark:text-gray-400">
             <span className="font-medium">F1:</span> Ajuda | 
             <span className="font-medium"> F2:</span> Vendas | 
-            <span className="font-medium"> F3:</span> Balanço | 
             <span className="font-medium"> F4:</span> Reforço | 
             <span className="font-medium"> F5:</span> Sangria | 
             <span className="font-medium"> F6:</span> Fechar
@@ -769,122 +764,181 @@ export default function PDVCaixa() {
         }
 
         {view === 'dashboard' &&
-        <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-            {/* KPIs Superiores */}
-            <div className="grid grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="text-gray-300 opacity-100">
-                <div className="text-gray-500 px-3 uppercase tracking-wide md:text-xs dark:text-gray-400">Saldo em Caixa</div>
-                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
-                  {formatValor(caixaData.saldoAtual)}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total Vendas</div>
-                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
-                  {formatValor(caixaData.totalVendas)}
-                </div>
-              </div>
-            </div>
-
-            {/* Recebimentos do Turno */}
-            <div className="pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-gray-800 mb-3 text-sm font-bold md:text-base dark:text-gray-200 md:mb-4">Recebimentos do Turno
-
-            </h3>
-              <div className="grid grid-cols-3 gap-3 md:gap-6">
-                <div>
-                  <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Dinheiro</div>
-                  <div className="text-lg md:text-2xl font-\nbold text-gray-800 dark:text-gray-200">
-                    {formatValor(caixaData.recebimentos.dinheiro)}
-                  </div>
+        <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+            {/* Header com KPIs */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg">
+                  <Wallet className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">PIX</div>
-                  <div className="text-lg md:text-2xl font-bold text-gray-800 dark:text-gray-200">
-                    {formatValor(caixaData.recebimentos.pix)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Cartão</div>
-                  <div className="text-lg md:text-2xl font-bold text-gray-800 dark:text-gray-200">
-                    {formatValor(caixaData.recebimentos.cartao)}
-                  </div>
+                  <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 font-glacial">Balanço do Caixa</h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{contaCaixaPDV?.nome} - {format(new Date(), 'dd/MM/yyyy')}</p>
                 </div>
               </div>
-            </div>
 
-            {/* Movimentações do Turno */}
-            <div className="pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-gray-800 mb-3 text-sm font-bold md:text-base dark:text-gray-200 md:mb-4">Movimentações do Turno
-
-            </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span className="text-xs md:text-sm">+ Vendas em Dinheiro:</span>
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    {formatValor(caixaData.recebimentos.dinheiro)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span className="text-xs md:text-sm">+ Reforços:</span>
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    {formatValor(caixaData.reforcos)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span className="text-xs md:text-sm">- Sangrias:</span>
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    {formatValor(caixaData.sangrias)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">Saldo Atual:</span>
-                  <span className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-200">
+              <div className="p-6 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border-0 shadow-sm">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Saldo Atual</p>
+                  <p className="text-4xl font-bold text-gray-900 dark:text-gray-100 font-glacial">
                     {formatValor(caixaData.saldoAtual)}
-                  </span>
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Botões de Ação Principais */}
-            <div className="bg-transparent grid grid-cols-2 gap-3 md:gap-4">
-              <button
-              onClick={handleProcessarVendas}
-              className="pdv-button-static border-0 h-14 md:h-20 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 rounded-md">
-                <ShoppingCart size={20} />
-                <span className="text-xs font-semibold md:text-base">Vendas</span>
-              </button>
-              <button
-              onClick={handleAbrirBalanco}
-              className="pdv-button-static border-0 h-14 md:h-20 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 rounded-md">
-                <Wallet size={20} />
-                <span className="text-xs md:text-base">Balanço</span>
-              </button>
+            {/* Duas Colunas: Recebimentos x Movimentações */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Coluna Esquerda - Recebimentos do Turno */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Recebimentos do Turno
+                </h3>
+                <div className="rounded-xl bg-white dark:bg-gray-800 border-0 shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                      <Banknote className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Dinheiro</p>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      {formatValor(caixaData.recebimentos.dinheiro)}
+                    </p>
+                  </div>
+
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                      <Smartphone className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">PIX</p>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      {formatValor(caixaData.recebimentos.pix)}
+                    </p>
+                  </div>
+
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Cartão Crédito</p>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      {formatValor(caixaData.recebimentos.cartao)}
+                    </p>
+                  </div>
+
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Cartão Débito</p>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      R$ 0,00
+                    </p>
+                  </div>
+
+                  {/* Total de Vendas */}
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center">
+                      <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Total Vendas</p>
+                      <button
+                        onClick={() => setShowVendasDialog(true)}
+                        className="text-xs text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1">
+                        {vendasFinalizadas.length} pedidos
+                        <PieChart className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {formatValor(caixaData.totalVendas)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coluna Direita - Movimentações do Turno */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Movimentações do Turno
+                </h3>
+                <div className="rounded-xl bg-white dark:bg-gray-800 border-0 shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                      <Wallet className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Saldo Inicial</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Abertura: R$ {((contaCaixaPDV?.saldo_inicial || 500)).toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  {movimentos.slice(-5).map((mov, idx) => (
+                    <div key={idx} className="p-4 flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${mov.tipo === 'Reforço' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                        {mov.tipo === 'Reforço' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{mov.tipo}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                          {formatHora(mov.created_date)} - {mov.observacao || 'Sem observação'}
+                        </p>
+                      </div>
+                      <p className={`text-sm font-semibold ${mov.tipo === 'Reforço' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                        {mov.tipo === 'Reforço' ? '+' : '-'}{formatValor(mov.valor)}
+                      </p>
+                    </div>
+                  ))}
+
+                  {movimentos.length === 0 && (
+                    <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Nenhuma movimentação registrada
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Botões Secundários */}
-            <div className="grid grid-cols-3 gap-2">
+            {/* Botões de Ação */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <button
-              onClick={() => handleAbrirMovimento('Reforço')}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
-              disabled={!contaCaixaPDV}>
-                <Plus size={16} className="text-teal-600 dark:text-teal-400" />
-                <span className="text-xs md:text-sm">Reforço</span>
+                onClick={handleProcessarVendas}
+                className="pdv-button-static border-0 h-14 flex items-center justify-center gap-2 rounded-xl">
+                <ShoppingCart size={20} />
+                <span className="text-sm font-semibold">Vendas</span>
               </button>
               
               <button
-              onClick={() => handleAbrirMovimento('Sangria')}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
-              disabled={!contaCaixaPDV}>
-                <Minus size={16} className="text-red-500 dark:text-yellow-400" />
-                <span className="text-xs md:text-sm">Sangria</span>
+                onClick={() => handleAbrirMovimento('Reforço')}
+                className="pdv-button-static border-0 h-14 flex items-center justify-center gap-2 rounded-xl disabled:opacity-50"
+                disabled={!contaCaixaPDV}>
+                <Plus size={18} className="text-teal-600 dark:text-teal-400" />
+                <span className="text-sm">Reforço</span>
+              </button>
+              
+              <button
+                onClick={() => handleAbrirMovimento('Sangria')}
+                className="pdv-button-static border-0 h-14 flex items-center justify-center gap-2 rounded-xl disabled:opacity-50"
+                disabled={!contaCaixaPDV}>
+                <Minus size={18} className="text-red-500 dark:text-amber-400" />
+                <span className="text-sm">Sangria</span>
               </button>
 
               <button
-              onClick={handleFecharCaixa}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md">
-                <Lock size={16} />
-                <span className="text-xs md:text-sm">Fechar</span>
+                onClick={handleFecharCaixa}
+                className="pdv-button-static border-0 h-14 flex items-center justify-center gap-2 rounded-xl">
+                <Lock size={18} />
+                <span className="text-sm">Fechar</span>
               </button>
             </div>
           </div>
@@ -984,131 +1038,7 @@ export default function PDVCaixa() {
           </div>
         }
 
-        {view === 'balanco' && // Updated telaAtual to view
-        <div className="space-y-4 max-w-6xl mx-auto p-4">
-            <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setView('dashboard')} // Updated setTelaAtual to setView
-            className="gap-2 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
 
-              <ArrowLeft className="w-4 h-4" />
-              Voltar (ESC)
-            </Button>
-
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="border-l-4 border-l-gray-400 dark:border-l-gray-600 dark:bg-gray-800 dark:border-gray-700">
-                <CardContent className="p-3">
-                  <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase">Saldo Atual</div>
-                  <div className="text-xl font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.saldoAtual)}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-teal-500 dark:border-l-teal-600 dark:bg-gray-800 dark:border-gray-700">
-                <CardContent className="p-3">
-                  <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase">Reforços</div>
-                  <div className="text-xl font-bold text-teal-600 dark:text-teal-400">{formatValor(caixaData.reforcos)}</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-500">{movimentos.filter((m) => m.tipo === 'Reforço').length} movimento(s)</div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-yellow-500 dark:border-l-yellow-600 dark:bg-gray-800 dark:border-gray-700">
-                <CardContent className="p-3">
-                  <div className="text-[10px] text-gray-600 dark:text-gray-400 uppercase">Sangrias</div>
-                  <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{formatValor(caixaData.sangrias)}</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-500">{movimentos.filter((m) => m.tipo === 'Sangria').length} movimento(s)</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="dark:bg-gray-800 dark:border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  Vendas Finalizadas ({vendasFinalizadas.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {vendasFinalizadas.length === 0 ?
-                <p className="text-center py-4 text-sm text-gray-500">Nenhuma venda finalizada hoje</p> :
-
-                vendasFinalizadas.map((venda) =>
-                <div key={venda.id} className="p-2 border rounded hover:bg-gray-50 text-xs dark:border-gray-700 dark:hover:bg-gray-800">
-                        <div className="flex justify-between">
-                          <div>
-                            <div className="font-semibold text-gray-800 dark:text-gray-200">{venda.numero} - {venda.cliente_nome}</div>
-                            <div className="text-[10px] text-gray-500 dark:text-gray-500">
-                              {format(new Date(venda.created_date), 'HH:mm')} - {venda.vendedor_nome}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-emerald-600 dark:text-emerald-400">{formatValor(venda.valor_total)}</div>
-                            <div className="text-[10px] text-gray-600 dark:text-gray-400">
-                              {venda.pagamentos && venda.pagamentos[0] ? venda.pagamentos[0].forma_pagamento : 'N/A'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                )
-                }
-                </div>
-                {vendasFinalizadas.length > 0 &&
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Subtotal de Vendas:</span>
-                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatValor(caixaData.totalVendas)}</span>
-                  </div>
-              }
-              </CardContent>
-            </Card>
-
-            <Card className="dark:bg-gray-800 dark:border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-sm text-gray-800 dark:text-gray-200">Movimentações do Turno</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {movimentos.length === 0 ?
-                <p className="text-center py-4 text-sm text-gray-500">Nenhuma movimentação registrada</p> :
-
-                movimentos.map((mov, idx) =>
-                <div key={idx} className="p-2 border rounded text-xs flex justify-between items-start dark:border-gray-700 dark:hover:bg-gray-800">
-                        <div className="flex-1">
-                          <div className="font-semibold flex items-center gap-1 text-gray-800 dark:text-gray-200">
-                            {mov.tipo === 'Reforço' ?
-                      <TrendingUp className="w-3 h-3 text-teal-600 dark:text-teal-400" /> :
-
-                      <TrendingDown className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
-                      }
-                            {mov.tipo} - {mov.numero || 'S/N'}
-                          </div>
-                          <div className="text-[10px] text-gray-500 dark:text-gray-500">
-                            {format(new Date(mov.created_date), 'HH:mm')} - {mov.observacao}
-                          </div>
-                        </div>
-                        <div className={`font-bold text-right ${mov.tipo === 'Reforço' ? 'text-teal-600 dark:text-teal-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                          {mov.tipo === 'Reforço' ? '+' : '-'}{formatValor(mov.valor)}
-                        </div>
-                      </div>
-                )
-                }
-                </div>
-                {movimentos.length > 0 &&
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-teal-700 dark:text-teal-300 font-semibold">Total Reforços:</span>
-                      <span className="font-bold text-teal-600 dark:text-teal-400">+{formatValor(caixaData.reforcos)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-yellow-700 dark:text-yellow-300 font-semibold">Total Sangrias:</span>
-                      <span className="font-bold text-yellow-600 dark:text-yellow-400">-{formatValor(caixaData.sangrias)}</span>
-                    </div>
-                  </div>
-              }
-              </CardContent>
-            </Card>
-          </div>
-        }
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200">
@@ -1536,11 +1466,51 @@ export default function PDVCaixa() {
           pedido={vendaFinalizada}
           cliente={clienteVenda} />
 
-        {/* Dialog de Balanço do Caixa */}
-        <BalancoCaixaDialog
-          open={showBalancoDialog}
-          onOpenChange={setShowBalancoDialog}
-          contaCaixa={contaCaixaPDV} />
+        {/* Dialog de Vendas Finalizadas */}
+        <Dialog open={showVendasDialog} onOpenChange={setShowVendasDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto dark:bg-gray-900">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                Vendas Finalizadas ({vendasFinalizadas.length})
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {vendasFinalizadas.length === 0 ? (
+                <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">Nenhuma venda finalizada hoje</p>
+              ) : (
+                <>
+                  {vendasFinalizadas.map((venda) => (
+                    <div key={venda.id} className="p-4 border rounded-lg hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="font-semibold text-gray-800 dark:text-gray-200">{venda.numero}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{venda.cliente_nome}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatValor(venda.valor_total)}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {format(new Date(venda.created_date), 'HH:mm')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <span>Vendedor: {venda.vendedor_nome}</span>
+                        {venda.pagamentos && venda.pagamentos.length > 0 && (
+                          <span className="ml-3">• {venda.pagamentos.map(p => p.forma_pagamento).join(', ')}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <span className="text-base font-semibold text-gray-700 dark:text-gray-300">Total:</span>
+                    <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatValor(caixaData.totalVendas)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
 
         {/* Dialog de Retorno para Edição */}
