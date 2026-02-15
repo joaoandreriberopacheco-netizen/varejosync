@@ -742,25 +742,27 @@ export default function PDVCaixa() {
     return total;
   };
 
+  useEffect(() => {
+    // Auto-preencher recebimentos quando os dados mudarem
+    if (!recebimentosDinheiro) {
+      setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
+    }
+  }, [caixaData]);
+
   const handleFecharCaixa = () => {
-    setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
-    setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
-    setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.6));
-    setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.4));
-    setCedulas({
-      nota200: 0,
-      nota100: 0,
-      nota50: 0,
-      nota20: 0,
-      nota10: 0,
-      nota5: 0,
-      nota2: 0,
-      moeda1: 0,
-      moeda050: 0,
-      moeda025: 0,
-      moeda010: 0,
-      moeda005: 0
-    });
+    const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || caixaData.recebimentos.dinheiro;
+    const totalRecebimentos = dinheiroContado + caixaData.recebimentos.pix + caixaData.recebimentos.cartao;
+    const diferenca = Math.abs(totalRecebimentos - caixaData.saldoAtual);
+    
+    if (diferenca > 0.01) {
+      toast({
+        title: "Valores não conferem",
+        description: "Ajuste o valor de dinheiro antes de fechar o caixa.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setShowFechamentoDialog(true);
   };
 
