@@ -789,6 +789,59 @@ export default function PDVCaixa() {
             {/* Balanço - Layout em duas colunas no desktop */}
             <div className="pb-4 md:pb-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                {/* Movimentações do Turno */}
+                <div>
+                  <h3 className="text-gray-800 mb-3 text-sm font-semibold md:text-base dark:text-gray-200">
+                    Movimentações do Turno
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Saldo Inicial</span>
+                      </div>
+                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                        {formatValor(contaCaixaPDV?.saldo_inicial || 0)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Vendas em Dinheiro</span>
+                      </div>
+                      <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                        +{formatValor(caixaData.recebimentos.dinheiro)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Reforços</span>
+                      </div>
+                      <span className="text-base font-semibold text-teal-600 dark:text-teal-400">
+                        +{formatValor(caixaData.reforcos)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Sangrias</span>
+                      </div>
+                      <span className="text-base font-semibold text-amber-600 dark:text-amber-400">
+                        -{formatValor(caixaData.sangrias)}
+                      </span>
+                    </div>
+                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Saldo Atual</span>
+                        <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                          {formatValor(caixaData.saldoAtual)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Recebimentos do Turno */}
                 <div>
                   <h3 className="text-gray-800 mb-3 text-sm font-semibold md:text-base dark:text-gray-200">
@@ -851,59 +904,6 @@ export default function PDVCaixa() {
                             <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           </button>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Movimentações do Turno */}
-                <div>
-                  <h3 className="text-gray-800 mb-3 text-sm font-semibold md:text-base dark:text-gray-200">
-                    Movimentações do Turno
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Saldo Inicial</span>
-                      </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                        {formatValor(contaCaixaPDV?.saldo_inicial || 0)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Vendas em Dinheiro</span>
-                      </div>
-                      <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
-                        +{formatValor(caixaData.recebimentos.dinheiro)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Reforços</span>
-                      </div>
-                      <span className="text-base font-semibold text-teal-600 dark:text-teal-400">
-                        +{formatValor(caixaData.reforcos)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Sangrias</span>
-                      </div>
-                      <span className="text-base font-semibold text-amber-600 dark:text-amber-400">
-                        -{formatValor(caixaData.sangrias)}
-                      </span>
-                    </div>
-                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Saldo Atual</span>
-                        <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                          {formatValor(caixaData.saldoAtual)}
-                        </span>
                       </div>
                     </div>
                   </div>
