@@ -288,187 +288,114 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
                   </CardContent>
                 </Card>
 
-                {/* Composição do Saldo */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    Composição do Saldo
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {Object.entries(composicaoSaldo).map(([forma, valor]) => (
-                      <Card key={forma} className="shadow-sm border-0 bg-white dark:bg-gray-800">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            {getIconeFormaPagamento(forma)}
-                            <span className="text-xs text-gray-600 dark:text-gray-400">{forma}</span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {formatValor(valor)}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Total de Vendas */}
-                <Card className="shadow-sm border-0 bg-white dark:bg-gray-800">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ShoppingBag className="w-5 h-5 text-emerald-500" />
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Total de Vendas</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">{vendas.length} pedidos</p>
-                        </div>
-                      </div>
-                      <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                        {formatValor(totalVendas)}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Lista de Pedidos */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                    <Receipt className="w-4 h-4" />
-                    Pedidos do Dia
-                  </h3>
-                  <div className="space-y-2">
-                    {vendas.length === 0 ? (
-                      <Card className="shadow-sm border-0 bg-white dark:bg-gray-800">
-                        <CardContent className="p-4 text-center text-gray-500 dark:text-gray-400">
-                          Nenhum pedido registrado hoje
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      vendas.map((venda, idx) => (
-                        <Collapsible key={venda.id || idx}>
-                          <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
-                            <CollapsibleTrigger asChild>
-                              <button className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                        {venda.numero || 'S/N'}
-                                      </span>
-                                      <span className="text-xs text-gray-400">•</span>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        {formatHora(venda.created_date)}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                                      {venda.cliente_nome || 'Cliente'}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                                      {formatValor(venda.valor_total)}
+                {/* Layout Responsivo: Mobile = Stacked, Desktop = Duas Colunas */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* Coluna Esquerda - Movimentações do Turno */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Movimentações do Turno
+                    </h3>
+                    <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
+                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {extratoTurno.map((item, idx) => {
+                          const Icon = item.icone;
+                          return (
+                            <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${item.cor}`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                      {item.tipo}
                                     </span>
-                                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                                  </div>
-                                </div>
-                              </button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-3">
-                                {/* Itens */}
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Itens</p>
-                                  <div className="space-y-1">
-                                    {venda.itens?.map((item, itemIdx) => (
-                                      <div key={itemIdx} className="flex justify-between text-xs">
-                                        <span className="text-gray-700 dark:text-gray-300">
-                                          {item.quantidade}x {item.produto_nome}
+                                    {item.horario && (
+                                      <>
+                                        <span className="text-gray-300">•</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                          {formatHora(item.horario)}
                                         </span>
-                                        <span className="text-gray-900 dark:text-gray-100 font-medium">
-                                          {formatValor(item.total)}
-                                        </span>
-                                      </div>
-                                    ))}
+                                      </>
+                                    )}
                                   </div>
-                                </div>
-
-                                {/* Formas de Pagamento */}
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                                    Formas de Pagamento
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                    {item.descricao}
                                   </p>
-                                  <div className="space-y-1">
-                                    {venda.pagamentos?.map((pag, pagIdx) => (
-                                      <div key={pagIdx} className="flex items-center justify-between text-xs">
-                                        <div className="flex items-center gap-2">
-                                          {getIconeFormaPagamento(pag.forma_pagamento)}
-                                          <span className="text-gray-700 dark:text-gray-300">
-                                            {pag.forma_pagamento}
-                                          </span>
-                                        </div>
-                                        <span className="text-gray-900 dark:text-gray-100 font-medium">
-                                          {formatValor(pag.valor)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
                                 </div>
-                              </div>
-                            </CollapsibleContent>
-                          </Card>
-                        </Collapsible>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Extrato do Turno */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Extrato do Turno
-                  </h3>
-                  <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
-                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                      {extratoTurno.map((item, idx) => {
-                        const Icon = item.icone;
-                        return (
-                          <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                            <div className="flex items-start gap-3">
-                              <div className={`w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${item.cor}`}>
-                                <Icon className="w-4 h-4" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {item.tipo}
-                                  </span>
-                                  {item.horario && (
-                                    <>
-                                      <span className="text-gray-300">•</span>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        {formatHora(item.horario)}
-                                      </span>
-                                    </>
-                                  )}
+                                <div className="text-right">
+                                  <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                                    {item.sinal && item.sinal} {formatValor(item.valor)}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Saldo: {formatValor(item.saldoAcumulado)}
+                                  </p>
                                 </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                                  {item.descricao}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className={`text-sm font-semibold ${item.sinal === '+' ? 'text-emerald-600 dark:text-emerald-400' : item.sinal === '-' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                                  {item.sinal && item.sinal} {formatValor(item.valor)}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  Saldo: {formatValor(item.saldoAcumulado)}
-                                </p>
                               </div>
                             </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Coluna Direita - Recebimentos do Turno */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Recebimentos do Turno
+                    </h3>
+                    <Card className="shadow-sm border-0 bg-white dark:bg-gray-800 overflow-hidden">
+                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {Object.entries(composicaoSaldo).map(([forma, valor]) => {
+                          const Icon = getIconeFormaPagamento(forma);
+                          return (
+                            <div key={forma} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                                  {Icon}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {forma}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                    {formatValor(valor)}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Total de Vendas */}
+                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center">
+                              <ShoppingBag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                Total Vendas
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {vendas.length} pedidos
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                                {formatValor(totalVendas)}
+                              </p>
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </Card>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
                 </div>
               </>
             )}
