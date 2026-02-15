@@ -68,6 +68,7 @@ export default function PDVCaixa() {
   const [showComprovanteMovimento, setShowComprovanteMovimento] = useState(false);
 
   const [showFechamentoDialog, setShowFechamentoDialog] = useState(false);
+  const [valorContadoCaixa, setValorContadoCaixa] = useState('');
 
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
   const [pagamentosPix, setPagamentosPix] = useState(0);
@@ -705,6 +706,7 @@ export default function PDVCaixa() {
   };
 
   const handleFecharCaixa = () => {
+    setValorContadoCaixa(formatarValorExibicao(caixaData.saldoAtual));
     setShowFechamentoDialog(true);
   };
 
@@ -800,8 +802,8 @@ export default function PDVCaixa() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Saldo Inicial</span>
+                        <Wallet className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                        <span className="text-sm text-gray-800 dark:text-gray-300">Saldo Inicial</span>
                       </div>
                       <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(contaCaixaPDV?.saldo_inicial || 0)}
@@ -809,52 +811,52 @@ export default function PDVCaixa() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Vendas em Dinheiro</span>
+                        <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                        <span className="text-sm text-gray-800 dark:text-gray-300">Vendas em Dinheiro</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
-                          +{formatValor(caixaData.recebimentos.dinheiro)}
+                      <div className="flex items-center gap-1">
+                        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                          {formatValor(caixaData.recebimentos.dinheiro)}
                         </span>
                         <button
                           onClick={() => setShowVendasDialog(true)}
-                          className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-800 rounded-md transition-colors"
+                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                           title="Ver vendas em dinheiro">
-                          <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          <Eye className="w-4 h-4 text-gray-700 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Reforços</span>
+                        <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                        <span className="text-sm text-gray-800 dark:text-gray-300">Reforços</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-teal-600 dark:text-teal-400">
-                          +{formatValor(caixaData.reforcos)}
+                      <div className="flex items-center gap-1">
+                        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                          {formatValor(caixaData.reforcos)}
                         </span>
                         <button
                           onClick={() => setShowReforcosDialog(true)}
-                          className="p-1.5 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-md transition-colors"
+                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                           title="Ver reforços">
-                          <Eye className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                          <Eye className="w-4 h-4 text-gray-700 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Sangrias</span>
+                        <Minus className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        <span className="text-sm text-gray-800 dark:text-gray-300">Sangrias</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-semibold text-amber-600 dark:text-amber-400">
-                          -{formatValor(caixaData.sangrias)}
+                      <div className="flex items-center gap-1">
+                        <span className="text-base font-semibold text-red-600 dark:text-red-400">
+                          {formatValor(caixaData.sangrias)}
                         </span>
                         <button
                           onClick={() => setShowSangriasDialog(true)}
-                          className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-md transition-colors"
+                          className="p-1.5 hover:bg-red-100 dark:hover:bg-red-800 rounded-md transition-colors"
                           title="Ver sangrias">
-                          <Eye className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <Eye className="w-4 h-4 text-red-600 dark:text-red-400" />
                         </button>
                       </div>
                     </div>
@@ -875,37 +877,37 @@ export default function PDVCaixa() {
                     Recebimentos do Turno
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <Banknote className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Dinheiro</span>
+                        <Banknote className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                        <span className="text-base text-gray-800 dark:text-gray-300">Dinheiro</span>
                       </div>
                       <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.dinheiro)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">PIX</span>
+                        <Smartphone className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                        <span className="text-base text-gray-800 dark:text-gray-300">PIX</span>
                       </div>
                       <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.pix)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Cartão Crédito</span>
+                        <CreditCard className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                        <span className="text-base text-gray-800 dark:text-gray-300">Cartão Crédito</span>
                       </div>
                       <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.cartao * 0.6)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Cartão Débito</span>
+                        <CreditCard className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                        <span className="text-base text-gray-800 dark:text-gray-300">Cartão Débito</span>
                       </div>
                       <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.cartao * 0.4)}
@@ -1442,48 +1444,126 @@ export default function PDVCaixa() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Resumo do Turno</h3>
+                <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Movimentações do Turno</h3>
                 <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                   <div className="flex justify-between">
-                    <span>Vendas em Dinheiro:</span>
-                    <span className="font-bold text-gray-800 dark:text-gray-200">+{formatValor(caixaData.recebimentos.dinheiro)}</span>
+                    <span>Saldo Inicial:</span>
+                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(contaCaixaPDV?.saldo_inicial || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Reforços:</span>
-                    <span className="font-bold text-teal-600 dark:text-teal-400">+{formatValor(caixaData.reforcos)}</span>
+                    <span>+ Vendas em Dinheiro:</span>
+                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.recebimentos.dinheiro)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Sangrias:</span>
-                    <span className="font-bold text-yellow-600 dark:text-yellow-400">-{formatValor(caixaData.sangrias)}</span>
+                    <span>+ Reforços:</span>
+                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.reforcos)}</span>
                   </div>
-                  <div className="border-t pt-2 border-gray-200 dark:border-gray-700 flex justify-between text-lg">
-                    <span>Saldo Final:</span>
+                  <div className="flex justify-between">
+                    <span>- Sangrias:</span>
+                    <span className="font-bold text-red-600 dark:text-red-400">{formatValor(caixaData.sangrias)}</span>
+                  </div>
+                  <div className="border-t pt-2 border-gray-200 dark:border-gray-700 flex justify-between text-base">
+                    <span className="font-semibold">Saldo Esperado:</span>
                     <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.saldoAtual)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                <p className="text-xs text-red-800 dark:text-red-300">
-                  ⚠️ Ao fechar o caixa, você não poderá mais processar vendas neste turno.
-                </p>
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300 mb-2 block">Valor Contado em Caixa *</Label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={valorContadoCaixa}
+                  onChange={(e) => {}}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace') {
+                      e.preventDefault();
+                      let numeros = valorContadoCaixa.replace(/\D/g, '');
+                      numeros = numeros.slice(0, -1) || '0';
+                      const valor = parseInt(numeros) / 100;
+                      setValorContadoCaixa(formatarValorExibicao(valor));
+                    } else if (/^\d$/.test(e.key)) {
+                      e.preventDefault();
+                      const novoValor = aplicarMascaraValor(valorContadoCaixa, e.key);
+                      setValorContadoCaixa(novoValor);
+                    }
+                  }}
+                  className="h-12 text-lg font-bold text-center dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                  placeholder="R$ 0,00"
+                  autoFocus
+                />
               </div>
 
+              {valorContadoCaixa && (() => {
+                const valorContadoNum = parseFloat(valorContadoCaixa.replace(/\./g, '').replace(',', '.'));
+                const diferenca = valorContadoNum - caixaData.saldoAtual;
+                const temDiferenca = Math.abs(diferenca) > 0.01;
+                
+                return temDiferenca ? (
+                  <div className={`p-3 rounded-lg border ${diferenca > 0 ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700' : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'}`}>
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className={`w-5 h-5 ${diferenca > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`} />
+                      <div>
+                        <p className={`text-sm font-semibold ${diferenca > 0 ? 'text-yellow-900 dark:text-yellow-200' : 'text-red-900 dark:text-red-200'}`}>
+                          {diferenca > 0 ? 'Sobrando' : 'Faltando'}: {formatValor(Math.abs(diferenca))}
+                        </p>
+                        <p className={`text-xs ${diferenca > 0 ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}`}>
+                          Não é possível fechar o caixa com diferença
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+                        Valores conferem! Você pode fechar o caixa.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowFechamentoDialog(false)} className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowFechamentoDialog(false);
+                    setValorContadoCaixa('');
+                  }} 
+                  className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
                   Cancelar
                 </Button>
                 <Button
                   onClick={() => {
+                    const valorContadoNum = parseFloat(valorContadoCaixa.replace(/\./g, '').replace(',', '.'));
+                    const diferenca = Math.abs(valorContadoNum - caixaData.saldoAtual);
+                    
+                    if (diferenca > 0.01) {
+                      toast({
+                        title: "Erro ao fechar caixa",
+                        description: "Há diferença entre o valor esperado e o contado.",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
                     toast({
                       title: "✓ Caixa fechado!",
                       description: "Turno encerrado com sucesso.",
                       className: "bg-emerald-100 text-emerald-800"
                     });
                     setShowFechamentoDialog(false);
+                    setValorContadoCaixa('');
                   }}
-                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600">
-
+                  disabled={!valorContadoCaixa || (() => {
+                    const valorContadoNum = parseFloat(valorContadoCaixa.replace(/\./g, '').replace(',', '.'));
+                    const diferenca = Math.abs(valorContadoNum - caixaData.saldoAtual);
+                    return diferenca > 0.01;
+                  })()}
+                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
                   Confirmar Fechamento
                 </Button>
               </div>
