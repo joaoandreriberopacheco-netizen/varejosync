@@ -716,7 +716,7 @@ export default function PDVCaixa() {
   };
 
   const handleAbrirBalanco = () => {
-    setView('balanco');
+    setShowBalancoDialog(true);
   };
 
   return (
