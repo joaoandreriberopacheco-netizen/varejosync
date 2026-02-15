@@ -831,8 +831,8 @@ export default function PDVCaixa() {
         <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
             {/* KPIs Superiores */}
             <div className="grid grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="text-gray-300 opacity-100">
-                <div className="text-gray-500 px-3 uppercase tracking-wide md:text-xs dark:text-gray-400">Saldo em Caixa</div>
+              <div>
+                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Saldo em Caixa</div>
                 <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
                   {formatValor(caixaData.saldoAtual)}
                 </div>
@@ -1509,37 +1509,39 @@ export default function PDVCaixa() {
                   <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Recebimentos Conferidos</h3>
                   <div className="space-y-2">
                     <div>
-                      <Label className="text-xs text-gray-600 dark:text-gray-400">Dinheiro *</Label>
-                      <div className="flex gap-1">
-                        <Input
-                          type="text"
-                          inputMode="numeric"
-                          value={recebimentosDinheiro}
-                          onChange={(e) => {}}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Backspace') {
-                              e.preventDefault();
-                              let numeros = recebimentosDinheiro.replace(/\D/g, '');
-                              numeros = numeros.slice(0, -1) || '0';
-                              const valor = parseInt(numeros) / 100;
-                              setRecebimentosDinheiro(formatarValorExibicao(valor));
-                            } else if (/^\d$/.test(e.key)) {
-                              e.preventDefault();
-                              const novoValor = aplicarMascaraValor(recebimentosDinheiro, e.key);
-                              setRecebimentosDinheiro(novoValor);
-                            }
-                          }}
-                          className="h-9 text-sm font-bold text-right dark:bg-gray-700 dark:text-gray-200"
-                          placeholder="0,00"
-                        />
+                      <Label className="text-xs text-gray-600 dark:text-gray-400 flex items-center justify-between">
+                        <span>Dinheiro (editável) *</span>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => setShowCalculadoraCedulas(true)}
-                          className="px-2">
-                          <Keyboard className="w-4 h-4" />
+                          className="h-6 px-2 text-xs">
+                          <Keyboard className="w-3 h-3 mr-1" />
+                          Calculadora
                         </Button>
-                      </div>
+                      </Label>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        value={recebimentosDinheiro}
+                        onChange={(e) => {}}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace') {
+                            e.preventDefault();
+                            let numeros = recebimentosDinheiro.replace(/\D/g, '');
+                            numeros = numeros.slice(0, -1) || '0';
+                            const valor = parseInt(numeros) / 100;
+                            setRecebimentosDinheiro(formatarValorExibicao(valor));
+                          } else if (/^\d$/.test(e.key)) {
+                            e.preventDefault();
+                            const novoValor = aplicarMascaraValor(recebimentosDinheiro, e.key);
+                            setRecebimentosDinheiro(novoValor);
+                          }
+                        }}
+                        className="h-9 text-sm font-bold text-right dark:bg-gray-700 dark:text-gray-200 border-blue-300 dark:border-blue-600"
+                        placeholder="0,00"
+                        autoFocus
+                      />
                     </div>
                     <div>
                       <Label className="text-xs text-gray-600 dark:text-gray-400">PIX</Label>
@@ -1587,7 +1589,7 @@ export default function PDVCaixa() {
                 </div>
               </div>
 
-              {/* Validação */}
+              {/* Validação e Saldo */}
               {recebimentosDinheiro && (() => {
                 const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                 const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
@@ -1597,28 +1599,51 @@ export default function PDVCaixa() {
                 const diferenca = totalRecebimentos - caixaData.saldoAtual;
                 const temDiferenca = Math.abs(diferenca) > 0.01;
                 
-                return temDiferenca ? (
-                  <div className={`p-3 rounded-lg border ${diferenca > 0 ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700' : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'}`}>
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className={`w-5 h-5 ${diferenca > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`} />
-                      <div>
-                        <p className={`text-sm font-semibold ${diferenca > 0 ? 'text-yellow-900 dark:text-yellow-200' : 'text-red-900 dark:text-red-200'}`}>
-                          {diferenca > 0 ? 'Sobrando' : 'Faltando'}: {formatValor(Math.abs(diferenca))}
-                        </p>
-                        <p className={`text-xs ${diferenca > 0 ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}`}>
-                          Os valores não conferem. Não é possível fechar o caixa.
-                        </p>
+                return (
+                  <div className="space-y-3">
+                    {/* Indicador de Saldo */}
+                    <div className={`p-4 rounded-lg border-2 ${!temDiferenca ? 'bg-emerald-50 border-emerald-500 dark:bg-emerald-900/20 dark:border-emerald-500' : (diferenca > 0 ? 'bg-yellow-50 border-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-400' : 'bg-red-50 border-red-500 dark:bg-red-900/20 dark:border-red-500')}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Status do Saldo</div>
+                          {!temDiferenca ? (
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                              <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">Valores Conferem</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className={`w-6 h-6 ${diferenca > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`} />
+                              <div>
+                                <span className={`text-lg font-bold ${diferenca > 0 ? 'text-yellow-900 dark:text-yellow-200' : 'text-red-900 dark:text-red-200'}`}>
+                                  {diferenca > 0 ? 'Sobrando' : 'Faltando'}
+                                </span>
+                                <p className={`text-xs ${diferenca > 0 ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}`}>
+                                  Diferença detectada
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        {temDiferenca && (
+                          <div className="text-right">
+                            <div className={`text-2xl font-bold ${diferenca > 0 ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}`}>
+                              {formatValor(Math.abs(diferenca))}
+                            </div>
+                            <div className={`text-xs ${diferenca > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                              Diferença
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                      <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
-                        Valores conferem! Você pode fechar o caixa.
-                      </p>
-                    </div>
+
+                    {/* Mensagem de Bloqueio */}
+                    {temDiferenca && (
+                      <div className="text-center p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                        ⚠️ Ajuste os valores para poder fechar o caixa
+                      </div>
+                    )}
                   </div>
                 );
               })()}
