@@ -1536,6 +1536,12 @@ export default function PDVCaixa() {
           pedido={vendaFinalizada}
           cliente={clienteVenda} />
 
+        {/* Dialog de Balanço do Caixa */}
+        <BalancoCaixaDialog
+          open={showBalancoDialog}
+          onOpenChange={setShowBalancoDialog}
+          contaCaixa={contaCaixaPDV} />
+
 
         {/* Dialog de Retorno para Edição */}
         <Dialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog}>
