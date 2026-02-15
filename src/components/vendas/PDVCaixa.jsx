@@ -1590,7 +1590,7 @@ export default function PDVCaixa() {
               </div>
 
               {/* Validação e Saldo */}
-              {recebimentosDinheiro && (() => {
+              {(() => {
                 const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                 const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
                 const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
@@ -1683,8 +1683,23 @@ export default function PDVCaixa() {
                     });
                     setShowFechamentoDialog(false);
                     setRecebimentosDinheiro('');
+                    setCedulas({
+                      nota200: 0,
+                      nota100: 0,
+                      nota50: 0,
+                      nota20: 0,
+                      nota10: 0,
+                      nota5: 0,
+                      nota2: 0,
+                      moeda1: 0,
+                      moeda050: 0,
+                      moeda025: 0,
+                      moeda010: 0,
+                      moeda005: 0
+                    });
                   }}
-                  disabled={!recebimentosDinheiro || (() => {
+                  disabled={(() => {
+                    if (!recebimentosDinheiro) return true;
                     const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                     const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
                     const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
