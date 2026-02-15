@@ -69,6 +69,25 @@ export default function PDVCaixa() {
 
   const [showFechamentoDialog, setShowFechamentoDialog] = useState(false);
   const [valorContadoCaixa, setValorContadoCaixa] = useState('');
+  const [showCalculadoraCedulas, setShowCalculadoraCedulas] = useState(false);
+  const [cedulas, setCedulas] = useState({
+    nota200: 0,
+    nota100: 0,
+    nota50: 0,
+    nota20: 0,
+    nota10: 0,
+    nota5: 0,
+    nota2: 0,
+    moeda1: 0,
+    moeda050: 0,
+    moeda025: 0,
+    moeda010: 0,
+    moeda005: 0
+  });
+  const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('');
+  const [recebimentosPix, setRecebimentosPix] = useState('');
+  const [recebimentosCredito, setRecebimentosCredito] = useState('');
+  const [recebimentosDebito, setRecebimentosDebito] = useState('');
 
   const [pagamentosDinheiro, setPagamentosDinheiro] = useState(0);
   const [pagamentosPix, setPagamentosPix] = useState(0);
@@ -705,8 +724,43 @@ export default function PDVCaixa() {
     }
   };
 
+  const calcularTotalCedulas = () => {
+    const total = (
+      cedulas.nota200 * 200 +
+      cedulas.nota100 * 100 +
+      cedulas.nota50 * 50 +
+      cedulas.nota20 * 20 +
+      cedulas.nota10 * 10 +
+      cedulas.nota5 * 5 +
+      cedulas.nota2 * 2 +
+      cedulas.moeda1 * 1 +
+      cedulas.moeda050 * 0.50 +
+      cedulas.moeda025 * 0.25 +
+      cedulas.moeda010 * 0.10 +
+      cedulas.moeda005 * 0.05
+    );
+    return total;
+  };
+
   const handleFecharCaixa = () => {
-    setValorContadoCaixa(formatarValorExibicao(caixaData.saldoAtual));
+    setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
+    setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
+    setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.6));
+    setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.4));
+    setCedulas({
+      nota200: 0,
+      nota100: 0,
+      nota50: 0,
+      nota20: 0,
+      nota10: 0,
+      nota5: 0,
+      nota2: 0,
+      moeda1: 0,
+      moeda050: 0,
+      moeda025: 0,
+      moeda010: 0,
+      moeda005: 0
+    });
     setShowFechamentoDialog(true);
   };
 
@@ -913,28 +967,7 @@ export default function PDVCaixa() {
                         {formatValor(caixaData.recebimentos.cartao * 0.4)}
                       </span>
                     </div>
-                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          <div>
-                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Total Vendas</span>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">{vendasFinalizadas.length} pedidos</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                            {formatValor(caixaData.totalVendas)}
-                          </span>
-                          <button
-                            onClick={() => setShowVendasDialog(true)}
-                            className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-800 rounded-md transition-colors"
-                            title="Ver detalhes das vendas">
-                            <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               </div>
@@ -1435,69 +1468,133 @@ export default function PDVCaixa() {
         </Dialog>
 
         <Dialog open={showFechamentoDialog} onOpenChange={setShowFechamentoDialog}>
-          <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200">
             <DialogHeader>
               <DialogTitle className="text-lg flex items-center gap-2 text-gray-800 dark:text-gray-200">
                 <Lock className="w-5 h-5 text-red-600 dark:text-red-400" />
-                Fechamento de Caixa
+                Conferência e Fechamento de Caixa
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Movimentações do Turno</h3>
-                <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <div className="flex justify-between">
-                    <span>Saldo Inicial:</span>
-                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(contaCaixaPDV?.saldo_inicial || 0)}</span>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Coluna Esquerda: Saldo Esperado */}
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+                  <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Movimentações do Turno</h3>
+                  <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div className="flex justify-between">
+                      <span>Saldo Inicial:</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(contaCaixaPDV?.saldo_inicial || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>+ Vendas Dinheiro:</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.recebimentos.dinheiro)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>+ Reforços:</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.reforcos)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>- Sangrias:</span>
+                      <span className="font-bold text-red-600 dark:text-red-400">{formatValor(caixaData.sangrias)}</span>
+                    </div>
+                    <div className="border-t pt-2 border-gray-200 dark:border-gray-700 flex justify-between">
+                      <span className="font-semibold">Saldo Esperado:</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-200 text-lg">{formatValor(caixaData.saldoAtual)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>+ Vendas em Dinheiro:</span>
-                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.recebimentos.dinheiro)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>+ Reforços:</span>
-                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.reforcos)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>- Sangrias:</span>
-                    <span className="font-bold text-red-600 dark:text-red-400">{formatValor(caixaData.sangrias)}</span>
-                  </div>
-                  <div className="border-t pt-2 border-gray-200 dark:border-gray-700 flex justify-between text-base">
-                    <span className="font-semibold">Saldo Esperado:</span>
-                    <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.saldoAtual)}</span>
+                </div>
+
+                {/* Coluna Direita: Recebimentos Contados */}
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <h3 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Recebimentos Conferidos</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Dinheiro *</Label>
+                      <div className="flex gap-1">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={recebimentosDinheiro}
+                          onChange={(e) => {}}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Backspace') {
+                              e.preventDefault();
+                              let numeros = recebimentosDinheiro.replace(/\D/g, '');
+                              numeros = numeros.slice(0, -1) || '0';
+                              const valor = parseInt(numeros) / 100;
+                              setRecebimentosDinheiro(formatarValorExibicao(valor));
+                            } else if (/^\d$/.test(e.key)) {
+                              e.preventDefault();
+                              const novoValor = aplicarMascaraValor(recebimentosDinheiro, e.key);
+                              setRecebimentosDinheiro(novoValor);
+                            }
+                          }}
+                          className="h-9 text-sm font-bold text-right dark:bg-gray-700 dark:text-gray-200"
+                          placeholder="0,00"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCalculadoraCedulas(true)}
+                          className="px-2">
+                          <Keyboard className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">PIX</Label>
+                      <Input
+                        type="text"
+                        value={recebimentosPix}
+                        readOnly
+                        className="h-9 text-sm font-bold text-right bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Cartão Crédito</Label>
+                      <Input
+                        type="text"
+                        value={recebimentosCredito}
+                        readOnly
+                        className="h-9 text-sm font-bold text-right bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400">Cartão Débito</Label>
+                      <Input
+                        type="text"
+                        value={recebimentosDebito}
+                        readOnly
+                        className="h-9 text-sm font-bold text-right bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
+                      />
+                    </div>
+                    <div className="border-t pt-2 border-blue-200 dark:border-blue-700">
+                      {(() => {
+                        const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                        const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
+                        const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
+                        const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
+                        const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
+                        return (
+                          <div className="flex justify-between">
+                            <span className="font-semibold text-gray-700 dark:text-gray-300">Total:</span>
+                            <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">{formatValor(totalRecebimentos)}</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300 mb-2 block">Valor Contado em Caixa *</Label>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  value={valorContadoCaixa}
-                  onChange={(e) => {}}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Backspace') {
-                      e.preventDefault();
-                      let numeros = valorContadoCaixa.replace(/\D/g, '');
-                      numeros = numeros.slice(0, -1) || '0';
-                      const valor = parseInt(numeros) / 100;
-                      setValorContadoCaixa(formatarValorExibicao(valor));
-                    } else if (/^\d$/.test(e.key)) {
-                      e.preventDefault();
-                      const novoValor = aplicarMascaraValor(valorContadoCaixa, e.key);
-                      setValorContadoCaixa(novoValor);
-                    }
-                  }}
-                  className="h-12 text-lg font-bold text-center dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                  placeholder="R$ 0,00"
-                  autoFocus
-                />
-              </div>
-
-              {valorContadoCaixa && (() => {
-                const valorContadoNum = parseFloat(valorContadoCaixa.replace(/\./g, '').replace(',', '.'));
-                const diferenca = valorContadoNum - caixaData.saldoAtual;
+              {/* Validação */}
+              {recebimentosDinheiro && (() => {
+                const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
+                const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
+                const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
+                const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
+                const diferenca = totalRecebimentos - caixaData.saldoAtual;
                 const temDiferenca = Math.abs(diferenca) > 0.01;
                 
                 return temDiferenca ? (
@@ -1509,7 +1606,7 @@ export default function PDVCaixa() {
                           {diferenca > 0 ? 'Sobrando' : 'Faltando'}: {formatValor(Math.abs(diferenca))}
                         </p>
                         <p className={`text-xs ${diferenca > 0 ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}`}>
-                          Não é possível fechar o caixa com diferença
+                          Os valores não conferem. Não é possível fechar o caixa.
                         </p>
                       </div>
                     </div>
@@ -1531,20 +1628,24 @@ export default function PDVCaixa() {
                   variant="outline" 
                   onClick={() => {
                     setShowFechamentoDialog(false);
-                    setValorContadoCaixa('');
+                    setRecebimentosDinheiro('');
                   }} 
-                  className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-300">
+                  className="flex-1">
                   Cancelar
                 </Button>
                 <Button
                   onClick={() => {
-                    const valorContadoNum = parseFloat(valorContadoCaixa.replace(/\./g, '').replace(',', '.'));
-                    const diferenca = Math.abs(valorContadoNum - caixaData.saldoAtual);
+                    const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                    const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
+                    const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
+                    const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
+                    const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
+                    const diferenca = Math.abs(totalRecebimentos - caixaData.saldoAtual);
                     
                     if (diferenca > 0.01) {
                       toast({
                         title: "Erro ao fechar caixa",
-                        description: "Há diferença entre o valor esperado e o contado.",
+                        description: "Os valores não conferem.",
                         variant: "destructive"
                       });
                       return;
@@ -1556,15 +1657,139 @@ export default function PDVCaixa() {
                       className: "bg-emerald-100 text-emerald-800"
                     });
                     setShowFechamentoDialog(false);
-                    setValorContadoCaixa('');
+                    setRecebimentosDinheiro('');
                   }}
-                  disabled={!valorContadoCaixa || (() => {
-                    const valorContadoNum = parseFloat(valorContadoCaixa.replace(/\./g, '').replace(',', '.'));
-                    const diferenca = Math.abs(valorContadoNum - caixaData.saldoAtual);
+                  disabled={!recebimentosDinheiro || (() => {
+                    const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                    const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
+                    const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
+                    const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
+                    const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
+                    const diferenca = Math.abs(totalRecebimentos - caixaData.saldoAtual);
                     return diferenca > 0.01;
                   })()}
-                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50">
                   Confirmar Fechamento
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Calculadora de Cédulas/Moedas */}
+        <Dialog open={showCalculadoraCedulas} onOpenChange={setShowCalculadoraCedulas}>
+          <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
+            <DialogHeader>
+              <DialogTitle className="text-lg text-gray-800 dark:text-gray-200">Calculadora de Cédulas e Moedas</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {/* Notas */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notas</h4>
+                {[
+                  { key: 'nota200', label: 'R$ 200,00', valor: 200 },
+                  { key: 'nota100', label: 'R$ 100,00', valor: 100 },
+                  { key: 'nota50', label: 'R$ 50,00', valor: 50 },
+                  { key: 'nota20', label: 'R$ 20,00', valor: 20 },
+                  { key: 'nota10', label: 'R$ 10,00', valor: 10 },
+                  { key: 'nota5', label: 'R$ 5,00', valor: 5 },
+                  { key: 'nota2', label: 'R$ 2,00', valor: 2 }
+                ].map(({ key, label, valor }) => (
+                  <div key={key} className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 w-24">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCedulas(prev => ({ ...prev, [key]: Math.max(0, prev[key] - 1) }))}
+                        className="h-8 w-8 p-0">
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <Input
+                        type="number"
+                        value={cedulas[key]}
+                        onChange={(e) => setCedulas(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="h-8 w-16 text-center dark:bg-gray-700"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCedulas(prev => ({ ...prev, [key]: prev[key] + 1 }))}
+                        className="h-8 w-8 p-0">
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 w-24 text-right">
+                        {formatValor(cedulas[key] * valor)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Moedas */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Moedas</h4>
+                {[
+                  { key: 'moeda1', label: 'R$ 1,00', valor: 1 },
+                  { key: 'moeda050', label: 'R$ 0,50', valor: 0.50 },
+                  { key: 'moeda025', label: 'R$ 0,25', valor: 0.25 },
+                  { key: 'moeda010', label: 'R$ 0,10', valor: 0.10 },
+                  { key: 'moeda005', label: 'R$ 0,05', valor: 0.05 }
+                ].map(({ key, label, valor }) => (
+                  <div key={key} className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 w-24">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCedulas(prev => ({ ...prev, [key]: Math.max(0, prev[key] - 1) }))}
+                        className="h-8 w-8 p-0">
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <Input
+                        type="number"
+                        value={cedulas[key]}
+                        onChange={(e) => setCedulas(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="h-8 w-16 text-center dark:bg-gray-700"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCedulas(prev => ({ ...prev, [key]: prev[key] + 1 }))}
+                        className="h-8 w-8 p-0">
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 w-24 text-right">
+                        {formatValor(cedulas[key] * valor)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">Total Calculado:</span>
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatValor(calcularTotalCedulas())}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCalculadoraCedulas(false)}
+                  className="flex-1">
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => {
+                    setRecebimentosDinheiro(formatarValorExibicao(calcularTotalCedulas()));
+                    setShowCalculadoraCedulas(false);
+                  }}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                  Confirmar
                 </Button>
               </div>
             </div>
