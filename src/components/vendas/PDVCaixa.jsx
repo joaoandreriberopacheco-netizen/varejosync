@@ -96,6 +96,9 @@ export default function PDVCaixa() {
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
   const [showVendasDialog, setShowVendasDialog] = useState(false);
+  const [showReforcosDialog, setShowReforcosDialog] = useState(false);
+  const [showSangriasDialog, setShowSangriasDialog] = useState(false);
+  const [vendaDetalhada, setVendaDetalhada] = useState(null);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -791,7 +794,7 @@ export default function PDVCaixa() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 {/* Movimentações do Turno */}
                 <div>
-                  <h3 className="text-gray-800 mb-3 text-sm font-semibold md:text-base dark:text-gray-200">
+                  <h3 className="text-gray-800 mb-3 text-sm font-extrabold md:text-base dark:text-gray-200">
                     Movimentações do Turno
                   </h3>
                   <div className="space-y-3">
@@ -809,27 +812,51 @@ export default function PDVCaixa() {
                         <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         <span className="text-sm text-gray-700 dark:text-gray-300">Vendas em Dinheiro</span>
                       </div>
-                      <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
-                        +{formatValor(caixaData.recebimentos.dinheiro)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                          +{formatValor(caixaData.recebimentos.dinheiro)}
+                        </span>
+                        <button
+                          onClick={() => setShowVendasDialog(true)}
+                          className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-800 rounded-md transition-colors"
+                          title="Ver vendas em dinheiro">
+                          <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                         <span className="text-sm text-gray-700 dark:text-gray-300">Reforços</span>
                       </div>
-                      <span className="text-base font-semibold text-teal-600 dark:text-teal-400">
-                        +{formatValor(caixaData.reforcos)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-semibold text-teal-600 dark:text-teal-400">
+                          +{formatValor(caixaData.reforcos)}
+                        </span>
+                        <button
+                          onClick={() => setShowReforcosDialog(true)}
+                          className="p-1.5 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-md transition-colors"
+                          title="Ver reforços">
+                          <Eye className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         <span className="text-sm text-gray-700 dark:text-gray-300">Sangrias</span>
                       </div>
-                      <span className="text-base font-semibold text-amber-600 dark:text-amber-400">
-                        -{formatValor(caixaData.sangrias)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-semibold text-amber-600 dark:text-amber-400">
+                          -{formatValor(caixaData.sangrias)}
+                        </span>
+                        <button
+                          onClick={() => setShowSangriasDialog(true)}
+                          className="p-1.5 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-md transition-colors"
+                          title="Ver sangrias">
+                          <Eye className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        </button>
+                      </div>
                     </div>
                     <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                       <div className="flex items-center justify-between">
@@ -844,7 +871,7 @@ export default function PDVCaixa() {
 
                 {/* Recebimentos do Turno */}
                 <div>
-                  <h3 className="text-gray-800 mb-3 text-sm font-semibold md:text-base dark:text-gray-200">
+                  <h3 className="text-gray-800 mb-3 text-sm font-extrabold md:text-base dark:text-gray-200">
                     Recebimentos do Turno
                   </h3>
                   <div className="space-y-3">
@@ -1473,50 +1500,333 @@ export default function PDVCaixa() {
 
         {/* Dialog de Vendas */}
         <Dialog open={showVendasDialog} onOpenChange={setShowVendasDialog}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden dark:bg-gray-900 dark:text-gray-200 flex flex-col">
+          <DialogContent className="max-w-6xl w-full h-[90vh] overflow-hidden dark:bg-gray-900 dark:text-gray-200 flex flex-col">
             <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-lg flex items-center gap-2 text-gray-800 dark:text-gray-200">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                Vendas Finalizadas ({vendasFinalizadas.length})
+                Vendas em Dinheiro ({vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).length})
               </DialogTitle>
             </DialogHeader>
-            <div className="flex-1 overflow-y-auto space-y-2">
-              {vendasFinalizadas.length === 0 ? (
-                <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">Nenhuma venda finalizada hoje</p>
+            <div className="flex-1 overflow-y-auto">
+              {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).length === 0 ? (
+                <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">Nenhuma venda em dinheiro hoje</p>
               ) : (
-                vendasFinalizadas.map((venda) => (
-                  <div key={venda.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="font-semibold text-gray-800 dark:text-gray-200">{venda.numero} - {venda.cliente_nome}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                <>
+                  {/* Desktop - Tabela */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Pedido</TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Vendedor</TableHead>
+                          <TableHead>Horário</TableHead>
+                          <TableHead className="text-right">Itens</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).map((venda) => (
+                          <TableRow key={venda.id}>
+                            <TableCell className="font-medium">{venda.numero}</TableCell>
+                            <TableCell>{venda.cliente_nome}</TableCell>
+                            <TableCell>{venda.vendedor_nome}</TableCell>
+                            <TableCell>{format(new Date(venda.created_date), 'HH:mm')}</TableCell>
+                            <TableCell className="text-right">{venda.itens?.length || 0}</TableCell>
+                            <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                              {formatValor(venda.valor_total)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <button
+                                onClick={() => setVendaDetalhada(venda)}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                title="Ver detalhes">
+                                <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                              </button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile - Cards */}
+                  <div className="md:hidden space-y-3">
+                    {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).map((venda) => (
+                      <div key={venda.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-semibold text-gray-800 dark:text-gray-200">{venda.numero}</div>
+                          <button
+                            onClick={() => setVendaDetalhada(venda)}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md">
+                            <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                          </button>
+                        </div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300">{venda.cliente_nome}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {format(new Date(venda.created_date), 'HH:mm')} • {venda.vendedor_nome}
                         </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          {venda.itens?.length || 0} {venda.itens?.length === 1 ? 'item' : 'itens'}
+                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <span className="text-xs text-gray-600 dark:text-gray-400">{venda.itens?.length || 0} itens</span>
+                          <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            {formatValor(venda.valor_total)}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold text-emerald-600 dark:text-emerald-400 text-lg">
-                          {formatValor(venda.valor_total)}
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).length > 0 && (
+              <div className="flex-shrink-0 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total em Dinheiro:</span>
+                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {formatValor(caixaData.recebimentos.dinheiro)}
+                </span>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Detalhes da Venda */}
+        <Dialog open={!!vendaDetalhada} onOpenChange={() => setVendaDetalhada(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200">
+            {vendaDetalhada && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-lg text-gray-800 dark:text-gray-200">
+                    Detalhes da Venda - {vendaDetalhada.numero}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Cliente:</span>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">{vendaDetalhada.cliente_nome}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Vendedor:</span>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">{vendaDetalhada.vendedor_nome}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Horário:</span>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">
+                        {format(new Date(vendaDetalhada.created_date), 'dd/MM/yyyy HH:mm')}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Pagamento:</span>
+                      {vendaDetalhada.pagamentos?.map((p, idx) => (
+                        <p key={idx} className="font-medium text-gray-800 dark:text-gray-200">
+                          {p.forma_pagamento} - {formatValor(p.valor)}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">Itens da Venda</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead className="text-right">Qtd</TableHead>
+                          <TableHead className="text-right">Preço Unit.</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {vendaDetalhada.itens?.map((item, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{item.produto_nome}</TableCell>
+                            <TableCell className="text-right">{item.quantidade}</TableCell>
+                            <TableCell className="text-right">{formatValor(item.preco_unitario_praticado)}</TableCell>
+                            <TableCell className="text-right font-semibold">{formatValor(item.total)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                      <span className="font-medium text-gray-800 dark:text-gray-200">
+                        {formatValor(vendaDetalhada.subtotal)}
+                      </span>
+                    </div>
+                    {vendaDetalhada.valor_desconto > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Desconto:</span>
+                        <span className="font-medium text-red-600 dark:text-red-400">
+                          -{formatValor(vendaDetalhada.valor_desconto)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <span className="text-gray-800 dark:text-gray-200">Total:</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        {formatValor(vendaDetalhada.valor_total)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Reforços */}
+        <Dialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog}>
+          <DialogContent className="max-w-4xl w-full h-[90vh] overflow-hidden dark:bg-gray-900 dark:text-gray-200 flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle className="text-lg flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                <Plus className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                Reforços de Caixa ({movimentos.filter(m => m.tipo === 'Reforço').length})
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto">
+              {movimentos.filter(m => m.tipo === 'Reforço').length === 0 ? (
+                <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">Nenhum reforço registrado hoje</p>
+              ) : (
+                <>
+                  {/* Desktop - Tabela */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Número</TableHead>
+                          <TableHead>Horário</TableHead>
+                          <TableHead>Operador</TableHead>
+                          <TableHead>Observação</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {movimentos.filter(m => m.tipo === 'Reforço').map((mov) => (
+                          <TableRow key={mov.id}>
+                            <TableCell className="font-medium">{mov.numero}</TableCell>
+                            <TableCell>{format(new Date(mov.created_date), 'HH:mm')}</TableCell>
+                            <TableCell>{mov.usuario_responsavel_nome}</TableCell>
+                            <TableCell className="max-w-xs truncate">{mov.observacao || '-'}</TableCell>
+                            <TableCell className="text-right font-semibold text-teal-600 dark:text-teal-400">
+                              +{formatValor(mov.valor)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile - Cards */}
+                  <div className="md:hidden space-y-3">
+                    {movimentos.filter(m => m.tipo === 'Reforço').map((mov) => (
+                      <div key={mov.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-semibold text-gray-800 dark:text-gray-200">{mov.numero}</div>
+                          <div className="text-lg font-bold text-teal-600 dark:text-teal-400">
+                            +{formatValor(mov.valor)}
+                          </div>
                         </div>
-                        {venda.pagamentos && venda.pagamentos.length > 0 && (
-                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            {venda.pagamentos.map((p, idx) => (
-                              <div key={idx}>{p.forma_pagamento}</div>
-                            ))}
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {format(new Date(mov.created_date), 'HH:mm')} • {mov.usuario_responsavel_nome}
+                        </div>
+                        {mov.observacao && (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                            {mov.observacao}
                           </div>
                         )}
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))
+                </>
               )}
             </div>
-            {vendasFinalizadas.length > 0 && (
+            {movimentos.filter(m => m.tipo === 'Reforço').length > 0 && (
               <div className="flex-shrink-0 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total:</span>
-                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatValor(caixaData.totalVendas)}</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total de Reforços:</span>
+                <span className="text-xl font-bold text-teal-600 dark:text-teal-400">
+                  +{formatValor(caixaData.reforcos)}
+                </span>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Sangrias */}
+        <Dialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog}>
+          <DialogContent className="max-w-4xl w-full h-[90vh] overflow-hidden dark:bg-gray-900 dark:text-gray-200 flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle className="text-lg flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                <Minus className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                Sangrias de Caixa ({movimentos.filter(m => m.tipo === 'Sangria').length})
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto">
+              {movimentos.filter(m => m.tipo === 'Sangria').length === 0 ? (
+                <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">Nenhuma sangria registrada hoje</p>
+              ) : (
+                <>
+                  {/* Desktop - Tabela */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Número</TableHead>
+                          <TableHead>Horário</TableHead>
+                          <TableHead>Operador</TableHead>
+                          <TableHead>Observação</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {movimentos.filter(m => m.tipo === 'Sangria').map((mov) => (
+                          <TableRow key={mov.id}>
+                            <TableCell className="font-medium">{mov.numero}</TableCell>
+                            <TableCell>{format(new Date(mov.created_date), 'HH:mm')}</TableCell>
+                            <TableCell>{mov.usuario_responsavel_nome}</TableCell>
+                            <TableCell className="max-w-xs truncate">{mov.observacao || '-'}</TableCell>
+                            <TableCell className="text-right font-semibold text-amber-600 dark:text-amber-400">
+                              -{formatValor(mov.valor)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile - Cards */}
+                  <div className="md:hidden space-y-3">
+                    {movimentos.filter(m => m.tipo === 'Sangria').map((mov) => (
+                      <div key={mov.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-semibold text-gray-800 dark:text-gray-200">{mov.numero}</div>
+                          <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                            -{formatValor(mov.valor)}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {format(new Date(mov.created_date), 'HH:mm')} • {mov.usuario_responsavel_nome}
+                        </div>
+                        {mov.observacao && (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                            {mov.observacao}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            {movimentos.filter(m => m.tipo === 'Sangria').length > 0 && (
+              <div className="flex-shrink-0 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total de Sangrias:</span>
+                <span className="text-xl font-bold text-amber-600 dark:text-amber-400">
+                  -{formatValor(caixaData.sangrias)}
+                </span>
               </div>
             )}
           </DialogContent>
