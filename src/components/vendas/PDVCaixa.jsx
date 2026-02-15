@@ -738,18 +738,17 @@ export default function PDVCaixa() {
             <span className="font-medium"> F5:</span> Sangria | 
             <span className="font-medium"> F6:</span> Fechar
           </div>
-          <div className="text-sm font-medium flex items-center">
+          <div className="text-sm font-medium flex items-center text-gray-700 dark:text-gray-300">
             <Clock className="w-4 h-4 mr-1" />
             {format(new Date(), 'HH:mm')}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={() => window.location.href = '/'}
-            className="text-white hover:bg-gray-600 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8">
-
-            <ArrowLeft className="w-5 h-5 md:w-4 md:h-4" />
-          </Button>
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            style={{ minHeight: '44px' }}>
+            <ArrowLeft className="w-5 h-5" />
+            <span className="hidden sm:inline text-sm font-medium">Sair</span>
+          </button>
         </div>
       </div>
 
