@@ -312,6 +312,13 @@ export default function PDVCaixa() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, valorRestante, pedidosAguardando]); // Updated telaAtual to view
 
+  useEffect(() => {
+    // Auto-preencher recebimentos quando os dados mudarem
+    if (!recebimentosDinheiro && caixaData.recebimentos.dinheiro > 0) {
+      setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
+    }
+  }, [caixaData]);
+
   const loadData = async () => {
     try {
       const user = await base44.auth.me();
