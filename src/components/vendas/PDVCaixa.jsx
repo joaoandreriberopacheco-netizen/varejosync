@@ -31,13 +31,13 @@ import {
   Keyboard,
   AlertCircle,
   Edit,
-  Eye } from 'lucide-react';
+  Eye } from
+'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import LiberacaoEntrega from './LiberacaoEntrega';
-import { Eye } from 'lucide-react';
 
 
 export default function PDVCaixa() {
