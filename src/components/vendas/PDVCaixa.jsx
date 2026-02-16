@@ -33,7 +33,8 @@ import {
   AlertCircle,
   Edit,
   Eye,
-  ChevronRight } from
+  ChevronRight,
+  Monitor } from
 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
