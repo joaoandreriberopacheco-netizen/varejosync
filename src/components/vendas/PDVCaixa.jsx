@@ -799,145 +799,107 @@ export default function PDVCaixa() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
-      {/* Header - Responsivo */}
-      <div className="bg-gray-50 text-white p-3 dark:bg-gray-800 md:p-4 flex items-center justify-between">
-        <div className="text-gray-950 flex items-center gap-2 md:gap-3">
-          <Receipt className="w-5 h-5 md:w-6 md:h-6" />
-          <div>
-            <h1 className="text-base font-black md:text-lg">PDV - Caixa</h1>
-            <p className="text-[10px] md:text-xs text-gray-300 dark:text-gray-400 hidden sm:block">Caixa PDV</p>
-          </div>
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+      {/* Header Minimalista */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={() => window.location.href = '/'}
+          className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          style={{ minWidth: '44px', minHeight: '44px' }}>
+          <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+        </button>
+        
+        <div className="flex-1 text-center">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">Caixa</h1>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* Atalhos de teclado - apenas desktop */}
-          <div className="hidden lg:block text-xs text-gray-300 dark:text-gray-400">
-            <span className="font-medium">F1:</span> Ajuda | 
-            <span className="font-medium"> F2:</span> Vendas | 
-            <span className="font-medium"> F3:</span> Balanço | 
-            <span className="font-medium"> F4:</span> Reforço | 
-            <span className="font-medium"> F5:</span> Sangria | 
-            <span className="font-medium"> F6:</span> Fechar
-          </div>
-          <div className="text-sm font-medium flex items-center text-gray-700 dark:text-gray-300">
-            <Clock className="w-4 h-4 mr-1" />
-            {format(new Date(), 'HH:mm')}
-          </div>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            style={{ minHeight: '44px' }}>
-            <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline text-sm font-medium">Sair</span>
-          </button>
+        
+        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <Clock className="w-4 h-4" />
+          {format(new Date(), 'HH:mm')}
         </div>
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="flex-1 overflow-auto">
-        {!contaCaixaPDV &&
-        <Card className="mb-4 border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700 mx-auto max-w-6xl mt-4">
-            <CardContent className="p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-yellow-900 dark:text-yellow-200">Conta Caixa não encontrada</h3>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">Recarregue a página ou crie uma conta "Caixa PDV" nas configurações. Se nenhuma for encontrada, uma será criada automaticamente.</p>
-              </div>
-            </CardContent>
-          </Card>
-        }
-
+      <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
         {view === 'dashboard' &&
-        <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-            {/* KPIs Superiores */}
-            <div className="grid grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Saldo em Caixa</div>
-                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
+        <div className="h-full flex flex-col p-4 space-y-4">
+            {/* KPIs Superiores - Glacial Style */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
                   {formatValor(caixaData.saldoAtual)}
                 </div>
               </div>
-              <div>
-                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total Vendas</div>
-                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total Vendas</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
                   {formatValor(caixaData.totalVendas)}
                 </div>
               </div>
             </div>
 
-            {/* Balanço - Layout em duas colunas no desktop */}
-            <div className="pb-4 md:pb-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            {/* Balanço - Glacial Style */}
+            <div className="flex-1 overflow-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Movimentações do Turno */}
-                <div>
-                  <h3 className="text-gray-800 mb-3 text-sm font-extrabold md:text-base dark:text-gray-200">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
                     Movimentações do Turno
                   </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Saldo Inicial</span>
-                      </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Inicial</span>
+                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                         {formatValor(contaCaixaPDV?.saldo_inicial || 0)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Total Vendas</span>
                       <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Total Vendas</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                        <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                           {formatValor(caixaData.totalVendas)}
                         </span>
                         <button
                           onClick={() => setShowVendasDialog(true)}
-                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                          title="Ver todas as vendas">
-                          <Eye className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                          style={{ minWidth: '32px', minHeight: '32px' }}>
+                          <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Reforços</span>
                       <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Reforços</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                        <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                           {formatValor(caixaData.reforcos)}
                         </span>
                         <button
                           onClick={() => setShowReforcosDialog(true)}
-                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                          title="Ver reforços">
-                          <Eye className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                          style={{ minWidth: '32px', minHeight: '32px' }}>
+                          <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Sangrias</span>
                       <div className="flex items-center gap-2">
-                        <Minus className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Sangrias</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-base font-semibold text-red-600 dark:text-red-400">
+                        <span className="text-base font-medium text-red-600 dark:text-red-400">
                           {formatValor(caixaData.sangrias)}
                         </span>
                         <button
                           onClick={() => setShowSangriasDialog(true)}
-                          className="p-1.5 hover:bg-red-100 dark:hover:bg-red-800 rounded-md transition-colors"
-                          title="Ver sangrias">
-                          <Eye className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          style={{ minWidth: '32px', minHeight: '32px' }}>
+                          <Eye className="w-4 h-4 text-red-500 dark:text-red-400" />
                         </button>
                       </div>
                     </div>
-                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Saldo Atual</span>
-                        <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Saldo Atual</span>
+                        <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
                           {formatValor(caixaData.saldoAtual)}
                         </span>
                       </div>
@@ -946,55 +908,43 @@ export default function PDVCaixa() {
                 </div>
 
                 {/* Recebimentos do Turno */}
-                <div>
-                  <h3 className="text-gray-800 mb-3 text-sm font-extrabold md:text-base dark:text-gray-200">
-                    Recebimentos do Turno (Conferir)
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
+                    Recebimentos do Turno
                   </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Banknote className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">Dinheiro</span>
-                      </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
                       <Input
                         type="text"
                         inputMode="numeric"
                         value={recebimentosDinheiro}
                         onChange={(e) => setRecebimentosDinheiro(e.target.value)}
-                        className="w-32 h-9 text-right font-semibold dark:bg-gray-700 dark:text-gray-200 border-blue-300 dark:border-blue-600"
+                        className="w-32 h-12 text-right text-lg font-semibold bg-gray-50 dark:bg-gray-700 dark:text-white border-0 focus:ring-2 focus:ring-blue-500 rounded-xl"
                         placeholder="0,00"
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">PIX</span>
-                      </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>
+                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.pix)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">Cartão Crédito</span>
-                      </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Crédito</span>
+                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.credito || 0)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">Cartão Débito</span>
-                      </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Débito</span>
+                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.debito || 0)}
                       </span>
                     </div>
 
                     {/* Total e Diferença */}
-                    <div className="pt-3 border-t border-gray-300 dark:border-gray-600 space-y-2">
+                    <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700 space-y-3">
                       {(() => {
                         const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                         const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
@@ -1004,19 +954,21 @@ export default function PDVCaixa() {
                         return (
                           <>
                             <div className="flex items-center justify-between">
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Conferido:</span>
-                              <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Conferido</span>
+                              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
                                 {formatValor(totalConferido)}
                               </span>
                             </div>
                             {temDiferenca && (
-                              <div className={`flex items-center justify-between p-2 rounded-lg ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                                <span className={`text-sm font-semibold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
-                                  {diferenca > 0 ? 'Sobrando:' : 'Faltando:'}
-                                </span>
-                                <span className={`text-xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
-                                  {formatValor(Math.abs(diferenca))}
-                                </span>
+                              <div className={`p-4 rounded-xl ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                                <div className="flex items-center justify-between">
+                                  <span className={`text-sm font-medium ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                    {diferenca > 0 ? 'Sobrando' : 'Faltando'}
+                                  </span>
+                                  <span className={`text-2xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'} font-glacial`}>
+                                    {formatValor(Math.abs(diferenca))}
+                                  </span>
+                                </div>
                               </div>
                             )}
                           </>
@@ -1028,138 +980,130 @@ export default function PDVCaixa() {
               </div>
             </div>
 
-            {/* Botões de Ação Principais */}
-            <div className="bg-transparent grid grid-cols-1 gap-3 md:gap-4">
+            {/* Botões de Ação - Glacial Style */}
+            <div className="space-y-3 mt-auto pt-4">
               <button
-              onClick={handleProcessarVendas}
-              className="pdv-button-static border-0 h-14 md:h-20 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 rounded-md">
-                <ShoppingCart size={20} />
-                <span className="text-xs font-semibold md:text-base">Processar Vendas (F2)</span>
-              </button>
-            </div>
-
-            {/* Botões Secundários */}
-            <div className="grid grid-cols-3 gap-2">
-              <button
-              onClick={() => handleAbrirMovimento('Reforço')}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
-              disabled={!contaCaixaPDV}>
-                <Plus size={16} className="text-teal-600 dark:text-teal-400" />
-                <span className="text-xs md:text-sm">Reforço</span>
-              </button>
-              
-              <button
-              onClick={() => handleAbrirMovimento('Sangria')}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
-              disabled={!contaCaixaPDV}>
-                <Minus size={16} className="text-red-500 dark:text-yellow-400" />
-                <span className="text-xs md:text-sm">Sangria</span>
+                onClick={handleProcessarVendas}
+                className="w-full h-16 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-center gap-3"
+                style={{ minHeight: '64px' }}>
+                <ShoppingCart size={24} />
+                <span>Processar Vendas</span>
               </button>
 
-              <button
-              onClick={handleFecharCaixa}
-              disabled={(() => {
-                const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
-                return diferenca > 0.01;
-              })()}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-40 disabled:cursor-not-allowed">
-                <Lock size={16} />
-                <span className="text-xs md:text-sm">Fechar</span>
-              </button>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  onClick={() => handleAbrirMovimento('Reforço')}
+                  disabled={!contaCaixaPDV}
+                  className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
+                  style={{ minHeight: '56px' }}>
+                  <Plus size={20} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs">Reforço</span>
+                </button>
+                
+                <button
+                  onClick={() => handleAbrirMovimento('Sangria')}
+                  disabled={!contaCaixaPDV}
+                  className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
+                  style={{ minHeight: '56px' }}>
+                  <Minus size={20} className="text-red-600 dark:text-red-400" />
+                  <span className="text-xs">Sangria</span>
+                </button>
+
+                <button
+                  onClick={handleFecharCaixa}
+                  disabled={(() => {
+                    const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                    const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                    const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
+                    return diferenca > 0.01;
+                  })()}
+                  className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ minHeight: '56px' }}>
+                  <Lock size={20} className="text-gray-600 dark:text-gray-400" />
+                  <span className="text-xs">Fechar</span>
+                </button>
+              </div>
             </div>
           </div>
         }
 
         {view === 'processar' &&
-        <div className="space-y-6 max-w-6xl mx-auto p-4">
-            <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView('dashboard')}
-            className="gap-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+        <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+            {/* Header da View */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center">
+              <button
+                onClick={() => setView('dashboard')}
+                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                style={{ minWidth: '44px', minHeight: '44px' }}>
+                <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              </button>
+              <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">Processar Vendas</h2>
+              <div className="w-10"></div>
+            </div>
 
-              <ArrowLeft className="w-4 h-4" />
-              Voltar (ESC)
-            </Button>
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                  Vendas Aguardando Confirmação ({rascunhosAguardando.length})
-                </h2>
-                <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadData}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-
-                  Atualizar (F7)
-                </Button>
+            <div className="flex-1 overflow-auto p-4">
+              <div className="mb-4">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aguardando</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                  {rascunhosAguardando.length} {rascunhosAguardando.length === 1 ? 'Venda' : 'Vendas'}
+                </div>
               </div>
 
               {rascunhosAguardando.length === 0 ?
-            <div className="py-16 text-center">
-                  <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma venda aguardando confirmação</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui automaticamente</p>
+            <div className="flex-1 flex flex-col items-center justify-center py-16">
+                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                    <Receipt className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+                  </div>
+                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma venda aguardando</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui</p>
                 </div> :
 
             <div className="space-y-3">
                   {rascunhosAguardando.map((rascunho) =>
               <div
                 key={rascunho.id}
-                className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer border border-gray-100 dark:border-gray-700"
+                className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => handleAbrirPedido(rascunho)}>
 
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          {rascunho.senha_atendimento &&
-                    <div className="inline-flex flex-col items-start gap-1 mb-2">
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
-                                <span className="text-3xl font-bold text-gray-800 dark:text-gray-200 font-mono">{rascunho.senha_atendimento.slice(-4)}</span>
-                              </div>
-                              <span className="text-xs text-gray-400 font-mono">{rascunho.senha_atendimento}</span>
-                            </div>
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        {rascunho.senha_atendimento &&
+                    <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Senha</div>
+                            <div className="text-3xl font-bold text-gray-900 dark:text-white font-mono">{rascunho.senha_atendimento.slice(-4)}</div>
+                          </div>
                     }
-                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate">{rascunho.cliente_nome}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">Vendedor: {rascunho.vendedor_nome}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-base font-medium text-gray-900 dark:text-white truncate">{rascunho.cliente_nome}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{rascunho.vendedor_nome}</div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
                             R$ {formatarValorExibicao(rascunho.valor_total)}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
                           </div>
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600"
-                        title="Editar rascunho">
-
-                              <Edit className="w-4 h-4 text-gray-500" />
-                            </Button>
-                            <Button
-                        size="sm"
-                        className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white">
-                              Confirmar
-                            </Button>
-                          </div>
                         </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
+                          }}
+                          className="flex-1 h-12 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+                          style={{ minHeight: '48px' }}>
+                          <Edit className="w-4 h-4" />
+                          <span>Editar</span>
+                        </button>
+                        <button
+                          className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:shadow-md transition-shadow"
+                          style={{ minHeight: '48px' }}>
+                          Confirmar
+                        </button>
                       </div>
                     </div>
               )}
-                  <p className="text-xs text-gray-400 text-center pt-2">
-                    Enter para processar a primeira venda
-                  </p>
                 </div>
             }
             </div>
