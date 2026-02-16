@@ -369,7 +369,7 @@ export default function PDVCaixa() {
       setRascunhosAguardando(rascunhosAguardandoCaixa);
 
       const vendasHoje = todosPedidos.filter((p) =>
-      p.status === 'Finalizado' &&
+      (p.status === 'Financeiro OK' || p.status === 'Finalizado') &&
       p.created_date &&
       p.created_date.startsWith(hoje)
       );
