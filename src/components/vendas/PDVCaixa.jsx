@@ -1033,7 +1033,7 @@ export default function PDVCaixa() {
 
             {/* Mobile - Navegação por Abas */}
             <div className="md:hidden h-full flex flex-col">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className="h-full flex flex-col">
                 <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
                   <TabsContent value="balanco" className="h-full p-4 mt-0 space-y-4">
                     {/* KPIs Mobile */}
