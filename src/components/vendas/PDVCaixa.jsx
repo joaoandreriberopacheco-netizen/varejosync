@@ -40,10 +40,11 @@ import { format } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import LiberacaoEntrega from './LiberacaoEntrega';
-
+import SeletorCaixaPDV from './SeletorCaixaPDV';
 
 export default function PDVCaixa() {
   const [configVenda, setConfigVenda] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     base44.entities.ConfiguracoesVenda.list().
@@ -51,8 +52,10 @@ export default function PDVCaixa() {
       if (configs.length > 0) setConfigVenda(configs[0]);
     }).
     catch(console.error);
+    
+    // Carregar usuário
+    base44.auth.me().then(setCurrentUser).catch(console.error);
   }, []);
-  const [currentUser, setCurrentUser] = useState(null);
   const [pedidosAguardando, setPedidosAguardando] = useState([]);
   const [rascunhosAguardando, setRascunhosAguardando] = useState([]);
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
@@ -127,6 +130,9 @@ export default function PDVCaixa() {
   const [descricaoDespesa, setDescricaoDespesa] = useState('');
   const [categoriaDespesa, setCategoriaDespesa] = useState('Outros');
   const [turnoAtivo, setTurnoAtivo] = useState(null);
+  const [caixaSelecionado, setCaixaSelecionado] = useState(null);
+  const [modoVisualizacao, setModoVisualizacao] = useState(false);
+  const [showSeletorCaixa, setShowSeletorCaixa] = useState(true);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -328,69 +334,10 @@ export default function PDVCaixa() {
   }, [caixaData.saldoAtual]);
 
   const loadData = async () => {
+    if (!caixaSelecionado || !turnoAtivo) return;
+    
     try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
-
-      const todasContas = await base44.entities.ContasFinanceiras.list();
-      let caixaPDV = todasContas.find((c) =>
-      c.ativo && (
-      c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV') && (
-      c.nome.toLowerCase().includes('caixa') || c.nome.toLowerCase().includes('pdv'))
-      );
-
-      if (!caixaPDV) {
-        caixaPDV = await base44.entities.ContasFinanceiras.create({
-          nome: 'Caixa PDV',
-          tipo: 'Caixa Físico',
-          saldo_inicial: 500,
-          saldo_atual: 500,
-          cor: '#10B981',
-          observacoes: 'Conta criada automaticamente para o PDV Caixa',
-          ativo: true
-        });
-
-        toast({
-          title: "✓ Conta Caixa PDV criada!",
-          description: "Uma conta foi criada automaticamente para operações do caixa.",
-          className: "bg-emerald-100 text-emerald-800",
-          duration: 2000
-        });
-      }
-
-      setContaCaixaPDV(caixaPDV);
-
-      // Verificar/criar turno ativo
-      const todosTurnos = await base44.entities.TurnoCaixa.list();
-      let turnoAtivoAtual = todosTurnos.find(t => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixaPDV.id);
-
-      if (!turnoAtivoAtual) {
-        // Criar novo turno
-        const numeroTurno = `TC-${String((todosTurnos.length || 0) + 1).padStart(5, '0')}`;
-        turnoAtivoAtual = await base44.entities.TurnoCaixa.create({
-          numero: numeroTurno,
-          conta_caixa_pdv_id: caixaPDV.id,
-          conta_caixa_pdv_nome: caixaPDV.nome,
-          usuario_abertura_id: user.id,
-          usuario_abertura_nome: user.full_name,
-          data_abertura: new Date().toISOString(),
-          saldo_inicial: caixaPDV.saldo_atual,
-          status: 'Aberto',
-          vendas_ids: [],
-          movimentos_ids: [],
-          despesas_ids: []
-        });
-
-        toast({
-          title: "✓ Turno iniciado!",
-          description: `Turno ${numeroTurno} aberto.`,
-          className: "bg-emerald-100 text-emerald-800",
-          duration: 2000
-        });
-      }
-
-      setTurnoAtivo(turnoAtivoAtual);
-
+      setContaCaixaPDV(caixaSelecionado);
       const hoje = format(new Date(), 'yyyy-MM-dd');
 
       const todosPedidos = await base44.entities.PedidoVenda.list();
@@ -410,15 +357,15 @@ export default function PDVCaixa() {
       // Filtrar vendas do turno ativo
       const vendasTurno = todosPedidos.filter((p) =>
         (p.status === 'Financeiro OK' || p.status === 'Finalizado') &&
-        p.turno_caixa_id === turnoAtivoAtual.id
+        p.turno_caixa_id === turnoAtivo.id
       );
       setVendasFinalizadas(vendasTurno);
 
       // Filtrar movimentos do turno ativo
       const todasMovimentacoes = await base44.entities.MovimentosCaixa.list();
       const movimentosTurno = todasMovimentacoes.filter((m) =>
-        m.turno_caixa_id === turnoAtivoAtual.id &&
-        m.conta_id === caixaPDV.id
+        m.turno_caixa_id === turnoAtivo.id &&
+        m.conta_id === caixaSelecionado.id
       );
       setMovimentos(movimentosTurno);
 
@@ -439,7 +386,7 @@ export default function PDVCaixa() {
       const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + m.valor, 0);
       const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + m.valor, 0);
 
-      const saldoCaixa = caixaPDV.saldo_atual;
+      const saldoCaixa = caixaSelecionado.saldo_atual;
 
       // Update caixaData state
       setCaixaData({
@@ -465,8 +412,26 @@ export default function PDVCaixa() {
   };
 
   const handleAbrirPedido = (pedido) => {
+    if (modoVisualizacao) {
+      toast({
+        title: "Acesso Restrito",
+        description: "Você não pode processar vendas neste caixa. Solicite vinculação ao administrador.",
+        variant: "destructive"
+      });
+      return;
+    }
     setPedidoSelecionado(pedido);
     setIsDialogOpen(true);
+  };
+
+  const handleSelecionarCaixa = (caixa, turno, somenteLeitura) => {
+    setCaixaSelecionado(caixa);
+    setTurnoAtivo(turno);
+    setModoVisualizacao(somenteLeitura);
+    setShowSeletorCaixa(false);
+    if (turno) {
+      loadData();
+    }
   };
 
   const handleRetornarParaEdicao = async () => {
@@ -886,7 +851,7 @@ export default function PDVCaixa() {
       // Para Recolhimento de Caixa, buscar Caixa Geral
       if (tipoMovimento === 'Recolhimento de Caixa') {
         const todasContas = await base44.entities.ContasFinanceiras.list();
-        const caixaGeral = todasContas.find(c => c.tipo === 'Caixa Físico' && c.nome.toLowerCase().includes('geral'));
+        const caixaGeral = todasContas.find(c => c.is_caixa_geral);
         
         if (!caixaGeral) {
           toast({
@@ -1044,6 +1009,14 @@ export default function PDVCaixa() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+      {showSeletorCaixa && (
+        <SeletorCaixaPDV 
+          open={showSeletorCaixa} 
+          onSelect={handleSelecionarCaixa}
+          currentUser={currentUser}
+        />
+      )}
+
       {/* Header Minimalista */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
         <button
@@ -1054,7 +1027,12 @@ export default function PDVCaixa() {
         </button>
         
         <div className="flex-1 text-center">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">Caixa</h1>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+            {caixaSelecionado?.nome || 'Caixa'}
+          </h1>
+          {modoVisualizacao && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">Somente visualização</p>
+          )}
         </div>
         
         <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
@@ -1065,7 +1043,14 @@ export default function PDVCaixa() {
 
       {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
-        {view === 'dashboard' &&
+        {!caixaSelecionado ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center text-gray-500 dark:text-gray-400">
+              <Monitor className="w-16 h-16 mx-auto mb-4" />
+              <p>Selecione um caixa para continuar</p>
+            </div>
+          </div>
+        ) : view === 'dashboard' &&
         <>
             {/* Desktop e Mobile - Sistema de Abas Unificado */}
             <div className="h-full flex flex-col">
@@ -1326,7 +1311,7 @@ export default function PDVCaixa() {
                   <div className="max-w-4xl mx-auto space-y-3">
                     <button
                       onClick={() => handleAbrirMovimento('Reforço')}
-                      disabled={!contaCaixaPDV}
+                      disabled={!contaCaixaPDV || modoVisualizacao}
                       className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
@@ -1341,7 +1326,7 @@ export default function PDVCaixa() {
 
                     <button
                       onClick={() => handleAbrirMovimento('Recolhimento de Caixa')}
-                      disabled={!contaCaixaPDV}
+                      disabled={!contaCaixaPDV || modoVisualizacao}
                       className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
@@ -1356,7 +1341,7 @@ export default function PDVCaixa() {
 
                     <button
                       onClick={() => setShowDespesaDialog(true)}
-                      disabled={!contaCaixaPDV}
+                      disabled={!contaCaixaPDV || modoVisualizacao}
                       className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
@@ -1410,7 +1395,7 @@ export default function PDVCaixa() {
 
                       <button
                         onClick={handleFecharCaixa}
-                        disabled={temDiferenca}
+                        disabled={temDiferenca || modoVisualizacao}
                         className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         style={{ minHeight: '56px' }}>
                         <Lock size={20} />
@@ -2119,7 +2104,7 @@ export default function PDVCaixa() {
 
                       // Transferir saldo para Caixa Geral
                       const todasContas = await base44.entities.ContasFinanceiras.list();
-                      const caixaGeral = todasContas.find(c => c.is_caixa_geral);
+                      const caixaGeral = todasContas.find(c => c.is_caixa_geral === true);
                       
                       if (caixaGeral && dinheiroNum > 0) {
                         // Zerar Caixa PDV
@@ -2170,7 +2155,9 @@ export default function PDVCaixa() {
                       });
                       
                       // Recarregar dados para iniciar novo turno
-                      loadData();
+                      setShowSeletorCaixa(true);
+                      setTurnoAtivo(null);
+                      setCaixaSelecionado(null);
                     } catch (error) {
                       toast({
                         title: "Erro ao fechar caixa",
