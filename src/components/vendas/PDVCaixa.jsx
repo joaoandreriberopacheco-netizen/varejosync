@@ -948,7 +948,7 @@ export default function PDVCaixa() {
                 {/* Recebimentos do Turno */}
                 <div>
                   <h3 className="text-gray-800 mb-3 text-sm font-extrabold md:text-base dark:text-gray-200">
-                    Recebimentos do Turno
+                    Recebimentos do Turno (Conferir)
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
@@ -956,9 +956,14 @@ export default function PDVCaixa() {
                         <Banknote className="w-4 h-4 text-gray-700 dark:text-gray-400" />
                         <span className="text-base text-gray-800 dark:text-gray-300">Dinheiro</span>
                       </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                        {formatValor(caixaData.recebimentos.dinheiro)}
-                      </span>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        value={recebimentosDinheiro}
+                        onChange={(e) => setRecebimentosDinheiro(e.target.value)}
+                        className="w-32 h-9 text-right font-semibold dark:bg-gray-700 dark:text-gray-200 border-blue-300 dark:border-blue-600"
+                        placeholder="0,00"
+                      />
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
@@ -988,6 +993,36 @@ export default function PDVCaixa() {
                       </span>
                     </div>
 
+                    {/* Total e Diferença */}
+                    <div className="pt-3 border-t border-gray-300 dark:border-gray-600 space-y-2">
+                      {(() => {
+                        const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                        const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                        const diferenca = totalConferido - caixaData.saldoAtual;
+                        const temDiferenca = Math.abs(diferenca) > 0.01;
+
+                        return (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Conferido:</span>
+                              <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                                {formatValor(totalConferido)}
+                              </span>
+                            </div>
+                            {temDiferenca && (
+                              <div className={`flex items-center justify-between p-2 rounded-lg ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                                <span className={`text-sm font-semibold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                  {diferenca > 0 ? 'Sobrando:' : 'Faltando:'}
+                                </span>
+                                <span className={`text-xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                  {formatValor(Math.abs(diferenca))}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1023,7 +1058,13 @@ export default function PDVCaixa() {
 
               <button
               onClick={handleFecharCaixa}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md">
+              disabled={(() => {
+                const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
+                return diferenca > 0.01;
+              })()}
+              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-40 disabled:cursor-not-allowed">
                 <Lock size={16} />
                 <span className="text-xs md:text-sm">Fechar</span>
               </button>
