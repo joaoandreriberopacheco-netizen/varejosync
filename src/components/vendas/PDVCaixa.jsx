@@ -857,8 +857,8 @@ export default function PDVCaixa() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="resumo" className="flex-1 overflow-auto mt-0 p-4 md:p-6"
-        <div className="max-w-6xl mx-auto space-y-6">
+          <TabsContent value="resumo" className="flex-1 overflow-auto mt-0 p-4 md:p-6">
+            <div className="max-w-6xl mx-auto space-y-6">
           {/* KPIs Superiores */}
           <div className="grid grid-cols-2 gap-4 md:gap-6">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
