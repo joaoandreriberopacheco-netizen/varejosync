@@ -826,27 +826,52 @@ export default function PDVCaixa() {
       <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
         {view === 'dashboard' &&
         <>
-            {/* Desktop - Layout Original */}
-            <div className="hidden md:flex h-full flex-col p-4 space-y-4">
-              {/* KPIs Superiores - Glacial Style */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa</div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
-                    {formatValor(caixaData.saldoAtual)}
+            {/* Desktop e Mobile - Sistema de Abas Unificado */}
+            <div className="h-full flex flex-col">
+              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className="h-full flex flex-col">
+                {/* KPIs Superiores - Apenas Desktop */}
+                <div className="hidden md:block p-4 pb-0">
+                  <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa</div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                        {formatValor(caixaData.saldoAtual)}
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total Vendas</div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                        {formatValor(caixaData.totalVendas)}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total Vendas</div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
-                    {formatValor(caixaData.totalVendas)}
-                  </div>
-                </div>
-              </div>
 
-              {/* Balanço - Glacial Style */}
-              <div className="flex-1 overflow-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Tabs Navigation - Desktop */}
+                <div className="hidden md:block border-b border-gray-100 dark:border-gray-700 px-4">
+                  <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-2xl mx-auto p-0">
+                    <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                      <PieChart className="w-4 h-4" />
+                      <span className="text-sm">Balanço</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                      <ShoppingCart className="w-4 h-4" />
+                      <span className="text-sm">Vendas</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                      <Wallet className="w-4 h-4" />
+                      <span className="text-sm">Movimentos</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="fechar" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                      <Lock className="w-4 h-4" />
+                      <span className="text-sm">Fechar</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 data-[state=inactive]:hidden">
+                  <div className="max-w-2xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Movimentações do Turno */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                   <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
@@ -983,57 +1008,134 @@ export default function PDVCaixa() {
                   </div>
                 </div>
                 </div>
-              </div>
+                </div>
+                </TabsContent>
 
-              {/* Botões de Ação - Glacial Style */}
-              <div className="space-y-3 mt-auto pt-4">
+                <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
+                <div className="max-w-2xl mx-auto">
                 <button
                   onClick={handleProcessarVendas}
-                  className="w-full h-16 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-center gap-3"
+                  className="w-full h-16 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-center gap-3 mb-4"
                   style={{ minHeight: '64px' }}>
                   <ShoppingCart size={24} />
                   <span>Processar Vendas</span>
                 </button>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <button
-                    onClick={() => handleAbrirMovimento('Reforço')}
-                    disabled={!contaCaixaPDV}
-                    className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
-                    style={{ minHeight: '56px' }}>
-                    <Plus size={20} className="text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-xs">Reforço</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleAbrirMovimento('Sangria')}
-                    disabled={!contaCaixaPDV}
-                    className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
-                    style={{ minHeight: '56px' }}>
-                    <Minus size={20} className="text-red-600 dark:text-red-400" />
-                    <span className="text-xs">Sangria</span>
-                  </button>
-
-                  <button
-                    onClick={handleFecharCaixa}
-                    disabled={(() => {
-                      const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                      const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                      const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
-                      return diferenca > 0.01;
-                    })()}
-                    className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{ minHeight: '56px' }}>
-                    <Lock size={20} className="text-gray-600 dark:text-gray-400" />
-                    <span className="text-xs">Fechar</span>
-                  </button>
                 </div>
-              </div>
-            </div>
+                </TabsContent>
 
-            {/* Mobile - Navegação por Abas */}
-            <div className="md:hidden h-full flex flex-col">
-              <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className="h-full flex flex-col">
+                <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
+                <div className="max-w-2xl mx-auto space-y-3">
+                <button
+                  onClick={() => handleAbrirMovimento('Reforço')}
+                  disabled={!contaCaixaPDV}
+                  className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">Reforço</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Adicionar dinheiro ao caixa</div>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleAbrirMovimento('Sangria')}
+                  disabled={!contaCaixaPDV}
+                  className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                      <Minus className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">Sangria</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Retirar dinheiro do caixa</div>
+                    </div>
+                  </div>
+                </button>
+                </div>
+                </TabsContent>
+
+                <TabsContent value="fechar" className="flex-1 overflow-auto p-4 mt-0 space-y-4 data-[state=inactive]:hidden">
+                <div className="max-w-2xl mx-auto">
+                {(() => {
+                  const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                  const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                  const diferenca = totalConferido - caixaData.saldoAtual;
+                  const temDiferenca = Math.abs(diferenca) > 0.01;
+
+                  return (
+                    <>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                        <h3 className="text-gray-900 mb-3 text-sm font-semibold dark:text-white">Status do Saldo</h3>
+                        {!temDiferenca ? (
+                          <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                            <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                            <div>
+                              <div className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Valores Conferem</div>
+                              <div className="text-xs text-emerald-600 dark:text-emerald-400">Pronto para fechar</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={`p-3 rounded-xl ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-sm font-medium ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                {diferenca > 0 ? 'Sobrando' : 'Faltando'}
+                              </span>
+                              <span className={`text-2xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'} font-glacial`}>
+                                {formatValor(Math.abs(diferenca))}
+                              </span>
+                            </div>
+                            <p className={`text-xs ${diferenca > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+                              Ajuste o dinheiro na aba Balanço
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleFecharCaixa}
+                        disabled={temDiferenca}
+                        className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        style={{ minHeight: '56px' }}>
+                        <Lock size={20} />
+                        <span>Fechar Caixa</span>
+                      </button>
+                    </>
+                  );
+                })()}
+                </div>
+                </TabsContent>
+
+                {/* Barra de Navegação - Mobile */}
+                <TabsList className="md:hidden grid grid-cols-4 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0 flex-shrink-0">
+                <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                <PieChart className="w-5 h-5" />
+                <span className="text-xs">Balanço</span>
+                </TabsTrigger>
+                <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                <ShoppingCart className="w-5 h-5" />
+                <span className="text-xs">Vendas</span>
+                </TabsTrigger>
+                <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                <Wallet className="w-5 h-5" />
+                <span className="text-xs">Movimentos</span>
+                </TabsTrigger>
+                <TabsTrigger value="fechar" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                <Lock className="w-5 h-5" />
+                <span className="text-xs">Fechar</span>
+                </TabsTrigger>
+                </TabsList>
+                </Tabs>
+                </div>
+                </>
+                }
+
+                {/* Remove old mobile tabs code below */}
+                <div className="hidden">
+                <div className="md:hidden h-full flex flex-col">
+                <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className="h-full flex flex-col">
                 <TabsContent value="balanco" className="flex-1 overflow-auto p-4 mt-0 space-y-4 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
                     {/* KPIs Mobile */}
                     <div className="grid grid-cols-2 gap-3">
@@ -1161,8 +1263,7 @@ export default function PDVCaixa() {
                       </div>
                     </div>
                 </TabsContent>
-
-                <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                <TabsContent value="vendas" className="hidden">
                     {rascunhosAguardando.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full py-16">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
@@ -1215,8 +1316,7 @@ export default function PDVCaixa() {
                       ))
                     )}
                 </TabsContent>
-
-                <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                <TabsContent value="movimentos" className="hidden">
                     <button
                       onClick={() => handleAbrirMovimento('Reforço')}
                       disabled={!contaCaixaPDV}
@@ -1249,8 +1349,7 @@ export default function PDVCaixa() {
                       <ChevronRight className="w-5 h-5 text-gray-400" />
                     </button>
                 </TabsContent>
-
-                <TabsContent value="fechar" className="flex-1 overflow-auto p-4 mt-0 space-y-4 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                <TabsContent value="fechar" className="hidden">
                     {(() => {
                       const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                       const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
@@ -1298,30 +1397,9 @@ export default function PDVCaixa() {
                       );
                     })()}
                 </TabsContent>
-
-                {/* Barra de Navegação Inferior */}
-                <TabsList className="grid grid-cols-4 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0 flex-shrink-0">
-                  <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
-                    <PieChart className="w-5 h-5" />
-                    <span className="text-xs">Balanço</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
-                    <ShoppingCart className="w-5 h-5" />
-                    <span className="text-xs">Vendas</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
-                    <Wallet className="w-5 h-5" />
-                    <span className="text-xs">Movimentos</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="fechar" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
-                    <Lock className="w-5 h-5" />
-                    <span className="text-xs">Fechar</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </>
-        }
+                </Tabs>
+                </div>
+                }
 
         {view === 'processar' &&
         <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
