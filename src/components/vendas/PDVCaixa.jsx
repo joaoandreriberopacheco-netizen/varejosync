@@ -886,16 +886,16 @@ export default function PDVCaixa() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Vendas em Dinheiro</span>
+                        <span className="text-sm text-gray-800 dark:text-gray-300">Total Vendas</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                          {formatValor(caixaData.recebimentos.dinheiro)}
+                          {formatValor(caixaData.totalVendas)}
                         </span>
                         <button
                           onClick={() => setShowVendasDialog(true)}
                           className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                          title="Ver vendas em dinheiro">
+                          title="Ver todas as vendas">
                           <Eye className="w-4 h-4 text-gray-700 dark:text-gray-400" />
                         </button>
                       </div>
@@ -1544,19 +1544,9 @@ export default function PDVCaixa() {
                         type="text"
                         inputMode="numeric"
                         value={recebimentosDinheiro}
-                        onChange={(e) => {}}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Backspace') {
-                            e.preventDefault();
-                            let numeros = recebimentosDinheiro.replace(/\D/g, '');
-                            numeros = numeros.slice(0, -1) || '0';
-                            const valor = parseInt(numeros) / 100;
-                            setRecebimentosDinheiro(formatarValorExibicao(valor));
-                          } else if (/^\d$/.test(e.key)) {
-                            e.preventDefault();
-                            const novoValor = aplicarMascaraValor(recebimentosDinheiro, e.key);
-                            setRecebimentosDinheiro(novoValor);
-                          }
+                        onChange={(e) => {
+                          const valor = e.target.value;
+                          setRecebimentosDinheiro(valor);
                         }}
                         className="h-9 text-sm font-bold text-right dark:bg-gray-700 dark:text-gray-200 border-blue-300 dark:border-blue-600"
                         placeholder="0,00"
@@ -1590,7 +1580,7 @@ export default function PDVCaixa() {
                         className="h-9 text-sm font-bold text-right bg-gray-100 dark:bg-gray-700 dark:text-gray-400"
                       />
                     </div>
-                    <div className="border-t pt-2 border-blue-200 dark:border-blue-700">
+                    <div className="border-t pt-2 border-blue-200 dark:border-blue-700 space-y-2">
                       {(() => {
                         const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                         const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
@@ -1598,10 +1588,16 @@ export default function PDVCaixa() {
                         const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
                         const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
                         return (
-                          <div className="flex justify-between">
-                            <span className="font-semibold text-gray-700 dark:text-gray-300">Total:</span>
-                            <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">{formatValor(totalRecebimentos)}</span>
-                          </div>
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-xs text-gray-600 dark:text-gray-400">Total Informado:</span>
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{formatValor(caixaData.saldoAtual)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-semibold text-gray-700 dark:text-gray-300">Total Real:</span>
+                              <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">{formatValor(totalRecebimentos)}</span>
+                            </div>
+                          </>
                         );
                       })()}
                     </div>
@@ -1869,12 +1865,12 @@ export default function PDVCaixa() {
             <DialogHeader className="flex-shrink-0">
               <DialogTitle className="text-lg flex items-center gap-2 text-gray-800 dark:text-gray-200">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                Vendas em Dinheiro ({vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).length})
+                Todas as Vendas ({vendasFinalizadas.length})
               </DialogTitle>
             </DialogHeader>
             <div className="flex-1 overflow-y-auto">
-              {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).length === 0 ? (
-                <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">Nenhuma venda em dinheiro hoje</p>
+              {vendasFinalizadas.length === 0 ? (
+                <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">Nenhuma venda registrada hoje</p>
               ) : (
                 <>
                   {/* Desktop - Tabela */}
@@ -1892,7 +1888,7 @@ export default function PDVCaixa() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).map((venda) => (
+                        {vendasFinalizadas.map((venda) => (
                           <TableRow key={venda.id}>
                             <TableCell className="font-medium">{venda.numero}</TableCell>
                             <TableCell>{venda.cliente_nome}</TableCell>
@@ -1918,7 +1914,7 @@ export default function PDVCaixa() {
 
                   {/* Mobile - Cards */}
                   <div className="md:hidden space-y-3">
-                    {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).map((venda) => (
+                    {vendasFinalizadas.map((venda) => (
                       <div key={venda.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                         <div className="flex justify-between items-start mb-2">
                           <div className="font-semibold text-gray-800 dark:text-gray-200">{venda.numero}</div>
@@ -1944,11 +1940,11 @@ export default function PDVCaixa() {
                 </>
               )}
             </div>
-            {vendasFinalizadas.filter(v => v.pagamentos?.some(p => p.forma_pagamento === 'Dinheiro')).length > 0 && (
+            {vendasFinalizadas.length > 0 && (
               <div className="flex-shrink-0 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total em Dinheiro:</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total de Vendas:</span>
                 <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {formatValor(caixaData.recebimentos.dinheiro)}
+                  {formatValor(caixaData.totalVendas)}
                 </span>
               </div>
             )}
