@@ -711,7 +711,177 @@ export default function PDVCaixa() {
 
           // Logic for Balcao with manual delivery (Logistics) could go here
           // For now, we assume default behavior or simple completion
-        }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowLiberacaoEntrega(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível identificar a conta do caixa.", variant: "destructive" });return;}try {const valorFloat = parseFloat(valorMovimento.replace(',', '.'));const todosMovimentos = await base44.entities.MovimentosCaixa.list();const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;const movimento = await base44.entities.MovimentosCaixa.create({ numero: numeroMovimento, tipo: tipoMovimento, valor: valorFloat, observacao: observacaoMovimento, conta_id: contaCaixaPDV.id, usuario_responsavel_id: currentUser.id, usuario_responsavel_nome: currentUser.full_name });const novoSaldo = tipoMovimento === 'Sangria' ? contaCaixaPDV.saldo_atual - valorFloat : contaCaixaPDV.saldo_atual + valorFloat;
+        }
+      }
+
+      toast({
+        title: "✓ Pagamento aprovado!",
+        description: "Venda finalizada com sucesso.",
+        className: "bg-emerald-100 text-emerald-800",
+        duration: 2000
+      });
+
+      setIsDialogOpen(false);
+      setShowLiberacaoEntrega(true);
+      loadData();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAbrirMovimento = (tipo) => {
+    if (!contaCaixaPDV) {
+      toast({
+        title: "Conta de Caixa PDV não encontrada",
+        description: "Não foi possível realizar o movimento. Recarregue a página.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setTipoMovimento(tipo);
+    setValorMovimento('');
+    setObservacaoMovimento('');
+    setShowMovimentoDialog(true);
+  };
+
+  const handleSalvarDespesa = async () => {
+    if (!valorDespesa || parseFloat(valorDespesa.replace(',', '.')) <= 0) {
+      toast({
+        title: "Valor inválido",
+        description: "Informe um valor maior que zero.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!descricaoDespesa.trim()) {
+      toast({
+        title: "Descrição obrigatória",
+        description: "Informe a descrição da despesa.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const valorFloat = parseFloat(valorDespesa.replace(',', '.'));
+
+      // Criar lançamento financeiro
+      await base44.entities.LancamentoFinanceiro.create({
+        tipo: 'Despesa',
+        descricao: descricaoDespesa,
+        valor: valorFloat,
+        data_vencimento: format(new Date(), 'yyyy-MM-dd'),
+        data_pagamento: format(new Date(), 'yyyy-MM-dd'),
+        status: 'Pago',
+        categoria: categoriaDespesa,
+        observacoes: `Despesa registrada via PDV Caixa por ${currentUser.full_name}`
+      });
+
+      // Debitar do Caixa PDV
+      const novoSaldo = contaCaixaPDV.saldo_atual - valorFloat;
+      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
+        saldo_atual: novoSaldo
+      });
+      setContaCaixaPDV(prev => ({ ...prev, saldo_atual: novoSaldo }));
+
+      toast({
+        title: "✓ Despesa registrada!",
+        description: `${descricaoDespesa} - ${formatValor(valorFloat)}`,
+        className: "bg-emerald-100 text-emerald-800",
+        duration: 2000
+      });
+
+      setShowDespesaDialog(false);
+      setValorDespesa('');
+      setDescricaoDespesa('');
+      setCategoriaDespesa('Outros');
+      loadData();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSalvarMovimento = async () => {
+    if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {
+      toast({
+        title: "Valor inválido",
+        description: "Informe um valor maior que zero.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!contaCaixaPDV) {
+      toast({
+        title: "Conta de Caixa PDV não encontrada",
+        description: "Não foi possível identificar a conta do caixa.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const valorFloat = parseFloat(valorMovimento.replace(',', '.'));
+      const todosMovimentos = await base44.entities.MovimentosCaixa.list();
+      const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
+      const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;
+
+      // Para Recolhimento de Caixa, buscar Caixa Geral
+      if (tipoMovimento === 'Recolhimento de Caixa') {
+        const todasContas = await base44.entities.ContasFinanceiras.list();
+        const caixaGeral = todasContas.find(c => c.tipo === 'Caixa Físico' && c.nome.toLowerCase().includes('geral'));
+        
+        if (!caixaGeral) {
+          toast({
+            title: "Caixa Geral não encontrado",
+            description: "Crie uma conta 'Caixa Geral' nas configurações.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Criar movimento de saída do Caixa PDV
+        await base44.entities.MovimentosCaixa.create({
+          numero: numeroMovimento,
+          tipo: tipoMovimento,
+          valor: valorFloat,
+          observacao: `Transferência para ${caixaGeral.nome}. ${observacaoMovimento}`,
+          conta_id: contaCaixaPDV.id,
+          usuario_responsavel_id: currentUser.id,
+          usuario_responsavel_nome: currentUser.full_name
+        });
+
+        // Atualizar saldos
+        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
+          saldo_atual: contaCaixaPDV.saldo_atual - valorFloat
+        });
+        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
+          saldo_atual: caixaGeral.saldo_atual + valorFloat
+        });
+
+        setContaCaixaPDV(prev => ({ ...prev, saldo_atual: prev.saldo_atual - valorFloat }));
+      } else {
+        // Reforço
+        const movimento = await base44.entities.MovimentosCaixa.create({
+          numero: numeroMovimento,
+          tipo: tipoMovimento,
+          valor: valorFloat,
+          observacao: observacaoMovimento,
+          conta_id: contaCaixaPDV.id,
+          usuario_responsavel_id: currentUser.id,
+          usuario_responsavel_nome: currentUser.full_name
+        });
+
+        const novoSaldo = contaCaixaPDV.saldo_atual + valorFloat;
 
         await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
           saldo_atual: novoSaldo
