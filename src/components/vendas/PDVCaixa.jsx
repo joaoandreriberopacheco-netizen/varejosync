@@ -1102,10 +1102,9 @@ export default function PDVCaixa() {
                           <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.debito || 0)}</span>
                         </div>
                       </div>
-                    </div>
-                </TabsContent>
+                      </TabsContent>
 
-                <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                      <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
                     {rascunhosAguardando.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full py-16">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
