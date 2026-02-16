@@ -385,13 +385,14 @@ export default function PDVCaixa() {
 
       const totalVendas = vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
-      let totalDinheiro = 0,totalPix = 0,totalCartao = 0;
+      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0;
       vendasHoje.forEach((venda) => {
         if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
           venda.pagamentos.forEach((pag) => {
             if (pag.forma_pagamento === 'Dinheiro') totalDinheiro += pag.valor;
             if (pag.forma_pagamento === 'PIX') totalPix += pag.valor;
-            if (pag.forma_pagamento && pag.forma_pagamento.includes('Cartão')) totalCartao += pag.valor;
+            if (pag.forma_pagamento === 'Cartão de Crédito') totalCredito += pag.valor;
+            if (pag.forma_pagamento === 'Cartão de Débito') totalDebito += pag.valor;
           });
         }
       });
@@ -408,7 +409,8 @@ export default function PDVCaixa() {
         recebimentos: {
           dinheiro: totalDinheiro,
           pix: totalPix,
-          cartao: totalCartao
+          credito: totalCredito,
+          debito: totalDebito
         },
         reforcos: totalReforcos,
         sangrias: totalSangrias
@@ -754,7 +756,16 @@ export default function PDVCaixa() {
     if (!recebimentosDinheiro) {
       setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
     }
-  }, [caixaData]);
+    if (!recebimentosPix) {
+      setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
+    }
+    if (!recebimentosCredito) {
+      setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.credito || 0));
+    }
+    if (!recebimentosDebito) {
+      setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.debito || 0));
+    }
+    }, [caixaData]);
 
   const handleFecharCaixa = () => {
     const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || caixaData.recebimentos.dinheiro;
@@ -964,7 +975,7 @@ export default function PDVCaixa() {
                         <span className="text-base text-gray-800 dark:text-gray-300">Cartão Crédito</span>
                       </div>
                       <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                        {formatValor(caixaData.recebimentos.cartao * 0.6)}
+                        {formatValor(caixaData.recebimentos.credito || 0)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
@@ -973,7 +984,7 @@ export default function PDVCaixa() {
                         <span className="text-base text-gray-800 dark:text-gray-300">Cartão Débito</span>
                       </div>
                       <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                        {formatValor(caixaData.recebimentos.cartao * 0.4)}
+                        {formatValor(caixaData.recebimentos.debito || 0)}
                       </span>
                     </div>
 
