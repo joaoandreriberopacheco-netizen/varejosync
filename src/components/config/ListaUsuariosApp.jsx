@@ -6,8 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, Edit, Shield, UserPlus, Mail, ShoppingCart, Building } from 'lucide-react';
+import { Users, Edit, Shield, UserPlus, Mail, ShoppingCart, Building, Trash2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { base44 as base44Client } from '@/api/base44Client';
 
 const PERFIS_EMPRESARIAIS = {
   'Microempresa': {
@@ -80,6 +81,7 @@ export default function ListaUsuariosApp() {
   const [selectedPerfil, setSelectedPerfil] = useState('');
   const [perfilEmpresarial, setPerfilEmpresarial] = useState(null);
   const [showPerfilSelector, setShowPerfilSelector] = useState(false);
+  const [isDeduplicating, setIsDeduplicating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -179,6 +181,37 @@ export default function ListaUsuariosApp() {
     });
   };
 
+  const handleDeduplicar = async () => {
+    if (!confirm('Deseja remover usuários duplicados? Será mantido apenas o registro mais antigo de cada email.')) {
+      return;
+    }
+
+    setIsDeduplicating(true);
+    try {
+      const response = await base44Client.functions.invoke('deduplicarUsuarios');
+      
+      if (response.data.success) {
+        toast({
+          title: "Deduplicação concluída",
+          description: `${response.data.usuarios_removidos} usuário(s) duplicado(s) removido(s) de ${response.data.emails_duplicados} email(s).`,
+          className: "bg-green-100 text-green-800"
+        });
+        loadUsuarios();
+      } else {
+        throw new Error('Falha na deduplicação');
+      }
+    } catch (error) {
+      console.error("Erro na deduplicação:", error);
+      toast({
+        title: "Erro ao desduplicar",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeduplicating(false);
+    }
+  };
+
   const getPerfilInfo = (perfil) => {
     return PERFIS_DISPONIVEIS[perfil] || 
            { label: perfil, color: 'bg-gray-100 text-gray-800', desc: '-', dashboard: '-' };
@@ -235,6 +268,15 @@ export default function ListaUsuariosApp() {
           <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 font-light">Configure os usuários da empresa e seus perfis de acesso</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleDeduplicar}
+            disabled={isDeduplicating}
+            className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="hidden sm:inline">{isDeduplicating ? 'Processando...' : 'Desduplicar'}</span>
+          </Button>
           {perfilEmpresarial && (
             <Button 
               variant="outline"
