@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Receipt,
   DollarSign,
@@ -58,7 +59,7 @@ export default function PDVCaixa() {
   const [contaCaixaPDV, setContaCaixaPDV] = useState(null);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [view, setView] = useState('dashboard'); // Renamed telaAtual to view
+  const [activeTab, setActiveTab] = useState('resumo');
 
   const [showMovimentoDialog, setShowMovimentoDialog] = useState(false);
   const [tipoMovimento, setTipoMovimento] = useState('');
@@ -254,33 +255,35 @@ export default function PDVCaixa() {
         return;
       }
 
-      if (e.key === 'F2' && view === 'dashboard') {// Updated telaAtual to view
+      if (e.key === 'F2') {
         e.preventDefault();
-        handleProcessarVendas(); // Changed to new function
+        setActiveTab('vendas');
         return;
       }
 
-      if (e.key === 'F3' && view === 'dashboard') {
+      if (e.key === 'F3') {
         e.preventDefault();
-        setShowVendasDialog(true);
+        setActiveTab('balanco');
         return;
       }
 
-      if (e.key === 'F4' && view === 'dashboard') {// Updated telaAtual to view
+      if (e.key === 'F4') {
         e.preventDefault();
+        setActiveTab('movimentos');
         handleAbrirMovimento('Reforço');
         return;
       }
 
-      if (e.key === 'F5' && view === 'dashboard') {// Updated telaAtual to view
+      if (e.key === 'F5') {
         e.preventDefault();
+        setActiveTab('movimentos');
         handleAbrirMovimento('Sangria');
         return;
       }
 
-      if (e.key === 'F6' && view === 'dashboard') {// Updated telaAtual to view
+      if (e.key === 'F6') {
         e.preventDefault();
-        handleFecharCaixa();
+        setActiveTab('balanco');
         return;
       }
 
@@ -295,22 +298,16 @@ export default function PDVCaixa() {
         return;
       }
 
-      if (e.key === 'Enter' && view === 'processar' && !isDialogOpen && pedidosAguardando.length > 0) {// Updated telaAtual to view
+      if (e.key === 'Enter' && activeTab === 'vendas' && !isDialogOpen && rascunhosAguardando.length > 0) {
         e.preventDefault();
-        handleAbrirPedido(pedidosAguardando[0]);
-        return;
-      }
-
-      if (e.key === 'Escape' && view !== 'dashboard' && !isDialogOpen && !showMovimentoDialog && !showFechamentoDialog) {// Updated telaAtual to view
-        e.preventDefault();
-        setView('dashboard'); // Updated setTelaAtual to setView
+        handleAbrirPedido(rascunhosAguardando[0]);
         return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, valorRestante, pedidosAguardando]); // Updated telaAtual to view
+  }, [activeTab, isDialogOpen, showMovimentoDialog, showFechamentoDialog, valorRestante, rascunhosAguardando]);
 
   // Auto-preencher apenas uma vez ao carregar
   useEffect(() => {
@@ -789,14 +786,7 @@ export default function PDVCaixa() {
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
-  // New helper functions for view navigation
-  const handleProcessarVendas = () => {
-    setView('processar');
-  };
 
-  const handleAbrirBalanco = () => {
-    // Não faz nada, pois o balanço está sempre visível
-  };
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
@@ -834,7 +824,7 @@ export default function PDVCaixa() {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
         {!contaCaixaPDV &&
         <Card className="mb-4 border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700 mx-auto max-w-6xl mt-4">
             <CardContent className="p-4 flex items-start gap-3">
@@ -847,154 +837,176 @@ export default function PDVCaixa() {
           </Card>
         }
 
-        {view === 'dashboard' &&
-        <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-            {/* KPIs Superiores */}
-            <div className="grid grid-cols-2 gap-4 md:gap-6 pb-4 md:pb-6 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Saldo em Caixa</div>
-                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
-                  {formatValor(caixaData.saldoAtual)}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total Vendas</div>
-                <div className="text-xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
-                  {formatValor(caixaData.totalVendas)}
-                </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <TabsList className="w-full justify-start bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
+            <TabsTrigger value="resumo" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 rounded-none py-4 text-sm font-medium">
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Resumo
+            </TabsTrigger>
+            <TabsTrigger value="balanco" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 rounded-none py-4 text-sm font-medium">
+              <PieChart className="w-4 h-4 mr-2" />
+              Balanceamento
+            </TabsTrigger>
+            <TabsTrigger value="movimentos" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 rounded-none py-4 text-sm font-medium">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Movimentos
+            </TabsTrigger>
+            <TabsTrigger value="vendas" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 rounded-none py-4 text-sm font-medium">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Vendas
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="resumo" className="flex-1 overflow-auto mt-0 p-4 md:p-6"
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* KPIs Superiores */}
+          <div className="grid grid-cols-2 gap-4 md:gap-6">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Saldo em Caixa</div>
+              <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
+                {formatValor(caixaData.saldoAtual)}
               </div>
             </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Total Vendas</div>
+              <div className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">
+                {formatValor(caixaData.totalVendas)}
+              </div>
+            </div>
+          </div>
 
-            {/* Balanço - Layout em duas colunas no desktop */}
-            <div className="pb-4 md:pb-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                {/* Movimentações do Turno */}
-                <div>
-                  <h3 className="text-gray-800 mb-3 text-sm font-extrabold md:text-base dark:text-gray-200">
-                    Movimentações do Turno
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Saldo Inicial</span>
+            {/* Movimentações do Turno */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+              <h3 className="text-gray-900 mb-4 text-base font-bold dark:text-gray-100">
+                Movimentações do Turno
+              </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <Wallet className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">Saldo Inicial</span>
                       </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(contaCaixaPDV?.saldo_inicial || 0)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Total Vendas</span>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <Plus className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">Total Vendas</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                           {formatValor(caixaData.totalVendas)}
                         </span>
                         <button
                           onClick={() => setShowVendasDialog(true)}
-                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                           title="Ver todas as vendas">
-                          <Eye className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                          <Eye className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Reforços</span>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <Plus className="w-5 h-5 text-teal-500 dark:text-teal-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">Reforços</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                           {formatValor(caixaData.reforcos)}
                         </span>
                         <button
                           onClick={() => setShowReforcosDialog(true)}
-                          className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                           title="Ver reforços">
-                          <Eye className="w-4 h-4 text-gray-700 dark:text-gray-400" />
+                          <Eye className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Minus className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        <span className="text-sm text-gray-800 dark:text-gray-300">Sangrias</span>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <Minus className="w-5 h-5 text-red-500 dark:text-red-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">Sangrias</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-base font-semibold text-red-600 dark:text-red-400">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold text-red-600 dark:text-red-400">
                           {formatValor(caixaData.sangrias)}
                         </span>
                         <button
                           onClick={() => setShowSangriasDialog(true)}
-                          className="p-1.5 hover:bg-red-100 dark:hover:bg-red-800 rounded-md transition-colors"
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Ver sangrias">
-                          <Eye className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          <Eye className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                         </button>
                       </div>
                     </div>
-                    <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Saldo Atual</span>
-                        <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    <div className="pt-4 mt-4 border-t-2 border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-base font-bold text-gray-900 dark:text-gray-100">Saldo Atual</span>
+                        <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                           {formatValor(caixaData.saldoAtual)}
                         </span>
                       </div>
                     </div>
-                  </div>
-                </div>
+                    </div>
+                    </div>
+                    </div>
+                    </TabsContent>
+
+                    <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 md:p-6">
+                    <div className="max-w-4xl mx-auto space-y-6">
 
                 {/* Recebimentos do Turno */}
-                <div>
-                  <h3 className="text-gray-800 mb-3 text-sm font-extrabold md:text-base dark:text-gray-200">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                  <h3 className="text-gray-900 mb-4 text-base font-bold dark:text-gray-100">
                     Recebimentos do Turno (Conferir)
                   </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Banknote className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">Dinheiro</span>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <Banknote className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">Dinheiro</span>
                       </div>
                       <Input
                         type="text"
                         inputMode="numeric"
                         value={recebimentosDinheiro}
                         onChange={(e) => setRecebimentosDinheiro(e.target.value)}
-                        className="w-32 h-9 text-right font-semibold dark:bg-gray-700 dark:text-gray-200 border-blue-300 dark:border-blue-600"
+                        className="w-36 h-11 text-right text-lg font-semibold dark:bg-gray-700 dark:text-gray-200 border-2 border-blue-300 dark:border-blue-600 rounded-xl"
                         placeholder="0,00"
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">PIX</span>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <Smartphone className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">PIX</span>
                       </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.pix)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">Cartão Crédito</span>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">Cartão Crédito</span>
                       </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.credito || 0)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-gray-700 dark:text-gray-400" />
-                        <span className="text-base text-gray-800 dark:text-gray-300">Cartão Débito</span>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-base text-gray-700 dark:text-gray-300">Cartão Débito</span>
                       </div>
-                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.debito || 0)}
                       </span>
                     </div>
 
                     {/* Total e Diferença */}
-                    <div className="pt-3 border-t border-gray-300 dark:border-gray-600 space-y-2">
+                    <div className="pt-4 mt-4 border-t-2 border-gray-200 dark:border-gray-700 space-y-3">
                       {(() => {
                         const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                         const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
@@ -1003,18 +1015,18 @@ export default function PDVCaixa() {
 
                         return (
                           <>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Conferido:</span>
-                              <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            <div className="flex items-center justify-between py-2">
+                              <span className="text-base font-bold text-gray-900 dark:text-gray-100">Total Conferido:</span>
+                              <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                                 {formatValor(totalConferido)}
                               </span>
                             </div>
                             {temDiferenca && (
-                              <div className={`flex items-center justify-between p-2 rounded-lg ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                                <span className={`text-sm font-semibold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                              <div className={`flex items-center justify-between p-4 rounded-2xl ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                                <span className={`text-base font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
                                   {diferenca > 0 ? 'Sobrando:' : 'Faltando:'}
                                 </span>
-                                <span className={`text-xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                <span className={`text-3xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
                                   {formatValor(Math.abs(diferenca))}
                                 </span>
                               </div>
@@ -1023,148 +1035,152 @@ export default function PDVCaixa() {
                         );
                       })()}
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    </div>
+                    </div>
 
-            {/* Botões de Ação Principais */}
-            <div className="bg-transparent grid grid-cols-1 gap-3 md:gap-4">
+                    {/* Botão de Fechar Caixa */}
+                    <button
+                    onClick={handleFecharCaixa}
+                    disabled={(() => {
+                    const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                    const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                    const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
+                    return diferenca > 0.01;
+                    })()}
+                    className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 py-6 rounded-2xl text-lg font-bold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
+                    <Lock className="w-6 h-6 inline-block mr-2" />
+                    Fechar Caixa (F6)
+                    </button>
+                    </div>
+                    </TabsContent>
+
+                    <TabsContent value="movimentos" className="flex-1 overflow-auto mt-0 p-4 md:p-6">
+                    <div className="max-w-4xl mx-auto space-y-6">
+
+            {/* Botões de Ação */}
+            <div className="grid grid-cols-2 gap-4">
               <button
-              onClick={handleProcessarVendas}
-              className="pdv-button-static border-0 h-14 md:h-20 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 rounded-md">
-                <ShoppingCart size={20} />
-                <span className="text-xs font-semibold md:text-base">Processar Vendas (F2)</span>
+                onClick={() => handleAbrirMovimento('Reforço')}
+                disabled={!contaCaixaPDV}
+                className="bg-teal-600 dark:bg-teal-700 text-white py-6 rounded-2xl text-lg font-bold hover:bg-teal-700 dark:hover:bg-teal-600 transition-colors disabled:opacity-50 shadow-lg">
+                <Plus className="w-6 h-6 inline-block mr-2" />
+                Reforço (F4)
+              </button>
+
+              <button
+                onClick={() => handleAbrirMovimento('Sangria')}
+                disabled={!contaCaixaPDV}
+                className="bg-red-600 dark:bg-red-700 text-white py-6 rounded-2xl text-lg font-bold hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50 shadow-lg">
+                <Minus className="w-6 h-6 inline-block mr-2" />
+                Sangria (F5)
               </button>
             </div>
 
-            {/* Botões Secundários */}
-            <div className="grid grid-cols-3 gap-2">
-              <button
-              onClick={() => handleAbrirMovimento('Reforço')}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
-              disabled={!contaCaixaPDV}>
-                <Plus size={16} className="text-teal-600 dark:text-teal-400" />
-                <span className="text-xs md:text-sm">Reforço</span>
-              </button>
-              
-              <button
-              onClick={() => handleAbrirMovimento('Sangria')}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-50"
-              disabled={!contaCaixaPDV}>
-                <Minus size={16} className="text-red-500 dark:text-yellow-400" />
-                <span className="text-xs md:text-sm">Sangria</span>
-              </button>
-
-              <button
-              onClick={handleFecharCaixa}
-              disabled={(() => {
-                const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
-                return diferenca > 0.01;
-              })()}
-              className="pdv-button-static gap-1 md:gap-2 border-0 h-12 md:h-14 flex items-center justify-center rounded-md disabled:opacity-40 disabled:cursor-not-allowed">
-                <Lock size={16} />
-                <span className="text-xs md:text-sm">Fechar</span>
-              </button>
-            </div>
-          </div>
-        }
-
-        {view === 'processar' &&
-        <div className="space-y-6 max-w-6xl mx-auto p-4">
-            <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView('dashboard')}
-            className="gap-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
-
-              <ArrowLeft className="w-4 h-4" />
-              Voltar (ESC)
-            </Button>
-
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                  Vendas Aguardando Confirmação ({rascunhosAguardando.length})
-                </h2>
-                <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadData}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-
-                  Atualizar (F7)
-                </Button>
-              </div>
-
-              {rascunhosAguardando.length === 0 ?
-            <div className="py-16 text-center">
-                  <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma venda aguardando confirmação</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui automaticamente</p>
-                </div> :
-
-            <div className="space-y-3">
-                  {rascunhosAguardando.map((rascunho) =>
-              <div
-                key={rascunho.id}
-                className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer border border-gray-100 dark:border-gray-700"
-                onClick={() => handleAbrirPedido(rascunho)}>
-
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          {rascunho.senha_atendimento &&
-                    <div className="inline-flex flex-col items-start gap-1 mb-2">
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
-                                <span className="text-3xl font-bold text-gray-800 dark:text-gray-200 font-mono">{rascunho.senha_atendimento.slice(-4)}</span>
-                              </div>
-                              <span className="text-xs text-gray-400 font-mono">{rascunho.senha_atendimento}</span>
-                            </div>
-                    }
-                          <div className="text-sm text-gray-600 dark:text-gray-400 truncate">{rascunho.cliente_nome}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">Vendedor: {rascunho.vendedor_nome}</div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                            R$ {formatarValorExibicao(rascunho.valor_total)}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
-                          </div>
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600"
-                        title="Editar rascunho">
-
-                              <Edit className="w-4 h-4 text-gray-500" />
-                            </Button>
-                            <Button
-                        size="sm"
-                        className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white">
-                              Confirmar
-                            </Button>
+            {/* Lista de Movimentos */}
+            {movimentos.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                <h3 className="text-gray-900 mb-4 text-base font-bold dark:text-gray-100">
+                  Histórico de Hoje
+                </h3>
+                <div className="space-y-3">
+                  {movimentos.map((mov) => (
+                    <div key={mov.id} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                      <div className="flex items-center gap-3">
+                        {mov.tipo === 'Reforço' ? (
+                          <Plus className="w-5 h-5 text-teal-500" />
+                        ) : (
+                          <Minus className="w-5 h-5 text-red-500" />
+                        )}
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">{mov.numero}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {format(new Date(mov.created_date), 'HH:mm')} • {mov.usuario_responsavel_nome}
                           </div>
                         </div>
                       </div>
+                      <div className={`text-lg font-bold ${mov.tipo === 'Reforço' ? 'text-teal-600 dark:text-teal-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {mov.tipo === 'Reforço' ? '+' : '-'}{formatValor(mov.valor)}
+                      </div>
                     </div>
-              )}
-                  <p className="text-xs text-gray-400 text-center pt-2">
-                    Enter para processar a primeira venda
-                  </p>
+                  ))}
                 </div>
-            }
+              </div>
+            )}
             </div>
+            </TabsContent>
+
+            <TabsContent value="vendas" className="flex-1 overflow-auto mt-0 p-4 md:p-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm mb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              Vendas Aguardando ({rascunhosAguardando.length})
+            </h2>
+            <button
+              onClick={loadData}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              Atualizar (F7)
+            </button>
           </div>
-        }
+        </div>
+
+              {rascunhosAguardando.length === 0 ? (
+                <div className="py-20 text-center bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+                  <Receipt className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                  <p className="text-lg font-semibold text-gray-600 dark:text-gray-400">Nenhuma venda aguardando</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">As vendas aparecerão aqui automaticamente</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {rascunhosAguardando.map((rascunho) => (
+                    <div
+                      key={rascunho.id}
+                      className="bg-white dark:bg-gray-800 p-6 rounded-2xl hover:shadow-lg transition-shadow cursor-pointer shadow-sm"
+                      onClick={() => handleAbrirPedido(rascunho)}>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          {rascunho.senha_atendimento && (
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl mb-3">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
+                              <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 font-mono">{rascunho.senha_atendimento.slice(-4)}</span>
+                            </div>
+                          )}
+                          <div className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">{rascunho.cliente_nome}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Vendedor: {rascunho.vendedor_nome}</div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                            R$ {formatarValorExibicao(rascunho.valor_total)}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                            {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
+                              }}
+                              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+                              title="Editar rascunho">
+                              <Edit className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                            </button>
+                            <button className="px-6 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-xl font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors">
+                              Confirmar
+                            </button>
+                          </div>
+                        </div>
+                        </div>
+                        </div>
+                        ))}
+                        <p className="text-sm text-gray-400 text-center pt-4">
+                        Enter para processar a primeira venda
+                        </p>
+                        </div>
+                        )}
+                        </div>
+                        </TabsContent>
+                        </Tabs>
 
 
 
