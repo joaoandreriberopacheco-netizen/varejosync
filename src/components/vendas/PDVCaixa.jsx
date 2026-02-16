@@ -196,6 +196,14 @@ export default function PDVCaixa() {
     loadData();
   }, []);
 
+  // Quando clicar na aba Vendas, ir direto para processamento
+  useEffect(() => {
+    if (activeTab === 'vendas') {
+      setView('processar');
+      setActiveTab('balanco'); // Volta para balanço quando sair
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     if (pedidoSelecionado) {
       const valorFormatado = formatarValorExibicao(pedidoSelecionado.valor_total);
@@ -831,7 +839,7 @@ export default function PDVCaixa() {
               <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className="h-full flex flex-col">
                 {/* KPIs Superiores - Apenas Desktop */}
                 <div className="hidden md:block p-4 pb-0">
-                  <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
+                  <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa</div>
                       <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
@@ -849,7 +857,7 @@ export default function PDVCaixa() {
 
                 {/* Tabs Navigation - Desktop */}
                 <div className="hidden md:block border-b border-gray-100 dark:border-gray-700 px-4">
-                  <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-2xl mx-auto p-0">
+                  <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
                     <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                       <PieChart className="w-4 h-4" />
                       <span className="text-sm">Balanço</span>
@@ -870,7 +878,7 @@ export default function PDVCaixa() {
                 </div>
 
                 <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 data-[state=inactive]:hidden">
-                  <div className="max-w-2xl mx-auto">
+                  <div className="max-w-4xl mx-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Movimentações do Turno */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
@@ -1011,20 +1019,10 @@ export default function PDVCaixa() {
                 </div>
                 </TabsContent>
 
-                <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
-                <div className="max-w-2xl mx-auto">
-                <button
-                  onClick={handleProcessarVendas}
-                  className="w-full h-16 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-center gap-3 mb-4"
-                  style={{ minHeight: '64px' }}>
-                  <ShoppingCart size={24} />
-                  <span>Processar Vendas</span>
-                </button>
-                </div>
-                </TabsContent>
+
 
                 <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
-                <div className="max-w-2xl mx-auto space-y-3">
+                  <div className="max-w-4xl mx-auto space-y-3">
                 <button
                   onClick={() => handleAbrirMovimento('Reforço')}
                   disabled={!contaCaixaPDV}
@@ -1058,7 +1056,7 @@ export default function PDVCaixa() {
                 </TabsContent>
 
                 <TabsContent value="fechar" className="flex-1 overflow-auto p-4 mt-0 space-y-4 data-[state=inactive]:hidden">
-                <div className="max-w-2xl mx-auto">
+                  <div className="max-w-4xl mx-auto">
                 {(() => {
                   const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                   const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
