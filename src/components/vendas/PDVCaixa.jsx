@@ -314,10 +314,13 @@ export default function PDVCaixa() {
 
   useEffect(() => {
     // Auto-preencher recebimentos quando os dados mudarem
-    if (!recebimentosDinheiro && caixaData.recebimentos.dinheiro > 0) {
+    if (caixaData.recebimentos.dinheiro >= 0) {
       setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
+      setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
+      setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.6));
+      setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.4));
     }
-  }, [caixaData]);
+  }, [caixaData.recebimentos.dinheiro, caixaData.recebimentos.pix, caixaData.recebimentos.cartao]);
 
   const loadData = async () => {
     try {
