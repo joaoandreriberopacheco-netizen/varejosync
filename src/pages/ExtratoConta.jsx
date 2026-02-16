@@ -71,11 +71,11 @@ export default function ExtratoContaPage() {
         let lancamentosFiltrados, vendasFiltradas, comprasFiltradas;
         
         if (isCaixaGeral) {
-          // CAIXA GERAL: Todas transações SEM turno de caixa
-          lancamentosFiltrados = lancamentosData.filter(l => !l.turno_caixa_id);
+          // CAIXA GERAL: TUDO que não tem conta específica vinculada
+          lancamentosFiltrados = lancamentosData.filter(l => !l.conta_financeira_id);
           
           vendasFiltradas = vendasData
-            .filter(v => v.status !== 'Cancelado' && !v.turno_caixa_id)
+            .filter(v => v.status !== 'Cancelado')
             .map(v => ({
               tipo: 'Receita',
               descricao: `Venda ${v.numero || v.senha_atendimento || v.id.slice(0,8)}`,
@@ -88,7 +88,7 @@ export default function ExtratoContaPage() {
             }));
           
           comprasFiltradas = comprasData
-            .filter(c => c.status_aprovacao_financeira === 'Aprovado')
+            .filter(c => c.status_aprovacao_financeira === 'aprovado')
             .map(c => ({
               tipo: 'Despesa',
               descricao: `Compra ${c.numero} - ${c.fornecedor_nome || 'Fornecedor'}`,
@@ -286,6 +286,16 @@ export default function ExtratoContaPage() {
     ...movimentosCaixa.map(m => ({ ...m, origem: 'movimento' }))
   ].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
+  // Calcula saldo real baseado nas movimentações
+  const saldoCalculado = todasMovimentacoes.reduce((saldo, mov) => {
+    if (mov.tipo === 'Receita' || mov.tipo === 'Reforço') {
+      return saldo + (mov.valor || 0);
+    } else if (mov.tipo === 'Despesa' || mov.tipo === 'Sangria') {
+      return saldo - (mov.valor || 0);
+    }
+    return saldo;
+  }, conta?.saldo_inicial || 0);
+
   // Filtra por busca
   const movimentacoesFiltradas = todasMovimentacoes.filter(m => {
     if (!searchTerm) return true;
@@ -348,7 +358,7 @@ export default function ExtratoContaPage() {
             <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 rounded-xl">
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo Atual</p>
               <p className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-                {formatCurrency(conta.saldo_atual)}
+                {formatCurrency(saldoCalculado)}
               </p>
             </div>
 
