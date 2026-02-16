@@ -83,6 +83,7 @@ export default function UsuariosManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentColab, setCurrentColab] = useState(null); // For editing/creating
   const [globalConfig, setGlobalConfig] = useState(null);
+  const [isDeduplicating, setIsDeduplicating] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -218,6 +219,37 @@ export default function UsuariosManager() {
     }
   };
 
+  const handleDeduplicar = async () => {
+    if (!confirm('Deseja remover colaboradores duplicados? Será mantido apenas o registro mais antigo de cada nome.')) {
+      return;
+    }
+
+    setIsDeduplicating(true);
+    try {
+      const response = await base44.functions.invoke('deduplicarColaboradores');
+      
+      if (response.data.success) {
+        toast({
+          title: "Deduplicação concluída",
+          description: `${response.data.colaboradores_removidos} colaborador(es) duplicado(s) removido(s) de ${response.data.nomes_duplicados} nome(s).`,
+          className: "bg-green-100 text-green-800"
+        });
+        loadData();
+      } else {
+        throw new Error('Falha na deduplicação');
+      }
+    } catch (error) {
+      console.error("Erro na deduplicação:", error);
+      toast({
+        title: "Erro ao desduplicar",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeduplicating(false);
+    }
+  };
+
   return (
   <div className="space-y-6 md:space-y-8 font-glacial">
     {/* Header */}
@@ -226,13 +258,24 @@ export default function UsuariosManager() {
         <h2 className="text-lg md:text-2xl font-medium text-slate-800 dark:text-slate-100 tracking-tight">Gestão de Usuários</h2>
         <p className="text-xs md:text-sm text-slate-500 font-light">Crie e configure os usuários do sistema conforme o perfil da empresa</p>
       </div>
+      <div className="flex gap-2">
+        <Button 
+          variant="outline"
+          onClick={handleDeduplicar}
+          disabled={isDeduplicating}
+          className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span className="hidden sm:inline">{isDeduplicating ? 'Processando...' : 'Desduplicar'}</span>
+        </Button>
         <Button 
           className="bg-sky-600 hover:bg-sky-700 text-white gap-2 shadow-sm border-0 font-medium"
           onClick={() => handleOpenDialog()}
         >
           <Plus className="w-4 h-4" />
-          Novo Usuário
+          <span className="hidden sm:inline">Novo Usuário</span>
         </Button>
+      </div>
       </div>
 
       {/* Cards Informativos - Design Glacial - Agora como "Tipos de Empresa" */}
