@@ -1034,7 +1034,8 @@ export default function PDVCaixa() {
             {/* Mobile - Navegação por Abas */}
             <div className="md:hidden h-full flex flex-col">
               <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="balanco" className="h-full flex flex-col">
-                <TabsContent value="balanco" className="flex-1 overflow-auto p-4 mt-0 space-y-4 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+                  <TabsContent value="balanco" className="h-full p-4 mt-0 space-y-4">
                     {/* KPIs Mobile */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
@@ -1102,9 +1103,10 @@ export default function PDVCaixa() {
                           <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.debito || 0)}</span>
                         </div>
                       </div>
-                      </TabsContent>
+                    </div>
+                  </TabsContent>
 
-                      <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                  <TabsContent value="vendas" className="h-full p-4 mt-0 space-y-3">
                     {rascunhosAguardando.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full py-16">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
@@ -1156,9 +1158,9 @@ export default function PDVCaixa() {
                         </div>
                       ))
                     )}
-                </TabsContent>
+                  </TabsContent>
 
-                <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                  <TabsContent value="movimentos" className="h-full p-4 mt-0 space-y-3">
                     <button
                       onClick={() => handleAbrirMovimento('Reforço')}
                       disabled={!contaCaixaPDV}
@@ -1190,9 +1192,9 @@ export default function PDVCaixa() {
                       </div>
                       <ChevronRight className="w-5 h-5 text-gray-400" />
                     </button>
-                </TabsContent>
+                  </TabsContent>
 
-                <TabsContent value="fechar" className="flex-1 overflow-auto p-4 mt-0 space-y-4 bg-gray-50 dark:bg-gray-900 data-[state=inactive]:hidden">
+                  <TabsContent value="fechar" className="h-full p-4 mt-0 space-y-4">
                     {(() => {
                       const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                       const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
@@ -1239,10 +1241,11 @@ export default function PDVCaixa() {
                         </>
                       );
                     })()}
-                </TabsContent>
+                  </TabsContent>
+                </div>
 
                 {/* Barra de Navegação Inferior */}
-                <TabsList className="grid grid-cols-4 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0 flex-shrink-0">
+                <TabsList className="grid grid-cols-4 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0">
                   <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
                     <PieChart className="w-5 h-5" />
                     <span className="text-xs">Balanço</span>
