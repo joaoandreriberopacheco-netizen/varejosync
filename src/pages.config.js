@@ -56,6 +56,7 @@ import ConferenciaEntrada from './pages/ConferenciaEntrada';
 import ConferenciaItens from './pages/ConferenciaItens';
 import ConferenciaVolumes from './pages/ConferenciaVolumes';
 import Configuracoes from './pages/Configuracoes';
+import ControleCaixasAtivos from './pages/ControleCaixasAtivos';
 import ControleEntregas from './pages/ControleEntregas';
 import Dashboard from './pages/Dashboard';
 import DashboardCaixa from './pages/DashboardCaixa';
@@ -90,7 +91,7 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import ControleCaixasAtivos from './pages/ControleCaixasAtivos';
+import ExtratoConta from './pages/ExtratoConta';
 import __Layout from './Layout.jsx';
 
 
@@ -104,6 +105,7 @@ export const PAGES = {
     "ConferenciaItens": ConferenciaItens,
     "ConferenciaVolumes": ConferenciaVolumes,
     "Configuracoes": Configuracoes,
+    "ControleCaixasAtivos": ControleCaixasAtivos,
     "ControleEntregas": ControleEntregas,
     "Dashboard": Dashboard,
     "DashboardCaixa": DashboardCaixa,
@@ -138,7 +140,7 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "ControleCaixasAtivos": ControleCaixasAtivos,
+    "ExtratoConta": ExtratoConta,
 }
 
 export const pagesConfig = {

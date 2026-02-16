@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle, CheckCircle, XCircle, Clock, FileText, Eye } from 'lucide-react';
+import { createPageUrl } from '@/components/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -356,6 +357,14 @@ export default function FinanceiroModuloPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`)}
+                              className="hover:bg-gray-100 dark:hover:bg-gray-600"
+                              title="Ver extrato">
+                              <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

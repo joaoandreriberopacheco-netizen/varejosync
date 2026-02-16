@@ -51,7 +51,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const [isHovering, setIsHovering] = useState(false);
 
-  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento'];
+  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
 
   useEffect(() => {
