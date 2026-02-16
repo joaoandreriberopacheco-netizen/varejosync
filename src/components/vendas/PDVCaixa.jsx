@@ -312,15 +312,12 @@ export default function PDVCaixa() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, valorRestante, pedidosAguardando]); // Updated telaAtual to view
 
+  // Auto-preencher apenas uma vez ao carregar
   useEffect(() => {
-    // Auto-preencher recebimentos quando os dados mudarem
-    if (caixaData.recebimentos.dinheiro >= 0) {
+    if (caixaData.recebimentos.dinheiro >= 0 && !recebimentosDinheiro) {
       setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
-      setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
-      setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.6));
-      setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.cartao * 0.4));
     }
-  }, [caixaData.recebimentos.dinheiro, caixaData.recebimentos.pix, caixaData.recebimentos.cartao]);
+  }, [caixaData.saldoAtual]);
 
   const loadData = async () => {
     try {
