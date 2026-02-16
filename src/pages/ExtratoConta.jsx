@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, ArrowUpCircle, ArrowDownCircle, ArrowRightLeft, Calendar, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { ArrowLeft, Plus, ArrowUpCircle, ArrowDownCircle, ArrowRightLeft, Calendar, Search, FileDown, Printer } from 'lucide-react';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function ExtratoContaPage() {
@@ -17,7 +17,9 @@ export default function ExtratoContaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showFAB, setShowFAB] = useState(false);
   const [dialogType, setDialogType] = useState(null);
-  const [filtroData, setFiltroData] = useState('todos');
+  const [filtroPeriodo, setFiltroPeriodo] = useState('mes');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -284,20 +286,37 @@ export default function ExtratoContaPage() {
   const todasMovimentacoes = [
     ...lancamentos.map(l => ({ ...l, origem: 'lancamento' })),
     ...movimentosCaixa.map(m => ({ ...m, origem: 'movimento' }))
-  ].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  ].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
-  // Calcula saldo real baseado nas movimentações
-  const saldoCalculado = todasMovimentacoes.reduce((saldo, mov) => {
-    if (mov.tipo === 'Receita' || mov.tipo === 'Reforço') {
-      return saldo + (mov.valor || 0);
-    } else if (mov.tipo === 'Despesa' || mov.tipo === 'Sangria') {
-      return saldo - (mov.valor || 0);
+  // Aplica filtro de período
+  const getDataRange = () => {
+    const hoje = new Date();
+    switch (filtroPeriodo) {
+      case 'hoje':
+        return { inicio: startOfDay(hoje), fim: endOfDay(hoje) };
+      case 'ontem':
+        const ontem = subDays(hoje, 1);
+        return { inicio: startOfDay(ontem), fim: endOfDay(ontem) };
+      case 'semana':
+        return { inicio: startOfWeek(hoje, { weekStartsOn: 0 }), fim: endOfWeek(hoje, { weekStartsOn: 0 }) };
+      case 'mes':
+        return { inicio: startOfMonth(hoje), fim: endOfMonth(hoje) };
+      case 'personalizado':
+        return dataInicio && dataFim ? 
+          { inicio: startOfDay(parseISO(dataInicio)), fim: endOfDay(parseISO(dataFim)) } : 
+          { inicio: new Date(0), fim: new Date() };
+      default:
+        return { inicio: new Date(0), fim: new Date() };
     }
-    return saldo;
-  }, conta?.saldo_inicial || 0);
+  };
 
-  // Filtra por busca
+  const { inicio, fim } = getDataRange();
   const movimentacoesFiltradas = todasMovimentacoes.filter(m => {
+    const dataMovimento = new Date(m.created_date);
+    const dentroDoRange = isWithinInterval(dataMovimento, { start: inicio, end: fim });
+    
+    if (!dentroDoRange) return false;
+    
     if (!searchTerm) return true;
     const termo = searchTerm.toLowerCase();
     return (
@@ -306,6 +325,75 @@ export default function ExtratoContaPage() {
       m.categoria?.toLowerCase().includes(termo)
     );
   });
+
+  // Agrupa por dia e calcula saldos
+  const movimentacoesPorDia = movimentacoesFiltradas.reduce((acc, mov) => {
+    const dia = format(new Date(mov.created_date), 'yyyy-MM-dd');
+    if (!acc[dia]) acc[dia] = [];
+    acc[dia].push(mov);
+    return acc;
+  }, {});
+
+  const diasOrdenados = Object.keys(movimentacoesPorDia).sort((a, b) => new Date(b) - new Date(a));
+
+  // Calcula saldos por dia
+  let saldoAtual = conta?.saldo_inicial || 0;
+  const diasComSaldo = diasOrdenados.reverse().map(dia => {
+    const saldoAnterior = saldoAtual;
+    const movimentacoesDia = movimentacoesPorDia[dia];
+    
+    movimentacoesDia.forEach(mov => {
+      if (mov.tipo === 'Receita' || mov.tipo === 'Reforço') {
+        saldoAtual += (mov.valor || 0);
+      } else if (mov.tipo === 'Despesa' || mov.tipo === 'Sangria') {
+        saldoAtual -= (mov.valor || 0);
+      }
+    });
+
+    const totalEntradas = movimentacoesDia
+      .filter(m => m.tipo === 'Receita' || m.tipo === 'Reforço')
+      .reduce((sum, m) => sum + (m.valor || 0), 0);
+    
+    const totalSaidas = movimentacoesDia
+      .filter(m => m.tipo === 'Despesa' || m.tipo === 'Sangria')
+      .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+    return {
+      dia,
+      movimentacoes: movimentacoesDia,
+      saldoAnterior,
+      saldoFinal: saldoAtual,
+      totalEntradas,
+      totalSaidas
+    };
+  }).reverse();
+
+  const saldoCalculado = saldoAtual;
+
+  // Funções de exportação
+  const exportarCSV = () => {
+    const csvContent = [
+      ['Data', 'Descrição', 'Tipo', 'Categoria', 'Valor', 'Saldo'],
+      ...movimentacoesFiltradas.map(m => [
+        format(new Date(m.created_date), 'dd/MM/yyyy HH:mm'),
+        m.descricao || m.tipo,
+        m.tipo,
+        m.categoria || '-',
+        (m.valor || 0).toFixed(2),
+        ''
+      ])
+    ].map(row => row.join(';')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `extrato_${conta.nome}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+  };
+
+  const imprimir = () => {
+    window.print();
+  };
 
   if (isLoading) {
     return (
@@ -350,100 +438,173 @@ export default function ExtratoContaPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">{conta.tipo}</p>
             </div>
 
-            <div className="w-20" />
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" onClick={exportarCSV} title="Exportar CSV">
+                <FileDown className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={imprimir} title="Imprimir">
+                <Printer className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
 
-          {/* Saldo e busca */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 rounded-xl">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo Atual</p>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-                {formatCurrency(saldoCalculado)}
-              </p>
-            </div>
+          {/* Saldo */}
+          <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 rounded-xl mb-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo Atual</p>
+            <p className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+              {formatCurrency(saldoCalculado)}
+            </p>
+          </div>
 
-            <div className="relative flex-1 max-w-md w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          {/* Filtros Timeline */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-4">
+            {[
+              { value: 'hoje', label: 'Hoje' },
+              { value: 'ontem', label: 'Ontem' },
+              { value: 'semana', label: 'Semana' },
+              { value: 'mes', label: 'Mês' },
+              { value: 'todos', label: 'Tudo' },
+              { value: 'personalizado', label: 'Período' }
+            ].map(filtro => (
+              <button
+                key={filtro.value}
+                onClick={() => setFiltroPeriodo(filtro.value)}
+                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+                  filtroPeriodo === filtro.value
+                    ? 'bg-gray-800 dark:bg-gray-600 text-white'
+                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
+              >
+                {filtro.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Período personalizado */}
+          {filtroPeriodo === 'personalizado' && (
+            <div className="flex gap-2 mb-4">
               <Input
-                placeholder="Buscar movimentações..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-50 dark:bg-gray-700 border-0"
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="dark:bg-gray-700 dark:border-gray-600"
+              />
+              <Input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="dark:bg-gray-700 dark:border-gray-600"
               />
             </div>
+          )}
+
+          {/* Busca */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar movimentações..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-gray-50 dark:bg-gray-700 border-0"
+            />
           </div>
         </div>
       </div>
 
-      {/* Lista de movimentações */}
+      {/* Lista de movimentações por dia */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-          {movimentacoesFiltradas.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-gray-500 dark:text-gray-400 mb-2">Nenhuma movimentação encontrada</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500">
-                Use o botão + para registrar movimentações
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {movimentacoesFiltradas.map((mov, idx) => (
-                <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        {mov.tipo === 'Receita' && (
-                          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                            <ArrowUpCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+        {diasComSaldo.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm text-center py-16">
+            <p className="text-gray-500 dark:text-gray-400 mb-2">Nenhuma movimentação encontrada</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Use o botão + para registrar movimentações
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {diasComSaldo.map((diaData, diaIdx) => (
+              <div key={diaIdx} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                {/* Header do dia */}
+                <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-800 dark:text-gray-200">
+                        {format(new Date(diaData.dia), "dd 'de' MMMM 'de' yyyy")}
+                      </p>
+                      <div className="flex gap-4 mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <span className="text-green-600 dark:text-green-400">
+                          ↑ {formatCurrency(diaData.totalEntradas)}
+                        </span>
+                        <span className="text-red-600 dark:text-red-400">
+                          ↓ {formatCurrency(diaData.totalSaidas)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Saldo Final</p>
+                      <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                        {formatCurrency(diaData.saldoFinal)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Movimentações do dia */}
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {diaData.movimentacoes.map((mov, idx) => (
+                    <div key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            {mov.tipo === 'Receita' && (
+                              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                <ArrowUpCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                              </div>
+                            )}
+                            {mov.tipo === 'Despesa' && (
+                              <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                <ArrowDownCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                              </div>
+                            )}
+                            {mov.tipo === 'Reforço' && (
+                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <ArrowUpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              </div>
+                            )}
+                            {mov.tipo === 'Sangria' && (
+                              <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                                <ArrowDownCircle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-800 dark:text-gray-200">
+                                {mov.descricao || mov.tipo}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {format(new Date(mov.created_date), "HH:mm")}
+                                {mov.categoria && ` • ${mov.categoria}`}
+                              </p>
+                            </div>
                           </div>
-                        )}
-                        {mov.tipo === 'Despesa' && (
-                          <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                            <ArrowDownCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                          </div>
-                        )}
-                        {mov.tipo === 'Reforço' && (
-                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <ArrowUpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                        )}
-                        {mov.tipo === 'Sangria' && (
-                          <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                            <ArrowDownCircle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-800 dark:text-gray-200">
-                            {mov.descricao || mov.tipo}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {format(new Date(mov.created_date), "dd/MM/yyyy 'às' HH:mm")}
-                            {mov.categoria && ` • ${mov.categoria}`}
-                            {mov.origem === 'lancamento' && ' • Lançamento'}
-                            {mov.origem === 'movimento' && ' • Movimento de Caixa'}
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-lg font-semibold ${
+                            mov.tipo === 'Receita' || mov.tipo === 'Reforço' ? 
+                            'text-green-600 dark:text-green-400' : 
+                            'text-red-600 dark:text-red-400'
+                          }`}>
+                            {mov.tipo === 'Receita' || mov.tipo === 'Reforço' ? '+' : '-'} 
+                            {formatCurrency(mov.valor)}
                           </p>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`text-lg font-semibold ${
-                        mov.tipo === 'Receita' || mov.tipo === 'Reforço' ? 
-                        'text-green-600 dark:text-green-400' : 
-                        'text-red-600 dark:text-red-400'
-                      }`}>
-                        {mov.tipo === 'Receita' || mov.tipo === 'Reforço' ? '+' : '-'} 
-                        {formatCurrency(mov.valor)}
-                      </p>
-                      {mov.status && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{mov.status}</p>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* FAB Principal */}
