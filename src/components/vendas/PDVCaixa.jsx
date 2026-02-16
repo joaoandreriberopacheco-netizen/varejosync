@@ -122,6 +122,10 @@ export default function PDVCaixa() {
   const [showSangriasDialog, setShowSangriasDialog] = useState(false);
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
   const [activeTab, setActiveTab] = useState('balanco');
+  const [showDespesaDialog, setShowDespesaDialog] = useState(false);
+  const [valorDespesa, setValorDespesa] = useState('');
+  const [descricaoDespesa, setDescricaoDespesa] = useState('');
+  const [categoriaDespesa, setCategoriaDespesa] = useState('Outros');
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -195,14 +199,6 @@ export default function PDVCaixa() {
   useEffect(() => {
     loadData();
   }, []);
-
-  // Quando clicar na aba Vendas, ir direto para processamento
-  useEffect(() => {
-    if (activeTab === 'vendas') {
-      setView('processar');
-      setActiveTab('balanco'); // Volta para balanço quando sair
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     if (pedidoSelecionado) {
@@ -409,7 +405,7 @@ export default function PDVCaixa() {
       });
 
       const totalReforcos = movimentosHoje.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + m.valor, 0);
-      const totalSangrias = movimentosHoje.filter((m) => m.tipo === 'Sangria').reduce((sum, m) => sum + m.valor, 0);
+      const totalSangrias = movimentosHoje.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + m.valor, 0);
 
       const saldoCaixa = caixaPDV.saldo_atual;
 
@@ -717,15 +713,18 @@ export default function PDVCaixa() {
           // For now, we assume default behavior or simple completion
         }}toast({ title: "✓ Pagamento aprovado!", description: "Venda finalizada com sucesso.", className: "bg-emerald-100 text-emerald-800", duration: 2000 });setIsDialogOpen(false);setShowLiberacaoEntrega(true);loadData();} catch (error) {toast({ title: "Erro", description: error.message, variant: "destructive" });}};const handleAbrirMovimento = (tipo) => {if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível realizar o movimento. Recarregue a página.", variant: "destructive" });return;}setTipoMovimento(tipo);setValorMovimento('');setObservacaoMovimento('');setShowMovimentoDialog(true);};const handleSalvarMovimento = async () => {if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {toast({ title: "Valor inválido", description: "Informe um valor maior que zero.", variant: "destructive" });return;}if (!contaCaixaPDV) {toast({ title: "Conta de Caixa PDV não encontrada", description: "Não foi possível identificar a conta do caixa.", variant: "destructive" });return;}try {const valorFloat = parseFloat(valorMovimento.replace(',', '.'));const todosMovimentos = await base44.entities.MovimentosCaixa.list();const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;const movimento = await base44.entities.MovimentosCaixa.create({ numero: numeroMovimento, tipo: tipoMovimento, valor: valorFloat, observacao: observacaoMovimento, conta_id: contaCaixaPDV.id, usuario_responsavel_id: currentUser.id, usuario_responsavel_nome: currentUser.full_name });const novoSaldo = tipoMovimento === 'Sangria' ? contaCaixaPDV.saldo_atual - valorFloat : contaCaixaPDV.saldo_atual + valorFloat;
 
-      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
-        saldo_atual: novoSaldo
-      });
+        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
+          saldo_atual: novoSaldo
+        });
 
-      setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
+        setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
+        setMovimentoCriado(movimento);
+      }
 
-      setMovimentoCriado(movimento);
       setShowMovimentoDialog(false);
-      setShowComprovanteMovimento(true);
+      if (tipoMovimento !== 'Recolhimento de Caixa') {
+        setShowComprovanteMovimento(true);
+      }
 
       toast({
         title: `✓ ${tipoMovimento} registrado!`,
@@ -863,7 +862,7 @@ export default function PDVCaixa() {
                       <span className="text-sm">Balanço</span>
                     </TabsTrigger>
                     <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
-                      <ShoppingCart className="w-4 h-4" />
+                      <Receipt className="w-4 h-4" />
                       <span className="text-sm">Vendas</span>
                     </TabsTrigger>
                     <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
@@ -921,22 +920,22 @@ export default function PDVCaixa() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between py-1">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Sangrias</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Recolhimentos</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-base font-medium text-red-600 dark:text-red-400">
+                        <span className="text-base font-medium text-blue-600 dark:text-blue-400">
                           {formatValor(caixaData.sangrias)}
                         </span>
                         <button
                           onClick={() => setShowSangriasDialog(true)}
-                          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
                           style={{ minWidth: '32px', minHeight: '32px' }}>
-                          <Eye className="w-4 h-4 text-red-500 dark:text-red-400" />
+                          <Eye className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                         </button>
                       </div>
                     </div>
                     <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Saldo Atual</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Dinheiro em Caixa</span>
                         <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
                           {formatValor(caixaData.saldoAtual)}
                         </span>
@@ -1021,38 +1020,121 @@ export default function PDVCaixa() {
 
 
 
+                <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="mb-4">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aguardando</div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                        {rascunhosAguardando.length} {rascunhosAguardando.length === 1 ? 'Venda' : 'Vendas'}
+                      </div>
+                    </div>
+
+                    {rascunhosAguardando.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16">
+                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                          <Receipt className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+                        </div>
+                        <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma venda aguardando</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">As vendas aparecerão aqui</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {rascunhosAguardando.map((rascunho) => (
+                          <div
+                            key={rascunho.id}
+                            className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => handleAbrirPedido(rascunho)}>
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              {rascunho.senha_atendimento && (
+                                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Senha</div>
+                                  <div className="text-3xl font-bold text-gray-900 dark:text-white font-mono">{rascunho.senha_atendimento.slice(-4)}</div>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-base font-medium text-gray-900 dark:text-white truncate">{rascunho.cliente_nome}</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{rascunho.vendedor_nome}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                                  R$ {formatarValorExibicao(rascunho.valor_total)}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {rascunho.itens?.length || 0} {rascunho.itens?.length === 1 ? 'item' : 'itens'}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
+                                }}
+                                className="flex-1 h-12 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+                                style={{ minHeight: '48px' }}>
+                                <Edit className="w-4 h-4" />
+                                <span>Editar</span>
+                              </button>
+                              <button
+                                className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:shadow-md transition-shadow"
+                                style={{ minHeight: '48px' }}>
+                                Confirmar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
                 <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
                   <div className="max-w-4xl mx-auto space-y-3">
-                <button
-                  onClick={() => handleAbrirMovimento('Reforço')}
-                  disabled={!contaCaixaPDV}
-                  className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">Reforço</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Adicionar dinheiro ao caixa</div>
-                    </div>
-                  </div>
-                </button>
+                    <button
+                      onClick={() => handleAbrirMovimento('Reforço')}
+                      disabled={!contaCaixaPDV}
+                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
+                          <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">Reforço</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Adicionar dinheiro ao caixa</div>
+                        </div>
+                      </div>
+                    </button>
 
-                <button
-                  onClick={() => handleAbrirMovimento('Sangria')}
-                  disabled={!contaCaixaPDV}
-                  className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                      <Minus className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">Sangria</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">Retirar dinheiro do caixa</div>
-                    </div>
+                    <button
+                      onClick={() => handleAbrirMovimento('Recolhimento de Caixa')}
+                      disabled={!contaCaixaPDV}
+                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                          <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">Recolhimento de Caixa</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Transferir para Caixa Geral</div>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setShowDespesaDialog(true)}
+                      disabled={!contaCaixaPDV}
+                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                          <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">Despesa</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Registrar gasto operacional</div>
+                        </div>
+                      </div>
+                    </button>
                   </div>
-                </button>
-                </div>
                 </TabsContent>
 
                 <TabsContent value="fechar" className="flex-1 overflow-auto p-4 mt-0 space-y-4 data-[state=inactive]:hidden">
@@ -1461,11 +1543,11 @@ export default function PDVCaixa() {
           <DialogContent className="max-w-sm dark:bg-gray-900 dark:text-gray-200">
             <DialogHeader>
               <DialogTitle className="text-base flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                {tipoMovimento === 'Reforço' ?
-                <><Plus className="w-5 h-5 text-teal-600 dark:text-teal-400" /> Reforço de Caixa</> :
-
-                <><Minus className="w-5 h-5 text-yellow-600 dark:text-yellow-400" /> Sangria de Caixa</>
-                }
+                {tipoMovimento === 'Reforço' ? (
+                  <><Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Reforço de Caixa</>
+                ) : (
+                  <><Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Recolhimento de Caixa</>
+                )}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
@@ -1475,8 +1557,8 @@ export default function PDVCaixa() {
                   <div className="font-semibold text-gray-800 dark:text-gray-200">{contaCaixaPDV.nome}</div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Saldo: {formatValor(contaCaixaPDV.saldo_atual)}</div>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    {tipoMovimento === 'Sangria' ?
-                  'O valor será DEBITADO desta conta.' :
+                    {tipoMovimento === 'Recolhimento de Caixa' ?
+                  'O valor será transferido para o Caixa Geral.' :
                   'O valor será CREDITADO nesta conta.'
                   }
                   </p>
@@ -1509,8 +1591,7 @@ export default function PDVCaixa() {
                 </Button>
                 <Button
                   onClick={handleSalvarMovimento}
-                  className={`flex-1 ${tipoMovimento === 'Reforço' ? 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600' : 'bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600'}`}>
-
+                  className={`flex-1 ${tipoMovimento === 'Reforço' ? 'bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600' : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600'}`}>
                   Confirmar
                 </Button>
               </div>
@@ -1605,8 +1686,8 @@ export default function PDVCaixa() {
                       <span className="font-bold text-gray-800 dark:text-gray-200">{formatValor(caixaData.reforcos)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>- Sangrias:</span>
-                      <span className="font-bold text-red-600 dark:text-red-400">{formatValor(caixaData.sangrias)}</span>
+                      <span>- Recolhimentos:</span>
+                      <span className="font-bold text-blue-600 dark:text-blue-400">{formatValor(caixaData.sangrias)}</span>
                     </div>
                     <div className="border-t pt-2 border-gray-200 dark:border-gray-700 flex justify-between">
                       <span className="font-semibold">Saldo Esperado:</span>
@@ -2239,7 +2320,7 @@ export default function PDVCaixa() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Sangrias - Estilo PDV Glacial */}
+        {/* Dialog de Recolhimentos - Estilo PDV Glacial */}
         <Dialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog}>
           <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
             <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
@@ -2250,21 +2331,21 @@ export default function PDVCaixa() {
                 <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
               </button>
               <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
-                Sangrias do Turno
+                Recolhimentos do Turno
               </h2>
               <div className="w-10"></div>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              {movimentos.filter(m => m.tipo === 'Sangria').length === 0 ? (
+              {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                     <Minus className="w-10 h-10 text-gray-400 dark:text-gray-600" />
                   </div>
-                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma sangria registrada</p>
+                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhum recolhimento registrado</p>
                 </div>
               ) : (
                 <div className="space-y-3 max-w-4xl mx-auto">
-                  {movimentos.filter(m => m.tipo === 'Sangria').map((mov) => (
+                  {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((mov) => (
                     <div key={mov.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1">
@@ -2274,7 +2355,7 @@ export default function PDVCaixa() {
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">{mov.usuario_responsavel_nome}</div>
                         </div>
-                        <div className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">
+                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 font-glacial">
                           -{formatValor(mov.valor)}
                         </div>
                       </div>
@@ -2288,16 +2369,78 @@ export default function PDVCaixa() {
                 </div>
               )}
             </div>
-            {movimentos.filter(m => m.tipo === 'Sangria').length > 0 && (
+            {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').length > 0 && (
               <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
                 <div className="flex justify-between items-center max-w-4xl mx-auto">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total do Turno</span>
-                  <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 font-glacial">
                     -{formatValor(caixaData.sangrias)}
                   </span>
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Despesa Simplificada */}
+        <Dialog open={showDespesaDialog} onOpenChange={setShowDespesaDialog}>
+          <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
+            <DialogHeader>
+              <DialogTitle className="text-base flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" /> Registrar Despesa
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
+                <p className="text-xs text-red-800 dark:text-red-300">
+                  O valor será debitado do Caixa PDV e registrado como despesa.
+                </p>
+              </div>
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300">Descrição *</Label>
+                <Input
+                  type="text"
+                  placeholder="Ex: Gasolina, Sacolas, Material de limpeza..."
+                  value={descricaoDespesa}
+                  onChange={(e) => setDescricaoDespesa(e.target.value)}
+                  className="h-12 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300">Categoria</Label>
+                <Select value={categoriaDespesa} onValueChange={setCategoriaDespesa}>
+                  <SelectTrigger className="h-12 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                    <SelectItem value="Utilities">Utilities</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-gray-700 dark:text-gray-300">Valor (R$) *</Label>
+                <Input
+                  type="text"
+                  placeholder="0,00"
+                  value={valorDespesa}
+                  onChange={(e) => setValorDespesa(e.target.value)}
+                  className="h-12 text-lg font-bold dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowDespesaDialog(false)} className="flex-1 border-gray-300 dark:border-gray-600 dark:text-gray-300">
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSalvarDespesa}
+                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600">
+                  Confirmar
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
