@@ -32,7 +32,8 @@ import {
   Keyboard,
   AlertCircle,
   Edit,
-  Eye } from
+  Eye,
+  LayoutDashboard } from
 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
