@@ -1034,8 +1034,8 @@ export default function PDVCaixa() {
             {/* Mobile - Navegação por Abas */}
             <div className="md:hidden h-full flex flex-col">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                <div className="flex-1 overflow-auto">
-                  <TabsContent value="balanco" className="h-full p-4 m-0 space-y-4">
+                <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+                  <TabsContent value="balanco" className="h-full p-4 mt-0 space-y-4">
                     {/* KPIs Mobile */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
@@ -1106,7 +1106,7 @@ export default function PDVCaixa() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="vendas" className="h-full p-4 m-0 space-y-3">
+                  <TabsContent value="vendas" className="h-full p-4 mt-0 space-y-3">
                     {rascunhosAguardando.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full py-16">
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
@@ -1160,7 +1160,7 @@ export default function PDVCaixa() {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="movimentos" className="h-full p-4 m-0 space-y-3">
+                  <TabsContent value="movimentos" className="h-full p-4 mt-0 space-y-3">
                     <button
                       onClick={() => handleAbrirMovimento('Reforço')}
                       disabled={!contaCaixaPDV}
@@ -1194,7 +1194,7 @@ export default function PDVCaixa() {
                     </button>
                   </TabsContent>
 
-                  <TabsContent value="fechar" className="h-full p-4 m-0 space-y-4">
+                  <TabsContent value="fechar" className="h-full p-4 mt-0 space-y-4">
                     {(() => {
                       const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                       const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
