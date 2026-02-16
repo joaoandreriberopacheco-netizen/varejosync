@@ -62,41 +62,9 @@ export default function ExtratoContaPage() {
         setConta(contaData[0]);
         setContas(contasData);
         
-        // Lançamentos vinculados diretamente
-        const lancamentosDaConta = lancamentosData.filter(l => 
-          l.conta_financeira_id === contaId
-        );
-        
-        // Vendas que usaram esta conta nos pagamentos
-        const vendasDaConta = vendasData
-          .filter(v => v.pagamentos?.some(p => 
-            p.forma_pagamento?.toLowerCase().includes(contaNome.toLowerCase()) ||
-            contaNome.toLowerCase().includes('caixa') && p.forma_pagamento?.toLowerCase().includes('dinheiro')
-          ))
-          .map(v => ({
-            tipo: 'Receita',
-            descricao: `Venda ${v.numero || v.id.slice(0,8)}`,
-            valor: v.valor_total || 0,
-            created_date: v.created_date,
-            categoria: 'Venda de Produto',
-            status: v.status,
-            origem: 'venda'
-          }));
-        
-        // Compras que afetaram esta conta
-        const comprasDaConta = comprasData
-          .filter(c => c.status === 'Concluído' || c.status === 'Pago')
-          .map(c => ({
-            tipo: 'Despesa',
-            descricao: `Compra ${c.numero || c.id.slice(0,8)} - ${c.fornecedor_nome}`,
-            valor: c.valor_total || 0,
-            created_date: c.created_date,
-            categoria: 'Compra de Mercadoria',
-            status: c.status,
-            origem: 'compra'
-          }));
-        
-        setLancamentos([...lancamentosDaConta, ...vendasDaConta, ...comprasDaConta]);
+        // TEMPORÁRIO: Mostra TODOS os lançamentos até migrarmos os dados antigos
+        // Depois precisamos vincular cada lançamento à conta correta via conta_financeira_id
+        setLancamentos(lancamentosData);
         setMovimentosCaixa(movimentosData.filter(m => m.conta_id === contaId));
       }
     } catch (error) {
