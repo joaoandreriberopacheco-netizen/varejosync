@@ -332,28 +332,30 @@ export default function PDVCaixa() {
       const user = await base44.auth.me();
       setCurrentUser(user);
 
-      // Buscar o caixa vinculado ao usuário
-      if (!user.caixa_pdv_id) {
-        toast({
-          title: "Caixa não vinculado",
-          description: "Este usuário não está vinculado a nenhum terminal de caixa. Configure nas configurações de usuário.",
-          variant: "destructive",
-          duration: 5000
-        });
-        return;
-      }
-
       const todasContas = await base44.entities.ContasFinanceiras.list();
-      const caixaPDV = todasContas.find((c) => c.id === user.caixa_pdv_id);
+      let caixaPDV = todasContas.find((c) =>
+      c.ativo && (
+      c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV') && (
+      c.nome.toLowerCase().includes('caixa') || c.nome.toLowerCase().includes('pdv'))
+      );
 
       if (!caixaPDV) {
-        toast({
-          title: "Erro ao buscar caixa",
-          description: `O terminal de caixa vinculado (${user.caixa_pdv_nome || 'ID: ' + user.caixa_pdv_id}) não foi encontrado.`,
-          variant: "destructive",
-          duration: 5000
+        caixaPDV = await base44.entities.ContasFinanceiras.create({
+          nome: 'Caixa PDV',
+          tipo: 'Caixa Físico',
+          saldo_inicial: 500,
+          saldo_atual: 500,
+          cor: '#10B981',
+          observacoes: 'Conta criada automaticamente para o PDV Caixa',
+          ativo: true
         });
-        return;
+
+        toast({
+          title: "✓ Conta Caixa PDV criada!",
+          description: "Uma conta foi criada automaticamente para operações do caixa.",
+          className: "bg-emerald-100 text-emerald-800",
+          duration: 2000
+        });
       }
 
       setContaCaixaPDV(caixaPDV);
@@ -884,7 +886,7 @@ export default function PDVCaixa() {
       // Para Recolhimento de Caixa, buscar Caixa Geral
       if (tipoMovimento === 'Recolhimento de Caixa') {
         const todasContas = await base44.entities.ContasFinanceiras.list();
-        const caixaGeral = todasContas.find(c => c.is_caixa_geral);
+        const caixaGeral = todasContas.find(c => c.tipo === 'Caixa Físico' && c.nome.toLowerCase().includes('geral'));
         
         if (!caixaGeral) {
           toast({
@@ -2117,7 +2119,7 @@ export default function PDVCaixa() {
 
                       // Transferir saldo para Caixa Geral
                       const todasContas = await base44.entities.ContasFinanceiras.list();
-                      const caixaGeral = todasContas.find(c => c.is_caixa_geral && c.ativo);
+                      const caixaGeral = todasContas.find(c => c.is_caixa_geral);
                       
                       if (caixaGeral && dinheiroNum > 0) {
                         // Zerar Caixa PDV
