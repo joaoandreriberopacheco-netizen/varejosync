@@ -59,8 +59,12 @@ export default function ExtratoContaPage() {
         setConta(contaData[0]);
         setContas(contasData);
         
-        // Filtra apenas lançamentos desta conta (via referência ou lógica futura)
-        setLancamentos(lancamentosData);
+        // Filtra lançamentos desta conta (via conta_financeira_id)
+        const lancamentosDaConta = lancamentosData.filter(l => 
+          l.conta_financeira_id === contaId || 
+          l.observacoes?.includes(`conta ${contaData[0].nome}`)
+        );
+        setLancamentos(lancamentosDaConta);
         setMovimentosCaixa(movimentosData.filter(m => m.conta_id === contaId));
       }
     } catch (error) {
@@ -79,7 +83,7 @@ export default function ExtratoContaPage() {
       const lancamentoData = {
         ...formLancamento,
         valor: parseFloat(formLancamento.valor),
-        // Vincula à conta para controle futuro
+        conta_financeira_id: conta.id,
         observacoes: `Lançamento manual via conta ${conta.nome}`
       };
 
@@ -132,6 +136,7 @@ export default function ExtratoContaPage() {
         data_vencimento: format(new Date(), 'yyyy-MM-dd'),
         data_pagamento: format(new Date(), 'yyyy-MM-dd'),
         status: 'Pago',
+        conta_financeira_id: conta.id,
         observacoes: `Transferência de ${conta.nome} para ${contaDestino.nome}`
       });
 
@@ -144,6 +149,7 @@ export default function ExtratoContaPage() {
         data_vencimento: format(new Date(), 'yyyy-MM-dd'),
         data_pagamento: format(new Date(), 'yyyy-MM-dd'),
         status: 'Pago',
+        conta_financeira_id: contaDestino.id,
         observacoes: `Transferência de ${conta.nome} para ${contaDestino.nome}`
       });
 
