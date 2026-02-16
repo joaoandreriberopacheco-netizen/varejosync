@@ -62,9 +62,59 @@ export default function ExtratoContaPage() {
         setConta(contaData[0]);
         setContas(contasData);
         
-        // TEMPORÁRIO: Mostra TODOS os lançamentos até migrarmos os dados antigos
-        // Depois precisamos vincular cada lançamento à conta correta via conta_financeira_id
-        setLancamentos(lancamentosData);
+        // 1. Lançamentos manuais vinculados à conta
+        const lancamentosDaConta = lancamentosData.filter(l => 
+          l.conta_financeira_id === contaId
+        );
+        
+        // 2. Vendas que afetaram esta conta (busca por forma de pagamento)
+        const vendasDaConta = vendasData
+          .filter(v => 
+            v.status !== 'Cancelado' &&
+            v.pagamentos?.some(p => {
+              const forma = p.forma_pagamento?.toLowerCase() || '';
+              const nomeContaLower = contaNome.toLowerCase();
+              
+              // Match direto no nome da forma de pagamento
+              if (forma.includes(nomeContaLower)) return true;
+              
+              // Se é conta caixa/PDV, pega dinheiro e PIX
+              if (nomeContaLower.includes('caixa') || nomeContaLower.includes('pdv')) {
+                return forma.includes('dinheiro') || forma.includes('pix');
+              }
+              
+              return false;
+            })
+          )
+          .map(v => ({
+            tipo: 'Receita',
+            descricao: `Venda ${v.numero || v.senha_atendimento || v.id.slice(0,8)}`,
+            valor: v.valor_total || 0,
+            created_date: v.created_date,
+            categoria: 'Venda de Produto',
+            status: v.status,
+            origem: 'venda',
+            referencia_numero: v.numero
+          }));
+        
+        // 3. Compras pagas (despesas)
+        const comprasPagas = comprasData
+          .filter(c => 
+            c.status_aprovacao_financeira === 'Aprovado' || 
+            c.conta_pagamento_id === contaId
+          )
+          .map(c => ({
+            tipo: 'Despesa',
+            descricao: `Compra ${c.numero} - ${c.fornecedor_nome || 'Fornecedor'}`,
+            valor: c.valor_total || 0,
+            created_date: c.created_date,
+            categoria: 'Compra de Mercadoria',
+            status: c.status,
+            origem: 'compra',
+            referencia_numero: c.numero
+          }));
+        
+        setLancamentos([...lancamentosDaConta, ...vendasDaConta, ...comprasPagas]);
         setMovimentosCaixa(movimentosData.filter(m => m.conta_id === contaId));
       }
     } catch (error) {
