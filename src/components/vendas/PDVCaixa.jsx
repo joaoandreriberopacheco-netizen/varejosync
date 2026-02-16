@@ -126,6 +126,7 @@ export default function PDVCaixa() {
   const [valorDespesa, setValorDespesa] = useState('');
   const [descricaoDespesa, setDescricaoDespesa] = useState('');
   const [categoriaDespesa, setCategoriaDespesa] = useState('Outros');
+  const [turnoAtivo, setTurnoAtivo] = useState(null);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -359,6 +360,37 @@ export default function PDVCaixa() {
 
       setContaCaixaPDV(caixaPDV);
 
+      // Verificar/criar turno ativo
+      const todosTurnos = await base44.entities.TurnoCaixa.list();
+      let turnoAtivoAtual = todosTurnos.find(t => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixaPDV.id);
+
+      if (!turnoAtivoAtual) {
+        // Criar novo turno
+        const numeroTurno = `TC-${String((todosTurnos.length || 0) + 1).padStart(5, '0')}`;
+        turnoAtivoAtual = await base44.entities.TurnoCaixa.create({
+          numero: numeroTurno,
+          conta_caixa_pdv_id: caixaPDV.id,
+          conta_caixa_pdv_nome: caixaPDV.nome,
+          usuario_abertura_id: user.id,
+          usuario_abertura_nome: user.full_name,
+          data_abertura: new Date().toISOString(),
+          saldo_inicial: caixaPDV.saldo_atual,
+          status: 'Aberto',
+          vendas_ids: [],
+          movimentos_ids: [],
+          despesas_ids: []
+        });
+
+        toast({
+          title: "✓ Turno iniciado!",
+          description: `Turno ${numeroTurno} aberto.`,
+          className: "bg-emerald-100 text-emerald-800",
+          duration: 2000
+        });
+      }
+
+      setTurnoAtivo(turnoAtivoAtual);
+
       const hoje = format(new Date(), 'yyyy-MM-dd');
 
       const todosPedidos = await base44.entities.PedidoVenda.list();
@@ -375,25 +407,25 @@ export default function PDVCaixa() {
       setPedidosAguardando(pedidosAguardandoCaixa);
       setRascunhosAguardando(rascunhosAguardandoCaixa);
 
-      const vendasHoje = todosPedidos.filter((p) =>
-      (p.status === 'Financeiro OK' || p.status === 'Finalizado') &&
-      p.created_date &&
-      p.created_date.startsWith(hoje)
+      // Filtrar vendas do turno ativo
+      const vendasTurno = todosPedidos.filter((p) =>
+        (p.status === 'Financeiro OK' || p.status === 'Finalizado') &&
+        p.turno_caixa_id === turnoAtivoAtual.id
       );
-      setVendasFinalizadas(vendasHoje);
+      setVendasFinalizadas(vendasTurno);
 
+      // Filtrar movimentos do turno ativo
       const todasMovimentacoes = await base44.entities.MovimentosCaixa.list();
-      const movimentosHoje = todasMovimentacoes.filter((m) =>
-      m.created_date &&
-      m.created_date.startsWith(hoje) &&
-      m.conta_id === caixaPDV.id
+      const movimentosTurno = todasMovimentacoes.filter((m) =>
+        m.turno_caixa_id === turnoAtivoAtual.id &&
+        m.conta_id === caixaPDV.id
       );
-      setMovimentos(movimentosHoje);
+      setMovimentos(movimentosTurno);
 
-      const totalVendas = vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0;
-      vendasHoje.forEach((venda) => {
+      vendasTurno.forEach((venda) => {
         if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
           venda.pagamentos.forEach((pag) => {
             if (pag.forma_pagamento === 'Dinheiro') totalDinheiro += pag.valor;
@@ -404,8 +436,8 @@ export default function PDVCaixa() {
         }
       });
 
-      const totalReforcos = movimentosHoje.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + m.valor, 0);
-      const totalSangrias = movimentosHoje.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + m.valor, 0);
+      const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + m.valor, 0);
+      const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + m.valor, 0);
 
       const saldoCaixa = caixaPDV.saldo_atual;
 
@@ -544,6 +576,7 @@ export default function PDVCaixa() {
         tipo: pedidoSelecionado.tipo,
         status: 'Financeiro OK',
         metodo_entrega: pedidoSelecionado.metodo_entrega,
+        turno_caixa_id: turnoAtivo?.id,
         itens: pedidoSelecionado.itens,
         subtotal: pedidoSelecionado.subtotal,
         valor_desconto: pedidoSelecionado.valor_desconto,
@@ -552,6 +585,13 @@ export default function PDVCaixa() {
         pagamentos: pagamentosArray,
         observacoes: pedidoSelecionado.observacoes
       });
+
+      // Atualizar turno com venda
+      if (turnoAtivo) {
+        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+          vendas_ids: [...(turnoAtivo.vendas_ids || []), pedidoVenda.id]
+        });
+      }
 
       // Atualizar rascunho como convertido
       await base44.entities.RascunhoPedidoVenda.update(pedidoSelecionado.id, {
@@ -771,7 +811,7 @@ export default function PDVCaixa() {
       const valorFloat = parseFloat(valorDespesa.replace(',', '.'));
 
       // Criar lançamento financeiro
-      await base44.entities.LancamentoFinanceiro.create({
+      const lancamento = await base44.entities.LancamentoFinanceiro.create({
         tipo: 'Despesa',
         descricao: descricaoDespesa,
         valor: valorFloat,
@@ -779,8 +819,16 @@ export default function PDVCaixa() {
         data_pagamento: format(new Date(), 'yyyy-MM-dd'),
         status: 'Pago',
         categoria: categoriaDespesa,
+        turno_caixa_id: turnoAtivo?.id,
         observacoes: `Despesa registrada via PDV Caixa por ${currentUser.full_name}`
       });
+
+      // Atualizar turno com despesa
+      if (turnoAtivo) {
+        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+          despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
+        });
+      }
 
       // Debitar do Caixa PDV
       const novoSaldo = contaCaixaPDV.saldo_atual - valorFloat;
@@ -850,15 +898,23 @@ export default function PDVCaixa() {
         }
 
         // Criar movimento de saída do Caixa PDV
-        await base44.entities.MovimentosCaixa.create({
+        const movimento = await base44.entities.MovimentosCaixa.create({
           numero: numeroMovimento,
           tipo: tipoMovimento,
           valor: valorFloat,
           observacao: `Transferência para ${caixaGeral.nome}. ${observacaoMovimento}`,
           conta_id: contaCaixaPDV.id,
+          turno_caixa_id: turnoAtivo?.id,
           usuario_responsavel_id: currentUser.id,
           usuario_responsavel_nome: currentUser.full_name
         });
+
+        // Atualizar turno com movimento
+        if (turnoAtivo) {
+          await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+            movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
+          });
+        }
 
         // Atualizar saldos
         await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
@@ -877,6 +933,7 @@ export default function PDVCaixa() {
           valor: valorFloat,
           observacao: observacaoMovimento,
           conta_id: contaCaixaPDV.id,
+          turno_caixa_id: turnoAtivo?.id,
           usuario_responsavel_id: currentUser.id,
           usuario_responsavel_nome: currentUser.full_name
         });
@@ -889,6 +946,13 @@ export default function PDVCaixa() {
 
         setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
         setMovimentoCriado(movimento);
+
+        // Atualizar turno com movimento
+        if (turnoAtivo) {
+          await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+            movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
+          });
+        }
       }
 
       setShowMovimentoDialog(false);
@@ -2017,15 +2081,15 @@ export default function PDVCaixa() {
                   Cancelar
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
                     const dinheiroNum = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                     const pixNum = parseFloat(recebimentosPix.replace(/\./g, '').replace(',', '.')) || 0;
                     const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
                     const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
                     const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
-                    const diferenca = Math.abs(totalRecebimentos - caixaData.saldoAtual);
+                    const diferenca = totalRecebimentos - caixaData.saldoAtual;
                     
-                    if (diferenca > 0.01) {
+                    if (Math.abs(diferenca) > 0.01) {
                       toast({
                         title: "Erro ao fechar caixa",
                         description: "Os valores não conferem.",
@@ -2034,27 +2098,86 @@ export default function PDVCaixa() {
                       return;
                     }
                     
-                    toast({
-                      title: "✓ Caixa fechado!",
-                      description: "Turno encerrado com sucesso.",
-                      className: "bg-emerald-100 text-emerald-800"
-                    });
-                    setShowFechamentoDialog(false);
-                    setRecebimentosDinheiro('');
-                    setCedulas({
-                      nota200: 0,
-                      nota100: 0,
-                      nota50: 0,
-                      nota20: 0,
-                      nota10: 0,
-                      nota5: 0,
-                      nota2: 0,
-                      moeda1: 0,
-                      moeda050: 0,
-                      moeda025: 0,
-                      moeda010: 0,
-                      moeda005: 0
-                    });
+                    try {
+                      // Atualizar turno com dados de fechamento
+                      await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+                        data_fechamento: new Date().toISOString(),
+                        usuario_fechamento_id: currentUser.id,
+                        usuario_fechamento_nome: currentUser.full_name,
+                        saldo_final: caixaData.saldoAtual,
+                        total_vendas: caixaData.totalVendas,
+                        total_reforcos: caixaData.reforcos,
+                        total_sangrias: caixaData.sangrias,
+                        recebimentos_dinheiro: caixaData.recebimentos.dinheiro,
+                        recebimentos_pix: caixaData.recebimentos.pix,
+                        recebimentos_credito: caixaData.recebimentos.credito || 0,
+                        recebimentos_debito: caixaData.recebimentos.debito || 0,
+                        dinheiro_conferido: dinheiroNum,
+                        diferenca: diferenca,
+                        status: 'Fechado'
+                      });
+
+                      // Transferir saldo para Caixa Geral
+                      const todasContas = await base44.entities.ContasFinanceiras.list();
+                      const caixaGeral = todasContas.find(c => c.is_caixa_geral);
+                      
+                      if (caixaGeral && dinheiroNum > 0) {
+                        // Zerar Caixa PDV
+                        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
+                          saldo_atual: 0
+                        });
+
+                        // Creditar no Caixa Geral
+                        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
+                          saldo_atual: caixaGeral.saldo_atual + dinheiroNum
+                        });
+
+                        // Criar movimento de transferência no histórico
+                        const numeroMovimento = `MCX-${String(Date.now()).slice(-5)}`;
+                        await base44.entities.MovimentosCaixa.create({
+                          numero: numeroMovimento,
+                          tipo: 'Sangria',
+                          valor: dinheiroNum,
+                          observacao: `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${caixaGeral.nome}`,
+                          conta_id: contaCaixaPDV.id,
+                          turno_caixa_id: turnoAtivo.id,
+                          usuario_responsavel_id: currentUser.id,
+                          usuario_responsavel_nome: currentUser.full_name
+                        });
+                      }
+
+                      toast({
+                        title: "✓ Caixa fechado!",
+                        description: "Turno encerrado e valores transferidos para Caixa Geral.",
+                        className: "bg-emerald-100 text-emerald-800"
+                      });
+                      
+                      setShowFechamentoDialog(false);
+                      setRecebimentosDinheiro('');
+                      setCedulas({
+                        nota200: 0,
+                        nota100: 0,
+                        nota50: 0,
+                        nota20: 0,
+                        nota10: 0,
+                        nota5: 0,
+                        nota2: 0,
+                        moeda1: 0,
+                        moeda050: 0,
+                        moeda025: 0,
+                        moeda010: 0,
+                        moeda005: 0
+                      });
+                      
+                      // Recarregar dados para iniciar novo turno
+                      loadData();
+                    } catch (error) {
+                      toast({
+                        title: "Erro ao fechar caixa",
+                        description: error.message,
+                        variant: "destructive"
+                      });
+                    }
                   }}
                   disabled={(() => {
                     if (!recebimentosDinheiro) return true;
