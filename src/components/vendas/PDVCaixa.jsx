@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Receipt,
   DollarSign,
@@ -119,6 +120,7 @@ export default function PDVCaixa() {
   const [showReforcosDialog, setShowReforcosDialog] = useState(false);
   const [showSangriasDialog, setShowSangriasDialog] = useState(false);
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
+  const [activeTab, setActiveTab] = useState('balanco');
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
@@ -822,26 +824,28 @@ export default function PDVCaixa() {
       {/* Conteúdo Principal */}
       <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
         {view === 'dashboard' &&
-        <div className="h-full flex flex-col p-4 space-y-4">
-            {/* KPIs Superiores - Glacial Style */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa</div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
-                  {formatValor(caixaData.saldoAtual)}
+        <>
+            {/* Desktop - Layout Original */}
+            <div className="hidden md:flex h-full flex-col p-4 space-y-4">
+              {/* KPIs Superiores - Glacial Style */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa</div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                    {formatValor(caixaData.saldoAtual)}
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total Vendas</div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                    {formatValor(caixaData.totalVendas)}
+                  </div>
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total Vendas</div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
-                  {formatValor(caixaData.totalVendas)}
-                </div>
-              </div>
-            </div>
 
-            {/* Balanço - Glacial Style */}
-            <div className="flex-1 overflow-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Balanço - Glacial Style */}
+              <div className="flex-1 overflow-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Movimentações do Turno */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                   <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
@@ -977,54 +981,290 @@ export default function PDVCaixa() {
                     </div>
                   </div>
                 </div>
+                </div>
+              </div>
+
+              {/* Botões de Ação - Glacial Style */}
+              <div className="space-y-3 mt-auto pt-4">
+                <button
+                  onClick={handleProcessarVendas}
+                  className="w-full h-16 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-center gap-3"
+                  style={{ minHeight: '64px' }}>
+                  <ShoppingCart size={24} />
+                  <span>Processar Vendas</span>
+                </button>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => handleAbrirMovimento('Reforço')}
+                    disabled={!contaCaixaPDV}
+                    className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
+                    style={{ minHeight: '56px' }}>
+                    <Plus size={20} className="text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-xs">Reforço</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleAbrirMovimento('Sangria')}
+                    disabled={!contaCaixaPDV}
+                    className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
+                    style={{ minHeight: '56px' }}>
+                    <Minus size={20} className="text-red-600 dark:text-red-400" />
+                    <span className="text-xs">Sangria</span>
+                  </button>
+
+                  <button
+                    onClick={handleFecharCaixa}
+                    disabled={(() => {
+                      const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                      const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                      const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
+                      return diferenca > 0.01;
+                    })()}
+                    className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ minHeight: '56px' }}>
+                    <Lock size={20} className="text-gray-600 dark:text-gray-400" />
+                    <span className="text-xs">Fechar</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Botões de Ação - Glacial Style */}
-            <div className="space-y-3 mt-auto pt-4">
-              <button
-                onClick={handleProcessarVendas}
-                className="w-full h-16 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-center gap-3"
-                style={{ minHeight: '64px' }}>
-                <ShoppingCart size={24} />
-                <span>Processar Vendas</span>
-              </button>
+            {/* Mobile - Navegação por Abas */}
+            <div className="md:hidden h-full flex flex-col">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                <div className="flex-1 overflow-auto">
+                  <TabsContent value="balanco" className="h-full p-4 m-0 space-y-4">
+                    {/* KPIs Mobile */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                          {formatValor(caixaData.saldoAtual)}
+                        </div>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Vendas</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                          {formatValor(caixaData.totalVendas)}
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => handleAbrirMovimento('Reforço')}
-                  disabled={!contaCaixaPDV}
-                  className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
-                  style={{ minHeight: '56px' }}>
-                  <Plus size={20} className="text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-xs">Reforço</span>
-                </button>
-                
-                <button
-                  onClick={() => handleAbrirMovimento('Sangria')}
-                  disabled={!contaCaixaPDV}
-                  className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40"
-                  style={{ minHeight: '56px' }}>
-                  <Minus size={20} className="text-red-600 dark:text-red-400" />
-                  <span className="text-xs">Sangria</span>
-                </button>
+                    {/* Movimentações */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                      <h3 className="text-gray-900 mb-3 text-sm font-semibold dark:text-white">Movimentações</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Saldo Inicial</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(contaCaixaPDV?.saldo_inicial || 0)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">+ Vendas</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.totalVendas)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">+ Reforços</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.reforcos)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">- Sangrias</span>
+                          <span className="font-medium text-red-600 dark:text-red-400">{formatValor(caixaData.sangrias)}</span>
+                        </div>
+                      </div>
+                    </div>
 
-                <button
-                  onClick={handleFecharCaixa}
-                  disabled={(() => {
-                    const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                    const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                    const diferenca = Math.abs(totalConferido - caixaData.saldoAtual);
-                    return diferenca > 0.01;
-                  })()}
-                  className="h-14 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ minHeight: '56px' }}>
-                  <Lock size={20} className="text-gray-600 dark:text-gray-400" />
-                  <span className="text-xs">Fechar</span>
-                </button>
-              </div>
+                    {/* Recebimentos */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                      <h3 className="text-gray-900 mb-3 text-sm font-semibold dark:text-white">Recebimentos</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            value={recebimentosDinheiro}
+                            onChange={(e) => setRecebimentosDinheiro(e.target.value)}
+                            className="w-32 h-10 text-right text-base font-semibold bg-gray-50 dark:bg-gray-700 border-0 rounded-lg"
+                            placeholder="0,00"
+                          />
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">PIX</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.pix)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Crédito</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.credito || 0)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Débito</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{formatValor(caixaData.recebimentos.debito || 0)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="vendas" className="h-full p-4 m-0 space-y-3">
+                    {rascunhosAguardando.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full py-16">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                          <Receipt className="w-8 h-8 text-gray-400 dark:text-gray-600" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nenhuma venda aguardando</p>
+                      </div>
+                    ) : (
+                      rascunhosAguardando.map((rascunho) => (
+                        <div
+                          key={rascunho.id}
+                          className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm"
+                          onClick={() => handleAbrirPedido(rascunho)}>
+                          <div className="flex items-start gap-3 mb-3">
+                            {rascunho.senha_atendimento && (
+                              <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div className="text-2xl font-bold text-gray-900 dark:text-white font-mono">
+                                  {rascunho.senha_atendimento.slice(-4)}
+                                </div>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{rascunho.cliente_nome}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{rascunho.vendedor_nome}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-gray-900 dark:text-white font-glacial">
+                                R$ {formatarValorExibicao(rascunho.valor_total)}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{rascunho.itens?.length || 0} itens</div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(createPageUrl('PDV') + `?mode=vendedor&rascunho_id=${rascunho.id}`, '_blank');
+                              }}
+                              className="flex-1 h-10 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium text-sm"
+                              style={{ minHeight: '40px' }}>
+                              Editar
+                            </button>
+                            <button
+                              className="flex-1 h-10 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium text-sm"
+                              style={{ minHeight: '40px' }}>
+                              Confirmar
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="movimentos" className="h-full p-4 m-0 space-y-3">
+                    <button
+                      onClick={() => handleAbrirMovimento('Reforço')}
+                      disabled={!contaCaixaPDV}
+                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
+                          <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">Reforço</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Adicionar dinheiro ao caixa</div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </button>
+
+                    <button
+                      onClick={() => handleAbrirMovimento('Sangria')}
+                      disabled={!contaCaixaPDV}
+                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                          <Minus className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">Sangria</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Retirar dinheiro do caixa</div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </button>
+                  </TabsContent>
+
+                  <TabsContent value="fechar" className="h-full p-4 m-0 space-y-4">
+                    {(() => {
+                      const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                      const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                      const diferenca = totalConferido - caixaData.saldoAtual;
+                      const temDiferenca = Math.abs(diferenca) > 0.01;
+                      
+                      return (
+                        <>
+                          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                            <h3 className="text-gray-900 mb-3 text-sm font-semibold dark:text-white">Status do Saldo</h3>
+                            {!temDiferenca ? (
+                              <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                                <div>
+                                  <div className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Valores Conferem</div>
+                                  <div className="text-xs text-emerald-600 dark:text-emerald-400">Pronto para fechar</div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className={`p-3 rounded-xl ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className={`text-sm font-medium ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                    {diferenca > 0 ? 'Sobrando' : 'Faltando'}
+                                  </span>
+                                  <span className={`text-2xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'} font-glacial`}>
+                                    {formatValor(Math.abs(diferenca))}
+                                  </span>
+                                </div>
+                                <p className={`text-xs ${diferenca > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+                                  Ajuste o dinheiro na aba Balanço
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={handleFecharCaixa}
+                            disabled={temDiferenca}
+                            className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            style={{ minHeight: '56px' }}>
+                            <Lock size={20} />
+                            <span>Fechar Caixa</span>
+                          </button>
+                        </>
+                      );
+                    })()}
+                  </TabsContent>
+                </div>
+
+                {/* Barra de Navegação Inferior */}
+                <TabsList className="grid grid-cols-4 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0">
+                  <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                    <PieChart className="w-5 h-5" />
+                    <span className="text-xs">Balanço</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                    <ShoppingCart className="w-5 h-5" />
+                    <span className="text-xs">Vendas</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                    <Wallet className="w-5 h-5" />
+                    <span className="text-xs">Movimentos</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="fechar" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                    <Lock className="w-5 h-5" />
+                    <span className="text-xs">Fechar</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-          </div>
+          </>
         }
 
         {view === 'processar' &&
