@@ -463,7 +463,29 @@ export default function FinanceiroModuloPage() {
         </div>
       </Tabs>
 
-      {/* Dialog */}
+      {/* Dialog de Conciliação Bancária */}
+      <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
+        <DialogContent className="dark:bg-gray-800 dark:border-gray-700 max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <ArrowRightLeft className="w-5 h-5 text-amber-500" />
+              Conciliação — {conciliacaoConta?.nome}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {conciliacaoConta && (
+              <ConciliacaoBancaria
+                contaId={conciliacaoConta.id}
+                contaNome={conciliacaoConta.nome}
+                onClose={() => setConciliacaoConta(null)}
+                onConciliado={() => loadInitialData()}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Nova/Editar Conta */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
