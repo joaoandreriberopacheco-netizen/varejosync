@@ -398,6 +398,20 @@ export default function FinanceiroModuloPage() {
                           )}
                         </div>
 
+                        {/* Badge de pendências de conciliação */}
+                        {pendenciasConciliacao[account.id] > 0 && (
+                          <button
+                            onClick={() => setConciliacaoConta(account)}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                          >
+                            <Clock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                            <span className="text-xs text-amber-700 dark:text-amber-300 font-medium flex-1 text-left">
+                              {pendenciasConciliacao[account.id]} lançamento{pendenciasConciliacao[account.id] > 1 ? 's' : ''} aguardando conciliação
+                            </span>
+                            <ArrowRightLeft className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                          </button>
+                        )}
+
                         {/* Ações */}
                         <div className="flex gap-2 pt-1 border-t border-gray-100 dark:border-gray-700">
                           <button
