@@ -336,39 +336,46 @@ export default function ExtratoContaPage() {
 
   const diasOrdenados = Object.keys(movimentacoesPorDia).sort((a, b) => new Date(b) - new Date(a));
 
-  // Calcula saldos por dia
-  let saldoAtual = conta?.saldo_inicial || 0;
+  // Usa o saldo_atual real da conta como ponto de referência
+  // e reconstrói os saldos por dia retroativamente
+  const saldoReal = conta?.saldo_atual || 0;
+
+  // Calcula totais de todas as movimentações filtradas
+  const totalEntradasGeral = movimentacoesFiltradas
+    .filter(m => m.tipo === 'Receita' || m.tipo === 'Reforço')
+    .reduce((sum, m) => sum + (m.valor || 0), 0);
+  const totalSaidasGeral = movimentacoesFiltradas
+    .filter(m => m.tipo === 'Despesa' || m.tipo === 'Sangria')
+    .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+  // Saldo anterior ao período = saldo atual - resultado do período filtrado
+  let saldoAcumulado = saldoReal - totalEntradasGeral + totalSaidasGeral;
+
   const diasComSaldo = diasOrdenados.reverse().map(dia => {
-    const saldoAnterior = saldoAtual;
+    const saldoAnterior = saldoAcumulado;
     const movimentacoesDia = movimentacoesPorDia[dia];
-    
-    movimentacoesDia.forEach(mov => {
-      if (mov.tipo === 'Receita' || mov.tipo === 'Reforço') {
-        saldoAtual += (mov.valor || 0);
-      } else if (mov.tipo === 'Despesa' || mov.tipo === 'Sangria') {
-        saldoAtual -= (mov.valor || 0);
-      }
-    });
 
     const totalEntradas = movimentacoesDia
       .filter(m => m.tipo === 'Receita' || m.tipo === 'Reforço')
       .reduce((sum, m) => sum + (m.valor || 0), 0);
-    
+
     const totalSaidas = movimentacoesDia
       .filter(m => m.tipo === 'Despesa' || m.tipo === 'Sangria')
       .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+    saldoAcumulado = saldoAcumulado + totalEntradas - totalSaidas;
 
     return {
       dia,
       movimentacoes: movimentacoesDia,
       saldoAnterior,
-      saldoFinal: saldoAtual,
+      saldoFinal: saldoAcumulado,
       totalEntradas,
       totalSaidas
     };
   }).reverse();
 
-  const saldoCalculado = saldoAtual;
+  const saldoCalculado = saldoReal;
 
   // Funções de exportação
   const exportarCSV = () => {
