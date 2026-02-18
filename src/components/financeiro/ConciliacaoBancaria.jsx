@@ -1,0 +1,355 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { base44 } from '@/api/base44Client';
+import { format, parseISO, isToday, isPast, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowRightLeft, X, Check, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
+const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onConciliado }) {
+  const [lancamentos, setLancamentos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selecionados, setSelecionados] = useState([]);
+  const [expandidos, setExpandidos] = useState({});
+  const [dialogConfirm, setDialogConfirm] = useState(false);
+  const [valorConfirmado, setValorConfirmado] = useState('');
+  const [dataEfetiva, setDataEfetiva] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [contas, setContas] = useState([]);
+  const [contaBancariaDestino, setContaBancariaDestino] = useState('');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadPendentes();
+  }, [contaId]);
+
+  const loadPendentes = async () => {
+    setIsLoading(true);
+    const [dados, todasContas] = await Promise.all([
+      base44.entities.LancamentoFinanceiro.filter({
+        conta_financeira_id: contaId,
+        status_conciliacao: 'Pendente'
+      }),
+      base44.entities.ContasFinanceiras.list()
+    ]);
+    setLancamentos(dados.sort((a, b) => new Date(a.data_liquidacao_prevista) - new Date(b.data_liquidacao_prevista)));
+    setContas(todasContas.filter(c => c.id !== contaId && c.ativo));
+    setIsLoading(false);
+  };
+
+  // Agrupa por data de liquidação prevista
+  const grupos = useMemo(() => {
+    const mapa = {};
+    lancamentos.forEach(l => {
+      const chave = l.data_liquidacao_prevista || l.data_vencimento || 'sem-data';
+      if (!mapa[chave]) mapa[chave] = [];
+      mapa[chave].push(l);
+    });
+    return Object.entries(mapa).sort(([a], [b]) => new Date(a) - new Date(b));
+  }, [lancamentos]);
+
+  const toggleSelecionado = (id) => {
+    setSelecionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const toggleGrupo = (data) => {
+    const ids = grupos.find(([d]) => d === data)?.[1].map(l => l.id) || [];
+    const todosSelecionados = ids.every(id => selecionados.includes(id));
+    if (todosSelecionados) {
+      setSelecionados(prev => prev.filter(id => !ids.includes(id)));
+    } else {
+      setSelecionados(prev => [...new Set([...prev, ...ids])]);
+    }
+  };
+
+  const toggleExpandido = (data) => {
+    setExpandidos(prev => ({ ...prev, [data]: !prev[data] }));
+  };
+
+  const selecionadosData = lancamentos.filter(l => selecionados.includes(l.id));
+  const totalSelecionado = selecionadosData.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0);
+
+  const abrirConciliacao = () => {
+    if (selecionados.length === 0) {
+      toast({ title: 'Selecione ao menos um lançamento', variant: 'destructive' });
+      return;
+    }
+    setValorConfirmado(totalSelecionado.toFixed(2));
+    setDialogConfirm(true);
+  };
+
+  const confirmarConciliacao = async () => {
+    const valorReal = parseFloat(valorConfirmado);
+    const grupoId = `CONC-${Date.now()}`;
+    const dataEfetivaISO = dataEfetiva;
+
+    // Marca todos selecionados como conciliados
+    const atualizacoes = selecionadosData.map(l => {
+      const status = Math.abs((l.valor_liquido || l.valor) - valorReal / selecionadosData.length) > 0.01
+        ? 'Ajustado' : 'Conciliado';
+      return base44.entities.LancamentoFinanceiro.update(l.id, {
+        status_conciliacao: status,
+        data_liquidacao_efetiva: dataEfetivaISO,
+        status: 'Pago',
+        conciliacao_grupo_id: grupoId
+      });
+    });
+
+    await Promise.all(atualizacoes);
+
+    // Cria lançamento consolidado na conta bancária destino (se selecionada)
+    if (contaBancariaDestino) {
+      const contaDestino = contas.find(c => c.id === contaBancariaDestino);
+      await base44.entities.LancamentoFinanceiro.create({
+        tipo: 'Receita',
+        descricao: `Conciliação ${grupoId} - ${contaNome} (${selecionados.length} lançamentos)`,
+        valor: valorReal,
+        valor_liquido: valorReal,
+        conta_financeira_id: contaBancariaDestino,
+        conta_financeira_nome: contaDestino?.nome,
+        categoria: 'Transferência entre Contas',
+        status: 'Pago',
+        status_conciliacao: 'N/A',
+        data_vencimento: dataEfetivaISO,
+        data_pagamento: dataEfetivaISO,
+        referencia_tipo: 'Conciliacao',
+        referencia_numero: grupoId,
+        conciliacao_grupo_id: grupoId,
+        observacoes: `Consolidação de ${selecionados.length} lançamentos de ${contaNome}`
+      });
+
+      // Atualiza saldo da conta destino
+      if (contaDestino) {
+        await base44.entities.ContasFinanceiras.update(contaBancariaDestino, {
+          saldo_atual: (contaDestino.saldo_atual || 0) + valorReal
+        });
+      }
+    }
+
+    toast({
+      title: 'Conciliação realizada',
+      description: `${selecionados.length} lançamento(s) conciliado(s) — ${fmt(valorReal)}`,
+      className: 'bg-green-50 text-green-800'
+    });
+
+    setDialogConfirm(false);
+    setSelecionados([]);
+    await loadPendentes();
+    onConciliado?.();
+  };
+
+  const getStatusData = (dataStr) => {
+    if (!dataStr) return { cor: 'text-gray-400', label: 'Sem data' };
+    const d = parseISO(dataStr);
+    if (isPast(d) && !isToday(d)) return { cor: 'text-red-500', label: 'Atrasado' };
+    if (isToday(d)) return { cor: 'text-amber-500', label: 'Hoje' };
+    return { cor: 'text-gray-500', label: format(d, "dd/MM", { locale: ptBR }) };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
+      </div>
+    );
+  }
+
+  if (lancamentos.length === 0) {
+    return (
+      <div className="text-center py-16 space-y-3">
+        <div className="w-14 h-14 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mx-auto">
+          <CheckCircle2 className="w-7 h-7 text-green-500" />
+        </div>
+        <p className="font-medium text-gray-700 dark:text-gray-200">Nada pendente</p>
+        <p className="text-sm text-gray-400">Todos os lançamentos desta conta estão conciliados.</p>
+        <Button variant="ghost" size="sm" onClick={onClose}>Fechar</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header Info */}
+      <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-4 flex items-start gap-3">
+        <Info className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+        <div className="text-sm text-amber-700 dark:text-amber-300">
+          <p className="font-medium mb-1">Como conciliar</p>
+          <p className="text-xs leading-relaxed">Selecione os lançamentos que você confirmou no extrato bancário. Você pode conciliar individualmente ou agrupar vários do mesmo dia. Se o valor real for diferente, informe o valor exato recebido.</p>
+        </div>
+      </div>
+
+      {/* Lista agrupada por data */}
+      <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+        {grupos.map(([data, items]) => {
+          const totalGrupo = items.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0);
+          const idsDaData = items.map(l => l.id);
+          const todosSelecionados = idsDaData.every(id => selecionados.includes(id));
+          const algumSelecionado = idsDaData.some(id => selecionados.includes(id));
+          const isExpanded = expandidos[data] !== false; // expandido por padrão
+          const { cor, label } = getStatusData(data);
+
+          return (
+            <div key={data} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+              {/* Header do grupo */}
+              <div
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                onClick={() => toggleExpandido(data)}
+              >
+                {/* Checkbox grupo */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleGrupo(data); }}
+                  className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+                    todosSelecionados
+                      ? 'bg-gray-800 dark:bg-gray-300'
+                      : algumSelecionado
+                        ? 'bg-gray-400'
+                        : 'border-2 border-gray-300 dark:border-gray-500'
+                  }`}
+                >
+                  {(todosSelecionados || algumSelecionado) && (
+                    <Check className="w-3 h-3 text-white dark:text-gray-800" />
+                  )}
+                </button>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${cor}`}>{label}</span>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-500">{items.length} lançamento{items.length > 1 ? 's' : ''}</span>
+                  </div>
+                  <p className="font-medium text-gray-800 dark:text-gray-200 text-sm">{fmt(totalGrupo)}</p>
+                </div>
+
+                {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+              </div>
+
+              {/* Itens do grupo */}
+              {isExpanded && (
+                <div className="border-t border-gray-100 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700/50">
+                  {items.map(l => {
+                    const isSel = selecionados.includes(l.id);
+                    return (
+                      <div
+                        key={l.id}
+                        onClick={() => toggleSelecionado(l.id)}
+                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                          isSel ? 'bg-gray-50 dark:bg-gray-700/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700/20'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isSel ? 'bg-gray-800 dark:bg-gray-300' : 'border-2 border-gray-200 dark:border-gray-600'
+                        }`}>
+                          {isSel && <Check className="w-2.5 h-2.5 text-white dark:text-gray-800" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-700 dark:text-gray-200 truncate">{l.descricao}</p>
+                          <p className="text-xs text-gray-400">
+                            {l.forma_pagamento || l.forma_pagamento_tipo || '—'}
+                            {l.referencia_numero ? ` • ${l.referencia_numero}` : ''}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{fmt(l.valor_liquido || l.valor)}</p>
+                          {l.valor_liquido && l.valor_liquido !== l.valor && (
+                            <p className="text-xs text-gray-400 line-through">{fmt(l.valor)}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer com ação */}
+      {selecionados.length > 0 && (
+        <div className="bg-gray-800 dark:bg-gray-700 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div className="text-white">
+            <p className="text-xs text-gray-400">{selecionados.length} selecionado{selecionados.length > 1 ? 's' : ''}</p>
+            <p className="text-lg font-semibold">{fmt(totalSelecionado)}</p>
+          </div>
+          <Button
+            onClick={abrirConciliacao}
+            className="bg-white text-gray-800 hover:bg-gray-100 gap-2 flex-shrink-0"
+          >
+            <ArrowRightLeft className="w-4 h-4" />
+            Conciliar
+          </Button>
+        </div>
+      )}
+
+      {/* Dialog de confirmação */}
+      <Dialog open={dialogConfirm} onOpenChange={setDialogConfirm}>
+        <DialogContent className="dark:bg-gray-800 dark:border-gray-700 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-gray-800 dark:text-gray-200">Confirmar Conciliação</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 space-y-1">
+              <p className="text-xs text-gray-500">{selecionados.length} lançamento{selecionados.length > 1 ? 's' : ''} selecionado{selecionados.length > 1 ? 's' : ''}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Total esperado: {fmt(totalSelecionado)}</p>
+            </div>
+
+            <div>
+              <Label className="text-gray-700 dark:text-gray-300 text-sm">Valor real recebido</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={valorConfirmado}
+                onChange={e => setValorConfirmado(e.target.value)}
+                className="mt-1 dark:bg-gray-700 dark:border-gray-600"
+              />
+              {parseFloat(valorConfirmado) !== totalSelecionado && (
+                <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Divergência de {fmt(Math.abs(parseFloat(valorConfirmado || 0) - totalSelecionado))} — será registrada como ajuste
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-gray-700 dark:text-gray-300 text-sm">Data do recebimento</Label>
+              <Input
+                type="date"
+                value={dataEfetiva}
+                onChange={e => setDataEfetiva(e.target.value)}
+                className="mt-1 dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-700 dark:text-gray-300 text-sm">Lançar na conta bancária</Label>
+              <select
+                value={contaBancariaDestino}
+                onChange={e => setContaBancariaDestino(e.target.value)}
+                className="mt-1 w-full h-10 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 text-gray-800 dark:text-gray-200"
+              >
+                <option value="">Não lançar (só marcar como conciliado)</option>
+                {contas.map(c => (
+                  <option key={c.id} value={c.id}>{c.nome}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDialogConfirm(false)} className="dark:bg-gray-700 dark:border-gray-600">
+              Cancelar
+            </Button>
+            <Button onClick={confirmarConciliacao} className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-300 dark:text-gray-800">
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
