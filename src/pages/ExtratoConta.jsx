@@ -256,7 +256,7 @@ export default function ExtratoContaPage() {
   };
 
   const formatCurrency = (value) => {
-    return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const openDialog = (type) => {
