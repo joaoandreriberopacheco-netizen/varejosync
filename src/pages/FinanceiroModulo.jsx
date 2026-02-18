@@ -11,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle, CheckCircle, XCircle, Clock, FileText, Eye } from 'lucide-react';
+import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle, CheckCircle, XCircle, Clock, FileText, Eye, ArrowRightLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import GestaoCaixa from '../components/financeiro/GestaoCaixa';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
+import ConciliacaoBancaria from '../components/financeiro/ConciliacaoBancaria';
 
 export default function FinanceiroModuloPage() {
   const [accounts, setAccounts] = useState([]);
