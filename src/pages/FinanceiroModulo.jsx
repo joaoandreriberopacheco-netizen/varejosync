@@ -27,6 +27,8 @@ export default function FinanceiroModuloPage() {
   const [contas, setContas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [conciliacaoConta, setConciliacaoConta] = useState(null); // conta selecionada para conciliar
+  const [pendenciasConciliacao, setPendenciasConciliacao] = useState({}); // { contaId: count }
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedPedido, setSelectedPedido] = useState(null);
