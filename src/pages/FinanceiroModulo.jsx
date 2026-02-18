@@ -54,16 +54,26 @@ export default function FinanceiroModuloPage() {
 
   const loadInitialData = async () => {
     setIsLoading(true);
-    const [accountsData, transactionsData, contasData, pendingData] = await Promise.all([
+    const [accountsData, transactionsData, contasData, pendingData, pendConciliacao] = await Promise.all([
       base44.entities.ContasFinanceiras.list(),
       base44.entities.LancamentoFinanceiro.list(),
       base44.entities.ContasFinanceiras.filter({ ativo: true }),
-      base44.entities.LancamentoFinanceiro.filter({ status: 'Aguardando Aprovação Financeira' })
+      base44.entities.LancamentoFinanceiro.filter({ status: 'Aguardando Aprovação Financeira' }),
+      base44.entities.LancamentoFinanceiro.filter({ status_conciliacao: 'Pendente' })
     ]);
     setAccounts(accountsData);
     setTransactions(transactionsData);
     setContas(contasData);
     setPendingTransactions(pendingData);
+
+    // Agrupa pendências de conciliação por conta
+    const mapa = {};
+    pendConciliacao.forEach(l => {
+      if (l.conta_financeira_id) {
+        mapa[l.conta_financeira_id] = (mapa[l.conta_financeira_id] || 0) + 1;
+      }
+    });
+    setPendenciasConciliacao(mapa);
     setIsLoading(false);
   };
 
