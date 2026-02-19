@@ -298,11 +298,11 @@ export default function ListaUsuariosApp() {
       </div>
 
       {/* Informação */}
-      <Card className="border-0 shadow-sm bg-blue-50 dark:bg-blue-900/20">
+      <Card className="border-0 shadow-sm bg-gray-50 dark:bg-gray-800/60">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded">
-              <Shield className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+            <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded">
+              <Shield className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </div>
             <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
               <p className="font-medium">Sobre Usuários e Perfis</p>
