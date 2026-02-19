@@ -153,28 +153,28 @@ export default function ConfiguracoesPage() {
               <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex overflow-x-auto overflow-y-hidden no-scrollbar" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 <TabsTrigger 
                   value="empresa" 
-                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-gray-500 data-[state=active]:text-gray-800 dark:text-gray-400 dark:data-[state=active]:text-gray-200 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                 >
                   <Building2 className="w-4 h-4" />
                   <span className="hidden data-[state=active]:inline md:inline">Dados da Empresa</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="usuarios-app" 
-                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-gray-500 data-[state=active]:text-gray-800 dark:text-gray-400 dark:data-[state=active]:text-gray-200 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                 >
                   <Users className="w-4 h-4" />
                   <span className="hidden data-[state=active]:inline md:inline">Usuários do Sistema</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="colaboradores" 
-                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-gray-500 data-[state=active]:text-gray-800 dark:text-gray-400 dark:data-[state=active]:text-gray-200 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                 >
                   <Shield className="w-4 h-4" />
                   <span className="hidden data-[state=active]:inline md:inline">Colaboradores</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="perfis-acesso" 
-                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-gray-500 data-[state=active]:text-gray-800 dark:text-gray-400 dark:data-[state=active]:text-gray-200 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                 >
                   <Shield className="w-4 h-4" />
                   <span className="hidden data-[state=active]:inline md:inline">Perfis de Acesso</span>
