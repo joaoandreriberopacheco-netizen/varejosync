@@ -28,15 +28,18 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       );
 
       // Filtrar por permissão
+      // O campo correto é caixas_pdv_autorizados_ids (salvo pelo ListaUsuariosApp)
+      const caixasAutorizados = currentUser.caixas_pdv_autorizados_ids || currentUser.caixas_vinculados || [];
       let caixasFiltrados;
       if (currentUser.role === 'admin') {
         // Admin vê todos
         caixasFiltrados = caixasPDV;
+      } else if (caixasAutorizados.length === 0) {
+        // Se nenhum caixa vinculado, vê todos (sem restrição)
+        caixasFiltrados = caixasPDV;
       } else {
-        // Não-admin só vê os vinculados
-        caixasFiltrados = caixasPDV.filter(c => 
-          currentUser.caixas_vinculados?.includes(c.id)
-        );
+        // Vê apenas os vinculados
+        caixasFiltrados = caixasPDV.filter(c => caixasAutorizados.includes(c.id));
       }
 
       setCaixasDisponiveis(caixasFiltrados);

@@ -26,12 +26,14 @@ export default function DashboardPage() {
     loadUser();
   }, []);
 
-  // Dashboards específicos por perfil
-  if (currentUser?.perfil === 'Vendedor') {
+  // Dashboards específicos por perfil (case-insensitive)
+  const perfilLower = currentUser?.perfil?.toLowerCase() || '';
+  
+  if (perfilLower === 'vendedor') {
     return <DashboardVendedor />;
   }
   
-  if (currentUser?.perfil === 'Caixa' || currentUser?.perfil === 'Operador de Caixa') {
+  if (perfilLower === 'caixa' || perfilLower === 'operador de caixa') {
     return <DashboardCaixa />;
   }
 
