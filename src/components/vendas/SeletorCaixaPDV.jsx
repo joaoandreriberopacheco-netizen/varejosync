@@ -51,12 +51,6 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
   };
 
   const handleSelecionarCaixa = async (caixa) => {
-    // Verificar se admin está tentando operar um caixa não vinculado
-    if (currentUser.role === 'admin' && !currentUser.caixas_vinculados?.includes(caixa.id)) {
-      alert('Administradores só podem operar caixas aos quais estão vinculados. Você pode visualizar, mas não processar vendas neste caixa.');
-      onSelect(caixa, null, true); // modo somente visualização
-      return;
-    }
 
     // Verificar se já existe turno aberto
     const todosTurnos = await base44.entities.TurnoCaixa.list();
