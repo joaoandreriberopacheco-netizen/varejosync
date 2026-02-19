@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, Edit, Shield, UserPlus, Mail, ShoppingCart, Building, Trash2 } from 'lucide-react';
+import { Users, Edit, Shield, UserPlus, ShoppingCart, Building, Trash2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { base44 as base44Client } from '@/api/base44Client';
 
