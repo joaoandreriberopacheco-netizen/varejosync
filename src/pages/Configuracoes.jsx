@@ -11,7 +11,6 @@ import CategoriasFinanceirasManager from '../components/config/CategoriasFinance
 import ConfigEstoqueManager from '../components/config/ConfigEstoqueManager';
 import MaquininhasManager from '../components/config/MaquininhasManager';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
-import UsuariosManager from '../components/config/UsuariosManager';
 import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
 import DadosEmpresaManager from '../components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '../components/config/PerfisDeAcessoManager';
