@@ -34,7 +34,8 @@ import {
   Edit,
   Eye,
   ChevronRight,
-  Monitor } from
+  Monitor,
+  RefreshCw } from
 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
