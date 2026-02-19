@@ -402,11 +402,11 @@ export default function ListaUsuariosApp() {
                 <div
                   key={tipo}
                   onClick={() => handleSelecionarPerfilEmpresarial(tipo)}
-                  className={`${config.color} border-2 ${
-                    isSelected 
-                      ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800' 
-                      : 'border-gray-200 dark:border-gray-700'
-                  } rounded-xl p-6 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-all group`}
+                  className={`rounded-xl p-6 cursor-pointer transition-all group shadow-sm ${
+                      isSelected
+                        ? 'bg-gray-100 dark:bg-gray-700 ring-2 ring-gray-400 dark:ring-gray-500'
+                        : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
                 >
                   <div className="flex flex-col items-center text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -421,7 +421,7 @@ export default function ListaUsuariosApp() {
                       </div>
                     </div>
                     {isSelected && (
-                      <Badge className="bg-blue-600 text-white border-0">Selecionado</Badge>
+                      <Badge className="bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900 border-0">Selecionado</Badge>
                     )}
                   </div>
                 </div>
