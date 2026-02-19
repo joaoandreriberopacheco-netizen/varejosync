@@ -172,11 +172,19 @@ export default function ConfiguracoesPage() {
                   <Shield className="w-4 h-4" />
                   <span className="hidden data-[state=active]:inline md:inline">Colaboradores</span>
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="perfis-acesso" 
+                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-sky-600 dark:data-[state=active]:border-sky-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-slate-500 data-[state=active]:text-sky-700 dark:text-slate-400 dark:data-[state=active]:text-sky-400 hover:text-sky-600 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span className="hidden data-[state=active]:inline md:inline">Perfis de Acesso</span>
+                </TabsTrigger>
               </TabsList>
               <div className="mt-6">
                 <TabsContent value="empresa"><DadosEmpresaManager /></TabsContent>
                 <TabsContent value="usuarios-app"><ListaUsuariosApp /></TabsContent>
                 <TabsContent value="colaboradores"><UsuariosManager /></TabsContent>
+                <TabsContent value="perfis-acesso"><PerfisDeAcessoManager /></TabsContent>
               </div>
             </Tabs>
           </TabsContent>
