@@ -165,13 +165,6 @@ export default function ConfiguracoesPage() {
                   <span className="hidden data-[state=active]:inline md:inline">Usuários do Sistema</span>
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="colaboradores" 
-                  className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-gray-500 data-[state=active]:text-gray-800 dark:text-gray-400 dark:data-[state=active]:text-gray-200 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
-                >
-                  <Shield className="w-4 h-4" />
-                  <span className="hidden data-[state=active]:inline md:inline">Colaboradores</span>
-                </TabsTrigger>
-                <TabsTrigger 
                   value="perfis-acesso" 
                   className="flex-1 md:flex-none px-2 md:px-4 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium text-gray-500 data-[state=active]:text-gray-800 dark:text-gray-400 dark:data-[state=active]:text-gray-200 hover:text-gray-700 dark:hover:text-gray-300 transition-colors whitespace-nowrap flex items-center justify-center gap-2"
                 >
