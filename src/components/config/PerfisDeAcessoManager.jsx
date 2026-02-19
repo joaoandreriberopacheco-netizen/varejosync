@@ -10,81 +10,21 @@ import { useToast } from '@/components/ui/use-toast';
 import { Plus, Pencil, Trash2, Shield, ChevronDown, ChevronRight, Users, Monitor, LayoutDashboard, TrendingUp, Package, DollarSign, BookOpen, Settings } from 'lucide-react';
 
 // Definição dos módulos e permissões para a UI
+const MODULO_ICONS = {
+  pdv: Monitor,
+  dashboard: LayoutDashboard,
+  vendas: TrendingUp,
+  estoque: Package,
+  financeiro: DollarSign,
+  relatorios: BookOpen,
+  configuracoes: Settings,
+};
+
 const MODULOS = [
   {
-    key: 'pdv', label: 'PDV', icon: '🖥️',
-    permissoes: [
-      { key: 'acesso_vendedor', label: 'Interface de Vendedor' },
-      { key: 'acesso_caixa', label: 'Interface de Caixa' },
-      { key: 'acesso_supermercado', label: 'Modo Supermercado' },
-      { key: 'aplicar_desconto', label: 'Aplicar Desconto' },
-      { key: 'cancelar_item_venda', label: 'Cancelar Item' },
-      { key: 'cancelar_venda', label: 'Cancelar Venda' },
-      { key: 'ver_historico_vendas', label: 'Ver Histórico' },
-    ]
-  },
-  {
-    key: 'dashboard', label: 'Dashboard', icon: '📊',
-    permissoes: [
-      { key: 'acesso', label: 'Acesso ao Dashboard' },
-      { key: 'ver_kpis_vendas', label: 'KPIs de Vendas' },
-      { key: 'ver_kpis_financeiro', label: 'KPIs Financeiros' },
-      { key: 'ver_kpis_estoque', label: 'KPIs de Estoque' },
-    ]
-  },
-  {
-    key: 'vendas', label: 'Vendas', icon: '📦',
-    permissoes: [
-      { key: 'acesso', label: 'Acesso ao Módulo' },
-      { key: 'listar_pedidos', label: 'Listar Pedidos' },
-      { key: 'editar_pedido', label: 'Editar Pedido' },
-      { key: 'cancelar_pedido', label: 'Cancelar Pedido' },
-      { key: 'controle_entregas', label: 'Controle de Entregas' },
-      { key: 'painel_gerencial', label: 'Painel Gerencial' },
-      { key: 'vendas_perdidas', label: 'Vendas Perdidas' },
-    ]
-  },
-  {
-    key: 'estoque', label: 'Estoque', icon: '🏭',
-    permissoes: [
-      { key: 'acesso', label: 'Acesso ao Módulo' },
-      { key: 'visualizar_produtos', label: 'Visualizar Produtos' },
-      { key: 'criar_produto', label: 'Criar Produto' },
-      { key: 'editar_produto', label: 'Editar Produto' },
-      { key: 'deletar_produto', label: 'Deletar Produto' },
-      { key: 'ver_custo_compra', label: 'Ver Custo de Compra' },
-      { key: 'realizar_ajuste_estoque', label: 'Ajuste de Estoque' },
-      { key: 'separacao_pedidos', label: 'Separação de Pedidos' },
-      { key: 'compras', label: 'Módulo de Compras' },
-      { key: 'logistica', label: 'Módulo de Logística' },
-      { key: 'armazenagem', label: 'Armazenagem' },
-    ]
-  },
-  {
-    key: 'financeiro', label: 'Financeiro', icon: '💰',
-    permissoes: [
-      { key: 'acesso', label: 'Acesso ao Módulo' },
-      { key: 'visualizar_contas', label: 'Visualizar Contas' },
-      { key: 'ver_saldos', label: 'Ver Saldos' },
-      { key: 'criar_lancamento', label: 'Criar Lançamento' },
-      { key: 'aprovar_pagamentos', label: 'Aprovar Pagamentos' },
-      { key: 'conciliar_movimentos', label: 'Conciliação Bancária' },
-      { key: 'ver_extrato', label: 'Ver Extrato' },
-      { key: 'caixas_ativos', label: 'Caixas Ativos' },
-    ]
-  },
-  {
-    key: 'relatorios', label: 'Relatórios', icon: '📋',
-    permissoes: [
-      { key: 'acesso', label: 'Acesso a Relatórios' },
-      { key: 'relatorio_vendas', label: 'Relatório de Vendas' },
-      { key: 'relatorio_estoque', label: 'Relatório de Estoque' },
-      { key: 'relatorio_financeiro', label: 'Relatório Financeiro' },
-      { key: 'relatorio_margem', label: 'Relatório de Margem' },
-    ]
-  },
-  {
-    key: 'configuracoes', label: 'Configurações', icon: '⚙️',
+    key: 'pdv', label: 'PDV',
+...
+    key: 'configuracoes', label: 'Configurações',
     permissoes: [
       { key: 'acesso', label: 'Acesso às Configurações' },
       { key: 'gerenciar_usuarios', label: 'Gerenciar Usuários' },
