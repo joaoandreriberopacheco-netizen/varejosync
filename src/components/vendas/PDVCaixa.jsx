@@ -1456,7 +1456,13 @@ export default function PDVCaixa() {
                 <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
               </button>
               <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">Processar Vendas</h2>
-              <div className="w-10"></div>
+              <button
+                onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+                title="Atualizar (F7)">
+                <RefreshCw className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
             </div>
 
             <div className="flex-1 overflow-auto p-4">
