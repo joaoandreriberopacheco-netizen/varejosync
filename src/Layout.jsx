@@ -132,10 +132,24 @@ export default function Layout({ children, currentPageName }) {
         roles: ['Admin', 'Vendedor', 'Operador de Caixa', 'Gerente']
       },
       { 
+        name: 'Início', 
+        icon: LayoutDashboard, 
+        page: 'DashboardCaixa',
+        roles: ['Operador de Caixa']
+      },
+      { 
         name: 'Dashboard', 
         icon: LayoutDashboard, 
         page: 'Dashboard',
         roles: ['Admin', 'Vendedor', 'Gerente', 'Financeiro']
+      },
+      {
+        name: 'Financeiro',
+        icon: DollarSign,
+        submenu: [
+          { name: 'Caixas Ativos', page: 'CaixasAtivos' },
+        ],
+        roles: ['Operador de Caixa']
       },
       { 
         name: 'Vendas', 
