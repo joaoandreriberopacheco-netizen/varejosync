@@ -175,7 +175,6 @@ export default function ConfiguracoesPage() {
               <div className="mt-6">
                 <TabsContent value="empresa"><DadosEmpresaManager /></TabsContent>
                 <TabsContent value="usuarios-app"><ListaUsuariosApp /></TabsContent>
-                <TabsContent value="colaboradores"><UsuariosManager /></TabsContent>
                 <TabsContent value="perfis-acesso"><PerfisDeAcessoManager /></TabsContent>
               </div>
             </Tabs>
