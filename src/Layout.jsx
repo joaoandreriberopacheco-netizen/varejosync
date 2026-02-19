@@ -117,7 +117,17 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const getMenuItemsForProfile = () => {
-    const perfil = currentUser?.perfil || 'Admin';
+    // Normaliza o perfil para comparação case-insensitive
+    const perfilRaw = currentUser?.perfil || 'Admin';
+    const perfilNormalizado = {
+      'operador de caixa': 'Operador de Caixa',
+      'vendedor': 'Vendedor',
+      'gerente': 'Gerente',
+      'admin': 'Admin',
+      'estoquista': 'Estoquista',
+      'financeiro': 'Financeiro',
+    };
+    const perfil = perfilNormalizado[perfilRaw.toLowerCase()] || perfilRaw;
     
     const allMenuItems = [
       { 
