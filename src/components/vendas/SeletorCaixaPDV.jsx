@@ -134,8 +134,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
               {caixasDisponiveis.map(caixa => {
-                const isVinculado = currentUser.caixas_vinculados?.includes(caixa.id);
-                const podeOperar = currentUser.role !== 'admin' || isVinculado;
+                const podeOperar = true;
                 
                 return (
                   <button
