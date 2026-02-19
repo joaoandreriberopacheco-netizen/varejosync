@@ -13,8 +13,13 @@ import {
 } from 'lucide-react';
 
 const MODULO_ICONS = {
-  pdv: Monitor, dashboard: LayoutDashboard, vendas: TrendingUp,
-  estoque: Package, financeiro: DollarSign, relatorios: BookOpen, configuracoes: Settings,
+  pdv: Monitor,
+  dashboard: LayoutDashboard,
+  vendas: TrendingUp,
+  estoque: Package,
+  financeiro: DollarSign,
+  relatorios: BookOpen,
+  configuracoes: Settings,
 };
 
 const MODULOS = [
