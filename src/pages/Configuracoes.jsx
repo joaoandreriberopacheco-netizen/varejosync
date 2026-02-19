@@ -14,6 +14,7 @@ import FormasPagamentoManager from '../components/config/FormasPagamentoManager'
 import UsuariosManager from '../components/config/UsuariosManager';
 import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
 import DadosEmpresaManager from '../components/config/DadosEmpresaManager';
+import PerfisDeAcessoManager from '../components/config/PerfisDeAcessoManager';
 import DataAuditor from '../components/config/DataAuditor';
 import SeedDataTool from '../components/config/SeedDataTool';
 import RecomecarDoZero from '../components/config/RecomecarDoZero';
