@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Pencil, Trash2, Shield, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, ChevronDown, ChevronRight, Users, Monitor, LayoutDashboard, TrendingUp, Package, DollarSign, BookOpen, Settings } from 'lucide-react';
 
 // Definição dos módulos e permissões para a UI
 const MODULOS = [
