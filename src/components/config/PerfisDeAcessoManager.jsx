@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import {
   Plus, Pencil, Trash2, Shield, ChevronDown, ChevronRight,
   Users, Monitor, LayoutDashboard, TrendingUp, Package,
-  DollarSign, BookOpen, Settings
+  DollarSign, BookOpen, Settings, Eye, Pencil as PencilIcon
 } from 'lucide-react';
 
 const MODULO_ICONS = {
@@ -22,6 +22,16 @@ const MODULO_ICONS = {
   configuracoes: Settings,
 };
 
+/**
+ * MODULOS — fonte da verdade para o sistema de permissões.
+ * 
+ * Cada permissão pode ter:
+ *   - tipo: 'toggle'  → simples liga/desliga (padrão)
+ *   - tipo: 'ver_editar' → expande para duas colunas: "pode ver" e "pode editar"
+ * 
+ * Para remover/adicionar páginas do sistema: edite apenas aqui.
+ * O restante do sistema lê dinamicamente.
+ */
 const MODULOS = [
   {
     key: 'pdv', label: 'PDV',
@@ -47,11 +57,10 @@ const MODULOS = [
   {
     key: 'vendas', label: 'Vendas',
     permissoes: [
-      { key: 'acesso', label: 'Acesso ao Módulo' },
-      { key: 'listar_pedidos', label: 'Listar Pedidos' },
-      { key: 'editar_pedido', label: 'Editar Pedido' },
+      { key: 'acesso', label: 'Módulo de Vendas' },
+      { key: 'listar_pedidos', label: 'Listar Pedidos', tipo: 'ver_editar' },
       { key: 'cancelar_pedido', label: 'Cancelar Pedido' },
-      { key: 'controle_entregas', label: 'Controle de Entregas' },
+      { key: 'controle_entregas', label: 'Controle de Entregas', tipo: 'ver_editar' },
       { key: 'painel_gerencial', label: 'Painel Gerencial' },
       { key: 'vendas_perdidas', label: 'Vendas Perdidas' },
     ]
@@ -59,25 +68,21 @@ const MODULOS = [
   {
     key: 'estoque', label: 'Estoque',
     permissoes: [
-      { key: 'acesso', label: 'Acesso ao Módulo' },
-      { key: 'visualizar_produtos', label: 'Visualizar Produtos' },
-      { key: 'criar_produto', label: 'Criar Produto' },
-      { key: 'editar_produto', label: 'Editar Produto' },
-      { key: 'deletar_produto', label: 'Deletar Produto' },
+      { key: 'acesso', label: 'Módulo de Estoque' },
+      { key: 'produtos', label: 'Produtos', tipo: 'ver_editar' },
       { key: 'ver_custo_compra', label: 'Ver Custo de Compra' },
       { key: 'realizar_ajuste_estoque', label: 'Ajuste de Estoque' },
       { key: 'separacao_pedidos', label: 'Separação de Pedidos' },
-      { key: 'compras', label: 'Módulo de Compras' },
-      { key: 'logistica', label: 'Módulo de Logística' },
+      { key: 'compras', label: 'Módulo de Compras', tipo: 'ver_editar' },
+      { key: 'logistica', label: 'Módulo de Logística', tipo: 'ver_editar' },
       { key: 'armazenagem', label: 'Armazenagem' },
     ]
   },
   {
     key: 'financeiro', label: 'Financeiro',
     permissoes: [
-      { key: 'acesso', label: 'Acesso ao Módulo' },
-      { key: 'visualizar_contas', label: 'Visualizar Contas' },
-      { key: 'ver_saldos', label: 'Ver Saldos' },
+      { key: 'acesso', label: 'Módulo Financeiro' },
+      { key: 'contas', label: 'Contas e Saldos', tipo: 'ver_editar' },
       { key: 'criar_lancamento', label: 'Criar Lançamento' },
       { key: 'aprovar_pagamentos', label: 'Aprovar Pagamentos' },
       { key: 'conciliar_movimentos', label: 'Conciliação Bancária' },
@@ -110,36 +115,108 @@ const MODULOS = [
 
 const PERFIL_VAZIO = { nome: '', descricao: '', menu_compacto: false, ativo: true, permissoes: {} };
 
-function getPermissao(permissoes, modulo, chave) {
+// Leitura de permissão — suporta toggle simples E ver_editar
+function getPermissao(permissoes, modulo, chave, subtipo = null) {
+  if (subtipo) return permissoes?.[modulo]?.[chave]?.[subtipo] === true;
   return permissoes?.[modulo]?.[chave] === true;
 }
 
-function setPermissao(permissoes, modulo, chave, valor) {
+// Escrita de permissão — suporta os dois modos
+function setPermissao(permissoes, modulo, chave, valor, subtipo = null) {
   const novo = { ...permissoes };
   if (!novo[modulo]) novo[modulo] = {};
-  novo[modulo] = { ...novo[modulo], [chave]: valor };
+  if (subtipo) {
+    novo[modulo] = {
+      ...novo[modulo],
+      [chave]: { ...(novo[modulo][chave] || {}), [subtipo]: valor }
+    };
+  } else {
+    novo[modulo] = { ...novo[modulo], [chave]: valor };
+  }
   return novo;
 }
 
-function contarPermissoes(permissoes, modulo) {
-  const mod = MODULOS.find(m => m.key === modulo);
+// Conta permissões ativas — considera toggles e ver_editar
+function contarPermissoes(permissoes, moduloKey) {
+  const mod = MODULOS.find(m => m.key === moduloKey);
   if (!mod) return { ativas: 0, total: 0 };
-  const total = mod.permissoes.length;
-  const ativas = mod.permissoes.filter(p => permissoes?.[modulo]?.[p.key] === true).length;
+  let ativas = 0;
+  let total = 0;
+  mod.permissoes.forEach(p => {
+    if (p.tipo === 'ver_editar') {
+      total += 2;
+      if (permissoes?.[moduloKey]?.[p.key]?.ver === true) ativas++;
+      if (permissoes?.[moduloKey]?.[p.key]?.editar === true) ativas++;
+    } else {
+      total += 1;
+      if (permissoes?.[moduloKey]?.[p.key] === true) ativas++;
+    }
+  });
   return { ativas, total };
+}
+
+// Linha de permissão: modo ver_editar com 2 colunas, ou toggle simples
+function LinhaPermissao({ perm, modulo, permissoes, onChange }) {
+  if (perm.tipo === 'ver_editar') {
+    const ver = getPermissao(permissoes, modulo, perm.key, 'ver');
+    const editar = getPermissao(permissoes, modulo, perm.key, 'editar');
+    return (
+      <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/30">
+        <span className="text-xs text-gray-600 dark:text-gray-400 flex-1">{perm.label}</span>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <Eye className="w-3 h-3 text-gray-400" />
+            <Switch
+              checked={ver}
+              onCheckedChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v, 'ver'))}
+              className="scale-75 data-[state=checked]:bg-gray-600 dark:data-[state=checked]:bg-gray-400"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <PencilIcon className="w-3 h-3 text-gray-400" />
+            <Switch
+              checked={editar}
+              onCheckedChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v, 'editar'))}
+              className="scale-75 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200"
+            />
+          </label>
+        </div>
+      </div>
+    );
+  }
+
+  // Toggle simples
+  return (
+    <label className="flex items-center gap-2.5 cursor-pointer group px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+      <Switch
+        checked={getPermissao(permissoes, modulo, perm.key)}
+        onCheckedChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v))}
+        className="scale-90 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200"
+      />
+      <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
+        {perm.label}
+      </span>
+    </label>
+  );
 }
 
 function ModuloPermissoes({ modulo, permissoes, onChange }) {
   const [expandido, setExpandido] = useState(false);
   const { ativas, total } = contarPermissoes(permissoes, modulo.key);
-  const todosMarcados = ativas === total && total > 0;
   const Icon = MODULO_ICONS[modulo.key] || Shield;
+  const temVerEditar = modulo.permissoes.some(p => p.tipo === 'ver_editar');
 
   const toggleTodos = (e) => {
     e.stopPropagation();
+    const todosMarcados = ativas === total && total > 0;
     let novo = { ...permissoes };
     modulo.permissoes.forEach(p => {
-      novo = setPermissao(novo, modulo.key, p.key, !todosMarcados);
+      if (p.tipo === 'ver_editar') {
+        novo = setPermissao(novo, modulo.key, p.key, !todosMarcados, 'ver');
+        novo = setPermissao(novo, modulo.key, p.key, !todosMarcados, 'editar');
+      } else {
+        novo = setPermissao(novo, modulo.key, p.key, !todosMarcados);
+      }
     });
     onChange(novo);
   };
@@ -165,12 +242,15 @@ function ModuloPermissoes({ modulo, permissoes, onChange }) {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          {temVerEditar && (
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 hidden sm:inline">ver · editar</span>
+          )}
           <button
             type="button"
             onClick={toggleTodos}
             className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline"
           >
-            {todosMarcados ? 'Desmarcar' : 'Todos'}
+            {ativas === total && total > 0 ? 'Desmarcar' : 'Todos'}
           </button>
           {expandido
             ? <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
@@ -179,18 +259,22 @@ function ModuloPermissoes({ modulo, permissoes, onChange }) {
       </button>
 
       {expandido && (
-        <div className="px-4 pb-4 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-t border-gray-100 dark:border-gray-700">
+        <div className="px-3 pb-3 pt-1 space-y-1 border-t border-gray-100 dark:border-gray-700">
+          {/* Cabeçalho das colunas se houver ver_editar */}
+          {temVerEditar && (
+            <div className="flex items-center justify-end gap-3 px-3 pb-1">
+              <span className="text-[10px] text-gray-400 flex items-center gap-1"><Eye className="w-3 h-3" /> Ver</span>
+              <span className="text-[10px] text-gray-400 flex items-center gap-1"><PencilIcon className="w-3 h-3" /> Editar</span>
+            </div>
+          )}
           {modulo.permissoes.map(p => (
-            <label key={p.key} className="flex items-center gap-2.5 cursor-pointer group">
-              <Switch
-                checked={getPermissao(permissoes, modulo.key, p.key)}
-                onCheckedChange={(v) => onChange(setPermissao(permissoes, modulo.key, p.key, v))}
-                className="scale-90 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200"
-              />
-              <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">
-                {p.label}
-              </span>
-            </label>
+            <LinhaPermissao
+              key={p.key}
+              perm={p}
+              modulo={modulo.key}
+              permissoes={permissoes}
+              onChange={onChange}
+            />
           ))}
         </div>
       )}
@@ -245,6 +329,11 @@ export default function PerfisDeAcessoManager() {
   };
 
   const deletar = async (id) => {
+    const emUso = usuarios.filter(u => u.perfil_acesso_id === id).length;
+    if (emUso > 0) {
+      toast({ title: `Perfil em uso por ${emUso} usuário(s)`, description: 'Desvincule os usuários antes de excluir.', variant: 'destructive' });
+      return;
+    }
     if (!window.confirm('Excluir este perfil?')) return;
     try {
       await base44.entities.PerfilDeAcesso.delete(id);
@@ -292,13 +381,12 @@ export default function PerfisDeAcessoManager() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {perfis.map(perfil => {
             const totalAtivas = MODULOS.reduce((acc, m) => acc + contarPermissoes(perfil.permissoes, m.key).ativas, 0);
-            const totalGeral = MODULOS.reduce((acc, m) => acc + m.permissoes.length, 0);
+            const totalGeral = MODULOS.reduce((acc, m) => acc + contarPermissoes(perfil.permissoes, m.key).total, 0);
             const qtdUsuarios = usuariosComPerfil(perfil.id);
             const pct = totalGeral > 0 ? (totalAtivas / totalGeral) * 100 : 0;
 
             return (
               <div key={perfil.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 flex flex-col gap-3">
-                {/* Top row */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
@@ -327,9 +415,8 @@ export default function PerfisDeAcessoManager() {
                   </div>
                 </div>
 
-                {/* Tags */}
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md font-mono">
                     {totalAtivas}/{totalGeral}
                   </span>
                   {qtdUsuarios > 0 && (
@@ -339,23 +426,15 @@ export default function PerfisDeAcessoManager() {
                     </span>
                   )}
                   {perfil.menu_compacto && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">
-                      Compacto
-                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">Compacto</span>
                   )}
                   {!perfil.ativo && (
-                    <span className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-md">
-                      Inativo
-                    </span>
+                    <span className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-md">Inativo</span>
                   )}
                 </div>
 
-                {/* Progress bar */}
                 <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1">
-                  <div
-                    className="h-1 rounded-full bg-gray-600 dark:bg-gray-400 transition-all"
-                    style={{ width: `${pct}%` }}
-                  />
+                  <div className="h-1 rounded-full bg-gray-600 dark:bg-gray-400 transition-all" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );
@@ -418,7 +497,13 @@ export default function PerfisDeAcessoManager() {
             </div>
 
             <div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-2 font-medium tracking-wide">PERMISSÕES POR MÓDULO</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium tracking-wide">PERMISSÕES POR MÓDULO</p>
+                <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
+                  <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> = ver</span>
+                  <span className="flex items-center gap-1"><PencilIcon className="w-3 h-3" /> = editar</span>
+                </div>
+              </div>
               <div className="space-y-1.5">
                 {MODULOS.map(modulo => (
                   <ModuloPermissoes
