@@ -260,7 +260,7 @@ export default function ListaUsuariosApp() {
           <div className="flex items-center gap-3">
             <h2 className="text-lg md:text-2xl font-medium text-gray-800 dark:text-gray-100">Gestão de Usuários</h2>
             {perfilEmpresarial && (
-              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-0">
+              <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border-0 font-normal">
                 {PERFIS_EMPRESARIAIS[perfilEmpresarial.tipo]?.label}
               </Badge>
             )}
