@@ -205,6 +205,16 @@ export default function PDVCaixa() {
     }
   };
 
+  // Subscription em tempo real para novos rascunhos
+  useEffect(() => {
+    const unsubscribe = base44.entities.RascunhoPedidoVenda.subscribe((event) => {
+      if (event.type === 'create' || event.type === 'update') {
+        loadData();
+      }
+    });
+    return unsubscribe;
+  }, [caixaSelecionado, turnoAtivo]);
+
   useEffect(() => {
     loadData();
   }, []);
