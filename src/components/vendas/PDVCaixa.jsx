@@ -1195,10 +1195,10 @@ export default function PDVCaixa() {
                     </div>
                     <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Saldo em Caixa (Dinheiro)</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                            {formatValor(caixaData.saldoAtual)}
+                          <span className={`font-bold text-gray-900 dark:text-white font-glacial ${caixaData.totalVendas >= 10000 ? 'text-lg' : caixaData.totalVendas >= 1000 ? 'text-xl' : 'text-2xl'}`}>
+                            {formatValor(caixaData.totalVendas)}
                           </span>
                           <button
                             onClick={() => setShowSaldoConsolidadoDialog(true)}
@@ -1210,7 +1210,7 @@ export default function PDVCaixa() {
                         </div>
                       </div>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        Saldo inicial + Dinheiro recebido + Reforços − Recolhimentos
+                        Total do turno (todos os meios de pagamento)
                       </p>
                     </div>
                   </div>
