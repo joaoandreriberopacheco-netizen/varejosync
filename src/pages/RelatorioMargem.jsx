@@ -118,16 +118,17 @@ export default function RelatorioMargemVendas() {
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       sorted = sorted.filter(item => 
-        item.nome.toLowerCase().includes(term) || 
-        item.codigo_interno.toLowerCase().includes(term)
+        item.nome?.toLowerCase().includes(term) || 
+        item.codigo_interno?.toLowerCase().includes(term)
       );
     }
 
     // Filter by tags
     if (selectedTags.length > 0) {
-      sorted = sorted.filter(item => 
-        item.tags && selectedTags.some(tag => item.tags.includes(tag))
-      );
+      sorted = sorted.filter(item => {
+        if (!item.tags || !Array.isArray(item.tags)) return false;
+        return selectedTags.some(tag => item.tags.includes(tag));
+      });
     }
 
     // Sort data
