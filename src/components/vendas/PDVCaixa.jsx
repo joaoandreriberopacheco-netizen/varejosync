@@ -1287,7 +1287,7 @@ export default function PDVCaixa() {
                               </div>
                               {temDiferenca && (
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  Esperado em caixa: {formatValor(caixaData.saldoAtual)}
+                                  Esperado: {formatValor(esperado)}
                                 </p>
                               )}
                             </div>
