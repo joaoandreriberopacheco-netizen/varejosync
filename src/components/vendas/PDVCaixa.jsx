@@ -174,7 +174,7 @@ export default function PDVCaixa() {
   const [showComprovanteDespesa, setShowComprovanteDespesa] = useState(false);
   const { toast } = useToast();
 
-  const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito;
+  const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito + pagamentosVale;
   const valorRestante = pedidoSelecionado ? pedidoSelecionado.valor_total - totalPago : 0;
   const troco = valorRestante < 0 ? Math.abs(valorRestante) : 0;
   const pagamentoValido = pedidoSelecionado ? totalPago >= pedidoSelecionado.valor_total : false;
