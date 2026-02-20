@@ -42,10 +42,15 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       const turnoAberto = todosTurnos.find(t => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixa.id);
       if (turnoAberto) {
       const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-      const vendasTurno = todosPedidos.filter(p =>
-        statusOk.includes(p.status) &&
-        (p.turno_caixa_id === turnoAberto.id || (turnoAberto.vendas_ids || []).includes(p.id))
-      );
+      const dataAbertura = new Date(turnoAberto.data_abertura);
+      const vendasTurno = todosPedidos.filter(p => {
+        if (!statusOk.includes(p.status)) return false;
+        if (p.turno_caixa_id === turnoAberto.id) return true;
+        if ((turnoAberto.vendas_ids || []).includes(p.id)) return true;
+        // Retrocompatibilidade: sem turno vinculado e turno ainda aberto
+        if (!p.turno_caixa_id) return true;
+        return false;
+      });
       const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
       const reforcos = todasMovimentacoes
         .filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço')
