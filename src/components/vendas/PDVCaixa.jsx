@@ -345,22 +345,30 @@ export default function PDVCaixa() {
     }
   }, [caixaData.saldoAtual]);
 
-  const loadData = async () => {
-    if (!caixaSelecionado || !turnoAtivo) return;
-    
-    try {
-      setContaCaixaPDV(caixaSelecionado);
-      const hoje = format(new Date(), 'yyyy-MM-dd');
+  // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
+  const loadData = async (caixaParam, turnoParam) => {
+    const caixa = caixaParam || caixaSelecionado;
+    const turno = turnoParam || turnoAtivo;
+    if (!caixa || !turno) return;
 
-      const todosPedidos = await base44.entities.PedidoVenda.list();
-      const todosRascunhos = await base44.entities.RascunhoPedidoVenda.list();
+    try {
+      // Recarregar conta atualizada do banco
+      const contaAtualizada = await base44.entities.ContasFinanceiras.get(caixa.id);
+      const caixaAtual = contaAtualizada || caixa;
+      setContaCaixaPDV(caixaAtual);
+
+      const [todosPedidos, todosRascunhos, todasMovimentacoes] = await Promise.all([
+        base44.entities.PedidoVenda.list(),
+        base44.entities.RascunhoPedidoVenda.list(),
+        base44.entities.MovimentosCaixa.list()
+      ]);
 
       const pedidosAguardandoCaixa = todosPedidos.filter((p) =>
-      p.status === 'Aguardando Caixa'
+        p.status === 'Aguardando Caixa'
       );
 
       const rascunhosAguardandoCaixa = todosRascunhos.filter((r) =>
-      r.status === 'Aguardando Caixa'
+        r.status === 'Aguardando Caixa'
       );
 
       setPedidosAguardando(pedidosAguardandoCaixa);
@@ -368,16 +376,15 @@ export default function PDVCaixa() {
 
       // Filtrar vendas do turno ativo
       const vendasTurno = todosPedidos.filter((p) =>
-        (p.status === 'Financeiro OK' || p.status === 'Finalizado') &&
-        p.turno_caixa_id === turnoAtivo.id
+        (p.status === 'Financeiro OK' || p.status === 'Pedido Concluído' || p.status === 'Em Separação' || p.status === 'Em Rota de Entrega') &&
+        p.turno_caixa_id === turno.id
       );
       setVendasFinalizadas(vendasTurno);
 
       // Filtrar movimentos do turno ativo
-      const todasMovimentacoes = await base44.entities.MovimentosCaixa.list();
       const movimentosTurno = todasMovimentacoes.filter((m) =>
-        m.turno_caixa_id === turnoAtivo.id &&
-        m.conta_id === caixaSelecionado.id
+        m.turno_caixa_id === turno.id &&
+        m.conta_id === caixa.id
       );
       setMovimentos(movimentosTurno);
 
@@ -387,22 +394,25 @@ export default function PDVCaixa() {
       vendasTurno.forEach((venda) => {
         if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
           venda.pagamentos.forEach((pag) => {
-            if (pag.forma_pagamento === 'Dinheiro') totalDinheiro += pag.valor;
-            if (pag.forma_pagamento === 'PIX') totalPix += pag.valor;
-            if (pag.forma_pagamento === 'Cartão de Crédito') totalCredito += pag.valor;
-            if (pag.forma_pagamento === 'Cartão de Débito') totalDebito += pag.valor;
+            const fp = (pag.forma_pagamento || '').toLowerCase();
+            if (fp === 'dinheiro') totalDinheiro += pag.valor || 0;
+            else if (fp === 'pix') totalPix += pag.valor || 0;
+            else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
+            else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
           });
         }
       });
 
-      const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + m.valor, 0);
-      const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + m.valor, 0);
+      const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + (m.valor || 0), 0);
+      const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + (m.valor || 0), 0);
 
-      const saldoCaixa = caixaSelecionado.saldo_atual;
+      const saldoInicial = turno.saldo_inicial || 0;
+      // Saldo em caixa = saldo inicial + dinheiro recebido + reforços - recolhimentos
+      const saldoCaixaCalculado = saldoInicial + totalDinheiro + totalReforcos - totalSangrias;
 
-      // Update caixaData state
       setCaixaData({
-        saldoAtual: saldoCaixa,
+        saldoInicial: saldoInicial,
+        saldoAtual: saldoCaixaCalculado,
         totalVendas: totalVendas,
         recebimentos: {
           dinheiro: totalDinheiro,
