@@ -788,6 +788,7 @@ export default function PDVCaixa() {
     setTipoMovimento(tipo);
     setValorMovimento('');
     setObservacaoMovimento('');
+    setMovimentoStep('obs');
     setShowMovimentoDialog(true);
   };
 
