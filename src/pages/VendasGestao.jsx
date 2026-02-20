@@ -7,9 +7,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Ticket } from 'lucide-react';
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
+import DevolucaoTrocaDialog from '@/components/vendas/DevolucaoTrocaDialog';
+import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
