@@ -27,7 +27,6 @@ import {
   WifiOff,
   Search,
   MoreVertical,
-  Download,
   Trash2,
   HelpCircle
 } from 'lucide-react';
