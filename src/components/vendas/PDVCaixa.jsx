@@ -388,11 +388,8 @@ export default function PDVCaixa() {
         if (p.turno_caixa_id === turno.id) return true;
         // Listada no array vendas_ids do turno
         if (turno.vendas_ids && turno.vendas_ids.includes(p.id)) return true;
-        // Retrocompatibilidade: sem turno vinculado, criada após abertura (e antes do fechamento se houver)
-        if (!p.turno_caixa_id) {
-          const criada = new Date(p.created_date);
-          if (criada >= dataAbertura && (!dataFechamento || criada <= dataFechamento)) return true;
-        }
+        // Retrocompatibilidade: sem turno vinculado e turno ainda aberto → inclui no turno ativo
+        if (!p.turno_caixa_id && !dataFechamento) return true;
         return false;
       });
       setVendasFinalizadas(vendasTurno);
