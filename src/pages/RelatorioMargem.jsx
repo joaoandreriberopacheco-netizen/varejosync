@@ -164,13 +164,21 @@ export default function RelatorioMargemVendas() {
   }, [sales, products, dateRange, selectedCategory, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
 
   const totals = useMemo(() => {
+    if (groupByCategory) {
+      return processedData.reduce((acc, group) => ({
+        quantidade_vendida: acc.quantidade_vendida + (group.totals?.quantidade_vendida || 0),
+        total_recebido: acc.total_recebido + (group.totals?.total_recebido || 0),
+        custo_total: acc.custo_total + (group.totals?.custo_total || 0),
+        lucro_total: acc.lucro_total + (group.totals?.lucro_total || 0)
+      }), { quantidade_vendida: 0, total_recebido: 0, custo_total: 0, lucro_total: 0 });
+    }
     return processedData.reduce((acc, item) => ({
-      quantidade_vendida: acc.quantidade_vendida + item.quantidade_vendida,
-      total_recebido: acc.total_recebido + item.total_recebido,
-      custo_total: acc.custo_total + item.custo_total,
-      lucro_total: acc.lucro_total + item.lucro_total
+      quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
+      total_recebido: acc.total_recebido + (item.total_recebido || 0),
+      custo_total: acc.custo_total + (item.custo_total || 0),
+      lucro_total: acc.lucro_total + (item.lucro_total || 0)
     }), { quantidade_vendida: 0, total_recebido: 0, custo_total: 0, lucro_total: 0 });
-  }, [processedData]);
+  }, [processedData, groupByCategory]);
 
   const totalMargem = totals.total_recebido > 0 ? (totals.lucro_total / totals.total_recebido) * 100 : 0;
   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
