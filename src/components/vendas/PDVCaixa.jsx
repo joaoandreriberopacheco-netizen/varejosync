@@ -1198,22 +1198,22 @@ export default function PDVCaixa() {
                   </h3>
                   {/* Helper: row with label on left, value+eye aligned right */}
                   {(() => {
-                    const ValorRow = ({ label, valor, color, onEye, eyeColor }) => (
+                    const ValorRow = ({ label, valor, color, onEye, eyeColor, eyeIconColor }) => (
                       <div className="flex items-center justify-between py-1">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
-                        <div className="flex items-center gap-1 min-w-0">
+                        <div className="flex items-center gap-1">
                           {onEye ? (
                             <button
                               onClick={onEye}
                               className={`p-1 rounded transition-colors flex-shrink-0 ${eyeColor || 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                               style={{ minWidth: '28px', minHeight: '28px' }}>
-                              <Eye className={`w-4 h-4 ${eyeColor ? 'text-blue-500 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                              <Eye className={`w-4 h-4 ${eyeIconColor || 'text-gray-400 dark:text-gray-500'}`} />
                             </button>
                           ) : <div className="w-7" />}
-                          <span className={`text-base font-medium tabular-nums text-right ${color || 'text-gray-900 dark:text-gray-100'}`} style={{ minWidth: '110px' }}>
-                            {formatValor(valor)}
-                          </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
                         </div>
+                        <span className={`text-base font-medium tabular-nums text-right ${color || 'text-gray-900 dark:text-gray-100'}`} style={{ minWidth: '110px' }}>
+                          {formatValor(valor)}
+                        </span>
                       </div>
                     );
                     return (
@@ -1221,7 +1221,10 @@ export default function PDVCaixa() {
                         <ValorRow label="Saldo Inicial" valor={caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0} />
                         <ValorRow label="Total Vendas" valor={caixaData.totalVendas} onEye={() => setShowVendasDialog(true)} />
                         <ValorRow label="Reforços" valor={caixaData.reforcos} onEye={() => setShowReforcosDialog(true)} />
-                        <ValorRow label="Recolhimentos" valor={caixaData.sangrias} color="text-blue-600 dark:text-blue-400" onEye={() => setShowSangriasDialog(true)} eyeColor="hover:bg-blue-50 dark:hover:bg-blue-900/20" />
+                        <ValorRow label="Recolhimentos" valor={caixaData.sangrias} color="text-blue-600 dark:text-blue-400" onEye={() => setShowSangriasDialog(true)} eyeColor="hover:bg-blue-50 dark:hover:bg-blue-900/20" eyeIconColor="text-blue-500 dark:text-blue-400" />
+                        {caixaData.despesas > 0 && (
+                          <ValorRow label="Despesas" valor={caixaData.despesas} color="text-red-600 dark:text-red-400" onEye={() => setShowDespesasDialog(true)} eyeColor="hover:bg-red-50 dark:hover:bg-red-900/20" eyeIconColor="text-red-400 dark:text-red-500" />
+                        )}
                         <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
