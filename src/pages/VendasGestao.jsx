@@ -32,6 +32,9 @@ export default function VendasGestaoPage() {
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
   const [activeTab, setActiveTab] = useState('pedidos');
+  const [showDevolucao, setShowDevolucao] = useState(false);
+  const [showTroca, setShowTroca] = useState(false);
+  const [showAlterarPagamento, setShowAlterarPagamento] = useState(false);
   const [stats, setStats] = useState({
     orcamentos: 0,
     aprovados: 0,
