@@ -211,9 +211,7 @@ export default function Layout({ children, currentPageName }) {
         ],
         roles: ['Admin', 'Gerente']
       },
-      { name: 'Relatórios', icon: BookOpen, page: 'Relatorios', roles: ['Admin', 'Gerente', 'Financeiro'] },
-      { name: 'Manual', icon: BookOpen, page: 'Manual', roles: ['Admin', 'Gerente'] },
-      { name: 'Exclusão de Docs', icon: Receipt, page: 'ExclusaoDocumentos', roles: ['Admin'] }
+      { name: 'Relatórios', icon: BookOpen, page: 'Relatorios', roles: ['Admin', 'Gerente', 'Financeiro'] }
     ];
 
     return allMenuItems.filter(item => {
