@@ -289,9 +289,9 @@ export default function RelatorioMargemVendas() {
             </div>
           </div>
 
-          {/* Quick Search */}
-          <div className="mt-4">
-            <div className="relative max-w-md">
+          {/* Quick Search + Group Toggle */}
+          <div className="mt-4 flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input 
                 type="text" 
@@ -301,6 +301,17 @@ export default function RelatorioMargemVendas() {
                 className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <button
+              onClick={() => setGroupByCategory(!groupByCategory)}
+              className={`px-4 py-2.5 rounded-lg font-medium text-sm transition ${
+                groupByCategory
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+              title="Agrupar por categoria"
+            >
+              Agrupar
+            </button>
           </div>
         </div>
 
