@@ -281,10 +281,10 @@ export default function PDVCaixa() {
   const handleNavegacaoPagamento = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setFormaPagamentoAtiva((prev) => (prev + 1) % 4);
+      setFormaPagamentoAtiva((prev) => (prev + 1) % 5);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setFormaPagamentoAtiva((prev) => (prev - 1 + 4) % 4);
+      setFormaPagamentoAtiva((prev) => (prev - 1 + 5) % 5);
     }
   };
 
