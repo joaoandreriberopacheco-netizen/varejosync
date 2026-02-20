@@ -1001,20 +1001,12 @@ export default function PDVCaixa() {
   };
 
   useEffect(() => {
-    // Auto-preencher recebimentos quando os dados mudarem
-    if (!recebimentosDinheiro) {
-      setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
-    }
-    if (!recebimentosPix) {
-      setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
-    }
-    if (!recebimentosCredito) {
-      setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.credito || 0));
-    }
-    if (!recebimentosDebito) {
-      setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.debito || 0));
-    }
-    }, [caixaData]);
+    // Auto-preencher recebimentos: dinheiro = saldoAtual (valor esperado na gaveta); demais = valor das vendas
+    setRecebimentosDinheiro(formatarValorExibicao(caixaData.saldoAtual));
+    setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
+    setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.credito || 0));
+    setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.debito || 0));
+  }, [caixaData]);
 
   const handleFecharCaixa = () => {
     const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || caixaData.recebimentos.dinheiro;
