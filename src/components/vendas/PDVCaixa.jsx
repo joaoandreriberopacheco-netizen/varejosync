@@ -164,6 +164,8 @@ export default function PDVCaixa() {
     despesasLista: [],
   });
   const [showDespesasDialog, setShowDespesasDialog] = useState(false);
+  const [despesaCriada, setDespesaCriada] = useState(null);
+  const [showComprovanteDespesa, setShowComprovanteDespesa] = useState(false);
   const { toast } = useToast();
 
   const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito;
