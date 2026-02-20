@@ -297,13 +297,7 @@ export default function RelatorioMargemVendas() {
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Análise de rentabilidade por produto</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowFilterScreen(true)}
-                className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium hover:opacity-90 transition"
-              >
-                Filtros
-              </button>
+            <div className="flex items-center gap-1.5">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200" title="Opções de impressão">
