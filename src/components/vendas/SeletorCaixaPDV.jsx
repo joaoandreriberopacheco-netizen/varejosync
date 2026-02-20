@@ -191,10 +191,10 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
                         {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
                           <div className="space-y-0.5">
                             <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                              Turno aberto · R$ {(liquidezPorCaixa[caixa.id].totalVendas).toFixed(2).replace('.', ',')} em vendas
+                              Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </p>
                             <p className="text-xs text-gray-400 dark:text-gray-500">
-                              Fundo: R$ {(liquidezPorCaixa[caixa.id].saldoInicial).toFixed(2).replace('.', ',')}
+                              Fundo: R$ {(liquidezPorCaixa[caixa.id].saldoInicial).toFixed(2).replace('.', ',')} · Vendas: R$ {(liquidezPorCaixa[caixa.id].totalVendas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </p>
                           </div>
                         ) : (
