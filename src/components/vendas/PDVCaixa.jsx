@@ -1404,12 +1404,11 @@ export default function PDVCaixa() {
                          </div>
                        </div>
                      );
-                   })()}
-                </div>
-                </div>
-                </TabsContent>
+                     })()}
+                     </div>
+                     </TabsContent>
 
-                <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
+                     <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
                   <div className="max-w-4xl mx-auto">
                     <div className="mb-4">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aguardando</div>
