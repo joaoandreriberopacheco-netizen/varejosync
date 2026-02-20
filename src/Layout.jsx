@@ -511,18 +511,14 @@ export default function Layout({ children, currentPageName }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
                   <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    <Download className="w-4 h-4 mr-2" />
-                    <span>Guardar/Exportar</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
                     <Trash2 className="w-4 h-4 mr-2" />
                     <span>Excluir Documentos</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
                     <HelpCircle className="w-4 h-4 mr-2" />
                     <span>Ajuda (IA)</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => window.location.href = createPageUrl('Configuracoes')}
                     className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
