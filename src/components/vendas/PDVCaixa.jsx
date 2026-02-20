@@ -1082,10 +1082,10 @@ export default function PDVCaixa() {
                 <div className="hidden md:block p-4 pb-0">
                   <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa</div>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
-                        {formatValor(caixaData.saldoAtual)}
-                      </div>
+                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo em Caixa (Dinheiro)</div>
+                     <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                       {formatValor(caixaData.saldoAtual)}
+                     </div>
                     </div>
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Total Vendas</div>
