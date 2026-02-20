@@ -564,35 +564,40 @@ export default function RelatorioMargemVendas() {
 
               {/* Mobile Cards View */}
               <div className="md:hidden space-y-3">
-                {processedData.map((row) => (
-                  <div key={row.codigo_interno || row.nome} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition space-y-3">
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">CÓDIGO • PRODUTO</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{row.codigo_interno} • {row.nome}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">QTD</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p>
+                {groupByCategory ? (
+                  processedData.map((group) => (
+                    <div key={group.category}>
+                      <div className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm font-semibold text-gray-900 dark:text-white">
+                        {group.category}
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">RECEITA</p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">CUSTO</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">LUCRO</p>
-                        <p className="text-sm font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p>
+                      {group.items.map((row) => (
+                        <div key={row.codigo_interno} className="p-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium">{row.codigo_interno} • {row.nome}</p>
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
+                            <div><p className="text-gray-500 dark:text-gray-400">Receita</p><p className="font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p></div>
+                            <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="p-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold">
+                        <p className="text-gray-900 dark:text-white">SUBTOTAL: {formatMoney(group.totals.lucro_total)} ({formatPercent((group.totals.lucro_total / group.totals.total_recebido) * 100)})</p>
                       </div>
                     </div>
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Margem: {formatPercent(row.margem_percentual)}</p>
+                  ))
+                ) : (
+                  processedData.map((row) => (
+                    <div key={row.codigo_interno} className="p-3 bg-gray-50 dark:bg-gray-800/50">
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 font-medium">{row.codigo_interno} • {row.nome}</p>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
+                        <div><p className="text-gray-500 dark:text-gray-400">Receita</p><p className="font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p></div>
+                        <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Margem: {formatPercent(row.margem_percentual)}</p>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
               <div className="mt-6 p-4 text-xs text-gray-600 dark:text-gray-400">
