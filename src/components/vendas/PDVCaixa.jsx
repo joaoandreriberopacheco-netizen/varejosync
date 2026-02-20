@@ -2826,7 +2826,46 @@ export default function PDVCaixa() {
                 Saldo Consolidado
               </h2>
               <button
-                onClick={() => window.print()}
+                onClick={() => {
+                  // Esconde tudo exceto o relatório e imprime
+                  const el = document.getElementById('saldo-consolidado-print');
+                  const original = document.body.innerHTML;
+                  const printContent = el ? el.innerHTML : '';
+                  const printWindow = window.open('', '_blank', 'width=800,height=900');
+                  printWindow.document.write(`
+                    <html><head><title>Saldo Consolidado</title>
+                    <style>
+                      body { font-family: Inter, sans-serif; font-size: 12px; color: #111; margin: 10mm; }
+                      .space-y-3 > * + * { margin-top: 12px; }
+                      .rounded-2xl { border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; }
+                      .px-5 { padding-left: 20px; padding-right: 20px; }
+                      .py-3 { padding-top: 12px; padding-bottom: 12px; }
+                      .py-4 { padding-top: 16px; padding-bottom: 16px; }
+                      .border-b { border-bottom: 1px solid #f3f4f6; }
+                      .flex { display: flex; }
+                      .justify-between { justify-content: space-between; }
+                      .items-center { align-items: center; }
+                      .text-sm { font-size: 12px; }
+                      .text-xs { font-size: 10px; }
+                      .text-xl { font-size: 18px; }
+                      .font-bold { font-weight: 700; }
+                      .font-semibold { font-weight: 600; }
+                      .font-medium { font-weight: 500; }
+                      .text-gray-400, .text-gray-500 { color: #9ca3af; }
+                      .text-gray-700, .text-gray-800 { color: #374151; }
+                      .text-gray-900 { color: #111827; }
+                      .text-emerald-600 { color: #059669; }
+                      .text-blue-600 { color: #2563eb; }
+                      .bg-gray-50 { background: #f9fafb; }
+                      .space-y-2 > * + * { margin-top: 8px; }
+                      .space-y-1 > * + * { margin-top: 4px; }
+                      .mt-0\\.5 { margin-top: 2px; }
+                    </style></head><body>${printContent}</body></html>
+                  `);
+                  printWindow.document.close();
+                  printWindow.focus();
+                  setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+                }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors print:hidden"
                 style={{ minWidth: '44px', minHeight: '44px' }}>
                 <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
