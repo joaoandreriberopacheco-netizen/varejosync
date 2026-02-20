@@ -73,6 +73,8 @@ export default function PDVCaixa() {
   const [observacaoMovimento, setObservacaoMovimento] = useState('');
   const [movimentoCriado, setMovimentoCriado] = useState(null);
   const [showComprovanteMovimento, setShowComprovanteMovimento] = useState(false);
+  const [movimentoStep, setMovimentoStep] = useState('obs'); // 'obs' | 'valor' | 'comprovante'
+  const valorMovimentoRef = React.useRef(null);
 
   const [showFechamentoDialog, setShowFechamentoDialog] = useState(false);
   const [valorContadoCaixa, setValorContadoCaixa] = useState('');
