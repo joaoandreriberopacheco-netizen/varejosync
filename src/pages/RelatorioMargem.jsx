@@ -307,119 +307,144 @@ export default function RelatorioMargemVendas() {
           </div>
         </div>
 
-        {/* Table - PDV Style */}
+        {/* Table - Desktop Table / Mobile Cards */}
         <div className="p-4 md:p-6" id="relatorio-table">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
             </div>
-          ) : (
-            <div className="space-y-3">
-              {processedData.length > 0 ? (
-                <>
-                  {processedData.map((row) => (
-                    <div key={row.codigo_interno || row.nome} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">CÓDIGO</p>
-                          <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{row.codigo_interno}</p>
-                        </div>
-                        <div className="col-span-1 md:col-span-1">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">PRODUTO</p>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">{row.nome}</p>
-                        </div>
-                        <div>
-                          <button
-                            onClick={() => {
-                              if (sortField === 'quantidade_vendida') {
-                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setSortField('quantidade_vendida');
-                                setSortOrder('desc');
-                              }
-                            }}
-                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
-                          >
-                            QTD {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
-                          </button>
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p>
-                        </div>
-                        <div>
-                          <button
-                            onClick={() => {
-                              if (sortField === 'total_recebido') {
-                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setSortField('total_recebido');
-                                setSortOrder('desc');
-                              }
-                            }}
-                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
-                          >
-                            RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
-                          </button>
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p>
-                        </div>
-                        <div>
-                          <button
-                            onClick={() => {
-                              if (sortField === 'custo_total') {
-                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setSortField('custo_total');
-                                setSortOrder('desc');
-                              }
-                            }}
-                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
-                          >
-                            CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
-                          </button>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</p>
-                        </div>
-                        <div>
-                          <button
-                            onClick={() => {
-                              if (sortField === 'lucro_total') {
-                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setSortField('lucro_total');
-                                setSortOrder('desc');
-                              }
-                            }}
-                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
-                          >
-                            LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
-                          </button>
-                          <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p>
-                        </div>
-                        <div>
-                          <button
-                            onClick={() => {
-                              if (sortField === 'margem_percentual') {
-                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setSortField('margem_percentual');
-                                setSortOrder('desc');
-                              }
-                            }}
-                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
-                          >
-                            MARGEM {sortField === 'margem_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
-                          </button>
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</p>
-                        </div>
+          ) : processedData.length > 0 ? (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400">CÓDIGO</th>
+                      <th className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400">DESCRIÇÃO</th>
+                      <th 
+                        onClick={() => {
+                          if (sortField === 'quantidade_vendida') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('quantidade_vendida');
+                            setSortOrder('desc');
+                          }
+                        }}
+                        className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        QUANTIDADE {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th 
+                        onClick={() => {
+                          if (sortField === 'total_recebido') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('total_recebido');
+                            setSortOrder('desc');
+                          }
+                        }}
+                        className="text-right py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th 
+                        onClick={() => {
+                          if (sortField === 'custo_total') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('custo_total');
+                            setSortOrder('desc');
+                          }
+                        }}
+                        className="text-right py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th 
+                        onClick={() => {
+                          if (sortField === 'lucro_total') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('lucro_total');
+                            setSortOrder('desc');
+                          }
+                        }}
+                        className="text-right py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th 
+                        onClick={() => {
+                          if (sortField === 'margem_percentual') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('margem_percentual');
+                            setSortOrder('desc');
+                          }
+                        }}
+                        className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        MARGEM {sortField === 'margem_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {processedData.map((row) => (
+                      <tr key={row.codigo_interno || row.nome} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                        <td className="py-3 px-4 text-sm font-mono text-gray-900 dark:text-white">{row.codigo_interno}</td>
+                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white font-medium">{row.nome}</td>
+                        <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white font-semibold">{row.quantidade_vendida}</td>
+                        <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
+                        <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
+                        <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
+                        <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards View */}
+              <div className="md:hidden space-y-3">
+                {processedData.map((row) => (
+                  <div key={row.codigo_interno || row.nome} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">CÓDIGO • PRODUTO</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{row.codigo_interno} • {row.nome}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">QTD</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">RECEITA</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">CUSTO</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">LUCRO</p>
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p>
                       </div>
                     </div>
-                  ))}
-                  <div className="mt-6 p-4 text-xs text-gray-600 dark:text-gray-400">
-                    Total de produtos: {processedData.length}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Margem: {formatPercent(row.margem_percentual)}</p>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="py-16 text-center">
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">Nenhum dado encontrado</p>
-                </div>
-              )}
+                ))}
+              </div>
+
+              <div className="mt-6 p-4 text-xs text-gray-600 dark:text-gray-400">
+                Total de produtos: {processedData.length}
+              </div>
+            </>
+          ) : (
+            <div className="py-16 text-center">
+              <p className="text-gray-500 dark:text-gray-400 text-lg">Nenhum dado encontrado</p>
             </div>
           )}
         </div>
