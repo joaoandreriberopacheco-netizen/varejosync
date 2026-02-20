@@ -21,6 +21,9 @@ export default function RelatorioMargemVendas() {
   // Filters
   const [selectedProduct, setSelectedProduct] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('lucro_total');
+  const [sortOrder, setSortOrder] = useState('desc');
   
   useEffect(() => {
     loadData();
