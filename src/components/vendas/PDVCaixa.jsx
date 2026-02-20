@@ -1178,9 +1178,18 @@ export default function PDVCaixa() {
                     <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Saldo em Caixa (Dinheiro)</span>
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                          {formatValor(caixaData.saldoAtual)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                            {formatValor(caixaData.saldoAtual)}
+                          </span>
+                          <button
+                            onClick={() => setShowSaldoConsolidadoDialog(true)}
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                            style={{ minWidth: '32px', minHeight: '32px' }}
+                            title="Ver consolidado">
+                            <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          </button>
+                        </div>
                       </div>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Saldo inicial + Dinheiro recebido + Reforços − Recolhimentos
