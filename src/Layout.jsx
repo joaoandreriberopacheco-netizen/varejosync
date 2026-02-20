@@ -54,6 +54,7 @@ export default function Layout({ children, currentPageName }) {
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
   const [isHovering, setIsHovering] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
