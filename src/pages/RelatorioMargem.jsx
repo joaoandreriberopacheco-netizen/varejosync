@@ -161,6 +161,8 @@ export default function RelatorioMargemVendas() {
   }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
 
   const totals = useMemo(() => {
+    if (!processedData.length) return { quantidade_vendida: 0, total_recebido: 0, custo_total: 0, lucro_total: 0 };
+    
     if (groupByCategory) {
       return processedData.reduce((acc, group) => ({
         quantidade_vendida: acc.quantidade_vendida + (group.totals?.quantidade_vendida || 0),
