@@ -1177,11 +1177,14 @@ export default function PDVCaixa() {
                     </div>
                     <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Dinheiro em Caixa</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Saldo em Caixa (Dinheiro)</span>
                         <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
                           {formatValor(caixaData.saldoAtual)}
                         </span>
                       </div>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Saldo inicial + Dinheiro recebido + Reforços − Recolhimentos
+                      </p>
                     </div>
                   </div>
                 </div>
