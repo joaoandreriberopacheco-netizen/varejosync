@@ -224,14 +224,21 @@ export default function RelatorioMargemVendas() {
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Análise de rentabilidade por produto</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={exportToCSV} className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition hidden sm:flex items-center gap-2 text-gray-700 dark:text-gray-200" title="Exportar CSV">
-                <Download className="w-5 h-5" />
-              </button>
-              <button onClick={exportToPDF} className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition hidden sm:flex items-center gap-2 text-gray-700 dark:text-gray-200" title="Exportar PDF">
-                <Download className="w-5 h-5" />
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200" title="Opções de impressão">
+                  <Printer className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+                <DropdownMenuItem onClick={exportToPDF} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                  Exportar PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                  Exportar CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Filters */}
