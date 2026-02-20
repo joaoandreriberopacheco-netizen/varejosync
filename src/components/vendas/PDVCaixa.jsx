@@ -1194,31 +1194,45 @@ export default function PDVCaixa() {
                   <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
                     Recebimentos do Turno
                   </h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
-                      <Input
+                  <div className="space-y-2">
+                    {/* Dinheiro - campo editável clicável */}
+                    <div
+                      className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                      onClick={() => {
+                        const el = document.getElementById('input-dinheiro-conferido');
+                        el?.focus();
+                        el?.select();
+                      }}>
+                      <div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">toque para conferir</p>
+                      </div>
+                      <input
+                        id="input-dinheiro-conferido"
                         type="text"
-                        inputMode="numeric"
+                        inputMode="decimal"
                         value={recebimentosDinheiro}
                         onChange={(e) => setRecebimentosDinheiro(e.target.value)}
-                        className="w-32 h-12 text-right text-lg font-semibold bg-gray-50 dark:bg-gray-700 dark:text-white border-0 focus:ring-2 focus:ring-blue-500 rounded-xl"
-                        placeholder="0,00"
+                        onFocus={(e) => e.target.select()}
+                        className="w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-pointer"
+                        placeholder={formatarValorExibicao(caixaData.recebimentos.dinheiro)}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </div>
-                    <div className="flex items-center justify-between py-2">
+
+                    <div className="flex items-center justify-between py-2 px-3">
                       <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>
                       <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.pix)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center justify-between py-2 px-3">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Crédito</span>
                       <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.credito || 0)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center justify-between py-2 px-3">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Débito</span>
                       <span className="text-base font-medium text-gray-900 dark:text-gray-100">
                         {formatValor(caixaData.recebimentos.debito || 0)}
@@ -1226,7 +1240,7 @@ export default function PDVCaixa() {
                     </div>
 
                     {/* Total e Diferença */}
-                    <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                    <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
                       {(() => {
                         const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                         const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
@@ -1235,24 +1249,27 @@ export default function PDVCaixa() {
 
                         return (
                           <>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between px-1">
                               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Conferido</span>
                               <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
                                 {formatValor(totalConferido)}
                               </span>
                             </div>
-                            {temDiferenca && (
-                              <div className={`p-4 rounded-xl ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                                <div className="flex items-center justify-between">
-                                  <span className={`text-sm font-medium ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
-                                    {diferenca > 0 ? 'Sobrando' : 'Faltando'}
-                                  </span>
-                                  <span className={`text-2xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'} font-glacial`}>
-                                    {formatValor(Math.abs(diferenca))}
-                                  </span>
-                                </div>
+                            <div className={`p-4 rounded-xl transition-colors ${!temDiferenca ? 'bg-emerald-50 dark:bg-emerald-900/20' : diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                              <div className="flex items-center justify-between">
+                                <span className={`text-sm font-medium ${!temDiferenca ? 'text-emerald-700 dark:text-emerald-300' : diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                  {!temDiferenca ? '✓ Confere' : diferenca > 0 ? 'Sobrando' : 'Faltando'}
+                                </span>
+                                <span className={`text-2xl font-bold font-glacial ${!temDiferenca ? 'text-emerald-700 dark:text-emerald-300' : diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
+                                  {!temDiferenca ? formatValor(0) : formatValor(Math.abs(diferenca))}
+                                </span>
                               </div>
-                            )}
+                              {temDiferenca && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  Esperado em caixa: {formatValor(caixaData.saldoAtual)}
+                                </p>
+                              )}
+                            </div>
                           </>
                         );
                       })()}
