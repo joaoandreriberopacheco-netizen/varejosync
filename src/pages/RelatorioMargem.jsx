@@ -32,10 +32,7 @@ export default function RelatorioMargemVendas() {
       const prods = await base44.entities.Produto.list();
       setProducts(prods);
 
-      // Load sales (we filter by date in memory or fetch all for now due to API limitations with complex filters)
-      // For production, better to filter by date in query if possible. 
-      // Assuming .list() returns enough or we use .filter()
-      const allSales = await base44.entities.PedidoVenda.filter({ status: ['Finalizado', 'Aprovado', 'Entregue', 'Concluido'] });
+      const allSales = await base44.entities.PedidoVenda.filter({ tipo: 'PDV' });
       setSales(allSales);
 
     } catch (error) {

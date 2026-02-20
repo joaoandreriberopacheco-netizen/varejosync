@@ -27,9 +27,6 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
     return isWithinInterval(day, { start, end });
   };
   
-  const isStart = start && isSameDay(day, start);
-  const isEnd = end && isSameDay(day, end);
-  
   const renderCalendar = () => {
     const firstDay = days[0].getDay();
     const cells = [];
