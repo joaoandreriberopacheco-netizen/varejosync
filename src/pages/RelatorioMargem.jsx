@@ -196,42 +196,58 @@ export default function RelatorioMargemVendas() {
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 12;
+    const margin = 10;
     let yPos = margin;
     
     // Header
-    pdf.setFontSize(16);
+    pdf.setFontSize(14);
     pdf.setFont(undefined, 'bold');
     pdf.text('Relatório de Margem de Vendas', margin, yPos);
-    yPos += 5;
+    yPos += 4;
     
     pdf.setFontSize(8);
     pdf.setFont(undefined, 'normal');
     pdf.setTextColor(100, 100, 100);
     pdf.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`, margin, yPos);
-    yPos += 6;
+    yPos += 5;
     
-    // Summary Box - Estilo extrato
+    // Summary Box
     pdf.setFillColor(250, 252, 250);
-    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 1.5, 1.5, 'F');
+    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 10, 1, 1, 'F');
     
     pdf.setFont(undefined, 'normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(7.5);
     pdf.setTextColor(100, 100, 100);
-    pdf.text(`Receita: R$ ${(totals.total_recebido || 0).toFixed(2).replace('.', ',')}`, margin + 2, yPos + 3);
-    pdf.text(`| Custo: R$ ${(totals.custo_total || 0).toFixed(2).replace('.', ',')}`, margin + 55, yPos + 3);
+    pdf.text(`Receita: R$ ${(totals.total_recebido || 0).toFixed(2).replace('.', ',')}  |  Custo: R$ ${(totals.custo_total || 0).toFixed(2).replace('.', ',')}`, margin + 1.5, yPos + 2.5);
     
     pdf.setTextColor(34, 139, 34);
     pdf.setFont(undefined, 'bold');
-    pdf.text(`Lucro: R$ ${(totals.lucro_total || 0).toFixed(2).replace('.', ',')}`, margin + 2, yPos + 7);
-    pdf.text(`| Margem: ${totalMargem.toFixed(1)}%`, margin + 55, yPos + 7);
+    pdf.text(`Lucro: R$ ${(totals.lucro_total || 0).toFixed(2).replace('.', ',')}  |  Margem: ${totalMargem.toFixed(1)}%`, margin + 1.5, yPos + 5.5);
     pdf.setTextColor(0, 0, 0);
     
-    yPos += 16;
+    yPos += 12;
     
-    // Items - Estilo extrato de conta
-    pdf.setFontSize(8);
+    // Table Header
+    pdf.setFont(undefined, 'bold');
+    pdf.setFontSize(7);
+    pdf.setTextColor(50, 50, 50);
+    
+    const colWidths = [12, 45, 12, 18, 20, 20, 18];
+    const headers = ['CÓDIGO', 'DESCRIÇÃO', 'QTD', 'RECEITA', 'CUSTO', 'LUCRO', 'MARGEM %'];
+    let xPos = margin;
+    
+    headers.forEach((h, i) => {
+      pdf.text(h, xPos + 0.5, yPos + 2.5);
+      xPos += colWidths[i];
+    });
+    
+    pdf.setDrawColor(200, 200, 200);
+    pdf.line(margin, yPos + 4, pageWidth - margin, yPos + 4);
+    yPos += 5;
+    
+    // Data rows
     pdf.setFont(undefined, 'normal');
+    pdf.setTextColor(40, 40, 40);
     
     const rows = groupByCategory ? 
       processedData.flatMap(group => [
@@ -240,60 +256,66 @@ export default function RelatorioMargemVendas() {
       ]) : 
       processedData;
     
-    rows.forEach((row, index) => {
-      if (yPos > pageHeight - margin - 8) {
+    rows.forEach((row) => {
+      if (yPos > pageHeight - margin - 6) {
         pdf.addPage();
         yPos = margin;
-      }
-      
-      const itemHeight = row.isSubtotal ? 5 : 6;
-      
-      // Card/Linha com fundo sutil
-      if (!row.isSubtotal) {
-        pdf.setFillColor(248, 250, 248);
-        pdf.roundedRect(margin, yPos - 1, pageWidth - 2 * margin, itemHeight + 1, 0.8, 0.8, 'F');
-      } else {
-        pdf.setFillColor(240, 248, 240);
-        pdf.roundedRect(margin, yPos - 1, pageWidth - 2 * margin, itemHeight + 1, 0.8, 0.8, 'F');
       }
       
       if (row.isSubtotal) {
         pdf.setFont(undefined, 'bold');
         pdf.setTextColor(34, 139, 34);
+        pdf.setFillColor(245, 252, 245);
+        pdf.rect(margin, yPos - 1.5, pageWidth - 2 * margin, 4, 'F');
       } else {
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(40, 40, 40);
       }
       
-      // Código e Descrição
-      const desc = row.nome ? row.nome.substring(0, 40) : '';
-      pdf.text(`${row.codigo_interno || ''} ${desc}`, margin + 2, yPos + 2);
+      xPos = margin;
       
-      // Valores à direita
-      const precUnit = row.total_recebido && row.quantidade_vendida ? (row.total_recebido / row.quantidade_vendida).toFixed(2) : '0.00';
-      const lucro = `R$ ${(row.lucro_total || 0).toFixed(2)}`.replace('.', ',');
-      const margem = `${((row.lucro_total || 0) / (row.total_recebido || 1) * 100).toFixed(1)}%`;
+      // Código
+      pdf.text(row.codigo_interno || '', xPos + 0.5, yPos + 1);
+      xPos += colWidths[0];
       
-      // Qtd e Lucro
-      pdf.setTextColor(34, 139, 34);
-      pdf.text(`Qtd: ${row.quantidade_vendida || 0}`, pageWidth - margin - 55, yPos + 2);
-      pdf.text(lucro, pageWidth - margin - 20, yPos + 2);
+      // Descrição (esquerda)
+      const desc = row.nome ? row.nome.substring(0, 25) : '';
+      pdf.text(desc, xPos + 0.5, yPos + 1);
+      xPos += colWidths[1];
       
-      // Margem na segunda linha (subtotal)
+      // Qtd (centro)
+      pdf.text((row.quantidade_vendida || 0).toString(), xPos + 3, yPos + 1, { align: 'right' });
+      xPos += colWidths[2];
+      
+      // Receita (direita)
+      pdf.text(`R$ ${(row.total_recebido || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[3] - 0.5, yPos + 1, { align: 'right' });
+      xPos += colWidths[3];
+      
+      // Custo (direita)
+      pdf.text(`R$ ${(row.custo_total || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[4] - 0.5, yPos + 1, { align: 'right' });
+      xPos += colWidths[4];
+      
+      // Lucro (direita)
       if (row.isSubtotal) {
-        pdf.text(margem, pageWidth - margin - 10, yPos + 4.5);
+        pdf.text(`R$ ${(row.lucro_total || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[5] - 0.5, yPos + 1, { align: 'right' });
+      } else {
+        pdf.setTextColor(34, 139, 34);
+        pdf.text(`R$ ${(row.lucro_total || 0).toFixed(2).replace('.', ',')}`, xPos + colWidths[5] - 0.5, yPos + 1, { align: 'right' });
+        pdf.setTextColor(40, 40, 40);
       }
+      xPos += colWidths[5];
       
-      pdf.setTextColor(0, 0, 0);
-      yPos += itemHeight + 2;
+      // Margem % (centro)
+      const margem = `${((row.lucro_total || 0) / (row.total_recebido || 1) * 100).toFixed(1)}%`;
+      pdf.text(margem, xPos + 6, yPos + 1, { align: 'center' });
+      
+      yPos += 4;
     });
     
     // Footer
-    yPos += 2;
-    pdf.setFontSize(7);
+    pdf.setFontSize(6);
     pdf.setTextColor(150, 150, 150);
-    pdf.setFont(undefined, 'normal');
-    pdf.text(`Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ${processedData.length} itens`, margin, pageHeight - 5);
+    pdf.text(`Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ${processedData.length} itens`, margin, pageHeight - 4);
     
     pdf.save('relatorio_margem.pdf');
   };
@@ -373,11 +395,13 @@ export default function RelatorioMargemVendas() {
                   <Calendar className="w-4 h-4" />
                 </button>
                 {showDatePicker && (
-                  <CalendarPopup
-                    dateRange={dateRange}
-                    setDateRange={setDateRange}
-                    onClose={() => setShowDatePicker(false)}
-                  />
+                  <div className="absolute left-0 top-full mt-2 z-50 overflow-visible">
+                    <CalendarPopup
+                      dateRange={dateRange}
+                      setDateRange={setDateRange}
+                      onClose={() => setShowDatePicker(false)}
+                    />
+                  </div>
                 )}
               </div>
               

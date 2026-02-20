@@ -85,6 +85,7 @@ import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
 import PDV from './pages/PDV';
 import PainelGerente from './pages/PainelGerente';
 import Produtos from './pages/Produtos';
+import RelatorioMargem from './pages/RelatorioMargem';
 import Relatorios from './pages/Relatorios';
 import TabelasPreco from './pages/TabelasPreco';
 import Terceiros from './pages/Terceiros';
@@ -93,7 +94,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import RelatorioMargem from './pages/RelatorioMargem';
 import __Layout from './Layout.jsx';
 
 
@@ -136,6 +136,7 @@ export const PAGES = {
     "PDV": PDV,
     "PainelGerente": PainelGerente,
     "Produtos": Produtos,
+    "RelatorioMargem": RelatorioMargem,
     "Relatorios": Relatorios,
     "TabelasPreco": TabelasPreco,
     "Terceiros": Terceiros,
@@ -144,7 +145,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "RelatorioMargem": RelatorioMargem,
 }
 
 export const pagesConfig = {
