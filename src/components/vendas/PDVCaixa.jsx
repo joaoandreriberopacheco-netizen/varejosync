@@ -1143,76 +1143,54 @@ export default function PDVCaixa() {
                   <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
                     Movimentações do Turno
                   </h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Inicial</span>
-                      <span className="text-base font-medium text-gray-900 dark:text-gray-100">
-                        {formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Total Vendas</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-medium text-gray-900 dark:text-gray-100">
-                          {formatValor(caixaData.totalVendas)}
-                        </span>
-                        <button
-                          onClick={() => setShowVendasDialog(true)}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                          style={{ minWidth: '32px', minHeight: '32px' }}>
-                          <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Reforços</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-medium text-gray-900 dark:text-gray-100">
-                          {formatValor(caixaData.reforcos)}
-                        </span>
-                        <button
-                          onClick={() => setShowReforcosDialog(true)}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                          style={{ minWidth: '32px', minHeight: '32px' }}>
-                          <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Recolhimentos</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-medium text-blue-600 dark:text-blue-400">
-                          {formatValor(caixaData.sangrias)}
-                        </span>
-                        <button
-                          onClick={() => setShowSangriasDialog(true)}
-                          className="p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                          style={{ minWidth: '32px', minHeight: '32px' }}>
-                          <Eye className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
-                        <div className="flex items-center gap-2">
-                          <span className={`font-bold text-gray-900 dark:text-white font-glacial ${caixaData.totalVendas >= 10000 ? 'text-lg' : caixaData.totalVendas >= 1000 ? 'text-xl' : 'text-2xl'}`}>
-                            {formatValor(caixaData.totalVendas)}
+                  {/* Helper: row with label on left, value+eye aligned right */}
+                  {(() => {
+                    const ValorRow = ({ label, valor, color, onEye, eyeColor }) => (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
+                        <div className="flex items-center gap-1 min-w-0">
+                          {onEye ? (
+                            <button
+                              onClick={onEye}
+                              className={`p-1 rounded transition-colors flex-shrink-0 ${eyeColor || 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                              style={{ minWidth: '28px', minHeight: '28px' }}>
+                              <Eye className={`w-4 h-4 ${eyeColor ? 'text-blue-500 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                            </button>
+                          ) : <div className="w-7" />}
+                          <span className={`text-base font-medium tabular-nums text-right ${color || 'text-gray-900 dark:text-gray-100'}`} style={{ minWidth: '110px' }}>
+                            {formatValor(valor)}
                           </span>
-                          <button
-                            onClick={() => setShowSaldoConsolidadoDialog(true)}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                            style={{ minWidth: '32px', minHeight: '32px' }}
-                            title="Ver consolidado">
-                            <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                          </button>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        Total do turno (todos os meios de pagamento)
-                      </p>
-                    </div>
-                  </div>
+                    );
+                    return (
+                      <div className="space-y-3">
+                        <ValorRow label="Saldo Inicial" valor={caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0} />
+                        <ValorRow label="Total Vendas" valor={caixaData.totalVendas} onEye={() => setShowVendasDialog(true)} />
+                        <ValorRow label="Reforços" valor={caixaData.reforcos} onEye={() => setShowReforcosDialog(true)} />
+                        <ValorRow label="Recolhimentos" valor={caixaData.sangrias} color="text-blue-600 dark:text-blue-400" onEye={() => setShowSangriasDialog(true)} eyeColor="hover:bg-blue-50 dark:hover:bg-blue-900/20" />
+                        <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setShowSaldoConsolidadoDialog(true)}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                                style={{ minWidth: '28px', minHeight: '28px' }}>
+                                <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                              </button>
+                              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>
+                                {formatValor(caixaData.liquidez)}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">
+                            Inicial + vendas + reforços − recolhimentos
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Recebimentos do Turno */}
