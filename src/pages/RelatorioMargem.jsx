@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import FilterScreenMargem from '@/components/relatorios/FilterScreenMargem';
 
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
