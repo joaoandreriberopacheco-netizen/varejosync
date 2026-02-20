@@ -254,6 +254,10 @@ export default function PDVCaixa() {
       setInputDebito('0,00');
       setPagamentosCredito(0);
       setInputCredito('0,00');
+      setPagamentosVale(0);
+      setInputVale('0,00');
+      setCodigoVale('');
+      setValeEncontrado(null);
       setParcelasCredito(1);
       setFormaPagamentoAtiva(0);
 
