@@ -147,21 +147,21 @@ export default function RelatorioMargemVendas() {
     if (groupByCategory) {
       const grouped = {};
       sorted.forEach(item => {
-        const cat = item.categoria_nome || 'Sem categoria';
+        const cat = item.categoria || 'Sem categoria';
         if (!grouped[cat]) {
           grouped[cat] = { category: cat, items: [], totals: { total_recebido: 0, custo_total: 0, lucro_total: 0, quantidade_vendida: 0 } };
         }
         grouped[cat].items.push(item);
-        grouped[cat].totals.total_recebido += item.total_recebido;
-        grouped[cat].totals.custo_total += item.custo_total;
-        grouped[cat].totals.lucro_total += item.lucro_total;
-        grouped[cat].totals.quantidade_vendida += item.quantidade_vendida;
+        grouped[cat].totals.total_recebido += item.total_recebido || 0;
+        grouped[cat].totals.custo_total += item.custo_total || 0;
+        grouped[cat].totals.lucro_total += item.lucro_total || 0;
+        grouped[cat].totals.quantidade_vendida += item.quantidade_vendida || 0;
       });
       return Object.values(grouped);
     }
 
     return sorted;
-  }, [sales, products, dateRange, selectedProduct, selectedCategory, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
+  }, [sales, products, dateRange, selectedCategory, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
 
   const totals = useMemo(() => {
     return processedData.reduce((acc, item) => ({
