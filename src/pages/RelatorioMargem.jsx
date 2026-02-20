@@ -112,12 +112,23 @@ export default function RelatorioMargemVendas() {
       };
     });
 
+    // Sort first
+    sorted.sort((a, b) => {
+      const aVal = a[sortField] || 0;
+      const bVal = b[sortField] || 0;
+      
+      if (typeof aVal === 'string') {
+        return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
     // Filter by search term
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       sorted = sorted.filter(item => 
-        item.nome?.toLowerCase().includes(term) || 
-        item.codigo_interno?.toLowerCase().includes(term)
+        item.nome?.toLowerCase?.().includes(term) || 
+        item.codigo_interno?.toLowerCase?.().includes(term)
       );
     }
 
@@ -129,19 +140,7 @@ export default function RelatorioMargemVendas() {
       });
     }
 
-    // Sort data
-    sorted.sort((a, b) => {
-      const aVal = a[sortField] || 0;
-      const bVal = b[sortField] || 0;
-      
-      if (typeof aVal === 'string') {
-        return sortOrder === 'asc' 
-          ? aVal.localeCompare(bVal) 
-          : bVal.localeCompare(aVal);
-      }
-      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-
+    // Group by category
     if (groupByCategory) {
       const grouped = {};
       sorted.forEach(item => {
@@ -150,16 +149,16 @@ export default function RelatorioMargemVendas() {
           grouped[cat] = { category: cat, items: [], totals: { total_recebido: 0, custo_total: 0, lucro_total: 0, quantidade_vendida: 0 } };
         }
         grouped[cat].items.push(item);
-        grouped[cat].totals.total_recebido += item.total_recebido || 0;
-        grouped[cat].totals.custo_total += item.custo_total || 0;
-        grouped[cat].totals.lucro_total += item.lucro_total || 0;
-        grouped[cat].totals.quantidade_vendida += item.quantidade_vendida || 0;
+        grouped[cat].totals.total_recebido += (item.total_recebido || 0);
+        grouped[cat].totals.custo_total += (item.custo_total || 0);
+        grouped[cat].totals.lucro_total += (item.lucro_total || 0);
+        grouped[cat].totals.quantidade_vendida += (item.quantidade_vendida || 0);
       });
       return Object.values(grouped);
     }
 
     return sorted;
-  }, [sales, products, dateRange, selectedCategory, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
+  }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
 
   const totals = useMemo(() => {
     if (groupByCategory) {
