@@ -2429,7 +2429,7 @@ export default function PDVCaixa() {
                     const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
                     const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
                     const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
-                    const diferenca = Math.abs(totalRecebimentos - caixaData.saldoAtual);
+                    const diferenca = Math.abs(totalRecebimentos - caixaData.liquidez);
                     return diferenca > 0.01;
                   })()}
                   className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50">
