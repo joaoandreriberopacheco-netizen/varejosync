@@ -2906,10 +2906,10 @@ export default function PDVCaixa() {
                   </div>
 
                   {[
-                    { label: 'Dinheiro', sub: 'na gaveta', valor: caixaData.saldoAtual },
-                    { label: 'PIX', sub: 'comprovantes digitais', valor: caixaData.recebimentos.pix },
-                    { label: 'Cartão Crédito', sub: 'maquininha — liquidação futura', valor: caixaData.recebimentos.credito || 0 },
-                    { label: 'Cartão Débito', sub: 'maquininha — liquidação D+1', valor: caixaData.recebimentos.debito || 0 },
+                    { label: 'Dinheiro', sub: 'gaveta — imediato', valor: caixaData.saldoAtual },
+                    { label: 'PIX', sub: 'conta digital — imediato', valor: caixaData.recebimentos.pix },
+                    { label: 'Cartão Débito', sub: 'maquininha — D+1', valor: caixaData.recebimentos.debito || 0 },
+                    { label: 'Cartão Crédito', sub: 'maquininha — D+30', valor: caixaData.recebimentos.credito || 0 },
                   ].map(({ label, sub, valor }) => (
                     <div key={label} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50 last:border-0">
                       <div>
