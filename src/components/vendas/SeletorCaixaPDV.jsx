@@ -22,11 +22,12 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
 
   const loadCaixas = async () => {
     try {
-      const [todasContas, todosTurnos, todosPedidos, todasMovimentacoes] = await Promise.all([
+      const [todasContas, todosTurnos, todosPedidos, todasMovimentacoes, todasDespesas] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
         base44.entities.TurnoCaixa.list(),
         base44.entities.PedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
+        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
       ]);
 
       const caixasPDV = todasContas.filter(c => 
@@ -35,7 +36,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       );
 
       // Calcular liquidez atual por caixa (turno aberto)
-      // Liquidez = Saldo Inicial + Vendas + Reforços − Recolhimentos
+      // Liquidez = Saldo Inicial + Vendas + Reforços − Recolhimentos − Despesas
       const liquidez = {};
       caixasPDV.forEach(caixa => {
       const turnoAberto = todosTurnos.find(t => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixa.id);
@@ -52,12 +53,15 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       const sangrias = todasMovimentacoes
         .filter(m => m.turno_caixa_id === turnoAberto.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
         .reduce((s, m) => s + (m.valor || 0), 0);
+      const despesas = todasDespesas
+        .filter(d => d.turno_caixa_id === turnoAberto.id)
+        .reduce((s, d) => s + (d.valor || 0), 0);
       const saldoIni = turnoAberto.saldo_inicial || 0;
       liquidez[caixa.id] = {
         turnoAberto: true,
         totalVendas,
         saldoInicial: saldoIni,
-        liquidez: saldoIni + totalVendas + reforcos - sangrias,
+        liquidez: saldoIni + totalVendas + reforcos - sangrias - despesas,
       };
       } else {
       liquidez[caixa.id] = { turnoAberto: false };
