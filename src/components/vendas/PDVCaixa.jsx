@@ -1086,7 +1086,7 @@ export default function PDVCaixa() {
 
   const formatValor = (valor) => {
     const num = valor || 0;
-    return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   // New helper functions for view navigation
