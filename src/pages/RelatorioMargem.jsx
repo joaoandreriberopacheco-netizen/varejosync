@@ -196,58 +196,42 @@ export default function RelatorioMargemVendas() {
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    let yPos = 12;
+    const margin = 12;
+    let yPos = margin;
     
     // Header
-    pdf.setFontSize(18);
+    pdf.setFontSize(16);
     pdf.setFont(undefined, 'bold');
-    pdf.text('Relatório de Margem de Vendas', 15, yPos);
-    yPos += 8;
+    pdf.text('Relatório de Margem de Vendas', margin, yPos);
+    yPos += 5;
     
-    pdf.setFontSize(9);
+    pdf.setFontSize(8);
     pdf.setFont(undefined, 'normal');
-    pdf.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`, 15, yPos);
-    yPos += 7;
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`, margin, yPos);
+    yPos += 6;
     
-    // Summary Box
-    pdf.setFillColor(240, 245, 240);
-    pdf.rect(15, yPos, pageWidth - 30, 16, 'F');
+    // Summary Box - Estilo extrato
+    pdf.setFillColor(250, 252, 250);
+    pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 12, 1.5, 1.5, 'F');
     
-    pdf.setFontSize(10);
-    pdf.setFont(undefined, 'bold');
-    pdf.setTextColor(34, 139, 34);
-    const receita = formatMoney(totals.total_recebido);
-    const custo = formatMoney(totals.custo_total);
-    const lucro = formatMoney(totals.lucro_total);
-    pdf.text(`Receita: ${receita}  |  Custo: ${custo}  |  Lucro: ${lucro}  |  Margem: ${totalMargem.toFixed(1)}%`, 18, yPos + 6);
-    pdf.setTextColor(0, 0, 0);
-    
-    yPos += 20;
-    
-    // Table Header
-    pdf.setFillColor(50, 50, 50);
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFont(undefined, 'bold');
-    pdf.setFontSize(9);
-    
-    const headers = ['Código', 'Descrição', 'Qtd', 'Preço Unit.', 'Total Receita', 'Custo Total', 'Lucro', 'Margem %'];
-    const colWidths = [14, 72, 10, 18, 20, 20, 18, 15];
-    let xPos = 15;
-    
-    // Cabeçalho
-    headers.forEach((header, i) => {
-      pdf.text(header, xPos, yPos + 4);
-      xPos += colWidths[i];
-    });
-    
-    pdf.setLineWidth(0.3);
-    pdf.line(15, yPos + 5, pageWidth - 15, yPos + 5);
-    yPos += 8;
-    
-    // Data rows
-    pdf.setTextColor(0, 0, 0);
     pdf.setFont(undefined, 'normal');
     pdf.setFontSize(8);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(`Receita: R$ ${(totals.total_recebido || 0).toFixed(2).replace('.', ',')}`, margin + 2, yPos + 3);
+    pdf.text(`| Custo: R$ ${(totals.custo_total || 0).toFixed(2).replace('.', ',')}`, margin + 55, yPos + 3);
+    
+    pdf.setTextColor(34, 139, 34);
+    pdf.setFont(undefined, 'bold');
+    pdf.text(`Lucro: R$ ${(totals.lucro_total || 0).toFixed(2).replace('.', ',')}`, margin + 2, yPos + 7);
+    pdf.text(`| Margem: ${totalMargem.toFixed(1)}%`, margin + 55, yPos + 7);
+    pdf.setTextColor(0, 0, 0);
+    
+    yPos += 16;
+    
+    // Items - Estilo extrato de conta
+    pdf.setFontSize(8);
+    pdf.setFont(undefined, 'normal');
     
     const rows = groupByCategory ? 
       processedData.flatMap(group => [
@@ -256,53 +240,60 @@ export default function RelatorioMargemVendas() {
       ]) : 
       processedData;
     
-    rows.forEach(row => {
-      if (yPos > pageHeight - 15) {
+    rows.forEach((row, index) => {
+      if (yPos > pageHeight - margin - 8) {
         pdf.addPage();
-        yPos = 12;
+        yPos = margin;
       }
       
-      xPos = 15;
-      const precUnit = row.total_recebido && row.quantidade_vendida ? (row.total_recebido / row.quantidade_vendida).toFixed(2) : '0.00';
+      const itemHeight = row.isSubtotal ? 5 : 6;
       
-      const rowData = [
-        row.codigo_interno || '',
-        row.nome ? row.nome.substring(0, 35) : '',
-        (row.quantidade_vendida || 0).toString(),
-        `R$ ${precUnit}`,
-        `R$ ${(row.total_recebido || 0).toFixed(2)}`,
-        `R$ ${(row.custo_total || 0).toFixed(2)}`,
-        `R$ ${(row.lucro_total || 0).toFixed(2)}`,
-        `${((row.lucro_total || 0) / (row.total_recebido || 1) * 100).toFixed(1)}%`
-      ];
+      // Card/Linha com fundo sutil
+      if (!row.isSubtotal) {
+        pdf.setFillColor(248, 250, 248);
+        pdf.roundedRect(margin, yPos - 1, pageWidth - 2 * margin, itemHeight + 1, 0.8, 0.8, 'F');
+      } else {
+        pdf.setFillColor(240, 248, 240);
+        pdf.roundedRect(margin, yPos - 1, pageWidth - 2 * margin, itemHeight + 1, 0.8, 0.8, 'F');
+      }
       
-      // Subtotal row
       if (row.isSubtotal) {
         pdf.setFont(undefined, 'bold');
-        pdf.setFillColor(230, 245, 230);
-        pdf.rect(15, yPos - 2, pageWidth - 30, 5, 'F');
         pdf.setTextColor(34, 139, 34);
+      } else {
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(40, 40, 40);
       }
       
-      colWidths.forEach((width, i) => {
-        const align = i === 1 ? 'left' : 'right';
-        if (align === 'right') {
-          pdf.text(rowData[i], xPos + width - 1, yPos, { align: 'right' });
-        } else {
-          pdf.text(rowData[i], xPos + 1, yPos);
-        }
-        xPos += width;
-      });
+      // Código e Descrição
+      const desc = row.nome ? row.nome.substring(0, 40) : '';
+      pdf.text(`${row.codigo_interno || ''} ${desc}`, margin + 2, yPos + 2);
+      
+      // Valores à direita
+      const precUnit = row.total_recebido && row.quantidade_vendida ? (row.total_recebido / row.quantidade_vendida).toFixed(2) : '0.00';
+      const lucro = `R$ ${(row.lucro_total || 0).toFixed(2)}`.replace('.', ',');
+      const margem = `${((row.lucro_total || 0) / (row.total_recebido || 1) * 100).toFixed(1)}%`;
+      
+      // Qtd e Lucro
+      pdf.setTextColor(34, 139, 34);
+      pdf.text(`Qtd: ${row.quantidade_vendida || 0}`, pageWidth - margin - 55, yPos + 2);
+      pdf.text(lucro, pageWidth - margin - 20, yPos + 2);
+      
+      // Margem na segunda linha (subtotal)
+      if (row.isSubtotal) {
+        pdf.text(margem, pageWidth - margin - 10, yPos + 4.5);
+      }
       
       pdf.setTextColor(0, 0, 0);
-      pdf.setFont(undefined, 'normal');
-      yPos += 5;
+      yPos += itemHeight + 2;
     });
     
     // Footer
+    yPos += 2;
     pdf.setFontSize(7);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')} | Total de itens: ${processedData.length}`, 15, pageHeight - 8);
+    pdf.setTextColor(150, 150, 150);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ${processedData.length} itens`, margin, pageHeight - 5);
     
     pdf.save('relatorio_margem.pdf');
   };

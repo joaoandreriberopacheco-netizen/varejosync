@@ -67,76 +67,86 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
   };
   
   return (
-    <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-5 z-50 border border-gray-200 dark:border-gray-700 w-auto max-w-2xl">
+    <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50 border border-gray-200 dark:border-gray-700 w-auto">
       {/* Navegação superior */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0"
         >
           <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
         </button>
-        <div className="text-sm font-semibold text-gray-900 dark:text-white">
-          {format(month1, 'MMMM', { locale: ptBR })} / {format(month2, 'MMMM', { locale: ptBR })}
+        <div className="text-sm font-semibold text-gray-900 dark:text-white text-center flex-1 px-2">
+          <div className="text-xs text-gray-600 dark:text-gray-400">{format(month1, 'MMMM', { locale: ptBR })}</div>
+          <div className="text-xs text-gray-600 dark:text-gray-400">/</div>
+          <div className="text-xs text-gray-600 dark:text-gray-400">{format(month2, 'MMMM', { locale: ptBR })}</div>
         </div>
         <button
           onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0"
         >
           <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
         </button>
       </div>
 
       {/* Dois meses lado a lado */}
-      <div className="grid grid-cols-2 gap-8 mb-4">
+      <div className="flex gap-4 mb-4">
         {/* Mês 1 */}
-        <div>
-          <div className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center mb-2">
-            {format(month1, 'MMMM yyyy', { locale: ptBR })}
+        <div className="flex-1">
+          <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center mb-2">
+            {format(month1, 'MMM yyyy', { locale: ptBR })}
           </div>
           
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 mb-2">
             {weekDays.map(day => (
-              <div key={day} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center py-1 w-7">
+              <div key={`h1-${day}`} className="text-xs font-semibold text-gray-600 dark:text-gray-400 text-center py-1">
                 {day[0]}
               </div>
             ))}
           </div>
           
-          <div className="grid grid-cols-7 gap-1">
-            {renderCalendar(month1)}
+          <div className="grid grid-cols-7 gap-0.5" style={{ gridAutoRows: 'minmax(28px, auto)' }}>
+            {renderCalendar(month1).map((cell, idx) => (
+              <div key={`m1-${idx}`} className="contents">
+                {cell}
+              </div>
+            ))}
           </div>
         </div>
         
         {/* Mês 2 */}
-        <div>
-          <div className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center mb-2">
-            {format(month2, 'MMMM yyyy', { locale: ptBR })}
+        <div className="flex-1">
+          <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center mb-2">
+            {format(month2, 'MMM yyyy', { locale: ptBR })}
           </div>
           
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 mb-2">
             {weekDays.map(day => (
-              <div key={day} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center py-1 w-7">
+              <div key={`h2-${day}`} className="text-xs font-semibold text-gray-600 dark:text-gray-400 text-center py-1">
                 {day[0]}
               </div>
             ))}
           </div>
           
-          <div className="grid grid-cols-7 gap-1">
-            {renderCalendar(month2)}
+          <div className="grid grid-cols-7 gap-0.5" style={{ gridAutoRows: 'minmax(28px, auto)' }}>
+            {renderCalendar(month2).map((cell, idx) => (
+              <div key={`m2-${idx}`} className="contents">
+                {cell}
+              </div>
+            ))}
           </div>
         </div>
       </div>
       
       {/* Range selecionado */}
-      <div className="pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 mb-3 text-center font-medium">
+      <div className="py-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300 text-center font-medium mb-3">
         <p>{format(start, 'dd/MM/yyyy')}{end ? ` até ${format(end, 'dd/MM/yyyy')}` : ' (selecione o final)'}</p>
       </div>
       
       <button
         onClick={onClose}
         disabled={!end}
-        className={`w-full py-2.5 rounded-lg font-semibold text-sm transition ${
+        className={`w-full py-2 rounded-lg font-semibold text-sm transition ${
           end 
             ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90' 
             : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
