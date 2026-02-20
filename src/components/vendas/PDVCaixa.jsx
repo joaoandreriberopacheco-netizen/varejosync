@@ -2873,64 +2873,164 @@ export default function PDVCaixa() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Despesa Simplificada */}
-        <Dialog open={showDespesaDialog} onOpenChange={setShowDespesaDialog}>
-          <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
-            <DialogHeader>
-              <DialogTitle className="text-base flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" /> Registrar Despesa
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
-                <p className="text-xs text-red-800 dark:text-red-300">
-                  O valor será debitado do Caixa PDV e registrado como despesa.
-                </p>
-              </div>
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Descrição *</Label>
-                <Input
-                  type="text"
-                  placeholder="Ex: Gasolina, Sacolas, Material de limpeza..."
-                  value={descricaoDespesa}
-                  onChange={(e) => setDescricaoDespesa(e.target.value)}
-                  className="h-12 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Categoria</Label>
-                <Select value={categoriaDespesa} onValueChange={setCategoriaDespesa}>
-                  <SelectTrigger className="h-12 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="Utilities">Utilities</SelectItem>
-                    <SelectItem value="Marketing">Marketing</SelectItem>
-                    <SelectItem value="Outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Valor (R$) *</Label>
-                <Input
-                  type="text"
-                  placeholder="0,00"
-                  value={valorDespesa}
-                  onChange={(e) => setValorDespesa(e.target.value)}
-                  className="h-12 text-lg font-bold dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowDespesaDialog(false)} className="flex-1 border-gray-300 dark:border-gray-600 dark:text-gray-300">
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleSalvarDespesa}
-                  className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600">
-                  Confirmar
-                </Button>
-              </div>
+        {/* Dialog de Despesa - Estilo PDV fullscreen com steps */}
+        <Dialog open={showDespesaDialog} onOpenChange={(open) => { if (!open) { setShowDespesaDialog(false); setDespesaStep('obs'); setValorDespesaNum(''); } }}>
+          <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
+            {/* Header */}
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
+              <button
+                onClick={() => {
+                  if (despesaStep === 'valor') { setDespesaStep('obs'); }
+                  else { setShowDespesaDialog(false); setDespesaStep('obs'); setValorDespesaNum(''); }
+                }}
+                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                style={{ minWidth: '44px', minHeight: '44px' }}>
+                <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              </button>
+              <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                Registrar Despesa
+              </h2>
+              <div className="w-10" />
+            </div>
+
+            <div className="flex-1 flex flex-col p-5 gap-4">
+              {despesaStep === 'obs' && (
+                <>
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">{contaCaixaPDV?.nome}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Valor será debitado deste caixa</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex-1 flex flex-col gap-4">
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Descrição *</label>
+                      <textarea
+                        ref={obsDespesaRef}
+                        autoFocus
+                        rows={3}
+                        placeholder="Ex: Gasolina, Sacolas, Material de limpeza..."
+                        value={descricaoDespesa}
+                        onChange={(e) => setDescricaoDespesa(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (descricaoDespesa.trim()) { setDespesaStep('valor'); setTimeout(() => valorDespesaRef.current?.focus(), 100); }
+                          }
+                        }}
+                        className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Categoria</label>
+                      <Select value={categoriaDespesa} onValueChange={setCategoriaDespesa}>
+                        <SelectTrigger className="h-11 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 border-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                          <SelectItem value="Utilities">Utilities</SelectItem>
+                          <SelectItem value="Marketing">Marketing</SelectItem>
+                          <SelectItem value="Outros">Outros</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (!descricaoDespesa.trim()) { toast({ title: "Informe a descrição.", variant: "destructive" }); return; }
+                      setDespesaStep('valor');
+                      setTimeout(() => valorDespesaRef.current?.focus(), 100);
+                    }}
+                    className="w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm bg-red-600"
+                    style={{ minHeight: '56px' }}>
+                    Próximo →
+                  </button>
+                </>
+              )}
+
+              {despesaStep === 'valor' && (
+                <>
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-2 flex-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{descricaoDespesa}</div>
+                    <div className="text-5xl font-bold text-red-600 dark:text-red-400 font-glacial">
+                      R$ {valorDespesaNum || '0,00'}
+                    </div>
+                    <input
+                      ref={valorDespesaRef}
+                      type="text"
+                      inputMode="numeric"
+                      value={valorDespesaNum}
+                      onChange={() => {}}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
+                          if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
+                          // remap to valorDespesa and save
+                          setValorDespesa(valorDespesaNum);
+                          setTimeout(() => handleSalvarDespesaNum(valorDespesaNum), 50);
+                          return;
+                        }
+                        if (e.key === 'Backspace') {
+                          e.preventDefault();
+                          let nums = (valorDespesaNum || '0,00').replace(/\D/g, '');
+                          nums = nums.slice(0, -1) || '0';
+                          setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
+                          return;
+                        }
+                        if (/^\d$/.test(e.key)) {
+                          e.preventDefault();
+                          let nums = (valorDespesaNum || '0,00').replace(/\D/g, '') + e.key;
+                          setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
+                        }
+                      }}
+                      className="opacity-0 w-0 h-0 absolute"
+                    />
+                    <div className="text-xs text-red-400 dark:text-red-500 mt-1">Digite o valor acima</div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {['1','2','3','4','5','6','7','8','9','000','0','⌫'].map((key) => (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          if (key === '⌫') {
+                            let nums = (valorDespesaNum || '0,00').replace(/\D/g, '');
+                            nums = nums.slice(0, -1) || '0';
+                            setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
+                          } else {
+                            const digits = key === '000' ? '000' : key;
+                            let nums = (valorDespesaNum || '0,00').replace(/\D/g, '') + digits;
+                            if (nums.length > 10) return;
+                            setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
+                          }
+                        }}
+                        className={`h-14 rounded-2xl text-xl font-semibold transition-colors ${key === '⌫' ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'}`}
+                        style={{ minHeight: '56px' }}>
+                        {key}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
+                      if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
+                      handleSalvarDespesaNum(valorDespesaNum);
+                    }}
+                    className="w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm bg-red-600"
+                    style={{ minHeight: '56px' }}>
+                    Confirmar
+                  </button>
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
