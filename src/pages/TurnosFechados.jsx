@@ -1,0 +1,292 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { RefreshCw, ChevronDown, ChevronRight, Lock, TrendingUp, TrendingDown, Wallet, DollarSign, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+const fmt = (v) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function TurnoRow({ turno, vendas, movimentos }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const reforcos = movimentos.filter(m => m.tipo === 'Reforço' && m.turno_caixa_id === turno.id);
+  const sangrias = movimentos.filter(m => m.tipo === 'Sangria' && m.turno_caixa_id === turno.id);
+  const vendasTurno = vendas.filter(v => v.turno_caixa_id === turno.id);
+
+  const duracao = () => {
+    if (!turno.data_abertura || !turno.data_fechamento) return '-';
+    const diff = new Date(turno.data_fechamento) - new Date(turno.data_abertura);
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return `${h}h ${m}min`;
+  };
+
+  const diferenca = turno.diferenca || 0;
+
+  return (
+    <div className="border-b border-gray-100 dark:border-gray-700/50 last:border-0">
+      {/* Linha principal */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{turno.numero}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{turno.conta_caixa_pdv_nome}</span>
+          </div>
+          <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            {turno.data_abertura ? format(new Date(turno.data_abertura), "dd/MM/yy HH:mm", { locale: ptBR }) : '-'}
+            {' → '}
+            {turno.data_fechamento ? format(new Date(turno.data_fechamento), "HH:mm", { locale: ptBR }) : '-'}
+            {' · '}{duracao()}
+            {' · '}{turno.usuario_abertura_nome}
+          </div>
+        </div>
+        <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="text-right hidden sm:block">
+            <div className="text-xs text-gray-400 dark:text-gray-500">Total Vendas</div>
+            <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">R$ {fmt(turno.total_vendas)}</div>
+          </div>
+          <div className="text-right hidden md:block">
+            <div className="text-xs text-gray-400 dark:text-gray-500">Diferença</div>
+            <div className={`text-sm font-semibold ${Math.abs(diferenca) < 0.01 ? 'text-gray-400 dark:text-gray-500' : diferenca > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+              {diferenca > 0 ? '+' : ''}{fmt(diferenca)}
+            </div>
+          </div>
+          {expanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+        </div>
+      </button>
+
+      {/* Detalhes expandidos */}
+      {expanded && (
+        <div className="px-4 pb-4 bg-gray-50/50 dark:bg-gray-800/30">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 pt-3">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Saldo Inicial</div>
+              <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.saldo_inicial)}</div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Total Vendas</div>
+              <div className="text-base font-semibold text-emerald-600 dark:text-emerald-400">R$ {fmt(turno.total_vendas)}</div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Reforços</div>
+              <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.total_reforcos)}</div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Recolhimentos</div>
+              <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.total_sangrias)}</div>
+            </div>
+          </div>
+
+          {/* Recebimentos por forma */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Recebimentos por Forma</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: 'Dinheiro', val: turno.recebimentos_dinheiro },
+                { label: 'PIX', val: turno.recebimentos_pix },
+                { label: 'Crédito', val: turno.recebimentos_credito },
+                { label: 'Débito', val: turno.recebimentos_debito },
+              ].map(f => (
+                <div key={f.label}>
+                  <div className="text-xs text-gray-400 dark:text-gray-500">{f.label}</div>
+                  <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">R$ {fmt(f.val)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Conferência */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Dinheiro Contado</div>
+              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.dinheiro_conferido)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Saldo Final</div>
+              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.saldo_final)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Diferença</div>
+              <div className={`text-sm font-semibold ${Math.abs(diferenca) < 0.01 ? 'text-gray-400' : diferenca > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                {diferenca > 0 ? '+' : ''}R$ {fmt(diferenca)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Fechado por</div>
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</div>
+            </div>
+          </div>
+
+          {/* Vendas do turno */}
+          {vendasTurno.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Vendas ({vendasTurno.length})</div>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {vendasTurno.map(v => (
+                  <div key={v.id} className="flex justify-between items-start text-xs py-1 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">{v.numero}</span>
+                      <span className="text-gray-400 dark:text-gray-500"> · {v.cliente_nome}</span>
+                      {(v.pagamentos || []).length > 1 && (
+                        <div className="mt-0.5 space-y-0.5">
+                          {(v.pagamentos || []).map((p, i) => (
+                            <div key={i} className="text-gray-400 dark:text-gray-500 pl-2">↳ {p.forma_pagamento} R$ {fmt(p.valor)}</div>
+                          ))}
+                        </div>
+                      )}
+                      {(v.pagamentos || []).length === 1 && (
+                        <span className="text-gray-400 dark:text-gray-500"> · {v.pagamentos[0].forma_pagamento}</span>
+                      )}
+                    </div>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums ml-3">R$ {fmt(v.valor_total)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Movimentos do turno */}
+          {(reforcos.length > 0 || sangrias.length > 0) && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Movimentos de Caixa</div>
+              <div className="space-y-1">
+                {[...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
+                  <div key={m.id} className="flex justify-between items-center text-xs py-1">
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {m.numero} · {format(new Date(m.created_date), 'HH:mm')} · {m.tipo}
+                      {m.observacao ? ` · ${m.observacao}` : ''}
+                    </span>
+                    <span className={`font-semibold tabular-nums ${m.tipo === 'Reforço' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                      {m.tipo === 'Reforço' ? '+' : '-'}R$ {fmt(m.valor)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function TurnosFechadosPage() {
+  const [turnos, setTurnos] = useState([]);
+  const [vendas, setVendas] = useState([]);
+  const [movimentos, setMovimentos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [busca, setBusca] = useState('');
+  const [filtroData, setFiltroData] = useState('');
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    const [t, v, m] = await Promise.all([
+      base44.entities.TurnoCaixa.filter({ status: 'Fechado' }, '-data_fechamento', 100),
+      base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 500),
+      base44.entities.MovimentosCaixa.list('-created_date', 500),
+    ]);
+    setTurnos(t);
+    setVendas(v);
+    setMovimentos(m);
+    setIsLoading(false);
+  };
+
+  const turnosFiltrados = turnos.filter(t => {
+    const matchBusca = !busca || 
+      (t.numero || '').toLowerCase().includes(busca.toLowerCase()) ||
+      (t.conta_caixa_pdv_nome || '').toLowerCase().includes(busca.toLowerCase()) ||
+      (t.usuario_abertura_nome || '').toLowerCase().includes(busca.toLowerCase());
+    const matchData = !filtroData || (t.data_abertura || '').startsWith(filtroData);
+    return matchBusca && matchData;
+  });
+
+  const totalVendasFiltrado = turnosFiltrados.reduce((s, t) => s + (t.total_vendas || 0), 0);
+  const totalDiferencas = turnosFiltrados.reduce((s, t) => s + (t.diferenca || 0), 0);
+
+  return (
+    <div className="p-4 md:p-6">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-lg font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <Lock className="w-5 h-5 text-gray-400" />
+              Turnos Fechados
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Auditoria de caixa por turno</p>
+          </div>
+          <Button onClick={loadData} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Filtros */}
+        <div className="flex gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar turno, caixa ou operador..."
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Input
+            type="date"
+            value={filtroData}
+            onChange={e => setFiltroData(e.target.value)}
+            className="w-44"
+          />
+        </div>
+
+        {/* KPIs rápidos */}
+        {!isLoading && turnosFiltrados.length > 0 && (
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Turnos</div>
+              <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">{turnosFiltrados.length}</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Total Vendas</div>
+              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">R$ {fmt(totalVendasFiltrado)}</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400">Diferença Total</div>
+              <div className={`text-xl font-semibold ${Math.abs(totalDiferencas) < 0.01 ? 'text-gray-400' : totalDiferencas > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                {totalDiferencas > 0 ? '+' : ''}R$ {fmt(totalDiferencas)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lista */}
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />)}
+          </div>
+        ) : turnosFiltrados.length === 0 ? (
+          <div className="text-center py-16 text-gray-400 dark:text-gray-600">
+            <Lock className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p>Nenhum turno fechado encontrado</p>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm overflow-hidden">
+            {turnosFiltrados.map(t => (
+              <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
