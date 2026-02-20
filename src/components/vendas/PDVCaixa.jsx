@@ -591,6 +591,23 @@ export default function PDVCaixa() {
         });
       }
 
+      if (pagamentosVale > 0 && valeEncontrado) {
+        pagamentosArray.push({
+          forma_pagamento: 'Vale Compra',
+          valor: pagamentosVale,
+          parcelas: 1,
+          vale_codigo: valeEncontrado.codigo,
+          vale_id: valeEncontrado.id,
+        });
+        // Atualizar saldo do vale
+        const novoSaldoVale = (valeEncontrado.valor_disponivel || 0) - pagamentosVale;
+        const novoStatus = novoSaldoVale <= 0.01 ? 'Utilizado' : 'Utilizado Parcialmente';
+        await base44.entities.ValeCompra.update(valeEncontrado.id, {
+          valor_disponivel: Math.max(0, novoSaldoVale),
+          status: novoStatus,
+        });
+      }
+
       // Converter rascunho para PedidoVenda
       const todosPedidos = await base44.entities.PedidoVenda.list();
       const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map((p) => parseInt(p.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
