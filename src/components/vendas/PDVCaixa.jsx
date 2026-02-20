@@ -882,7 +882,7 @@ export default function PDVCaixa() {
     }
 
     try {
-      const valorFloat = parseFloat(valorMovimento.replace(',', '.'));
+      const valorFloat = parseFloat(valorMovimento.replace(/\./g, '').replace(',', '.'));
       const todosMovimentos = await base44.entities.MovimentosCaixa.list();
       const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;
