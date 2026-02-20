@@ -1406,6 +1406,7 @@ export default function PDVCaixa() {
                      );
                    })()}
                 </div>
+                </div>
                 </TabsContent>
 
                 <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
