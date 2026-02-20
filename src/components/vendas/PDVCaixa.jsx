@@ -452,7 +452,9 @@ export default function PDVCaixa() {
           debito: totalDebito
         },
         reforcos: totalReforcos,
-        sangrias: totalSangrias
+        sangrias: totalSangrias,
+        despesas: totalDespesas,
+        despesasLista: todasDespesas,
       });
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
