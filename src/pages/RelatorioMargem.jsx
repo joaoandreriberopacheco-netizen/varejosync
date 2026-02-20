@@ -199,25 +199,75 @@ export default function RelatorioMargemVendas() {
     link.click();
   };
 
-  const exportToPDF = async () => {
-    const table = document.getElementById('relatorio-table');
-    if (!table) return;
-    
-    const canvas = await html2canvas(table, { scale: 2, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/png');
+  const exportToPDF = () => {
     const pdf = new jsPDF('l', 'mm', 'a4');
-    
-    const imgWidth = pdf.internal.pageSize.getWidth() - 10;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
     let yPos = 10;
     
+    // Header
     pdf.setFontSize(16);
-    pdf.text('Relatório de Margem de Vendas', 10, 5);
+    pdf.text('Relatório de Margem de Vendas', 10, yPos);
+    yPos += 8;
     pdf.setFontSize(10);
-    pdf.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`, 10, 10);
+    pdf.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`, 10, yPos);
+    yPos += 10;
     
-    yPos = 20;
-    pdf.addImage(imgData, 'PNG', 5, yPos, imgWidth, imgHeight);
+    // Summary
+    pdf.setFontSize(9);
+    pdf.text(`Receita: ${formatMoney(totals.total_recebido)} | Custo: ${formatMoney(totals.custo_total)} | Lucro: ${formatMoney(totals.lucro_total)}`, 10, yPos);
+    yPos += 8;
+    
+    // Table
+    const columns = ['Código', 'Produto', 'Qtd', 'Receita', 'Custo', 'Lucro', 'Margem %'];
+    const colWidths = [12, 45, 12, 25, 25, 25, 22];
+    let xPos = 10;
+    
+    // Header row
+    pdf.setFillColor(240, 240, 240);
+    let totalWidth = 0;
+    columns.forEach((col, i) => {
+      pdf.rect(xPos + totalWidth, yPos, colWidths[i], 7, 'F');
+      pdf.setFontSize(8);
+      pdf.text(col, xPos + totalWidth + 1, yPos + 5);
+      totalWidth += colWidths[i];
+    });
+    yPos += 8;
+    
+    // Data rows
+    pdf.setFontSize(8);
+    const rows = groupByCategory ? 
+      processedData.flatMap(group => [
+        ...group.items,
+        { ...group.totals, nome: 'SUBTOTAL', isSubtotal: true, codigo_interno: '' }
+      ]) : 
+      processedData;
+    
+    rows.forEach(row => {
+      if (yPos > pageHeight - 15) {
+        pdf.addPage();
+        yPos = 10;
+      }
+      
+      totalWidth = 0;
+      const rowData = [
+        row.codigo_interno || '',
+        row.nome || '',
+        (row.quantidade_vendida || 0).toString(),
+        `R$${(row.total_recebido || 0).toFixed(0)}`,
+        `R$${(row.custo_total || 0).toFixed(0)}`,
+        `R$${(row.lucro_total || 0).toFixed(0)}`,
+        `${((row.lucro_total || 0) / (row.total_recebido || 1) * 100).toFixed(1)}%`
+      ];
+      
+      if (row.isSubtotal) pdf.setFillColor(250, 250, 250);
+      
+      colWidths.forEach((width, i) => {
+        pdf.text(rowData[i], xPos + totalWidth + 1, yPos + 4);
+        totalWidth += width;
+      });
+      yPos += 6;
+    });
     
     pdf.save('relatorio_margem.pdf');
   };
