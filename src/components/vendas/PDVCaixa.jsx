@@ -73,8 +73,15 @@ export default function PDVCaixa() {
   const [observacaoMovimento, setObservacaoMovimento] = useState('');
   const [movimentoCriado, setMovimentoCriado] = useState(null);
   const [showComprovanteMovimento, setShowComprovanteMovimento] = useState(false);
-  const [movimentoStep, setMovimentoStep] = useState('obs'); // 'obs' | 'valor' | 'comprovante'
+  const [movimentoStep, setMovimentoStep] = useState('obs'); // 'obs' | 'valor'
   const valorMovimentoRef = React.useRef(null);
+  const obsMovimentoRef = React.useRef(null);
+
+  // Despesa - mesmo fluxo do movimento
+  const [despesaStep, setDespesaStep] = useState('obs'); // 'obs' | 'valor'
+  const [valorDespesaNum, setValorDespesaNum] = useState('');
+  const obsDespesaRef = React.useRef(null);
+  const valorDespesaRef = React.useRef(null);
 
   const [showFechamentoDialog, setShowFechamentoDialog] = useState(false);
   const [valorContadoCaixa, setValorContadoCaixa] = useState('');
