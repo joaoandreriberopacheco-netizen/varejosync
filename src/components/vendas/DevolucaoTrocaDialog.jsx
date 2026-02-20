@@ -362,10 +362,19 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
         }
       }
 
-      // Se reembolso em dinheiro/pix, criar lançamento financeiro negativo
+      // Se reembolso em dinheiro/pix, criar lançamento financeiro e impactar turno
       if (formaReembolso === 'Dinheiro' || formaReembolso === 'PIX') {
         const contas = await base44.entities.ContasFinanceiras.list();
+        const caixaAtiva = turnoAtivo ? contas.find(c => c.id === turnoAtivo.conta_caixa_pdv_id) : null;
         const caixaGeral = contas.find(c => c.is_caixa_geral) || contas[0];
+        
+        if (caixaAtiva) {
+          // Debitar do caixa ativo
+          await base44.entities.ContasFinanceiras.update(caixaAtiva.id, {
+            saldo_atual: (caixaAtiva.saldo_atual || 0) - totalDevolvido,
+          });
+        }
+        
         if (caixaGeral) {
           await base44.entities.LancamentoFinanceiro.create({
             tipo: 'Despesa',
@@ -377,15 +386,23 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
             data_pagamento: format(new Date(), 'yyyy-MM-dd'),
             status: 'Pago',
             categoria: 'Outros',
-            referencia_tipo: 'PedidoVenda',
-            referencia_id: pedido.id,
-            referencia_numero: pedido.numero,
+            referencia_tipo: 'DevolucaoTroca',
+            referencia_id: devolucao.id,
+            referencia_numero: numeroDev,
+            turno_caixa_id: turnoAtivo?.id,
             observacoes: `Reembolso ${formaReembolso} por ${tipo}`,
           });
           await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
             saldo_atual: (caixaGeral.saldo_atual || 0) - totalDevolvido,
           });
         }
+      }
+      
+      // Atualizar turno ativo com referência à devolução
+      if (turnoAtivo) {
+        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), devolucao.id]
+        });
       }
 
       setResultado({
