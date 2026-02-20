@@ -189,78 +189,97 @@ export default function RelatorioMargemVendas() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-             <Link to="/Relatorios">
-                <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4"/></Button>
-             </Link>
-             <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Relatório de Margem de Vendas</h1>
-                <p className="text-sm text-gray-500">Análise detalhada de rentabilidade por produto</p>
-             </div>
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <div className="max-w-full mx-auto">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 md:p-6 sticky top-0 z-10">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <Link to="/Relatorios">
+                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+                  <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                </button>
+              </Link>
+              <div>
+                <h1 className="text-xl md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white">Relatório de Margem</h1>
+                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Análise de rentabilidade por produto</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={exportToCSV} className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition hidden sm:flex items-center gap-2 text-gray-700 dark:text-gray-200" title="Exportar CSV">
+                <Download className="w-5 h-5" />
+              </button>
+              <button onClick={exportToPDF} className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition hidden sm:flex items-center gap-2 text-gray-700 dark:text-gray-200" title="Exportar PDF">
+                <Download className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <Button onClick={exportToCSV} className="gap-2">
-            <Download className="w-4 h-4" /> Exportar CSV
-          </Button>
+
+          {/* Filters */}
+          <div className="space-y-3">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+              <div className="flex-1 relative">
+                <Search className="w-4 h-4 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Buscar produto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex gap-2">
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Todas categorias</option>
+                  {[...new Set(products.map(p => p.categoria_nome).filter(Boolean))].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="lucro_total">Lucro (desc)</option>
+                  <option value="margem_percentual">Margem %</option>
+                  <option value="quantidade_vendida">Quantidade</option>
+                  <option value="total_recebido">Receita</option>
+                  <option value="nome">Nome (A-Z)</option>
+                </select>
+                <button 
+                  onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                  title="Alternar ordem"
+                >
+                  <ArrowUpDown className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4 items-end">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Período</label>
-                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-              </div>
-              <div className="space-y-2 min-w-[200px]">
-                <label className="text-sm font-medium">Categoria</label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    {[...new Set(products.map(p => p.categoria_nome).filter(Boolean))].map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button variant="ghost" onClick={loadData} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Filter className="w-4 h-4 mr-2" />}
-                Atualizar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-           <Card className="bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800">
-              <CardContent className="p-4 text-center">
-                 <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">Total Recebido</p>
-                 <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{formatMoney(totals.total_recebido)}</p>
-              </CardContent>
-           </Card>
-           <Card className="bg-orange-50 border-orange-100 dark:bg-orange-900/20 dark:border-orange-800">
-              <CardContent className="p-4 text-center">
-                 <p className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase">Custo Total (Cadastro)</p>
-                 <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{formatMoney(totals.custo_total)}</p>
-              </CardContent>
-           </Card>
-           <Card className="bg-green-50 border-green-100 dark:bg-green-900/20 dark:border-green-800">
-              <CardContent className="p-4 text-center">
-                 <p className="text-xs font-bold text-green-600 dark:text-green-400 uppercase">Lucro Total</p>
-                 <p className="text-2xl font-bold text-green-900 dark:text-green-100">{formatMoney(totals.lucro_total)}</p>
-              </CardContent>
-           </Card>
-           <Card className="bg-purple-50 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800">
-              <CardContent className="p-4 text-center">
-                 <p className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">Margem Média</p>
-                 <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{formatPercent(totalMargem)}</p>
-              </CardContent>
-           </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 p-4 md:p-6 bg-gray-50 dark:bg-gray-900/50">
+          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">RECEITA</p>
+            <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.total_recebido)}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">CUSTO</p>
+            <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.custo_total)}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">LUCRO</p>
+            <p className="text-lg md:text-2xl font-semibold text-green-600">{formatMoney(totals.lucro_total)}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">MARGEM</p>
+            <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
+          </div>
         </div>
 
         <Card>
