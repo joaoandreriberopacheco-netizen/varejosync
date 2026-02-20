@@ -840,8 +840,9 @@ export default function PDVCaixa() {
       const novoSaldo = (contaCaixaPDV?.saldo_atual || 0) - valorFloat;
       await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: novoSaldo });
       setContaCaixaPDV(prev => ({ ...prev, saldo_atual: novoSaldo }));
-      toast({ title: "✓ Despesa registrada!", description: `${descricaoDespesa} - ${formatValor(valorFloat)}`, className: "bg-emerald-100 text-emerald-800", duration: 2000 });
+      setDespesaCriada({ ...lancamento, descricao: descricaoDespesa, valor: valorFloat, categoria: categoriaDespesa });
       setShowDespesaDialog(false);
+      setShowComprovanteDespesa(true);
       setDespesaStep('obs');
       setValorDespesaNum('');
       setValorDespesa('');
