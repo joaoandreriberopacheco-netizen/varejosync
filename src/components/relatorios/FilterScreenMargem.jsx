@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Calendar, Tag } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 
 export default function FilterScreenMargem({ 
@@ -17,8 +17,7 @@ export default function FilterScreenMargem({
 
   const filteredTags = useMemo(() => {
     return allTags
-      .filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(tag))
-      .slice(0, 10);
+      .filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(tag));
   }, [tagSearch, allTags, selectedTags]);
 
   const categories = [...new Set(products.map(p => p.categoria_nome).filter(Boolean))];
