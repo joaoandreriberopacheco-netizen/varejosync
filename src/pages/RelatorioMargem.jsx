@@ -288,21 +288,21 @@ export default function RelatorioMargemVendas() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 p-4 md:p-6 bg-gray-50 dark:bg-gray-900/50">
-          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">RECEITA</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 md:px-6 py-4 md:py-6">
+          <div className="p-4 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">RECEITA</p>
             <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.total_recebido)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">CUSTO</p>
+          <div className="p-4 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">CUSTO</p>
             <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.custo_total)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">LUCRO</p>
-            <p className="text-lg md:text-2xl font-semibold text-green-600">{formatMoney(totals.lucro_total)}</p>
+          <div className="p-4 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">LUCRO</p>
+            <p className="text-lg md:text-2xl font-semibold text-green-600 dark:text-green-400">{formatMoney(totals.lucro_total)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg shadow-sm">
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">MARGEM</p>
+          <div className="p-4 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">MARGEM</p>
             <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
           </div>
         </div>
