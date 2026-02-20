@@ -1347,12 +1347,40 @@ export default function PDVCaixa() {
                      const diferenca = totalConferido - caixaData.liquidez;
                      const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
+                       // Vendas: linha principal + sub-linhas por forma de pagamento
                        const linhasVendas = vendasFinalizadas.map(v => {
-                         const formas = (v.pagamentos || []).map(p => `${p.forma_pagamento} R$${(p.valor||0).toFixed(2)}`).join(', ');
-                         return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:11px"><span>${v.numero} · ${v.cliente_nome} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${formas}</span><span style="font-weight:600;color:#059669">+R$${(v.valor_total||0).toFixed(2)}</span></div>`;
+                         const pagamentos = (v.pagamentos || []);
+                         const subLinhas = pagamentos.length > 1
+                           ? pagamentos.map(p => `<div style="display:flex;justify-content:space-between;padding:2px 0 2px 16px;font-size:10px;color:#6b7280"><span>${p.forma_pagamento}</span><span>R$ ${(p.valor||0).toFixed(2)}</span></div>`).join('')
+                           : '';
+                         const formasSingle = pagamentos.length === 1 ? ` · ${pagamentos[0].forma_pagamento} R$ ${(pagamentos[0].valor||0).toFixed(2)}` : '';
+                         return `<div style="border-bottom:1px solid #f3f4f6;padding:5px 0">
+                           <div style="display:flex;justify-content:space-between;font-size:11px">
+                             <span>${v.numero} · ${v.cliente_nome} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${formasSingle}</span>
+                             <span style="font-weight:600;color:#059669;white-space:nowrap;margin-left:8px">+R$ ${(v.valor_total||0).toFixed(2)}</span>
+                           </div>${subLinhas}</div>`;
                        }).join('');
+                       // Reforços
+                       const linhasReforcos = movimentos.filter(m => m.tipo === 'Reforço').map(m =>
+                         `<div class="row"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#059669">+R$ ${(m.valor||0).toFixed(2)}</span></div>`
+                       ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum reforço</p>';
+                       // Recolhimentos
+                       const linhasRecolhimentos = movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map(m =>
+                         `<div class="row"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#2563eb">-R$ ${(m.valor||0).toFixed(2)}</span></div>`
+                       ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum recolhimento</p>';
+                       // Despesas
+                       const linhasDespesas = (caixaData.despesasLista || []).map(d =>
+                         `<div class="row"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:#dc2626">-R$ ${(d.valor||0).toFixed(2)}</span></div>`
+                       ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
+                       
                        const pw = window.open('', '_blank', 'width=800,height=900');
-                       pw.document.write(`<html><head><title>Relatório de Fechamento</title><style>body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}.row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}.total{font-size:15px;font-weight:700}.dashed{border-top:1px dashed #aaa;margin:8px 0}</style></head><body>
+                       pw.document.write(`<html><head><title>Relatório de Fechamento</title><style>
+                         body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
+                         h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
+                         .row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
+                         .total{font-size:15px;font-weight:700}
+                         .dashed{border-top:1px dashed #aaa;margin:8px 0}
+                       </style></head><body>
                          <div style="text-align:center;margin-bottom:14px"><b style="font-size:16px">VAREJOSYNC</b><br/><span style="color:#9ca3af;font-size:11px">Relatório de Fechamento de Caixa</span></div>
                          <div class="dashed"></div>
                          <h2>Turno</h2>
@@ -1375,6 +1403,15 @@ export default function PDVCaixa() {
                          <div class="row"><span>PIX:</span><span>R$ ${(caixaData.recebimentos?.pix||0).toFixed(2)}</span></div>
                          <div class="row"><span>Cartão Crédito:</span><span>R$ ${(caixaData.recebimentos?.credito||0).toFixed(2)}</span></div>
                          <div class="row"><span>Cartão Débito:</span><span>R$ ${(caixaData.recebimentos?.debito||0).toFixed(2)}</span></div>
+                         <div class="dashed"></div>
+                         <h2>Reforços do Turno</h2>
+                         ${linhasReforcos}
+                         <div class="dashed"></div>
+                         <h2>Recolhimentos do Turno</h2>
+                         ${linhasRecolhimentos}
+                         <div class="dashed"></div>
+                         <h2>Despesas do Turno</h2>
+                         ${linhasDespesas}
                          <div class="dashed"></div>
                          <h2>Vendas do Turno (${vendasFinalizadas.length})</h2>
                          ${linhasVendas || '<p style="color:#9ca3af;font-size:11px">Nenhuma venda registrada</p>'}
