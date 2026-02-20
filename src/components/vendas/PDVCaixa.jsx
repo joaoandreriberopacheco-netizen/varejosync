@@ -128,6 +128,7 @@ export default function PDVCaixa() {
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
   const [activeTab, setActiveTab] = useState('balanco');
   const [showDespesaDialog, setShowDespesaDialog] = useState(false);
+  const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
   const [valorDespesa, setValorDespesa] = useState('');
   const [descricaoDespesa, setDescricaoDespesa] = useState('');
   const [categoriaDespesa, setCategoriaDespesa] = useState('Outros');
