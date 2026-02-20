@@ -185,9 +185,18 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
                           {caixa.nome}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          Saldo: R$ {caixa.saldo_atual.toFixed(2).replace('.', ',')}
-                        </p>
+                        {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                              Turno aberto · R$ {(liquidezPorCaixa[caixa.id].totalVendas).toFixed(2).replace('.', ',')} em vendas
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Fundo: R$ {(liquidezPorCaixa[caixa.id].saldoInicial).toFixed(2).replace('.', ',')}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Sem turno aberto</p>
+                        )}
                         {!podeOperar && (
                           <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                             <Lock className="w-3 h-3" />
