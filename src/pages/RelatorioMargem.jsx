@@ -1,18 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import { Printer, Loader2, ArrowLeft, ArrowUpDown, Search, X } from 'lucide-react';
-import { format } from 'date-fns';
+import { Printer, Loader2, ArrowLeft, Search, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { Link } from 'react-router-dom';
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import FilterScreenMargem from '@/components/relatorios/FilterScreenMargem';
 
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
