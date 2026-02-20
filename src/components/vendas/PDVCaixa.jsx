@@ -1135,6 +1135,15 @@ export default function PDVCaixa() {
         />
       )}
 
+      {/* Notificações de Autorizações de Estorno Pendentes */}
+      {turnoAtivo && caixaSelecionado && (
+        <AutorizacoesEstornoPendentes
+          turnoAtivo={turnoAtivo}
+          contaCaixa={contaCaixaPDV}
+          currentUser={currentUser}
+        />
+      )}
+
       {/* Header Minimalista */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
         <button
