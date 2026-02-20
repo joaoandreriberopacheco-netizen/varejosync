@@ -278,135 +278,92 @@ export default function RelatorioMargemVendas() {
 
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="max-w-full mx-auto">
-        {/* Header */}
-        <div className="p-4 md:p-6 sticky top-0 z-10 bg-white dark:bg-gray-900">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1">
-              <Link to="/Relatorios">
-                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
-                  <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                </button>
-              </Link>
-              <div>
-                <h1 className="text-xl md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white">Relatório de Margem</h1>
-                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Análise de rentabilidade por produto</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200" title="Opções de impressão">
-                    <Printer className="w-5 h-5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
-                  <DropdownMenuItem onClick={exportToPDF} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    Exportar PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    Exportar CSV
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header PDV Style */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 flex items-center justify-between">
+          <Link to="/Relatorios">
+            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+              <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+            </button>
+          </Link>
+          <div className="flex-1 text-center">
+            <h1 className="text-xl font-glacial font-semibold text-gray-900 dark:text-white">Relatório de Margem</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {format(dateRange.from, 'dd/MM/yyyy')} - {format(dateRange.to, 'dd/MM/yyyy')}
+            </p>
           </div>
-
-          {/* Search Bar + Filters */}
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Procurar produto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            
-            {/* Filter Buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Date Picker */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                  title="Selecionar período"
-                >
-                  <Calendar className="w-4 h-4" />
-                </button>
-                {showDatePicker && (
-                  <CalendarPopup
-                    dateRange={dateRange}
-                    setDateRange={setDateRange}
-                    onClose={() => setShowDatePicker(false)}
-                  />
-                )}
-              </div>
-              
-              {/* Tag Filter */}
-              {allTags.length > 0 && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowTagPopup(!showTagPopup)}
-                    className="px-2 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                    title="Filtrar por tags"
-                  >
-                    #{selectedTags.length > 0 ? selectedTags.length : ''}
-                  </button>
-                  {showTagPopup && (
-                    <TagSearchPopup
-                      allTags={allTags}
-                      selectedTags={selectedTags}
-                      setSelectedTags={setSelectedTags}
-                      onClose={() => setShowTagPopup(false)}
-                    />
-                  )}
-                </div>
-              )}
-              
-              {/* Group Toggle */}
-              <button
-                onClick={() => setGroupByCategory(!groupByCategory)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  groupByCategory
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-                title="Agrupar por categoria"
-              >
-                Agrupar
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200">
+                <Printer className="w-5 h-5" />
               </button>
-            </div>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+              <DropdownMenuItem onClick={exportToPDF} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                Exportar PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                Exportar CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 md:px-6 py-4 md:py-6">
-          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">RECEITA</p>
-            <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.total_recebido)}</p>
+        {/* Filtros compactos */}
+        <div className="px-4 pb-4 flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Procurar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-1.5 bg-gray-100 dark:bg-gray-700 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+            />
           </div>
-          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">CUSTO</p>
-            <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.custo_total)}</p>
-          </div>
-          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">LUCRO</p>
-            <p className="text-lg md:text-2xl font-semibold text-green-600 dark:text-green-400">{formatMoney(totals.lucro_total)}</p>
-          </div>
-          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">MARGEM</p>
-            <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
-          </div>
+          <button
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            className="relative p-1.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          >
+            <Calendar className="w-4 h-4" />
+            {showDatePicker && (
+              <CalendarPopup dateRange={dateRange} setDateRange={setDateRange} onClose={() => setShowDatePicker(false)} />
+            )}
+          </button>
+          <button
+            onClick={() => setGroupByCategory(!groupByCategory)}
+            className={`px-2.5 py-1.5 rounded text-xs font-medium transition ${
+              groupByCategory ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Agrupar
+          </button>
         </div>
+      </div>
+
+      {/* Summary Cards PDV Style */}
+      <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="bg-white dark:bg-gray-800 p-3 rounded shadow-sm">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">RECEITA</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatMoney(totals.total_recebido)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-3 rounded shadow-sm">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">CUSTO</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatMoney(totals.custo_total)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-3 rounded shadow-sm">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">LUCRO</p>
+          <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatMoney(totals.lucro_total)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-3 rounded shadow-sm">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">MARGEM</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
+        </div>
+      </div>
 
         {/* Table - Desktop Table / Mobile Cards */}
-        <div className="p-4 md:p-6" id="relatorio-table">
+        <div className="p-4" id="relatorio-table">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
@@ -414,11 +371,11 @@ export default function RelatorioMargemVendas() {
           ) : processedData.length > 0 ? (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto bg-white dark:bg-gray-800 rounded shadow-sm">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400">CÓDIGO</th>
+                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-gray-600 dark:text-gray-400">CÓDIGO</th>
                       <th 
                         onClick={() => {
                           if (sortField === 'nome') {
@@ -550,45 +507,47 @@ export default function RelatorioMargemVendas() {
               </div>
 
               {/* Mobile Cards View */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-2">
                 {groupByCategory ? (
                   processedData.map((group) => (
-                    <div key={group.category}>
-                      <div className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm font-semibold text-gray-900 dark:text-white">
+                    <div key={group.category} className="bg-white dark:bg-gray-800 rounded shadow-sm overflow-hidden">
+                      <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700/50 text-xs font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700">
                         {group.category}
                       </div>
                       {group.items.map((row) => (
-                        <div key={row.codigo_interno} className="p-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                          <p className="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium">{row.codigo_interno} • {row.nome}</p>
+                        <div key={row.codigo_interno} className="px-3 py-2 border-b border-gray-100 dark:border-gray-700/50 last:border-0">
+                          <p className="text-xs text-gray-900 dark:text-white font-medium mb-1">{row.codigo_interno}</p>
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1.5">{row.nome}</div>
                           <div className="grid grid-cols-3 gap-2 text-xs">
-                            <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
-                            <div><p className="text-gray-500 dark:text-gray-400">Receita</p><p className="font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p></div>
-                            <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
+                            <div><span className="text-gray-500 dark:text-gray-400">Qtd:</span> <span className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</span></div>
+                            <div><span className="text-gray-500 dark:text-gray-400">Receita:</span> <span className="font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</span></div>
+                            <div><span className="text-gray-500 dark:text-gray-400">Lucro:</span> <span className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</span></div>
                           </div>
                         </div>
                       ))}
-                      <div className="p-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold">
-                        <p className="text-gray-900 dark:text-white">SUBTOTAL: {formatMoney(group.totals.lucro_total)} ({formatPercent((group.totals.lucro_total / group.totals.total_recebido) * 100)})</p>
+                      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700/30 text-xs font-semibold text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-700">
+                        SUBTOTAL: {formatMoney(group.totals.lucro_total)} • {formatPercent((group.totals.lucro_total / group.totals.total_recebido) * 100)}
                       </div>
                     </div>
                   ))
                 ) : (
                   processedData.map((row) => (
-                    <div key={row.codigo_interno} className="p-3 bg-gray-50 dark:bg-gray-800/50">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 font-medium">{row.codigo_interno} • {row.nome}</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
-                        <div><p className="text-gray-500 dark:text-gray-400">Receita</p><p className="font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p></div>
-                        <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
+                    <div key={row.codigo_interno} className="bg-white dark:bg-gray-800 p-3 rounded shadow-sm">
+                      <p className="text-xs text-gray-900 dark:text-white font-medium mb-1">{row.codigo_interno}</p>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">{row.nome}</div>
+                      <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                        <div><span className="text-gray-500 dark:text-gray-400">Qtd:</span> <span className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</span></div>
+                        <div><span className="text-gray-500 dark:text-gray-400">Receita:</span> <span className="font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</span></div>
+                        <div><span className="text-gray-500 dark:text-gray-400">Lucro:</span> <span className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</span></div>
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Margem: {formatPercent(row.margem_percentual)}</p>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">Margem: {formatPercent(row.margem_percentual)}</div>
                     </div>
                   ))
                 )}
               </div>
 
-              <div className="mt-6 p-4 text-xs text-gray-600 dark:text-gray-400">
-                Total de produtos: {processedData.length}
+              <div className="p-4 text-xs text-gray-600 dark:text-gray-400">
+                {processedData.length} produtos
               </div>
             </>
           ) : (
