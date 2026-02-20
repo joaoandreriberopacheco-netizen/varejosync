@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [hoverEnd, setHoverEnd] = useState(null);
   
   const start = dateRange.from;
   const end = dateRange.to;
@@ -20,7 +19,6 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
       const newEnd = day < start ? start : day;
       const newStart = day < start ? day : start;
       setDateRange({ from: newStart, to: newEnd });
-      setHoverEnd(null);
     }
   };
   
@@ -36,12 +34,10 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
     const firstDay = days[0].getDay();
     const cells = [];
     
-    // Empty cells
     for (let i = 0; i < firstDay; i++) {
       cells.push(<div key={`empty-${i}`} />);
     }
     
-    // Days
     days.forEach(day => {
       const inRange = isInRange(day);
       const isStartDay = start && isSameDay(day, start);
@@ -51,8 +47,6 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
         <button
           key={day.toString()}
           onClick={() => handleSelectDate(day)}
-          onMouseEnter={() => !end && setHoverEnd(day)}
-          onMouseLeave={() => setHoverEnd(null)}
           className={`p-2 text-sm font-medium rounded transition ${
             isStartDay || isEndDay
               ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
@@ -70,8 +64,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
   };
   
   return (
-    <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50 border border-gray-200 dark:border-gray-700">
-      {/* Month Navigation */}
+    <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50 border border-gray-200 dark:border-gray-700 w-72">
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -90,7 +83,6 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
         </button>
       </div>
       
-      {/* Weekday Headers */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {weekDays.map(day => (
           <div key={day} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center py-1">
@@ -99,20 +91,17 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
         ))}
       </div>
       
-      {/* Calendar Days */}
       <div className="grid grid-cols-7 gap-1 mb-4">
         {renderCalendar()}
       </div>
       
-      {/* Date Display */}
-      <div className="pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
-        <p>{format(start, 'dd/MM/yyyy', { locale: ptBR })} - {format(end, 'dd/MM/yyyy', { locale: ptBR })}</p>
+      <div className="pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 mb-3">
+        <p>{format(start, 'dd/MM/yyyy')} - {format(end, 'dd/MM/yyyy')}</p>
       </div>
       
-      {/* Close Button */}
       <button
         onClick={onClose}
-        className="w-full mt-3 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg hover:opacity-90 transition"
+        className="w-full py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg hover:opacity-90 transition"
       >
         Pronto
       </button>
