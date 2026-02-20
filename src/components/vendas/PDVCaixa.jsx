@@ -2357,7 +2357,13 @@ export default function PDVCaixa() {
               <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
                 Vendas do Turno
               </h2>
-              <div className="w-10"></div>
+              <button
+                onClick={() => window.print()}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors print:hidden"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+                title="Imprimir extrato">
+                <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {vendasFinalizadas.length === 0 ? (
