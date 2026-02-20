@@ -63,9 +63,9 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       // Turno já existe, apenas conectar
       onSelect(caixa, turnoAberto, false);
     } else {
-      // Precisa abrir novo turno
+      // Precisa abrir novo turno — saldo inicial começa sempre em 0 (operador informa o fundo de troco)
       setCaixaSelecionado(caixa);
-      setSaldoInicial(caixa.saldo_atual.toFixed(2).replace('.', ','));
+      setSaldoInicial('');
       setShowSaldoDialog(true);
     }
   };
