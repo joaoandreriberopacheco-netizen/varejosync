@@ -200,16 +200,6 @@ export default function Layout({ children, currentPageName }) {
         ],
         roles: ['Admin', 'Gerente', 'Financeiro']
       },
-      { 
-        name: 'Configurações', 
-        icon: Settings, 
-        submenu: [
-          { name: 'Terceiros', page: 'Terceiros' },
-          { name: 'Intervenientes', page: 'Intervenientes' },
-          { name: 'Parâmetros', page: 'Configuracoes' }
-        ],
-        roles: ['Admin', 'Gerente']
-      },
       { name: 'Relatórios', icon: BookOpen, page: 'Relatorios', roles: ['Admin', 'Gerente', 'Financeiro'] }
     ];
 
