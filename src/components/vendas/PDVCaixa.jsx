@@ -1490,57 +1490,7 @@ export default function PDVCaixa() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="fechar" className="flex-1 overflow-auto p-4 mt-0 space-y-4 data-[state=inactive]:hidden">
-                  <div className="max-w-4xl mx-auto">
-                {(() => {
-                  const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                  const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                  const esperado = caixaData.totalVendas + (caixaData.saldoInicial || 0) + caixaData.reforcos - caixaData.sangrias;
-                  const diferenca = totalConferido - esperado;
-                  const temDiferenca = Math.abs(diferenca) > 0.01;
 
-                  return (
-                    <>
-                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-                        <h3 className="text-gray-900 mb-3 text-sm font-semibold dark:text-white">Status do Saldo</h3>
-                        {!temDiferenca ? (
-                          <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-                            <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                            <div>
-                              <div className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Valores Conferem</div>
-                              <div className="text-xs text-emerald-600 dark:text-emerald-400">Pronto para fechar</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className={`p-3 rounded-xl ${diferenca > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className={`text-sm font-medium ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'}`}>
-                                {diferenca > 0 ? 'Sobrando' : 'Faltando'}
-                              </span>
-                              <span className={`text-2xl font-bold ${diferenca > 0 ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-300'} font-glacial`}>
-                                {formatValor(Math.abs(diferenca))}
-                              </span>
-                            </div>
-                            <p className={`text-xs ${diferenca > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-                              Ajuste o dinheiro na aba Balanço antes de fechar
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={handleFecharCaixa}
-                        disabled={temDiferenca || modoVisualizacao}
-                        className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        style={{ minHeight: '56px' }}>
-                        <Lock size={20} />
-                        <span>Fechar Caixa</span>
-                      </button>
-                    </>
-                  );
-                })()}
-                </div>
-                </TabsContent>
 
                 {/* Barra de Navegação - Mobile */}
                 <TabsList className="md:hidden grid grid-cols-4 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0 flex-shrink-0">
