@@ -2328,8 +2328,8 @@ export default function PDVCaixa() {
                     const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
                     const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
                     const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
-                    const diferenca = totalRecebimentos - caixaData.saldoAtual;
-                    
+                    const diferenca = totalRecebimentos - caixaData.liquidez;
+
                     if (Math.abs(diferenca) > 0.01) {
                       toast({
                         title: "Erro ao fechar caixa",
