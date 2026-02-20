@@ -1130,7 +1130,7 @@ export default function PDVCaixa() {
                     <div className="flex items-center justify-between py-1">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Inicial</span>
                       <span className="text-base font-medium text-gray-900 dark:text-gray-100">
-                        {formatValor(contaCaixaPDV?.saldo_inicial || 0)}
+                        {formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1">
