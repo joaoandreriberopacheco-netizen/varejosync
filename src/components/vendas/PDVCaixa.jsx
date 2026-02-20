@@ -109,14 +109,19 @@ export default function PDVCaixa() {
   const [pagamentosPix, setPagamentosPix] = useState(0);
   const [pagamentosDebito, setPagamentosDebito] = useState(0);
   const [pagamentosCredito, setPagamentosCredito] = useState(0);
+  const [pagamentosVale, setPagamentosVale] = useState(0);
   const [parcelasCredito, setParcelasCredito] = useState(1);
   const [formaPagamentoAtiva, setFormaPagamentoAtiva] = useState(0);
+  const [codigoVale, setCodigoVale] = useState('');
+  const [valeEncontrado, setValeEncontrado] = useState(null);
+  const [buscandoVale, setBuscandoVale] = useState(false);
 
   // Valores como strings para edição livre
   const [inputDinheiro, setInputDinheiro] = useState('');
   const [inputPix, setInputPix] = useState('');
   const [inputDebito, setInputDebito] = useState('');
   const [inputCredito, setInputCredito] = useState('');
+  const [inputVale, setInputVale] = useState('');
 
   // Refs para os inputs
   const inputRefs = {

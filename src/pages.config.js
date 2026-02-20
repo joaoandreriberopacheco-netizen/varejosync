@@ -88,11 +88,12 @@ import RelatorioMargem from './pages/RelatorioMargem';
 import Relatorios from './pages/Relatorios';
 import TabelasPreco from './pages/TabelasPreco';
 import Terceiros from './pages/Terceiros';
+import TurnosFechados from './pages/TurnosFechados';
 import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import TurnosFechados from './pages/TurnosFechados';
+import ExclusaoDocumentos from './pages/ExclusaoDocumentos';
 import __Layout from './Layout.jsx';
 
 
@@ -138,11 +139,12 @@ export const PAGES = {
     "Relatorios": Relatorios,
     "TabelasPreco": TabelasPreco,
     "Terceiros": Terceiros,
+    "TurnosFechados": TurnosFechados,
     "Veiculos": Veiculos,
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "TurnosFechados": TurnosFechados,
+    "ExclusaoDocumentos": ExclusaoDocumentos,
 }
 
 export const pagesConfig = {
