@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Printer, Loader2, ArrowLeft, Search, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import CalendarPopup from '@/components/relatorios/CalendarPopup';
+import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
