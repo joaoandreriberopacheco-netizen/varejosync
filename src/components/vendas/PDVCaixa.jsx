@@ -159,8 +159,11 @@ export default function PDVCaixa() {
       debito: 0
     },
     reforcos: 0,
-    sangrias: 0
+    sangrias: 0,
+    despesas: 0,
+    despesasLista: [],
   });
+  const [showDespesasDialog, setShowDespesasDialog] = useState(false);
   const { toast } = useToast();
 
   const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito;
