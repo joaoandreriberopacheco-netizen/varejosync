@@ -138,13 +138,19 @@ export default function RelatorioMargemVendas() {
 
     // Sort data
     sorted.sort((a, b) => {
-      const aVal = a[sortBy] || 0;
-      const bVal = b[sortBy] || 0;
+      const aVal = a[sortField] || 0;
+      const bVal = b[sortField] || 0;
+      
+      if (typeof aVal === 'string') {
+        return sortOrder === 'asc' 
+          ? aVal.localeCompare(bVal) 
+          : bVal.localeCompare(aVal);
+      }
       return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
     });
 
     return sorted;
-  }, [sales, products, dateRange, selectedProduct, selectedCategory, searchTerm, sortBy, sortOrder, selectedTags]);
+  }, [sales, products, dateRange, selectedProduct, selectedCategory, searchTerm, sortField, sortOrder, selectedTags]);
 
   const totals = useMemo(() => {
     return processedData.reduce((acc, item) => ({
