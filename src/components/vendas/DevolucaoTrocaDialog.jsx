@@ -278,6 +278,11 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
     setProcessando(true);
     try {
       const user = await base44.auth.me();
+      
+      // Buscar turno ativo
+      const todosTurnos = await base44.entities.TurnoCaixa.list();
+      const turnoAtivo = todosTurnos.find(t => t.status === 'Aberto');
+
       const todos = await base44.entities.DevolucaoTroca.list();
       const nextNum = (todos.length > 0 ? Math.max(...todos.map(d => parseInt(d.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroDev = `DT-${String(nextNum).padStart(5, '0')}`;
