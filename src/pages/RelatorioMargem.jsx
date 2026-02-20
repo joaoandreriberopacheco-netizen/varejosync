@@ -314,48 +314,104 @@ export default function RelatorioMargemVendas() {
               <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {processedData.length > 0 ? (
                 <>
                   {processedData.map((row) => (
-                    <div key={row.codigo_interno || row.nome} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:shadow-md transition">
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-center">
+                    <div key={row.codigo_interno || row.nome} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">CÓDIGO</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">CÓDIGO</p>
                           <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{row.codigo_interno}</p>
                         </div>
                         <div className="col-span-1 md:col-span-1">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">PRODUTO</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">PRODUTO</p>
                           <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">{row.nome}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">QTD</p>
+                          <button
+                            onClick={() => {
+                              if (sortField === 'quantidade_vendida') {
+                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setSortField('quantidade_vendida');
+                                setSortOrder('desc');
+                              }
+                            }}
+                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
+                          >
+                            QTD {sortField === 'quantidade_vendida' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </button>
                           <p className="text-lg font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">RECEITA</p>
+                          <button
+                            onClick={() => {
+                              if (sortField === 'total_recebido') {
+                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setSortField('total_recebido');
+                                setSortOrder('desc');
+                              }
+                            }}
+                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
+                          >
+                            RECEITA {sortField === 'total_recebido' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </button>
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">CUSTO</p>
+                          <button
+                            onClick={() => {
+                              if (sortField === 'custo_total') {
+                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setSortField('custo_total');
+                                setSortOrder('desc');
+                              }
+                            }}
+                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
+                          >
+                            CUSTO {sortField === 'custo_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </button>
                           <p className="text-sm text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">LUCRO</p>
+                          <button
+                            onClick={() => {
+                              if (sortField === 'lucro_total') {
+                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setSortField('lucro_total');
+                                setSortOrder('desc');
+                              }
+                            }}
+                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
+                          >
+                            LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </button>
                           <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">MARGEM</p>
+                          <button
+                            onClick={() => {
+                              if (sortField === 'margem_percentual') {
+                                setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setSortField('margem_percentual');
+                                setSortOrder('desc');
+                              }
+                            }}
+                            className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
+                          >
+                            MARGEM {sortField === 'margem_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </button>
                           <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">V.UNIT</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{formatMoney(row.valor_unitario_medio)}</p>
                         </div>
                       </div>
                     </div>
                   ))}
-                  <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-xs text-gray-600 dark:text-gray-400">
+                  <div className="mt-6 p-4 text-xs text-gray-600 dark:text-gray-400">
                     Total de produtos: {processedData.length}
                   </div>
                 </>
