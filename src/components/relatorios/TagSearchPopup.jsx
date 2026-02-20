@@ -13,7 +13,6 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
   
   return (
     <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 z-50 border border-gray-200 dark:border-gray-700 w-64 max-h-72 overflow-hidden flex flex-col">
-      {/* Search Input */}
       <div className="relative mb-3">
         <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -26,7 +25,6 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
         />
       </div>
       
-      {/* Selected Tags */}
       {selectedTags.length > 0 && (
         <div className="mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Selecionadas</p>
@@ -45,7 +43,6 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
         </div>
       )}
       
-      {/* Available Tags */}
       <div className="flex-1 overflow-y-auto space-y-1">
         {unselected.length > 0 ? (
           unselected.map(tag => (
@@ -64,7 +61,6 @@ export default function TagSearchPopup({ allTags, selectedTags, setSelectedTags,
         )}
       </div>
       
-      {/* Close Button */}
       <button
         onClick={onClose}
         className="w-full mt-2 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded hover:opacity-90 transition"
