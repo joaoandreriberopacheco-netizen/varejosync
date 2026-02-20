@@ -432,12 +432,13 @@ export default function PDVCaixa() {
 
       const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + (m.valor || 0), 0);
       const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + (m.valor || 0), 0);
+      const totalDespesas = todasDespesas.reduce((sum, d) => sum + (d.valor || 0), 0);
 
       const saldoInicial = turno.saldo_inicial || 0;
-      // Saldo em caixa (dinheiro na gaveta) = saldo inicial + dinheiro recebido + reforços - recolhimentos
-      const saldoCaixaCalculado = saldoInicial + totalDinheiro + totalReforcos - totalSangrias;
-      // Liquidez total do turno = saldo inicial + TODAS as vendas + reforços - recolhimentos
-      const liquidezTurno = saldoInicial + totalVendas + totalReforcos - totalSangrias;
+      // Saldo em caixa (dinheiro na gaveta) = saldo inicial + dinheiro recebido + reforços - recolhimentos - despesas
+      const saldoCaixaCalculado = saldoInicial + totalDinheiro + totalReforcos - totalSangrias - totalDespesas;
+      // Liquidez total do turno = saldo inicial + TODAS as vendas + reforços - recolhimentos - despesas
+      const liquidezTurno = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
 
       setCaixaData({
         saldoInicial: saldoInicial,
