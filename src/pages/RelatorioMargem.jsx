@@ -555,8 +555,7 @@ export default function RelatorioMargemVendas() {
               <p className="text-gray-500 dark:text-gray-400 text-lg">Nenhum dado encontrado</p>
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-}
+          </div>
+          </div>
+          );
+          }
