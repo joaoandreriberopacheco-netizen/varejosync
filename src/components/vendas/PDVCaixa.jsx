@@ -1417,50 +1417,80 @@ export default function PDVCaixa() {
 
                 <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
                   <div className="max-w-4xl mx-auto space-y-3">
-                    <button
-                     onClick={() => handleAbrirMovimento('Reforço')}
-                     disabled={modoVisualizacao}
-                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
-                          <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    {/* Botões de ação */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <button onClick={() => handleAbrirMovimento('Reforço')} disabled={modoVisualizacao}
+                        className="h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
+                        <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
+                          <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <div className="text-left">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">Reforço</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Adicionar dinheiro ao caixa</div>
+                        <div className="text-xs font-medium text-gray-900 dark:text-white">Reforço</div>
+                      </button>
+                      <button onClick={() => handleAbrirMovimento('Recolhimento de Caixa')} disabled={modoVisualizacao}
+                        className="h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
+                        <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                          <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
-                      </div>
-                    </button>
+                        <div className="text-xs font-medium text-gray-900 dark:text-white">Recolhimento</div>
+                      </button>
+                      <button onClick={() => setShowDespesaDialog(true)} disabled={modoVisualizacao}
+                        className="h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-1 disabled:opacity-40">
+                        <div className="w-8 h-8 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                          <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div className="text-xs font-medium text-gray-900 dark:text-white">Despesa</div>
+                      </button>
+                    </div>
 
-                    <button
-                      onClick={() => handleAbrirMovimento('Recolhimento de Caixa')}
-                      disabled={modoVisualizacao}
-                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                          <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    {/* Histórico cronológico de movimentos + despesas */}
+                    {(() => {
+                      const itensMovimentos = movimentos.map(m => ({
+                        id: m.id,
+                        tipo: m.tipo,
+                        valor: m.valor,
+                        descricao: m.observacao || m.tipo,
+                        hora: m.created_date,
+                        operador: m.usuario_responsavel_nome,
+                        cor: m.tipo === 'Reforço' ? 'emerald' : 'blue',
+                        icone: m.tipo === 'Reforço' ? '+' : '−',
+                      }));
+                      const itensDespesas = (caixaData.despesasLista || []).map(d => ({
+                        id: d.id,
+                        tipo: 'Despesa',
+                        valor: d.valor,
+                        descricao: d.descricao,
+                        hora: d.created_date,
+                        operador: null,
+                        cor: 'red',
+                        icone: '−',
+                      }));
+                      const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
+                      if (todos.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600">
+                          <Wallet className="w-10 h-10 mb-2" />
+                          <p className="text-sm">Nenhuma movimentação registrada</p>
                         </div>
-                        <div className="text-left">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">Recolhimento de Caixa</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Transferir para Caixa Geral</div>
+                      );
+                      return (
+                        <div className="space-y-2">
+                          <p className="text-xs text-gray-400 dark:text-gray-500 px-1">Histórico do turno</p>
+                          {todos.map(item => (
+                            <div key={item.id} className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
+                              <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                                {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.descricao}</div>
+                                <div className="text-xs text-gray-400 dark:text-gray-500">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
+                              </div>
+                              <div className={`text-base font-bold tabular-nums font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+                                {item.icone}{formatValor(item.valor)}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => setShowDespesaDialog(true)}
-                      disabled={modoVisualizacao}
-                      className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                          <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div className="text-left">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">Despesa</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Registrar gasto operacional</div>
-                        </div>
-                      </div>
-                    </button>
+                      );
+                    })()}
                   </div>
                 </TabsContent>
 
