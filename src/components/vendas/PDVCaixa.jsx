@@ -2824,70 +2824,100 @@ export default function PDVCaixa() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-lg mx-auto space-y-4">
-                {/* Movimentações */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Movimentações do Turno</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Saldo Inicial</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
+              <div className="max-w-lg mx-auto space-y-3">
+
+                {/* Extrato corrido */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Extrato do Turno</h3>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      {turnoAtivo?.numero} · abertura {turnoAtivo?.data_abertura ? format(new Date(turnoAtivo.data_abertura), 'dd/MM HH:mm') : '-'}
+                    </p>
+                  </div>
+
+                  {/* Saldo Inicial */}
+                  <div className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                    <div>
+                      <div className="text-sm text-gray-700 dark:text-gray-300">Saldo inicial</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">Fundo de caixa</div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">+ Dinheiro recebido em vendas</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{formatValor(caixaData.recebimentos.dinheiro)}</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
+                  </div>
+
+                  {/* Vendas - cada uma como linha */}
+                  {vendasFinalizadas.length > 0 && vendasFinalizadas.map((v) => {
+                    const dinheiroVenda = (v.pagamentos || []).reduce((s, p) => (p.forma_pagamento || '').toLowerCase() === 'dinheiro' ? s + (p.valor || 0) : s, 0);
+                    return (
+                      <div key={v.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                        <div>
+                          <div className="text-sm text-gray-700 dark:text-gray-300">{v.numero}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">
+                            {format(new Date(v.created_date), 'HH:mm')} · {v.cliente_nome}
+                            {dinheiroVenda < v.valor_total && <span className="ml-1 text-gray-400">(dinheiro: {formatValor(dinheiroVenda)})</span>}
+                          </div>
+                        </div>
+                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(dinheiroVenda)}</span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Reforços */}
+                  {movimentos.filter(m => m.tipo === 'Reforço').map((m) => (
+                    <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                      <div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300">Reforço · {m.numero}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
+                      </div>
+                      <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(m.valor)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">+ Reforços</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{formatValor(caixaData.reforcos)}</span>
+                  ))}
+
+                  {/* Recolhimentos */}
+                  {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((m) => (
+                    <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                      <div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300">Recolhimento · {m.numero}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(m.created_date), 'HH:mm')} · {m.usuario_responsavel_nome}</div>
+                      </div>
+                      <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">−{formatValor(m.valor)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">− Recolhimentos</span>
-                      <span className="font-medium text-blue-600 dark:text-blue-400">{formatValor(caixaData.sangrias)}</span>
-                    </div>
-                    <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between">
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">Saldo Esperado (Dinheiro)</span>
-                      <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.saldoAtual)}</span>
-                    </div>
+                  ))}
+
+                  {/* Saldo esperado em dinheiro */}
+                  <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 flex justify-between items-center">
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Saldo esperado (gaveta)</span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.saldoAtual)}</span>
                   </div>
                 </div>
 
-                {/* Recebimentos por forma de pagamento */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Total de Vendas por Forma de Pagamento</h3>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Dinheiro</div>
-                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.dinheiro)}</div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">PIX</div>
-                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.pix)}</div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Crédito</div>
-                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.credito || 0)}</div>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Débito</div>
-                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.debito || 0)}</div>
-                    </div>
+                {/* Resumo por forma de pagamento — "o que esperar no caixa" */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">O que esperar no caixa</h3>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Baseado nas vendas do turno</p>
                   </div>
-                  <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between">
-                    <div>
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">Total de Vendas</span>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        Saldo esperado em caixa (dinheiro): {formatValor(caixaData.saldoAtual)}
-                      </p>
+
+                  {[
+                    { label: 'Dinheiro', sub: 'na gaveta', valor: caixaData.saldoAtual },
+                    { label: 'PIX', sub: 'comprovantes digitais', valor: caixaData.recebimentos.pix },
+                    { label: 'Cartão Crédito', sub: 'maquininha — liquidação futura', valor: caixaData.recebimentos.credito || 0 },
+                    { label: 'Cartão Débito', sub: 'maquininha — liquidação D+1', valor: caixaData.recebimentos.debito || 0 },
+                  ].map(({ label, sub, valor }) => (
+                    <div key={label} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                      <div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300">{label}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">{sub}</div>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(valor)}</span>
                     </div>
+                  ))}
+
+                  <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 flex justify-between items-center">
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Total de vendas</span>
                     <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.totalVendas)}</span>
                   </div>
                 </div>
 
-                {/* Nota explicativa */}
-                <p className="text-xs text-center text-gray-400 dark:text-gray-500 px-4">
-                  PIX, Crédito e Débito não ficam na gaveta — confira os comprovantes físicos.
-                </p>
               </div>
             </div>
           </DialogContent>
