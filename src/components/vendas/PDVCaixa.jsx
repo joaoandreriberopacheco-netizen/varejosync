@@ -128,7 +128,8 @@ export default function PDVCaixa() {
     dinheiro: React.useRef(null),
     pix: React.useRef(null),
     debito: React.useRef(null),
-    credito: React.useRef(null)
+    credito: React.useRef(null),
+    vale: React.useRef(null),
   };
 
   const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
