@@ -151,7 +151,6 @@ export default function RelatorioMargemVendas() {
   const formatPercent = (val) => `${val.toFixed(2)}%`;
 
   const exportToCSV = () => {
-    // Implementation for CSV export
     const headers = "Codigo;Produto;Categoria;Qtd Vendida;Valor Medio;Total Recebido;Custo Unit;Custo Total;Lucro Total;Margem %;Markup %\n";
     const rows = processedData.map(row => 
       `${row.codigo_interno};${row.nome};${row.categoria};${row.quantidade_vendida};${row.valor_unitario_medio.toFixed(2)};${row.total_recebido.toFixed(2)};${row.custo_unitario_cadastro.toFixed(2)};${row.custo_total.toFixed(2)};${row.lucro_total.toFixed(2)};${row.margem_percentual.toFixed(2)};${row.markup_percentual.toFixed(2)}`
@@ -163,6 +162,30 @@ export default function RelatorioMargemVendas() {
     link.setAttribute("download", "relatorio_margem.csv");
     document.body.appendChild(link);
     link.click();
+  };
+
+  const exportToPDF = async () => {
+    const table = document.getElementById('relatorio-table');
+    if (!table) return;
+    
+    const canvas = await html2canvas(table, { scale: 2, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('l', 'mm', 'a4');
+    
+    const imgWidth = pdf.internal.pageSize.getWidth() - 10;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let yPos = 10;
+    
+    // Title
+    pdf.setFontSize(16);
+    pdf.text('Relatório de Margem de Vendas', 10, 5);
+    pdf.setFontSize(10);
+    pdf.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} a ${format(dateRange.to, 'dd/MM/yyyy')}`, 10, 10);
+    
+    yPos = 20;
+    pdf.addImage(imgData, 'PNG', 5, yPos, imgWidth, imgHeight);
+    
+    pdf.save('relatorio_margem.pdf');
   };
 
   return (
