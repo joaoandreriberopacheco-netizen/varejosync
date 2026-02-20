@@ -1944,6 +1944,13 @@ export default function PDVCaixa() {
                       value={valorMovimento}
                       onChange={() => {}}
                       onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const valorFloat = parseFloat((valorMovimento || '0').replace(/\./g, '').replace(',', '.')) || 0;
+                          if (valorFloat <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
+                          handleSalvarMovimento();
+                          return;
+                        }
                         if (e.key === 'Backspace') {
                           e.preventDefault();
                           let nums = valorMovimento.replace(/\D/g, '');
