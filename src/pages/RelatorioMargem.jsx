@@ -14,16 +14,12 @@ export default function RelatorioMargemVendas() {
   const [loading, setLoading] = useState(true);
   const [groupByCategory, setGroupByCategory] = useState(false);
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
-  
-  // Filters
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [tagSearch, setTagSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortField, setSortField] = useState('lucro_total');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTagSearch, setShowTagSearch] = useState(false);
+  const [showTagPopup, setShowTagPopup] = useState(false);
   
   useEffect(() => {
     loadData();
