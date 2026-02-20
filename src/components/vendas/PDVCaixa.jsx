@@ -401,15 +401,10 @@ export default function PDVCaixa() {
       const dataAbertura = new Date(turno.data_abertura);
       const dataFechamento = turno.data_fechamento ? new Date(turno.data_fechamento) : null;
       const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
+      // SELO FRIO: apenas vendas com turno_caixa_id igual ao turno atual
       const vendasTurno = todosPedidos.filter((p) => {
         if (!statusOk.includes(p.status)) return false;
-        // Vinculada diretamente ao turno
-        if (p.turno_caixa_id === turno.id) return true;
-        // Listada no array vendas_ids do turno
-        if (turno.vendas_ids && turno.vendas_ids.includes(p.id)) return true;
-        // Retrocompatibilidade: sem turno vinculado e turno ainda aberto → inclui no turno ativo
-        if (!p.turno_caixa_id && !dataFechamento) return true;
-        return false;
+        return p.turno_caixa_id === turno.id;
       });
       setVendasFinalizadas(vendasTurno);
 
