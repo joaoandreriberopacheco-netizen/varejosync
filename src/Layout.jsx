@@ -158,8 +158,9 @@ export default function Layout({ children, currentPageName }) {
         icon: DollarSign,
         submenu: [
           { name: 'Caixas Ativos', page: 'CaixasAtivos' },
-        ],
-        roles: ['Operador de Caixa']
+          { name: 'Turnos Fechados', page: 'TurnosFechados' },
+          ],
+          roles: ['Operador de Caixa']
       },
       { 
         name: 'Vendas', 
