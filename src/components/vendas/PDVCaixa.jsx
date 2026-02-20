@@ -903,80 +903,79 @@ export default function PDVCaixa() {
 
       // Para Recolhimento de Caixa, buscar Caixa Geral
       if (tipoMovimento === 'Recolhimento de Caixa') {
-        const todasContas = await base44.entities.ContasFinanceiras.list();
-        const caixaGeral = todasContas.find(c => c.is_caixa_geral);
-        
-        if (!caixaGeral) {
-          toast({
-            title: "Caixa Geral não encontrado",
-            description: "Crie uma conta 'Caixa Geral' nas configurações.",
-            variant: "destructive"
-          });
-          return;
-        }
+      const todasContas = await base44.entities.ContasFinanceiras.list();
+      const caixaGeral = todasContas.find(c => c.is_caixa_geral);
 
-        // Criar movimento de saída do Caixa PDV
-        const movimento = await base44.entities.MovimentosCaixa.create({
-          numero: numeroMovimento,
-          tipo: tipoMovimento,
-          valor: valorFloat,
-          observacao: `Transferência para ${caixaGeral.nome}. ${observacaoMovimento}`,
-          conta_id: contaCaixaPDV.id,
-          turno_caixa_id: turnoAtivo?.id,
-          usuario_responsavel_id: currentUser.id,
-          usuario_responsavel_nome: currentUser.full_name
+      if (!caixaGeral) {
+        toast({
+          title: "Caixa Geral não encontrado",
+          description: "Crie uma conta 'Caixa Geral' nas configurações.",
+          variant: "destructive"
         });
+        return;
+      }
 
-        // Atualizar turno com movimento
-        if (turnoAtivo) {
-          await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-            movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-          });
-        }
+      // Criar movimento de saída do Caixa PDV
+      const movimento = await base44.entities.MovimentosCaixa.create({
+        numero: numeroMovimento,
+        tipo: tipoMovimento,
+        valor: valorFloat,
+        observacao: `Transferência para ${caixaGeral.nome}${observacaoMovimento ? '. ' + observacaoMovimento : ''}`,
+        conta_id: contaCaixaPDV.id,
+        turno_caixa_id: turnoAtivo?.id,
+        usuario_responsavel_id: currentUser.id,
+        usuario_responsavel_nome: currentUser.full_name
+      });
 
-        // Atualizar saldos
-        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
-          saldo_atual: contaCaixaPDV.saldo_atual - valorFloat
+      // Atualizar turno com movimento
+      if (turnoAtivo) {
+        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
         });
-        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
-          saldo_atual: caixaGeral.saldo_atual + valorFloat
-        });
+      }
 
-        setContaCaixaPDV(prev => ({ ...prev, saldo_atual: prev.saldo_atual - valorFloat }));
+      // Atualizar saldos
+      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
+        saldo_atual: contaCaixaPDV.saldo_atual - valorFloat
+      });
+      await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
+        saldo_atual: caixaGeral.saldo_atual + valorFloat
+      });
+
+      setContaCaixaPDV(prev => ({ ...prev, saldo_atual: prev.saldo_atual - valorFloat }));
+      setMovimentoCriado(movimento);
       } else {
-        // Reforço
-        const movimento = await base44.entities.MovimentosCaixa.create({
-          numero: numeroMovimento,
-          tipo: tipoMovimento,
-          valor: valorFloat,
-          observacao: observacaoMovimento,
-          conta_id: contaCaixaPDV.id,
-          turno_caixa_id: turnoAtivo?.id,
-          usuario_responsavel_id: currentUser.id,
-          usuario_responsavel_nome: currentUser.full_name
+      // Reforço
+      const movimento = await base44.entities.MovimentosCaixa.create({
+        numero: numeroMovimento,
+        tipo: tipoMovimento,
+        valor: valorFloat,
+        observacao: observacaoMovimento,
+        conta_id: contaCaixaPDV.id,
+        turno_caixa_id: turnoAtivo?.id,
+        usuario_responsavel_id: currentUser.id,
+        usuario_responsavel_nome: currentUser.full_name
+      });
+
+      const novoSaldo = contaCaixaPDV.saldo_atual + valorFloat;
+
+      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
+        saldo_atual: novoSaldo
+      });
+
+      setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
+      setMovimentoCriado(movimento);
+
+      // Atualizar turno com movimento
+      if (turnoAtivo) {
+        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
         });
-
-        const novoSaldo = contaCaixaPDV.saldo_atual + valorFloat;
-
-        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
-          saldo_atual: novoSaldo
-        });
-
-        setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
-        setMovimentoCriado(movimento);
-
-        // Atualizar turno com movimento
-        if (turnoAtivo) {
-          await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-            movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
-          });
-        }
+      }
       }
 
       setShowMovimentoDialog(false);
-      if (tipoMovimento !== 'Recolhimento de Caixa') {
-        setShowComprovanteMovimento(true);
-      }
+      setShowComprovanteMovimento(true);
 
       toast({
         title: `✓ ${tipoMovimento} registrado!`,
