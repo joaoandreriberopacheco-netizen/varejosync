@@ -65,6 +65,7 @@ import DiscriminarVolumes from './pages/DiscriminarVolumes';
 import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
 import EstimativaEmbalagensIA from './pages/EstimativaEmbalagensIA';
 import Estoque from './pages/Estoque';
+import ExclusaoDocumentos from './pages/ExclusaoDocumentos';
 import Expedicao from './pages/Expedicao';
 import ExtratoConta from './pages/ExtratoConta';
 import Financeiro from './pages/Financeiro';
@@ -93,7 +94,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import ExclusaoDocumentos from './pages/ExclusaoDocumentos';
 import __Layout from './Layout.jsx';
 
 
@@ -116,6 +116,7 @@ export const PAGES = {
     "EdicaoMassivaCustos": EdicaoMassivaCustos,
     "EstimativaEmbalagensIA": EstimativaEmbalagensIA,
     "Estoque": Estoque,
+    "ExclusaoDocumentos": ExclusaoDocumentos,
     "Expedicao": Expedicao,
     "ExtratoConta": ExtratoConta,
     "Financeiro": Financeiro,
@@ -144,7 +145,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "ExclusaoDocumentos": ExclusaoDocumentos,
 }
 
 export const pagesConfig = {

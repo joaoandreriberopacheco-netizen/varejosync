@@ -25,7 +25,11 @@ import {
   Warehouse,
   BookOpen,
   WifiOff,
-  Search
+  Search,
+  MoreVertical,
+  Download,
+  Trash2,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
