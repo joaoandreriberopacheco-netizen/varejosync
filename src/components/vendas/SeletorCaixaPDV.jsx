@@ -22,12 +22,9 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
 
   const loadCaixas = async () => {
     try {
-      const [todasContas, todosTurnos, todosPedidos, todasMovimentacoes, todasDespesas] = await Promise.all([
+      const [todasContas, todosTurnos] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
-        base44.entities.TurnoCaixa.list(),
-        base44.entities.PedidoVenda.list(),
-        base44.entities.MovimentosCaixa.list(),
-        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
+        base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
       ]);
 
       const caixasPDV = todasContas.filter(c => 
@@ -35,42 +32,21 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
         (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
       );
 
-      // Calcular liquidez atual por caixa (turno aberto)
-      // Liquidez = Saldo Inicial + Vendas + Reforços − Recolhimentos − Despesas
+      // SELO FRIO: o seletor confia nos dados do turno — não recalcula nada.
+      // Os totais corretos já estão gravados no TurnoCaixa pelo PDVCaixa.
       const liquidez = {};
       caixasPDV.forEach(caixa => {
-      const turnoAberto = todosTurnos.find(t => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixa.id);
-      if (turnoAberto) {
-      const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-      const dataAbertura = new Date(turnoAberto.data_abertura);
-      const vendasTurno = todosPedidos.filter(p => {
-        if (!statusOk.includes(p.status)) return false;
-        if (p.turno_caixa_id === turnoAberto.id) return true;
-        if ((turnoAberto.vendas_ids || []).includes(p.id)) return true;
-        // Retrocompatibilidade: sem turno vinculado e turno ainda aberto
-        if (!p.turno_caixa_id) return true;
-        return false;
-      });
-      const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
-      const reforcos = todasMovimentacoes
-        .filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço')
-        .reduce((s, m) => s + (m.valor || 0), 0);
-      const sangrias = todasMovimentacoes
-        .filter(m => m.turno_caixa_id === turnoAberto.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
-        .reduce((s, m) => s + (m.valor || 0), 0);
-      const despesas = todasDespesas
-        .filter(d => d.turno_caixa_id === turnoAberto.id)
-        .reduce((s, d) => s + (d.valor || 0), 0);
-      const saldoIni = turnoAberto.saldo_inicial || 0;
-      liquidez[caixa.id] = {
-        turnoAberto: true,
-        totalVendas,
-        saldoInicial: saldoIni,
-        liquidez: saldoIni + totalVendas + reforcos - sangrias - despesas,
-      };
-      } else {
-      liquidez[caixa.id] = { turnoAberto: false };
-      }
+        const turnoAberto = todosTurnos.find(t => t.conta_caixa_pdv_id === caixa.id);
+        if (turnoAberto) {
+          liquidez[caixa.id] = {
+            turnoAberto: true,
+            saldoInicial: turnoAberto.saldo_inicial || 0,
+            totalVendas: turnoAberto.total_vendas || 0,
+            liquidez: (turnoAberto.saldo_inicial || 0) + (turnoAberto.total_vendas || 0) + (turnoAberto.total_reforcos || 0) - (turnoAberto.total_sangrias || 0) - (turnoAberto.total_despesas || 0),
+          };
+        } else {
+          liquidez[caixa.id] = { turnoAberto: false };
+        }
       });
       setLiquidezPorCaixa(liquidez);
 
