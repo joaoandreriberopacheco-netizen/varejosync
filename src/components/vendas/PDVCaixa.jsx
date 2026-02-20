@@ -1973,6 +1973,90 @@ export default function PDVCaixa() {
                       }
                       </div>
                     </div>
+
+                    {/* Vale Compra */}
+                    <div className={`py-4 rounded-lg transition-colors ${formaPagamentoAtiva === 4 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}>
+                      <div className="flex items-center justify-between cursor-pointer" onClick={() => { setFormaPagamentoAtiva(4); }}>
+                        <div className="flex items-center gap-3">
+                          <Receipt className="w-5 h-5 text-gray-400" />
+                          <span className="text-base text-gray-700 dark:text-gray-300">Vale Compra</span>
+                        </div>
+                        <input
+                          ref={inputRefs.vale}
+                          type="text"
+                          inputMode="numeric"
+                          value={inputVale}
+                          onChange={() => {}}
+                          onKeyDown={(e) => {
+                            if (valeEncontrado) {
+                              // limit vale to saldo disponível e ao restante
+                              handleInputMascara(e, (v) => {
+                                const num = parseFloat(v.replace(/\./g, '').replace(',', '.')) || 0;
+                                const maxVale = Math.min(valeEncontrado.valor_disponivel || 0, pedidoSelecionado?.valor_total || 0);
+                                const clamped = Math.min(num, maxVale);
+                                setInputVale(formatarValorExibicao(clamped));
+                                setPagamentosVale(clamped);
+                              }, () => {});
+                            }
+                          }}
+                          onFocus={(e) => { e.target.select(); setFormaPagamentoAtiva(4); }}
+                          className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 4 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200'}`}
+                        />
+                      </div>
+                      {/* Busca de vale */}
+                      <div className="mt-2 flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Código do vale (ex: VC-00001)"
+                          value={codigoVale}
+                          onChange={e => setCodigoVale(e.target.value.toUpperCase())}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              setBuscandoVale(true);
+                              setValeEncontrado(null);
+                              const todos = await base44.entities.ValeCompra.list();
+                              const vale = todos.find(v => v.codigo?.toUpperCase() === codigoVale.trim().toUpperCase() && v.status === 'Ativo');
+                              setBuscandoVale(false);
+                              if (!vale) { toast({ title: 'Vale não encontrado ou inativo', variant: 'destructive' }); return; }
+                              setValeEncontrado(vale);
+                              const maxVale = Math.min(vale.valor_disponivel || 0, pedidoSelecionado?.valor_total || 0);
+                              setInputVale(formatarValorExibicao(maxVale));
+                              setPagamentosVale(maxVale);
+                            }
+                          }}
+                          className="flex-1 h-9 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 px-3 text-sm font-mono uppercase focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-white"
+                        />
+                        <button
+                          onClick={async () => {
+                            setBuscandoVale(true);
+                            setValeEncontrado(null);
+                            const todos = await base44.entities.ValeCompra.list();
+                            const vale = todos.find(v => v.codigo?.toUpperCase() === codigoVale.trim().toUpperCase() && v.status === 'Ativo');
+                            setBuscandoVale(false);
+                            if (!vale) { toast({ title: 'Vale não encontrado ou inativo', variant: 'destructive' }); return; }
+                            setValeEncontrado(vale);
+                            const maxVale = Math.min(vale.valor_disponivel || 0, pedidoSelecionado?.valor_total || 0);
+                            setInputVale(formatarValorExibicao(maxVale));
+                            setPagamentosVale(maxVale);
+                          }}
+                          className="h-9 px-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm"
+                          disabled={buscandoVale}>
+                          {buscandoVale ? '...' : 'Buscar'}
+                        </button>
+                      </div>
+                      {valeEncontrado && (
+                        <div className="mt-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg flex justify-between items-center">
+                          <div>
+                            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">{valeEncontrado.codigo}</div>
+                            <div className="text-xs text-emerald-600 dark:text-emerald-400">{valeEncontrado.cliente_nome}</div>
+                          </div>
+                          <div className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                            Saldo: R$ {(valeEncontrado.valor_disponivel || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Resumo */}
