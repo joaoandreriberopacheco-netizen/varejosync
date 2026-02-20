@@ -2907,7 +2907,7 @@ export default function PDVCaixa() {
                 </div>
 
                 {/* Resumo por forma de pagamento — "o que esperar no caixa" */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none print:border print:border-gray-300">
                   <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">O que esperar no caixa</h3>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Baseado nas vendas do turno</p>
