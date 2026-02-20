@@ -451,9 +451,10 @@ export default function PDVCaixa() {
     setTurnoAtivo(turno);
     setModoVisualizacao(somenteLeitura);
     setShowSeletorCaixa(false);
-    // contaCaixaPDV é setado dentro do loadData, mas loadData depende do state
-    // então setamos aqui também para desbloquear os botões imediatamente
     setContaCaixaPDV(caixa);
+    if (turno) {
+      loadData(caixa, turno);
+    }
   };
 
   const handleRetornarParaEdicao = async () => {
