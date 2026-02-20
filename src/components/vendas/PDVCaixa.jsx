@@ -871,12 +871,14 @@ export default function PDVCaixa() {
         tipo: 'Despesa',
         descricao: descricaoDespesa,
         valor: valorFloat,
+        conta_financeira_id: contaCaixaPDV?.id,
+        conta_financeira_nome: contaCaixaPDV?.nome,
         data_vencimento: format(new Date(), 'yyyy-MM-dd'),
         data_pagamento: format(new Date(), 'yyyy-MM-dd'),
         status: 'Pago',
         categoria: categoriaDespesa,
         turno_caixa_id: turnoAtivo?.id,
-        observacoes: `Despesa registrada via PDV Caixa por ${currentUser.full_name}`
+        observacoes: `Despesa registrada via PDV Caixa por ${currentUser?.full_name}`
       });
 
       // Atualizar turno com despesa
@@ -887,7 +889,7 @@ export default function PDVCaixa() {
       }
 
       // Debitar do Caixa PDV
-      const novoSaldo = contaCaixaPDV.saldo_atual - valorFloat;
+      const novoSaldo = (contaCaixaPDV?.saldo_atual || 0) - valorFloat;
       await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
         saldo_atual: novoSaldo
       });
