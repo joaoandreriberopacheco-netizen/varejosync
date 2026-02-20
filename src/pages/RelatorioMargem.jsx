@@ -19,6 +19,7 @@ export default function RelatorioMargemVendas() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilterScreen, setShowFilterScreen] = useState(false);
+  const [groupByCategory, setGroupByCategory] = useState(false);
   const [dateRange, setDateRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date() });
   
   // Filters
