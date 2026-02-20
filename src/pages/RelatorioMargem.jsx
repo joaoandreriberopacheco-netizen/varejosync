@@ -243,6 +243,15 @@ export default function RelatorioMargemVendas() {
 
           {/* Filters */}
           <div className="space-y-3">
+            {/* Data Range */}
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">PERÍODO</label>
+                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+              </div>
+            </div>
+
+            {/* Search and Filters */}
             <div className="flex flex-col md:flex-row gap-2 md:gap-3">
               <div className="flex-1 relative">
                 <Search className="w-4 h-4 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -254,36 +263,62 @@ export default function RelatorioMargemVendas() {
                   className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div className="flex gap-2">
-                <select 
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">Todas categorias</option>
-                  {[...new Set(products.map(p => p.categoria_nome).filter(Boolean))].map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+              <select 
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Todas categorias</option>
+                {[...new Set(products.map(p => p.categoria_nome).filter(Boolean))].map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tags Filter */}
+            {allTags.length > 0 && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">TAGS</label>
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => setSelectedTags(prev => 
+                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                      )}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                        selectedTags.includes(tag)
+                          ? 'bg-blue-500 text-white dark:bg-blue-600'
+                          : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {tag}
+                    </button>
                   ))}
-                </select>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="lucro_total">Lucro (desc)</option>
-                  <option value="margem_percentual">Margem %</option>
-                  <option value="quantidade_vendida">Quantidade</option>
-                  <option value="total_recebido">Receita</option>
-                  <option value="nome">Nome (A-Z)</option>
-                </select>
-                <button 
-                  onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-                  title="Alternar ordem"
-                >
-                  <ArrowUpDown className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-                </button>
+                </div>
               </div>
+            )}
+
+            {/* Sort Options */}
+            <div className="flex gap-2">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="lucro_total">Lucro</option>
+                <option value="margem_percentual">Margem %</option>
+                <option value="quantidade_vendida">Quantidade</option>
+                <option value="total_recebido">Receita</option>
+                <option value="nome">Nome (A-Z)</option>
+              </select>
+              <button 
+                onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                title="Alternar ordem"
+              >
+                <ArrowUpDown className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+              </button>
             </div>
           </div>
         </div>
