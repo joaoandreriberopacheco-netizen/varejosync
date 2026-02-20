@@ -128,6 +128,13 @@ export default function RelatorioMargemVendas() {
       );
     }
 
+    // Filter by tags
+    if (selectedTags.length > 0) {
+      sorted = sorted.filter(item => 
+        item.tags && selectedTags.some(tag => item.tags.includes(tag))
+      );
+    }
+
     // Sort data
     sorted.sort((a, b) => {
       const aVal = a[sortBy] || 0;
@@ -136,7 +143,7 @@ export default function RelatorioMargemVendas() {
     });
 
     return sorted;
-  }, [sales, products, dateRange, selectedProduct, selectedCategory, searchTerm, sortBy, sortOrder]);
+  }, [sales, products, dateRange, selectedProduct, selectedCategory, searchTerm, sortBy, sortOrder, selectedTags]);
 
   const totals = useMemo(() => {
     return processedData.reduce((acc, item) => ({
