@@ -501,6 +501,42 @@ export default function Layout({ children, currentPageName }) {
             })}
           </nav>
 
+          {/* More Menu - 3 Pontinhos */}
+          {(isOpen || isMobile) && (
+            <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0 p-2">
+              <DropdownMenu open={showMoreMenu} onOpenChange={setShowMoreMenu}>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">
+                    <MoreVertical className="w-4 h-4" />
+                    <span className="text-sm flex-1 text-left">Mais</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
+                  <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    <Download className="w-4 h-4 mr-2" />
+                    <span>Guardar/Exportar</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    <span>Excluir Documentos</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    <HelpCircle className="w-4 h-4 mr-2" />
+                    <span>Ajuda (IA)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => window.location.href = createPageUrl('Configuracoes')}
+                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+
           {/* User Profile */}
           <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
             {currentUser && (isOpen || isMobile) && (
