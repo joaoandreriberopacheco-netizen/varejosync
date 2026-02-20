@@ -1570,6 +1570,14 @@ export default function PDVCaixa() {
                 <Wallet className="w-5 h-5" />
                 <span className="text-xs">Movimentos</span>
                 </TabsTrigger>
+                {/* Botão Fechar Caixa - só ativo na aba balanço */}
+                <button
+                  onClick={() => { if (activeTab === 'balanco' && !modoVisualizacao) setShowFechamentoDialog(true); }}
+                  className={`flex flex-col items-center justify-center gap-1 h-full rounded-none border-0 transition-colors ${activeTab === 'balanco' && !modoVisualizacao ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
+                >
+                  <Lock className="w-5 h-5" />
+                  <span className="text-xs">Fechar</span>
+                </button>
                 </TabsList>
                 </Tabs>
                 </div>
