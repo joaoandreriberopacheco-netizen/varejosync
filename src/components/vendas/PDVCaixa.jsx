@@ -863,7 +863,7 @@ export default function PDVCaixa() {
   };
 
   const handleSalvarMovimento = async () => {
-    if (!valorMovimento || parseFloat(valorMovimento.replace(',', '.')) <= 0) {
+    if (!valorMovimento || parseFloat(valorMovimento.replace(/\./g, '').replace(',', '.')) <= 0) {
       toast({
         title: "Valor inválido",
         description: "Informe um valor maior que zero.",
