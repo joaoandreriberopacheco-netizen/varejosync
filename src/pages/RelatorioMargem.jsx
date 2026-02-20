@@ -384,9 +384,9 @@ export default function RelatorioMargemVendas() {
             </div>
             
             {/* Filter Buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap overflow-visible">
               {/* Date Picker */}
-              <div className="relative">
+              <div className="relative z-50">
                 <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
                   className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
@@ -395,13 +395,11 @@ export default function RelatorioMargemVendas() {
                   <Calendar className="w-4 h-4" />
                 </button>
                 {showDatePicker && (
-                  <div className="absolute left-0 top-full mt-2 z-50 overflow-visible">
-                    <CalendarPopup
-                      dateRange={dateRange}
-                      setDateRange={setDateRange}
-                      onClose={() => setShowDatePicker(false)}
-                    />
-                  </div>
+                  <CalendarPopup
+                    dateRange={dateRange}
+                    setDateRange={setDateRange}
+                    onClose={() => setShowDatePicker(false)}
+                  />
                 )}
               </div>
               
