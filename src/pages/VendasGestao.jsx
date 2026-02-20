@@ -211,10 +211,26 @@ export default function VendasGestaoPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header Ultra Minimalista */}
       <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-1">Gestão de Vendas</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Orçamentos, Pedidos e Acompanhamento de Vendas
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-1">Gestão de Vendas</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Orçamentos, Pedidos e Acompanhamento de Vendas</p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => setShowDevolucao(true)}>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Devolução</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => setShowTroca(true)}>
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Troca</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => setShowAlterarPagamento(true)}>
+              <CreditCard className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Alt. Pagamento</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* KPIs - Estilo Dashboard com Ícones */}
