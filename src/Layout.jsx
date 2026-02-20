@@ -190,7 +190,8 @@ export default function Layout({ children, currentPageName }) {
         icon: DollarSign, 
         submenu: [
           { name: 'Caixas Ativos', page: 'CaixasAtivos' },
-          { name: 'Gestão Financeira', page: 'FinanceiroModulo' },
+            { name: 'Turnos Fechados', page: 'TurnosFechados' },
+            { name: 'Gestão Financeira', page: 'FinanceiroModulo' },
           { name: 'Formas de Pagamento', page: 'Configuracoes' }
         ],
         roles: ['Admin', 'Gerente', 'Financeiro']
