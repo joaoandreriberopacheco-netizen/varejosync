@@ -35,30 +35,33 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       );
 
       // Calcular liquidez atual por caixa (turno aberto)
+      // Liquidez = Saldo Inicial + Vendas + Reforços − Recolhimentos
       const liquidez = {};
       caixasPDV.forEach(caixa => {
-        const turnoAberto = todosTurnos.find(t => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixa.id);
-        if (turnoAberto) {
-          const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
-          const vendasTurno = todosPedidos.filter(p =>
-            statusOk.includes(p.status) &&
-            (p.turno_caixa_id === turnoAberto.id || (turnoAberto.vendas_ids || []).includes(p.id))
-          );
-          const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
-          const reforcos = todasMovimentacoes
-            .filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço')
-            .reduce((s, m) => s + (m.valor || 0), 0);
-          const sangrias = todasMovimentacoes
-            .filter(m => m.turno_caixa_id === turnoAberto.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
-            .reduce((s, m) => s + (m.valor || 0), 0);
-          liquidez[caixa.id] = {
-            turnoAberto: true,
-            totalVendas,
-            saldoInicial: turnoAberto.saldo_inicial || 0,
-          };
-        } else {
-          liquidez[caixa.id] = { turnoAberto: false };
-        }
+      const turnoAberto = todosTurnos.find(t => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixa.id);
+      if (turnoAberto) {
+      const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
+      const vendasTurno = todosPedidos.filter(p =>
+        statusOk.includes(p.status) &&
+        (p.turno_caixa_id === turnoAberto.id || (turnoAberto.vendas_ids || []).includes(p.id))
+      );
+      const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
+      const reforcos = todasMovimentacoes
+        .filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço')
+        .reduce((s, m) => s + (m.valor || 0), 0);
+      const sangrias = todasMovimentacoes
+        .filter(m => m.turno_caixa_id === turnoAberto.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'))
+        .reduce((s, m) => s + (m.valor || 0), 0);
+      const saldoIni = turnoAberto.saldo_inicial || 0;
+      liquidez[caixa.id] = {
+        turnoAberto: true,
+        totalVendas,
+        saldoInicial: saldoIni,
+        liquidez: saldoIni + totalVendas + reforcos - sangrias,
+      };
+      } else {
+      liquidez[caixa.id] = { turnoAberto: false };
+      }
       });
       setLiquidezPorCaixa(liquidez);
 
