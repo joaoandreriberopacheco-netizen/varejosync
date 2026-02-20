@@ -2938,6 +2938,55 @@ export default function PDVCaixa() {
           </DialogContent>
         </Dialog>
 
+        {/* Dialog de Lista de Despesas */}
+        <Dialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog}>
+          <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
+              <button onClick={() => setShowDespesasDialog(false)} className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
+                <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              </button>
+              <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">Despesas do Turno</h2>
+              <div className="w-10"></div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {(caixaData.despesasLista || []).length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                    <DollarSign className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+                  </div>
+                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhuma despesa registrada</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-w-4xl mx-auto">
+                  {(caixaData.despesasLista || []).map((desp) => (
+                    <div key={desp.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">{desp.descricao}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{desp.categoria} · {desp.created_date ? format(new Date(desp.created_date), 'HH:mm') : ''}</div>
+                        </div>
+                        <div className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">
+                          -{formatValor(desp.valor)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {(caixaData.despesasLista || []).length > 0 && (
+              <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
+                <div className="flex justify-between items-center max-w-4xl mx-auto">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total do Turno</span>
+                  <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">
+                    -{formatValor(caixaData.despesas)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Dialog de Despesa - Estilo PDV fullscreen com steps */}
         <Dialog open={showDespesaDialog} onOpenChange={(open) => { if (!open) { setShowDespesaDialog(false); setDespesaStep('obs'); setValorDespesaNum(''); } }}>
           <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
