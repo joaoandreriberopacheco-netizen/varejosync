@@ -1352,7 +1352,7 @@ export default function PDVCaixa() {
 
                     <button
                       onClick={() => handleAbrirMovimento('Recolhimento de Caixa')}
-                      disabled={!contaCaixaPDV || modoVisualizacao}
+                      disabled={modoVisualizacao}
                       className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
