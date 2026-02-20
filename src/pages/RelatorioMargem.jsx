@@ -349,7 +349,19 @@ export default function RelatorioMargemVendas() {
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
                       <th className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400">CÓDIGO</th>
-                      <th className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400">DESCRIÇÃO</th>
+                      <th 
+                        onClick={() => {
+                          if (sortField === 'nome') {
+                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('nome');
+                            setSortOrder('asc');
+                          }
+                        }}
+                        className="text-left py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                        DESCRIÇÃO {sortField === 'nome' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
                       <th 
                         onClick={() => {
                           if (sortField === 'quantidade_vendida') {
