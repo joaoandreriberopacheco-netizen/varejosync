@@ -371,10 +371,11 @@ export default function PDVCaixa() {
       const caixaAtual = contaAtualizada || caixa;
       setContaCaixaPDV(caixaAtual);
 
-      const [todosPedidos, todosRascunhos, todasMovimentacoes] = await Promise.all([
+      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesas] = await Promise.all([
         base44.entities.PedidoVenda.list(),
         base44.entities.RascunhoPedidoVenda.list(),
-        base44.entities.MovimentosCaixa.list()
+        base44.entities.MovimentosCaixa.list(),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Despesa' })
       ]);
 
       const pedidosAguardandoCaixa = todosPedidos.filter((p) =>
