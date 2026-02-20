@@ -356,8 +356,36 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
         }
       }
 
-      // Se reembolso em dinheiro/pix, criar lançamento financeiro negativo
-      if (formaReembolso === 'Dinheiro' || formaReembolso === 'PIX') {
+      // Se reembolso em Dinheiro, criar AutorizacaoEstorno para o caixa processar
+      if (formaReembolso === 'Dinheiro') {
+        const todosEstornos = await base44.entities.AutorizacaoEstorno.list();
+        const nextEstorno = (todosEstornos.length > 0 ? Math.max(...todosEstornos.map(a => parseInt(a.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
+        const numeroEstorno = `AE-${String(nextEstorno).padStart(5, '0')}`;
+        
+        // Buscar turnos ativos para enviar a autorização
+        const todossTurnos = await base44.entities.TurnoCaixa.list();
+        const turnosAtivos = todossTurnos.filter(t => !t.data_fechamento);
+        
+        // Criar autorização para cada turno ativo
+        for (const turno of turnosAtivos) {
+          await base44.entities.AutorizacaoEstorno.create({
+            numero: numeroEstorno,
+            devolucao_id: numeroDev,
+            devolucao_numero: numeroDev,
+            pedido_origem_numero: pedido.numero,
+            cliente_nome: pedido.cliente_nome,
+            valor_autorizado: totalDevolvido,
+            forma_reembolso: 'Dinheiro',
+            motivo: tipo + (motivo ? ` - ${motivo}` : ''),
+            turno_caixa_destino_id: turno.id,
+            turno_caixa_destino_numero: turno.numero,
+            gerente_aprovador_id: user?.id,
+            gerente_aprovador_nome: user?.full_name,
+            status: 'Pendente',
+          });
+        }
+      } else if (formaReembolso === 'PIX') {
+        // PIX: criar lançamento financeiro imediatamente
         const contas = await base44.entities.ContasFinanceiras.list();
         const caixaGeral = contas.find(c => c.is_caixa_geral) || contas[0];
         if (caixaGeral) {
