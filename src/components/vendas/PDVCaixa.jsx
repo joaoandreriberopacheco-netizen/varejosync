@@ -2492,38 +2492,16 @@ export default function PDVCaixa() {
                       </>
                       )}
                       </div>
-            {/* Resumo consolidado do turno */}
-            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
-              <div className="max-w-4xl mx-auto space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Dinheiro</div>
-                    <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.dinheiro)}</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">PIX</div>
-                    <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.pix)}</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Crédito</div>
-                    <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.credito || 0)}</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Débito</div>
-                    <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.debito || 0)}</div>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
-                  <div>
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Vendas</span>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Saldo esperado em caixa: {formatValor(caixaData.saldoAtual)}</p>
-                  </div>
+            {vendasFinalizadas.length > 0 && (
+              <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
+                <div className="flex justify-between items-center max-w-4xl mx-auto">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total do Turno</span>
                   <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
                     {formatValor(caixaData.totalVendas)}
                   </span>
                 </div>
               </div>
-            </div>
+            )}
           </DialogContent>
         </Dialog>
 
