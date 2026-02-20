@@ -3418,19 +3418,25 @@ export default function PDVCaixa() {
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
                   </div>
 
-                  {/* Vendas - cada uma como linha com valor total + breakdown */}
+                  {/* Vendas - linha principal + sub-linhas por forma de pagamento */}
                   {vendasFinalizadas.length > 0 && vendasFinalizadas.map((v) => {
-                    const dinheiroVenda = (v.pagamentos || []).reduce((s, p) => (p.forma_pagamento || '').toLowerCase() === 'dinheiro' ? s + (p.valor || 0) : s, 0);
-                    const formas = (v.pagamentos || []).map(p => `${p.forma_pagamento} ${formatValor(p.valor)}`).join(' · ');
+                    const pagamentos = (v.pagamentos || []);
+                    const temMultiplos = pagamentos.length > 1;
                     return (
-                      <div key={v.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
-                        <div>
-                          <div className="text-sm text-gray-700 dark:text-gray-300">{v.numero} · {v.cliente_nome}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">
-                            {format(new Date(v.created_date), 'HH:mm')} · {formas}
+                      <div key={v.id} className="border-b border-gray-50 dark:border-gray-700/50">
+                        <div className="px-5 py-2.5 flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{v.numero} · {v.cliente_nome}</div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(v.created_date), 'HH:mm')}{!temMultiplos && pagamentos[0] ? ` · ${pagamentos[0].forma_pagamento} ${formatValor(pagamentos[0].valor)}` : ''}</div>
                           </div>
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex-shrink-0 tabular-nums">+{formatValor(v.valor_total)}</span>
                         </div>
-                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(v.valor_total)}</span>
+                        {temMultiplos && pagamentos.map((p, idx) => (
+                          <div key={idx} className="px-5 py-1 flex justify-between items-center">
+                            <span className="text-xs text-gray-400 dark:text-gray-500 pl-3">↳ {p.forma_pagamento}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{formatValor(p.valor)}</span>
+                          </div>
+                        ))}
                       </div>
                     );
                   })}
