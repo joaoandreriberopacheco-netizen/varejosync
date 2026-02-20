@@ -278,11 +278,6 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
     setProcessando(true);
     try {
       const user = await base44.auth.me();
-      
-      // Buscar turno ativo
-      const todosTurnos = await base44.entities.TurnoCaixa.list();
-      const turnoAtivo = todosTurnos.find(t => t.status === 'Aberto');
-
       const todos = await base44.entities.DevolucaoTroca.list();
       const nextNum = (todos.length > 0 ? Math.max(...todos.map(d => parseInt(d.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroDev = `DT-${String(nextNum).padStart(5, '0')}`;
@@ -321,7 +316,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
       }
 
       // Criar registro de devolução
-      const devolucao = await base44.entities.DevolucaoTroca.create({
+      await base44.entities.DevolucaoTroca.create({
         numero: numeroDev,
         tipo,
         pedido_origem_id: pedido.id,
@@ -337,7 +332,6 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
         operador_id: user?.id,
         operador_nome: user?.full_name,
         status: 'Processada',
-        turno_caixa_id: turnoAtivo?.id,
       });
 
       // Retornar produtos ao estoque
@@ -362,19 +356,10 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
         }
       }
 
-      // Se reembolso em dinheiro/pix, criar lançamento financeiro e impactar turno
+      // Se reembolso em dinheiro/pix, criar lançamento financeiro negativo
       if (formaReembolso === 'Dinheiro' || formaReembolso === 'PIX') {
         const contas = await base44.entities.ContasFinanceiras.list();
-        const caixaAtiva = turnoAtivo ? contas.find(c => c.id === turnoAtivo.conta_caixa_pdv_id) : null;
         const caixaGeral = contas.find(c => c.is_caixa_geral) || contas[0];
-        
-        if (caixaAtiva) {
-          // Debitar do caixa ativo
-          await base44.entities.ContasFinanceiras.update(caixaAtiva.id, {
-            saldo_atual: (caixaAtiva.saldo_atual || 0) - totalDevolvido,
-          });
-        }
-        
         if (caixaGeral) {
           await base44.entities.LancamentoFinanceiro.create({
             tipo: 'Despesa',
@@ -386,23 +371,15 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
             data_pagamento: format(new Date(), 'yyyy-MM-dd'),
             status: 'Pago',
             categoria: 'Outros',
-            referencia_tipo: 'DevolucaoTroca',
-            referencia_id: devolucao.id,
-            referencia_numero: numeroDev,
-            turno_caixa_id: turnoAtivo?.id,
+            referencia_tipo: 'PedidoVenda',
+            referencia_id: pedido.id,
+            referencia_numero: pedido.numero,
             observacoes: `Reembolso ${formaReembolso} por ${tipo}`,
           });
           await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
             saldo_atual: (caixaGeral.saldo_atual || 0) - totalDevolvido,
           });
         }
-      }
-      
-      // Atualizar turno ativo com referência à devolução
-      if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          movimentos_ids: [...(turnoAtivo.movimentos_ids || []), devolucao.id]
-        });
       }
 
       setResultado({
