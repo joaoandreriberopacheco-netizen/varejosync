@@ -645,6 +645,11 @@ export default function VendasGestaoPage() {
         </Dialog>
       )}
 
+      {/* Dialogs de operações */}
+      <DevolucaoTrocaDialog open={showDevolucao} onClose={() => setShowDevolucao(false)} tipo="Devolução" />
+      <DevolucaoTrocaDialog open={showTroca} onClose={() => setShowTroca(false)} tipo="Troca" />
+      <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
+
       {/* Dialog de Detalhes */}
       <DetalhesPedidoVenda
         pedido={pedidoDetalhes}
