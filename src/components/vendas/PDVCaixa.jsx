@@ -1339,9 +1339,74 @@ export default function PDVCaixa() {
                 </div>
                 </div>
                 </div>
+
+                   {/* Fechamento inline no balanço */}
+                   {!modoVisualizacao && (() => {
+                     const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                     const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                     const diferenca = totalConferido - caixaData.liquidez;
+                     const temDiferenca = Math.abs(diferenca) > 0.01;
+                     const imprimirRelatorio = () => {
+                       const linhasVendas = vendasFinalizadas.map(v => {
+                         const formas = (v.pagamentos || []).map(p => `${p.forma_pagamento} R$${(p.valor||0).toFixed(2)}`).join(', ');
+                         return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:11px"><span>${v.numero} · ${v.cliente_nome} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${formas}</span><span style="font-weight:600;color:#059669">+R$${(v.valor_total||0).toFixed(2)}</span></div>`;
+                       }).join('');
+                       const pw = window.open('', '_blank', 'width=800,height=900');
+                       pw.document.write(`<html><head><title>Relatório de Fechamento</title><style>body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}.row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}.total{font-size:15px;font-weight:700}.dashed{border-top:1px dashed #aaa;margin:8px 0}</style></head><body>
+                         <div style="text-align:center;margin-bottom:14px"><b style="font-size:16px">VAREJOSYNC</b><br/><span style="color:#9ca3af;font-size:11px">Relatório de Fechamento de Caixa</span></div>
+                         <div class="dashed"></div>
+                         <h2>Turno</h2>
+                         <div class="row"><span>Número:</span><b>${turnoAtivo?.numero}</b></div>
+                         <div class="row"><span>Abertura:</span><span>${turnoAtivo?.data_abertura ? new Date(turnoAtivo.data_abertura).toLocaleString('pt-BR') : '-'}</span></div>
+                         <div class="row"><span>Fechamento:</span><span>${new Date().toLocaleString('pt-BR')}</span></div>
+                         <div class="row"><span>Operador:</span><span>${currentUser?.full_name}</span></div>
+                         <div class="dashed"></div>
+                         <h2>Movimentações</h2>
+                         <div class="row"><span>Saldo Inicial:</span><span>R$ ${(caixaData.saldoInicial||0).toFixed(2)}</span></div>
+                         <div class="row"><span>+ Total Vendas:</span><span>R$ ${(caixaData.totalVendas||0).toFixed(2)}</span></div>
+                         <div class="row"><span>+ Reforços:</span><span>R$ ${(caixaData.reforcos||0).toFixed(2)}</span></div>
+                         <div class="row"><span>− Recolhimentos:</span><span>R$ ${(caixaData.sangrias||0).toFixed(2)}</span></div>
+                         <div class="row"><span>− Despesas:</span><span>R$ ${(caixaData.despesas||0).toFixed(2)}</span></div>
+                         <div class="dashed"></div>
+                         <div class="row total"><span>Liquidez do Turno:</span><span>R$ ${(caixaData.liquidez||0).toFixed(2)}</span></div>
+                         <div class="dashed"></div>
+                         <h2>Recebimentos por Forma</h2>
+                         <div class="row"><span>Dinheiro (gaveta):</span><span>R$ ${(caixaData.saldoAtual||0).toFixed(2)}</span></div>
+                         <div class="row"><span>PIX:</span><span>R$ ${(caixaData.recebimentos?.pix||0).toFixed(2)}</span></div>
+                         <div class="row"><span>Cartão Crédito:</span><span>R$ ${(caixaData.recebimentos?.credito||0).toFixed(2)}</span></div>
+                         <div class="row"><span>Cartão Débito:</span><span>R$ ${(caixaData.recebimentos?.debito||0).toFixed(2)}</span></div>
+                         <div class="dashed"></div>
+                         <h2>Vendas do Turno (${vendasFinalizadas.length})</h2>
+                         ${linhasVendas || '<p style="color:#9ca3af;font-size:11px">Nenhuma venda registrada</p>'}
+                         <div class="dashed"></div>
+                         <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:14px">Não é documento fiscal</p>
+                       </body></html>`);
+                       pw.document.close(); pw.focus();
+                       setTimeout(() => { pw.print(); pw.close(); }, 300);
+                     };
+                     return (
+                       <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
+                         <div className="flex items-center justify-between mb-3">
+                           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Fechamento de Caixa</h3>
+                           {!temDiferenca ? (
+                             <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Valores conferem</span>
+                           ) : (
+                             <span className="text-xs text-red-500 dark:text-red-400">{diferenca > 0 ? 'Sobrando' : 'Faltando'} {formatValor(Math.abs(diferenca))}</span>
+                           )}
+                         </div>
+                         <div className="flex gap-2">
+                           <button onClick={imprimirRelatorio} className="flex-1 h-12 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-medium flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }}>
+                             <Printer className="w-4 h-4" /> Imprimir
+                           </button>
+                           <button onClick={() => setShowFechamentoDialog(true)} className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }}>
+                             <Lock className="w-4 h-4" /> Fechar Caixa
+                           </button>
+                         </div>
+                       </div>
+                     );
+                   })()}
+                </div>
                 </TabsContent>
-
-
 
                 <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
                   <div className="max-w-4xl mx-auto">
