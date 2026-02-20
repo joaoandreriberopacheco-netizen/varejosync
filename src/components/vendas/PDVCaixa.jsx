@@ -2885,10 +2885,16 @@ export default function PDVCaixa() {
                     </div>
                   ))}
 
-                  {/* Saldo esperado em dinheiro */}
-                  <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 flex justify-between items-center">
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Saldo esperado (gaveta)</span>
-                    <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.saldoAtual)}</span>
+                  {/* Totais do turno */}
+                  <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Total do turno (liquidez)</span>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.totalVendas)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">↳ Dinheiro na gaveta</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{formatValor(caixaData.saldoAtual)}</span>
+                    </div>
                   </div>
                 </div>
 
