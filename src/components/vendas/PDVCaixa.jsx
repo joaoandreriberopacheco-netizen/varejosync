@@ -2790,6 +2790,97 @@ export default function PDVCaixa() {
         </Dialog>
 
 
+        {/* Dialog Saldo Consolidado */}
+        <Dialog open={showSaldoConsolidadoDialog} onOpenChange={setShowSaldoConsolidadoDialog}>
+          <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
+              <button
+                onClick={() => setShowSaldoConsolidadoDialog(false)}
+                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                style={{ minWidth: '44px', minHeight: '44px' }}>
+                <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              </button>
+              <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                Saldo Consolidado
+              </h2>
+              <button
+                onClick={() => window.print()}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors print:hidden"
+                style={{ minWidth: '44px', minHeight: '44px' }}>
+                <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="max-w-lg mx-auto space-y-4">
+                {/* Movimentações */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Movimentações do Turno</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Saldo Inicial</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">+ Dinheiro recebido em vendas</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{formatValor(caixaData.recebimentos.dinheiro)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">+ Reforços</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{formatValor(caixaData.reforcos)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">− Recolhimentos</span>
+                      <span className="font-medium text-blue-600 dark:text-blue-400">{formatValor(caixaData.sangrias)}</span>
+                    </div>
+                    <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between">
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">Saldo Esperado (Dinheiro)</span>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.saldoAtual)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recebimentos por forma de pagamento */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Total de Vendas por Forma de Pagamento</h3>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Dinheiro</div>
+                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.dinheiro)}</div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">PIX</div>
+                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.pix)}</div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Crédito</div>
+                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.credito || 0)}</div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Débito</div>
+                      <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.recebimentos.debito || 0)}</div>
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between">
+                    <div>
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">Total de Vendas</span>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        Saldo esperado em caixa (dinheiro): {formatValor(caixaData.saldoAtual)}
+                      </p>
+                    </div>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.totalVendas)}</span>
+                  </div>
+                </div>
+
+                {/* Nota explicativa */}
+                <p className="text-xs text-center text-gray-400 dark:text-gray-500 px-4">
+                  PIX, Crédito e Débito não ficam na gaveta — confira os comprovantes físicos.
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Dialog de Retorno para Edição */}
         <Dialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog}>
           <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
