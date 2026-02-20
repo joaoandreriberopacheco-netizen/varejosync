@@ -27,7 +27,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
   const handleNext = () => setMonth(addMonths(month, 2));
   
   return (
-    <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50 border border-gray-200 dark:border-gray-700 w-80">
+    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 z-50 border border-gray-200 dark:border-gray-700 w-80 min-w-max">
       {/* Navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
