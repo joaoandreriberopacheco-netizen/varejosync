@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import { Download, Filter, Loader2, ArrowLeft } from 'lucide-react';
+import { Download, Filter, Loader2, ArrowLeft, ArrowUpDown, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
