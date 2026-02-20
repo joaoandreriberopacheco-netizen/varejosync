@@ -1878,47 +1878,55 @@ export default function PDVCaixa() {
 
             <div className="flex-1 flex flex-col p-5 gap-4">
               {movimentoStep === 'obs' && (
-                <>
-                  {/* Info da conta */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tipoMovimento === 'Reforço' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
-                        {tipoMovimento === 'Reforço'
-                          ? <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                          : <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">{contaCaixaPDV?.nome}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {tipoMovimento === 'Recolhimento de Caixa' ? 'Valor será transferido para Caixa Geral' : 'Valor será creditado neste caixa'}
-                        </div>
-                      </div>
+              <>
+              {/* Info da conta */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tipoMovimento === 'Reforço' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
+                    {tipoMovimento === 'Reforço'
+                      ? <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      : <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">{contaCaixaPDV?.nome}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {tipoMovimento === 'Recolhimento de Caixa' ? 'Valor será transferido para Caixa Geral' : 'Valor será creditado neste caixa'}
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* Observação */}
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex-1">
-                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Observação (opcional)</label>
-                    <textarea
-                      autoFocus
-                      rows={4}
-                      placeholder="Motivo ou observação..."
-                      value={observacaoMovimento}
-                      onChange={(e) => setObservacaoMovimento(e.target.value)}
-                      className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => {
+              {/* Observação */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex-1">
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Observação (opcional)</label>
+                <textarea
+                  ref={obsMovimentoRef}
+                  autoFocus
+                  rows={4}
+                  placeholder="Motivo ou observação..."
+                  value={observacaoMovimento}
+                  onChange={(e) => setObservacaoMovimento(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
                       setMovimentoStep('valor');
                       setTimeout(() => valorMovimentoRef.current?.focus(), 100);
-                    }}
-                    className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'}`}
-                    style={{ minHeight: '56px' }}>
-                    Próximo →
-                  </button>
-                </>
+                    }
+                  }}
+                  className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  setMovimentoStep('valor');
+                  setTimeout(() => valorMovimentoRef.current?.focus(), 100);
+                }}
+                className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'}`}
+                style={{ minHeight: '56px' }}>
+                Próximo →
+              </button>
+              </>
               )}
 
               {movimentoStep === 'valor' && (
