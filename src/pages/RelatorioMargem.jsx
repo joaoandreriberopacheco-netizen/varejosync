@@ -10,17 +10,18 @@ export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showFilterScreen, setShowFilterScreen] = useState(false);
   const [groupByCategory, setGroupByCategory] = useState(false);
-  const [dateRange, setDateRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date() });
+  const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
   
   // Filters
-  const [selectedProduct, setSelectedProduct] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [tagSearch, setTagSearch] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
   const [sortField, setSortField] = useState('lucro_total');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTagSearch, setShowTagSearch] = useState(false);
   
   useEffect(() => {
     loadData();
