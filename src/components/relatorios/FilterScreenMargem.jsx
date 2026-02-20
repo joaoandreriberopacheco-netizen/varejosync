@@ -79,10 +79,7 @@ export default function FilterScreenMargem({
           {/* Tags */}
           {allTags.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Tag className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <label className="text-lg font-semibold text-gray-900 dark:text-white">Tags</label>
-              </div>
+              <label className="text-lg font-semibold text-gray-900 dark:text-white block mb-4">Tags</label>
 
               {/* Search Input */}
               <div className="mb-4">
@@ -95,10 +92,11 @@ export default function FilterScreenMargem({
                 />
               </div>
 
-              {/* Selected Tags - Horizontal Stack */}
+              {/* Selected Tags */}
               {selectedTags.length > 0 && (
-                <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="flex flex-wrap gap-2 justify-end">
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">SELECIONADAS</p>
+                  <div className="flex flex-wrap gap-2">
                     {selectedTags.map(tag => (
                       <button
                         key={tag}
@@ -114,23 +112,30 @@ export default function FilterScreenMargem({
               )}
 
               {/* Available Tags */}
-              <div className="space-y-2">
-                {filteredTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => {
-                      setSelectedTags(prev => [...prev, tag]);
-                      setTagSearch('');
-                    }}
-                    className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition text-left font-medium"
-                  >
-                    {tag}
-                  </button>
-                ))}
-                {tagSearch && filteredTags.length === 0 && (
-                  <p className="text-center py-4 text-gray-500 dark:text-gray-400">Nenhuma tag encontrada</p>
-                )}
-              </div>
+              {filteredTags.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">DISPONÍVEIS</p>
+                  <div className="flex flex-wrap gap-2">
+                    {filteredTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => setSelectedTags(prev => [...prev, tag])}
+                        className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition text-sm font-medium"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {tagSearch && filteredTags.length === 0 && (
+                <p className="text-center py-6 text-gray-500 dark:text-gray-400">Nenhuma tag encontrada</p>
+              )}
+
+              {!tagSearch && filteredTags.length === 0 && selectedTags.length === allTags.length && (
+                <p className="text-center py-6 text-gray-500 dark:text-gray-400">Todas as tags selecionadas</p>
+              )}
             </div>
           )}
 
