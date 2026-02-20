@@ -321,7 +321,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
       }
 
       // Criar registro de devolução
-      await base44.entities.DevolucaoTroca.create({
+      const devolucao = await base44.entities.DevolucaoTroca.create({
         numero: numeroDev,
         tipo,
         pedido_origem_id: pedido.id,
@@ -337,6 +337,7 @@ export default function DevolucaoTrocaDialog({ open, onClose, tipo = 'Devoluçã
         operador_id: user?.id,
         operador_nome: user?.full_name,
         status: 'Processada',
+        turno_caixa_id: turnoAtivo?.id,
       });
 
       // Retornar produtos ao estoque
