@@ -1184,10 +1184,6 @@ export default function PDVCaixa() {
                       <Wallet className="w-4 h-4" />
                       <span className="text-sm">Movimentos</span>
                     </TabsTrigger>
-                    <TabsTrigger value="fechar" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
-                      <Lock className="w-4 h-4" />
-                      <span className="text-sm">Fechar</span>
-                    </TabsTrigger>
                   </TabsList>
                 </div>
 
