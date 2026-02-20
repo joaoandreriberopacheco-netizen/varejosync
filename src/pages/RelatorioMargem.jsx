@@ -97,7 +97,7 @@ export default function RelatorioMargemVendas() {
       });
     });
 
-    return Object.values(reportMap).map(item => {
+    let sorted = Object.values(reportMap).map(item => {
       const custo_total = item.custo_unitario_cadastro * item.quantidade_vendida;
       const lucro_total = item.total_recebido - custo_total;
       const valor_unitario_medio = item.total_recebido / item.quantidade_vendida;
@@ -115,7 +115,25 @@ export default function RelatorioMargemVendas() {
         lucro_marginal
       };
     });
-  }, [sales, products, dateRange, selectedProduct, selectedCategory]);
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      sorted = sorted.filter(item => 
+        item.nome.toLowerCase().includes(term) || 
+        item.codigo_interno.toLowerCase().includes(term)
+      );
+    }
+
+    // Sort data
+    sorted.sort((a, b) => {
+      const aVal = a[sortBy] || 0;
+      const bVal = b[sortBy] || 0;
+      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+
+    return sorted;
+  }, [sales, products, dateRange, selectedProduct, selectedCategory, searchTerm, sortBy, sortOrder]);
 
   const totals = useMemo(() => {
     return processedData.reduce((acc, item) => ({
