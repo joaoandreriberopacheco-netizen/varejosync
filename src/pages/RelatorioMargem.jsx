@@ -186,7 +186,6 @@ export default function RelatorioMargemVendas() {
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     let yPos = 10;
     
-    // Title
     pdf.setFontSize(16);
     pdf.text('Relatório de Margem de Vendas', 10, 5);
     pdf.setFontSize(10);
@@ -197,6 +196,16 @@ export default function RelatorioMargemVendas() {
     
     pdf.save('relatorio_margem.pdf');
   };
+
+  const allTags = React.useMemo(() => {
+    const tags = new Set();
+    products.forEach(p => {
+      if (p.tags && Array.isArray(p.tags)) {
+        p.tags.forEach(tag => tags.add(tag));
+      }
+    });
+    return Array.from(tags).sort();
+  }, [products]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
