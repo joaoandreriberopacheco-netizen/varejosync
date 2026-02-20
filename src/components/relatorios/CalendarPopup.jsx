@@ -38,7 +38,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
     const cells = [];
     
     for (let i = 0; i < firstDay; i++) {
-      cells.push(<div key={`empty-${i}`} />);
+      cells.push(<div key={`empty-${i}`} className="w-9 h-9" />);
     }
     
     days.forEach(day => {
@@ -50,7 +50,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
         <button
           key={day.toString()}
           onClick={() => handleSelectDate(day)}
-          className={`p-2 text-sm font-medium rounded transition ${
+          className={`w-9 h-9 text-xs font-medium rounded transition flex items-center justify-center ${
             isStartDay || isEndDay
               ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
               : inRange
@@ -87,8 +87,8 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
           
           <div className="grid grid-cols-7 gap-1 mb-2">
             {weekDays.map(day => (
-              <div key={day} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center py-1 w-8">
-                {day}
+              <div key={day} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center py-1 w-9 h-6">
+                {day.substring(0, 1)}
               </div>
             ))}
           </div>
@@ -115,8 +115,8 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
           
           <div className="grid grid-cols-7 gap-1 mb-2">
             {weekDays.map(day => (
-              <div key={day} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center py-1 w-8">
-                {day}
+              <div key={day} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center py-1 w-9 h-6">
+                {day.substring(0, 1)}
               </div>
             ))}
           </div>
