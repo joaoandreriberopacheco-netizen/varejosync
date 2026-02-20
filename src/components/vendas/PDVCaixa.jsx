@@ -375,11 +375,26 @@ export default function PDVCaixa() {
       setPedidosAguardando(pedidosAguardandoCaixa);
       setRascunhosAguardando(rascunhosAguardandoCaixa);
 
-      // Filtrar vendas do turno ativo
-      const vendasTurno = todosPedidos.filter((p) =>
-        (p.status === 'Financeiro OK' || p.status === 'Pedido Concluído' || p.status === 'Em Separação' || p.status === 'Em Rota de Entrega') &&
-        p.turno_caixa_id === turno.id
-      );
+      // Filtrar vendas do turno ativo:
+      // 1. Vinculadas pelo turno_caixa_id, OU
+      // 2. Listadas em vendas_ids do turno, OU
+      // 3. Criadas após a abertura do turno sem turno vinculado (retrocompatibilidade)
+      const dataAbertura = new Date(turno.data_abertura);
+      const dataFechamento = turno.data_fechamento ? new Date(turno.data_fechamento) : null;
+      const statusOk = ['Financeiro OK', 'Pedido Concluído', 'Em Separação', 'Em Rota de Entrega'];
+      const vendasTurno = todosPedidos.filter((p) => {
+        if (!statusOk.includes(p.status)) return false;
+        // Vinculada diretamente ao turno
+        if (p.turno_caixa_id === turno.id) return true;
+        // Listada no array vendas_ids do turno
+        if (turno.vendas_ids && turno.vendas_ids.includes(p.id)) return true;
+        // Retrocompatibilidade: sem turno vinculado, criada após abertura (e antes do fechamento se houver)
+        if (!p.turno_caixa_id) {
+          const criada = new Date(p.created_date);
+          if (criada >= dataAbertura && (!dataFechamento || criada <= dataFechamento)) return true;
+        }
+        return false;
+      });
       setVendasFinalizadas(vendasTurno);
 
       // Filtrar movimentos do turno ativo
