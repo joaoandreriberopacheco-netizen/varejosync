@@ -2840,25 +2840,25 @@ export default function PDVCaixa() {
                   {/* Saldo Inicial */}
                   <div className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
                     <div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300">Saldo inicial</div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500">Fundo de caixa</div>
+                      <div className="text-sm text-gray-700 dark:text-gray-300">Fundo de caixa (dinheiro)</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">Abertura do turno</div>
                     </div>
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
                   </div>
 
-                  {/* Vendas - cada uma como linha */}
+                  {/* Vendas - cada uma como linha com valor total + breakdown */}
                   {vendasFinalizadas.length > 0 && vendasFinalizadas.map((v) => {
                     const dinheiroVenda = (v.pagamentos || []).reduce((s, p) => (p.forma_pagamento || '').toLowerCase() === 'dinheiro' ? s + (p.valor || 0) : s, 0);
+                    const formas = (v.pagamentos || []).map(p => `${p.forma_pagamento} ${formatValor(p.valor)}`).join(' · ');
                     return (
                       <div key={v.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
                         <div>
-                          <div className="text-sm text-gray-700 dark:text-gray-300">{v.numero}</div>
+                          <div className="text-sm text-gray-700 dark:text-gray-300">{v.numero} · {v.cliente_nome}</div>
                           <div className="text-xs text-gray-400 dark:text-gray-500">
-                            {format(new Date(v.created_date), 'HH:mm')} · {v.cliente_nome}
-                            {dinheiroVenda < v.valor_total && <span className="ml-1 text-gray-400">(dinheiro: {formatValor(dinheiroVenda)})</span>}
+                            {format(new Date(v.created_date), 'HH:mm')} · {formas}
                           </div>
                         </div>
-                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(dinheiroVenda)}</span>
+                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(v.valor_total)}</span>
                       </div>
                     );
                   })}
