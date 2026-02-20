@@ -2834,10 +2834,10 @@ export default function PDVCaixa() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-lg mx-auto space-y-3">
+              <div id="saldo-consolidado-print" className="max-w-lg mx-auto space-y-3">
 
                 {/* Extrato corrido */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm print:shadow-none print:rounded-none">
                   <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Extrato do Turno</h3>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
