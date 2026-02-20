@@ -341,10 +341,11 @@ export default function PDVCaixa() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, valorRestante, pedidosAguardando]); // Updated telaAtual to view
 
-  // Auto-preencher apenas uma vez ao carregar
+  // Auto-preencher saldo em dinheiro esperado (saldoAtual = fundo + dinheiro vendas + reforços − recolhimentos)
   useEffect(() => {
-    if (caixaData.recebimentos.dinheiro >= 0 && !recebimentosDinheiro) {
-      setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
+    // Sempre sincronizar com o valor esperado em caixa
+    if (caixaData.saldoAtual >= 0) {
+      setRecebimentosDinheiro(formatarValorExibicao(caixaData.saldoAtual));
     }
   }, [caixaData.saldoAtual]);
 
