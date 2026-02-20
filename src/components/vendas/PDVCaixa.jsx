@@ -2259,13 +2259,13 @@ export default function PDVCaixa() {
                 const creditoNum = parseFloat(recebimentosCredito.replace(/\./g, '').replace(',', '.')) || 0;
                 const debitoNum = parseFloat(recebimentosDebito.replace(/\./g, '').replace(',', '.')) || 0;
                 const totalRecebimentos = dinheiroNum + pixNum + creditoNum + debitoNum;
-                const diferenca = totalRecebimentos - caixaData.saldoAtual;
-                const temDiferenca = Math.abs(diferenca) > 0.01;
-                
-                return (
-                  <div className="space-y-3">
-                    {/* Indicador de Saldo */}
-                    <div className={`p-4 rounded-lg border-2 ${!temDiferenca ? 'bg-emerald-50 border-emerald-500 dark:bg-emerald-900/20 dark:border-emerald-500' : (diferenca > 0 ? 'bg-yellow-50 border-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-400' : 'bg-red-50 border-red-500 dark:bg-red-900/20 dark:border-red-500')}`}>
+                const diferenca = totalRecebimentos - caixaData.liquidez;
+                     const temDiferenca = Math.abs(diferenca) > 0.01;
+
+                     return (
+                       <div className="space-y-3">
+                         {/* Indicador de Saldo */}
+                         <div className={`p-4 rounded-lg border-2 ${!temDiferenca ? 'bg-emerald-50 border-emerald-500 dark:bg-emerald-900/20 dark:border-emerald-500' : (diferenca > 0 ? 'bg-yellow-50 border-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-400' : 'bg-red-50 border-red-500 dark:bg-red-900/20 dark:border-red-500')}`}>
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Status do Saldo</div>
