@@ -142,11 +142,14 @@ export default function PDVCaixa() {
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
     saldoAtual: 0,
+    liquidez: 0,
     totalVendas: 0,
+    saldoInicial: 0,
     recebimentos: {
       dinheiro: 0,
       pix: 0,
-      cartao: 0
+      credito: 0,
+      debito: 0
     },
     reforcos: 0,
     sangrias: 0
