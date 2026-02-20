@@ -1336,8 +1336,8 @@ export default function PDVCaixa() {
                 <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
                   <div className="max-w-4xl mx-auto space-y-3">
                     <button
-                      onClick={() => handleAbrirMovimento('Reforço')}
-                      disabled={!contaCaixaPDV || modoVisualizacao}
+                     onClick={() => handleAbrirMovimento('Reforço')}
+                     disabled={modoVisualizacao}
                       className="w-full h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-sm flex items-center justify-between px-5 disabled:opacity-40">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
