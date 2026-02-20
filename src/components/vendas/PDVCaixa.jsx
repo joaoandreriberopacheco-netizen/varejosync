@@ -1609,7 +1609,56 @@ export default function PDVCaixa() {
                 </TabsTrigger>
                 {/* Botão Fechar Caixa - só ativo na aba balanço */}
                 <button
-                  onClick={() => { if (activeTab === 'balanco' && !modoVisualizacao) setShowFechamentoDialog(true); }}
+                  disabled={activeTab !== 'balanco' || modoVisualizacao}
+                  onClick={async () => {
+                    const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                    const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                    const diferenca = totalConferido - caixaData.liquidez;
+                    if (Math.abs(diferenca) > 0.01) {
+                      toast({ title: "Valores não conferem", description: `${diferenca > 0 ? 'Sobrando' : 'Faltando'} ${formatValor(Math.abs(diferenca))}`, variant: "destructive" });
+                      return;
+                    }
+                    try {
+                      await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+                        data_fechamento: new Date().toISOString(),
+                        usuario_fechamento_id: currentUser.id,
+                        usuario_fechamento_nome: currentUser.full_name,
+                        saldo_final: caixaData.saldoAtual,
+                        total_vendas: caixaData.totalVendas,
+                        total_reforcos: caixaData.reforcos,
+                        total_sangrias: caixaData.sangrias,
+                        recebimentos_dinheiro: caixaData.recebimentos.dinheiro,
+                        recebimentos_pix: caixaData.recebimentos.pix,
+                        recebimentos_credito: caixaData.recebimentos.credito || 0,
+                        recebimentos_debito: caixaData.recebimentos.debito || 0,
+                        dinheiro_conferido: dinheiroConferido,
+                        diferenca: diferenca,
+                        status: 'Fechado'
+                      });
+                      const todasContas = await base44.entities.ContasFinanceiras.list();
+                      const caixaGeral = todasContas.find(c => c.is_caixa_geral === true);
+                      if (caixaGeral && dinheiroConferido > 0) {
+                        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: 0 });
+                        await base44.entities.ContasFinanceiras.update(caixaGeral.id, { saldo_atual: caixaGeral.saldo_atual + dinheiroConferido });
+                        await base44.entities.MovimentosCaixa.create({
+                          numero: `MCX-${String(Date.now()).slice(-5)}`,
+                          tipo: 'Sangria',
+                          valor: dinheiroConferido,
+                          observacao: `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${caixaGeral.nome}`,
+                          conta_id: contaCaixaPDV.id,
+                          turno_caixa_id: turnoAtivo.id,
+                          usuario_responsavel_id: currentUser.id,
+                          usuario_responsavel_nome: currentUser.full_name
+                        });
+                      }
+                      toast({ title: "✓ Caixa fechado!", description: "Turno encerrado.", className: "bg-emerald-100 text-emerald-800" });
+                      setShowSeletorCaixa(true);
+                      setTurnoAtivo(null);
+                      setCaixaSelecionado(null);
+                    } catch (error) {
+                      toast({ title: "Erro ao fechar caixa", description: error.message, variant: "destructive" });
+                    }
+                  }}
                   className={`flex flex-col items-center justify-center gap-1 h-full rounded-none border-0 transition-colors ${activeTab === 'balanco' && !modoVisualizacao ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
                 >
                   <Lock className="w-5 h-5" />
