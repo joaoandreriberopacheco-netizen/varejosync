@@ -282,52 +282,58 @@ export default function RelatorioMargemVendas() {
           </div>
         </div>
 
-        <Card>
-          <CardContent className="p-0 overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 dark:bg-gray-800">
-                  <TableHead>Código</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead className="text-right">Qtd.</TableHead>
-                  <TableHead className="text-right">Vl. Médio</TableHead>
-                  <TableHead className="text-right">Total Recebido</TableHead>
-                  <TableHead className="text-right">Custo Unit. (Cad)</TableHead>
-                  <TableHead className="text-right">Custo Total</TableHead>
-                  <TableHead className="text-right">Lucro</TableHead>
-                  <TableHead className="text-right">Margem %</TableHead>
-                  <TableHead className="text-right">Markup %</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {processedData.length > 0 ? (
-                  processedData.map((row) => (
-                    <TableRow key={row.codigo_interno || row.nome} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <TableCell className="text-xs font-mono">{row.codigo_interno}</TableCell>
-                      <TableCell className="font-medium">{row.nome}</TableCell>
-                      <TableCell className="text-xs text-gray-500">{row.categoria}</TableCell>
-                      <TableCell className="text-right">{row.quantidade_vendida}</TableCell>
-                      <TableCell className="text-right">{formatMoney(row.valor_unitario_medio)}</TableCell>
-                      <TableCell className="text-right font-bold">{formatMoney(row.total_recebido)}</TableCell>
-                      <TableCell className="text-right text-gray-500">{formatMoney(row.custo_unitario_cadastro)}</TableCell>
-                      <TableCell className="text-right text-gray-500">{formatMoney(row.custo_total)}</TableCell>
-                      <TableCell className="text-right font-bold text-green-600">{formatMoney(row.lucro_total)}</TableCell>
-                      <TableCell className="text-right">{formatPercent(row.margem_percentual)}</TableCell>
-                      <TableCell className="text-right">{formatPercent(row.markup_percentual)}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={11} className="h-24 text-center">
-                      Nenhum dado encontrado para o período selecionado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* Table */}
+        <div className="bg-white dark:bg-gray-800 mx-4 md:mx-6 mb-6 rounded-lg shadow-sm overflow-hidden" id="relatorio-table">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">CÓDIGO</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">PRODUTO</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400">QTD</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400">V.UNIT</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400">RECEITA</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400">CUSTO</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400">LUCRO</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400">MARGEM%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {processedData.length > 0 ? (
+                      processedData.map((row) => (
+                        <tr key={row.codigo_interno || row.nome} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                          <td className="px-4 py-3 text-xs font-mono text-gray-600 dark:text-gray-400">{row.codigo_interno}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{row.nome}</td>
+                          <td className="px-4 py-3 text-right text-gray-900 dark:text-white">{row.quantidade_vendida}</td>
+                          <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400 text-xs">{formatMoney(row.valor_unitario_medio)}</td>
+                          <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
+                          <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400 text-xs">{formatMoney(row.custo_total)}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
+                          <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="h-24 text-center text-gray-500 dark:text-gray-400">
+                          Nenhum dado encontrado
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-xs text-gray-600 dark:text-gray-400">
+                Total de produtos: {processedData.length}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
