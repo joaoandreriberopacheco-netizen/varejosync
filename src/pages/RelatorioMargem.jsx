@@ -282,21 +282,7 @@ export default function RelatorioMargemVendas() {
     return Array.from(tags).sort();
   }, [products]);
 
-  if (showFilterScreen) {
-    return (
-      <FilterScreenMargem
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        selectedTags={selectedTags}
-        setSelectedTags={setSelectedTags}
-        products={products}
-        allTags={allTags}
-        onClose={() => setShowFilterScreen(false)}
-      />
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
