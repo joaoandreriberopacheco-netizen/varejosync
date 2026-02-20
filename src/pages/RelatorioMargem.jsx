@@ -234,9 +234,9 @@ export default function RelatorioMargemVendas() {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="max-w-full mx-auto">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 md:p-6 sticky top-0 z-10">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3">
+        <div className="p-4 md:p-6 sticky top-0 z-10 bg-white dark:bg-gray-900">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
               <Link to="/Relatorios">
                 <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
                   <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
@@ -247,127 +247,42 @@ export default function RelatorioMargemVendas() {
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Análise de rentabilidade por produto</p>
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200" title="Opções de impressão">
-                  <Printer className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
-                <DropdownMenuItem onClick={exportToPDF} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                  Exportar PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                  Exportar CSV
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowFilterScreen(true)}
+                className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium hover:opacity-90 transition"
+              >
+                Filtros
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200" title="Opções de impressão">
+                    <Printer className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+                  <DropdownMenuItem onClick={exportToPDF} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    Exportar PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    Exportar CSV
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          {/* Filters */}
-          <div className="space-y-4">
-            {/* Data Range */}
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">PERÍODO</label>
-              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-            </div>
-
-            {/* Search Product */}
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">PRODUTO</label>
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">CATEGORIA</label>
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Todas</option>
-                {[...new Set(products.map(p => p.categoria_nome).filter(Boolean))].map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tags Search */}
-            {allTags.length > 0 && (
-              <div>
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">TAGS</label>
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Procurar tags..."
-                      value={tagSearch}
-                      onChange={(e) => setTagSearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  {selectedTags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTags.map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                          className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium flex items-center gap-2 hover:bg-blue-600 transition"
-                        >
-                          {tag}
-                          <X className="w-3 h-3" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="max-h-32 overflow-y-auto space-y-1">
-                    {allTags
-                      .filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(tag))
-                      .map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => setSelectedTags(prev => [...prev, tag])}
-                          className="w-full text-left px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 transition"
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sort Options */}
-            <div className="flex gap-2">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="lucro_total">Lucro</option>
-                <option value="margem_percentual">Margem %</option>
-                <option value="quantidade_vendida">Quantidade</option>
-                <option value="total_recebido">Receita</option>
-                <option value="nome">Nome (A-Z)</option>
-              </select>
-              <button 
-                onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-                className="px-4 py-2.5 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition"
-                title="Alternar ordem"
-              >
-                <ArrowUpDown className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-              </button>
+          {/* Quick Search */}
+          <div className="mt-4">
+            <div className="relative max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Procurar produto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
         </div>
