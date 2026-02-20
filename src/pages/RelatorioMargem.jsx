@@ -242,59 +242,85 @@ export default function RelatorioMargemVendas() {
           </div>
 
           {/* Filters */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Data Range */}
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">PERÍODO</label>
-                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">PERÍODO</label>
+              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+            </div>
+
+            {/* Search Product */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">PRODUTO</label>
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
             </div>
 
-            {/* Search and Filters */}
-            <div className="flex flex-col md:flex-row gap-2 md:gap-3">
-              <div className="flex-1 relative">
-                <Search className="w-4 h-4 absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar produto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            {/* Category Filter */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">CATEGORIA</label>
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">Todas categorias</option>
+                <option value="all">Todas</option>
                 {[...new Set(products.map(p => p.categoria_nome).filter(Boolean))].map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
             </div>
 
-            {/* Tags Filter */}
+            {/* Tags Search */}
             {allTags.length > 0 && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-600 dark:text-gray-400">TAGS</label>
-                <div className="flex flex-wrap gap-2">
-                  {allTags.map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => setSelectedTags(prev => 
-                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-                      )}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                        selectedTags.includes(tag)
-                          ? 'bg-blue-500 text-white dark:bg-blue-600'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
+              <div>
+                <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-2">TAGS</label>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Procurar tags..."
+                      value={tagSearch}
+                      onChange={(e) => setTagSearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTags.map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
+                          className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium flex items-center gap-2 hover:bg-blue-600 transition"
+                        >
+                          {tag}
+                          <X className="w-3 h-3" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {allTags
+                      .filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(tag))
+                      .map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => setSelectedTags(prev => [...prev, tag])}
+                          className="w-full text-left px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 transition"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -304,7 +330,7 @@ export default function RelatorioMargemVendas() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="lucro_total">Lucro</option>
                 <option value="margem_percentual">Margem %</option>
@@ -314,7 +340,7 @@ export default function RelatorioMargemVendas() {
               </select>
               <button 
                 onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                className="px-4 py-2.5 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition"
                 title="Alternar ordem"
               >
                 <ArrowUpDown className="w-4 h-4 text-gray-700 dark:text-gray-200" />
