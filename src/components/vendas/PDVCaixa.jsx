@@ -3505,6 +3505,17 @@ export default function PDVCaixa() {
                     </div>
                   ))}
 
+                  {/* Despesas */}
+                  {(caixaData.despesasLista || []).map((d) => (
+                    <div key={d.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
+                      <div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300">Despesa · {d.descricao}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">{d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''} · {d.categoria}</div>
+                      </div>
+                      <span className="text-sm font-semibold text-red-600 dark:text-red-400">−{formatValor(d.valor)}</span>
+                    </div>
+                  ))}
+
                   {/* Totais do turno */}
                   <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 space-y-2">
                     <div className="flex justify-between items-center">
