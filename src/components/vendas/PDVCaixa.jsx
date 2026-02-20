@@ -1425,7 +1425,8 @@ export default function PDVCaixa() {
                 {(() => {
                   const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                   const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                  const diferenca = totalConferido - caixaData.saldoAtual;
+                  const esperado = caixaData.totalVendas + (caixaData.saldoInicial || 0) + caixaData.reforcos - caixaData.sangrias;
+                  const diferenca = totalConferido - esperado;
                   const temDiferenca = Math.abs(diferenca) > 0.01;
 
                   return (
@@ -1451,7 +1452,7 @@ export default function PDVCaixa() {
                               </span>
                             </div>
                             <p className={`text-xs ${diferenca > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-                              Ajuste o dinheiro na aba Balanço
+                              Ajuste o dinheiro na aba Balanço antes de fechar
                             </p>
                           </div>
                         )}
