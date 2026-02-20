@@ -56,18 +56,14 @@ export default function RelatorioMargemVendas() {
     const reportMap = {};
 
     sales.forEach(sale => {
-      const saleDate = new Date(sale.created_date); // Adjust if needed
+      const saleDate = new Date(sale.created_date);
       if (dateRange?.from && saleDate < dateRange.from) return;
-      if (dateRange?.to && saleDate > new Date(dateRange.to.getTime() + 86400000)) return; // End of day
+      if (dateRange?.to && saleDate > new Date(dateRange.to.getTime() + 86400000)) return;
 
-      sale.itens.forEach(item => {
+      sale.itens?.forEach(item => {
         const prodId = item.produto_id;
         const product = prodMap[prodId];
         if (!product) return;
-
-        // Apply Filters
-        if (selectedProduct !== 'all' && prodId !== selectedProduct) return;
-        if (selectedCategory !== 'all' && product.categoria_nome !== selectedCategory) return;
 
         if (!reportMap[prodId]) {
           reportMap[prodId] = {
