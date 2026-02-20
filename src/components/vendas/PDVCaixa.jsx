@@ -2920,9 +2920,12 @@ export default function PDVCaixa() {
                     </div>
                   ))}
 
-                  <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 flex justify-between items-center">
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Total de vendas</span>
-                    <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.totalVendas)}</span>
+                  <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Total de vendas</span>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(caixaData.totalVendas)}</span>
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Toda liquidez gerada no turno, independente do meio de pagamento</p>
                   </div>
                 </div>
 
