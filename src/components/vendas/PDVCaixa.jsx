@@ -2062,9 +2062,9 @@ export default function PDVCaixa() {
                             setBuscandoVale(true);
                             setValeEncontrado(null);
                             const todos = await base44.entities.ValeCompra.list();
-                            const vale = todos.find(v => v.codigo?.toUpperCase() === codigoVale.trim().toUpperCase() && v.status === 'Ativo');
+                            const vale = todos.find(v => v.codigo?.toUpperCase() === codigoVale.trim().toUpperCase() && ['Ativo', 'Utilizado Parcialmente'].includes(v.status) && (v.valor_disponivel || 0) > 0.01);
                             setBuscandoVale(false);
-                            if (!vale) { toast({ title: 'Vale não encontrado ou inativo', variant: 'destructive' }); return; }
+                            if (!vale) { toast({ title: 'Vale não encontrado, inativo ou sem saldo', variant: 'destructive' }); return; }
                             setValeEncontrado(vale);
                             const maxVale = Math.min(vale.valor_disponivel || 0, pedidoSelecionado?.valor_total || 0);
                             setInputVale(formatarValorExibicao(maxVale));
