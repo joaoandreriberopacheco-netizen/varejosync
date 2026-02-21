@@ -29,7 +29,12 @@ Deno.serve(async (req) => {
   const svc = base44.asServiceRole;
 
   // ── PASSO 1: Buscar rascunho e aplicar selo frio ──────────────────────────
-  const rascunho = await svc.entities.RascunhoPedidoVenda.get(rascunho_id);
+  let rascunho;
+  try {
+    rascunho = await svc.entities.RascunhoPedidoVenda.get(rascunho_id);
+  } catch (_) {
+    rascunho = null;
+  }
 
   if (!rascunho) {
     return Response.json({ error: 'Rascunho não encontrado.' }, { status: 404 });
