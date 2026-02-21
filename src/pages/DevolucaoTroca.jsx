@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, RotateCcw, Printer, CheckCircle2, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Search, Printer, CheckCircle2, Minus, Plus, Camera, X, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
-import { Link } from 'react-router-dom';
 
 // Step 1: Buscar pedido
 function BuscarPedidoStep({ onFound }) {
@@ -31,7 +30,7 @@ function BuscarPedidoStep({ onFound }) {
     }
     const statusOk = ['Financeiro OK', 'Em Separação', 'Em Rota de Entrega', 'Pedido Concluído'];
     if (!statusOk.includes(encontrado.status)) {
-      toast({ title: `Este pedido não pode ser devolvido`, description: `Status: ${encontrado.status}`, variant: 'destructive' });
+      toast({ title: 'Este pedido não pode ser devolvido', description: `Status: ${encontrado.status}`, variant: 'destructive' });
       return;
     }
     onFound(encontrado);
@@ -59,14 +58,18 @@ function BuscarPedidoStep({ onFound }) {
   );
 }
 
-// Step 2: Selecionar itens e forma de reembolso
-function SelecionarItensStep({ pedido, tipo, onConfirm }) {
+// Step 2: Selecionar itens, forma de reembolso, fotos
+function SelecionarItensStep({ pedido, onConfirm }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map(i => [i.produto_id + '_' + i.produto_nome, 0]))
   );
   const [focusedKey, setFocusedKey] = useState(null);
-  const [formaReembolso, setFormaReembolso] = useState('Vale Compra');
+  const [formaReembolso, setFormaReembolso] = useState('Vale Troca');
   const [motivo, setMotivo] = useState('');
+  const [fotos, setFotos] = useState([]); // { file, previewUrl, uploading, url }
+  const [uploadingFotos, setUploadingFotos] = useState(false);
+  const fileInputRef = useRef(null);
+  const { toast } = useToast();
 
   const totalDevolvido = (pedido.itens || []).reduce((sum, i) => {
     const key = i.produto_id + '_' + i.produto_nome;
@@ -80,8 +83,48 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
 
   const formatValor = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+  const handleAdicionarFotos = async (files) => {
+    const novasFotos = Array.from(files).slice(0, 5 - fotos.length);
+    if (novasFotos.length === 0) return;
+
+    const previews = novasFotos.map(file => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      uploading: true,
+      url: null
+    }));
+    setFotos(prev => [...prev, ...previews]);
+    setUploadingFotos(true);
+
+    const uploadadas = await Promise.all(
+      novasFotos.map(async (file, idx) => {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        return { ...previews[idx], uploading: false, url: file_url };
+      })
+    );
+
+    setFotos(prev => {
+      const base = prev.slice(0, prev.length - novasFotos.length);
+      return [...base, ...uploadadas];
+    });
+    setUploadingFotos(false);
+  };
+
+  const removerFoto = (idx) => {
+    setFotos(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleConfirmarClick = () => {
+    if (uploadingFotos) {
+      toast({ title: 'Aguarde o upload das fotos', variant: 'destructive' });
+      return;
+    }
+    const fotosUrls = fotos.filter(f => f.url).map(f => f.url);
+    onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido, fotosUrls });
+  };
+
   return (
-    <div className="flex flex-col gap-4 p-4 max-w-lg mx-auto w-full pb-32">
+    <div className="flex flex-col gap-4 p-4 max-w-lg mx-auto w-full pb-36">
       {/* Cabeçalho do pedido */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-4 shadow-sm">
         <div className="flex justify-between items-center">
@@ -153,7 +196,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="dark:bg-gray-800">
-              <SelectItem value="Vale Compra">Vale Compra (crédito na loja)</SelectItem>
+              <SelectItem value="Vale Troca">Vale Troca (crédito na loja)</SelectItem>
               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
               <SelectItem value="PIX">PIX</SelectItem>
               <SelectItem value="Estorno Cartão">Estorno no Cartão</SelectItem>
@@ -171,6 +214,49 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
         </div>
       </div>
 
+      {/* Fotos da mercadoria */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-5 shadow-sm">
+        <label className="text-sm text-gray-500 dark:text-gray-400 block mb-3">Fotos da mercadoria (opcional)</label>
+        <div className="flex flex-wrap gap-3">
+          {fotos.map((foto, idx) => (
+            <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+              <img src={foto.previewUrl} alt="" className="w-full h-full object-cover" />
+              {foto.uploading && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {!foto.uploading && (
+                <button
+                  onClick={() => removerFoto(idx)}
+                  className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              )}
+            </div>
+          ))}
+          {fotos.length < 5 && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-500 transition-colors flex-shrink-0"
+            >
+              <Camera className="w-5 h-5" />
+              <span className="text-xs">Foto</span>
+            </button>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          capture="environment"
+          onChange={e => handleAdicionarFotos(e.target.files)}
+          className="hidden"
+        />
+      </div>
+
       {/* Total + Botão fixo no rodapé */}
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 p-4 space-y-3 z-10">
         <div className="flex justify-between items-center max-w-lg mx-auto">
@@ -179,10 +265,10 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
         </div>
         <Button
           disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
-          onClick={() => onConfirm({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido })}
+          onClick={handleConfirmarClick}
           className="w-full max-w-lg mx-auto block h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold text-base"
         >
-          Confirmar {tipo}
+          Confirmar Devolução
         </Button>
       </div>
     </div>
@@ -194,12 +280,13 @@ function ComprovanteStep({ resultado, onClose }) {
   const formatValor = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   const imprimir = () => {
-    const w = window.open('', '_blank', 'width=400,height=600');
-    w.document.write(`<html><head><title>Comprovante ${resultado.tipo}</title>
+    const w = window.open('', '_blank', 'width=400,height=650');
+    w.document.write(`<html><head><title>Comprovante de Devolução</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
       .center{text-align:center}.dashed{border-top:2px dashed #aaa;margin:12px 0}.big{font-size:20px;font-weight:bold}.row{display:flex;justify-content:space-between;margin:6px 0}
+      .alert{background:#f0fdf4;border:1px solid #86efac;padding:10px;border-radius:6px;margin:8px 0;text-align:center}
       </style></head><body>
-      <div class="center"><b>VAREJOSYNC</b><br/><small>Comprovante de ${resultado.tipo}</small></div>
+      <div class="center"><b>VAREJOSYNC</b><br/><small>Comprovante de Devolução</small></div>
       <div class="dashed"></div>
       <div class="row"><span>Nº:</span><b>${resultado.numero}</b></div>
       <div class="row"><span>Pedido Origem:</span><b>${resultado.pedidoNumero}</b></div>
@@ -208,7 +295,14 @@ function ComprovanteStep({ resultado, onClose }) {
       <div class="dashed"></div>
       <div class="row big"><span>VALOR:</span><span>-R$ ${(resultado.valorTotal || 0).toFixed(2).replace('.', ',')}</span></div>
       <div class="row"><span>Reembolso:</span><b>${resultado.formaReembolso}</b></div>
-      ${resultado.valeCode ? `<div class="dashed"></div><div class="center"><b>VALE COMPRA: ${resultado.valeCode}</b><br/><small>Apresente este código na próxima compra</small></div>` : ''}
+      ${resultado.valeCode ? `
+        <div class="dashed"></div>
+        <div class="alert">
+          <b>VALE TROCA: ${resultado.valeCode}</b><br/>
+          <small>Saldo: R$ ${(resultado.valorTotal || 0).toFixed(2).replace('.', ',')}</small><br/>
+          <small>Apresente este código na próxima compra</small><br/>
+          <small>O código permanece válido enquanto houver saldo</small>
+        </div>` : ''}
       <div class="dashed"></div>
       ${resultado.motivo ? `<p><small>Motivo: ${resultado.motivo}</small></p>` : ''}
       <div class="center"><small>Não é documento fiscal</small></div>
@@ -226,7 +320,7 @@ function ComprovanteStep({ resultado, onClose }) {
       <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden" style={{ fontFamily: 'Courier New, monospace' }}>
         <div className="px-5 py-4 text-center border-b-2 border-dashed border-gray-200 dark:border-gray-700">
           <div className="text-sm font-bold text-gray-900 dark:text-white">VAREJOSYNC</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">Comprovante de {resultado.tipo}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Comprovante de Devolução</div>
         </div>
         <div className="px-5 py-4 space-y-3">
           {[
@@ -251,13 +345,26 @@ function ComprovanteStep({ resultado, onClose }) {
             <span className="font-semibold text-gray-800 dark:text-gray-200">{resultado.formaReembolso}</span>
           </div>
         </div>
+
         {resultado.valeCode && (
-          <div className="px-5 py-4 bg-emerald-50 dark:bg-emerald-900/20 text-center space-y-1">
-            <p className="text-xs text-emerald-600 dark:text-emerald-400">Vale Compra Gerado</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 font-mono">{resultado.valeCode}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Apresente na próxima compra</p>
+          <div className="px-5 py-4 bg-emerald-50 dark:bg-emerald-900/20 space-y-2">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 text-center font-medium">Vale Troca Gerado</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 font-mono text-center">{resultado.valeCode}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Saldo: {formatValor(resultado.valorTotal)}</p>
+            <div className="bg-emerald-100/60 dark:bg-emerald-900/30 rounded-xl p-3 mt-1">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 text-center leading-relaxed">
+                📌 Se o cliente usar apenas parte do saldo, o mesmo código continuará válido com o saldo restante.
+              </p>
+            </div>
           </div>
         )}
+
+        {resultado.motivo && (
+          <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700">
+            <p className="text-xs text-gray-400">Motivo: {resultado.motivo}</p>
+          </div>
+        )}
+
         <div className="px-5 py-3 text-center">
           <p className="text-xs text-gray-400">Não é documento fiscal</p>
         </div>
@@ -276,9 +383,6 @@ function ComprovanteStep({ resultado, onClose }) {
 }
 
 export default function DevolucaoTrocaPage() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const tipo = urlParams.get('tipo') || 'Devolução';
-
   const [step, setStep] = useState('buscar');
   const [pedido, setPedido] = useState(null);
   const [resultado, setResultado] = useState(null);
@@ -289,151 +393,144 @@ export default function DevolucaoTrocaPage() {
     window.location.href = createPageUrl('VendasGestao');
   };
 
-  const handleConfirm = async ({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido }) => {
+  const handleConfirm = async ({ itensSelecionados, qtds, formaReembolso, motivo, totalDevolvido, fotosUrls }) => {
     setProcessando(true);
-    try {
-      const user = await base44.auth.me();
-      const todos = await base44.entities.DevolucaoTroca.list();
-      const nextNum = (todos.length > 0 ? Math.max(...todos.map(d => parseInt(d.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
-      const numeroDev = `DT-${String(nextNum).padStart(5, '0')}`;
+    const user = await base44.auth.me();
+    const todos = await base44.entities.DevolucaoTroca.list();
+    const nextNum = (todos.length > 0 ? Math.max(...todos.map(d => parseInt(d.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
+    const numeroDev = `DT-${String(nextNum).padStart(5, '0')}`;
 
-      const itensDevolvidos = itensSelecionados.map(item => {
-        const key = item.produto_id + '_' + item.produto_nome;
-        const qtd = qtds[key] || 0;
-        return {
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_devolvida: qtd,
-          preco_unitario: item.preco_unitario_praticado || 0,
-          total: qtd * (item.preco_unitario_praticado || 0),
-        };
-      });
+    const itensDevolvidos = itensSelecionados.map(item => {
+      const key = item.produto_id + '_' + item.produto_nome;
+      const qtd = qtds[key] || 0;
+      return {
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        quantidade_devolvida: qtd,
+        preco_unitario: item.preco_unitario_praticado || 0,
+        total: qtd * (item.preco_unitario_praticado || 0),
+      };
+    });
 
-      let valeId = null;
-      let valeCodigo = null;
-      if (formaReembolso === 'Vale Compra') {
-        const todosVales = await base44.entities.ValeCompra.list();
-        const nextVale = (todosVales.length > 0 ? Math.max(...todosVales.map(v => parseInt(v.codigo?.split('-')[1] || 0) || 0)) : 0) + 1;
-        valeCodigo = `VC-${String(nextVale).padStart(5, '0')}`;
-        const vale = await base44.entities.ValeCompra.create({
-          codigo: valeCodigo,
-          valor_original: totalDevolvido,
-          valor_disponivel: totalDevolvido,
-          cliente_id: pedido.cliente_id,
-          cliente_nome: pedido.cliente_nome,
-          origem_tipo: tipo,
-          pedido_origem_id: pedido.id,
-          pedido_origem_numero: pedido.numero,
-          status: 'Ativo',
-        });
-        valeId = vale.id;
-      }
-
-      await base44.entities.DevolucaoTroca.create({
-        numero: numeroDev,
-        tipo,
-        pedido_origem_id: pedido.id,
-        pedido_origem_numero: pedido.numero,
+    let valeId = null;
+    let valeCodigo = null;
+    if (formaReembolso === 'Vale Troca') {
+      const todosVales = await base44.entities.ValeCompra.list();
+      const nextVale = (todosVales.length > 0 ? Math.max(...todosVales.map(v => parseInt(v.codigo?.split('-')[1] || 0) || 0)) : 0) + 1;
+      valeCodigo = `VC-${String(nextVale).padStart(5, '0')}`;
+      const vale = await base44.entities.ValeCompra.create({
+        codigo: valeCodigo,
+        valor_original: totalDevolvido,
+        valor_disponivel: totalDevolvido,
         cliente_id: pedido.cliente_id,
         cliente_nome: pedido.cliente_nome,
-        itens_devolvidos: itensDevolvidos,
-        valor_total_devolvido: totalDevolvido,
-        forma_reembolso: formaReembolso,
-        vale_compra_id: valeId,
-        vale_compra_codigo: valeCodigo,
-        motivo,
-        operador_id: user?.id,
-        operador_nome: user?.full_name,
-        status: 'Processada',
+        origem_tipo: 'Devolução',
+        pedido_origem_id: pedido.id,
+        pedido_origem_numero: pedido.numero,
+        status: 'Ativo',
       });
-
-      for (const item of itensDevolvidos) {
-        const produto = await base44.entities.Produto.get(item.produto_id);
-        if (produto) {
-          await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: (produto.estoque_atual || 0) + item.quantidade_devolvida,
-          });
-          await base44.entities.MovimentacaoEstoque.create({
-            produto_id: item.produto_id,
-            produto_nome: item.produto_nome,
-            tipo: 'Entrada',
-            motivo: 'Devolução',
-            quantidade: item.quantidade_devolvida,
-            custo_unitario: item.preco_unitario,
-            referencia_tipo: 'PedidoVenda',
-            referencia_id: pedido.id,
-            referencia_numero: pedido.numero,
-            usuario_responsavel: user?.full_name,
-          });
-        }
-      }
-
-      if (formaReembolso === 'Dinheiro') {
-        const todosEstornos = await base44.entities.AutorizacaoEstorno.list();
-        const nextEstorno = (todosEstornos.length > 0 ? Math.max(...todosEstornos.map(a => parseInt(a.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
-        const numeroEstorno = `AE-${String(nextEstorno).padStart(5, '0')}`;
-        const todossTurnos = await base44.entities.TurnoCaixa.list();
-        const turnosAtivos = todossTurnos.filter(t => !t.data_fechamento);
-        for (const turno of turnosAtivos) {
-          await base44.entities.AutorizacaoEstorno.create({
-            numero: numeroEstorno,
-            devolucao_id: numeroDev,
-            devolucao_numero: numeroDev,
-            pedido_origem_numero: pedido.numero,
-            cliente_nome: pedido.cliente_nome,
-            valor_autorizado: totalDevolvido,
-            forma_reembolso: 'Dinheiro',
-            motivo: tipo + (motivo ? ` - ${motivo}` : ''),
-            turno_caixa_destino_id: turno.id,
-            turno_caixa_destino_numero: turno.numero,
-            gerente_aprovador_id: user?.id,
-            gerente_aprovador_nome: user?.full_name,
-            status: 'Pendente',
-          });
-        }
-      } else if (formaReembolso === 'PIX') {
-        const contas = await base44.entities.ContasFinanceiras.list();
-        const caixaGeral = contas.find(c => c.is_caixa_geral) || contas[0];
-        if (caixaGeral) {
-          await base44.entities.LancamentoFinanceiro.create({
-            tipo: 'Despesa',
-            descricao: `${tipo} - ${numeroDev} - ${pedido.numero}`,
-            valor: totalDevolvido,
-            conta_financeira_id: caixaGeral.id,
-            conta_financeira_nome: caixaGeral.nome,
-            data_vencimento: format(new Date(), 'yyyy-MM-dd'),
-            data_pagamento: format(new Date(), 'yyyy-MM-dd'),
-            status: 'Pago',
-            categoria: 'Outros',
-            referencia_tipo: 'PedidoVenda',
-            referencia_id: pedido.id,
-            referencia_numero: pedido.numero,
-            observacoes: `Reembolso ${formaReembolso} por ${tipo}`,
-          });
-          await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
-            saldo_atual: (caixaGeral.saldo_atual || 0) - totalDevolvido,
-          });
-        }
-      }
-
-      setResultado({
-        numero: numeroDev,
-        pedidoNumero: pedido.numero,
-        clienteNome: pedido.cliente_nome,
-        valorTotal: totalDevolvido,
-        formaReembolso,
-        valeCode: valeCodigo,
-        motivo,
-        tipo,
-      });
-      setStep('comprovante');
-    } catch (error) {
-      toast({ title: 'Erro ao processar', description: error.message, variant: 'destructive' });
+      valeId = vale.id;
     }
+
+    await base44.entities.DevolucaoTroca.create({
+      numero: numeroDev,
+      pedido_origem_id: pedido.id,
+      pedido_origem_numero: pedido.numero,
+      cliente_id: pedido.cliente_id,
+      cliente_nome: pedido.cliente_nome,
+      itens_devolvidos: itensDevolvidos,
+      valor_total_devolvido: totalDevolvido,
+      forma_reembolso: formaReembolso,
+      vale_compra_id: valeId,
+      vale_compra_codigo: valeCodigo,
+      motivo,
+      fotos_mercadoria: fotosUrls || [],
+      operador_id: user?.id,
+      operador_nome: user?.full_name,
+      status: 'Processada',
+    });
+
+    for (const item of itensDevolvidos) {
+      const produto = await base44.entities.Produto.get(item.produto_id);
+      if (produto) {
+        await base44.entities.Produto.update(item.produto_id, {
+          estoque_atual: (produto.estoque_atual || 0) + item.quantidade_devolvida,
+        });
+        await base44.entities.MovimentacaoEstoque.create({
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          tipo: 'Entrada',
+          motivo: 'Devolução',
+          quantidade: item.quantidade_devolvida,
+          custo_unitario: item.preco_unitario,
+          referencia_tipo: 'PedidoVenda',
+          referencia_id: pedido.id,
+          referencia_numero: pedido.numero,
+          usuario_responsavel: user?.full_name,
+        });
+      }
+    }
+
+    if (formaReembolso === 'Dinheiro') {
+      const todosEstornos = await base44.entities.AutorizacaoEstorno.list();
+      const nextEstorno = (todosEstornos.length > 0 ? Math.max(...todosEstornos.map(a => parseInt(a.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
+      const numeroEstorno = `AE-${String(nextEstorno).padStart(5, '0')}`;
+      const todossTurnos = await base44.entities.TurnoCaixa.list();
+      const turnosAtivos = todossTurnos.filter(t => !t.data_fechamento);
+      for (const turno of turnosAtivos) {
+        await base44.entities.AutorizacaoEstorno.create({
+          numero: numeroEstorno,
+          devolucao_id: numeroDev,
+          devolucao_numero: numeroDev,
+          pedido_origem_numero: pedido.numero,
+          cliente_nome: pedido.cliente_nome,
+          valor_autorizado: totalDevolvido,
+          forma_reembolso: 'Dinheiro',
+          motivo: `Devolução${motivo ? ` - ${motivo}` : ''}`,
+          turno_caixa_destino_id: turno.id,
+          turno_caixa_destino_numero: turno.numero,
+          gerente_aprovador_id: user?.id,
+          gerente_aprovador_nome: user?.full_name,
+          status: 'Pendente',
+        });
+      }
+    } else if (formaReembolso === 'PIX') {
+      const contas = await base44.entities.ContasFinanceiras.list();
+      const caixaGeral = contas.find(c => c.is_caixa_geral) || contas[0];
+      if (caixaGeral) {
+        await base44.entities.LancamentoFinanceiro.create({
+          tipo: 'Despesa',
+          descricao: `Devolução - ${numeroDev} - ${pedido.numero}`,
+          valor: totalDevolvido,
+          conta_financeira_id: caixaGeral.id,
+          conta_financeira_nome: caixaGeral.nome,
+          data_vencimento: format(new Date(), 'yyyy-MM-dd'),
+          data_pagamento: format(new Date(), 'yyyy-MM-dd'),
+          status: 'Pago',
+          categoria: 'Outros',
+          referencia_tipo: 'PedidoVenda',
+          referencia_id: pedido.id,
+          referencia_numero: pedido.numero,
+          observacoes: `Reembolso PIX por Devolução`,
+        });
+        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
+          saldo_atual: (caixaGeral.saldo_atual || 0) - totalDevolvido,
+        });
+      }
+    }
+
+    setResultado({
+      numero: numeroDev,
+      pedidoNumero: pedido.numero,
+      clienteNome: pedido.cliente_nome,
+      valorTotal: totalDevolvido,
+      formaReembolso,
+      valeCode: valeCodigo,
+      motivo,
+    });
+    setStep('comprovante');
     setProcessando(false);
   };
-
-  const titulo = tipo === 'Troca' ? 'Troca de Produto' : tipo === 'Cancelamento' ? 'Cancelamento de Venda' : 'Devolução de Produto';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -447,7 +544,7 @@ export default function DevolucaoTrocaPage() {
           <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
         </button>
         <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
-          {titulo}
+          Devolução de Produto
         </h2>
         <div className="w-10" />
       </div>
@@ -460,7 +557,7 @@ export default function DevolucaoTrocaPage() {
           </div>
         )}
         {step === 'buscar' && <BuscarPedidoStep onFound={p => { setPedido(p); setStep('itens'); }} />}
-        {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />}
+        {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} onConfirm={handleConfirm} />}
         {step === 'comprovante' && resultado && <ComprovanteStep resultado={resultado} onClose={handleClose} />}
       </div>
     </div>
