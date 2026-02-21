@@ -2822,8 +2822,39 @@ export default function PDVCaixa() {
                 Vendas do Turno
               </h2>
               <button
-                onClick={() => window.print()}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors print:hidden"
+                onClick={() => {
+                  const linhas = vendasFinalizadas.map(v => {
+                    const pags = (v.pagamentos || []).map(p => `${p.forma_pagamento} R$ ${(p.valor||0).toFixed(2)}`).join(' | ');
+                    return `<div style="border-bottom:1px solid #f3f4f6;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>${v.numero} · ${v.cliente_nome || ''} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span><span style="color:#059669;font-weight:600">+R$ ${(v.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af">${pags}</div></div>`;
+                  }).join('');
+                  const cancelamentos = (turnoAtivo?.cancelamentos_rastro || []);
+                  const linhasCancelamentos = cancelamentos.length > 0
+                    ? cancelamentos.map(c => `<div style="border-bottom:1px solid #fee2e2;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626;font-weight:600">CANCELADO</span></div><div style="font-size:10px;color:#9ca3af">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div></div>`).join('')
+                    : '<p style="font-size:11px;color:#9ca3af;margin:4px 0">Nenhuma venda cancelada</p>';
+                  const pw = window.open('', '_blank', 'width=800,height=900');
+                  pw.document.write(`<html><head><title>Extrato de Vendas</title><style>
+                    body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
+                    h2{font-size:13px;font-weight:600;margin:14px 0 6px;color:#374151}
+                    .dashed{border-top:1px dashed #aaa;margin:8px 0}
+                  </style></head><body>
+                    <div style="text-align:center;margin-bottom:14px"><b style="font-size:16px">VAREJOSYNC</b><br/><span style="color:#9ca3af;font-size:11px">Extrato de Vendas do Turno</span></div>
+                    <div class="dashed"></div>
+                    <h2>Turno: ${turnoAtivo?.numero || '-'} · Abertura: ${turnoAtivo?.data_abertura ? new Date(turnoAtivo.data_abertura).toLocaleString('pt-BR') : '-'}</h2>
+                    <div class="dashed"></div>
+                    <h2>Vendas (${vendasFinalizadas.length})</h2>
+                    ${linhas || '<p style="color:#9ca3af;font-size:11px">Nenhuma venda</p>'}
+                    <div class="dashed"></div>
+                    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin:8px 0"><span>Total:</span><span>R$ ${(caixaData.totalVendas||0).toFixed(2)}</span></div>
+                    <div class="dashed"></div>
+                    <h2>Cancelamentos do Turno (${cancelamentos.length})</h2>
+                    ${linhasCancelamentos}
+                    <div class="dashed"></div>
+                    <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:14px">Não é documento fiscal</p>
+                  </body></html>`);
+                  pw.document.close(); pw.focus();
+                  setTimeout(() => { pw.print(); pw.close(); }, 300);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 style={{ minWidth: '44px', minHeight: '44px' }}
                 title="Imprimir extrato">
                 <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
