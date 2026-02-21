@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { LayoutDashboard, TrendingUp, Monitor, Package } from 'lucide-react';
 
@@ -12,6 +12,16 @@ const tabs = [
 
 export default function MobileBottomNav({ currentPageName }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleTabClick = (e, tab) => {
+    const pageName = tab.page.split('?')[0];
+    const isActive = currentPageName === pageName || location.pathname.includes(pageName);
+    if (isActive) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex mobile-bottom-nav md:hidden">
@@ -23,6 +33,7 @@ export default function MobileBottomNav({ currentPageName }) {
           <Link
             key={tab.name}
             to={createPageUrl(tab.page)}
+            onClick={(e) => handleTabClick(e, tab)}
             className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${
               isActive
                 ? 'text-gray-900 dark:text-white'
