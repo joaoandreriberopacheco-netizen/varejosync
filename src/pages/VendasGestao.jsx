@@ -573,7 +573,6 @@ export default function VendasGestaoPage() {
             </div>
 
             </div>
-            </PullToRefreshWrapper>
 
             {/* Desktop: Tabela */}
             <div className="hidden md:block overflow-x-auto">
