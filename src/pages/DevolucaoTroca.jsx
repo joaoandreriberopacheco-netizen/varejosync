@@ -116,7 +116,22 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
                 >
                   <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                 </button>
-                <span className={`w-8 text-center text-base font-bold tabular-nums ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}>{qtd}</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  min={0}
+                  max={item.quantidade}
+                  value={focusedKey === key ? (qtd === 0 ? '' : qtd) : qtd}
+                  onFocus={(e) => { setFocusedKey(key); e.target.select(); }}
+                  onBlur={() => setFocusedKey(null)}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value) || 0;
+                    setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, Math.max(0, v)) }));
+                  }}
+                  className={`w-14 text-center text-base font-bold tabular-nums rounded-lg border-0 bg-transparent focus:bg-blue-50 dark:focus:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition-all ${qtd > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}
+                  style={{ minHeight: '36px' }}
+                />
                 <button
                   onClick={() => setQtds(prev => ({ ...prev, [key]: Math.min(item.quantidade, (prev[key] || 0) + 1) }))}
                   className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform"
