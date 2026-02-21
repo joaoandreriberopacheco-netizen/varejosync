@@ -1231,6 +1231,17 @@ export default function PDVCaixa() {
                         {formatValor(caixaData.recebimentos.debito || 0)}
                       </span>
                     </div>
+                    {(caixaData.recebimentos.vale || 0) > 0 && (
+                      <div className="flex items-center justify-between py-2 px-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Vale Troca</span>
+                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
+                        </div>
+                        <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">
+                          {formatValor(caixaData.recebimentos.vale || 0)}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Total e Diferença */}
                     <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
