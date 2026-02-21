@@ -137,6 +137,7 @@ export default function PDVCaixa() {
   const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
   const [clienteVenda, setClienteVenda] = useState(null);
+  const [saldoResidualVale, setSaldoResidualVale] = useState(null); // { codigo, saldo }
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
   const [showVendasDialog, setShowVendasDialog] = useState(false);
