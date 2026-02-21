@@ -499,7 +499,9 @@ export default function Layout({ children, currentPageName }) {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
-                  <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                  <DropdownMenuItem 
+                    onClick={() => { window.location.href = createPageUrl('ExclusaoDocumentos'); }}
+                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
                     <Trash2 className="w-4 h-4 mr-2" />
                     <span>Excluir Documentos</span>
                   </DropdownMenuItem>
