@@ -591,15 +591,16 @@ export default function Layout({ children, currentPageName }) {
         <div 
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? 'ml-0 pt-12' 
+              ? 'ml-0 pt-12 pb-16' 
               : (isOpen ? 'ml-64' : 'ml-16')
           }`}
-          style={{ willChange: 'margin' }}
+          style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
           <div className="p-4 md:p-6 overflow-x-hidden">
             {children}
           </div>
         </div>
+        {isMobile && !isFullscreen && <MobileBottomNav currentPageName={currentPageName} />}
       </div>
       <Toaster />
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
