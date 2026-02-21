@@ -1165,8 +1165,9 @@ export default function ProdutosPage() {
 
             {/* Tabela - MOBILE/DESKTOP */}
             <div className="flex-1 overflow-auto">
-              {/* MOBILE: Cards */}
-              <div className="md:hidden space-y-3">
+              {/* MOBILE: Cards with pull-to-refresh */}
+              <PullToRefreshWrapper onRefresh={loadData} className="md:hidden">
+              <div className="space-y-3">
                 {filteredProdutos.map(produto => {
                   const margem = produto.preco_venda_padrao && produto.preco_venda_padrao > 0 ?
                     ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100 : 0;
