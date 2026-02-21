@@ -2878,8 +2878,8 @@ export default function PDVCaixa() {
                 </div>
               ) : (
                 <>
-                  {/* Cancelamentos - sempre visível mesmo sem vendas */}
-                  {(turnoAtivo?.cancelamentos_rastro?.length > 0) && vendasFinalizadas.length === 0 && (
+                  {/* Cancelamentos - sempre visível */}
+                  {(turnoAtivo?.cancelamentos_rastro?.length > 0) && (
                     <div className="mb-4">
                       <p className="text-xs font-semibold text-red-600 dark:text-red-400 px-1 mb-2">
                         Cancelamentos do turno ({turnoAtivo.cancelamentos_rastro.length})
