@@ -701,10 +701,7 @@ export default function PDVCaixa() {
 
 
 
-          // Logic for Balcao with manual delivery (Logistics) could go here
-          // For now, we assume default behavior or simple completion
-        }
-      }
+
 
       toast({
         title: "✓ Pagamento aprovado!",
