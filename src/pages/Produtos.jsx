@@ -48,6 +48,7 @@ import { base44 } from '@/api/base44Client';
 
 
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
+import PullToRefreshWrapper from '@/components/ui/PullToRefreshWrapper';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import MassImageUploader from '../components/produtos/MassImageUploader';
