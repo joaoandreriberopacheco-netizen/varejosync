@@ -570,8 +570,6 @@ export default function VendasGestaoPage() {
               ))}
             </div>
 
-            </div>
-
             {/* Desktop: Tabela */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
