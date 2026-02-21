@@ -465,7 +465,8 @@ export default function PDVCaixa() {
           dinheiro: totalDinheiro,
           pix: totalPix,
           credito: totalCredito,
-          debito: totalDebito
+          debito: totalDebito,
+          vale: totalVale,
         },
         reforcos: totalReforcos,
         sangrias: totalSangrias,
