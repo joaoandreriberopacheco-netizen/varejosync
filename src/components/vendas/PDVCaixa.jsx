@@ -2008,10 +2008,12 @@ export default function PDVCaixa() {
                   </Button>
                   <Button
                   onClick={handleFinalizarVenda}
-                  disabled={!pagamentoValido}
+                  disabled={!pagamentoValido || processandoVenda}
                   className="flex-1 h-14 text-lg font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl">
-                    <CheckCircle2 className="w-5 h-5 mr-2" />
-                    Aprovar {pagamentoValido && '(Enter)'}
+                    {processandoVenda
+                      ? <><RefreshCw className="w-5 h-5 mr-2 animate-spin" /> Processando...</>
+                      : <><CheckCircle2 className="w-5 h-5 mr-2" /> Aprovar {pagamentoValido && '(Enter)'}</>
+                    }
                   </Button>
                 </div>
               </div>
