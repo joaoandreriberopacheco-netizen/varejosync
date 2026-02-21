@@ -2878,6 +2878,28 @@ export default function PDVCaixa() {
                 </div>
               ) : (
                 <>
+                  {/* Cancelamentos - sempre visível mesmo sem vendas */}
+                  {(turnoAtivo?.cancelamentos_rastro?.length > 0) && vendasFinalizadas.length === 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-red-600 dark:text-red-400 px-1 mb-2">
+                        Cancelamentos do turno ({turnoAtivo.cancelamentos_rastro.length})
+                      </p>
+                      <div className="space-y-2">
+                        {turnoAtivo.cancelamentos_rastro.map((c, idx) => (
+                          <div key={idx} className="bg-red-50 dark:bg-red-900/10 rounded-2xl p-4 shadow-sm">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="text-sm font-semibold text-red-700 dark:text-red-300">{c.pedido_numero} · {c.cliente_nome}</div>
+                                <div className="text-xs text-red-500 dark:text-red-400 mt-0.5">{c.motivo_cancelamento}</div>
+                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{c.cancelado_por}{c.data_cancelamento ? ` · ${format(new Date(c.data_cancelamento), 'HH:mm')}` : ''}</div>
+                              </div>
+                              <span className="text-base font-bold text-red-600 dark:text-red-400 font-glacial">-{formatValor(c.valor_total)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {/* Desktop - Cards Glacial */}
                   <div className="hidden md:block">
                     <div className="grid gap-3 max-w-4xl mx-auto">
