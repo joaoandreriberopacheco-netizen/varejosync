@@ -107,5 +107,6 @@ export default function DashboardPage() {
         </div>
       </Tabs>
     </div>
+    </PullToRefreshWrapper>
   );
 }
