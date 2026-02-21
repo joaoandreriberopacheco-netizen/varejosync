@@ -1314,7 +1314,11 @@ export default function PDVCaixa() {
                          `<div class="row"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:#dc2626">-R$ ${(d.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
                        
+                       const linhasCancelamentos = cancelamentos.length > 0
+                         ? cancelamentos.map(c => `<div class="row"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af;padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')
+                         : '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma venda cancelada</p>';
                        const pw = window.open('', '_blank', 'width=800,height=900');
+                       if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
                        pw.document.write(`<html><head><title>Relatório de Fechamento</title><style>
                          body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
                          h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
@@ -1356,6 +1360,9 @@ export default function PDVCaixa() {
                          <div class="dashed"></div>
                          <h2>Vendas do Turno (${vendasFinalizadas.length})</h2>
                          ${linhasVendas || '<p style="color:#9ca3af;font-size:11px">Nenhuma venda registrada</p>'}
+                         <div class="dashed"></div>
+                         <h2>Cancelamentos do Turno (${cancelamentos.length})</h2>
+                         ${linhasCancelamentos}
                          <div class="dashed"></div>
                          <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:14px">Não é documento fiscal</p>
                        </body></html>`);
