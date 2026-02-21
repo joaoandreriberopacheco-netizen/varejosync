@@ -70,8 +70,9 @@ export default function AutorizacoesEstornoPendentes({ turnoAtivo, contaCaixa, c
         caixa_operador_nome: currentUser.full_name,
       });
 
-      // Debitar do saldo do caixa
-      const novoSaldo = (contaCaixa.saldo_atual || 0) - selectedAuth.valor_autorizado;
+      // Debitar do saldo do caixa (buscar saldo atual direto do banco para evitar stale)
+      const contaAtualizada = await base44.entities.ContasFinanceiras.get(contaCaixa.id);
+      const novoSaldo = ((contaAtualizada || contaCaixa).saldo_atual || 0) - selectedAuth.valor_autorizado;
       await base44.entities.ContasFinanceiras.update(contaCaixa.id, {
         saldo_atual: novoSaldo,
       });
