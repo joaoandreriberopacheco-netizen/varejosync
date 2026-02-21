@@ -2929,46 +2929,32 @@ export default function PDVCaixa() {
                       </div>
                     ))}
                   </div>
-                  {/* Remove old table code */}
-                  <div className="hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Pedido</TableHead>
-                          <TableHead>Cliente</TableHead>
-                          <TableHead>Vendedor</TableHead>
-                          <TableHead>Horário</TableHead>
-                          <TableHead className="text-right">Itens</TableHead>
-                          <TableHead className="text-right">Valor</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {vendasFinalizadas.map((venda) => (
-                          <TableRow key={venda.id}>
-                            <TableCell className="font-medium">{venda.numero}</TableCell>
-                            <TableCell>{venda.cliente_nome}</TableCell>
-                            <TableCell>{venda.vendedor_nome}</TableCell>
-                            <TableCell>{format(new Date(venda.created_date), 'HH:mm')}</TableCell>
-                            <TableCell className="text-right">{venda.itens?.length || 0}</TableCell>
-                            <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
-                              {formatValor(venda.valor_total)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <button
-                                onClick={() => setVendaDetalhada(venda)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                                title="Ver detalhes">
-                                <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                              </button>
-                            </TableCell>
-                          </TableRow>
+                  {/* Cancelamentos do turno */}
+                  {(turnoAtivo?.cancelamentos_rastro?.length > 0) && (
+                    <div className="mt-4">
+                      <p className="text-xs font-semibold text-red-600 dark:text-red-400 px-1 mb-2">
+                        Cancelamentos ({turnoAtivo.cancelamentos_rastro.length})
+                      </p>
+                      <div className="space-y-2">
+                        {turnoAtivo.cancelamentos_rastro.map((c, idx) => (
+                          <div key={idx} className="bg-red-50 dark:bg-red-900/10 rounded-2xl p-4 shadow-sm">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="text-sm font-semibold text-red-700 dark:text-red-300">{c.pedido_numero} · {c.cliente_nome}</div>
+                                <div className="text-xs text-red-500 dark:text-red-400 mt-0.5">{c.motivo_cancelamento}</div>
+                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{c.cancelado_por}{c.data_cancelamento ? ` · ${format(new Date(c.data_cancelamento), 'HH:mm')}` : ''}</div>
+                              </div>
+                              <span className="text-base font-bold text-red-600 dark:text-red-400 font-glacial">
+                                {formatValor(c.valor_total)}
+                              </span>
+                            </div>
+                          </div>
                         ))}
-                      </TableBody>
-                      </Table>
                       </div>
-                      </>
-                      )}
+                    </div>
+                  )}
+                  </>
+                  )}
                       </div>
             {vendasFinalizadas.length > 0 && (
               <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
