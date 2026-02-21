@@ -1288,7 +1288,8 @@ export default function PDVCaixa() {
                      const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
                        const cancelamentos = (turnoAtivo?.cancelamentos_rastro || []);
-                      // Vendas: linha principal + sub-linhas por forma de pagamento
+                       if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
+                       // Vendas: linha principal + sub-linhas por forma de pagamento
                       const linhasVendas = vendasFinalizadas.map(v => {
                          const pagamentos = (v.pagamentos || []);
                          const subLinhas = pagamentos.length > 1
