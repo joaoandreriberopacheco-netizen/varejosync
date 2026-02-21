@@ -543,191 +543,77 @@ export default function PDVCaixa() {
 
   const handleFinalizarVenda = async () => {
     if (!pagamentoValido) {
-      toast({
-        title: "Pagamento insuficiente",
-        description: `Falta R$ ${formatarValorExibicao(valorRestante)}`,
-        variant: "destructive",
-        duration: 2000
-      });
+      toast({ title: "Pagamento insuficiente", description: `Falta R$ ${formatarValorExibicao(valorRestante)}`, variant: "destructive", duration: 2000 });
       return;
     }
-
     if (!contaCaixaPDV) {
-      toast({
-        title: "Conta de Caixa PDV não encontrada",
-        description: "Não foi possível registrar o pagamento em dinheiro. Recarregue a página.",
-        variant: "destructive"
-      });
+      toast({ title: "Conta de Caixa PDV não encontrada", variant: "destructive" });
       return;
     }
+    // Trava de duplo clique no frontend
+    if (processandoVenda) return;
+    setProcessandoVenda(true);
 
     try {
       const pagamentosArray = [];
-
-      if (pagamentosDinheiro > 0) {
-        pagamentosArray.push({
-          forma_pagamento: 'Dinheiro',
-          valor: pagamentosDinheiro,
-          parcelas: 1
-        });
-      }
-
-      if (pagamentosPix > 0) {
-        pagamentosArray.push({
-          forma_pagamento: 'PIX',
-          valor: pagamentosPix,
-          parcelas: 1
-        });
-      }
-
-      if (pagamentosDebito > 0) {
-        pagamentosArray.push({
-          forma_pagamento: 'Cartão de Débito',
-          valor: pagamentosDebito,
-          parcelas: 1
-        });
-      }
-
-      if (pagamentosCredito > 0) {
-        pagamentosArray.push({
-          forma_pagamento: 'Cartão de Crédito',
-          valor: pagamentosCredito,
-          parcelas: parcelasCredito
-        });
-      }
-
+      if (pagamentosDinheiro > 0) pagamentosArray.push({ forma_pagamento: 'Dinheiro', valor: pagamentosDinheiro, parcelas: 1 });
+      if (pagamentosPix > 0) pagamentosArray.push({ forma_pagamento: 'PIX', valor: pagamentosPix, parcelas: 1 });
+      if (pagamentosDebito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
+      if (pagamentosCredito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
       if (pagamentosVale > 0 && valeEncontrado) {
-        pagamentosArray.push({
-          forma_pagamento: 'Vale Troca',
-          valor: pagamentosVale,
-          parcelas: 1,
-          vale_codigo: valeEncontrado.codigo,
-          vale_id: valeEncontrado.id,
-        });
-        // Atualizar saldo do vale — o mesmo código permanece válido com saldo residual
-        const novoSaldoVale = (valeEncontrado.valor_disponivel || 0) - pagamentosVale;
-        const saldoResidual = Math.max(0, novoSaldoVale);
-        const novoStatus = saldoResidual <= 0.01 ? 'Utilizado' : 'Utilizado Parcialmente';
-        await base44.entities.ValeCompra.update(valeEncontrado.id, {
-          valor_disponivel: saldoResidual,
-          status: novoStatus,
-          historico_uso: [
-            ...(valeEncontrado.historico_uso || []),
-            {
-              data: new Date().toISOString(),
-              valor_usado: pagamentosVale,
-              pedido_id: null,
-              pedido_numero: pedidoSelecionado?.numero || ''
-            }
-          ]
-        });
-        // Guardar saldo residual para exibir comprovante
-        if (saldoResidual > 0.01) {
-          setSaldoResidualVale({ codigo: valeEncontrado.codigo, saldo: saldoResidual });
-        }
+        pagamentosArray.push({ forma_pagamento: 'Vale Troca', valor: pagamentosVale, parcelas: 1, vale_codigo: valeEncontrado.codigo, vale_id: valeEncontrado.id });
       }
 
-      // Converter rascunho para PedidoVenda
-      const todosPedidos = await base44.entities.PedidoVenda.list();
-      const nextNumber = (todosPedidos.length > 0 ? Math.max(...todosPedidos.map((p) => parseInt(p.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
-      const numeroPedido = `PV-${String(nextNumber).padStart(5, '0')}`;
-
-      const pedidoVenda = await base44.entities.PedidoVenda.create({
-        numero: numeroPedido,
-        senha_atendimento: pedidoSelecionado.senha_atendimento,
-        cliente_id: pedidoSelecionado.cliente_id,
-        cliente_nome: pedidoSelecionado.cliente_nome,
-        vendedor_id: pedidoSelecionado.vendedor_id,
-        vendedor_nome: pedidoSelecionado.vendedor_nome,
-        tabela_preco_id: pedidoSelecionado.tabela_preco_id,
-        tipo: pedidoSelecionado.tipo,
-        status: 'Financeiro OK',
-        metodo_entrega: pedidoSelecionado.metodo_entrega,
-        turno_caixa_id: turnoAtivo?.id,
-        itens: pedidoSelecionado.itens,
-        subtotal: pedidoSelecionado.subtotal,
-        valor_desconto: pedidoSelecionado.valor_desconto,
-        valor_frete: pedidoSelecionado.valor_frete,
-        valor_total: pedidoSelecionado.valor_total,
+      // ── CHAMADA AO BACKEND (atômico + selo frio + número único) ──
+      const { data } = await processarVendaCaixa({
+        rascunho_id: pedidoSelecionado.id,
         pagamentos: pagamentosArray,
-        observacoes: pedidoSelecionado.observacoes
+        turno_id: turnoAtivo?.id,
+        conta_caixa_id: contaCaixaPDV?.id,
+        saldo_atual_caixa: contaCaixaPDV?.saldo_atual,
+        config_venda: configVenda ? { fluxo_venda_padrao: configVenda.fluxo_venda_padrao, auto_delivery_balcao: configVenda.auto_delivery_balcao } : null,
       });
 
-      // Atualizar turno com venda
-      if (turnoAtivo) {
-        await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
-          vendas_ids: [...(turnoAtivo.vendas_ids || []), pedidoVenda.id]
-        });
-      }
-
-      // Atualizar rascunho como convertido
-      await base44.entities.RascunhoPedidoVenda.update(pedidoSelecionado.id, {
-        status: 'Convertido',
-        pedido_venda_final_id: pedidoVenda.id
-      });
-
-      // Criar movimentações de estoque para cada item vendido
-      for (const item of pedidoSelecionado.itens) {
-        await base44.entities.MovimentacaoEstoque.create({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          tipo: 'Saída',
-          motivo: 'Venda',
-          quantidade: item.quantidade,
-          custo_unitario: item.custo_unitario_momento || 0,
-          referencia_tipo: 'PedidoVenda',
-          referencia_id: pedidoVenda.id,
-          referencia_numero: numeroPedido,
-          usuario_responsavel: currentUser.full_name
-        });
-
-        // Atualizar estoque do produto
-        const produto = await base44.entities.Produto.get(item.produto_id);
-        if (produto) {
-          await base44.entities.Produto.update(item.produto_id, {
-            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade)
-          });
+      if (!data?.success) {
+        const msg = data?.error || 'Erro desconhecido no processamento.';
+        // Mensagem amigável para duplicidade
+        if (data?.ja_processado || data?.em_processamento) {
+          toast({ title: "⚠️ Pedido já processado", description: msg, variant: "destructive", duration: 5000 });
+        } else {
+          toast({ title: "Erro ao processar venda", description: msg, variant: "destructive" });
         }
+        return;
       }
 
+      const pedidoVenda = data.pedido_venda;
+
+      // Saldo residual do vale troca
+      if (data.saldo_residual_vale) {
+        setSaldoResidualVale(data.saldo_residual_vale);
+      }
+
+      // Avisos de operações secundárias que falharam (não críticos)
+      if (data.avisos?.length) {
+        console.warn('Avisos pós-venda:', data.avisos);
+      }
+
+      // Atualizar estado local do caixa
       if (pagamentosDinheiro > 0 && contaCaixaPDV) {
-        const novoSaldo = contaCaixaPDV.saldo_atual + pagamentosDinheiro;
-        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
-          saldo_atual: novoSaldo
-        });
-        setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
+        setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: (prev.saldo_atual || 0) + pagamentosDinheiro }));
       }
 
-      // Buscar dados do cliente para o documento
+      // Buscar dados do cliente para o comprovante
       let cliente = null;
       if (pedidoSelecionado.cliente_id) {
         cliente = await base44.entities.Terceiro.get(pedidoSelecionado.cliente_id);
         setClienteVenda(cliente);
       }
 
-      setVendaFinalizada({
-        ...pedidoVenda,
-        pagamentos: pagamentosArray
-      });
+      setVendaFinalizada({ ...pedidoVenda, pagamentos: pagamentosArray });
 
-      // Logic for Separation or Automatic Delivery
-      if (configVenda) {
-        if (configVenda.fluxo_venda_padrao === 'Completo') {
-          // Create OrdemSeparacao
-          await base44.entities.OrdemSeparacao.create({
-            pedido_venda_id: pedidoVenda.id,
-            pedido_numero: numeroPedido,
-            status: 'Pendente',
-            itens: pedidoSelecionado.itens.map((item) => ({
-              produto_id: item.produto_id,
-              produto_nome: item.produto_nome,
-              quantidade_solicitada: item.quantidade,
-              quantidade_separada: 0,
-              custo_unitario_momento: item.custo_unitario_momento || 0
-            }))
-          });
-          toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
-        } else if (configVenda.fluxo_venda_padrao === 'Balcao' && !configVenda.auto_delivery_balcao) {
+      if (configVenda?.fluxo_venda_padrao === 'Completo') {
+        toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
+      } else if (configVenda?.fluxo_venda_padrao === 'Balcao' && !configVenda?.auto_delivery_balcao) {
 
 
 
