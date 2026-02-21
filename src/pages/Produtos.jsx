@@ -1220,8 +1220,6 @@ export default function ProdutosPage() {
                 })}
               </div>
 
-              </PullToRefreshWrapper>
-
               {/* DESKTOP: Tabela */}
               <div className="hidden md:block border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900">
                 <Table>
