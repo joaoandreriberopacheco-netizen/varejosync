@@ -718,11 +718,9 @@ export default function PDVCaixa() {
       setShowLiberacaoEntrega(true);
       loadData();
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setProcessandoVenda(false);
     }
   };
 
