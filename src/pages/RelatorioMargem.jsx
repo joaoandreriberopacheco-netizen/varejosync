@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, Calendar } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
