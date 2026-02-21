@@ -1287,7 +1287,7 @@ export default function PDVCaixa() {
                      const diferenca = totalConferido - caixaData.liquidez;
                      const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
-                        const pw2 = window.open('', '_blank', 'width=800,height=900');
+                        const pw = window.open('', '_blank', 'width=800,height=900');
                         if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
                         const cancelamentos = (turnoAtivo?.cancelamentos_rastro || []);
                         // Vendas: linha principal + sub-linhas por forma de pagamento
@@ -1305,22 +1305,20 @@ export default function PDVCaixa() {
                        }).join('');
                        // Reforços
                        const linhasReforcos = movimentos.filter(m => m.tipo === 'Reforço').map(m =>
-                         `<div class="row"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#059669">+R$ ${(m.valor||0).toFixed(2)}</span></div>`
+                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#059669">+R$ ${(m.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum reforço</p>';
                        // Recolhimentos
                        const linhasRecolhimentos = movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map(m =>
-                         `<div class="row"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#2563eb">-R$ ${(m.valor||0).toFixed(2)}</span></div>`
+                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date),'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#2563eb">-R$ ${(m.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum recolhimento</p>';
                        // Despesas
                        const linhasDespesas = (caixaData.despesasLista || []).map(d =>
-                         `<div class="row"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:#dc2626">-R$ ${(d.valor||0).toFixed(2)}</span></div>`
+                         `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${d.descricao} · ${d.created_date ? format(new Date(d.created_date),'HH:mm') : ''}</span><span style="color:#dc2626">-R$ ${(d.valor||0).toFixed(2)}</span></div>`
                        ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma despesa</p>';
                        
                        const linhasCancelamentos = cancelamentos.length > 0
-                         ? cancelamentos.map(c => `<div class="row"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af;padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')
+                         ? cancelamentos.map(c => `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span style="color:#dc2626">${c.pedido_numero} · ${c.cliente_nome || ''}</span><span style="color:#dc2626">CANCELADO R$ ${(c.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af;padding-bottom:4px">${c.motivo_cancelamento || ''} · ${c.cancelado_por || ''}</div>`).join('')
                          : '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma venda cancelada</p>';
-                       const pw = window.open('', '_blank', 'width=800,height=900');
-                       if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
                        pw.document.write(`<html><head><title>Relatório de Fechamento</title><style>
                          body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:700px;margin:0 auto}
                          h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
