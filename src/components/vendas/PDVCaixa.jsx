@@ -3519,12 +3519,11 @@ export default function PDVCaixa() {
               </h2>
               <button
                 onClick={() => {
-                  // Esconde tudo exceto o relatório e imprime
-                  const el = document.getElementById('saldo-consolidado-print');
-                  const original = document.body.innerHTML;
-                  const printContent = el ? el.innerHTML : '';
-                  const printWindow = window.open('', '_blank', 'width=800,height=900');
-                  printWindow.document.write(`
+                    const el = document.getElementById('saldo-consolidado-print');
+                    const printContent = el ? el.innerHTML : '';
+                    const printWindow = window.open('', '_blank', 'width=800,height=900');
+                    if (!printWindow) { alert('Permita pop-ups para imprimir.'); return; }
+                    printWindow.document.write(`
                     <html><head><title>Saldo Consolidado</title>
                     <style>
                       body { font-family: Inter, sans-serif; font-size: 12px; color: #111; margin: 10mm; }
