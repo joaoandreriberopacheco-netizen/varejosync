@@ -64,6 +64,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map(i => [i.produto_id + '_' + i.produto_nome, 0]))
   );
+  const [focusedKey, setFocusedKey] = useState(null);
   const [formaReembolso, setFormaReembolso] = useState('Vale Compra');
   const [motivo, setMotivo] = useState('');
 
