@@ -595,19 +595,38 @@ export default function PDVCaixa() {
 
       if (pagamentosVale > 0 && valeEncontrado) {
         pagamentosArray.push({
-          forma_pagamento: 'Vale Compra',
+          forma_pagamento: 'Vale Troca',
           valor: pagamentosVale,
           parcelas: 1,
           vale_codigo: valeEncontrado.codigo,
           vale_id: valeEncontrado.id,
         });
-        // Atualizar saldo do vale
+        // Atualizar saldo do vale — o mesmo código permanece válido com saldo residual
         const novoSaldoVale = (valeEncontrado.valor_disponivel || 0) - pagamentosVale;
-        const novoStatus = novoSaldoVale <= 0.01 ? 'Utilizado' : 'Utilizado Parcialmente';
+        const saldoResidual = Math.max(0, novoSaldoVale);
+        const novoStatus = saldoResidual <= 0.01 ? 'Utilizado' : 'Utilizado Parcialmente';
         await base44.entities.ValeCompra.update(valeEncontrado.id, {
-          valor_disponivel: Math.max(0, novoSaldoVale),
+          valor_disponivel: saldoResidual,
           status: novoStatus,
+          historico_uso: [
+            ...(valeEncontrado.historico_uso || []),
+            {
+              data: new Date().toISOString(),
+              valor_usado: pagamentosVale,
+              pedido_id: null,
+              pedido_numero: pedidoSelecionado?.numero || ''
+            }
+          ]
         });
+        // Notificar operador se houver saldo residual
+        if (saldoResidual > 0.01) {
+          toast({
+            title: `Vale Troca com saldo residual`,
+            description: `${valeEncontrado.codigo} ainda tem ${formatValor(saldoResidual)} disponível para uso futuro.`,
+            className: 'bg-emerald-50 text-emerald-800',
+            duration: 6000
+          });
+        }
       }
 
       // Converter rascunho para PedidoVenda
