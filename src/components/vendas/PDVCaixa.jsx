@@ -615,12 +615,7 @@ export default function PDVCaixa() {
 
       if (configVenda?.fluxo_venda_padrao === 'Completo') {
         toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
-      } else if (configVenda?.fluxo_venda_padrao === 'Balcao' && !configVenda?.auto_delivery_balcao) {
-        // Balcão com entrega manual — sem ação adicional
       }
-
-
-
 
 
 
