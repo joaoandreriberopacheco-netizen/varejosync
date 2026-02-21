@@ -619,14 +619,9 @@ export default function PDVCaixa() {
             }
           ]
         });
-        // Notificar operador se houver saldo residual
+        // Guardar saldo residual para exibir comprovante
         if (saldoResidual > 0.01) {
-          toast({
-            title: `Vale Troca com saldo residual`,
-            description: `${valeEncontrado.codigo} ainda tem ${formatValor(saldoResidual)} disponível para uso futuro.`,
-            className: 'bg-emerald-50 text-emerald-800',
-            duration: 6000
-          });
+          setSaldoResidualVale({ codigo: valeEncontrado.codigo, saldo: saldoResidual });
         }
       }
 
