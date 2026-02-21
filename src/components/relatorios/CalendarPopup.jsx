@@ -8,57 +8,30 @@ import 'react-day-picker/dist/style.css';
 export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
   const [month, setMonth] = useState(new Date());
   
-  const handleSelect = (day) => {
-    const start = dateRange.from;
-    const end = dateRange.to;
-    
-    if (!start || (start && end)) {
-      // Novo intervalo começando
-      setDateRange({ from: day, to: undefined });
-    } else {
-      // Completar intervalo
-      const newStart = day < start ? day : start;
-      const newEnd = day < start ? start : day;
-      setDateRange({ from: newStart, to: newEnd });
-    }
-  };
-  
-  const handlePrevious = () => setMonth(subMonths(month, 2));
-  const handleNext = () => setMonth(addMonths(month, 2));
+  const handlePrevious = () => setMonth(subMonths(month, 1));
+  const handleNext = () => setMonth(addMonths(month, 1));
   
   return (
-    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 z-50 border border-gray-200 dark:border-gray-700 w-80 min-w-max">
+    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 z-50 border border-gray-200 dark:border-gray-700 min-w-max">
       {/* Navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={handlePrevious}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={handlePrevious} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+          <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-gray-200" />
         </button>
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+        <span className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
           {format(month, 'MMM', { locale: ptBR })} / {format(addMonths(month, 1), 'MMM', { locale: ptBR })} {format(month, 'yyyy')}
         </span>
-        <button
-          onClick={handleNext}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+        <button onClick={handleNext} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+          <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-200" />
         </button>
       </div>
 
-      {/* Calendário */}
       <style>{`
-        .rdp {
-          margin: 0;
-          --rdp-cell-size: 28px;
-          --rdp-accent-color: #1f2937;
-          --rdp-background-color: #f0f9f0;
-        }
+        .rdp { margin: 0; --rdp-cell-size: 28px; --rdp-accent-color: #1f2937; --rdp-background-color: #f0f9f0; }
         .rdp-caption { display: none; }
-        .rdp-head_cell { color: #6b7280; font-size: 12px; font-weight: 600; }
+        .rdp-head_cell { color: #6b7280; font-size: 11px; font-weight: 600; }
         .rdp-cell { padding: 0; }
-        .rdp-day { font-size: 12px; }
+        .rdp-day { font-size: 11px; }
         .rdp-day_selected { background-color: #1f2937; color: white; font-weight: bold; }
         .rdp-day_range_middle { background-color: #dcfce7; color: #1f2937; }
         .rdp-day_disabled { color: #d1d5db; }
@@ -67,7 +40,8 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
         .dark .rdp-head_cell { color: #9ca3af; }
       `}</style>
       
-      <div className="flex gap-2">
+      {/* Two months side by side with divider */}
+      <div className="flex">
         <DayPicker
           mode="range"
           selected={{ from: dateRange.from, to: dateRange.to }}
@@ -76,6 +50,7 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
           locale={ptBR}
           showOutsideDays={false}
         />
+        <div className="w-px bg-gray-200 dark:bg-gray-600 mx-1 self-stretch" />
         <DayPicker
           mode="range"
           selected={{ from: dateRange.from, to: dateRange.to }}
@@ -87,17 +62,14 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
       </div>
 
       {/* Info */}
-      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 text-center font-medium">
+      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 text-center">
         {dateRange.from ? (
-          <>
-            <p>{format(dateRange.from, 'dd/MM/yyyy')}{dateRange.to ? ` até ${format(dateRange.to, 'dd/MM/yyyy')}` : ''}</p>
-          </>
+          <p className="font-medium">{format(dateRange.from, 'dd/MM/yyyy')}{dateRange.to ? ` até ${format(dateRange.to, 'dd/MM/yyyy')}` : ''}</p>
         ) : (
           <p>Selecione o período</p>
         )}
       </div>
 
-      {/* Button */}
       <button
         onClick={onClose}
         disabled={!dateRange.from || !dateRange.to}
