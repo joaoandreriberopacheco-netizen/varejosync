@@ -139,6 +139,7 @@ export default function PDVCaixa() {
   const [vendaFinalizada, setVendaFinalizada] = useState(null);
   const [clienteVenda, setClienteVenda] = useState(null);
   const [saldoResidualVale, setSaldoResidualVale] = useState(null); // { codigo, saldo }
+  const [processandoVenda, setProcessandoVenda] = useState(false); // Trava de duplo clique
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
   const [showVendasDialog, setShowVendasDialog] = useState(false);
