@@ -432,7 +432,7 @@ export default function PDVCaixa() {
 
       const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
-      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0;
+      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
       vendasTurno.forEach((venda) => {
         if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
           venda.pagamentos.forEach((pag) => {
@@ -441,6 +441,7 @@ export default function PDVCaixa() {
             else if (fp === 'pix') totalPix += pag.valor || 0;
             else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
             else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
+            else if (fp.includes('vale')) totalVale += pag.valor || 0;
           });
         }
       });
