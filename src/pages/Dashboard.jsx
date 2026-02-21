@@ -39,7 +39,6 @@ export default function DashboardPage() {
   }
 
   return (
-    <PullToRefreshWrapper onRefresh={async () => { /* trigger child re-renders by key bump not needed; tabs fetch own data */ window.location.reload(); }} className="max-w-7xl mx-auto">
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header com Logo */}
       <div className="pb-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
