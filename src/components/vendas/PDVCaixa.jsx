@@ -1287,7 +1287,7 @@ export default function PDVCaixa() {
                      const diferenca = totalConferido - caixaData.liquidez;
                      const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
-                        const pw = window.open('', '_blank', 'width=800,height=900');
+                        const _NOTUSED = window.open('', '_blank', 'width=800,height=900');
                         if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
                         const cancelamentos = (turnoAtivo?.cancelamentos_rastro || []);
                         // Vendas: linha principal + sub-linhas por forma de pagamento
