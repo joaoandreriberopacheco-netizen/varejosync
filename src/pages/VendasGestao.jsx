@@ -217,11 +217,11 @@ export default function VendasGestaoPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Orçamentos, Pedidos e Acompanhamento de Vendas</p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => setShowDevolucao(true)}>
+            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
               <RotateCcw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Devolução</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => setShowTroca(true)}>
+            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
               <RefreshCw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Troca</span>
             </Button>
