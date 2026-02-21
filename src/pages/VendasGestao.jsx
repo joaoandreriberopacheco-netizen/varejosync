@@ -532,7 +532,8 @@ export default function VendasGestaoPage() {
         ) : (
           <>
             {/* Mobile: Cards */}
-            <div className="md:hidden space-y-2">
+            <PullToRefreshWrapper onRefresh={loadPedidos} className="md:hidden">
+            <div className="space-y-2">
               {pedidosFiltrados.map(pedido => (
                 <div key={pedido.id} className="bg-white dark:bg-gray-800 rounded-xl p-4">
                   <div className="flex items-start justify-between gap-2">
