@@ -325,15 +325,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
-        {isMobile && !isOpen && (
-          <button
-            onClick={handleMobileMenuToggle}
-            className="fixed top-3 left-3 z-50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-md backdrop-blur-sm"
-            style={{ minWidth: '48px', minHeight: '48px' }}
-          >
-            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </button>
-        )}
+
 
         {isMobile && isOpen && (
           <div 
