@@ -116,69 +116,104 @@ export default function MobileBottomNav({ currentPageName }) {
   const subItems = parentTab?.children || [];
 
   const navStyle = {
-    background: 'rgba(255,255,255,0.95)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
+    background: 'rgba(255,255,255,0.97)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
     boxShadow: '0 -1px 0 0 rgba(0,0,0,0.06)',
+    fontFamily: "'DM Sans', sans-serif",
+  };
+
+  const NavItem = ({ icon: Icon, name, active, onClick, to, isButton }) => {
+    const content = (
+      <>
+        <div
+          className="flex items-center justify-center rounded-2xl transition-all duration-200"
+          style={{
+            width: 44,
+            height: 30,
+            background: active ? '#111' : 'transparent',
+          }}
+        >
+          <Icon
+            style={{ width: 20, height: 20 }}
+            className={`transition-all duration-200 ${
+              active ? 'text-white stroke-[2]' : 'text-gray-400 dark:text-gray-500 stroke-[1.5]'
+            }`}
+          />
+        </div>
+        <span
+          style={{
+            fontSize: 10,
+            fontFamily: "'DM Sans', sans-serif",
+            fontWeight: active ? 600 : 400,
+            color: active ? '#111' : '#9ca3af',
+            letterSpacing: 0,
+            lineHeight: 1.2,
+          }}
+          className="dark:!text-white dark:!opacity-100"
+        >
+          {name}
+        </span>
+      </>
+    );
+
+    const cls = "flex-1 flex flex-col items-center justify-center py-2 gap-0.5";
+    const sty = { minHeight: 60 };
+
+    if (isButton) {
+      return (
+        <button onClick={onClick} className={cls} style={sty}>
+          {content}
+        </button>
+      );
+    }
+    return (
+      <Link to={to} onClick={onClick} className={cls} style={sty}>
+        {content}
+      </Link>
+    );
   };
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden mobile-bottom-nav"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden mobile-bottom-nav dark:bg-gray-900/97"
       style={navStyle}
     >
-      <div className="dark:bg-gray-900/95">
+      <div>
         {/* Sub-menu level */}
         {activeParent && subItems.length > 0 && (
-          <div
-            className="flex items-stretch border-t border-gray-100 dark:border-gray-800"
-            style={{ minHeight: 56 }}
-          >
-            {/* Sub items - fill left portion */}
+          <div className="flex items-stretch" style={{ minHeight: 60 }}>
             <div className="flex-1 flex items-stretch overflow-x-auto">
               {subItems.map(sub => {
-                const Icon = sub.icon;
                 const isActive = (currentPageName || '').includes(sub.page.split('?')[0]);
                 return (
-                  <Link
+                  <NavItem
                     key={sub.page}
+                    icon={sub.icon}
+                    name={sub.name}
+                    active={isActive}
                     to={createPageUrl(sub.page)}
                     onClick={handleSubClick}
-                    className="flex flex-col items-center justify-center py-2 gap-0.5 relative"
-                    style={{ minWidth: 56, minHeight: 56, flex: '1 1 0' }}
-                  >
-                    {isActive && (
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-b-full bg-gray-800 dark:bg-white" />
-                    )}
-                    <Icon
-                      className={`w-5 h-5 transition-all ${
-                        isActive
-                          ? 'text-gray-900 dark:text-white stroke-[2]'
-                          : 'text-gray-400 dark:text-gray-500 stroke-[1.5]'
-                      }`}
-                    />
-                    <span
-                      className={`text-[9px] font-glacial tracking-wide transition-all leading-tight text-center ${
-                        isActive
-                          ? 'text-gray-900 dark:text-white font-semibold'
-                          : 'text-gray-400 dark:text-gray-500 font-normal'
-                      }`}
-                    >
-                      {sub.name}
-                    </span>
-                  </Link>
+                  />
                 );
               })}
             </div>
 
-            {/* Back button - canto direito */}
+            {/* Back button */}
             <button
               onClick={() => setActiveParent(null)}
-              className="flex flex-col items-center justify-center px-4 gap-0.5 border-l border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60"
-              style={{ minWidth: 52 }}
+              className="flex flex-col items-center justify-center px-3 gap-0.5"
+              style={{ minWidth: 52, borderLeft: '1px solid rgba(0,0,0,0.06)' }}
             >
-              <ChevronLeft className="w-5 h-5 text-gray-400 dark:text-gray-400 stroke-[1.5]" />
-              <span className="text-[9px] font-glacial text-gray-400 dark:text-gray-400">Voltar</span>
+              <div
+                className="flex items-center justify-center rounded-2xl"
+                style={{ width: 44, height: 30, background: 'transparent' }}
+              >
+                <ChevronLeft style={{ width: 20, height: 20 }} className="text-gray-400 stroke-[1.5]" />
+              </div>
+              <span style={{ fontSize: 10, fontFamily: "'DM Sans', sans-serif", color: '#9ca3af' }}>
+                Voltar
+              </span>
             </button>
           </div>
         )}
@@ -187,63 +222,25 @@ export default function MobileBottomNav({ currentPageName }) {
         {!activeParent && (
           <div className="flex items-stretch">
             {mainTabs.map(tab => {
-              const Icon = tab.icon;
               const active = isTabRelated(tab);
               return tab.children ? (
-                <button
+                <NavItem
                   key={tab.name}
+                  icon={tab.icon}
+                  name={tab.name}
+                  active={active}
+                  isButton
                   onClick={(e) => handleMainTabClick(e, tab)}
-                  className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative"
-                  style={{ minHeight: 56 }}
-                >
-                  {active && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-b-full bg-gray-800 dark:bg-white" />
-                  )}
-                  <Icon
-                    className={`w-[22px] h-[22px] transition-all ${
-                      active
-                        ? 'text-gray-900 dark:text-white stroke-[2]'
-                        : 'text-gray-400 dark:text-gray-500 stroke-[1.5]'
-                    }`}
-                  />
-                  <span
-                    className={`text-[10px] font-glacial tracking-wide transition-all ${
-                      active
-                        ? 'text-gray-900 dark:text-white font-semibold'
-                        : 'text-gray-400 dark:text-gray-500 font-normal'
-                    }`}
-                  >
-                    {tab.name}
-                  </span>
-                </button>
+                />
               ) : (
-                <Link
+                <NavItem
                   key={tab.name}
+                  icon={tab.icon}
+                  name={tab.name}
+                  active={active}
                   to={createPageUrl(tab.page)}
                   onClick={(e) => handleMainTabClick(e, tab)}
-                  className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative"
-                  style={{ minHeight: 56 }}
-                >
-                  {active && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-b-full bg-gray-800 dark:bg-white" />
-                  )}
-                  <Icon
-                    className={`w-[22px] h-[22px] transition-all ${
-                      active
-                        ? 'text-gray-900 dark:text-white stroke-[2]'
-                        : 'text-gray-400 dark:text-gray-500 stroke-[1.5]'
-                    }`}
-                  />
-                  <span
-                    className={`text-[10px] font-glacial tracking-wide transition-all ${
-                      active
-                        ? 'text-gray-900 dark:text-white font-semibold'
-                        : 'text-gray-400 dark:text-gray-500 font-normal'
-                    }`}
-                  >
-                    {tab.name}
-                  </span>
-                </Link>
+                />
               );
             })}
           </div>
