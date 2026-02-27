@@ -12,14 +12,6 @@ import ConferenciaAuditoria from '@/components/estoque/auditoria/ConferenciaAudi
 export default function Armazenagem() {
   const [produtos, setProdutos] = useState([]);
   const [conferenciaAtiva, setConferenciaAtiva] = useState(null);
-  const [modoAuditoria, setModoAuditoria] = useState(false);
-
-  const abrirConferencia = (conf) => {
-    // Se está aguardando auditoria ou concluída, abre no modo auditoria (visão do responsável)
-    const isAuditoria = ["Aguardando Auditoria", "Concluída", "Cancelada"].includes(conf.status);
-    setModoAuditoria(isAuditoria);
-    setConferenciaAtiva(conf);
-  };
 
   useEffect(() => {
     loadData();
@@ -69,12 +61,11 @@ export default function Armazenagem() {
             <TabsTrigger
               value="auditoria"
               title="Auditoria de Estoque"
-              onClick={() => { setConferenciaAtiva(null); setModoAuditoria(false); }}
+              onClick={() => setConferenciaAtiva(null)}
               className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
             >
               <ClipboardCheck className="w-4 h-4" />
               <span className="hidden md:inline">Auditoria de Estoque</span>
-
             </TabsTrigger>
           </TabsList>
 
@@ -93,19 +84,12 @@ export default function Armazenagem() {
           <TabsContent value="auditoria" className="mt-6">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
               {conferenciaAtiva ? (
-                modoAuditoria ? (
-                  <ConferenciaAuditoria
-                    conferencia={conferenciaAtiva}
-                    onVoltar={() => { setConferenciaAtiva(null); setModoAuditoria(false); }}
-                  />
-                ) : (
-                  <ConferenciaEditor
-                    conferencia={conferenciaAtiva}
-                    onVoltar={() => setConferenciaAtiva(null)}
-                  />
-                )
+                <ConferenciaEditor
+                  conferencia={conferenciaAtiva}
+                  onVoltar={() => setConferenciaAtiva(null)}
+                />
               ) : (
-                <ListaConferencias onAbrirConferencia={abrirConferencia} />
+                <ListaConferencias onAbrirConferencia={setConferenciaAtiva} />
               )}
             </div>
           </TabsContent>
