@@ -100,6 +100,7 @@ export default function ProdutosPage() {
     cadastroIncompleto: 'all'
   });
   const [sortOrder, setSortOrder] = useState('az');
+  const [viewMode, setViewMode] = useState('dinamica'); // 'dinamica' | 'plana'
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState(null);
