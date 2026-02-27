@@ -30,6 +30,8 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   const [iaLoading, setIaLoading] = useState(false);
   const [iaSugestoes, setIaSugestoes] = useState([]);
   const [iaImagem, setIaImagem] = useState(null);
+  const [iaDescricao, setIaDescricao] = useState(""); // O que a IA identificou na imagem
+  const [iaSemResultado, setIaSemResultado] = useState(false);
   const fileInputRef = useRef(null);
   const buscaRef = useRef(null);
 
