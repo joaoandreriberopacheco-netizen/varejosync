@@ -65,7 +65,6 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   // Abre modal de quantidade ao selecionar produto
   const selecionarProduto = (produto) => {
     setBusca("");
-    setIaSugestoes([]);
     const nome = produto.nome || [
       produto.campo_hierarquico_1,
       produto.campo_hierarquico_2,
