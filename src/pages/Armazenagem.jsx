@@ -5,10 +5,12 @@ import { Package, TrendingUp, History, ClipboardCheck } from 'lucide-react';
 import FilaSeparacao from '@/components/estoque/FilaSeparacao';
 import MovimentacaoEstoqueForm from '@/components/estoque/MovimentacaoEstoqueForm';
 import HistoricoMovimentacoes from '@/components/estoque/HistoricoMovimentacoes';
-import AuditoriaEstoque from '@/pages/AuditoriaEstoque';
+import ListaConferencias from '@/components/estoque/auditoria/ListaConferencias';
+import ConferenciaEditor from '@/components/estoque/auditoria/ConferenciaEditor';
 
 export default function Armazenagem() {
   const [produtos, setProdutos] = useState([]);
+  const [conferenciaAtiva, setConferenciaAtiva] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -54,6 +56,7 @@ export default function Armazenagem() {
             </TabsTrigger>
             <TabsTrigger
               value="auditoria"
+              onClick={() => setConferenciaAtiva(null)}
               className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
             >
               <ClipboardCheck className="w-4 h-4" />
@@ -74,7 +77,16 @@ export default function Armazenagem() {
           </TabsContent>
 
           <TabsContent value="auditoria" className="mt-6">
-            <AuditoriaEstoque />
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+              {conferenciaAtiva ? (
+                <ConferenciaEditor
+                  conferencia={conferenciaAtiva}
+                  onVoltar={() => setConferenciaAtiva(null)}
+                />
+              ) : (
+                <ListaConferencias onAbrirConferencia={setConferenciaAtiva} />
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
