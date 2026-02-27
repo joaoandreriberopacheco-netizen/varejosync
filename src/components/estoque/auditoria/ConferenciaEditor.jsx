@@ -37,7 +37,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
   const carregar = async () => {
     setLoading(true);
-    const prods = await base44.entities.Produto.list("campo_hierarquico_1", 500);
+    const prods = await base44.entities.Produto.list("-created_date", 500);
     setProdutos(prods);
     setLoading(false);
   };
@@ -63,11 +63,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
     setProdutosFiltrados(filtrados);
   }, [busca, produtos]);
 
-  const salvarItens = useCallback(async (novosItens) => {
+  const salvarItens = async (novosItens) => {
     setSaving(true);
     await base44.entities.ConferenciaEstoque.update(conferencia_id, { itens_conferidos: novosItens });
     setSaving(false);
-  }, [conferencia_id]);
+  };
 
   // Abre modal de quantidade ao selecionar produto
   const selecionarProduto = (produto) => {
