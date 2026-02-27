@@ -54,6 +54,7 @@ import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import MassImageUploader from '../components/produtos/MassImageUploader';
 import TabelaDinamica from '../components/produtos/TabelaDinamica';
+import MobileHierarquica from '../components/produtos/MobileHierarquica';
 
 
 const isCadastroIncompleto = (produto) => {
