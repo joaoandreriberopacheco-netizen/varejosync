@@ -74,6 +74,7 @@ export default function Armazenagem() {
             >
               <ClipboardCheck className="w-4 h-4" />
               <span className="hidden md:inline">Auditoria de Estoque</span>
+
             </TabsTrigger>
           </TabsList>
 
