@@ -7,6 +7,7 @@ import MovimentacaoEstoqueForm from '@/components/estoque/MovimentacaoEstoqueFor
 import HistoricoMovimentacoes from '@/components/estoque/HistoricoMovimentacoes';
 import ListaConferencias from '@/components/estoque/auditoria/ListaConferencias';
 import ConferenciaEditor from '@/components/estoque/auditoria/ConferenciaEditor';
+import ConferenciaAuditoria from '@/components/estoque/auditoria/ConferenciaAuditoria';
 
 export default function Armazenagem() {
   const [produtos, setProdutos] = useState([]);
