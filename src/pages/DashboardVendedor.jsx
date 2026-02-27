@@ -62,7 +62,7 @@ export default function DashboardVendedor() {
 
       // Agendamentos logísticos
       const agenda = await base44.entities.AgendaLogistica.filter({
-        data_entrega: { $gte: moment().format('YYYY-MM-DD') }
+        data_agendada: { $gte: moment().format('YYYY-MM-DD') }
       });
       setAgendamentos(agenda.slice(0, 5));
 
