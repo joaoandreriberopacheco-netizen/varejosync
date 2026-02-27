@@ -30,8 +30,9 @@ export default function ListaConferencias({ onAbrirConferencia }) {
     setLoading(false);
   };
 
-  const handleCriada = (nova) => {
+  const handleCriada = async (nova) => {
     setShowNova(false);
+    await carregar();
     onAbrirConferencia(nova);
   };
 
