@@ -1239,8 +1239,20 @@ export default function ProdutosPage() {
                 })}
               </div>
 
-              {/* DESKTOP: Tabela */}
-              <div className="hidden md:block border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900">
+              {/* DESKTOP: Tabela Dinâmica Hierárquica */}
+              {viewMode === 'dinamica' && (
+                <div className="hidden md:block">
+                  <TabelaDinamica
+                    produtos={filteredProdutos}
+                    visibleColumns={visibleColumns}
+                    fornecedorMap={fornecedorMap}
+                    onEdit={handleEdit}
+                  />
+                </div>
+              )}
+
+              {/* DESKTOP: Tabela Plana (original) */}
+              <div className={`${viewMode === 'plana' ? 'hidden md:block' : 'hidden'} border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900`}>
                 <Table>
                   <TableHeader className="bg-gray-50 sticky top-0 z-20 dark:bg-gray-800">
                     <TableRow>
