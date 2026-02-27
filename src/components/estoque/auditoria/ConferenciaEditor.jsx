@@ -373,9 +373,9 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Modal de quantidade ao selecionar produto */}
       {modalQtd && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setModalQtd(null)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl md:rounded-3xl p-6 w-full max-w-sm shadow-2xl" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 80px))' }}>
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">Produto selecionado</p>
             <p className="text-sm font-semibold text-gray-900 dark:text-white mb-5 line-clamp-2">{modalQtd.produto.nome}</p>
 
