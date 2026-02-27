@@ -197,7 +197,6 @@ export default function Layout({ children, currentPageName }) {
           { name: 'Compras', page: 'Compras' },
           { name: 'Logística', page: 'Logistica' },
           { name: 'Armazenagem', page: 'Armazenagem' },
-          { name: 'Auditoria de Estoque', page: 'AuditoriaEstoque' },
           { name: 'Separação de Pedidos', page: 'InterfaceSeparador', roles: ['Admin', 'Gerente', 'Estoquista'] }
         ],
         roles: ['Admin', 'Gerente', 'Estoquista']
