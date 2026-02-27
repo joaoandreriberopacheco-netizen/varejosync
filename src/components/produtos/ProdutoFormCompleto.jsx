@@ -16,6 +16,11 @@ import CurrencyInput from './CurrencyInput';
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
+  const gerarNomeCompleto = (data) => {
+    const campos = [data.campo_hierarquico_1, data.campo_hierarquico_2, data.campo_hierarquico_3, data.campo_hierarquico_4, data.campo_hierarquico_5];
+    return campos.filter(Boolean).join(' | ').toUpperCase();
+  };
+
   const [formData, setFormData] = useState(produto ? {
     ...produto,
     tags: Array.isArray(produto.tags) ? produto.tags : [],
@@ -28,8 +33,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     unidade_principal: produto.unidade_principal || 'UN',
     ativo: produto.ativo !== false
   } : {
-    nome: '', descricao: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
-    categoria_id: '', categoria_nome: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
+    campo_hierarquico_1: '', campo_hierarquico_2: '', campo_hierarquico_3: '', campo_hierarquico_4: '', campo_hierarquico_5: '',
+    nome: '', codigo_barras: '', codigo_interno: '', tipo: 'Produto',
+    categoria_id: '', categoria_nome: '', marca: '', tags: [], valor_compra: 0, preco_venda_padrao: 0,
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
     unidade_principal: 'UN', unidades_por_pacote: 1, unidades_alternativas: [],
     estoque_atual: 0, estoque_minimo: 0, estoque_ideal: 0, estoque_maximo: 0, estoque_avariado: 0,
