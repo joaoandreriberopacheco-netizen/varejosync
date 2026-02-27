@@ -84,13 +84,22 @@ export default function Armazenagem() {
 
           <TabsContent value="auditoria" className="mt-6">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-              {conferenciaAtiva ? (
+              {conferenciaAuditoria ? (
+                <ConferenciaAuditoria
+                  conferencia={conferenciaAuditoria}
+                  onVoltar={() => setConferenciaAuditoria(null)}
+                  onAtualizar={() => setConferenciaAuditoria(null)}
+                />
+              ) : conferenciaAtiva ? (
                 <ConferenciaEditor
                   conferencia={conferenciaAtiva}
                   onVoltar={() => setConferenciaAtiva(null)}
                 />
               ) : (
-                <ListaConferencias onAbrirConferencia={setConferenciaAtiva} />
+                <ListaConferencias
+                  onAbrirConferencia={setConferenciaAtiva}
+                  onAbrirAuditoria={setConferenciaAuditoria}
+                />
               )}
             </div>
           </TabsContent>
