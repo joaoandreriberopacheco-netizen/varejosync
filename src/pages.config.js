@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import Armazenagem from './pages/Armazenagem';
+import AuditoriaEstoque from './pages/AuditoriaEstoque';
 import AutoAtendimento from './pages/AutoAtendimento';
 import CaixasAtivos from './pages/CaixasAtivos';
 import Campanhas from './pages/Campanhas';
@@ -84,6 +85,7 @@ import MapaFuncionalidades from './pages/MapaFuncionalidades';
 import Operacoes from './pages/Operacoes';
 import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
 import PDV from './pages/PDV';
+import PDVAuditoria from './pages/PDVAuditoria';
 import PainelGerente from './pages/PainelGerente';
 import Produtos from './pages/Produtos';
 import RelatorioMargem from './pages/RelatorioMargem';
@@ -95,13 +97,12 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import AuditoriaEstoque from './pages/AuditoriaEstoque';
-import PDVAuditoria from './pages/PDVAuditoria';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Armazenagem": Armazenagem,
+    "AuditoriaEstoque": AuditoriaEstoque,
     "AutoAtendimento": AutoAtendimento,
     "CaixasAtivos": CaixasAtivos,
     "Campanhas": Campanhas,
@@ -138,6 +139,7 @@ export const PAGES = {
     "Operacoes": Operacoes,
     "OtimizacaoEstoqueIA": OtimizacaoEstoqueIA,
     "PDV": PDV,
+    "PDVAuditoria": PDVAuditoria,
     "PainelGerente": PainelGerente,
     "Produtos": Produtos,
     "RelatorioMargem": RelatorioMargem,
@@ -149,8 +151,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "AuditoriaEstoque": AuditoriaEstoque,
-    "PDVAuditoria": PDVAuditoria,
 }
 
 export const pagesConfig = {

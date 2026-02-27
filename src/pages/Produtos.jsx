@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 // entities imported via base44 client
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
