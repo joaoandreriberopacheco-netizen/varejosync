@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ClipboardList, Play, CheckCircle2, Clock, XCircle, AlertCircle, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog";
+import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 
