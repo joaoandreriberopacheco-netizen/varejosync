@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Search, Plus, Minus, Trash2,
   CheckCircle2, Loader2, Package, ChevronDown, ChevronUp,
-  ClipboardCheck, X
+  ClipboardCheck, X, Camera
 } from "lucide-react";
 
 export default function ConferenciaEditor({ conferencia: conferenciaInicial, onVoltar }) {

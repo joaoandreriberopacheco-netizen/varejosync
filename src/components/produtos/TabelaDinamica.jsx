@@ -17,7 +17,7 @@ const getStockDot = (produto) => {
   return 'bg-green-500';
 };
 
-function GroupRow({ label, count, valorEstoque, abaixoMin, depth, expanded, onToggle }) {
+function GroupRow({ label, count, valorEstoque, abaixoMin, estoqueTotal, depth, expanded, onToggle }) {
   const indent = depth * 16;
   return (
     <tr
@@ -30,12 +30,21 @@ function GroupRow({ label, count, valorEstoque, abaixoMin, depth, expanded, onTo
         style={{ paddingLeft: 12 + indent }}
         colSpan={3}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-gray-400 dark:text-gray-500">
             {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </span>
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">{label}</span>
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">{count} SKU{count !== 1 ? 's' : ''}</span>
+          <span className="text-[10px] text-gray-400 dark:text-gray-500">{count} SKU{count !== 1 ? 's' : ''}</span>
+          {/* Estoque somado — visível no mobile também */}
+          {estoqueTotal > 0 && (
+            <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+              ∑ {formatarNumero(estoqueTotal)}
+            </span>
+          )}
+          {abaixoMin > 0 && (
+            <span className="text-[10px] text-red-500 dark:text-red-400">{abaixoMin} abaixo mín.</span>
+          )}
         </div>
       </td>
       <td className="py-2 px-3 text-right text-[10px] text-gray-400 dark:text-gray-500 hidden md:table-cell">
