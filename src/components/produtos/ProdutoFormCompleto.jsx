@@ -466,13 +466,50 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
               </div>
             </div>
 
+            {/* Campos Hierárquicos */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 mb-3">
+                <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Descrição Hierárquica</Label>
+              </div>
+
+              {/* Preview do nome gerado */}
+              {formData.nome && (
+                <div className="mb-4 px-3 py-2 bg-gray-50 dark:bg-gray-800/60 rounded-lg">
+                  <p className="text-[10px] text-gray-400 uppercase mb-1">Preview da Descrição Completa</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 font-glacial">{formData.nome}</p>
+                </div>
+              )}
+
+              {[
+                { field: 'campo_hierarquico_1', label: 'Campo 1 (Produto base) *', placeholder: 'Ex: Placa Dry Wall, Cimento Portland' },
+                { field: 'campo_hierarquico_2', label: 'Campo 2 (Subtipo)', placeholder: 'Ex: Standard, RU, CPIV' },
+                { field: 'campo_hierarquico_3', label: 'Campo 3 (Espessura / Gramatura)', placeholder: 'Ex: 12,5mm, 50kg' },
+                { field: 'campo_hierarquico_4', label: 'Campo 4 (Dimensão / Embalagem)', placeholder: 'Ex: 1200x2400mm, Saco' },
+                { field: 'campo_hierarquico_5', label: 'Campo 5 (Marca / Variante)', placeholder: 'Ex: Knauf, Votorantim' },
+              ].map(({ field, label, placeholder }, idx) => (
+                <div key={field} className="grid grid-cols-[20px_1fr] items-center gap-3 py-1">
+                  <span className="text-xs font-bold text-gray-400 dark:text-gray-500 text-center">{idx + 1}</span>
+                  <div>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{label}</Label>
+                    <Input
+                      value={formData[field] || ''}
+                      onChange={e => handleChange(field, e.target.value)}
+                      placeholder={placeholder}
+                      className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-9 text-sm text-gray-800 dark:text-gray-200 focus:border-gray-500"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Marca (campo independente) */}
             <div>
-              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Descrição do Produto *</Label>
-              <Input 
-                value={formData.nome} 
-                onChange={e => handleChange('nome', e.target.value)} 
-                placeholder="Ex: Torneira de Mesa Cromada" 
-                className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-base font-medium text-gray-800 dark:text-gray-200"
+              <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Marca Oficial (campo independente)</Label>
+              <Input
+                value={formData.marca || ''}
+                onChange={e => handleChange('marca', e.target.value)}
+                placeholder="Ex: Knauf, Placo, Eternit"
+                className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
               />
             </div>
 
