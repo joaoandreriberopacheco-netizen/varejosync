@@ -974,7 +974,7 @@ export default function ProdutosPage() {
     <div className="flex flex-col h-screen overflow-hidden w-screen bg-white dark:bg-gray-900">
       {/* Header - mobile-first compacto */}
       <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 w-full">
-        <div className="max-w-7xl mx-auto px-3 py-2 space-y-2">
+        <div className="w-full px-3 py-2 space-y-2 overflow-x-hidden">
 
           {/* Linha 1: título + KPIs + ações */}
           <div className="flex items-center gap-2">
