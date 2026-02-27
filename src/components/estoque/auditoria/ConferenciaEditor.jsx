@@ -37,7 +37,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
   const carregar = async () => {
     setLoading(true);
-    const prods = await base44.entities.Produto.list("-created_date", 500);
+    const prods = await base44.entities.Produto.list("-nome", 2000);
     setProdutos(prods);
     setLoading(false);
   };
