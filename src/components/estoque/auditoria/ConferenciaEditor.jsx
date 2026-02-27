@@ -141,6 +141,8 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
     setCameraMode(mode);
     setIaSugestoes([]);
     setIaImagem(null);
+    setIaDescricao("");
+    setIaSemResultado(false);
     setShowCamera(true);
     // Simular abertura de câmera via input file
     setTimeout(() => {
