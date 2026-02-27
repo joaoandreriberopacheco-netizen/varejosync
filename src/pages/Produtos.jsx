@@ -1180,8 +1180,8 @@ export default function ProdutosPage() {
       </div>
 
       {/* Tabela - SCROLL INDEPENDENTE */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full max-w-7xl mx-auto px-3 md:px-4 pb-4">
+      <div className="flex-1 overflow-hidden overflow-x-hidden w-full">
+        <div className="h-full w-full max-w-full px-3 md:px-4 pb-4 overflow-x-hidden">
           <div className="h-full flex flex-col">
             {/* Contador + Botão Colunas */}
             <div className="flex items-center justify-between py-2 flex-none">
