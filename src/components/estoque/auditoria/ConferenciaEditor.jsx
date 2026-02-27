@@ -175,120 +175,30 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       </div>
 
       {/* ---- BUSCA NO TOPO ---- */}
-      <div className="mb-4 space-y-2">
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-gray-600 pointer-events-none" />
-            <Input
-              ref={buscaRef}
-              placeholder="Buscar produto por nome ou código..."
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              className="pl-9 pr-4 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
-              autoComplete="off"
-            />
-            {busca && (
-              <button
-                onClick={() => setBusca("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          {/* Botão câmera IA */}
-          <button
-            onClick={() => abrirCamera("ia")}
-            className="w-11 h-11 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="Identificar produto por foto (IA)"
-          >
-            <Sparkles className="w-4 h-4" />
-          </button>
-          {/* Botão código de barras */}
-          <button
-            onClick={() => abrirCamera("barcode")}
-            className="w-11 h-11 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="Ler código de barras"
-          >
-            <Camera className="w-4 h-4" />
-          </button>
+      <div className="mb-4 relative">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-gray-600 pointer-events-none" />
+          <Input
+            ref={buscaRef}
+            placeholder="Buscar produto por nome ou código..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            className="pl-9 pr-9 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
+            autoComplete="off"
+          />
+          {busca && (
+            <button
+              onClick={() => setBusca("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* Input oculto para câmera */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleFotoCapturada}
-        />
-
-        {/* Loading IA */}
-        {iaLoading && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl">
-            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-            <span className="text-xs text-gray-400">
-              {cameraMode === "ia" ? "Identificando produto com IA..." : "Lendo código de barras..."}
-            </span>
-          </div>
-        )}
-
-        {/* Painel IA: sugestões ou sem resultado */}
-        {(iaSugestoes.length > 0 || iaSemResultado) && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-            {/* Cabeçalho com o que a IA identificou */}
-            <div className="flex items-start gap-2 px-4 py-3 border-b border-gray-50 dark:border-gray-700">
-              <Sparkles className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">IA identificou na imagem:</p>
-                {iaDescricao && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 italic line-clamp-2">"{iaDescricao}"</p>
-                )}
-              </div>
-              <button
-                onClick={() => { setIaSugestoes([]); setIaSemResultado(false); setIaDescricao(""); }}
-                className="text-gray-300 dark:text-gray-600 flex-shrink-0"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Lista de produtos encontrados */}
-            {iaSugestoes.length > 0 && (
-              <div className="divide-y divide-gray-50 dark:divide-gray-700">
-                {iaSugestoes.map(prod => {
-                  const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
-                  return (
-                    <button
-                      key={prod.id}
-                      onClick={() => { setIaSugestoes([]); setIaSemResultado(false); setIaDescricao(""); selecionarProduto(prod); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{nome}</p>
-                        <p className="text-xs text-gray-400">{prod.codigo_interno || prod.codigo_barras || ""}</p>
-                      </div>
-                      <Plus className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Sem resultado */}
-            {iaSemResultado && (
-              <div className="px-4 py-4 text-center">
-                <p className="text-xs text-gray-400 dark:text-gray-500">Nenhum produto cadastrado corresponde à imagem.</p>
-                <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Tente buscar manualmente pelo nome acima.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Resultados da busca incremental */}
-        {produtosFiltrados.length > 0 && !iaLoading && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden max-h-64 overflow-y-auto">
+        {/* Resultados como overlay flutuante */}
+        {produtosFiltrados.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden max-h-72 overflow-y-auto">
             <div className="divide-y divide-gray-50 dark:divide-gray-700">
               {produtosFiltrados.map(prod => {
                 const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
@@ -302,7 +212,9 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{nome}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">{prod.codigo_interno || prod.codigo_barras || ""}</p>
+                      {(prod.codigo_interno || prod.codigo_barras) && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{prod.codigo_interno || prod.codigo_barras}</p>
+                      )}
                     </div>
                     {contagens.length > 0 && (
                       <div className="flex items-center gap-1 flex-shrink-0">
