@@ -13,10 +13,13 @@ export default function usePullToRefresh(onRefresh, { threshold = 80 } = {}) {
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
   const pulling = useRef(false);
+  const pullDistanceRef = useRef(0);
+  const isRefreshingRef = useRef(false);
+  const onRefreshRef = useRef(onRefresh);
+
+  useEffect(() => { onRefreshRef.current = onRefresh; }, [onRefresh]);
 
   useEffect(() => {
-    const el = containerRef.current || window;
-
     const onTouchStart = (e) => {
       const scrollTop = containerRef.current
         ? containerRef.current.scrollTop
@@ -27,22 +30,27 @@ export default function usePullToRefresh(onRefresh, { threshold = 80 } = {}) {
     };
 
     const onTouchMove = (e) => {
-      if (!pulling.current || isRefreshing) return;
+      if (!pulling.current || isRefreshingRef.current) return;
       const dist = Math.max(0, e.touches[0].clientY - startY.current);
-      // dampen
-      setPullDistance(Math.min(dist * 0.5, threshold * 1.2));
+      const clamped = Math.min(dist * 0.5, threshold * 1.2);
+      pullDistanceRef.current = clamped;
+      setPullDistance(clamped);
     };
 
     const onTouchEnd = async () => {
       if (!pulling.current) return;
       pulling.current = false;
-      if (pullDistance >= threshold) {
+      if (pullDistanceRef.current >= threshold) {
+        isRefreshingRef.current = true;
         setIsRefreshing(true);
         setPullDistance(0);
-        await onRefresh();
+        pullDistanceRef.current = 0;
+        await onRefreshRef.current();
+        isRefreshingRef.current = false;
         setIsRefreshing(false);
       } else {
         setPullDistance(0);
+        pullDistanceRef.current = 0;
       }
     };
 
@@ -56,7 +64,7 @@ export default function usePullToRefresh(onRefresh, { threshold = 80 } = {}) {
       target.removeEventListener('touchmove', onTouchMove);
       target.removeEventListener('touchend', onTouchEnd);
     };
-  }, [onRefresh, pullDistance, threshold, isRefreshing]);
+  }, []); // sem dependências — estável
 
   return { containerRef, isRefreshing, pullDistance };
 }
