@@ -155,15 +155,18 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       const base64 = ev.target.result;
       setIaImagem(base64);
 
-      if (cameraMode === "barcode") {
-        // Busca por código de barras: usa a IA para extrair o código e busca no catálogo
-        setIaLoading(true);
-        try {
+      // Upload da imagem (necessário para ambos os modos)
+      setIaLoading(true);
+      try {
+        const blob = await (await fetch(base64)).blob();
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: blob });
+
+        if (cameraMode === "barcode") {
           const res = await base44.integrations.Core.InvokeLLM({
             prompt: `Esta imagem contém um código de barras de produto de varejo/material de construção. 
-Extraia o código de barras (EAN/UPC) visível na imagem. Retorne apenas o número, sem formatação.
-Se não houver código de barras visível, retorne null.`,
-            file_urls: [base64],
+Extraia o código de barras (EAN/UPC) visível na imagem. Retorne apenas o número do código, sem espaços ou formatação.
+Se não houver código de barras visível, retorne null para codigo_barras.`,
+            file_urls: [file_url],
             response_json_schema: {
               type: "object",
               properties: {
@@ -178,28 +181,14 @@ Se não houver código de barras visível, retorne null.`,
               p.codigo_barras?.replace(/\D/g, "") === codigo.replace(/\D/g, "")
             );
             if (encontrado) {
-              setShowCamera(false);
               selecionarProduto(encontrado);
             } else {
-              // Tenta busca parcial
               setBusca(codigo);
-              setShowCamera(false);
             }
-          } else {
-            setBusca("");
-            setShowCamera(false);
           }
-        } finally {
-          setIaLoading(false);
-        }
-      } else {
-        // Modo IA: identifica o produto pela imagem
-        setIaLoading(true);
-        try {
-          // Upload da imagem
-          const blob = await (await fetch(base64)).blob();
-          const { file_url } = await base44.integrations.Core.UploadFile({ file: blob });
-
+          setShowCamera(false);
+        } else {
+          // Modo IA: identifica o produto pela imagem
           const res = await base44.integrations.Core.InvokeLLM({
             prompt: `Esta é uma foto de um produto de varejo ou material de construção.
 Identifique o produto e sugira de 3 a 5 possíveis nomes/descrições para este produto que poderiam estar em um catálogo de loja de materiais de construção ou varejo.
@@ -216,15 +205,14 @@ Retorne as sugestões em português, em ordem da mais provável para a menos pro
           });
 
           if (res?.sugestoes?.length) {
-            // Busca produtos que correspondem às sugestões
-            const sugestoesIA = res.sugestoes;
             const produtosEncontrados = [];
-            sugestoesIA.forEach(sug => {
-              const q = sug.toLowerCase();
-              const found = produtos.filter(p =>
-                (p.nome || "").toLowerCase().includes(q.split(" ")[0]) ||
-                (p.campo_hierarquico_1 || "").toLowerCase().includes(q.split(" ")[0])
-              ).slice(0, 3);
+            res.sugestoes.forEach(sug => {
+              // Usa todas as palavras relevantes da sugestão (não só a primeira)
+              const palavras = sug.toLowerCase().split(" ").filter(w => w.length > 3);
+              const found = produtos.filter(p => {
+                const texto = `${p.nome || ""} ${p.campo_hierarquico_1 || ""} ${p.campo_hierarquico_2 || ""}`.toLowerCase();
+                return palavras.some(w => texto.includes(w));
+              }).slice(0, 3);
               found.forEach(f => {
                 if (!produtosEncontrados.find(x => x.id === f.id)) {
                   produtosEncontrados.push(f);
@@ -232,13 +220,11 @@ Retorne as sugestões em português, em ordem da mais provável para a menos pro
               });
             });
             setIaSugestoes(produtosEncontrados.slice(0, 8));
-            setShowCamera(false);
-          } else {
-            setShowCamera(false);
           }
-        } finally {
-          setIaLoading(false);
+          setShowCamera(false);
         }
+      } finally {
+        setIaLoading(false);
       }
     };
     reader.readAsDataURL(file);
