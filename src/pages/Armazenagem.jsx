@@ -12,6 +12,7 @@ import ConferenciaAuditoria from '@/components/estoque/auditoria/ConferenciaAudi
 export default function Armazenagem() {
   const [produtos, setProdutos] = useState([]);
   const [conferenciaAtiva, setConferenciaAtiva] = useState(null);
+  const [conferenciaAuditoria, setConferenciaAuditoria] = useState(null);
 
   useEffect(() => {
     loadData();
