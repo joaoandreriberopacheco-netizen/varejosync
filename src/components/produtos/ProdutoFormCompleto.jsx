@@ -188,9 +188,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
   const handleChange = (field, value) => {
     setFormData(prev => {
-      const newData = { ...prev, [field]: value };
+      const updated = { ...prev, [field]: value };
+      // Auto-gerar nome ao mudar qualquer campo hierárquico
+      if (field.startsWith('campo_hierarquico_')) {
+        updated.nome = gerarNomeCompleto(updated);
+      }
       saveToHistory(prev);
-      return newData;
+      return updated;
     });
     setTemAlteracoesNaoSalvas(true);
   };
