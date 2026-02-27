@@ -284,6 +284,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                               count={l2Node.items.length}
                               valorEstoque={l2ValorEstoque}
                               abaixoMin={l2AbaixoMin}
+                              estoqueTotal={l2EstoqueTotal}
                               depth={1}
                               expanded={l2Expanded}
                               onToggle={() => toggle(l2FullKey)}
