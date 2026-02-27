@@ -112,6 +112,7 @@ export default function ProdutosPage() {
     'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
   ]);
 
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
   // States for unified import (products + costs)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
