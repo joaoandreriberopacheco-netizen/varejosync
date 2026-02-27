@@ -35,6 +35,7 @@ export default function Armazenagem() {
           <TabsList className="grid w-full grid-cols-4 bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm">
             <TabsTrigger
               value="separacao"
+              title="Fila de Separação"
               className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
             >
               <Package className="w-4 h-4" />
@@ -42,6 +43,7 @@ export default function Armazenagem() {
             </TabsTrigger>
             <TabsTrigger
               value="movimentacao"
+              title="Nova Movimentação"
               className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
             >
               <TrendingUp className="w-4 h-4" />
@@ -49,6 +51,7 @@ export default function Armazenagem() {
             </TabsTrigger>
             <TabsTrigger
               value="historico"
+              title="Histórico de Movimentações"
               className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
             >
               <History className="w-4 h-4" />
@@ -56,6 +59,7 @@ export default function Armazenagem() {
             </TabsTrigger>
             <TabsTrigger
               value="auditoria"
+              title="Auditoria de Estoque"
               onClick={() => setConferenciaAtiva(null)}
               className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
             >
