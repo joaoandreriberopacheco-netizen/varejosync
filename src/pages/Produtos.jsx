@@ -1154,15 +1154,32 @@ export default function ProdutosPage() {
                   </>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsColumnSelectorOpen(true)}
-                className="hidden md:flex h-7 px-2 text-xs dark:text-gray-300"
-              >
-                <Columns className="w-3.5 h-3.5 text-gray-700 dark:text-gray-400" />
-                <span className="ml-1.5 text-gray-700 dark:text-gray-300">Colunas</span>
-              </Button>
+              <div className="hidden md:flex items-center gap-2">
+                {/* Toggle Tabela Dinâmica / Plana */}
+                <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded p-0.5 gap-0.5">
+                  <button
+                    onClick={() => setViewMode('dinamica')}
+                    className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'dinamica' ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 shadow-sm font-medium' : 'text-gray-400 dark:text-gray-500'}`}
+                  >
+                    Hierárquica
+                  </button>
+                  <button
+                    onClick={() => setViewMode('plana')}
+                    className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'plana' ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 shadow-sm font-medium' : 'text-gray-400 dark:text-gray-500'}`}
+                  >
+                    Plana
+                  </button>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsColumnSelectorOpen(true)}
+                  className="h-7 px-2 text-xs dark:text-gray-300"
+                >
+                  <Columns className="w-3.5 h-3.5 text-gray-700 dark:text-gray-400" />
+                  <span className="ml-1.5 text-gray-700 dark:text-gray-300">Colunas</span>
+                </Button>
+              </div>
             </div>
 
             {/* Tabela - MOBILE/DESKTOP */}
