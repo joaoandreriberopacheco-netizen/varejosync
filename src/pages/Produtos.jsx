@@ -1069,54 +1069,54 @@ export default function ProdutosPage() {
             />
           </div>
 
-          {/* Filtros secundários - grid compacto */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
-            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todas</SelectItem>
-              {categorias.map(cat => <SelectItem key={cat} value={cat} className="dark:hover:bg-gray-700 text-xs">{cat}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filters.fornecedorId === 'all' ? '' : filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
-            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
-              <SelectValue placeholder="Fornecedor" />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todos</SelectItem>
-              {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="dark:hover:bg-gray-700 text-xs">{f.nome}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filters.statusEstoque === 'all' ? '' : filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
-            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todos</SelectItem>
-              <SelectItem value="ok" className="dark:hover:bg-gray-700 text-xs">OK</SelectItem>
-              <SelectItem value="baixo" className="dark:hover:bg-gray-700 text-xs">Baixo</SelectItem>
-              <SelectItem value="critico" className="dark:hover:bg-gray-700 text-xs">Crítico</SelectItem>
-              <SelectItem value="inativo" className="dark:hover:bg-gray-700 text-xs">Inativo</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input
-            placeholder="Tag"
-            className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm"
-            value={filters.tag || ''}
-            onChange={e => handleFilterChange('tag', e.target.value)}
-          />
-          <Select value={filters.cadastroIncompleto === 'all' ? '' : filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
-            <SelectTrigger className="border border-input bg-background h-9 text-xs font-medium dark:bg-gray-800 dark:border-gray-700 shadow-sm">
-              <SelectValue placeholder="Cadastro" />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-              <SelectItem value="all" className="dark:hover:bg-gray-700 text-xs font-semibold">Todos</SelectItem>
-              <SelectItem value="incompleto" className="dark:hover:bg-gray-700 text-xs">Incompleto</SelectItem>
-              <SelectItem value="completo" className="dark:hover:bg-gray-700 text-xs">Completo</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Filtros secundários - 1 coluna mobile, 5 desktop */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
+              <SelectTrigger className="border border-input bg-background h-10 text-sm dark:bg-gray-800 dark:border-gray-700 shadow-sm w-full">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+                <SelectItem value="all" className="dark:hover:bg-gray-700 text-sm">Todas as categorias</SelectItem>
+                {categorias.map(cat => <SelectItem key={cat} value={cat} className="dark:hover:bg-gray-700 text-sm">{cat}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filters.fornecedorId === 'all' ? '' : filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
+              <SelectTrigger className="border border-input bg-background h-10 text-sm dark:bg-gray-800 dark:border-gray-700 shadow-sm w-full">
+                <SelectValue placeholder="Fornecedor" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+                <SelectItem value="all" className="dark:hover:bg-gray-700 text-sm">Todos os fornecedores</SelectItem>
+                {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="dark:hover:bg-gray-700 text-sm">{f.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filters.statusEstoque === 'all' ? '' : filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
+              <SelectTrigger className="border border-input bg-background h-10 text-sm dark:bg-gray-800 dark:border-gray-700 shadow-sm w-full">
+                <SelectValue placeholder="Status do estoque" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+                <SelectItem value="all" className="dark:hover:bg-gray-700 text-sm">Todos os status</SelectItem>
+                <SelectItem value="ok" className="dark:hover:bg-gray-700 text-sm">OK</SelectItem>
+                <SelectItem value="baixo" className="dark:hover:bg-gray-700 text-sm">Baixo</SelectItem>
+                <SelectItem value="critico" className="dark:hover:bg-gray-700 text-sm">Crítico</SelectItem>
+                <SelectItem value="inativo" className="dark:hover:bg-gray-700 text-sm">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Tag"
+              className="border border-input bg-background h-10 text-sm dark:bg-gray-800 dark:border-gray-700 shadow-sm w-full"
+              value={filters.tag || ''}
+              onChange={e => handleFilterChange('tag', e.target.value)}
+            />
+            <Select value={filters.cadastroIncompleto === 'all' ? '' : filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
+              <SelectTrigger className="border border-input bg-background h-10 text-sm dark:bg-gray-800 dark:border-gray-700 shadow-sm w-full">
+                <SelectValue placeholder="Cadastro" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+                <SelectItem value="all" className="dark:hover:bg-gray-700 text-sm">Todos</SelectItem>
+                <SelectItem value="incompleto" className="dark:hover:bg-gray-700 text-sm">Incompleto</SelectItem>
+                <SelectItem value="completo" className="dark:hover:bg-gray-700 text-sm">Completo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           </div>
         </div>
