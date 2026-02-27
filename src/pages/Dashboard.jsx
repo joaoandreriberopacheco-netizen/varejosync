@@ -29,11 +29,11 @@ export default function DashboardPage() {
 
   // Dashboards específicos por perfil (case-insensitive)
   const perfilLower = currentUser?.perfil?.toLowerCase() || '';
-  
+
   if (perfilLower === 'vendedor') {
     return <DashboardVendedor />;
   }
-  
+
   if (perfilLower === 'caixa' || perfilLower === 'operador de caixa') {
     return <DashboardCaixa />;
   }
@@ -48,49 +48,49 @@ export default function DashboardPage() {
             Visão geral do seu negócio
           </p>
         </div>
-        <img 
-          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68a91b1a009497f8d44af37e/38881a93d_generated_image.png" 
-          alt="Manah" 
-          className="h-12 w-auto object-contain"
-        />
+        
+
+
+
+
       </div>
 
       {/* Tabs - MOBILE: SÓ ÍCONES */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
           <div className="flex justify-around w-full">
-            <TabsTrigger 
-              value="geral" 
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+            <TabsTrigger
+              value="geral"
+              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
               <LayoutDashboard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Geral</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="vendas"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
               <TrendingUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Vendas</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="compras"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
               <ShoppingCart className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Compras</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="estoque"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
               <Package className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Estoque</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="financeiro"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
+              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+
               <DollarSign className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Financeiro</span>
             </TabsTrigger>
@@ -105,6 +105,6 @@ export default function DashboardPage() {
           <TabsContent value="financeiro" className="mt-0"><FinanceiroTab /></TabsContent>
         </div>
       </Tabs>
-    </div>
-  );
+    </div>);
+
 }
