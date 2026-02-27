@@ -193,56 +193,51 @@ Se não houver código de barras visível, retorne null para codigo_barras.`,
           setShowCamera(false);
         } else {
           // Modo IA: identifica o produto pela imagem
+          // Passa a lista de nomes dos produtos para a IA comparar diretamente
+          const nomesProdutos = produtos.map(p => p.nome || p.campo_hierarquico_1 || "").filter(Boolean);
+
           const res = await base44.integrations.Core.InvokeLLM({
-            prompt: `Esta é uma foto de um produto de varejo ou material de construção.
-Identifique o produto e sugira de 3 a 5 possíveis nomes/descrições para este produto que poderiam estar em um catálogo de loja de materiais de construção ou varejo.
-Seja específico: inclua tipo, material, tamanho/dimensão se visível, cor se relevante.
-Retorne as sugestões em português, em ordem da mais provável para a menos provável.`,
+            prompt: `Você é um sistema de identificação de produtos para uma loja de materiais de construção e varejo.
+
+Analise esta imagem e identifique o produto.
+
+Aqui está a lista de produtos cadastrados no sistema (descrições concatenadas):
+${nomesProdutos.slice(0, 300).join("\n")}
+
+Sua tarefa:
+1. Identifique o que é o produto na imagem (descricao_ia)
+2. Compare com os produtos cadastrados e retorne os nomes EXATOS dos produtos acima que mais se assemelham ao produto da imagem (máximo 6)
+3. Se não houver correspondência clara, retorne lista vazia e explique em descricao_ia o que a imagem mostra
+
+Seja rigoroso: só retorne produtos realmente compatíveis com a imagem.`,
             file_urls: [file_url],
             response_json_schema: {
               type: "object",
               properties: {
-                sugestoes: { type: "array", items: { type: "string" } },
-                descricao: { type: "string" }
+                descricao_ia: { type: "string" },
+                produtos_correspondentes: { type: "array", items: { type: "string" } }
               }
             }
           });
 
-          if (res?.sugestoes?.length) {
-            // Usa a primeira sugestão como termo de busca no campo de texto
-            const primeiraSugestao = res.sugestoes[0] || "";
-            // Extrai palavras relevantes de TODAS as sugestões (mín 3 chars)
-            const todasPalavras = res.sugestoes
-              .join(" ")
-              .toLowerCase()
-              .split(/\s+/)
-              .filter(w => w.length >= 3);
+          setIaDescricao(res?.descricao_ia || "");
 
-            const produtosEncontrados = [];
-            produtos.forEach(p => {
-              // Usa o nome concatenado como fonte principal de busca
-              const texto = (p.nome || [
-                p.campo_hierarquico_1,
-                p.campo_hierarquico_2,
-                p.campo_hierarquico_3,
-                p.campo_hierarquico_4,
-                p.campo_hierarquico_5,
-              ].filter(Boolean).join(" | ")).toLowerCase();
+          const correspondentes = res?.produtos_correspondentes || [];
+          if (correspondentes.length > 0) {
+            // Encontra os objetos produto que batem com os nomes retornados pela IA
+            const encontrados = correspondentes
+              .map(nome => produtos.find(p =>
+                (p.nome || "").toLowerCase() === nome.toLowerCase() ||
+                (p.nome || "").toLowerCase().includes(nome.toLowerCase().slice(0, 20))
+              ))
+              .filter(Boolean)
+              .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i); // dedup
 
-              const matches = todasPalavras.filter(w => texto.includes(w)).length;
-              if (matches > 0) {
-                produtosEncontrados.push({ produto: p, matches });
-              }
-            });
-
-            // Ordena por quantidade de matches
-            produtosEncontrados.sort((a, b) => b.matches - a.matches);
-            setIaSugestoes(produtosEncontrados.slice(0, 8).map(x => x.produto));
-
-            // Se não achou nada nos produtos locais, coloca o termo no campo de busca
-            if (produtosEncontrados.length === 0) {
-              setBusca(primeiraSugestao.split(" ").slice(0, 2).join(" "));
-            }
+            setIaSugestoes(encontrados.slice(0, 6));
+            setIaSemResultado(encontrados.length === 0);
+          } else {
+            setIaSugestoes([]);
+            setIaSemResultado(true);
           }
           setShowCamera(false);
         }
