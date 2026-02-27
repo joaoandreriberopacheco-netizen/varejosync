@@ -249,6 +249,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                     count={allL1Items.length}
                     valorEstoque={l1ValorEstoque}
                     abaixoMin={l1AbaixoMin}
+                    estoqueTotal={l1EstoqueTotal}
                     depth={0}
                     expanded={l1Expanded}
                     onToggle={() => toggle(l1Key)}
@@ -274,6 +275,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                         const l2Expanded = expanded[l2FullKey] !== false;
                         const l2ValorEstoque = l2Node.items.reduce((s, p) => s + (p.estoque_atual || 0) * (p.preco_custo_calculado || 0), 0);
                         const l2AbaixoMin = l2Node.items.filter(p => p.ativo && p.estoque_atual <= p.estoque_minimo).length;
+                        const l2EstoqueTotal = l2Node.items.reduce((s, p) => s + (p.estoque_atual || 0), 0);
 
                         return (
                           <React.Fragment key={l2FullKey}>
