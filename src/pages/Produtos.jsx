@@ -1185,60 +1185,12 @@ export default function ProdutosPage() {
 
             {/* Tabela - MOBILE/DESKTOP */}
             <div className="flex-1 overflow-auto">
-              {/* MOBILE: Cards */}
-              <div className="md:hidden space-y-3">
-                {filteredProdutos.map(produto => {
-                  const margem = produto.preco_venda_padrao && produto.preco_venda_padrao > 0 ?
-                    ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100 : 0;
-                  const cadastroStatus = isCadastroIncompleto(produto);
-                  return (
-                    <div key={produto.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0 pr-2">
-                          <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 mb-1 uppercase">{produto.nome}</h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">{produto.codigo_interno}</p>
-                        </div>
-                        <DropdownMenu modal={false}>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreHorizontal className="h-4 w-4 text-gray-700 dark:text-gray-400" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent 
-                            align="end" 
-                            className="dark:bg-gray-800 dark:border-gray-700"
-                          >
-                            <DropdownMenuItem 
-                              onClick={() => handleEdit(produto)}
-                              className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
-                            >
-                              <Edit className="mr-2 h-3.5 w-3.5"/>Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                              <Copy className="mr-2 h-3.5 w-3.5"/>Duplicar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs">
-                              <Archive className="mr-2 h-3.5 w-3.5"/>Inativar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-700">
-                        <div className="flex flex-col gap-1">
-                          {getStockStatusIndicator(produto)}
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            Estoque: {formatarNumero(produto.estoque_atual)} {produto.unidade_principal || 'UN'}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {formatarNumero(produto.preco_venda_padrao)}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Margem {formatarNumero(margem)}%</div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {/* MOBILE: Vista Hierárquica */}
+              <MobileHierarquica
+                produtos={filteredProdutos}
+                onEdit={handleEdit}
+                formatarNumero={formatarNumero}
+              />
 
               {/* DESKTOP: Tabela Dinâmica Hierárquica */}
               {viewMode === 'dinamica' && (
