@@ -69,7 +69,11 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
               <div className="space-y-2">
                 {grupos.ativas.map(conf => (
-                  <ConferenciaCard key={conf.id} conf={conf} onClick={onAbrirConferencia} />
+                  <ConferenciaCard
+                    key={conf.id}
+                    conf={conf}
+                    onClick={conf.status === "Aguardando Auditoria" ? onAbrirAuditoria : onAbrirConferencia}
+                  />
                 ))}
               </div>
             </section>
@@ -80,7 +84,11 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Histórico</p>
               <div className="space-y-2">
                 {grupos.concluidas.map(conf => (
-                  <ConferenciaCard key={conf.id} conf={conf} onClick={onAbrirConferencia} />
+                  <ConferenciaCard
+                    key={conf.id}
+                    conf={conf}
+                    onClick={conf.status === "Concluída" ? onAbrirAuditoria : onAbrirConferencia}
+                  />
                 ))}
               </div>
             </section>
