@@ -216,15 +216,14 @@ Retorne as sugestões em português, em ordem da mais provável para a menos pro
 
             const produtosEncontrados = [];
             produtos.forEach(p => {
-              const texto = [
-                p.nome,
+              // Usa o nome concatenado como fonte principal de busca
+              const texto = (p.nome || [
                 p.campo_hierarquico_1,
                 p.campo_hierarquico_2,
                 p.campo_hierarquico_3,
                 p.campo_hierarquico_4,
                 p.campo_hierarquico_5,
-                p.tags?.join(" "),
-              ].filter(Boolean).join(" ").toLowerCase();
+              ].filter(Boolean).join(" | ")).toLowerCase();
 
               const matches = todasPalavras.filter(w => texto.includes(w)).length;
               if (matches > 0) {
