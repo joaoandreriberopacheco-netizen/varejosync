@@ -108,11 +108,16 @@ function ConferenciaCard({ conf, onClick }) {
   const cfg = statusConfig[conf.status] || statusConfig["Rascunho"];
   const Icon = cfg.icon;
   const itens = conf.itens_conferidos?.length || 0;
+  const aguardandoAuditoria = conf.status === "Aguardando Auditoria";
 
   return (
     <button
       onClick={() => onClick(conf)}
-      className="w-full text-left bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className={`w-full text-left rounded-2xl p-4 flex items-center gap-3 transition-colors ${
+        aguardandoAuditoria
+          ? "bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
+          : "bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
+      }`}
     >
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
         <Icon className={`w-5 h-5 ${cfg.color}`} />
@@ -134,6 +139,12 @@ function ConferenciaCard({ conf, onClick }) {
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
+        {aguardandoAuditoria && (
+          <div className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 px-2 py-0.5 rounded-full">
+            <Shield className="w-3 h-3" />
+            <span>Auditar</span>
+          </div>
+        )}
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
           {cfg.label}
         </span>
