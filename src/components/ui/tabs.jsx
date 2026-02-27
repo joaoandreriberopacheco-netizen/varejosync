@@ -4,14 +4,15 @@ import { cn } from "@/components/utils"
 const TabsContext = createContext({})
 
 const Tabs = React.forwardRef(({ className, value, defaultValue, onValueChange, children, ...props }, ref) => {
-  const [selectedValue, setSelectedValue] = useState(value || defaultValue)
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState(defaultValue || '');
   
-  const handleValueChange = (val) => {
-      setSelectedValue(val)
-      onValueChange?.(val)
-  }
+  const current = isControlled ? value : internalValue;
 
-  const current = value !== undefined ? value : selectedValue
+  const handleValueChange = (val) => {
+    if (!isControlled) setInternalValue(val);
+    onValueChange?.(val);
+  }
 
   return (
       <TabsContext.Provider value={{ value: current, onValueChange: handleValueChange }}>
