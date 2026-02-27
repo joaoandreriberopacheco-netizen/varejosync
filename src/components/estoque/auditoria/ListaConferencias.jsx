@@ -14,7 +14,7 @@ const statusConfig = {
   "Cancelada": { icon: XCircle, color: "text-red-400", bg: "bg-red-50 dark:bg-red-900/20", label: "Cancelada" },
 };
 
-export default function ListaConferencias({ onAbrirConferencia }) {
+export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria }) {
   const [conferencias, setConferencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNova, setShowNova] = useState(false);
