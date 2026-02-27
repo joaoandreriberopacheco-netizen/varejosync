@@ -205,21 +205,41 @@ Retorne as sugestões em português, em ordem da mais provável para a menos pro
           });
 
           if (res?.sugestoes?.length) {
+            // Usa a primeira sugestão como termo de busca no campo de texto
+            const primeiraSugestao = res.sugestoes[0] || "";
+            // Extrai palavras relevantes de TODAS as sugestões (mín 3 chars)
+            const todasPalavras = res.sugestoes
+              .join(" ")
+              .toLowerCase()
+              .split(/\s+/)
+              .filter(w => w.length >= 3);
+
             const produtosEncontrados = [];
-            res.sugestoes.forEach(sug => {
-              // Usa todas as palavras relevantes da sugestão (não só a primeira)
-              const palavras = sug.toLowerCase().split(" ").filter(w => w.length > 3);
-              const found = produtos.filter(p => {
-                const texto = `${p.nome || ""} ${p.campo_hierarquico_1 || ""} ${p.campo_hierarquico_2 || ""}`.toLowerCase();
-                return palavras.some(w => texto.includes(w));
-              }).slice(0, 3);
-              found.forEach(f => {
-                if (!produtosEncontrados.find(x => x.id === f.id)) {
-                  produtosEncontrados.push(f);
-                }
-              });
+            produtos.forEach(p => {
+              const texto = [
+                p.nome,
+                p.campo_hierarquico_1,
+                p.campo_hierarquico_2,
+                p.campo_hierarquico_3,
+                p.campo_hierarquico_4,
+                p.campo_hierarquico_5,
+                p.tags?.join(" "),
+              ].filter(Boolean).join(" ").toLowerCase();
+
+              const matches = todasPalavras.filter(w => texto.includes(w)).length;
+              if (matches > 0) {
+                produtosEncontrados.push({ produto: p, matches });
+              }
             });
-            setIaSugestoes(produtosEncontrados.slice(0, 8));
+
+            // Ordena por quantidade de matches
+            produtosEncontrados.sort((a, b) => b.matches - a.matches);
+            setIaSugestoes(produtosEncontrados.slice(0, 8).map(x => x.produto));
+
+            // Se não achou nada nos produtos locais, coloca o termo no campo de busca
+            if (produtosEncontrados.length === 0) {
+              setBusca(primeiraSugestao.split(" ").slice(0, 2).join(" "));
+            }
           }
           setShowCamera(false);
         }
