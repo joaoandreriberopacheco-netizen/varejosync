@@ -355,34 +355,55 @@ Seja rigoroso: só retorne produtos realmente compatíveis com a imagem.`,
           </div>
         )}
 
-        {/* Sugestões IA */}
-        {iaSugestoes.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-50 dark:border-gray-700">
-              <Sparkles className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs font-medium text-gray-400">Sugestões por IA</span>
-              <button onClick={() => setIaSugestoes([])} className="ml-auto text-gray-300">
+        {/* Painel IA: sugestões ou sem resultado */}
+        {(iaSugestoes.length > 0 || iaSemResultado) && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+            {/* Cabeçalho com o que a IA identificou */}
+            <div className="flex items-start gap-2 px-4 py-3 border-b border-gray-50 dark:border-gray-700">
+              <Sparkles className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">IA identificou na imagem:</p>
+                {iaDescricao && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 italic line-clamp-2">"{iaDescricao}"</p>
+                )}
+              </div>
+              <button
+                onClick={() => { setIaSugestoes([]); setIaSemResultado(false); setIaDescricao(""); }}
+                className="text-gray-300 dark:text-gray-600 flex-shrink-0"
+              >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <div className="divide-y divide-gray-50 dark:divide-gray-700">
-              {iaSugestoes.map(prod => {
-                const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
-                return (
-                  <button
-                    key={prod.id}
-                    onClick={() => { setIaSugestoes([]); selecionarProduto(prod); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{nome}</p>
-                      <p className="text-xs text-gray-400">{prod.codigo_interno || prod.codigo_barras || ""}</p>
-                    </div>
-                    <Plus className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                  </button>
-                );
-              })}
-            </div>
+
+            {/* Lista de produtos encontrados */}
+            {iaSugestoes.length > 0 && (
+              <div className="divide-y divide-gray-50 dark:divide-gray-700">
+                {iaSugestoes.map(prod => {
+                  const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
+                  return (
+                    <button
+                      key={prod.id}
+                      onClick={() => { setIaSugestoes([]); setIaSemResultado(false); setIaDescricao(""); selecionarProduto(prod); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{nome}</p>
+                        <p className="text-xs text-gray-400">{prod.codigo_interno || prod.codigo_barras || ""}</p>
+                      </div>
+                      <Plus className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Sem resultado */}
+            {iaSemResultado && (
+              <div className="px-4 py-4 text-center">
+                <p className="text-xs text-gray-400 dark:text-gray-500">Nenhum produto cadastrado corresponde à imagem.</p>
+                <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Tente buscar manualmente pelo nome acima.</p>
+              </div>
+            )}
           </div>
         )}
 
