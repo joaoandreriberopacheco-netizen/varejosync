@@ -12,6 +12,14 @@ import ConferenciaAuditoria from '@/components/estoque/auditoria/ConferenciaAudi
 export default function Armazenagem() {
   const [produtos, setProdutos] = useState([]);
   const [conferenciaAtiva, setConferenciaAtiva] = useState(null);
+  const [modoAuditoria, setModoAuditoria] = useState(false);
+
+  const abrirConferencia = (conf) => {
+    // Se está aguardando auditoria ou concluída, abre no modo auditoria (visão do responsável)
+    const isAuditoria = ["Aguardando Auditoria", "Concluída", "Cancelada"].includes(conf.status);
+    setModoAuditoria(isAuditoria);
+    setConferenciaAtiva(conf);
+  };
 
   useEffect(() => {
     loadData();
