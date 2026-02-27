@@ -239,6 +239,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
               ];
               const l1ValorEstoque = allL1Items.reduce((s, p) => s + (p.estoque_atual || 0) * (p.preco_custo_calculado || 0), 0);
               const l1AbaixoMin = allL1Items.filter(p => p.ativo && p.estoque_atual <= p.estoque_minimo).length;
+              const l1EstoqueTotal = allL1Items.reduce((s, p) => s + (p.estoque_atual || 0), 0);
               const hasChildren = Object.keys(l1Node.children).length > 0;
 
               return (

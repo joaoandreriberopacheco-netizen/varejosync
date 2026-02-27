@@ -24,6 +24,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   const [modalQtd, setModalQtd] = useState(null); // { produto, qtdStr }
   const qtdInputRef = useRef(null);
 
+  const fileInputRef = useRef(null);
   const buscaRef = useRef(null);
 
   useEffect(() => { carregar(); }, [conferencia_id]);
@@ -175,24 +176,65 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* ---- BUSCA NO TOPO ---- */}
       <div className="mb-4 relative">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-gray-600 pointer-events-none" />
-          <Input
-            ref={buscaRef}
-            placeholder="Buscar produto por nome ou código..."
-            value={busca}
-            onChange={e => setBusca(e.target.value)}
-            className="pl-9 pr-9 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
-            autoComplete="off"
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-gray-600 pointer-events-none" />
+            <Input
+              ref={buscaRef}
+              placeholder="Buscar produto por nome ou código..."
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              className="pl-9 pr-9 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
+              autoComplete="off"
+            />
+            {busca && (
+              <button
+                onClick={() => setBusca("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {/* Botão câmera para código de barras */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-11 h-11 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 flex-shrink-0"
+            title="Ler código de barras"
+          >
+            <Camera className="w-4 h-4" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              e.target.value = "";
+              const reader = new FileReader();
+              reader.onload = async (ev) => {
+                const blob = await (await fetch(ev.target.result)).blob();
+                const { file_url } = await base44.integrations.Core.UploadFile({ file: blob });
+                const res = await base44.integrations.Core.InvokeLLM({
+                  prompt: "Extraia o código de barras (EAN/UPC) visível na imagem. Retorne apenas o número, sem espaços. Se não houver, retorne null.",
+                  file_urls: [file_url],
+                  response_json_schema: { type: "object", properties: { codigo_barras: { type: "string" } } }
+                });
+                const codigo = res?.codigo_barras;
+                if (codigo) {
+                  const encontrado = produtos.find(p =>
+                    p.codigo_barras === codigo || p.codigo_barras?.replace(/\D/g, "") === codigo.replace(/\D/g, "")
+                  );
+                  if (encontrado) selecionarProduto(encontrado);
+                  else setBusca(codigo);
+                }
+              };
+              reader.readAsDataURL(file);
+            }}
           />
-          {busca && (
-            <button
-              onClick={() => setBusca("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
         </div>
 
         {/* Resultados como overlay flutuante */}
