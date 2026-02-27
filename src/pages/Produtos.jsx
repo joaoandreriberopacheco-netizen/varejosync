@@ -41,6 +41,8 @@ import {
   Image as ImageIcon,
   Sparkles,
   Wand2,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
