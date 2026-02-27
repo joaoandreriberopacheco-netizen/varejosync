@@ -69,7 +69,7 @@ export default function Armazenagem() {
             <TabsTrigger
               value="auditoria"
               title="Auditoria de Estoque"
-              onClick={() => setConferenciaAtiva(null)}
+              onClick={() => { setConferenciaAtiva(null); setModoAuditoria(false); }}
               className="flex items-center gap-2 data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
             >
               <ClipboardCheck className="w-4 h-4" />
