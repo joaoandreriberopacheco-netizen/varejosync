@@ -1241,17 +1241,19 @@ export default function ProdutosPage() {
             </div>
 
             {/* Tabela - MOBILE/DESKTOP */}
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto overflow-x-hidden w-full">
               {/* MOBILE: Vista Hierárquica */}
-              <MobileHierarquica
-                produtos={filteredProdutos}
-                onEdit={handleEdit}
-                formatarNumero={formatarNumero}
-              />
+              <div className="md:hidden w-full overflow-x-hidden px-0">
+                <MobileHierarquica
+                  produtos={filteredProdutos}
+                  onEdit={handleEdit}
+                  formatarNumero={formatarNumero}
+                />
+              </div>
 
               {/* DESKTOP: Tabela Dinâmica Hierárquica */}
               {viewMode === 'dinamica' && (
-                <div className="hidden md:block">
+                <div className="hidden md:block w-full">
                   <TabelaDinamica
                     produtos={filteredProdutos}
                     visibleColumns={visibleColumns}
@@ -1262,7 +1264,7 @@ export default function ProdutosPage() {
               )}
 
               {/* DESKTOP: Tabela Plana (original) */}
-              <div className={`${viewMode === 'plana' ? 'hidden md:block' : 'hidden'} border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900`}>
+              <div className={`${viewMode === 'plana' ? 'hidden md:block' : 'hidden'} w-full border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900`}>
                 <Table>
                   <TableHeader className="bg-gray-50 sticky top-0 z-20 dark:bg-gray-800">
                     <TableRow>
