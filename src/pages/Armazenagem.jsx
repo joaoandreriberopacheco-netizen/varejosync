@@ -83,25 +83,59 @@ export default function Armazenagem() {
           </TabsContent>
 
           <TabsContent value="auditoria" className="mt-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-              {conferenciaAuditoria ? (
-                <ConferenciaAuditoria
-                  conferencia={conferenciaAuditoria}
-                  onVoltar={() => setConferenciaAuditoria(null)}
-                  onAtualizar={() => setConferenciaAuditoria(null)}
-                />
-              ) : conferenciaAtiva ? (
-                <ConferenciaEditor
-                  conferencia={conferenciaAtiva}
-                  onVoltar={() => setConferenciaAtiva(null)}
-                />
-              ) : (
-                <ListaConferencias
-                  onAbrirConferencia={setConferenciaAtiva}
-                  onAbrirAuditoria={setConferenciaAuditoria}
-                />
-              )}
-            </div>
+            <Tabs defaultValue="contagem" className="w-full">
+              <TabsList className="bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm mb-4 inline-flex">
+                <TabsTrigger
+                  value="contagem"
+                  onClick={() => { setConferenciaAtiva(null); }}
+                  className="text-sm data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+                >
+                  Contagem
+                </TabsTrigger>
+                <TabsTrigger
+                  value="auditoria-sub"
+                  onClick={() => { setConferenciaAuditoria(null); }}
+                  className="text-sm data-[state=active]:bg-gray-100 dark:data-[state=active]:bg-gray-700"
+                >
+                  Auditoria
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="contagem">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                  {conferenciaAtiva ? (
+                    <ConferenciaEditor
+                      conferencia={conferenciaAtiva}
+                      onVoltar={() => setConferenciaAtiva(null)}
+                    />
+                  ) : (
+                    <ListaConferencias
+                      onAbrirConferencia={setConferenciaAtiva}
+                      onAbrirAuditoria={setConferenciaAuditoria}
+                      modoFiltro="contagem"
+                    />
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="auditoria-sub">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                  {conferenciaAuditoria ? (
+                    <ConferenciaAuditoria
+                      conferencia={conferenciaAuditoria}
+                      onVoltar={() => setConferenciaAuditoria(null)}
+                      onAtualizar={() => setConferenciaAuditoria(null)}
+                    />
+                  ) : (
+                    <ListaConferencias
+                      onAbrirConferencia={setConferenciaAtiva}
+                      onAbrirAuditoria={setConferenciaAuditoria}
+                      modoFiltro="auditoria"
+                    />
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </div>
