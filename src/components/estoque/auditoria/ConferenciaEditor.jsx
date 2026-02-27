@@ -24,15 +24,6 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   const [modalQtd, setModalQtd] = useState(null); // { produto, qtdStr }
   const qtdInputRef = useRef(null);
 
-  // Modal IA / câmera
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraMode, setCameraMode] = useState("barcode"); // "barcode" | "ia"
-  const [iaLoading, setIaLoading] = useState(false);
-  const [iaSugestoes, setIaSugestoes] = useState([]);
-  const [iaImagem, setIaImagem] = useState(null);
-  const [iaDescricao, setIaDescricao] = useState(""); // O que a IA identificou na imagem
-  const [iaSemResultado, setIaSemResultado] = useState(false);
-  const fileInputRef = useRef(null);
   const buscaRef = useRef(null);
 
   useEffect(() => { carregar(); }, [conferencia_id]);
