@@ -14,7 +14,7 @@ const statusConfig = {
   "Cancelada": { icon: XCircle, color: "text-red-400", bg: "bg-red-50 dark:bg-red-900/20", label: "Cancelada" },
 };
 
-export default function ListaConferencias({ onAbrirConferencia }) {
+export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria, modoFiltro }) {
   const [conferencias, setConferencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNova, setShowNova] = useState(false);
@@ -36,25 +36,47 @@ export default function ListaConferencias({ onAbrirConferencia }) {
     onAbrirConferencia(nova);
   };
 
+  // Filtra de acordo com a sub-aba
+  const statusContagem = ["Rascunho", "Em Andamento"];
+  const statusAuditoria = ["Aguardando Auditoria", "Concluída", "Cancelada"];
+
+  const lista = modoFiltro === "contagem"
+    ? conferencias.filter(c => statusContagem.includes(c.status))
+    : modoFiltro === "auditoria"
+    ? conferencias.filter(c => statusAuditoria.includes(c.status))
+    : conferencias;
+
   const grupos = {
-    ativas: conferencias.filter(c => ["Em Andamento", "Aguardando Auditoria", "Rascunho"].includes(c.status)),
-    concluidas: conferencias.filter(c => ["Concluída", "Cancelada"].includes(c.status)),
+    ativas: lista.filter(c => ["Em Andamento", "Aguardando Auditoria", "Rascunho"].includes(c.status)),
+    concluidas: lista.filter(c => ["Concluída", "Cancelada"].includes(c.status)),
+  };
+
+  const handleClick = (conf) => {
+    if (conf.status === "Aguardando Auditoria" && onAbrirAuditoria) {
+      onAbrirAuditoria(conf);
+    } else {
+      onAbrirConferencia(conf);
+    }
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-base font-semibold font-glacial text-gray-900 dark:text-white">Auditoria de Estoque</h2>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{conferencias.length} conferência{conferencias.length !== 1 ? "s" : ""}</p>
+          <h2 className="text-base font-semibold font-glacial text-gray-900 dark:text-white">
+            {modoFiltro === "auditoria" ? "Auditoria" : "Contagem de Estoque"}
+          </h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{lista.length} conferência{lista.length !== 1 ? "s" : ""}</p>
         </div>
-        <Button
-          onClick={() => setShowNova(true)}
-          className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl h-9 px-4 text-sm font-medium shadow-none"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          Nova
-        </Button>
+        {modoFiltro !== "auditoria" && (
+          <Button
+            onClick={() => setShowNova(true)}
+            className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl h-9 px-4 text-sm font-medium shadow-none"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Nova
+          </Button>
+        )}
       </div>
 
       {loading ? (
@@ -70,7 +92,7 @@ export default function ListaConferencias({ onAbrirConferencia }) {
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
               <div className="space-y-2">
                 {grupos.ativas.map(conf => (
-                  <ConferenciaCard key={conf.id} conf={conf} onClick={onAbrirConferencia} />
+                  <ConferenciaCard key={conf.id} conf={conf} onClick={handleClick} />
                 ))}
               </div>
             </section>
@@ -81,19 +103,21 @@ export default function ListaConferencias({ onAbrirConferencia }) {
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Histórico</p>
               <div className="space-y-2">
                 {grupos.concluidas.map(conf => (
-                  <ConferenciaCard key={conf.id} conf={conf} onClick={onAbrirConferencia} />
+                  <ConferenciaCard key={conf.id} conf={conf} onClick={handleClick} />
                 ))}
               </div>
             </section>
           )}
 
-          {conferencias.length === 0 && (
+          {lista.length === 0 && (
             <div className="text-center py-16">
               <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
                 <ClipboardList className="w-7 h-7 text-gray-300 dark:text-gray-600" />
               </div>
               <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhuma conferência encontrada</p>
-              <p className="text-gray-300 dark:text-gray-600 text-xs mt-1">Crie uma nova para começar</p>
+              {modoFiltro !== "auditoria" && (
+                <p className="text-gray-300 dark:text-gray-600 text-xs mt-1">Crie uma nova para começar</p>
+              )}
             </div>
           )}
         </div>
