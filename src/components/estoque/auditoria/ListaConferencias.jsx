@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Plus, ClipboardList, Play, CheckCircle2, Clock, XCircle, AlertCircle, ChevronRight } from "lucide-react";
+import { Plus, ClipboardList, Play, CheckCircle2, Clock, XCircle, AlertCircle, ChevronRight, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
@@ -14,7 +14,7 @@ const statusConfig = {
   "Cancelada": { icon: XCircle, color: "text-red-400", bg: "bg-red-50 dark:bg-red-900/20", label: "Cancelada" },
 };
 
-export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria }) {
+export default function ListaConferencias({ onAbrirConferencia }) {
   const [conferencias, setConferencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNova, setShowNova] = useState(false);
@@ -69,11 +69,7 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Ativas</p>
               <div className="space-y-2">
                 {grupos.ativas.map(conf => (
-                  <ConferenciaCard
-                    key={conf.id}
-                    conf={conf}
-                    onClick={conf.status === "Aguardando Auditoria" ? onAbrirAuditoria : onAbrirConferencia}
-                  />
+                  <ConferenciaCard key={conf.id} conf={conf} onClick={onAbrirConferencia} />
                 ))}
               </div>
             </section>
@@ -84,11 +80,7 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
               <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-1">Histórico</p>
               <div className="space-y-2">
                 {grupos.concluidas.map(conf => (
-                  <ConferenciaCard
-                    key={conf.id}
-                    conf={conf}
-                    onClick={conf.status === "Concluída" ? onAbrirAuditoria : onAbrirConferencia}
-                  />
+                  <ConferenciaCard key={conf.id} conf={conf} onClick={onAbrirConferencia} />
                 ))}
               </div>
             </section>
