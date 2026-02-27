@@ -12,8 +12,13 @@
    MOBILE NATIVE COMPATIBILITY
    ========================================== */
 
+html {
+  touch-action: manipulation;
+}
+
 body {
   overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
 button,
