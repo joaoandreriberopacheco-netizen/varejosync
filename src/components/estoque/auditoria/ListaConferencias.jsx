@@ -7,11 +7,11 @@ import { ptBR } from "date-fns/locale";
 import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
 
 const statusConfig = {
-  "Rascunho": { icon: Clock, color: "text-gray-400", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
-  "Em Andamento": { icon: Play, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", label: "Em Andamento" },
-  "Aguardando Auditoria": { icon: AlertCircle, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/20", label: "Aguardando Auditoria" },
-  "Concluída": { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", label: "Concluída" },
-  "Cancelada": { icon: XCircle, color: "text-red-400", bg: "bg-red-50 dark:bg-red-900/20", label: "Cancelada" },
+  "Rascunho": { icon: Clock, color: "text-gray-400 dark:text-gray-500", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
+  "Em Andamento": { icon: Play, color: "text-gray-600 dark:text-gray-300", bg: "bg-gray-100 dark:bg-gray-800", label: "Em Andamento" },
+  "Aguardando Auditoria": { icon: AlertCircle, color: "text-gray-600 dark:text-gray-300", bg: "bg-gray-100 dark:bg-gray-700", label: "Aguardando" },
+  "Concluída": { icon: CheckCircle2, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20", label: "Concluída" },
+  "Cancelada": { icon: XCircle, color: "text-red-500 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20", label: "Cancelada" },
 };
 
 export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria, modoFiltro }) {
