@@ -287,8 +287,8 @@ export default function PDVAuditoria() {
           </div>
         )}
 
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
+        <div className="flex gap-2 min-w-0">
+          <div className="flex-1 relative min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-gray-600" />
             <Input
               ref={buscaRef}
@@ -296,13 +296,13 @@ export default function PDVAuditoria() {
               value={busca}
               onChange={e => setBusca(e.target.value)}
               onFocus={() => setMostrarBusca(true)}
-              className="pl-9 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
+              className="pl-9 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700 w-full"
             />
           </div>
           <Button
             onClick={finalizar}
             disabled={finalizando || itens.length === 0}
-            className="h-11 px-4 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-none flex-shrink-0"
+            className="h-11 px-3 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-none flex-shrink-0 text-sm"
           >
             {finalizando
               ? <Loader2 className="w-4 h-4 animate-spin" />
