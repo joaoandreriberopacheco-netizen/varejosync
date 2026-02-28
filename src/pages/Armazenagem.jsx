@@ -119,7 +119,7 @@ export default function Armazenagem() {
               </TabsContent>
 
               <TabsContent value="auditoria-sub">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm w-full max-w-full overflow-x-hidden">
                   {conferenciaAuditoria ? (
                     <ConferenciaAuditoria
                       conferencia={conferenciaAuditoria}
