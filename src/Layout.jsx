@@ -615,6 +615,7 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </div>
         {isMobile && !isFullscreen && <MobileBottomNav currentPageName={currentPageName} />}
+        {isMobile && !isFullscreen && <MobileUserMenu darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
       </div>
       <AlertDialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
         <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-700">
