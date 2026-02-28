@@ -232,16 +232,16 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
             <Button
               variant="ghost"
               onClick={reprovar}
-              className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"
+              className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-xs"
             >
-              <XCircle className="w-4 h-4 mr-1.5" /> Reprovar / Recontar
+              <XCircle className="w-4 h-4 mr-1" /> Recontar
             </Button>
             <Button
               onClick={aprovar}
               disabled={aprovando}
-              className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-none"
+              className="flex-1 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none text-xs"
             >
-              {aprovando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-1.5" /> Aprovar e Ajustar</>}
+              {aprovando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-1" /> Aprovar</>}
             </Button>
           </div>
         </div>
