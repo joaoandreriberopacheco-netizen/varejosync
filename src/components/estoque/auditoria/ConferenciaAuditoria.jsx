@@ -250,7 +250,7 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
       </div>
 
       {/* Footer ações */}
-      <div className="flex-shrink-0 px-4 pb-6 pt-3 bg-gray-950 border-t border-gray-900">
+      <div className="flex-shrink-0 px-4 pb-20 pt-3 bg-gray-950 border-t border-gray-900">
         {!isConcluida && conferencia.status === "Aguardando Auditoria" && (
           <>
             {totais.com_dif > 0 && (
