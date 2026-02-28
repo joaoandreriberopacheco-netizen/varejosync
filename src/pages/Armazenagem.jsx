@@ -84,7 +84,7 @@ export default function Armazenagem() {
 
           <TabsContent value="auditoria" className="mt-6">
             <Tabs defaultValue="contagem" className="w-full">
-              <TabsList className="bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm mb-4 inline-flex">
+              <TabsList className="bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm mb-4 inline-flex w-full max-w-full overflow-hidden">
                 <TabsTrigger
                   value="contagem"
                   onClick={() => { setConferenciaAtiva(null); }}
