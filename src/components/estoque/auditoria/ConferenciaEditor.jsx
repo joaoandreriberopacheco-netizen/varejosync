@@ -131,7 +131,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   );
 
   return (
-    <div className="flex flex-col w-full min-w-0 overflow-x-hidden">
+    <div className="flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
