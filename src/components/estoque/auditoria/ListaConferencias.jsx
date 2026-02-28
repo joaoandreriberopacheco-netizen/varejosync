@@ -60,8 +60,8 @@ export default function ListaConferencias({ onAbrirConferencia, onAbrirAuditoria
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="flex items-center justify-between mb-4 min-w-0">
         <div>
           <h2 className="text-base font-semibold font-glacial text-gray-900 dark:text-white">
             {modoFiltro === "auditoria" ? "Auditoria" : "Contagem de Estoque"}
