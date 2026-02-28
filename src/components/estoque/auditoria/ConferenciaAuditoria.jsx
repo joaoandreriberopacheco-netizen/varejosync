@@ -221,9 +221,9 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
       {!isConcluida && conferencia.status === "Aguardando Auditoria" && (
         <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4 space-y-2">
           {totais.com_dif > 0 && (
-            <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-2xl px-4 py-3 mb-3">
-              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700 dark:text-amber-400">
+            <div className="flex items-start gap-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-2xl px-4 py-3 mb-3">
+              <AlertTriangle className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-600 dark:text-gray-400">
                 {totais.com_dif} produto{totais.com_dif !== 1 ? "s" : ""} com divergência. Ao aprovar, o estoque será ajustado automaticamente.
               </p>
             </div>
