@@ -151,11 +151,11 @@ function ConferenciaCard({ conf, onClick }) {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+      <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[38%]">
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full truncate ${cfg.bg} ${cfg.color}`}>
           {cfg.label}
         </span>
-        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
       </div>
     </button>
   );
