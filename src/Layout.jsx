@@ -34,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from "@/components/ui/dialog.jsx";
 import MobileBottomNav from '@/components/vendas/MobileBottomNav';
+import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
