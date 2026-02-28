@@ -8,7 +8,7 @@ import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenci
 
 const statusConfig = {
   "Rascunho": { icon: Clock, color: "text-gray-400 dark:text-gray-500", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
-  "Em Andamento": { icon: Play, color: "text-gray-600 dark:text-gray-300", bg: "bg-gray-100 dark:bg-gray-800", label: "Em Andamento" },
+  "Em Andamento": { icon: Play, color: "text-blue-500 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/20", label: "Em Andamento" },
   "Aguardando Auditoria": { icon: AlertCircle, color: "text-gray-600 dark:text-gray-300", bg: "bg-gray-100 dark:bg-gray-700", label: "Aguardando" },
   "Concluída": { icon: CheckCircle2, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20", label: "Concluída" },
   "Cancelada": { icon: XCircle, color: "text-red-500 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20", label: "Cancelada" },
