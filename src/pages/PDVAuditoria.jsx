@@ -207,11 +207,11 @@ export default function PDVAuditoria() {
             {itemExpandido === grupo.produto_id && (
               <div className="border-t border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                 {grupo.entradas.map((entrada, eIdx) => (
-                  <div key={entrada.idx} className="flex items-center gap-3 px-3.5 py-2.5">
-                    <span className="text-xs text-gray-400 dark:text-gray-500 w-16">
-                      Entrada {eIdx + 1}
-                    </span>
-                    <div className="flex items-center gap-2 flex-1 justify-end">
+                         <div key={entrada.idx} className="flex items-center gap-2 px-3 py-2.5 min-w-0">
+                           <span className="text-xs text-gray-400 dark:text-gray-500 w-14 flex-shrink-0">
+                             Entrada {eIdx + 1}
+                           </span>
+                           <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                       <button
                         onClick={() => atualizarQtd(entrada.idx, -1)}
                         className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
