@@ -137,7 +137,7 @@ function ConferenciaCard({ conf, onClick }) {
   return (
     <button
       onClick={() => onClick(conf)}
-      className={`w-full text-left rounded-2xl p-4 flex items-center gap-3 transition-colors ${
+      className={`w-full text-left rounded-2xl p-4 flex items-center gap-3 transition-colors min-w-0 overflow-hidden ${
         aguardandoAuditoria
           ? "bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
           : "bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
