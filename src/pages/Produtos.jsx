@@ -1241,7 +1241,7 @@ export default function ProdutosPage() {
             </div>
 
             {/* Tabela - MOBILE/DESKTOP */}
-            <div className="flex-1 overflow-auto overflow-x-hidden w-full">
+            <div className="flex-1 overflow-auto w-full min-w-0">
               {/* MOBILE: Vista Hierárquica */}
               <div className="md:hidden w-full overflow-x-hidden px-0">
                 <MobileHierarquica
