@@ -1043,7 +1043,7 @@ export default function ProdutosPage() {
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
               <Input
                 placeholder="Buscar produto..."
-                className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-0 w-full rounded-xl"
+                className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
                 value={filters.searchTerm}
                 onChange={e => handleFilterChange('searchTerm', e.target.value)}
               />
