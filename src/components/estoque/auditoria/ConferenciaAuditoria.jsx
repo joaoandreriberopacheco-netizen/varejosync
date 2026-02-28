@@ -182,45 +182,38 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
           ))}
         </div>
 
-        {/* Tabela comparativa */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/50">
-                <th className="text-left px-3 py-2.5 text-gray-500 dark:text-gray-400 font-medium rounded-l-xl">Produto</th>
-                <th className="text-right px-3 py-2.5 text-gray-500 dark:text-gray-400 font-medium">Contado</th>
-                <th className="text-right px-3 py-2.5 text-gray-500 dark:text-gray-400 font-medium">Sistema</th>
-                <th className="text-right px-3 py-2.5 text-gray-500 dark:text-gray-400 font-medium rounded-r-xl">Diferença</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {comparativo.map(item => {
-                const dif = item.diferenca;
-                const difColor = dif === null ? "text-gray-400" : dif > 0 ? "text-blue-600 dark:text-blue-400" : dif < 0 ? "text-red-600 dark:text-red-400" : "text-gray-400";
-                const DifIcon = dif === null ? Minus : dif > 0 ? TrendingUp : dif < 0 ? TrendingDown : Minus;
-                return (
-                  <tr key={item.produto_id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                    <td className="px-3 py-2.5">
-                      <p className="font-medium text-gray-900 dark:text-white truncate max-w-[160px]">{item.produto_nome}</p>
-                      {item.hierarquia && <p className="text-[10px] text-gray-400 dark:text-gray-500">{item.hierarquia}</p>}
-                    </td>
-                    <td className="px-3 py-2.5 text-right font-semibold text-gray-800 dark:text-gray-200">
-                      {item.contado} {item.unidade}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-gray-500 dark:text-gray-400">
-                      {item.estoque_sistema !== null ? `${item.estoque_sistema} ${item.unidade}` : "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span className={`inline-flex items-center gap-1 font-semibold ${difColor}`}>
-                        <DifIcon className="w-3 h-3" />
-                        {dif === null ? "—" : dif > 0 ? `+${dif}` : dif === 0 ? "OK" : `${dif}`}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {/* Lista comparativa — sem tabela para mobile */}
+        <div className="space-y-2">
+          {/* Header */}
+          <div className="grid grid-cols-3 gap-2 px-3 py-1">
+            <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Produto</span>
+            <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide text-right">Contado · Sistema</span>
+            <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide text-right">Dif.</span>
+          </div>
+          {comparativo.map(item => {
+            const dif = item.diferenca;
+            const difColor = dif === null ? "text-gray-400" : dif > 0 ? "text-gray-700 dark:text-gray-200" : dif < 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";
+            const DifIcon = dif === null ? Minus : dif > 0 ? TrendingUp : dif < 0 ? TrendingDown : Minus;
+            const rowBg = dif !== null && dif !== 0 ? "bg-gray-50 dark:bg-gray-800/50" : "";
+            return (
+              <div key={item.produto_id} className={`grid grid-cols-3 gap-2 items-center rounded-xl px-3 py-2.5 ${rowBg}`}>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{item.produto_nome}</p>
+                  {item.hierarquia && <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{item.hierarquia}</p>}
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{item.contado}</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500"> · {item.estoque_sistema ?? "—"} {item.unidade}</span>
+                </div>
+                <div className="text-right">
+                  <span className={`inline-flex items-center justify-end gap-0.5 text-xs font-semibold ${difColor}`}>
+                    <DifIcon className="w-3 h-3" />
+                    {dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${dif}` : `${dif}`}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
