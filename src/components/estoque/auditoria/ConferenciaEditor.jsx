@@ -313,11 +313,11 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Botão finalizar — só se não bloqueada */}
       {!bloqueada && (
-        <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+        <div className="border-t border-gray-100 dark:border-gray-800 pt-4 w-full max-w-full overflow-hidden">
           <Button
             onClick={finalizar}
             disabled={finalizando || itens.length === 0}
-            className="w-full h-11 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-none"
+            className="w-full h-11 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-none truncate"
           >
             {finalizando
               ? <Loader2 className="w-4 h-4 animate-spin" />
