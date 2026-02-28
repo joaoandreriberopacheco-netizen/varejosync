@@ -251,16 +251,16 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
           <div key={grupo.produto_id} className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl overflow-hidden">
             <button
               onClick={() => setItemExpandido(prev => prev === grupo.produto_id ? null : grupo.produto_id)}
-              className="w-full flex items-center gap-3 p-3.5 text-left"
+              className="w-full flex items-start gap-3 p-3.5 text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm mt-0.5">
                 <Package className="w-4 h-4 text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{grupo.produto_nome}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug break-words">{grupo.produto_nome}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
                 <span className="text-lg font-bold font-glacial text-gray-900 dark:text-white">{grupo.total}</span>
                 {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
               </div>
