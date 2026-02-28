@@ -24,8 +24,8 @@ export default function Armazenagem() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full max-w-full overflow-x-hidden">
+      <div className="p-4 md:p-6 space-y-6 w-full max-w-full overflow-x-hidden">
         <div>
           <h1 className="text-2xl font-light text-gray-900 dark:text-white">Módulo de Estoque</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
