@@ -147,7 +147,7 @@ export default function PDVAuditoria() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-4 py-3 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
         <button
