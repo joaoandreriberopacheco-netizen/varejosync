@@ -125,60 +125,61 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   }, []);
 
   if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+    <div className="fixed inset-0 bg-gray-950 flex items-center justify-center z-50">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
     </div>
   );
 
   return (
-    <div className="flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="fixed inset-0 bg-gray-950 z-50 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
+      <div className="flex items-center gap-3 px-4 pt-5 pb-3 flex-shrink-0">
+        <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-gray-300">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold font-glacial text-gray-900 dark:text-white truncate">{conferenciaInicial?.nome_conferencia}</h2>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          <h2 className="text-sm font-semibold font-glacial text-white truncate">{conferenciaInicial?.nome_conferencia}</h2>
+          <p className="text-xs text-gray-500">
             {itensAgrupados.length} produto{itensAgrupados.length !== 1 ? "s" : ""} contados
+            {saving && <span className="ml-2 text-gray-600">· salvando...</span>}
           </p>
         </div>
-        {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-300 flex-shrink-0" />}
+        {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-600 flex-shrink-0" />}
       </div>
 
       {/* Banner bloqueio */}
       {bloqueada && (
-        <div className="mb-4 flex items-center gap-2.5 bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3">
-          <Lock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Conferência <strong>{conferenciaInicial.status}</strong> — somente visualização. Para auditar, acesse pelo painel do responsável.
+        <div className="mx-4 mb-3 flex items-center gap-2.5 bg-gray-900 rounded-2xl px-4 py-3">
+          <Lock className="w-4 h-4 text-gray-600 flex-shrink-0" />
+          <p className="text-xs text-gray-400">
+            Conferência <strong className="text-gray-300">{conferenciaInicial.status}</strong> — somente visualização.
           </p>
         </div>
       )}
 
       {/* Busca — só se não bloqueada */}
       {!bloqueada && (
-        <div className="mb-4 relative">
+        <div className="px-4 pb-3 relative flex-shrink-0">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-gray-600 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
               <Input
                 ref={buscaRef}
                 placeholder="Buscar produto por nome ou código..."
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
-                className="pl-9 pr-9 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 h-11 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
+                className="pl-9 pr-9 rounded-xl border-0 bg-gray-900 text-white placeholder:text-gray-600 h-11 focus-visible:ring-1 focus-visible:ring-gray-700"
                 autoComplete="off"
               />
               {busca && (
-                <button onClick={() => setBusca("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
+                <button onClick={() => setBusca("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-11 h-11 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 flex-shrink-0"
+              className="w-11 h-11 rounded-xl bg-gray-900 flex items-center justify-center text-gray-500 flex-shrink-0"
             >
               <Camera className="w-4 h-4" />
             </button>
@@ -205,27 +206,27 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             />
           </div>
           {produtosFiltrados.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden max-h-72 overflow-y-auto">
-              <div className="divide-y divide-gray-50 dark:divide-gray-700">
+            <div className="absolute top-full left-4 right-4 z-30 mt-1 bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
+              <div className="divide-y divide-gray-800">
                 {produtosFiltrados.map(prod => {
                   const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
                   const contagens = itens.filter(i => i.produto_id === prod.id);
                   const totalContado = contagens.reduce((s, i) => s + (i.quantidade_contada || 0), 0);
                   return (
-                    <button key={prod.id} onClick={() => selecionarProduto(prod)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <button key={prod.id} onClick={() => selecionarProduto(prod)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-800 transition-colors">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{nome}</p>
+                        <p className="text-sm font-medium text-white truncate">{nome}</p>
                         {(prod.codigo_interno || prod.codigo_barras) && (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{prod.codigo_interno || prod.codigo_barras}</p>
+                          <p className="text-xs text-gray-600">{prod.codigo_interno || prod.codigo_barras}</p>
                         )}
                       </div>
                       {contagens.length > 0 && (
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
-                          <span className="text-xs text-green-500 font-medium">{totalContado}</span>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                          <span className="text-xs text-green-400 font-medium">{totalContado}</span>
                         </div>
                       )}
-                      <Plus className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                      <Plus className="w-4 h-4 text-gray-600 flex-shrink-0" />
                     </button>
                   );
                 })}
@@ -235,46 +236,44 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
         </div>
       )}
 
-      {/* Lista itens */}
-      <div className="space-y-2 pb-4">
+      {/* Lista itens scrollável */}
+      <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-4">
         {itensAgrupados.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-              <Package className="w-7 h-7 text-gray-300 dark:text-gray-600" />
-            </div>
-            <p className="text-gray-400 dark:text-gray-500 text-sm">Nenhum produto conferido</p>
-            {!bloqueada && <p className="text-gray-300 dark:text-gray-600 text-xs mt-1">Busque ou escaneie produtos acima</p>}
+          <div className="flex flex-col items-center justify-center py-16 text-gray-700">
+            <Package className="w-10 h-10 mb-3" />
+            <p className="text-sm">Nenhum produto conferido</p>
+            {!bloqueada && <p className="text-xs mt-1 text-gray-800">Busque ou escaneie produtos acima</p>}
           </div>
         )}
 
         {itensAgrupados.map((grupo) => (
-          <div key={grupo.produto_id} className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl overflow-hidden">
+          <div key={grupo.produto_id} className="bg-gray-900 rounded-2xl overflow-hidden">
             <button
               onClick={() => setItemExpandido(prev => prev === grupo.produto_id ? null : grupo.produto_id)}
               className="w-full flex items-start gap-3 p-3.5 text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm mt-0.5">
-                <Package className="w-4 h-4 text-gray-400" />
+              <div className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Package className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug break-words">{grupo.produto_nome}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
+                <p className="text-sm font-medium text-white leading-snug break-words">{grupo.produto_nome}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-                <span className="text-lg font-bold font-glacial text-gray-900 dark:text-white">{grupo.total}</span>
-                {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
+                <span className="text-xl font-bold font-glacial text-white">{grupo.total}</span>
+                {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-gray-600" /> : <ChevronDown className="w-4 h-4 text-gray-600" />}
               </div>
             </button>
 
             {itemExpandido === grupo.produto_id && (
-              <div className="border-t border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+              <div className="border-t border-gray-800 divide-y divide-gray-800">
                 {grupo.entradas.map((entrada, eIdx) => (
                   <div key={entrada.idx} className="flex items-center gap-2 px-3 py-2.5 min-w-0">
-                    <span className="text-xs text-gray-400 dark:text-gray-500 w-14 flex-shrink-0">Entrada {eIdx + 1}</span>
+                    <span className="text-xs text-gray-600 w-14 flex-shrink-0">Entrada {eIdx + 1}</span>
                     <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                       {!bloqueada && (
-                        <button onClick={() => atualizarQtd(entrada.idx, -1)} className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                          <Minus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                        <button onClick={() => atualizarQtd(entrada.idx, -1)} className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center">
+                          <Minus className="w-3 h-3 text-gray-400" />
                         </button>
                       )}
                       <Input
@@ -282,15 +281,15 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                         value={entrada.qtd}
                         readOnly={bloqueada}
                         onChange={e => !bloqueada && definirQtd(entrada.idx, e.target.value)}
-                        className="w-14 text-center text-sm font-medium border-0 bg-transparent focus-visible:ring-0 p-0 h-7"
+                        className="w-14 text-center text-sm font-medium border-0 bg-transparent text-white focus-visible:ring-0 p-0 h-7"
                       />
                       {!bloqueada && (
                         <>
-                          <button onClick={() => atualizarQtd(entrada.idx, 1)} className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                            <Plus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                          <button onClick={() => atualizarQtd(entrada.idx, 1)} className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center">
+                            <Plus className="w-3 h-3 text-gray-400" />
                           </button>
-                          <button onClick={() => removerItem(entrada.idx)} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center ml-1">
-                            <Trash2 className="w-3 h-3 text-red-400" />
+                          <button onClick={() => removerItem(entrada.idx)} className="w-7 h-7 rounded-lg bg-red-950/60 flex items-center justify-center ml-1">
+                            <Trash2 className="w-3 h-3 text-red-500" />
                           </button>
                         </>
                       )}
@@ -300,7 +299,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 {!bloqueada && (
                   <button
                     onClick={() => { const prod = produtos.find(p => p.id === grupo.produto_id); if (prod) selecionarProduto(prod); }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-gray-600 hover:text-gray-400"
                   >
                     <Plus className="w-3 h-3" /> Adicionar outra entrada
                   </button>
@@ -311,49 +310,48 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
         ))}
       </div>
 
-      {/* Botão finalizar — só se não bloqueada */}
+      {/* Footer — botão finalizar */}
       {!bloqueada && (
-        <div className="border-t border-gray-100 dark:border-gray-800 pt-4 w-full max-w-full overflow-hidden">
+        <div className="flex-shrink-0 px-4 pb-6 pt-3 bg-gray-950 border-t border-gray-900">
           <Button
             onClick={finalizar}
             disabled={finalizando || itens.length === 0}
-            className="w-full h-11 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-none truncate"
+            className="w-full h-12 rounded-2xl bg-white hover:bg-gray-100 text-gray-900 shadow-none font-semibold disabled:opacity-30"
           >
             {finalizando
               ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <><ClipboardCheck className="w-4 h-4 mr-1.5" /> Enviar para Auditoria</>
+              : <><ClipboardCheck className="w-4 h-4 mr-2" /> Enviar para Auditoria</>
             }
           </Button>
-          <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">O responsável irá comparar com o estoque real e aprovar</p>
         </div>
       )}
 
       {/* Modal qtd */}
       {modalQtd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setModalQtd(null)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl">
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">Produto selecionado</p>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white mb-5 line-clamp-2">{modalQtd.produto.nome}</p>
-            <label className="text-xs text-gray-400 dark:text-gray-500 mb-2 block">Quantidade contada</label>
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalQtd(null)} />
+          <div className="relative bg-gray-900 rounded-t-3xl p-6 w-full max-w-sm shadow-2xl">
+            <p className="text-xs text-gray-600 mb-1">Produto selecionado</p>
+            <p className="text-sm font-semibold text-white mb-5 leading-snug">{modalQtd.produto.nome}</p>
+            <label className="text-xs text-gray-600 mb-2 block">Quantidade contada</label>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String(Math.max(0, (parseFloat(m.qtdStr) || 0) - 1)) }))} className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <Minus className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String(Math.max(0, (parseFloat(m.qtdStr) || 0) - 1)) }))} className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center">
+                <Minus className="w-5 h-5 text-gray-300" />
               </button>
               <Input
                 ref={qtdInputRef} type="number" inputMode="numeric"
                 value={modalQtd.qtdStr}
                 onChange={e => setModalQtd(m => ({ ...m, qtdStr: e.target.value }))}
                 onKeyDown={e => e.key === "Enter" && confirmarQtd()}
-                className="flex-1 text-center text-2xl font-bold font-glacial border-0 bg-gray-50 dark:bg-gray-800 rounded-xl h-12 focus-visible:ring-1 focus-visible:ring-gray-200 dark:focus-visible:ring-gray-700"
+                className="flex-1 text-center text-3xl font-bold font-glacial border-0 bg-gray-800 text-white rounded-2xl h-14 focus-visible:ring-1 focus-visible:ring-gray-700"
               />
-              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String((parseFloat(m.qtdStr) || 0) + 1) }))} className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <Plus className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String((parseFloat(m.qtdStr) || 0) + 1) }))} className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center">
+                <Plus className="w-5 h-5 text-gray-300" />
               </button>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 rounded-xl text-gray-500 dark:text-gray-400">Cancelar</Button>
-              <Button onClick={confirmarQtd} className="flex-1 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-none">
+              <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-gray-800 text-gray-400 hover:bg-gray-700">Cancelar</Button>
+              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-white hover:bg-gray-100 text-gray-900 shadow-none font-semibold">
                 <CheckCircle2 className="w-4 h-4 mr-1.5" /> Confirmar
               </Button>
             </div>
