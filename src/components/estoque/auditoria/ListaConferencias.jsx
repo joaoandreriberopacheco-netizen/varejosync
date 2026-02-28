@@ -162,17 +162,17 @@ function ConferenciaCard({ conf, onClick }) {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[40%]">
         {aguardandoAuditoria && (
           <div className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 px-2 py-0.5 rounded-full">
             <Shield className="w-3 h-3" />
-            <span>Auditar</span>
+            <span className="hidden sm:inline">Auditar</span>
           </div>
         )}
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full truncate ${cfg.bg} ${cfg.color}`}>
           {cfg.label}
         </span>
-        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
       </div>
     </button>
   );
