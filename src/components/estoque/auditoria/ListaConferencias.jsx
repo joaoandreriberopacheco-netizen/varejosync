@@ -137,39 +137,33 @@ function ConferenciaCard({ conf, onClick }) {
   return (
     <button
       onClick={() => onClick(conf)}
-      className={`w-full text-left rounded-2xl p-4 flex items-center gap-3 transition-colors min-w-0 overflow-hidden ${
-        aguardandoAuditoria
-          ? "bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
-          : "bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
-      }`}
+      className="w-full text-left rounded-2xl p-4 flex items-center gap-3 transition-colors min-w-0 overflow-hidden bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
     >
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
         <Icon className={`w-5 h-5 ${cfg.color}`} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{conf.nome_conferencia}</p>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-gray-400 dark:text-gray-500">{conf.tipo_conferencia}</span>
           <span className="text-gray-200 dark:text-gray-700">·</span>
           <span className="text-xs text-gray-400 dark:text-gray-500">{itens} item{itens !== 1 ? "s" : ""}</span>
           {conf.data_inicio && (
             <>
-              <span className="text-gray-200 dark:text-gray-700">·</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
+              <span className="text-gray-200 dark:text-gray-700 hidden sm:inline">·</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">
                 {format(new Date(conf.data_inicio), "dd/MM", { locale: ptBR })}
               </span>
             </>
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[40%]">
-        {aguardandoAuditoria && (
-          <div className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/40 px-2 py-0.5 rounded-full">
-            <Shield className="w-3 h-3" />
-            <span className="hidden sm:inline">Auditar</span>
-          </div>
-        )}
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full truncate ${cfg.bg} ${cfg.color}`}>
+      {/* No mobile: só ícone. No sm+: ícone + label */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${cfg.bg}`}>
+          <Icon className={`w-4 h-4 ${cfg.color}`} />
+        </div>
+        <span className={`hidden sm:inline text-xs font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
           {cfg.label}
         </span>
         <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
