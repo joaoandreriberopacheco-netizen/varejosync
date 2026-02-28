@@ -312,7 +312,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Footer — botão finalizar */}
       {!bloqueada && (
-        <div className="flex-shrink-0 px-4 pb-6 pt-3 bg-gray-950 border-t border-gray-900">
+        <div className="flex-shrink-0 px-4 pb-20 pt-3 bg-gray-950 border-t border-gray-900">
           <Button
             onClick={finalizar}
             disabled={finalizando || itens.length === 0}
