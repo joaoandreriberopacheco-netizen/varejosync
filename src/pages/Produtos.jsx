@@ -1038,8 +1038,8 @@ export default function ProdutosPage() {
           </div>
 
           {/* Linha 2: Busca + filtros */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
+          <div className="flex gap-2 min-w-0">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
               <Input
                 placeholder="Buscar produto..."
