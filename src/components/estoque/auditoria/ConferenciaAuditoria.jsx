@@ -169,127 +169,123 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+    <div className="fixed inset-0 bg-gray-950 flex items-center justify-center z-50">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
     </div>
   );
 
   const isConcluida = conferencia.status === "Concluída";
+  const dataFimFmt = conferencia.data_fim ? format(new Date(conferencia.data_fim), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "";
 
   return (
-    <div className="flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
+    <div className="fixed inset-0 bg-gray-950 z-50 flex flex-col overflow-hidden">
+      {/* Header escuro */}
+      <div className="flex items-center gap-3 px-4 pt-5 pb-4 flex-shrink-0">
+        <button
+          onClick={onVoltar}
+          className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-gray-300"
+        >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold font-glacial text-gray-900 dark:text-white truncate">
-            Auditoria — {conferencia.nome_conferencia}
-          </h2>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            {conferencia.responsavel_nome} · {conferencia.data_fim ? format(new Date(conferencia.data_fim), "dd/MM/yyyy HH:mm", { locale: ptBR }) : ""}
-          </p>
+          <h2 className="text-sm font-semibold font-glacial text-white truncate">{conferencia.nome_conferencia}</h2>
+          <p className="text-xs text-gray-500">{conferencia.responsavel_nome} · {dataFimFmt}</p>
         </div>
         <button
           onClick={imprimir}
-          className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400"
-          title="Imprimir relatório"
+          className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-gray-400"
         >
           <Printer className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Conteúdo imprimível */}
-      <div ref={printRef}>
-        {/* Resumo print */}
-        <div className="resumo" style={{ display: "none" }}>
-          <h1>Relatório de Auditoria de Estoque</h1>
-          <div className="sub">{conferencia.nome_conferencia} · {conferencia.tipo_conferencia} · {conferencia.responsavel_nome} · {conferencia.data_fim ? format(new Date(conferencia.data_fim), "dd/MM/yyyy HH:mm", { locale: ptBR }) : ""}</div>
-        </div>
-
-        {/* Cards resumo */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {[
-            { label: "Total", value: totais.total, color: "text-gray-900 dark:text-white" },
-            { label: "OK", value: totais.ok, color: "text-green-600 dark:text-green-400" },
-            { label: "Sobras", value: totais.sobras, color: "text-gray-700 dark:text-gray-200" },
-            { label: "Faltas", value: totais.faltas, color: "text-red-600 dark:text-red-400" },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-3 text-center">
-              <div className={`text-xl font-bold font-glacial leading-none ${color}`}>{value}</div>
-              <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase tracking-wide">{label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Lista comparativa — cards com nome completo */}
-        <div className="space-y-2">
-          {comparativo.map(item => {
-            const dif = item.diferenca;
-            const difColor = dif === null ? "text-gray-400" : dif > 0 ? "text-gray-700 dark:text-gray-200" : dif < 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400";
-            const DifIcon = dif === null ? Minus : dif > 0 ? TrendingUp : dif < 0 ? TrendingDown : Minus;
-            const hasDif = dif !== null && dif !== 0;
-            return (
-              <div key={item.produto_id} className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl px-4 py-3">
-                {/* Nome completo — quebra linha normalmente */}
-                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug break-words mb-2">{item.produto_nome}</p>
-                {/* Infos na linha de baixo */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="font-semibold text-gray-800 dark:text-gray-200">{item.contado}</span>
-                    <span className="text-gray-300 dark:text-gray-600">·</span>
-                    <span>{item.estoque_sistema ?? "—"} {item.unidade}</span>
-                  </div>
-                  <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${difColor}`}>
-                    <DifIcon className="w-3 h-3" />
-                    {dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${dif}` : `${dif}`}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {/* KPI strip */}
+      <div className="grid grid-cols-4 gap-2 px-4 pb-4 flex-shrink-0">
+        {[
+          { label: "Total", value: totais.total, color: "text-white" },
+          { label: "OK", value: totais.ok, color: "text-green-400" },
+          { label: "Sobras", value: totais.sobras, color: "text-gray-300" },
+          { label: "Faltas", value: totais.faltas, color: "text-red-400" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="bg-gray-900 rounded-2xl p-3 text-center">
+            <div className={`text-2xl font-bold font-glacial leading-none ${color}`}>{value}</div>
+            <div className="text-[9px] text-gray-600 mt-1.5 uppercase tracking-wider">{label}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Ações aprovação */}
-      {!isConcluida && conferencia.status === "Aguardando Auditoria" && (
-        <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4 space-y-2">
-          {totais.com_dif > 0 && (
-            <div className="flex items-start gap-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-2xl px-4 py-3 mb-3">
-              <AlertTriangle className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                {totais.com_dif} produto{totais.com_dif !== 1 ? "s" : ""} com divergência. Ao aprovar, o estoque será ajustado automaticamente.
-              </p>
+      {/* Lista scrollável */}
+      <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-4">
+        {comparativo.map(item => {
+          const dif = item.diferenca;
+          const difColor = dif === null ? "text-gray-600" : dif > 0 ? "text-gray-300" : dif < 0 ? "text-red-400" : "text-green-400";
+          const DifIcon = dif === null ? Minus : dif > 0 ? TrendingUp : dif < 0 ? TrendingDown : Minus;
+          const hasDif = dif !== null && dif !== 0;
+          return (
+            <div
+              key={item.produto_id}
+              className={`rounded-2xl px-4 py-3 ${hasDif ? "bg-gray-900" : "bg-gray-900/60"}`}
+            >
+              <p className="text-sm font-medium text-white leading-snug break-words mb-2">{item.produto_nome}</p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="font-semibold text-gray-200">{item.contado}</span>
+                  <span className="text-gray-700">·</span>
+                  <span className="text-gray-500">{item.estoque_sistema ?? "—"} {item.unidade}</span>
+                </div>
+                <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${difColor}`}>
+                  <DifIcon className="w-3 h-3" />
+                  {dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${dif}` : `${dif}`}
+                </span>
+              </div>
             </div>
-          )}
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={reprovar}
-              className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-xs"
-            >
-              <XCircle className="w-4 h-4 mr-1" /> Recontar
-            </Button>
-            <Button
-              onClick={aprovar}
-              disabled={aprovando}
-              className="flex-1 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none text-xs"
-            >
-              {aprovando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-1" /> Aprovar</>}
-            </Button>
+          );
+        })}
+        {comparativo.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-700">
+            <Package className="w-10 h-10 mb-3" />
+            <p className="text-sm">Nenhum item conferido</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {isConcluida && (
-        <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4">
-          <div className="flex items-center gap-2.5 bg-green-50 dark:bg-green-900/20 rounded-2xl px-4 py-3">
+      {/* Footer ações */}
+      <div className="flex-shrink-0 px-4 pb-6 pt-3 bg-gray-950 border-t border-gray-900">
+        {!isConcluida && conferencia.status === "Aguardando Auditoria" && (
+          <>
+            {totais.com_dif > 0 && (
+              <div className="flex items-start gap-2.5 bg-gray-900 rounded-2xl px-4 py-3 mb-3">
+                <AlertTriangle className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-400">
+                  {totais.com_dif} produto{totais.com_dif !== 1 ? "s" : ""} com divergência. Ao aprovar, o estoque será ajustado automaticamente.
+                </p>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={reprovar}
+                className="flex-1 h-12 rounded-2xl bg-gray-900 text-gray-300 hover:bg-gray-800 border-0"
+              >
+                <XCircle className="w-4 h-4 mr-2" /> Recontar
+              </Button>
+              <Button
+                onClick={aprovar}
+                disabled={aprovando}
+                className="flex-1 h-12 rounded-2xl bg-white hover:bg-gray-100 text-gray-900 shadow-none font-semibold"
+              >
+                {aprovando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Aprovar</>}
+              </Button>
+            </div>
+          </>
+        )}
+        {isConcluida && (
+          <div className="flex items-center gap-2.5 bg-green-950/60 rounded-2xl px-4 py-3">
             <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-            <p className="text-xs text-green-700 dark:text-green-400 font-medium">Auditoria concluída e estoque ajustado.</p>
+            <p className="text-xs text-green-400 font-medium">Auditoria concluída e estoque ajustado.</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
