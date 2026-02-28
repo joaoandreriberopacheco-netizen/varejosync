@@ -102,7 +102,7 @@ export default function Armazenagem() {
               </TabsList>
 
               <TabsContent value="contagem">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm w-full max-w-full overflow-x-hidden">
                   {conferenciaAtiva ? (
                     <ConferenciaEditor
                       conferencia={conferenciaAtiva}
