@@ -97,30 +97,71 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
   };
 
   const imprimir = () => {
-    const conteudo = printRef.current?.innerHTML;
-    if (!conteudo) return;
+    const dataFim = conferencia.data_fim ? format(new Date(conferencia.data_fim), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "";
+    const linhas = comparativo.map(item => {
+      const dif = item.diferenca;
+      const difStr = dif === null ? "—" : dif === 0 ? "OK" : dif > 0 ? `+${dif}` : `${dif}`;
+      const difClass = dif > 0 ? "pos" : dif < 0 ? "neg" : "ok";
+      return `
+        <tr>
+          <td>${item.produto_nome}</td>
+          <td style="text-align:center">${item.contado} ${item.unidade}</td>
+          <td style="text-align:center">${item.estoque_sistema ?? "—"} ${item.unidade}</td>
+          <td style="text-align:center" class="${difClass}">${difStr}</td>
+        </tr>`;
+    }).join("");
+
     const win = window.open("", "_blank");
     win.document.write(`
       <html>
         <head>
           <title>Relatório de Auditoria — ${conferencia.nome_conferencia}</title>
           <style>
-            body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 20px; }
-            h1 { font-size: 16px; margin-bottom: 4px; }
-            .sub { color: #666; font-size: 11px; margin-bottom: 16px; }
-            table { width: 100%; border-collapse: collapse; }
-            th { background: #f3f4f6; text-align: left; padding: 6px 8px; font-size: 11px; }
-            td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; }
-            .pos { color: #16a34a; font-weight: 600; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 24px; max-width: 800px; margin: 0 auto; }
+            h1 { font-size: 18px; margin: 0 0 4px; color: #111; }
+            .sub { color: #6b7280; font-size: 11px; margin-bottom: 20px; }
+            .resumo { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+            .resumo-item { background: #f9fafb; border-radius: 8px; padding: 10px 16px; min-width: 80px; text-align: center; }
+            .resumo-item .num { font-size: 22px; font-weight: 700; }
+            .resumo-item .label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+            .num-total { color: #111; }
+            .num-ok { color: #16a34a; }
+            .num-sobras { color: #374151; }
+            .num-faltas { color: #dc2626; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+            thead th { background: #f3f4f6; text-align: left; padding: 8px 10px; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+            thead th:not(:first-child) { text-align: center; }
+            tbody td { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; font-size: 12px; vertical-align: middle; }
+            tbody td:not(:first-child) { text-align: center; }
+            tbody tr:hover { background: #fafafa; }
+            .pos { color: #374151; font-weight: 600; }
             .neg { color: #dc2626; font-weight: 600; }
-            .ok { color: #6b7280; }
-            .resumo { display: flex; gap: 24px; margin-bottom: 16px; }
-            .resumo-item { background: #f9fafb; padding: 8px 12px; border-radius: 8px; }
-            .resumo-item .num { font-size: 18px; font-weight: bold; }
-            .resumo-item .label { font-size: 10px; color: #9ca3af; }
+            .ok { color: #16a34a; font-weight: 600; }
+            .footer { margin-top: 24px; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 12px; }
           </style>
         </head>
-        <body>${conteudo}</body>
+        <body>
+          <h1>Relatório de Auditoria de Estoque</h1>
+          <div class="sub">${conferencia.nome_conferencia} · ${conferencia.tipo_conferencia || ""} · ${conferencia.responsavel_nome || ""} · ${dataFim}</div>
+          <div class="resumo">
+            <div class="resumo-item"><div class="num num-total">${totais.total}</div><div class="label">Total</div></div>
+            <div class="resumo-item"><div class="num num-ok">${totais.ok}</div><div class="label">OK</div></div>
+            <div class="resumo-item"><div class="num num-sobras">${totais.sobras}</div><div class="label">Sobras</div></div>
+            <div class="resumo-item"><div class="num num-faltas">${totais.faltas}</div><div class="label">Faltas</div></div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Contado</th>
+                <th>Sistema</th>
+                <th>Diferença</th>
+              </tr>
+            </thead>
+            <tbody>${linhas}</tbody>
+          </table>
+          <div class="footer">Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })} · Status: ${conferencia.status}</div>
+        </body>
       </html>
     `);
     win.document.close();
