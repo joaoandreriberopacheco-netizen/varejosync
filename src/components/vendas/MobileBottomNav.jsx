@@ -115,11 +115,12 @@ export default function MobileBottomNav({ currentPageName }) {
   const parentTab = mainTabs.find(t => t.name === activeParent);
   const subItems = parentTab?.children || [];
 
+  const isDark = document.documentElement.classList.contains('dark');
   const navStyle = {
-    background: 'rgba(255,255,255,0.97)',
+    background: isDark ? 'rgba(17,24,39,0.97)' : 'rgba(255,255,255,0.97)',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
-    boxShadow: '0 -1px 0 0 rgba(0,0,0,0.06)',
+    boxShadow: isDark ? '0 -1px 0 0 rgba(255,255,255,0.06)' : '0 -1px 0 0 rgba(0,0,0,0.06)',
     fontFamily: "'DM Sans', sans-serif",
   };
 
