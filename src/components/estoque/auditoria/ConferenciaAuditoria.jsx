@@ -69,8 +69,12 @@ export default function ConferenciaAuditoria({ conferencia, onVoltar, onAtualiza
     for (const item of comparativo) {
       if (item.diferenca !== null && item.diferenca !== 0) {
         const prod = produtos.find(p => p.id === item.produto_id);
-        if (prod) {
-          await base44.entities.Produto.update(item.produto_id, { estoque_atual: item.contado });
+        if (prod && prod.campo_hierarquico_1) {
+          // Patch mínimo — apenas o campo de estoque
+          await base44.entities.Produto.update(item.produto_id, {
+            campo_hierarquico_1: prod.campo_hierarquico_1,
+            estoque_atual: item.contado,
+          });
           // Registra movimentação
           await base44.entities.MovimentacaoEstoque.create({
             produto_id: item.produto_id,
