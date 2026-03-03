@@ -138,7 +138,7 @@ export default function MobileBottomNav({ currentPageName }) {
           <Icon
             style={{ width: 20, height: 20 }}
             className={`transition-all duration-200 ${
-              active ? 'text-white stroke-[2]' : 'text-gray-400 dark:text-gray-500 stroke-[1.5]'
+              active ? 'text-white stroke-[2]' : 'text-gray-400 stroke-[1.5]'
             }`}
           />
         </div>
