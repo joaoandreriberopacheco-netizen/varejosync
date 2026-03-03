@@ -125,31 +125,25 @@ export default function MobileBottomNav({ currentPageName }) {
   };
 
   const NavItem = ({ icon: Icon, name, active, onClick, to, isButton }) => {
+    const dark = document.documentElement.classList.contains('dark');
+    const pillBg = active ? (dark ? '#fff' : '#111') : 'transparent';
+    const iconCls = active ? (dark ? 'text-gray-900 stroke-[2]' : 'text-white stroke-[2]') : 'text-gray-400 stroke-[1.5]';
+    const labelColor = active ? (dark ? '#fff' : '#111') : '#9ca3af';
+
     const content = (
       <>
         <div
           className="flex items-center justify-center rounded-2xl transition-all duration-200"
-          style={{
-            width: 44,
-            height: 30,
-            background: active ? '#111' : 'transparent',
-          }}
+          style={{ width: 44, height: 30, background: pillBg }}
         >
-          <Icon
-            style={{ width: 20, height: 20 }}
-            className={`transition-all duration-200 ${
-              active ? 'text-white stroke-[2]' : 'text-gray-400 stroke-[1.5]'
-            }`}
-          />
+          <Icon style={{ width: 20, height: 20 }} className={`transition-all duration-200 ${iconCls}`} />
         </div>
         <span
           style={{
             fontSize: 10,
             fontFamily: "'DM Sans', sans-serif",
             fontWeight: active ? 600 : 400,
-            color: active
-              ? (document.documentElement.classList.contains('dark') ? '#fff' : '#111')
-              : '#9ca3af',
+            color: labelColor,
             letterSpacing: 0,
             lineHeight: 1.2,
           }}
