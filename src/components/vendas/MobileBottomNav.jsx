@@ -147,11 +147,12 @@ export default function MobileBottomNav({ currentPageName }) {
             fontSize: 10,
             fontFamily: "'DM Sans', sans-serif",
             fontWeight: active ? 600 : 400,
-            color: active ? '#111' : '#9ca3af',
+            color: active
+              ? (document.documentElement.classList.contains('dark') ? '#fff' : '#111')
+              : '#9ca3af',
             letterSpacing: 0,
             lineHeight: 1.2,
           }}
-          className="dark:!text-white dark:!opacity-100"
         >
           {name}
         </span>
