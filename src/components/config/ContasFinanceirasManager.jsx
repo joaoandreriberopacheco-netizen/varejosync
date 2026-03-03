@@ -125,67 +125,96 @@ export default function ContasFinanceirasManager() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
         {contas.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <p className="text-gray-500 mb-4">Nenhuma conta cadastrada</p>
+          <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
+            <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Nenhuma conta cadastrada</p>
             <Button onClick={handleAddNew} className="bg-emerald-600 hover:bg-emerald-700">
               Criar Primeira Conta
             </Button>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="whitespace-nowrap">Nome</TableHead>
-                <TableHead className="whitespace-nowrap">Tipo</TableHead>
-                <TableHead className="whitespace-nowrap">Banco/Agência/Conta</TableHead>
-                <TableHead className="whitespace-nowrap">Saldo Atual</TableHead>
-                <TableHead className="whitespace-nowrap">Status</TableHead>
-                <TableHead className="text-right whitespace-nowrap">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            {/* Mobile: cards */}
+            <div className="flex flex-col gap-3 md:hidden">
               {contas.map(conta => (
-                <TableRow key={conta.id}>
-                  <TableCell className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: conta.cor }} />
-                    <span className="font-medium">{conta.nome}</span>
-                  </TableCell>
-                  <TableCell>{conta.tipo}</TableCell>
-                  <TableCell>
+                <div key={conta.id} className="flex items-center gap-3 rounded-2xl bg-gray-50 dark:bg-gray-700/40 px-4 py-3">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: conta.cor }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{conta.nome}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{conta.tipo}</p>
                     {conta.banco && (
-                      <span className="text-sm text-gray-600">
-                        {conta.banco} {conta.agencia && `| Ag: ${conta.agencia}`} {conta.conta && `| Cc: ${conta.conta}`}
-                      </span>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{conta.banco}{conta.agencia ? ` · Ag ${conta.agencia}` : ''}{conta.conta ? ` · Cc ${conta.conta}` : ''}</p>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className="bg-emerald-100 text-emerald-800 font-semibold">
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                       R$ {conta.saldo_atual?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {conta.ativo ? '✓ Ativa' : '✗ Inativa'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-1 justify-end">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}>
-                        <Edit className="h-4 w-4" />
+                    </span>
+                    <div className="flex gap-0.5">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(conta)}>
+                        <Edit className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(conta)} className="text-red-600">
-                        <Trash2 className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDelete(conta)}>
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
-        )}
+            </div>
 
-        </div>
+            {/* Desktop: tabela */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Banco/Agência/Conta</TableHead>
+                    <TableHead>Saldo Atual</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contas.map(conta => (
+                    <TableRow key={conta.id}>
+                      <TableCell className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: conta.cor }} />
+                        <span className="font-medium">{conta.nome}</span>
+                      </TableCell>
+                      <TableCell>{conta.tipo}</TableCell>
+                      <TableCell>
+                        {conta.banco && (
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {conta.banco}{conta.agencia && ` | Ag: ${conta.agencia}`}{conta.conta && ` | Cc: ${conta.conta}`}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 font-semibold">
+                          R$ {conta.saldo_atual?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{conta.ativo ? '✓ Ativa' : '✗ Inativa'}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(conta)} className="text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
       </CardContent>
       
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
