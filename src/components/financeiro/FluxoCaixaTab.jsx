@@ -323,10 +323,14 @@ export default function FluxoCaixaTab() {
     <div className="w-full min-w-0 overflow-x-hidden space-y-3 pb-28">
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-2 w-full min-w-0">
-        <KpiCard label="Entrou" value={fmt(kpis.entrou)} />
-        <KpiCard label="Saiu" value={fmt(kpis.saiu)} isNegative={kpis.saiu > 0} />
-        <div className="col-span-2">
+      <div className="grid grid-cols-2 gap-2 w-full" style={{ maxWidth: '100%' }}>
+        <div className="min-w-0 overflow-hidden">
+          <KpiCard label="Entrou" value={fmt(kpis.entrou)} />
+        </div>
+        <div className="min-w-0 overflow-hidden">
+          <KpiCard label="Saiu" value={fmt(kpis.saiu)} isNegative={kpis.saiu > 0} />
+        </div>
+        <div className="col-span-2 min-w-0 overflow-hidden">
           <KpiCard
             label="Saldo do período"
             value={fmt(kpis.saldo)}
