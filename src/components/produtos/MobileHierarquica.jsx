@@ -141,7 +141,7 @@ export default function MobileHierarquica({ produtos, onEdit, formatarNumero }) 
   }
 
   return (
-    <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+    <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800 w-full overflow-x-hidden">
       {Object.entries(tree).map(([l1Key, l1Node]) => {
         const l1Expanded = expanded[l1Key] !== false;
         const allL1 = [...l1Node.items, ...Object.values(l1Node.children).flatMap(c => c.items)];
