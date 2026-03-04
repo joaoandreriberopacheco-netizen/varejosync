@@ -28,41 +28,41 @@ function ProdutoCard({ produto, onEdit, formatarNumero }) {
   const nome = produto.nome || [produto.campo_hierarquico_1, produto.campo_hierarquico_2, produto.campo_hierarquico_3].filter(Boolean).join(' ');
 
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3">
+    <div className="flex items-center gap-2 py-2.5 px-3 w-full overflow-hidden">
       {/* Imagem pequena */}
-      <div className="w-9 h-9 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
         {produto.imagem_url
           ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
           : <Package className="w-4 h-4 text-gray-300 dark:text-gray-600" />
         }
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0" onClick={() => onEdit(produto)}>
-        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate uppercase leading-tight">
+      {/* Info — ocupa todo o espaço disponível */}
+      <div className="flex-1 min-w-0 overflow-hidden" onClick={() => onEdit(produto)}>
+        <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 leading-tight break-words line-clamp-2 uppercase">
           {nome}
         </p>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-1.5 mt-0.5">
           <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStockDot(produto)}`} />
-          <span className="text-[10px] text-gray-400 dark:text-gray-500">
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 truncate">
             {formatarNumero(produto.estoque_atual)} {produto.unidade_principal || 'UN'}
           </span>
         </div>
       </div>
 
-      {/* Preço + ações */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <div className="text-right mr-1">
-          <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+      {/* Preço + margem + menu — largura fixa mínima */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        <div className="text-right">
+          <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
             R$ {formatarNumero(produto.preco_venda_padrao)}
           </div>
-          <div className={`text-[10px] ${margem < 15 ? 'text-red-500' : margem < 25 ? 'text-orange-500' : 'text-green-500'}`}>
+          <div className={`text-[10px] whitespace-nowrap ${margem < 15 ? 'text-red-500' : margem < 25 ? 'text-orange-500' : 'text-green-500'}`}>
             {formatarNumero(margem)}%
           </div>
         </div>
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
               <MoreHorizontal className="h-3.5 w-3.5 text-gray-400" />
             </Button>
           </DropdownMenuTrigger>
