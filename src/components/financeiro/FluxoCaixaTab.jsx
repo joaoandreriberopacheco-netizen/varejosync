@@ -164,7 +164,7 @@ export default function FluxoCaixaTab() {
   const totalPendentes = lancamentos.filter(l => l.status_conciliacao === 'Pendente').length;
 
   return (
-    <div className="relative space-y-4 pb-24 w-full overflow-x-hidden">
+    <div className="relative space-y-4 pb-24 w-full max-w-full overflow-hidden">
       {/* KPIs */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
@@ -296,8 +296,8 @@ export default function FluxoCaixaTab() {
           onClick={() => setFabOpen(o => !o)}
           className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95 ${
             fabOpen
-              ? 'bg-gray-600 dark:bg-gray-500 text-white rotate-45'
-              : 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
+              ? 'bg-gray-500 dark:bg-gray-500 text-white rotate-45'
+              : 'bg-gray-700 dark:bg-gray-600 text-white'
           }`}
         >
           <Plus className="w-6 h-6" />
