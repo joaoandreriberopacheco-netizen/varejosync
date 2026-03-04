@@ -385,7 +385,17 @@ export default function FluxoCaixaTabV2() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-3 pb-28">
 
-      {/* KPIs - temporariamente removidos para teste de responsividade */}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 gap-2">
+        <KpiCard label="Entrou" value={R(kpis.entrou)} />
+        <KpiCard label="Saiu"   value={R(kpis.saiu)} neg={kpis.saiu > 0} />
+        <div className="col-span-2">
+          <KpiCard
+            label="Saldo do período" value={R(kpis.saldo)} neg={kpis.saldo < 0} dark
+            sub={kpis.pEntrou > 0 || kpis.pSaiu > 0 ? `Projeção: ${R(kpis.saldoPrev)}` : null}
+          />
+        </div>
+      </div>
 
       {/* Alerta pendentes */}
       {totalPend > 0 && !pendentes && (
