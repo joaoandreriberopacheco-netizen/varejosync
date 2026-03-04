@@ -1243,7 +1243,7 @@ export default function ProdutosPage() {
             {/* Tabela - MOBILE/DESKTOP */}
             <div className="flex-1 overflow-auto w-full min-w-0">
               {/* MOBILE: Vista Hierárquica */}
-              <div className="md:hidden w-full overflow-x-hidden px-0">
+              <div className="md:hidden w-full overflow-x-hidden overflow-y-auto px-0">
                 <MobileHierarquica
                   produtos={filteredProdutos}
                   onEdit={handleEdit}
