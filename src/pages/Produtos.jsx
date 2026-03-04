@@ -182,9 +182,9 @@ export default function ProdutosPage() {
     setIsFormOpen(true);
   };
 
-  const handleFilterChange = (key, value) => {
+  const handleFilterChange = React.useCallback((key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
   const formatarNumero = React.useCallback((numero) => {
     if (numero === null || numero === undefined) return '0,00';
