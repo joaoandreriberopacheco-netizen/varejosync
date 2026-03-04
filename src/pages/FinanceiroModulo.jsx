@@ -312,7 +312,7 @@ export default function FinanceiroModuloPage() {
           </div>
         </TabsList>
 
-        <div className="mt-6">
+        <div className="mt-4">
           <TabsContent value="caixa" className="mt-0">
             <FluxoCaixaTab />
           </TabsContent>
