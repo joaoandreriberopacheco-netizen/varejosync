@@ -306,10 +306,6 @@ export default function FinanceiroModuloPage() {
         </TabsList>
 
         <div className="mt-4 w-full min-w-0 overflow-x-hidden">
-          <TabsContent value="caixa" className="mt-0 w-full min-w-0">
-            <FluxoCaixaTab />
-          </TabsContent>
-
           <TabsContent value="contas" className="mt-0 space-y-4">
             {/* KPI Saldo Total */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
