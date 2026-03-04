@@ -263,20 +263,20 @@ function LancRow({ l, onClick }) {
         }
       </span>
 
-      {/* Descrição — largura fixa, quebra verticalmente */}
-      <span className="flex-none w-[52%]">
-        <span className={`block text-[0.8rem] font-medium leading-snug break-words ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
+      {/* Descrição — cresce, mas respeita o espaço do valor */}
+      <span className="flex-1 min-w-0">
+        <span className={`block text-[0.8rem] font-medium leading-snug truncate ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
           {l.descricao}
         </span>
-        <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5">
+        <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
           {data ? format(new Date(data), 'dd MMM', { locale: ptBR }) : '—'}
           {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
           {prev ? <span className="ml-1 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded px-1 text-[0.6rem]">prev.</span> : null}
         </span>
       </span>
 
-      {/* Valor — espaço livre, alinhado à direita */}
-      <span className="flex-1 flex flex-col items-end pt-0.5 gap-0.5">
+      {/* Valor — largura mínima garantida, alinhado à direita */}
+      <span className="flex-none flex flex-col items-end pt-0.5 gap-0.5 pl-2">
         <span className={`text-[0.82rem] font-bold whitespace-nowrap
           ${isR ? (pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400') : (pago ? 'text-red-500 dark:text-red-400' : 'text-gray-400')}`}>
           {isR ? '+' : '−'}{R(val)}
