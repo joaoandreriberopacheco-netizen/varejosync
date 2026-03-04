@@ -168,15 +168,29 @@ export default function FluxoCaixaTab() {
   return (
     <div className="relative space-y-4 pb-24">
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-2">
-        <KpiCard label="Entrou" value={formatCurrency(kpis.realizado.entrou)} />
-        <KpiCard label="Saiu" value={formatCurrency(kpis.realizado.saiu)} isNegative={kpis.realizado.saiu > 0} />
-        <KpiCard
-          label="Saldo"
-          value={formatCurrency(kpis.saldoRealizado)}
-          isNegative={kpis.saldoRealizado < 0}
-          isHighlight
-        />
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider">Resumo</span>
+          <button
+            onClick={() => setKpisPinned(p => !p)}
+            className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {kpisPinned ? <Pin className="w-3 h-3" /> : <PinOff className="w-3 h-3" />}
+            {kpisPinned ? 'Fixado' : 'Oculto'}
+          </button>
+        </div>
+        {kpisPinned && (
+          <div className="grid grid-cols-3 gap-2">
+            <KpiCard label="Entrou" value={formatCurrency(kpis.realizado.entrou)} />
+            <KpiCard label="Saiu" value={formatCurrency(kpis.realizado.saiu)} isNegative={kpis.realizado.saiu > 0} />
+            <KpiCard
+              label="Saldo"
+              value={formatCurrency(kpis.saldoRealizado)}
+              isNegative={kpis.saldoRealizado < 0}
+              isHighlight
+            />
+          </div>
+        )}
       </div>
 
       {/* Previsão linha */}
