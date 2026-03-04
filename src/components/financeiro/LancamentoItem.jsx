@@ -28,59 +28,42 @@ export default function LancamentoItem({ lancamento, onClick }) {
   return (
     <button
       onClick={() => onClick && onClick(lancamento)}
-      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left group"
+      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left active:scale-[0.99]"
     >
-      {/* Ícone tipo */}
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+      {/* Ícone */}
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
         isReceita
-          ? isPago ? 'bg-green-50 dark:bg-green-900/20' : 'bg-green-50/50 dark:bg-green-900/10'
-          : isPago ? 'bg-red-50 dark:bg-red-900/20' : 'bg-red-50/50 dark:bg-red-900/10'
+          ? isPago ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-700'
+          : isPago ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-700'
       }`}>
         {isReceita
-          ? <ArrowDownLeft className={`w-4 h-4 ${isPago ? 'text-green-500' : 'text-green-400'}`} />
-          : <ArrowUpRight className={`w-4 h-4 ${isPago ? 'text-red-500' : 'text-red-400'}`} />
+          ? <ArrowDownLeft className={`w-4 h-4 ${isPago ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
+          : <ArrowUpRight className={`w-4 h-4 ${isPago ? 'text-red-500 dark:text-red-400' : 'text-gray-400'}`} />
         }
       </div>
 
       {/* Descrição */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <p className={`text-sm font-medium truncate ${
-            isPrevisto ? 'text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-100'
-          }`}>
+        <div className="flex items-center gap-2">
+          <p className={`text-sm font-medium truncate ${isPrevisto ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
             {lancamento.descricao}
           </p>
           {isPrevisto && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 flex-shrink-0">
-              PREVISTO
-            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 flex-shrink-0">prev.</span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            {dataRef ? format(new Date(dataRef), 'dd MMM', { locale: ptBR }) : '—'}
-          </span>
-          {lancamento.categoria && (
-            <>
-              <span className="text-gray-300 dark:text-gray-600">·</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 truncate">{categoriaLabel(lancamento.categoria)}</span>
-            </>
-          )}
-          {lancamento.conta_financeira_nome && (
-            <>
-              <span className="text-gray-300 dark:text-gray-600">·</span>
-              <span className="text-xs text-gray-400 dark:text-gray-500 truncate">{lancamento.conta_financeira_nome}</span>
-            </>
-          )}
-        </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+          {dataRef ? format(new Date(dataRef), 'dd MMM', { locale: ptBR }) : '—'}
+          {lancamento.conta_financeira_nome ? ` · ${lancamento.conta_financeira_nome}` : ''}
+        </p>
       </div>
 
-      {/* Valor + conciliação */}
+      {/* Valor */}
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <p className={`text-sm font-semibold ${
+        <p className={`text-base font-semibold ${
           isReceita
-            ? isPago ? 'text-green-600 dark:text-green-400' : 'text-green-500/70 dark:text-green-500/60'
-            : isPago ? 'text-red-500 dark:text-red-400' : 'text-red-400/70 dark:text-red-400/60'
+            ? isPago ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+            : isPago ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'
         }`}>
           {isReceita ? '+' : '-'}{formatCurrency(lancamento.valor)}
         </p>
