@@ -271,7 +271,7 @@ export default function FinanceiroModuloPage() {
   const totalPendente = pendingTransactions.reduce((sum, t) => sum + (t.valor || 0), 0);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-4 overflow-hidden">
+    <div className="w-full max-w-7xl mx-auto space-y-4">
       {/* Header */}
       <div className="pb-3 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-0.5">Gestão Financeira</h1>

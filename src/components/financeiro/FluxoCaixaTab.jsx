@@ -107,7 +107,7 @@ export default function FluxoCaixaTab() {
   const totalPendentes = useMemo(() => lancamentos.filter(l => l.status_conciliacao === 'Pendente').length, [lancamentos]);
 
   return (
-    <div className="w-full" style={{ maxWidth: '100%', overflow: 'hidden' }}>
+    <div className="w-full min-w-0">
 
       {/* KPIs — 3 cards fixos */}
       <div className="grid grid-cols-3 gap-2 mb-4">
