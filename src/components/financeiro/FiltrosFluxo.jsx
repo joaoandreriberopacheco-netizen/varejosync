@@ -56,17 +56,17 @@ export default function FiltrosFluxo({ periodo, onPeriodoChange, customStart, cu
     : `${contasSelecionadas.length} conta${contasSelecionadas.length > 1 ? 's' : ''}`;
 
   return (
-    <div className="space-y-3">
-      {/* Filtro de período - estilo pill */}
-      <div className="flex gap-1.5 flex-wrap">
+    <div className="space-y-2">
+      {/* Filtro de período — scroll horizontal, sem quebra */}
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {PERIODOS.map(p => (
           <button
             key={p.value}
             onClick={() => onPeriodoChange(p.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
               periodo === p.value
                 ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
             }`}
           >
             {p.label}
@@ -76,25 +76,25 @@ export default function FiltrosFluxo({ periodo, onPeriodoChange, customStart, cu
 
       {/* Período customizado */}
       {periodo === 'periodo' && (
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none' }}>
           <Input
             type="date"
             value={customStart || ''}
             onChange={e => onCustomChange('start', e.target.value)}
-            className="h-8 text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-36"
+            className="h-8 text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 min-w-[130px]"
           />
-          <span className="text-xs text-gray-400">até</span>
+          <span className="text-xs text-gray-400 flex-shrink-0">até</span>
           <Input
             type="date"
             value={customEnd || ''}
             onChange={e => onCustomChange('end', e.target.value)}
-            className="h-8 text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 w-36"
+            className="h-8 text-xs dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 min-w-[130px]"
           />
         </div>
       )}
 
-      {/* Filtros secundários: contas + pendentes */}
-      <div className="flex gap-2 flex-wrap items-center">
+      {/* Filtros secundários: contas + pendentes — scroll horizontal */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5 items-center" style={{ scrollbarWidth: 'none' }}>
         {/* Selector de contas */}
         <Popover open={openContas} onOpenChange={setOpenContas}>
           <PopoverTrigger asChild>
