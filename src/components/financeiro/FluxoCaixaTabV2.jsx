@@ -441,7 +441,21 @@ export default function FluxoCaixaTabV2() {
         </div>
       </div>
 
-      {/* Lista - temporariamente removida para teste */}
+      {/* Lista */}
+      {loading ? (
+        <div className="space-y-2">
+          {[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
+        </div>
+      ) : grupos.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
+          <Scale className="w-9 h-9 text-gray-200 dark:text-gray-700" />
+          <p className="text-sm text-gray-400">Nenhuma movimentação encontrada</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {grupos.map(({ k, label, items }) => <Grupo key={k} label={label} items={items} onRow={setDetalhe} />)}
+        </div>
+      )}
 
       {/* FAB */}
       {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
