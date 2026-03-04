@@ -151,7 +151,7 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
         throw new Error(extraction.details || "Falha ao extrair dados da planilha.");
       }
 
-      const rows = extraction.output.data.filter(r => r.codigo_barras && r.url_imagem);
+      const rows = extraction.output.data.filter(r => r.codigo_barras && r.url_imagem && r.url_imagem.trim() !== '');
       const allProducts = await base44.entities.Produto.list();
       const codigoBarrasMap = {}, codigoInternoMap = {};
       allProducts.forEach(p => {
