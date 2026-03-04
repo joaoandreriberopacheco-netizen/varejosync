@@ -176,8 +176,12 @@ export default function ImportacaoProdutos() {
 
       console.log('🗺️ Mapeamento de colunas:', mapeamento);
       
-      if (mapeamento.indice_nome === -1 || mapeamento.indice_preco_venda === -1) {
-        throw new Error(`Colunas obrigatórias não encontradas. Necessário: NOME (${mapeamento.indice_nome}) e PRECO_VENDA (${mapeamento.indice_preco_venda}). Cabeçalhos: ${headers.join(', ')}`);
+      // NOME ou CAMPO_HIERARQUICO_1 deve existir
+      if (mapeamento.indice_nome === -1 && mapeamento.indice_h1 === -1) {
+        throw new Error(`Coluna obrigatória não encontrada. Necessário: NOME ou CAMPO_HIERARQUICO_1. Cabeçalhos: ${headers.join(', ')}`);
+      }
+      if (mapeamento.indice_preco_venda === -1) {
+        throw new Error(`Coluna obrigatória não encontrada. Necessário: PRECO_VENDA. Cabeçalhos: ${headers.join(', ')}`);
       }
 
       setValidationProgress({ step: 'Processando todos os produtos...', progress: 75 });
