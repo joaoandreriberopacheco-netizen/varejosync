@@ -172,15 +172,15 @@ export default function ProdutosPage() {
     // setIsFormOpen(false); // Mantendo aberto para feedback
   };
 
-  const handleEdit = (produto) => {
+  const handleEdit = React.useCallback((produto) => {
     setSelectedProduto(produto);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleAddNew = () => {
+  const handleAddNew = React.useCallback(() => {
     setSelectedProduto(null);
     setIsFormOpen(true);
-  };
+  }, []);
 
   const handleFilterChange = React.useCallback((key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
