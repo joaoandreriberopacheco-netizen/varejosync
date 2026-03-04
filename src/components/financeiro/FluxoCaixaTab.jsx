@@ -166,7 +166,7 @@ export default function FluxoCaixaTab() {
   const totalPendentes = lancamentos.filter(l => l.status_conciliacao === 'Pendente').length;
 
   return (
-    <div className="relative space-y-4 pb-24">
+    <div className="relative space-y-4 pb-24 w-full overflow-x-hidden">
       {/* KPIs */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
