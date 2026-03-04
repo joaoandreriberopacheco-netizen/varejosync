@@ -10,9 +10,10 @@ import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
+import PeriodoPicker from './PeriodoPicker';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmt = (v) => `R$\u00a0${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+const fmtVal = (v) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
 function getDateRange(periodo, customStart, customEnd) {
   const hoje = new Date();
@@ -30,20 +31,17 @@ function getDateRange(periodo, customStart, customEnd) {
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, isNegative, accent }) {
   return (
-    <div
-      style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}
-      className={`rounded-2xl px-3 py-3 ${accent ? 'bg-gray-800 dark:bg-gray-100' : 'bg-white dark:bg-gray-800 shadow-sm'}`}
+    <div style={{ minWidth: 0, overflow: 'hidden', boxSizing: 'border-box', borderRadius: 16, padding: '12px 14px' }}
+      className={accent ? 'bg-gray-800 dark:bg-gray-100' : 'bg-white dark:bg-gray-800 shadow-sm'}
     >
-      <p className="text-[10px] uppercase tracking-wide mb-0.5 text-gray-400 dark:text-gray-500 truncate">{label}</p>
-      <p
-        style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.95rem' }}
-        className={`font-semibold leading-tight ${
-          accent
-            ? (isNegative ? 'text-red-400' : 'text-white dark:text-gray-900')
-            : (isNegative ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100')
-        }`}
-      >{value}</p>
-      {sub && <p className={`text-[10px] mt-0.5 truncate ${accent ? 'text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>{sub}</p>}
+      <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="text-gray-400 dark:text-gray-500">{label}</p>
+      {/* Valor: nunca trunca, vai para linha seguinte se necessário */}
+      <p style={{ fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.2, wordBreak: 'break-word' }}
+        className={accent ? (isNegative ? 'text-red-400' : 'text-white dark:text-gray-900') : (isNegative ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100')}
+      >
+        R$&nbsp;{value}
+      </p>
+      {sub && <p style={{ fontSize: '0.68rem', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className={accent ? 'text-gray-400' : 'text-gray-400 dark:text-gray-500'}>{sub}</p>}
     </div>
   );
 }
@@ -55,15 +53,16 @@ function LancamentoItem({ lancamento, onClick }) {
   const isPrevisto = !isPago && lancamento.status !== 'Cancelado';
   const concStatus = lancamento.status_conciliacao || 'N/A';
   const dataRef = lancamento.data_pagamento || lancamento.data_vencimento;
+  const valor = Math.abs(lancamento.valor || 0);
 
   return (
     <button
       onClick={() => onClick && onClick(lancamento)}
-      style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', textAlign: 'left' }}
+      style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer' }}
       className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors active:scale-[0.99]"
     >
       {/* Ícone */}
-      <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}
         className={isReceita ? (isPago ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-700') : (isPago ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-700')}
       >
         {isReceita
@@ -72,26 +71,27 @@ function LancamentoItem({ lancamento, onClick }) {
         }
       </div>
 
-      {/* Texto */}
-      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden' }}>
-          <p style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 500 }}
+      {/* Texto central: largura fixa ~55%, transborda verticalmente */}
+      <div style={{ width: '55%', minWidth: 0, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+          {/* Descrição: quebra linha em vez de truncar */}
+          <p style={{ fontSize: '0.8rem', fontWeight: 500, lineHeight: 1.35, wordBreak: 'break-word', flex: '1 1 auto' }}
             className={isPrevisto ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}
           >{lancamento.descricao}</p>
-          {isPrevisto && <span style={{ flexShrink: 0, fontSize: '0.65rem', padding: '1px 5px', borderRadius: 4, whiteSpace: 'nowrap' }} className="bg-gray-100 dark:bg-gray-700 text-gray-400">prev.</span>}
+          {isPrevisto && <span style={{ fontSize: '0.62rem', padding: '1px 5px', borderRadius: 4, flexShrink: 0, marginTop: 2 }} className="bg-gray-100 dark:bg-gray-700 text-gray-400">prev.</span>}
         </div>
-        <p style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.7rem' }} className="text-gray-400 dark:text-gray-500 mt-0.5">
+        <p style={{ fontSize: '0.7rem', marginTop: 2 }} className="text-gray-400 dark:text-gray-500">
           {dataRef ? format(new Date(dataRef), 'dd MMM', { locale: ptBR }) : '—'}
           {lancamento.conta_financeira_nome ? ` · ${lancamento.conta_financeira_nome}` : ''}
         </p>
       </div>
 
-      {/* Valor */}
-      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-        <p style={{ fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap' }} className={
-          isReceita ? (isPago ? 'text-green-600 dark:text-green-400' : 'text-gray-400') : (isPago ? 'text-red-500 dark:text-red-400' : 'text-gray-400')
-        }>
-          {isReceita ? '+' : '-'}R${Math.abs(lancamento.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+      {/* Valor: ocupa o restante, alinhado à direita, com liberdade para exibir o número completo */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, paddingTop: 2 }}>
+        <p style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}
+          className={isReceita ? (isPago ? 'text-green-600 dark:text-green-400' : 'text-gray-400') : (isPago ? 'text-red-500 dark:text-red-400' : 'text-gray-400')}
+        >
+          {isReceita ? '+' : '-'}R${fmtVal(valor)}
         </p>
         {concStatus === 'Pendente' && <Clock style={{ width: 10, height: 10 }} className="text-amber-500" />}
         {concStatus === 'Discrepância' && <AlertCircle style={{ width: 10, height: 10 }} className="text-red-500" />}
@@ -104,90 +104,55 @@ function LancamentoItem({ lancamento, onClick }) {
 function GroupHeader({ label, items, onLancamentoClick }) {
   return (
     <div style={{ minWidth: 0, overflow: 'hidden' }}>
-      <p style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="text-gray-400 dark:text-gray-500">{label}</p>
-      <div style={{ overflow: 'hidden' }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm divide-y divide-gray-50 dark:divide-white/5">
+      <p style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 4px' }} className="text-gray-400 dark:text-gray-500">{label}</p>
+      <div style={{ overflow: 'hidden', borderRadius: 16 }} className="bg-white dark:bg-gray-800 shadow-sm divide-y divide-gray-50 dark:divide-white/5">
         {items.map(l => <LancamentoItem key={l.id} lancamento={l} onClick={onLancamentoClick} />)}
       </div>
     </div>
   );
 }
 
-// ─── Filtros ──────────────────────────────────────────────────────────────────
-const PERIODOS = [
-  { label: 'Hoje', value: 'hoje' },
-  { label: 'Ontem', value: 'ontem' },
-  { label: 'Semana', value: 'semana' },
-  { label: 'Mês', value: 'mes' },
-  { label: 'Tudo', value: 'tudo' },
-  { label: 'Período', value: 'periodo' },
-];
-
-function Filtros({ periodo, onPeriodo, customStart, customEnd, onCustom, contas, contasSel, onContas, pendentes, onPendentes }) {
+// ─── Filtros secundários (Contas + Pendentes) ─────────────────────────────────
+function FiltrosSecundarios({ contas, contasSel, onContas, pendentes, onPendentes }) {
   const [openContas, setOpenContas] = useState(false);
   const todasSel = contasSel.length === 0 || contasSel.length === contas.length;
   const toggle = (id) => contasSel.includes(id) ? onContas(contasSel.filter(c => c !== id)) : onContas([...contasSel, id]);
 
   return (
-    <div style={{ width: '100%', minWidth: 0, overflow: 'hidden' }} className="space-y-2">
-      {/* Chips período */}
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-        {PERIODOS.map(p => (
-          <button key={p.value} onClick={() => onPeriodo(p.value)}
-            style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}
-            className={periodo === p.value ? 'bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}
-          >{p.label}</button>
-        ))}
-      </div>
-
-      {/* Datas custom */}
-      {periodo === 'periodo' && (
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
-          <input type="date" value={customStart || ''} onChange={e => onCustom('start', e.target.value)}
-            style={{ flex: 1, minWidth: 0, height: 32, padding: '0 8px', fontSize: '0.75rem', borderRadius: 8, border: '1px solid #e5e7eb', background: 'transparent', outline: 'none' }}
-            className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
-          <span style={{ flexShrink: 0, fontSize: '0.72rem' }} className="text-gray-400">até</span>
-          <input type="date" value={customEnd || ''} onChange={e => onCustom('end', e.target.value)}
-            style={{ flex: 1, minWidth: 0, height: 32, padding: '0 8px', fontSize: '0.75rem', borderRadius: 8, border: '1px solid #e5e7eb', background: 'transparent', outline: 'none' }}
-            className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
-        </div>
-      )}
-
-      {/* Filtros secundários */}
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
-        <Popover open={openContas} onOpenChange={setOpenContas}>
-          <PopoverTrigger asChild>
-            <button style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}
-              className={!todasSel ? 'bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
-            >
-              <SlidersHorizontal style={{ width: 11, height: 11, flexShrink: 0 }} />
-              {todasSel ? 'Contas' : `${contasSel.length} conta${contasSel.length > 1 ? 's' : ''}`}
-              <ChevronDown style={{ width: 11, height: 11, flexShrink: 0 }} />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-52 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
-            <div className="space-y-0.5">
-              <button onClick={() => onContas([])} className={`w-full text-left px-2 py-1.5 rounded text-xs ${todasSel ? 'bg-gray-100 dark:bg-gray-700 font-medium' : 'hover:bg-gray-50 dark:hover:bg-gray-700'} text-gray-700 dark:text-gray-200`}>Todas as contas</button>
-              <div className="border-t border-gray-100 dark:border-gray-700 pt-1 space-y-0.5">
-                {contas.map(c => (
-                  <label key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                    <Checkbox checked={contasSel.includes(c.id)} onCheckedChange={() => toggle(c.id)} className="w-3.5 h-3.5" />
-                    <div className="w-2 h-2 rounded-full flex-none" style={{ backgroundColor: c.cor || '#10B981' }} />
-                    <span className="text-xs text-gray-700 dark:text-gray-200 truncate">{c.nome}</span>
-                  </label>
-                ))}
-              </div>
+    <div style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
+      <Popover open={openContas} onOpenChange={setOpenContas}>
+        <PopoverTrigger asChild>
+          <button style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}
+            className={!todasSel ? 'bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
+          >
+            <SlidersHorizontal style={{ width: 11, height: 11, flexShrink: 0 }} />
+            {todasSel ? 'Contas' : `${contasSel.length} conta${contasSel.length > 1 ? 's' : ''}`}
+            <ChevronDown style={{ width: 11, height: 11, flexShrink: 0 }} />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-52 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
+          <div className="space-y-0.5">
+            <button onClick={() => onContas([])} className={`w-full text-left px-2 py-1.5 rounded text-xs ${todasSel ? 'bg-gray-100 dark:bg-gray-700 font-medium' : 'hover:bg-gray-50 dark:hover:bg-gray-700'} text-gray-700 dark:text-gray-200`}>Todas as contas</button>
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-1 space-y-0.5">
+              {contas.map(c => (
+                <label key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                  <Checkbox checked={contasSel.includes(c.id)} onCheckedChange={() => toggle(c.id)} className="w-3.5 h-3.5" />
+                  <div className="w-2 h-2 rounded-full flex-none" style={{ backgroundColor: c.cor || '#10B981' }} />
+                  <span className="text-xs text-gray-700 dark:text-gray-200 truncate">{c.nome}</span>
+                </label>
+              ))}
             </div>
-          </PopoverContent>
-        </Popover>
+          </div>
+        </PopoverContent>
+      </Popover>
 
-        <button
-          onClick={() => onPendentes(!pendentes)}
-          style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}
-          className={pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
-        >
-          Não conciliados
-        </button>
-      </div>
+      <button
+        onClick={() => onPendentes(!pendentes)}
+        style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}
+        className={pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
+      >
+        Não conciliados
+      </button>
     </div>
   );
 }
@@ -279,29 +244,28 @@ export default function FluxoCaixaTab() {
   const totalPendentes = useMemo(() => lancamentos.filter(l => l.status_conciliacao === 'Pendente').length, [lancamentos]);
 
   return (
-    /* Raiz: ocupa apenas o espaço disponível, nunca vaza */
-    <div style={{ width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box' }} className="space-y-3 pb-28">
+    <div style={{ width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box', position: 'relative' }} className="space-y-3 pb-28">
 
-      {/* KPIs: grid 2 colunas, cada coluna tem overflow hidden */}
+      {/* ── KPIs 2+1 ────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: '100%', boxSizing: 'border-box' }}>
-        <KpiCard label="Entrou" value={fmt(kpis.entrou)} />
-        <KpiCard label="Saiu" value={fmt(kpis.saiu)} isNegative={kpis.saiu > 0} />
-        <div style={{ gridColumn: 'span 2', minWidth: 0, overflow: 'hidden' }}>
+        <KpiCard label="Entrou" value={fmtVal(kpis.entrou)} />
+        <KpiCard label="Saiu" value={fmtVal(kpis.saiu)} isNegative={kpis.saiu > 0} />
+        <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
           <KpiCard
             label="Saldo do período"
-            value={fmt(kpis.saldo)}
-            sub={kpis.prevEntrou > 0 || kpis.prevSaiu > 0 ? `Projeção: ${fmt(kpis.saldoPrev)}` : null}
+            value={fmtVal(kpis.saldo)}
+            sub={kpis.prevEntrou > 0 || kpis.prevSaiu > 0 ? `Projeção: R$ ${fmtVal(kpis.saldoPrev)}` : null}
             isNegative={kpis.saldo < 0}
             accent
           />
         </div>
       </div>
 
-      {/* Alerta conciliação */}
+      {/* ── Alerta conciliação ──────────────────────────────────────────── */}
       {totalPendentes > 0 && !pendentes && (
         <button
           onClick={() => setPendentes(true)}
-          style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', textAlign: 'left' }}
+          style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', textAlign: 'left' }}
           className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300"
         >
           <Clock style={{ width: 14, height: 14, flexShrink: 0 }} />
@@ -312,9 +276,10 @@ export default function FluxoCaixaTab() {
         </button>
       )}
 
-      {/* Busca + Filtros */}
-      <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', overflow: 'hidden', borderRadius: 16 }} className="bg-white dark:bg-gray-800 shadow-sm">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid #f9fafb', overflow: 'hidden' }}>
+      {/* ── Busca + Filtros ─────────────────────────────────────────────── */}
+      <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: 16, overflow: 'visible' }} className="bg-white dark:bg-gray-800 shadow-sm">
+        {/* Busca */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid #f9fafb' }}>
           <Search style={{ width: 15, height: 15, flexShrink: 0 }} className="text-gray-400" />
           <input
             value={search}
@@ -323,23 +288,25 @@ export default function FluxoCaixaTab() {
             style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontSize: '0.85rem' }}
             className="text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
           />
-          {search && (
-            <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
-              <X style={{ width: 14, height: 14 }} className="text-gray-400" />
-            </button>
-          )}
+          {search && <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><X style={{ width: 14, height: 14 }} className="text-gray-400" /></button>}
         </div>
-        <div style={{ padding: '10px 12px', minWidth: 0, overflow: 'hidden' }}>
-          <Filtros
+
+        {/* Período picker com carrossel + calendário */}
+        <div style={{ padding: '10px 8px 6px', position: 'relative' }}>
+          <PeriodoPicker
             periodo={periodo} onPeriodo={setPeriodo}
-            customStart={customStart} customEnd={customEnd} onCustom={(k, v) => k === 'start' ? setCustomStart(v) : setCustomEnd(v)}
-            contas={contas} contasSel={contasSel} onContas={setContasSel}
-            pendentes={pendentes} onPendentes={setPendentes}
+            customStart={customStart} customEnd={customEnd}
+            onCustom={(k, v) => k === 'start' ? setCustomStart(v) : setCustomEnd(v)}
           />
+        </div>
+
+        {/* Filtros secundários */}
+        <div style={{ padding: '6px 12px 10px' }}>
+          <FiltrosSecundarios contas={contas} contasSel={contasSel} onContas={setContasSel} pendentes={pendentes} onPendentes={setPendentes} />
         </div>
       </div>
 
-      {/* Lista */}
+      {/* ── Lista ───────────────────────────────────────────────────────── */}
       {loading ? (
         <div className="space-y-2">
           {[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
@@ -350,14 +317,14 @@ export default function FluxoCaixaTab() {
           <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma movimentação encontrada</p>
         </div>
       ) : (
-        <div style={{ width: '100%', minWidth: 0, overflow: 'hidden' }} className="space-y-3">
+        <div style={{ width: '100%', minWidth: 0 }} className="space-y-3">
           {grupos.map(({ key, label, items }) => (
             <GroupHeader key={key} label={label} items={items} onLancamentoClick={setDetalhe} />
           ))}
         </div>
       )}
 
-      {/* FAB */}
+      {/* ── FAB ─────────────────────────────────────────────────────────── */}
       {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
       <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
         {fabOpen && FAB_OPCOES.map(({ tipo, icon: Icon, label }) => (
@@ -380,7 +347,7 @@ export default function FluxoCaixaTab() {
         </button>
       </div>
 
-      {/* Dialogs */}
+      {/* ── Dialogs ─────────────────────────────────────────────────────── */}
       <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={loadData} />
       {detalhe && (
         <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { loadData(); setDetalhe(null); }} />
