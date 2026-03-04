@@ -44,9 +44,9 @@ function getDateRange(periodo, customStart, customEnd) {
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, isNegative, accent }) {
   return (
-    <div className={`rounded-2xl px-4 py-3 min-w-0 overflow-hidden ${accent ? 'bg-gray-800 dark:bg-gray-100' : 'bg-white dark:bg-gray-800 shadow-sm'}`}>
-      <p className={`text-[10px] uppercase tracking-wide mb-1 truncate ${accent ? 'text-gray-400 dark:text-gray-500' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
-      <p className={`text-lg font-semibold truncate leading-tight ${
+    <div className={`rounded-2xl px-3 py-3 w-full min-w-0 overflow-hidden ${accent ? 'bg-gray-800 dark:bg-gray-100' : 'bg-white dark:bg-gray-800 shadow-sm'}`}>
+      <p className="text-[10px] uppercase tracking-wide mb-1 text-gray-400 dark:text-gray-500 truncate">{label}</p>
+      <p className={`text-base font-semibold leading-tight truncate ${
         accent
           ? (isNegative ? 'text-red-400' : 'text-white dark:text-gray-900')
           : (isNegative ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100')
