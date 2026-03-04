@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronRight, ChevronDown, Package, MoreHorizontal, Edit, Copy, Archive } from 'lucide-react';
+import { ChevronRight, ChevronDown, Package, MoreHorizontal, Edit, Copy, Archive, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+const PAGE_SIZE = 50; // produtos por página
 
 const formatarNumero = (n) => {
   if (n === null || n === undefined || isNaN(n)) return '0,00';
