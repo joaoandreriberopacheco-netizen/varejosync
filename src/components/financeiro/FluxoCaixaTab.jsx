@@ -14,9 +14,9 @@ const formatCurrency = (v) =>
 
 function KpiCard({ label, value, isNegative, isHighlight }) {
   return (
-    <div className={`flex-1 min-w-0 px-4 py-3 rounded-2xl ${isHighlight ? 'bg-gray-800 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'} shadow-sm`}>
-      <p className={`text-xs mb-1 ${isHighlight ? 'text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
-      <p className={`text-xl font-semibold leading-none ${
+    <div className={`flex-1 min-w-0 px-3 py-3 rounded-2xl ${isHighlight ? 'bg-gray-800 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'} shadow-sm`}>
+      <p className={`text-[11px] mb-1 truncate ${isHighlight ? 'text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
+      <p className={`text-sm font-semibold leading-snug break-all ${
         isHighlight
           ? (isNegative ? 'text-red-400' : 'text-green-400')
           : (isNegative ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100')
@@ -167,11 +167,11 @@ export default function FluxoCaixaTab() {
   return (
     <div className="relative space-y-4 pb-24">
       {/* KPIs */}
-      <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
-        <KpiCard label="Entrou (realizado)" value={formatCurrency(kpis.realizado.entrou)} />
-        <KpiCard label="Saiu (realizado)" value={formatCurrency(kpis.realizado.saiu)} isNegative={kpis.realizado.saiu > 0} />
+      <div className="grid grid-cols-3 gap-2">
+        <KpiCard label="Entrou" value={formatCurrency(kpis.realizado.entrou)} />
+        <KpiCard label="Saiu" value={formatCurrency(kpis.realizado.saiu)} isNegative={kpis.realizado.saiu > 0} />
         <KpiCard
-          label="Saldo do período"
+          label="Saldo"
           value={formatCurrency(kpis.saldoRealizado)}
           isNegative={kpis.saldoRealizado < 0}
           isHighlight
