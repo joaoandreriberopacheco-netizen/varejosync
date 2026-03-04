@@ -14,12 +14,10 @@ const formatCurrency = (v) =>
 
 function KpiCard({ label, value, isNegative, isHighlight }) {
   return (
-    <div className={`rounded-2xl px-3 py-3 shadow-sm min-w-0 overflow-hidden ${isHighlight ? 'bg-gray-800 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}`}>
-      <p className={`text-xs mb-1 ${isHighlight ? 'text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>{label}</p>
+    <div className={`rounded-2xl px-3 py-3 shadow-sm min-w-0 overflow-hidden ${isHighlight ? 'bg-gray-100 dark:bg-gray-800' : 'bg-white dark:bg-gray-800/60'}`}>
+      <p className="text-xs mb-1 text-gray-400 dark:text-gray-500">{label}</p>
       <p className={`text-base font-semibold truncate ${
-        isHighlight
-          ? (isNegative ? 'text-red-400' : 'text-green-400')
-          : (isNegative ? 'text-red-500 dark:text-red-400' : 'text-gray-900 dark:text-gray-100')
+        isNegative ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100'
       }`}>
         {value}
       </p>
