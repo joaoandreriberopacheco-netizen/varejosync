@@ -610,7 +610,7 @@ export default function Layout({ children, currentPageName }) {
           }`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
-          <div className="p-4 md:p-6 overflow-x-hidden">
+          <div className="p-4 md:p-6 overflow-x-hidden max-w-full">
             {children}
           </div>
         </div>
