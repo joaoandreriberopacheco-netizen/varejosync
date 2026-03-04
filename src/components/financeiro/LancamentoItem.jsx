@@ -43,16 +43,16 @@ export default function LancamentoItem({ lancamento, onClick }) {
       </div>
 
       {/* Descrição */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <p className={`text-sm font-medium truncate min-w-0 ${isPrevisto ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <div className="flex items-center gap-1.5 overflow-hidden">
+          <p className={`text-sm font-medium truncate flex-1 min-w-0 ${isPrevisto ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
             {lancamento.descricao}
           </p>
           {isPrevisto && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 flex-shrink-0">prev.</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 flex-shrink-0 whitespace-nowrap">prev.</span>
           )}
         </div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate overflow-hidden">
           {dataRef ? format(new Date(dataRef), 'dd MMM', { locale: ptBR }) : '—'}
           {lancamento.conta_financeira_nome ? ` · ${lancamento.conta_financeira_nome}` : ''}
         </p>
