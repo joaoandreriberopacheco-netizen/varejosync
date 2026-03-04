@@ -197,13 +197,15 @@ export default function FluxoCaixaTab() {
 
       {/* Previsão linha */}
       {(kpis.previsto.entrou > 0 || kpis.previsto.saiu > 0) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2.5 text-xs text-gray-500 dark:text-gray-400">
-          <span className="font-medium text-gray-600 dark:text-gray-300">Projeção:</span>
-          <span className="text-green-600 dark:text-green-400">+{formatCurrency(kpis.previsto.entrou)}</span>
-          <span className="text-red-500 dark:text-red-400">-{formatCurrency(kpis.previsto.saiu)}</span>
-          <span className={`font-semibold ml-auto ${kpis.saldoPrevisto < 0 ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
-            Prev: {formatCurrency(kpis.saldoPrevisto)}
-          </span>
+        <div className="flex flex-col gap-1 bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2.5 text-xs text-gray-500 dark:text-gray-400 w-full overflow-hidden">
+          <span className="font-medium text-gray-600 dark:text-gray-300">Projeção prevista</span>
+          <div className="flex gap-3 flex-wrap">
+            <span className="text-green-600 dark:text-green-400">+{formatCurrency(kpis.previsto.entrou)}</span>
+            <span className="text-red-500 dark:text-red-400">-{formatCurrency(kpis.previsto.saiu)}</span>
+            <span className={`font-semibold ${kpis.saldoPrevisto < 0 ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+              = {formatCurrency(kpis.saldoPrevisto)}
+            </span>
+          </div>
         </div>
       )}
 
