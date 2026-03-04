@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Scale, Search, AlertCircle } from 'lucide-react';
+import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Scale, Search, AlertCircle, Pin, PinOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import FiltrosFluxo, { getDateRange } from './FiltrosFluxo';
 import LancamentoItem from './LancamentoItem';
@@ -54,6 +54,7 @@ export default function FluxoCaixaTab() {
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [fabOpen, setFabOpen] = useState(false);
   const [lancamentoDetalhe, setLancamentoDetalhe] = useState(null);
+  const [kpisPinned, setKpisPinned] = useState(true);
 
   useEffect(() => {
     loadData();
