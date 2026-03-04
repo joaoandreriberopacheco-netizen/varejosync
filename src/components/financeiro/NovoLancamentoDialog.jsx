@@ -19,8 +19,8 @@ const TIPOS = [
 const CATEGORIAS_RECEITA = ['Venda de Produto', 'Prestação de Serviço', 'Outros'];
 const CATEGORIAS_DESPESA = ['Compra de Mercadoria', 'Aluguel', 'Salários', 'Impostos', 'Utilities', 'Marketing', 'Outros'];
 
-export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId }) {
-  const [tipo, setTipo] = useState('Despesa');
+export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefaultId, tipoInicial }) {
+  const [tipo, setTipo] = useState(tipoInicial || 'Despesa');
   const [contas, setContas] = useState([]);
   const [form, setForm] = useState({
     descricao: '',
@@ -36,7 +36,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
   useEffect(() => {
     base44.entities.ContasFinanceiras.filter({ ativo: true }).then(setContas);
-  }, [open]);
+    if (tipoInicial) setTipo(tipoInicial);
+  }, [open, tipoInicial]);
 
   useEffect(() => {
     if (contaDefaultId) setForm(f => ({ ...f, conta_financeira_id: contaDefaultId }));
