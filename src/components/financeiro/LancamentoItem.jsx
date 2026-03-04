@@ -28,7 +28,7 @@ export default function LancamentoItem({ lancamento, onClick }) {
   return (
     <button
       onClick={() => onClick && onClick(lancamento)}
-      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left active:scale-[0.99]"
+      className="w-full max-w-full overflow-hidden flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left active:scale-[0.99]"
     >
       {/* Ícone */}
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -44,8 +44,8 @@ export default function LancamentoItem({ lancamento, onClick }) {
 
       {/* Descrição */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className={`text-sm font-medium truncate ${isPrevisto ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
+        <div className="flex items-center gap-2 min-w-0">
+          <p className={`text-sm font-medium truncate min-w-0 ${isPrevisto ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
             {lancamento.descricao}
           </p>
           {isPrevisto && (
