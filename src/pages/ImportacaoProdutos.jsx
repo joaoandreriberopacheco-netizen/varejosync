@@ -146,6 +146,11 @@ export default function ImportacaoProdutos() {
       const mapeamento = {
         separador,
         indice_codigo_barras: mapearColuna(['CODIGO_BARRAS', 'COD_BARRAS', 'BARCODE', 'EAN']),
+        indice_h1: mapearColuna(['CAMPO_HIERARQUICO_1', 'HIERARQUICO_1', 'H1']),
+        indice_h2: mapearColuna(['CAMPO_HIERARQUICO_2', 'HIERARQUICO_2', 'H2']),
+        indice_h3: mapearColuna(['CAMPO_HIERARQUICO_3', 'HIERARQUICO_3', 'H3']),
+        indice_h4: mapearColuna(['CAMPO_HIERARQUICO_4', 'HIERARQUICO_4', 'H4']),
+        indice_h5: mapearColuna(['CAMPO_HIERARQUICO_5', 'HIERARQUICO_5', 'H5']),
         indice_nome: mapearColuna(['NOME', 'PRODUTO', 'DESCRICAO', 'DESCRIPTION']),
         indice_categoria: mapearColuna(['CATEGORIA', 'CATEGORY']),
         indice_marca: mapearColuna(['MARCA', 'BRAND']),
