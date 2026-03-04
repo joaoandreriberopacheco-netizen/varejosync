@@ -314,7 +314,7 @@ export default function FinanceiroModuloPage() {
 
         <div className="mt-6">
           <TabsContent value="caixa" className="mt-0">
-            <GestaoCaixa />
+            <FluxoCaixaTab />
           </TabsContent>
 
           <TabsContent value="contas" className="mt-0 space-y-4">
