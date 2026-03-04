@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
+import FluxoCaixaTab from '../components/financeiro/FluxoCaixaTab';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 import ConciliacaoBancaria from '../components/financeiro/ConciliacaoBancaria';
 
@@ -277,10 +278,16 @@ export default function FinanceiroModuloPage() {
         <p className="text-xs text-gray-500 dark:text-gray-400">Fluxo de Caixa, Contas e Projeções</p>
       </div>
 
-      <Tabs defaultValue="contas" className="w-full">
+      <Tabs defaultValue="caixa" className="w-full">
         <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
           <div className="flex w-full">
+            <TabsTrigger
+                value="caixa"
+                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
 
+              <DollarSign className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Fluxo de Caixa</span>
+            </TabsTrigger>
             <TabsTrigger
                 value="contas"
                 className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
@@ -306,6 +313,10 @@ export default function FinanceiroModuloPage() {
         </TabsList>
 
         <div className="mt-4 w-full min-w-0 overflow-x-hidden">
+          <TabsContent value="caixa" className="mt-0 w-full min-w-0">
+            <FluxoCaixaTab />
+          </TabsContent>
+
           <TabsContent value="contas" className="mt-0 space-y-4">
             {/* KPI Saldo Total */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-5">
