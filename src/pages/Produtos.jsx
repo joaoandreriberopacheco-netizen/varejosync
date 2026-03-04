@@ -447,6 +447,11 @@ export default function ProdutosPage() {
               type: "object",
               properties: {
                 "codigo_barras": { type: "string" },
+                "campo_hierarquico_1": { type: "string" },
+                "campo_hierarquico_2": { type: "string" },
+                "campo_hierarquico_3": { type: "string" },
+                "campo_hierarquico_4": { type: "string" },
+                "campo_hierarquico_5": { type: "string" },
                 "nome": { type: "string" },
                 "tipo": { type: "string" },
                 "categoria": { type: "string" },
