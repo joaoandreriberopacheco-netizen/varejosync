@@ -208,13 +208,26 @@ export default function ImportacaoProdutos() {
           return isNaN(num) ? 0 : num;
         };
 
-        const nome = getCol(mapeamento.indice_nome);
-        const preco = getNum(mapeamento.indice_preco_venda);
+        const h1 = getCol(mapeamento.indice_h1);
+        const nomeRaw = getCol(mapeamento.indice_nome);
+        const nomeGerado = nomeRaw || [
+          h1,
+          getCol(mapeamento.indice_h2),
+          getCol(mapeamento.indice_h3),
+          getCol(mapeamento.indice_h4),
+          getCol(mapeamento.indice_h5)
+        ].filter(Boolean).join(' | ');
 
-        if (!nome || !preco) continue;
+        const preco = getNum(mapeamento.indice_preco_venda);
+        if (!nomeGerado || !preco) continue;
 
         produtosIA.push({
-          nome,
+          nome: nomeGerado,
+          campo_hierarquico_1: h1,
+          campo_hierarquico_2: getCol(mapeamento.indice_h2),
+          campo_hierarquico_3: getCol(mapeamento.indice_h3),
+          campo_hierarquico_4: getCol(mapeamento.indice_h4),
+          campo_hierarquico_5: getCol(mapeamento.indice_h5),
           preco_venda: preco,
           codigo_barras: getCol(mapeamento.indice_codigo_barras),
           categoria_nome: getCol(mapeamento.indice_categoria),
