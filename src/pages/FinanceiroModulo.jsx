@@ -271,7 +271,7 @@ export default function FinanceiroModuloPage() {
   const totalPendente = pendingTransactions.reduce((sum, t) => sum + (t.valor || 0), 0);
 
   return (
-    <div className="w-full min-w-0 max-w-2xl mx-auto space-y-4 overflow-x-hidden">
+    <div className="w-full min-w-0 overflow-x-hidden" style={{ maxWidth: '100%' }}>
       {/* Header */}
       <div className="pb-3 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-0.5">Gestão Financeira</h1>
@@ -312,8 +312,8 @@ export default function FinanceiroModuloPage() {
           </div>
         </TabsList>
 
-        <div className="mt-4 w-full min-w-0 overflow-x-hidden">
-          <TabsContent value="caixa" className="mt-0 w-full min-w-0">
+        <div className="mt-2 w-full min-w-0 overflow-x-hidden">
+          <TabsContent value="caixa" className="mt-0 w-full min-w-0 overflow-x-hidden">
             <FluxoCaixaTab />
           </TabsContent>
 
