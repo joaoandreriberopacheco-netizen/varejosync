@@ -581,9 +581,24 @@ export default function ProdutosPage() {
             }
         }
         
+        // Gerar nome automaticamente se vazio, concatenando campos hierárquicos
+        const h1 = (linha.campo_hierarquico_1 || linha.nome || '').toString().toUpperCase().trim();
+        const h2 = (linha.campo_hierarquico_2 || '').toString().toUpperCase().trim();
+        const h3 = (linha.campo_hierarquico_3 || '').toString().toUpperCase().trim();
+        const h4 = (linha.campo_hierarquico_4 || '').toString().toUpperCase().trim();
+        const h5 = (linha.campo_hierarquico_5 || '').toString().toUpperCase().trim();
+        const nomeGerado = linha.nome?.trim()
+          ? linha.nome.toUpperCase()
+          : [h1, h2, h3, h4, h5].filter(Boolean).join(' | ');
+
         const produtoData = {
           id: isUpdate ? produtoExistente.id : undefined,
-          nome: linha.nome.toUpperCase(),
+          campo_hierarquico_1: h1,
+          campo_hierarquico_2: h2 || undefined,
+          campo_hierarquico_3: h3 || undefined,
+          campo_hierarquico_4: h4 || undefined,
+          campo_hierarquico_5: h5 || undefined,
+          nome: nomeGerado,
           codigo_barras: String(linha.codigo_barras || ''),
           tipo: tipoProduto,
           categoria_nome: linha.categoria ? linha.categoria.toUpperCase() : '',
