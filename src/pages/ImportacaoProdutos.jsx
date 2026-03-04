@@ -389,8 +389,14 @@ export default function ImportacaoProdutos() {
 
         const tags = prod.tags ? prod.tags.split(',').map(t => t.trim().toUpperCase()).filter(t => t) : [];
 
+        const toUp = (v) => v?.toString().toUpperCase().trim() || '';
         const produtoData = {
           codigo_barras: codigoBarras,
+          campo_hierarquico_1: toUp(prod.campo_hierarquico_1),
+          campo_hierarquico_2: toUp(prod.campo_hierarquico_2) || undefined,
+          campo_hierarquico_3: toUp(prod.campo_hierarquico_3) || undefined,
+          campo_hierarquico_4: toUp(prod.campo_hierarquico_4) || undefined,
+          campo_hierarquico_5: toUp(prod.campo_hierarquico_5) || undefined,
           nome: prod.nome.toUpperCase(),
           categoria_id: categoria?.id || null,
           categoria_nome: categoria?.nome || null,
