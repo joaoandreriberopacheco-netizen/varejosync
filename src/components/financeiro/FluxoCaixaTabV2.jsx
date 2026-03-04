@@ -420,25 +420,25 @@ export default function FluxoCaixaTabV2() {
           {search && <button onClick={() => setSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
         </div>
 
-        {/* chips período */}
-        <div className="px-2 py-2.5 relative">
-          <PeriodoPicker
-            periodo={periodo} onPeriodo={setPeriodo}
-            customStart={cs} customEnd={ce}
-            onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
-          />
-        </div>
+        {/* chips período — mobile otimizado */}
+          <div className="px-2 py-2 sm:px-3 sm:py-2.5 relative">
+            <PeriodoPicker
+              periodo={periodo} onPeriodo={setPeriodo}
+              customStart={cs} customEnd={ce}
+              onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
+            />
+          </div>
 
-        {/* filtros secundários */}
-        <div className="flex gap-2 px-3 pb-3">
-          <ContasFiltro contas={contas} sel={contasSel} onSel={setContasSel} />
-          <button
-            onClick={() => setPendentes(p => !p)}
-            className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-              ${pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-            Não conciliados
-          </button>
-        </div>
+          {/* filtros secundários — stack vertical no mobile */}
+          <div className="px-2 py-2 space-y-2 sm:px-3 sm:py-0 sm:pb-3 sm:flex sm:gap-2 sm:space-y-0">
+            <ContasFiltro contas={contas} sel={contasSel} onSel={setContasSel} />
+            <button
+              onClick={() => setPendentes(p => !p)}
+              className={`w-full sm:w-auto flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+                ${pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+              Não conciliados
+            </button>
+          </div>
       </div>
 
       {/* Lista */}
