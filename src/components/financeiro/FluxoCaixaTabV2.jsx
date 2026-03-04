@@ -252,38 +252,43 @@ function LancRow({ l, onClick }) {
   return (
     <button
       onClick={() => onClick(l)}
-      className="w-full flex items-center gap-2.5 px-3.5 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left overflow-hidden"
+      className="flex flex-col gap-2 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left bg-white dark:bg-gray-800/50"
     >
-      {/* Ícone */}
-      <span className={`flex-none w-8 h-8 rounded-xl flex items-center justify-center shrink-0
-        ${isR ? (pago ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-700') : (pago ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-700')}`}>
-        {isR
-          ? <ArrowDownLeft className={`w-3.5 h-3.5 ${pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
-          : <ArrowUpRight  className={`w-3.5 h-3.5 ${pago ? 'text-red-500 dark:text-red-400'   : 'text-gray-400'}`} />
-        }
-      </span>
-
-      {/* Descrição — flex-1 com min-w-0 para truncar corretamente */}
-      <span className="flex-1 min-w-0 overflow-hidden">
-        <span className={`block text-[0.8rem] font-medium leading-snug truncate ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
-          {l.descricao}
+      {/* Topo: Ícone + Descrição */}
+      <div className="flex items-start gap-2.5">
+        <span className={`flex-none w-7 h-7 rounded-lg flex items-center justify-center shrink-0
+          ${isR ? (pago ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-700') : (pago ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-700')}`}>
+          {isR
+            ? <ArrowDownLeft className={`w-3 h-3 ${pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
+            : <ArrowUpRight  className={`w-3 h-3 ${pago ? 'text-red-500 dark:text-red-400'   : 'text-gray-400'}`} />
+          }
         </span>
-        <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+        <span className="flex-1 min-w-0">
+          <span className={`block text-[0.75rem] font-medium leading-tight truncate ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
+            {l.descricao}
+          </span>
+        </span>
+      </div>
+
+      {/* Baixo: Meta + Data */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[0.65rem] text-gray-400 dark:text-gray-500 truncate">
           {data ? format(new Date(data), 'dd MMM', { locale: ptBR }) : '—'}
           {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
-          {prev ? <span className="ml-1 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded px-1 text-[0.6rem]">prev.</span> : null}
         </span>
-      </span>
-
-      {/* Valor — shrink-0 para nunca ser comprimido */}
-      <span className="shrink-0 flex flex-col items-end gap-0.5 pl-2">
-        <span className={`text-[0.82rem] font-bold whitespace-nowrap
+        <span className={`text-[0.8rem] font-bold whitespace-nowrap
           ${isR ? (pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400') : (pago ? 'text-red-500 dark:text-red-400' : 'text-gray-400')}`}>
           {isR ? '+' : '−'}{R(val)}
         </span>
-        {conc === 'Pendente'     && <Clock         className="w-2.5 h-2.5 text-amber-400" />}
-        {conc === 'Discrepância' && <AlertCircle   className="w-2.5 h-2.5 text-red-400" />}
-      </span>
+      </div>
+
+      {/* Status — se houver */}
+      {(conc === 'Pendente' || conc === 'Discrepância') && (
+        <div className="flex items-center gap-1 text-[0.65rem]">
+          {conc === 'Pendente' && <><Clock className="w-2.5 h-2.5 text-amber-400" /><span className="text-amber-400">Pendente</span></>}
+          {conc === 'Discrepância' && <><AlertCircle className="w-2.5 h-2.5 text-red-400" /><span className="text-red-400">Discrepância</span></>}
+        </div>
+      )}
     </button>
   );
 }
