@@ -312,8 +312,8 @@ export default function FinanceiroModuloPage() {
           </div>
         </TabsList>
 
-        <div className="mt-4">
-          <TabsContent value="caixa" className="mt-0">
+        <div className="mt-4 w-full min-w-0 overflow-x-hidden">
+          <TabsContent value="caixa" className="mt-0 w-full min-w-0">
             <FluxoCaixaTab />
           </TabsContent>
 
