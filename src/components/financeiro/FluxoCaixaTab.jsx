@@ -180,9 +180,11 @@ export default function FluxoCaixaTab() {
           </button>
         </div>
         {kpisPinned && (
-          <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3">
-            <KpiCard label="Entrou" value={formatCurrency(kpis.realizado.entrou)} />
-            <KpiCard label="Saiu" value={formatCurrency(kpis.realizado.saiu)} isNegative={kpis.realizado.saiu > 0} />
+          <div className="grid grid-cols-1 gap-2 w-full">
+            <div className="grid grid-cols-2 gap-2">
+              <KpiCard label="Entrou" value={formatCurrency(kpis.realizado.entrou)} />
+              <KpiCard label="Saiu" value={formatCurrency(kpis.realizado.saiu)} isNegative={kpis.realizado.saiu > 0} />
+            </div>
             <KpiCard
               label="Saldo do período"
               value={formatCurrency(kpis.saldoRealizado)}
