@@ -183,18 +183,28 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth }) {
   );
 }
 
-function buildTree(produtos, levels = ['campo_hierarquico_1', 'campo_hierarquico_2']) {
+function buildTree(produtos) {
   const root = {};
   produtos.forEach(p => {
-    const l1 = p[levels[0]] || '(Sem Categoria)';
-    const l2 = levels[1] ? (p[levels[1]] || null) : null;
+    const niveis = [
+      p.campo_hierarquico_1,
+      p.campo_hierarquico_2,
+      p.campo_hierarquico_3,
+      p.campo_hierarquico_4,
+      p.campo_hierarquico_5,
+    ].filter(Boolean);
 
+    const l1 = niveis[0] || '(Sem Categoria)';
     if (!root[l1]) root[l1] = { children: {}, items: [] };
-    if (l2) {
+
+    if (niveis.length <= 2) {
+      // Cai direto no L1, sem subgrupo
+      root[l1].items.push(p);
+    } else {
+      // Agrupa por L2, produto cai no L2
+      const l2 = niveis[1];
       if (!root[l1].children[l2]) root[l1].children[l2] = { items: [] };
       root[l1].children[l2].items.push(p);
-    } else {
-      root[l1].items.push(p);
     }
   });
   return root;
