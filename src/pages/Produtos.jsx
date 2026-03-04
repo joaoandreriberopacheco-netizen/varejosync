@@ -186,10 +186,10 @@ export default function ProdutosPage() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const formatarNumero = (numero) => {
+  const formatarNumero = React.useCallback((numero) => {
     if (numero === null || numero === undefined) return '0,00';
     return numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
+  }, []);
 
   const handleExportarCatalogo = () => {
     const headers = [
