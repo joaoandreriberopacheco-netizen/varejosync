@@ -118,14 +118,32 @@ export default function MobileHierarquica({ produtos, onEdit, formatarNumero }) 
   const tree = useMemo(() => {
     const root = {};
     produtos.forEach(p => {
-      const l1 = p.campo_hierarquico_1 || '(Sem Categoria)';
-      const l2 = p.campo_hierarquico_2 || null;
+      // Descobrir todos os níveis preenchidos
+      const niveis = [
+        p.campo_hierarquico_1,
+        p.campo_hierarquico_2,
+        p.campo_hierarquico_3,
+        p.campo_hierarquico_4,
+        p.campo_hierarquico_5,
+      ].filter(Boolean);
+
+      // Agrupamos até o penúltimo nível
+      // Se só tem 1 nível, agrupamos pelo L1 e o produto cai direto
+      // Se tem 2+ níveis, agrupamos pelo L1 e o L2 em diante vai direto como produto (sem subgrupo)
+      // Se tem 3+ níveis, agrupamos L1 > L2 e o produto cai no L2
+      // Regra: grupos = niveis.slice(0, niveis.length - 1), produto cai no último grupo
+
+      const l1 = niveis[0] || '(Sem Categoria)';
       if (!root[l1]) root[l1] = { children: {}, items: [] };
-      if (l2) {
+
+      if (niveis.length <= 2) {
+        // Produto cai direto no L1 (sem subgrupo L2)
+        root[l1].items.push(p);
+      } else {
+        // Tem 3+ níveis: agrupa por L2, produto cai no L2
+        const l2 = niveis[1];
         if (!root[l1].children[l2]) root[l1].children[l2] = { items: [] };
         root[l1].children[l2].items.push(p);
-      } else {
-        root[l1].items.push(p);
       }
     });
     return root;
