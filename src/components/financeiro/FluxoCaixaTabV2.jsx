@@ -296,9 +296,9 @@ function LancRow({ l, onClick }) {
 // ─── Grupo data ───────────────────────────────────────────────────────────────
 function Grupo({ label, items, onRow }) {
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full">
       <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-1 py-1.5">{label}</p>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-white/5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 auto-rows-max">
         {items.map(l => <LancRow key={l.id} l={l} onClick={onRow} />)}
       </div>
     </div>
