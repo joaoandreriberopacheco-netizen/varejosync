@@ -320,6 +320,11 @@ export default function ProdutosPage() {
   const handleBaixarTemplateUnificado = () => {
     const headers = [
       "codigo_barras",
+      "campo_hierarquico_1",
+      "campo_hierarquico_2",
+      "campo_hierarquico_3",
+      "campo_hierarquico_4",
+      "campo_hierarquico_5",
       "nome",
       "tipo",
       "categoria",
@@ -352,12 +357,15 @@ export default function ProdutosPage() {
     let csvContent = "\uFEFF";
     csvContent += "# TEMPLATE COMPLETO DE IMPORTAÇÃO/ATUALIZAÇÃO DE PRODUTOS\n";
     csvContent += "# Se codigo_barras existir, o produto será ATUALIZADO, senão será CRIADO\n";
+    csvContent += "# CAMPO_HIERARQUICO_1: obrigatório (ex: Torneira). Define o agrupamento principal na tabela.\n";
+    csvContent += "# CAMPO_HIERARQUICO_2..5: opcionais (ex: Mesa, Cromada, 1/2\", Deca). Formam subgrupos.\n";
+    csvContent += "# NOME: deixe vazio para gerar automaticamente pela concatenação dos campos hierárquicos\n";
     csvContent += "# TIPO: Produto ou Serviço\n";
     csvContent += "# TAGS: separadas por vírgula (ex: torneira,banheiro,metais)\n";
     csvContent += "# DIMENSOES: formato AxLxP (ex: 30x20x15)\n";
     csvContent += "# Custos em PERCENTUAL (sistema calcula valor em R$)\n";
     csvContent += "# PRECO_VENDA_PADRAO: informe o valor final de venda (sistema calcula markup automaticamente)\n";
-    csvContent += "# ESTOQUE_ATUAL: estoque livre para venda (não reservado nem avariado)\n";
+    csvContent += "# ESTOQUE_ATUAL: estoque livre para venda\n";
     csvContent += "# CODIGO_INTERNO: gerado automaticamente, não preencher\n";
     csvContent += "# CONTROLA_SERIAL/LOTE_VALIDADE: true/false\n";
     csvContent += "\n";
@@ -366,7 +374,12 @@ export default function ProdutosPage() {
     // Linha de exemplo
     const exemplo = [
       "7891234567890",
-      "Torneira de Mesa Cromada",
+      "Torneira",
+      "Mesa",
+      "Cromada",
+      "1/2\"",
+      "Deca",
+      "",
       "Produto",
       "Hidráulica",
       "Deca",
