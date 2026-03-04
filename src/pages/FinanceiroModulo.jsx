@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
-import GestaoCaixa from '../components/financeiro/GestaoCaixa';
+import FluxoCaixaTab from '../components/financeiro/FluxoCaixaTab';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 import ConciliacaoBancaria from '../components/financeiro/ConciliacaoBancaria';
 
