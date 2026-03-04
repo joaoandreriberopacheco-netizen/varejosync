@@ -255,6 +255,11 @@ export default function ProdutosPage() {
       const row = [
         p.codigo_interno || '',
         p.codigo_barras || '',
+        p.campo_hierarquico_1 || '',
+        p.campo_hierarquico_2 || '',
+        p.campo_hierarquico_3 || '',
+        p.campo_hierarquico_4 || '',
+        p.campo_hierarquico_5 || '',
         p.nome || '',
         camposPendentesString,
         p.tipo || 'Produto',
