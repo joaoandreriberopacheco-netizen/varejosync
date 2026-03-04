@@ -59,7 +59,7 @@ export default function LancamentoItem({ lancamento, onClick }) {
       </div>
 
       {/* Valor */}
-      <div className="flex flex-col items-end gap-1 flex-shrink-0 max-w-[40%]">
+      <div className="flex flex-col items-end gap-1 flex-shrink-0 max-w-[40%] min-w-0">
         <p className={`text-sm font-semibold truncate max-w-full ${
           isReceita
             ? isPago ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
