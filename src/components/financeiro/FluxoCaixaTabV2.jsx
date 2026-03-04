@@ -252,10 +252,10 @@ function LancRow({ l, onClick }) {
   return (
     <button
       onClick={() => onClick(l)}
-      className="w-full flex items-start gap-2.5 px-3.5 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
+      className="w-full flex items-center gap-2.5 px-3.5 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left overflow-hidden"
     >
       {/* Ícone */}
-      <span className={`flex-none mt-0.5 w-8 h-8 rounded-xl flex items-center justify-center
+      <span className={`flex-none w-8 h-8 rounded-xl flex items-center justify-center shrink-0
         ${isR ? (pago ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-700') : (pago ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-700')}`}>
         {isR
           ? <ArrowDownLeft className={`w-3.5 h-3.5 ${pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
@@ -263,8 +263,8 @@ function LancRow({ l, onClick }) {
         }
       </span>
 
-      {/* Descrição — cresce, mas respeita o espaço do valor */}
-      <span className="flex-1 min-w-0">
+      {/* Descrição — flex-1 com min-w-0 para truncar corretamente */}
+      <span className="flex-1 min-w-0 overflow-hidden">
         <span className={`block text-[0.8rem] font-medium leading-snug truncate ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
           {l.descricao}
         </span>
@@ -275,8 +275,8 @@ function LancRow({ l, onClick }) {
         </span>
       </span>
 
-      {/* Valor — largura mínima garantida, alinhado à direita */}
-      <span className="flex-none flex flex-col items-end pt-0.5 gap-0.5 pl-2">
+      {/* Valor — shrink-0 para nunca ser comprimido */}
+      <span className="shrink-0 flex flex-col items-end gap-0.5 pl-2">
         <span className={`text-[0.82rem] font-bold whitespace-nowrap
           ${isR ? (pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400') : (pago ? 'text-red-500 dark:text-red-400' : 'text-gray-400')}`}>
           {isR ? '+' : '−'}{R(val)}
