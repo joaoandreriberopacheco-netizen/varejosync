@@ -344,6 +344,48 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
           </div>
         )}
       </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <span className="text-[11px] text-gray-400 dark:text-gray-500">
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, produtos.length)} de {produtos.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={page === 0}
+              onClick={() => setPage(p => p - 1)}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                className={`h-6 w-6 text-[11px] rounded transition-colors ${
+                  i === page
+                    ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 font-semibold'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={page === totalPages - 1}
+              onClick={() => setPage(p => p + 1)}
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
