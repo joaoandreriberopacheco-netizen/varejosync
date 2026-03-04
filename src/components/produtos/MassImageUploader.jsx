@@ -316,9 +316,9 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
                 </ol>
               </div>
 
-              <Button variant="outline" onClick={handleDownloadTemplate} className="w-full flex items-center gap-2 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
-                <Download className="w-4 h-4" />
-                Baixar Template (CSV)
+              <Button variant="outline" onClick={handleDownloadTemplate} disabled={downloadingTemplate} className="w-full flex items-center gap-2 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+                {downloadingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {downloadingTemplate ? 'Gerando template...' : 'Baixar Template com Produtos (CSV)'}
               </Button>
 
               <div className="space-y-2">
