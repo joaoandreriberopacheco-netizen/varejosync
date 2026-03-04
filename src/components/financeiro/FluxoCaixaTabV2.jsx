@@ -383,7 +383,7 @@ export default function FluxoCaixaTabV2() {
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
 
   return (
-    <div className="w-full space-y-3 pb-28">
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-3 pb-28">
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-2">
