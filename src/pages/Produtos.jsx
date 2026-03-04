@@ -195,6 +195,11 @@ export default function ProdutosPage() {
     const headers = [
       "codigo_interno",
       "codigo_barras",
+      "campo_hierarquico_1",
+      "campo_hierarquico_2",
+      "campo_hierarquico_3",
+      "campo_hierarquico_4",
+      "campo_hierarquico_5",
       "nome",
       "campos_pendentes",
       "tipo",
