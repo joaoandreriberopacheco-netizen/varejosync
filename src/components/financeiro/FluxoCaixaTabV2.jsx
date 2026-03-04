@@ -407,15 +407,38 @@ export default function FluxoCaixaTabV2() {
         </button>
       )}
 
-      {/* Filtros secundários */}
-      <div className="flex gap-2">
-        <ContasFiltro contas={contas} sel={contasSel} onSel={setContasSel} />
-        <button
-          onClick={() => setPendentes(p => !p)}
-          className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-            ${pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-          Não conciliados
-        </button>
+      {/* Busca + Filtros */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+        {/* busca */}
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-50 dark:border-white/5">
+          <Search className="w-4 h-4 text-gray-400 flex-none" />
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar movimentações..."
+            className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 outline-none"
+          />
+          {search && <button onClick={() => setSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
+        </div>
+
+        {/* chips período */}
+        <div className="px-2 py-2.5 relative">
+          <PeriodoPicker
+            periodo={periodo} onPeriodo={setPeriodo}
+            customStart={cs} customEnd={ce}
+            onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
+          />
+        </div>
+
+        {/* filtros secundários */}
+        <div className="flex gap-2 px-3 pb-3">
+          <ContasFiltro contas={contas} sel={contasSel} onSel={setContasSel} />
+          <button
+            onClick={() => setPendentes(p => !p)}
+            className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+              ${pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+            Não conciliados
+          </button>
+        </div>
       </div>
 
       {/* Lista */}
