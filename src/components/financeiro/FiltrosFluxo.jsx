@@ -65,8 +65,8 @@ export default function FiltrosFluxo({ periodo, onPeriodoChange, customStart, cu
             onClick={() => onPeriodoChange(p.value)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
               periodo === p.value
-                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                ? 'bg-gray-700 dark:bg-gray-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
             }`}
           >
             {p.label}
