@@ -194,11 +194,11 @@ export default function FluxoCaixaTab() {
       {totalPendentes > 0 && !apenasPendentes && (
         <button
           onClick={() => setApenasPendentes(true)}
-          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs"
+          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs"
         >
-          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
           <span>{totalPendentes} lançamento{totalPendentes > 1 ? 's' : ''} aguardando conciliação</span>
-          <span className="ml-auto font-medium underline">Ver todos →</span>
+          <span className="ml-auto font-medium text-gray-500">Ver →</span>
         </button>
       )}
 
@@ -252,17 +252,50 @@ export default function FluxoCaixaTab() {
         </div>
       )}
 
-      {/* FAB + */}
-      <button
-        onClick={() => setShowNovo(true)}
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 w-14 h-14 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-700 dark:hover:bg-gray-100 transition-all active:scale-95"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      {/* FAB Speed Dial */}
+      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-3">
+        {/* Opções expandidas */}
+        {fabOpen && (
+          <div className="flex flex-col items-end gap-2">
+            {[
+              { tipo: 'Receita', icon: ArrowDownLeft, bg: 'bg-gray-700 dark:bg-gray-600', label: 'Receita' },
+              { tipo: 'Despesa', icon: ArrowUpRight, bg: 'bg-gray-500 dark:bg-gray-500', label: 'Despesa' },
+              { tipo: 'Transferência', icon: ArrowRightLeft, bg: 'bg-gray-400 dark:bg-gray-400', label: 'Transferência' },
+            ].map(({ tipo, icon: Icon, bg, label }) => (
+              <button
+                key={tipo}
+                onClick={() => { setNovoTipo(tipo); setShowNovo(true); setFabOpen(false); }}
+                className={`flex items-center gap-3 px-5 py-3 rounded-full shadow-lg text-white text-sm font-medium ${bg} active:scale-95 transition-all`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* Dialogs */}
+        {/* Botão principal */}
+        <button
+          onClick={() => setFabOpen(o => !o)}
+          className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-95 ${
+            fabOpen
+              ? 'bg-gray-600 dark:bg-gray-500 text-white rotate-45'
+              : 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
+          }`}
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Overlay para fechar FAB */}
+      {fabOpen && (
+        <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />
+      )}
+
+      {/* Dialog */}
       <NovoLancamentoDialog
         open={showNovo}
+        tipoInicial={novoTipo}
         onClose={() => setShowNovo(false)}
         onSaved={loadData}
       />
