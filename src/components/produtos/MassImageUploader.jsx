@@ -93,22 +93,31 @@ export default function MassImageUploader({ isOpen, onClose, onComplete }) {
   };
 
   // ---- URL IMPORT (XLS) LOGIC ----
-  const handleDownloadTemplate = () => {
-    // Generate a simple CSV that can be opened as spreadsheet
-    let csv = "\uFEFF";
-    csv += "# Template de Importação de Imagens por URL\n";
-    csv += "# Preencha o código de barras e a URL pública da imagem\n";
-    csv += "codigo_barras;url_imagem\n";
-    csv += "7891234567890;https://exemplo.com/imagem1.jpg\n";
-    csv += "7899999999999;https://exemplo.com/imagem2.png\n";
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'template_imagens_url.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
-    toast({ title: "Template baixado!", description: "Preencha e importe o arquivo.", duration: 3000 });
+  const handleDownloadTemplate = async () => {
+    setDownloadingTemplate(true);
+    try {
+      const allProducts = await base44.entities.Produto.list();
+      let csv = "\uFEFF";
+      csv += "codigo_barras;nome;url_imagem\n";
+      allProducts.forEach(p => {
+        const cb = (p.codigo_barras || '').replace(/;/g, '');
+        const nome = (p.nome || '').replace(/;/g, ' ');
+        csv += `${cb};${nome};\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'template_imagens_url.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      toast({ title: "Template baixado!", description: `${allProducts.length} produtos incluídos.`, duration: 3000 });
+    } catch (err) {
+      toast({ title: "Erro ao gerar template", description: err.message, variant: "destructive" });
+    } finally {
+      setDownloadingTemplate(false);
+    }
   };
 
   const handleImportXls = async () => {
