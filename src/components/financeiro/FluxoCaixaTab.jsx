@@ -28,7 +28,7 @@ function KpiCard({ label, value, isNegative, isHighlight }) {
 function GroupHeader({ label, children }) {
   return (
     <div>
-      <div className="px-4 py-2 sticky top-0 bg-gray-50 dark:bg-gray-900 z-10">
+      <div className="px-4 py-2 sticky top-0 bg-gray-50 dark:bg-gray-900 z-10 max-w-full overflow-hidden">
         <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{label}</p>
       </div>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -178,8 +178,8 @@ export default function FluxoCaixaTab() {
           </button>
         </div>
         {kpisPinned && (
-          <div className="grid grid-cols-1 gap-2 w-full">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 w-full min-w-0 overflow-hidden">
+            <div className="grid grid-cols-2 gap-2 min-w-0">
               <KpiCard label="Entrou" value={formatCurrency(kpis.realizado.entrou)} />
               <KpiCard label="Saiu" value={formatCurrency(kpis.realizado.saiu)} isNegative={kpis.realizado.saiu > 0} />
             </div>
@@ -220,14 +220,14 @@ export default function FluxoCaixaTab() {
       )}
 
       {/* Busca + Filtros inline */}
-      <div className="space-y-2">
+      <div className="space-y-2 w-full max-w-full overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar movimentações..."
-            className="pl-9 bg-white dark:bg-gray-800 border-0 shadow-sm dark:text-gray-200 dark:placeholder:text-gray-500 h-10 text-sm"
+            className="pl-9 w-full bg-transparent border-0 shadow-none dark:text-gray-200 dark:placeholder:text-gray-500 h-10 text-sm"
           />
         </div>
         <FiltrosFluxo

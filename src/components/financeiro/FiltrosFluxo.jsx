@@ -56,7 +56,7 @@ export default function FiltrosFluxo({ periodo, onPeriodoChange, customStart, cu
     : `${contasSelecionadas.length} conta${contasSelecionadas.length > 1 ? 's' : ''}`;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full max-w-full overflow-hidden">
       {/* Filtro de período — scroll horizontal, sem quebra */}
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {PERIODOS.map(p => (
