@@ -217,28 +217,28 @@ export default function FluxoCaixaTab() {
         </button>
       )}
 
-      {/* Filtros */}
-      <FiltrosFluxo
-        periodo={periodo}
-        onPeriodoChange={setPeriodo}
-        customStart={customStart}
-        customEnd={customEnd}
-        onCustomChange={(k, v) => k === 'start' ? setCustomStart(v) : setCustomEnd(v)}
-        contas={contas}
-        contasSelecionadas={contasSelecionadas}
-        onContasChange={setContasSelecionadas}
-        apenasPendentes={apenasPendentes}
-        onPendentesChange={setApenasPendentes}
-      />
-
-      {/* Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <Input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar movimentações..."
-          className="pl-9 bg-white dark:bg-gray-800 border-0 shadow-sm dark:text-gray-200 dark:placeholder:text-gray-500"
+      {/* Busca + Filtros inline */}
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar movimentações..."
+            className="pl-9 bg-white dark:bg-gray-800 border-0 shadow-sm dark:text-gray-200 dark:placeholder:text-gray-500 h-10 text-sm"
+          />
+        </div>
+        <FiltrosFluxo
+          periodo={periodo}
+          onPeriodoChange={setPeriodo}
+          customStart={customStart}
+          customEnd={customEnd}
+          onCustomChange={(k, v) => k === 'start' ? setCustomStart(v) : setCustomEnd(v)}
+          contas={contas}
+          contasSelecionadas={contasSelecionadas}
+          onContasChange={setContasSelecionadas}
+          apenasPendentes={apenasPendentes}
+          onPendentesChange={setApenasPendentes}
         />
       </div>
 
