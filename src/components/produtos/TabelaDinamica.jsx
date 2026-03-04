@@ -214,10 +214,25 @@ function buildTree(produtos) {
 
 export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap, onEdit }) {
   const [expanded, setExpanded] = useState({});
+  const [page, setPage] = useState(0);
 
   const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const tree = useMemo(() => buildTree(produtos), [produtos]);
+  // Paginação: fatia os produtos antes de construir a árvore
+  const totalPages = Math.ceil(produtos.length / PAGE_SIZE);
+  const produtosPaginados = useMemo(() => {
+    const start = page * PAGE_SIZE;
+    return produtos.slice(start, start + PAGE_SIZE);
+  }, [produtos, page]);
+
+  // Reset página quando lista muda
+  const prevProdutosLength = React.useRef(produtos.length);
+  if (prevProdutosLength.current !== produtos.length) {
+    prevProdutosLength.current = produtos.length;
+    if (page !== 0) setPage(0);
+  }
+
+  const tree = useMemo(() => buildTree(produtosPaginados), [produtosPaginados]);
 
   const cols = ['status', 'fornecedor', 'preco_venda', 'margem', 'estoque_atual', 'preco_custo', 'markup', 'categoria', 'estoque_minimo'];
   const activeCols = cols.filter(c => visibleColumns.includes(c));
