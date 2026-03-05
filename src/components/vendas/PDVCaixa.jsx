@@ -2316,7 +2316,7 @@ export default function PDVCaixa() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Fechamento removido — o fechamento agora é feito inline no balanço via FechamentoCaixaButton */}
+
 
         {/* Calculadora de Cédulas/Moedas */}
         <Dialog open={showCalculadoraCedulas} onOpenChange={setShowCalculadoraCedulas}>
