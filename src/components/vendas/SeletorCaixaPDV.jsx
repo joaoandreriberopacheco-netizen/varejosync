@@ -16,16 +16,18 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
   const [descricaoSaldo, setDescricaoSaldo] = useState('');
 
   const handleSaldoChange = (e) => {
-    const numbers = e.target.value.replace(/\D/g, '');
-    if (numbers.length > 10) return;
+    let numbers = e.target.value.replace(/\D/g, '');
+    if (numbers.length > 10) numbers = numbers.slice(0, 10);
     
     if (!numbers) {
       setSaldoInicial('');
       return;
     }
     
-    const integerPart = numbers.slice(0, -2) || '0';
-    const decimalPart = numbers.slice(-2);
+    // Se tem menos de 3 dígitos, padroniza para mostrar centavos
+    const fullNumber = numbers.padStart(3, '0');
+    const integerPart = fullNumber.slice(0, -2).replace(/^0+/, '') || '0';
+    const decimalPart = fullNumber.slice(-2);
     const formatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     setSaldoInicial(`${formatted},${decimalPart}`);
   };
