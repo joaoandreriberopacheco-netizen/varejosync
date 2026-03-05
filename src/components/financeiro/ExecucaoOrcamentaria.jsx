@@ -183,85 +183,97 @@ const CHIPS = [
   { v: 'semana', l: 'Semana' },
   { v: 'mes',    l: 'Mês' },
   { v: 'tudo',   l: 'Tudo' },
+  { v: 'periodo', l: 'Período' },
 ];
-
 
 function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom }) {
   const [showCal, setShowCal] = useState(false);
   const [offset, setOffset] = useState(0);
   const [hover, setHover] = useState(null);
-  const scrollRef = useRef(null);
 
   const hoje = new Date();
   const baseLeft = addMonths(new Date(hoje.getFullYear(), hoje.getMonth(), 1), offset);
-  const baseRight = addMonths(baseLeft, 1);
   const rs = customStart ? new Date(customStart) : null;
   const re = customEnd ? new Date(customEnd + 'T23:59:59') : null;
 
+  const idx = CHIPS.findIndex(c => c.v === periodo);
+  const current = CHIPS[idx] || CHIPS[0];
+
+  const goPrev = () => {
+    const newIdx = (idx - 1 + CHIPS.length) % CHIPS.length;
+    const next = CHIPS[newIdx];
+    onPeriodo(next.v);
+    if (next.v === 'periodo') setShowCal(true);
+    else setShowCal(false);
+  };
+
+  const goNext = () => {
+    const newIdx = (idx + 1) % CHIPS.length;
+    const next = CHIPS[newIdx];
+    onPeriodo(next.v);
+    if (next.v === 'periodo') setShowCal(true);
+    else setShowCal(false);
+  };
+
   const handleDay = (d) => {
-    if (!rs || rs && re) {
+    if (!rs || (rs && re)) {
       onCustom('start', format(d, 'yyyy-MM-dd'));
       onCustom('end', '');
     } else {
-      if (isBefore(d, rs)) {onCustom('end', format(rs, 'yyyy-MM-dd'));onCustom('start', format(d, 'yyyy-MM-dd'));} else
-      onCustom('end', format(d, 'yyyy-MM-dd'));
+      if (isBefore(d, rs)) { onCustom('end', format(rs, 'yyyy-MM-dd')); onCustom('start', format(d, 'yyyy-MM-dd')); }
+      else onCustom('end', format(d, 'yyyy-MM-dd'));
       setHover(null);
     }
   };
 
-  const rangeLabel = rs && re ?
-  `${format(rs, 'dd/MM')} – ${format(re, 'dd/MM')}` :
-  rs ? `${format(rs, 'dd/MM')} – ...` : 'Período';
+  const rangeLabel = rs && re
+    ? `${format(rs, 'dd/MM')} – ${format(re, 'dd/MM')}`
+    : rs ? `${format(rs, 'dd/MM')} – ...` : 'Período';
+
+  const label = periodo === 'periodo' ? rangeLabel : current.l;
 
   return (
     <div className="relative w-full">
-      <div
-        ref={scrollRef}
-        className="flex gap-1.5 py-0.5"
-        style={{
-          overflowX: 'scroll',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          touchAction: 'pan-x',
-        }}
-      >
-        {CHIPS.map((c) => (
-          <button key={c.v} onClick={() => { onPeriodo(c.v); setShowCal(false); }}
-            className={`flex-none px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-              ${periodo === c.v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-            {c.l}
-          </button>
-        ))}
-        <button onClick={() => { onPeriodo('periodo'); setShowCal(s => !s); }}
-          className={`flex-none flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-            ${periodo === 'periodo' ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-          {rangeLabel}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={goPrev}
+          className="flex-none w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 active:scale-95 transition-transform">
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          onClick={() => { if (periodo === 'periodo') setShowCal(s => !s); }}
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 transition-colors">
+          {label}
           {periodo === 'periodo' && (rs || re) && (
             <span onMouseDown={(e) => { e.stopPropagation(); onCustom('start', ''); onCustom('end', ''); onPeriodo('mes'); setShowCal(false); }}>
               <X className="w-3 h-3 ml-0.5" />
             </span>
           )}
         </button>
+
+        <button
+          onClick={goNext}
+          className="flex-none w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 active:scale-95 transition-transform">
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {showCal && periodo === 'periodo' &&
-      <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl">
-          <div className="flex flex-col gap-3">
-            <MiniCal base={baseLeft} rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset((o) => o - 1)} onNext={() => setOffset((o) => o + 1)} />
-          </div>
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl">
+          <MiniCal base={baseLeft} rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset(o => o - 1)} onNext={() => setOffset(o => o + 1)} />
           {rs && re &&
-        <div className="mt-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
+            <div className="mt-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {format(rs, 'dd MMM yyyy', { locale: ptBR })} → {format(re, 'dd MMM yyyy', { locale: ptBR })}
               </span>
               <button onClick={() => setShowCal(false)} className="text-xs font-semibold bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 px-3 py-1 rounded-lg">OK</button>
             </div>
-        }
+          }
         </div>
       }
-    </div>);
-
+    </div>
+  );
 }
 
 // ─── Contas Filter ────────────────────────────────────────────────────────────
