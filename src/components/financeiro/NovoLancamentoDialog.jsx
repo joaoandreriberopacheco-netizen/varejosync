@@ -136,46 +136,39 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
       {step === 'valor' ? (
         <>
-          {/* Valor display */}
-          <div className="flex-1 flex flex-col justify-end">
-            <div className="text-center px-4 pb-4">
-              <p className="text-5xl font-semibold text-gray-900 dark:text-white tracking-tight font-glacial">
-                R$ {display}
-              </p>
+          {/* Valor display + input nativo */}
+          <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
+            <div className="text-center w-full">
+              <p className="text-[0.7rem] uppercase tracking-widest text-gray-400 mb-2">Valor</p>
               <input
-                value={descricao}
-                onChange={e => setDescricao(e.target.value)}
-                placeholder={tipo === 'Transferência' ? 'Observações (opcional)' : 'Descrição *'}
-                className="mt-4 w-full text-center bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 py-2 text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                value={valorNumerico === 0 ? '' : valorNumerico}
+                onChange={e => {
+                  const cents = Math.round(parseFloat(e.target.value || '0') * 100).toString();
+                  setValorCents(cents || '0');
+                }}
+                placeholder="0,00"
+                className="w-full text-center text-5xl font-semibold text-gray-900 dark:text-white tracking-tight font-glacial bg-transparent outline-none border-0 placeholder-gray-300"
               />
+              <p className="text-xs text-gray-400 mt-1">R$</p>
             </div>
 
-            {/* Numpad */}
-            <div className="grid grid-cols-3 gap-2 px-4 pb-4">
-              {['1','2','3','4','5','6','7','8','9','0','00','⌫'].map(k => (
-                <button
-                  key={k}
-                  onPointerDown={e => { e.preventDefault(); handlePad(k); }}
-                  className={`h-16 rounded-2xl text-2xl font-medium active:scale-95 transition-all select-none ${
-                    k === '⌫'
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                      : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-sm'
-                  }`}
-                >
-                  {k === '⌫' ? <Delete className="w-5 h-5 mx-auto" /> : k}
-                </button>
-              ))}
-            </div>
+            <input
+              value={descricao}
+              onChange={e => setDescricao(e.target.value)}
+              placeholder={tipo === 'Transferência' ? 'Observações (opcional)' : 'Descrição *'}
+              className="w-full text-center bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 py-2 text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 outline-none focus:border-gray-400 transition-colors"
+            />
 
-            <div className="px-4 pb-6">
-              <button
-                onPointerDown={e => e.preventDefault()}
-                onClick={() => setStep('detalhes')}
-                className="w-full h-14 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                Continuar <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+            <button
+              onClick={() => setStep('detalhes')}
+              className="w-full h-14 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              Continuar <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </>
       ) : (
