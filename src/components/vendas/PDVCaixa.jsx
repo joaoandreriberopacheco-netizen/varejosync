@@ -1034,8 +1034,9 @@ export default function PDVCaixa() {
         duration: 2000
       });
 
-      setView('dashboard');
-      loadData();
+      setTimeout(() => {
+        navigate(createPageUrl('Dashboard'));
+      }, 1500);
     } catch (error) {
       toast({
         title: "Erro ao fechar caixa",
