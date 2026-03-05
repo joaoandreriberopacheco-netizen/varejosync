@@ -2012,125 +2012,15 @@ export default function PDVCaixa() {
           currentUser={currentUser} formatValor={formatValor}
         />
 
-        {/* Calculadora de Cédulas/Moedas */}
-        <Dialog open={showCalculadoraCedulas} onOpenChange={setShowCalculadoraCedulas}>
-          <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
-            <DialogHeader>
-              <DialogTitle className="text-lg text-gray-800 dark:text-gray-200">Calculadora de Cédulas e Moedas</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              {/* Notas */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notas</h4>
-                {[
-                  { key: 'nota200', label: 'R$ 200,00', valor: 200 },
-                  { key: 'nota100', label: 'R$ 100,00', valor: 100 },
-                  { key: 'nota50', label: 'R$ 50,00', valor: 50 },
-                  { key: 'nota20', label: 'R$ 20,00', valor: 20 },
-                  { key: 'nota10', label: 'R$ 10,00', valor: 10 },
-                  { key: 'nota5', label: 'R$ 5,00', valor: 5 },
-                  { key: 'nota2', label: 'R$ 2,00', valor: 2 }
-                ].map(({ key, label, valor }) => (
-                  <div key={key} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 w-24">{label}</span>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCedulas(prev => ({ ...prev, [key]: Math.max(0, prev[key] - 1) }))}
-                        className="h-8 w-8 p-0">
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <Input
-                        type="number"
-                        value={cedulas[key]}
-                        onChange={(e) => setCedulas(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
-                        className="h-8 w-16 text-center dark:bg-gray-700"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCedulas(prev => ({ ...prev, [key]: prev[key] + 1 }))}
-                        className="h-8 w-8 p-0">
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 w-24 text-right">
-                        {formatValor(cedulas[key] * valor)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Moedas */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Moedas</h4>
-                {[
-                  { key: 'moeda1', label: 'R$ 1,00', valor: 1 },
-                  { key: 'moeda050', label: 'R$ 0,50', valor: 0.50 },
-                  { key: 'moeda025', label: 'R$ 0,25', valor: 0.25 },
-                  { key: 'moeda010', label: 'R$ 0,10', valor: 0.10 },
-                  { key: 'moeda005', label: 'R$ 0,05', valor: 0.05 }
-                ].map(({ key, label, valor }) => (
-                  <div key={key} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 w-24">{label}</span>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCedulas(prev => ({ ...prev, [key]: Math.max(0, prev[key] - 1) }))}
-                        className="h-8 w-8 p-0">
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <Input
-                        type="number"
-                        value={cedulas[key]}
-                        onChange={(e) => setCedulas(prev => ({ ...prev, [key]: Math.max(0, parseInt(e.target.value) || 0) }))}
-                        className="h-8 w-16 text-center dark:bg-gray-700"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCedulas(prev => ({ ...prev, [key]: prev[key] + 1 }))}
-                        className="h-8 w-8 p-0">
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 w-24 text-right">
-                        {formatValor(cedulas[key] * valor)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-800 dark:text-gray-200">Total Calculado:</span>
-                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                    {formatValor(calcularTotalCedulas())}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCalculadoraCedulas(false)}
-                  className="flex-1">
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={() => {
-                    setRecebimentosDinheiro(formatarValorExibicao(calcularTotalCedulas()));
-                    setShowCalculadoraCedulas(false);
-                  }}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700">
-                  Confirmar
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CalculadoraCedulasDialog
+          open={showCalculadoraCedulas} onOpenChange={setShowCalculadoraCedulas}
+          cedulas={cedulas} setCedulas={setCedulas}
+          formatValor={formatValor}
+          onConfirmar={(total) => {
+            setRecebimentosDinheiro(formatarValorExibicao(total));
+            setShowCalculadoraCedulas(false);
+          }}
+        />
 
         {/* Documento de Liberação para Entrega */}
         <LiberacaoEntrega
