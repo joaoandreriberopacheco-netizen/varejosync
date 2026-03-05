@@ -431,8 +431,8 @@ export default function FluxoCaixaTabV2() {
             {search && <button onClick={() => setSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
           </div>
 
-        {/* chips período — mobile otimizado */}
-          <div className="px-2 py-2 sm:px-3 sm:py-2.5 relative">
+        {/* chips período */}
+          <div className="px-2 py-2 relative">
             <PeriodoPicker
               periodo={periodo} onPeriodo={setPeriodo}
               customStart={cs} customEnd={ce}
