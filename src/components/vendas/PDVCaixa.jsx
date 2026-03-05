@@ -2489,8 +2489,6 @@ export default function PDVCaixa() {
         />
 
 
-        {/* SaldoConsolidado extraído para componente próprio */}
-
         {/* Dialog de Retorno para Edição */}
         <Dialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog}>
           <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
