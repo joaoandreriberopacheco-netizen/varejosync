@@ -373,8 +373,8 @@ function LancRow({ l, onClick }) {
         <span className={`text-[0.82rem] font-bold whitespace-nowrap ${valColor}`}>
           {isT ? '' : isR ? '+' : '−'}{R(val)}
         </span>
-        {conc === 'Pendente'      && <Clock       className="w-2.5 h-2.5 text-amber-400" />}
-        {conc === 'Discrepância'  && <AlertCircle className="w-2.5 h-2.5 text-red-400" />}
+        {conc === 'Pendente'      && <Clock       className="w-2.5 h-2.5 text-gray-400" />}
+        {conc === 'Discrepância'  && <AlertCircle className="w-2.5 h-2.5 text-gray-500" />}
       </span>
     </button>
   );
