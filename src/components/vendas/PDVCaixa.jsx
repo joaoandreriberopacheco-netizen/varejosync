@@ -571,8 +571,8 @@ export default function PDVCaixa() {
 
     try {
        const pagamentosArray = [];
-       // Dinheiro: usa valor_total (já descontar troco aqui, não no backend)
-       if (pagamentosDinheiro > 0) pagamentosArray.push({ forma_pagamento: 'Dinheiro', valor: pedidoSelecionado.valor_total, parcelas: 1 });
+       // Dinheiro: registra o valor líquido (pago menos troco)
+       if (pagamentosDinheiro > 0) pagamentosArray.push({ forma_pagamento: 'Dinheiro', valor: pagamentosDinheiro - troco, parcelas: 1 });
        if (pagamentosPix > 0) pagamentosArray.push({ forma_pagamento: 'PIX', valor: pagamentosPix, parcelas: 1 });
        if (pagamentosDebito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
        if (pagamentosCredito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
