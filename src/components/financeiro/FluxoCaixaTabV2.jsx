@@ -151,7 +151,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
         </button>
 
         {/* chips */}
-        <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none', scrollBehavior: 'smooth' }}>
+        <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto flex-1 min-w-0" style={{ scrollbarWidth: 'none', scrollBehavior: 'smooth' }}>
           {CHIPS.map(c => (
             <button
               key={c.v}
