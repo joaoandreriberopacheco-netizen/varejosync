@@ -192,7 +192,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
         >
           <div className="flex flex-col md:flex-row gap-3">
             <MiniCal base={baseLeft}  rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset(o => o - 1)} onNext={null} />
-            <div className="w-px bg-gray-100 dark:bg-gray-700" />
+            <div className="hidden md:block w-px bg-gray-100 dark:bg-gray-700" />
             <MiniCal base={baseRight} rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={null} onNext={() => setOffset(o => o + 1)} />
           </div>
           {rs && re && (
