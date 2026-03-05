@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle, CheckCircle, XCircle, Clock, FileText, Eye, ArrowRightLeft } from 'lucide-react';
+import { DollarSign, Wallet, PlusCircle, Edit, Trash2, CreditCard, Banknote, Settings, AlertCircle, CheckCircle, XCircle, Clock, FileText, Eye, ArrowRightLeft, TrendingUp } from 'lucide-react';
+import FluxoCaixaTabV2 from '@/components/financeiro/FluxoCaixaTabV2';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';

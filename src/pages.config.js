@@ -73,6 +73,7 @@ import ExtratoConta from './pages/ExtratoConta';
 import Financeiro from './pages/Financeiro';
 import FinanceiroAprovacoes from './pages/FinanceiroAprovacoes';
 import FinanceiroModulo from './pages/FinanceiroModulo';
+import FluxoCaixa from './pages/FluxoCaixa';
 import Home from './pages/Home';
 import HubLogistico from './pages/HubLogistico';
 import ImportacaoProdutos from './pages/ImportacaoProdutos';
@@ -97,7 +98,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import FluxoCaixa from './pages/FluxoCaixa';
 import __Layout from './Layout.jsx';
 
 
@@ -128,6 +128,7 @@ export const PAGES = {
     "Financeiro": Financeiro,
     "FinanceiroAprovacoes": FinanceiroAprovacoes,
     "FinanceiroModulo": FinanceiroModulo,
+    "FluxoCaixa": FluxoCaixa,
     "Home": Home,
     "HubLogistico": HubLogistico,
     "ImportacaoProdutos": ImportacaoProdutos,
@@ -152,7 +153,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "FluxoCaixa": FluxoCaixa,
 }
 
 export const pagesConfig = {
