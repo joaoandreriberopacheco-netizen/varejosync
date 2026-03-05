@@ -219,10 +219,11 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
         ref={scrollRef}
         className="flex gap-1.5 py-0.5"
         style={{
-          overflowX: 'auto',
+          overflowX: 'scroll',
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
+          touchAction: 'pan-x',
         }}
       >
         {CHIPS.map((c) => (
