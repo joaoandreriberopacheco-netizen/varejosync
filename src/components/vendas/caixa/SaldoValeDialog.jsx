@@ -1,0 +1,72 @@
+import React from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Printer, Ticket } from 'lucide-react';
+
+export default function SaldoValeDialog({ saldoResidualVale, onClose, formatValor }) {
+  return (
+    <Dialog open={!!saldoResidualVale} onOpenChange={onClose}>
+      <DialogContent className="max-w-xs mx-auto dark:bg-gray-900">
+        <div className="flex flex-col items-center gap-4 py-2">
+          <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+            <Ticket className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="w-full bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm" style={{ fontFamily: 'Courier New, monospace' }}>
+            <div className="px-5 py-4 text-center border-b-2 border-dashed border-gray-200 dark:border-gray-700">
+              <div className="text-sm font-bold text-gray-900 dark:text-white">VAREJOSYNC</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Saldo de Vale Troca</div>
+            </div>
+            <div className="px-5 py-5 space-y-3 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Código do Vale</p>
+              <p className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{saldoResidualVale?.codigo}</p>
+              <div className="pt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo Disponível</p>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 font-glacial">
+                  {formatValor(saldoResidualVale?.saldo)}
+                </p>
+              </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 pt-2">
+                Apresente este código na próxima compra.<br/>O código permanece válido até o saldo zerar.
+              </p>
+            </div>
+            <div className="px-5 py-3 text-center border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs text-gray-400">Não é documento fiscal</p>
+            </div>
+          </div>
+          <div className="flex gap-3 w-full">
+            <button onClick={onClose}
+              className="flex-1 h-12 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium text-sm">
+              Fechar
+            </button>
+            <button
+              onClick={() => {
+                const { codigo, saldo } = saldoResidualVale;
+                const w = window.open('', '_blank', 'width=380,height=520');
+                w.document.write(`<html><head><title>Saldo Vale Troca</title>
+                  <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:300px;margin:0 auto;text-align:center}
+                  .dashed{border-top:2px dashed #aaa;margin:12px 0}.big{font-size:26px;font-weight:bold}.code{font-size:22px;font-weight:bold;letter-spacing:2px}
+                  .small{font-size:11px;color:#6b7280}
+                  </style></head><body>
+                  <b>VAREJOSYNC</b><br/><span class="small">Comprovante de Saldo — Vale Troca</span>
+                  <div class="dashed"></div>
+                  <p class="small">Código do Vale</p>
+                  <p class="code">${codigo}</p>
+                  <div class="dashed"></div>
+                  <p class="small">Saldo Disponível</p>
+                  <p class="big">R$ ${(saldo).toFixed(2).replace('.', ',')}</p>
+                  <div class="dashed"></div>
+                  <p class="small">Apresente este código na próxima compra.<br/>O código permanece válido até o saldo zerar.</p>
+                  <div class="dashed"></div>
+                  <p class="small">Não é documento fiscal</p>
+                  </body></html>`);
+                w.document.close(); w.focus();
+                setTimeout(() => { w.print(); w.close(); }, 300);
+              }}
+              className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-medium text-sm flex items-center justify-center gap-2">
+              <Printer className="w-4 h-4" /> Imprimir
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
