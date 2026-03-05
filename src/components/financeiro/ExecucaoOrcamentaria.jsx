@@ -506,15 +506,10 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
 
-      {/* Header de contexto */}
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-gray-900 dark:bg-gray-200 flex items-center justify-center">
-          <Target className="w-4 h-4 text-white dark:text-gray-900" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-tight">Execução Orçamentária</p>
-          <p className="text-[0.65rem] text-gray-400">Acompanhe receitas, despesas e saldo em tempo real</p>
-        </div>
+      {/* Header */}
+      <div className="pb-3 mb-1">
+        <p className="text-xl font-medium text-gray-800 dark:text-gray-200">Fluxo de Caixa</p>
+        <p className="text-xs text-gray-400">Movimentações, receitas e despesas</p>
       </div>
 
       {/* KPIs */}
