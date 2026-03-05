@@ -420,8 +420,8 @@ export default function FluxoCaixaTabV2() {
 
       {/* Busca + Filtros */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-        {/* busca — mobile otimizado */}
-          <div className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-gray-50 dark:border-white/5">
+        {/* busca */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-50 dark:border-white/5">
             <Search className="w-4 h-4 text-gray-400 flex-none" />
             <input
               value={search} onChange={e => setSearch(e.target.value)}
