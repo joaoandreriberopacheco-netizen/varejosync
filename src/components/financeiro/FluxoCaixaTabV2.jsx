@@ -436,12 +436,12 @@ export default function FluxoCaixaTabV2() {
             />
           </div>
 
-          {/* filtros secundários — stack vertical no mobile */}
-          <div className="px-2 py-2 space-y-2 sm:px-3 sm:py-0 sm:pb-3 sm:flex sm:gap-2 sm:space-y-0">
+          {/* filtros secundários — linha única no mobile */}
+          <div className="px-2 pb-2 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             <ContasFiltro contas={contas} sel={contasSel} onSel={setContasSel} />
             <button
               onClick={() => setPendentes(p => !p)}
-              className={`w-full sm:w-auto flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+              className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
                 ${pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
               Não conciliados
             </button>
