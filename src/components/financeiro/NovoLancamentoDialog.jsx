@@ -47,14 +47,10 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const valorNumerico = parseInt(valorCents || '0', 10) / 100;
   const categorias = tipo === 'Receita' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
 
-  const handlePad = (k) => {
-    if (k === '⌫') {
-      const next = valorCents.slice(0, -1);
-      setValorCents(next.length === 0 ? '0' : next);
-    } else {
-      const raw = valorCents === '0' ? k : valorCents + k;
-      if (raw.length <= 10) setValorCents(raw);
-    }
+  const handleValorChange = (e) => {
+    // Store as cents string from decimal input
+    const raw = e.target.value.replace(/\D/g, '');
+    setValorCents(raw || '0');
   };
 
   const display = valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
