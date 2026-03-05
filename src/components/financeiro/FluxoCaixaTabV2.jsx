@@ -265,7 +265,7 @@ function LancRow({ l, onClick }) {
 
       {/* Descrição — flex-1 com min-w-0 para truncar corretamente */}
       <span className="flex-1 min-w-0 overflow-hidden">
-        <span className={`block text-[0.8rem] font-medium leading-snug break-words ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
+        <span className={`block text-[0.8rem] font-medium leading-snug whitespace-normal break-words ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
           {l.descricao}
         </span>
         <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
