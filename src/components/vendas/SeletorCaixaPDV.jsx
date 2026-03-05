@@ -13,6 +13,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
   const [showSaldoDialog, setShowSaldoDialog] = useState(false);
   const [liquidezPorCaixa, setLiquidezPorCaixa] = useState({});
+  const [descricaoSaldo, setDescricaoSaldo] = useState('');
 
   useEffect(() => {
     if (open && currentUser) {
