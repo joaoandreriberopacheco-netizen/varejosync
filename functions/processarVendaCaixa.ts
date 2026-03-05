@@ -200,6 +200,56 @@ Deno.serve(async (req) => {
     }
   }
 
+  // 4e2. Criar LancamentoFinanceiro para cada forma de pagamento
+  for (const pag of pagamentos) {
+    if (!pag.valor || pag.valor <= 0) continue;
+    if (pag.forma_pagamento === 'Vale Troca') continue; // vale troca não gera lançamento financeiro
+
+    try {
+      // Buscar a forma de pagamento para obter conta destino
+      let contaDestinoId = conta_caixa_id;
+      let contaDestinoNome = 'Caixa';
+      let formaPgId = null;
+
+      if (pag.forma_pagamento !== 'Dinheiro') {
+        const formasList = await svc.entities.FormasDePagamento.filter({ nome: pag.forma_pagamento });
+        const forma = formasList[0];
+        if (forma) {
+          contaDestinoId = forma.conta_destino_id;
+          contaDestinoNome = forma.conta_destino_nome || pag.forma_pagamento;
+          formaPgId = forma.id;
+        }
+      }
+
+      const hoje = new Date().toISOString().split('T')[0];
+
+      await svc.entities.LancamentoFinanceiro.create({
+        tipo: 'Receita',
+        descricao: `Venda ${numeroPedido}${rascunho.cliente_nome ? ` - ${rascunho.cliente_nome}` : ''}`,
+        terceiro_id: rascunho.cliente_id || null,
+        terceiro_nome: rascunho.cliente_nome || null,
+        valor: pag.valor,
+        valor_liquido: pag.valor_liquido_recebido || pag.valor,
+        data_vencimento: hoje,
+        data_pagamento: hoje,
+        status: 'Pago',
+        status_conciliacao: pag.forma_pagamento === 'Dinheiro' ? 'N/A' : 'Pendente',
+        forma_pagamento: pag.forma_pagamento,
+        forma_pagamento_id: formaPgId,
+        forma_pagamento_tipo: pag.forma_pagamento,
+        categoria: 'Venda de Produto',
+        conta_financeira_id: contaDestinoId,
+        conta_financeira_nome: contaDestinoNome,
+        turno_caixa_id: turno_id,
+        referencia_id: pedidoVenda.id,
+        referencia_tipo: 'PedidoVenda',
+        referencia_numero: numeroPedido,
+      });
+    } catch (err) {
+      erros.push(`Lançamento financeiro (${pag.forma_pagamento}): ${err.message}`);
+    }
+  }
+
   // 4f. Criar OrdemSeparacao se fluxo Completo
   if (config_venda?.fluxo_venda_padrao === 'Completo') {
     try {
