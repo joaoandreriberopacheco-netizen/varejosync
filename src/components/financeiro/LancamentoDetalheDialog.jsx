@@ -2,23 +2,21 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X } from 'lucide-react';
+import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-// Toggle Switch simples
 function Toggle({ checked, onChange }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${checked ? 'bg-gray-800 dark:bg-gray-200' : 'bg-gray-200 dark:bg-gray-600'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-none ${checked ? 'bg-gray-800 dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`}
     >
-      <span className={`inline-block h-4 w-4 rounded-full bg-white dark:bg-gray-900 shadow transform transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
+      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
     </button>
   );
 }
@@ -30,23 +28,31 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       ? format(new Date(lancamento.data_pagamento), 'yyyy-MM-dd')
       : format(new Date(), 'yyyy-MM-dd')
   );
+  const [dataLiquidacao, setDataLiquidacao] = useState(
+    lancamento.data_pagamento
+      ? format(new Date(lancamento.data_pagamento), 'yyyy-MM-dd')
+      : format(new Date(), 'yyyy-MM-dd')
+  );
+  const [isPagoLocal, setIsPagoLocal] = useState(lancamento.status === 'Pago');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const isReceita = lancamento.tipo === 'Receita';
   const isTransf = lancamento.tipo === 'Transferência';
-  const isPago = lancamento.status === 'Pago';
+  const isPagoOriginal = lancamento.status === 'Pago';
   const isPendente = lancamento.status_conciliacao === 'Pendente';
   const data = lancamento.data_pagamento || lancamento.data_vencimento;
 
-  const handleTogglePago = async (novoPago) => {
-    if (novoPago && !contaId) {
+  const handleSalvarPagamento = async () => {
+    if (isPagoLocal && !contaId) {
       toast({ title: 'Selecione uma conta', variant: 'destructive' });
       return;
     }
     setSaving(true);
     const conta = contas.find((c) => c.id === contaId);
-    if (novoPago) {
+
+    if (isPagoLocal && !isPagoOriginal) {
+      // Marcar como pago
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
         status: 'Pago',
         data_pagamento: dataPagamento,
@@ -59,10 +65,20 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
       toast({ title: 'Pagamento registrado!', className: 'bg-gray-100 text-gray-800' });
-    } else {
+    } else if (!isPagoLocal && isPagoOriginal) {
+      // Reverter para em aberto
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, { status: 'Em Aberto' });
       toast({ title: 'Marcado como em aberto', className: 'bg-gray-100 text-gray-800' });
+    } else if (isPagoLocal && isPagoOriginal) {
+      // Atualizar data/conta
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        data_pagamento: dataPagamento,
+        conta_financeira_id: contaId,
+        conta_financeira_nome: conta?.nome
+      });
+      toast({ title: 'Dados atualizados!', className: 'bg-gray-100 text-gray-800' });
     }
+
     onSaved?.();
     setSaving(false);
   };
@@ -71,19 +87,18 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setSaving(true);
     await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
       status_conciliacao: 'Conciliado',
-      data_liquidacao_efetiva: dataPagamento
+      data_liquidacao_efetiva: dataLiquidacao
     });
     toast({ title: 'Lançamento conciliado!', className: 'bg-gray-100 text-gray-800' });
     onSaved?.();
     setSaving(false);
   };
 
-  // Ícone do tipo
   let Icon = ArrowRightLeft;
   let iconClass = 'text-gray-400';
   if (!isTransf) {
     Icon = isReceita ? ArrowDownLeft : ArrowUpRight;
-    iconClass = isPago ? (isReceita ? 'text-green-500' : 'text-red-500') : 'text-gray-400';
+    iconClass = isPagoOriginal ? (isReceita ? 'text-green-500' : 'text-red-500') : 'text-gray-400';
   }
 
   return (
@@ -91,9 +106,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       <DialogContent className="sm:max-w-sm p-0 gap-0 dark:bg-gray-900 dark:border-gray-700 overflow-hidden rounded-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div className="flex items-start justify-between px-5 pt-5 pb-3">
           <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-snug flex-1 pr-3">{lancamento.descricao}</p>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400">
+          <button onClick={onClose} className="w-7 h-7 flex-none flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -104,7 +119,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             <Icon className={`w-5 h-5 ${iconClass}`} />
           </span>
           <div>
-            <p className={`text-2xl font-bold ${isTransf ? 'text-gray-700 dark:text-gray-200' : isReceita ? 'text-gray-700 dark:text-gray-200' : 'text-gray-700 dark:text-gray-200'}`}>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               {isTransf ? '' : isReceita ? '+' : '−'}{R(lancamento.valor)}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
@@ -129,37 +144,36 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           )}
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-gray-100 dark:bg-gray-800 mx-5" />
+        <div className="h-px bg-gray-100 dark:bg-gray-800" />
 
-        {/* Seção: Marcar como pago (toggle) */}
+        {/* Seção: Marcar como pago */}
         {!isTransf && (
           <div className="px-5 py-4 space-y-4">
-            {/* Toggle pago */}
+            {/* Toggle */}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Marcar como pago</p>
-                <p className="text-xs text-gray-400">{isPago ? 'Pago' : 'Em aberto'}</p>
+                <p className="text-xs text-gray-400">{isPagoLocal ? 'Pago' : 'Em aberto'}</p>
               </div>
-              <Toggle checked={isPago} onChange={handleTogglePago} />
+              <Toggle checked={isPagoLocal} onChange={setIsPagoLocal} />
             </div>
 
-            {/* Campos de data e conta (sempre visíveis para preencher antes de ativar) */}
+            {/* Campos Data e Conta */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <p className="text-[0.65rem] text-gray-400 mb-1">Data</p>
-                <Input
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Data</p>
+                <input
                   type="date"
                   value={dataPagamento}
                   onChange={(e) => setDataPagamento(e.target.value)}
-                  className="h-9 text-sm bg-gray-100 dark:bg-gray-800 border-0 rounded-xl dark:text-gray-200"
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                 />
               </div>
               <div>
-                <p className="text-[0.65rem] text-gray-400 mb-1">Conta</p>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Conta</p>
                 <Select value={contaId} onValueChange={setContaId}>
-                  <SelectTrigger className="h-9 text-sm bg-gray-100 dark:bg-gray-800 border-0 rounded-xl dark:text-gray-200">
-                    <SelectValue placeholder="Conta..." />
+                  <SelectTrigger className="h-9 text-sm bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-gray-300">
+                    <SelectValue placeholder="Selecionar..." />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                     {contas.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
@@ -167,39 +181,50 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 </Select>
               </div>
             </div>
+
+            {/* Botão Salvar */}
+            <button
+              onClick={handleSalvarPagamento}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
+              <Save className="w-4 h-4" />
+              Salvar
+            </button>
           </div>
         )}
 
         {/* Conciliar (se pago e pendente) */}
-        {isPago && isPendente && (
+        {isPagoOriginal && isPendente && (
           <>
-            <div className="h-px bg-gray-100 dark:bg-gray-800 mx-5" />
+            <div className="h-px bg-gray-100 dark:bg-gray-800" />
             <div className="px-5 py-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Conciliar</p>
-                  <p className="text-xs text-gray-400">Confirmar data de liquidação</p>
-                </div>
-                <button
-                  onClick={handleConciliar}
-                  disabled={saving}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-xs font-medium active:scale-95 transition-transform">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Conciliar
-                </button>
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Conciliar</p>
+                <p className="text-xs text-gray-400">Confirmar data de liquidação</p>
               </div>
-              <Input
-                type="date"
-                value={dataPagamento}
-                onChange={(e) => setDataPagamento(e.target.value)}
-                className="h-9 text-sm bg-gray-100 dark:bg-gray-800 border-0 rounded-xl dark:text-gray-200"
-              />
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Data de liquidação</p>
+                <input
+                  type="date"
+                  value={dataLiquidacao}
+                  onChange={(e) => setDataLiquidacao(e.target.value)}
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                />
+              </div>
+              <button
+                onClick={handleConciliar}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
+                <CheckCircle2 className="w-4 h-4" />
+                Salvar Conciliação
+              </button>
             </div>
           </>
         )}
 
         {/* Fechar */}
-        <div className="px-5 pb-5">
-          <button onClick={onClose} className="w-full text-xs text-gray-400 py-2 hover:text-gray-600">
+        <div className="px-5 pb-5 pt-1">
+          <button onClick={onClose} className="w-full text-xs text-gray-400 py-2 hover:text-gray-600 dark:hover:text-gray-300">
             Fechar
           </button>
         </div>
