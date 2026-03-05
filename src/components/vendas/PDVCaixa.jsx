@@ -999,10 +999,10 @@ export default function PDVCaixa() {
 
   useEffect(() => {
     // Auto-preencher recebimentos: dinheiro = valor recebido em vendas apenas
-    setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
-    setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
-    setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.credito || 0));
-    setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.debito || 0));
+    setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos?.dinheiro || 0));
+    setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos?.pix || 0));
+    setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos?.credito || 0));
+    setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos?.debito || 0));
   }, [caixaData]);
 
   const handleFecharCaixa = async () => {
@@ -1241,7 +1241,7 @@ export default function PDVCaixa() {
                         onChange={(e) => setRecebimentosDinheiro(e.target.value)}
                         onFocus={(e) => e.target.select()}
                         className="w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-pointer"
-                        placeholder={formatarValorExibicao(caixaData.recebimentos.dinheiro)}
+                        placeholder={formatarValorExibicao(caixaData.recebimentos?.dinheiro || 0)}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
