@@ -1132,9 +1132,9 @@ export default function PDVCaixa() {
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Dinheiro na Gaveta</div>
                       <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
-                        {formatValor(caixaData.saldoAtual)}
+                        {formatValor(caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0))}
                       </div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Inicial + dinheiro vendas + reforços − recolhimentos</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
                     </div>
                   </div>
                 </div>
