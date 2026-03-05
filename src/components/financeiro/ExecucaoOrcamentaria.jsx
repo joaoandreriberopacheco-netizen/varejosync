@@ -85,7 +85,7 @@ function KpiStrip({ kpis }) {
       </div>
 
       {/* Linha 2: saldo + barra de execução */}
-      <div className="bg-gray-900 mr-20 ml-4 px-4 py-4 rounded-2xl dark:bg-gray-100">
+      <div className="bg-gray-900 px-4 py-4 rounded-2xl dark:bg-gray-100">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Saldo de Execução</p>
