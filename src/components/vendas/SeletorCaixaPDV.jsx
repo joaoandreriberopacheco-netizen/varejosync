@@ -234,23 +234,21 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
                   VALOR
                 </p>
                 
-                {/* Display grande do valor */}
-                <div className="text-6xl font-bold text-gray-200 dark:text-gray-700 font-mono mb-1">
-                  {saldoInicial || '0,00'}
+                {/* Display com input ativo para cursor */}
+                <div className="relative text-center">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={saldoInicial}
+                    onChange={(e) => setSaldoInicial(e.target.value)}
+                    placeholder="0,00"
+                    className="text-6xl font-bold font-mono mb-1 bg-transparent border-0 text-center text-gray-900 dark:text-gray-800 focus:ring-0 outline-none caret-gray-900 dark:caret-gray-800"
+                    autoFocus
+                  />
                 </div>
-                
-                <p className="text-sm text-gray-500 dark:text-gray-400">R$</p>
-              </div>
 
-              {/* Input invisível mas funcional */}
-              <input
-                type="text"
-                inputMode="decimal"
-                value={saldoInicial}
-                onChange={(e) => setSaldoInicial(e.target.value)}
-                className="absolute opacity-0 w-0 h-0"
-                autoFocus
-              />
+                <p className="text-sm text-gray-500 dark:text-gray-400">R$</p>
+                </div>
 
               {/* Campo de descrição */}
               <div className="w-full">
