@@ -226,29 +226,34 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
               <div className="w-6" />
             </div>
 
+            {/* Input invisível para capturar teclado */}
+            <input
+              type="text"
+              inputMode="decimal"
+              value={saldoInicial}
+              onChange={(e) => setSaldoInicial(e.target.value)}
+              className="absolute opacity-0 w-0 h-0 -z-10"
+              autoFocus
+            />
+
             {/* Conteúdo principal */}
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 space-y-8">
               {/* Label VALOR */}
               <div className="text-center">
-                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-widest mb-2">
+                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-widest mb-4">
                   VALOR
                 </p>
-                
-                {/* Display com input ativo para cursor */}
-                <div className="relative text-center">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={saldoInicial}
-                    onChange={(e) => setSaldoInicial(e.target.value)}
-                    placeholder="0,00"
-                    className="text-6xl font-bold font-mono mb-1 bg-transparent border-0 text-center text-gray-900 dark:text-gray-800 focus:ring-0 outline-none caret-gray-900 dark:caret-gray-800"
-                    autoFocus
-                  />
+
+                {/* Display do valor com cursor */}
+                <div className="relative inline-block">
+                  <div className="text-6xl font-bold text-gray-900 dark:text-gray-800 font-mono mb-2 flex items-center justify-center gap-1">
+                    {saldoInicial || '0,00'}
+                    <span className="animate-pulse text-gray-600 dark:text-gray-700">|</span>
+                  </div>
                 </div>
 
                 <p className="text-sm text-gray-500 dark:text-gray-400">R$</p>
-                </div>
+              </div>
 
               {/* Campo de descrição */}
               <div className="w-full">
