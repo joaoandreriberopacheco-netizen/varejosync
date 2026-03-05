@@ -21,6 +21,7 @@ import VendasTurnoDialog from './caixa/VendasTurnoDialog';
 import VendaDetalheDialog from './caixa/VendaDetalheDialog';
 import SaldoValeDialog from './caixa/SaldoValeDialog';
 import ProcessarVendasView from './caixa/ProcessarVendasView';
+import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog';
 import {
   Receipt,
   DollarSign,
