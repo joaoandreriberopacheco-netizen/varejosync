@@ -19,6 +19,7 @@ import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 import ConciliacaoBancaria from '../components/financeiro/ConciliacaoBancaria';
+import ExecucaoOrcamentaria from '../components/financeiro/ExecucaoOrcamentaria';
 
 export default function FinanceiroModuloPage() {
   const [accounts, setAccounts] = useState([]);
