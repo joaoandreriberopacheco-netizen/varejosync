@@ -204,41 +204,76 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       </Dialog>
 
       <Dialog open={showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent className="max-w-sm dark:bg-gray-900 border-0 shadow-2xl" hideClose>
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                Abrir Turno - {caixaSelecionado?.nome}
-              </h2>
+        <DialogContent className="max-w-sm dark:bg-gray-900 border-0 p-0 shadow-2xl" hideClose>
+          <div className="flex flex-col h-full">
+            {/* Header com abas */}
+            <div className="flex items-center justify-between px-4 pt-4 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowSaldoDialog(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </button>
+              
+              <div className="flex gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full text-sm font-medium"
+                >
+                  Abertura
+                </button>
+              </div>
+              
+              <div className="w-6" />
             </div>
 
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border-0 shadow-sm">
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                Informe o valor do dinheiro físico que está no caixa para iniciar o turno.
-              </p>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Saldo Inicial (Fundo de Troco) <span className="text-red-500">*</span>
-              </label>
-              <Input
+            {/* Conteúdo principal */}
+            <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 space-y-8">
+              {/* Label VALOR */}
+              <div className="text-center">
+                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-widest mb-2">
+                  VALOR
+                </p>
+                
+                {/* Display grande do valor */}
+                <div className="text-6xl font-bold text-gray-200 dark:text-gray-700 font-mono mb-1">
+                  {saldoInicial || '0,00'}
+                </div>
+                
+                <p className="text-sm text-gray-500 dark:text-gray-400">R$</p>
+              </div>
+
+              {/* Input invisível mas funcional */}
+              <input
                 type="text"
                 inputMode="decimal"
-                placeholder="25"
                 value={saldoInicial}
                 onChange={(e) => setSaldoInicial(e.target.value)}
-                className="h-16 text-4xl font-bold text-center bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl dark:text-white font-mono"
+                className="absolute opacity-0 w-0 h-0"
                 autoFocus
               />
+
+              {/* Campo de descrição */}
+              <div className="w-full">
+                <Input
+                  type="text"
+                  placeholder="Descrição (opcional)"
+                  value={descricaoSaldo}
+                  onChange={(e) => setDescricaoSaldo(e.target.value)}
+                  className="text-center text-gray-500 dark:text-gray-400 border-0 border-b-2 border-gray-200 dark:border-gray-700 rounded-0 bg-transparent focus:ring-0 focus:border-b-2 focus:border-gray-400"
+                />
+              </div>
             </div>
 
-            <Button
-              onClick={handleAbrirTurno}
-              className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold text-lg rounded-2xl hover:shadow-lg transition-shadow"
-            >
-              Abrir Turno
-            </Button>
+            {/* Botão Continuar */}
+            <div className="px-6 pb-6">
+              <Button
+                onClick={handleAbrirTurno}
+                className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold rounded-3xl hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
+              >
+                <span>Abrir Turno</span>
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
