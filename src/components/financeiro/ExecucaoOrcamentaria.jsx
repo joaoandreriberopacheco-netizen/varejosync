@@ -178,10 +178,12 @@ function MiniCal({ base, rangeStart, rangeEnd, hover, onDay, onHover, onPrev, on
 
 // ─── Periodo Picker ───────────────────────────────────────────────────────────
 const CHIPS = [
-{ v: 'hoje', l: 'Hoje' },
-{ v: 'semana', l: 'Semana' },
-{ v: 'mes', l: 'Mês' },
-{ v: 'tudo', l: 'Tudo' }];
+  { v: 'hoje',   l: 'Hoje' },
+  { v: 'ontem',  l: 'Ontem' },
+  { v: 'semana', l: 'Semana' },
+  { v: 'mes',    l: 'Mês' },
+  { v: 'tudo',   l: 'Tudo' },
+];
 
 
 function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom }) {
