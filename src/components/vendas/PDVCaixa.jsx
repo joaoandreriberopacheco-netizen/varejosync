@@ -2489,18 +2489,8 @@ export default function PDVCaixa() {
         />
 
 
-        {/* PLACEHOLDER REMOVED */}
-        <Dialog open={false} onOpenChange={() => {}}><DialogContent className="hidden">
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
-              <button
-                onClick={() => setShowSaldoConsolidadoDialog(false)}
-                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                style={{ minWidth: '44px', minHeight: '44px' }}>
-                <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-              </button>
-              <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
-                Saldo Consolidado
-              </h2>
+        {/* SaldoConsolidado extraído para SaldoConsolidadoDialog */}
+        <Dialog open={false} onOpenChange={() => {}}><DialogContent className="hidden"><div>
               <button
                 onClick={() => {
                     const el = document.getElementById('saldo-consolidado-print');
