@@ -385,17 +385,24 @@ export default function FluxoCaixaTabV2() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible space-y-3 pb-28" style={{ contain: 'paint' }}>
 
-      {/* KPIs — mobile: coluna, desktop: grid */}
-      <div className="space-y-2 sm:grid sm:grid-cols-2 sm:gap-2 sm:space-y-0">
-        <KpiCard label="Entrou" value={R(kpis.entrou)} />
-        <KpiCard label="Saiu"   value={R(kpis.saiu)} neg={kpis.saiu > 0} />
+      {/* KPIs — linha única de 3 colunas no mobile */}
+      <div className="grid grid-cols-3 gap-1.5">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex flex-col">
+          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Entrou</p>
+          <p className="text-xs sm:text-sm font-bold text-gray-800 dark:text-white truncate">{R(kpis.entrou)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex flex-col">
+          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Saiu</p>
+          <p className="text-xs sm:text-sm font-bold text-red-500 truncate">{R(kpis.saiu)}</p>
+        </div>
+        <div className="bg-gray-900 dark:bg-gray-100 rounded-2xl shadow-sm p-3 flex flex-col">
+          <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-1">Saldo</p>
+          <p className={`text-xs sm:text-sm font-bold truncate ${kpis.saldo < 0 ? 'text-red-400' : 'text-white dark:text-gray-900'}`}>{R(kpis.saldo)}</p>
+          {(kpis.pEntrou > 0 || kpis.pSaiu > 0) && (
+            <p className="text-[8px] mt-0.5 text-gray-500 truncate">Proj: {R(kpis.saldoPrev)}</p>
+          )}
+        </div>
       </div>
-      
-      {/* Saldo do período — destaque */}
-      <KpiCard
-        label="Saldo do período" value={R(kpis.saldo)} neg={kpis.saldo < 0} dark
-        sub={kpis.pEntrou > 0 || kpis.pSaiu > 0 ? `Projeção: ${R(kpis.saldoPrev)}` : null}
-      />
 
       {/* Alerta pendentes */}
       {totalPend > 0 && !pendentes && (
