@@ -202,33 +202,38 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       </Dialog>
 
       <Dialog open={showSaldoDialog} onOpenChange={() => {}}>
-        <DialogContent className="max-w-md dark:bg-gray-900" hideClose>
-          <DialogHeader>
-            <DialogTitle className="text-lg font-glacial">Abrir Turno - {caixaSelecionado?.nome}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-              <p className="text-sm text-blue-800 dark:text-blue-300">
+        <DialogContent className="max-w-sm dark:bg-gray-900 border-0 shadow-2xl" hideClose>
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                Abrir Turno - {caixaSelecionado?.nome}
+              </h2>
+            </div>
+
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border-0 shadow-sm">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
                 Informe o valor do dinheiro físico que está no caixa para iniciar o turno.
               </p>
             </div>
             
             <div>
-              <Label className="text-gray-700 dark:text-gray-300">Saldo Inicial (Fundo de Troco) *</Label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Saldo Inicial (Fundo de Troco) <span className="text-red-500">*</span>
+              </label>
               <Input
                 type="text"
-                inputMode="numeric"
-                placeholder="0,00"
+                inputMode="decimal"
+                placeholder="25"
                 value={saldoInicial}
                 onChange={(e) => setSaldoInicial(e.target.value)}
-                className="h-14 text-2xl font-bold text-center dark:bg-gray-700 dark:text-white"
+                className="h-16 text-4xl font-bold text-center bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl dark:text-white font-mono"
                 autoFocus
               />
             </div>
 
             <Button
               onClick={handleAbrirTurno}
-              className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+              className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold text-lg rounded-2xl hover:shadow-lg transition-shadow"
             >
               Abrir Turno
             </Button>
