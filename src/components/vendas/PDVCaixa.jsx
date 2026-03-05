@@ -1420,11 +1420,15 @@ export default function PDVCaixa() {
                            )}
                          </div>
                          <div className="flex gap-2">
-                           <button onClick={imprimirRelatorio} className="flex-1 h-12 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-medium flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }}>
+                           <button onClick={imprimirRelatorio} className="flex-1 h-12 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-medium flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }} disabled={fechandoCaixa}>
                              <Printer className="w-4 h-4" /> Imprimir
                            </button>
-                           <button onClick={() => setShowFechamentoDialog(true)} className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm" style={{ minHeight: '48px' }}>
-                             <Lock className="w-4 h-4" /> Fechar Caixa
+                           <button onClick={handleFecharCaixa} disabled={!temDiferenca === false || fechandoCaixa} className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed" style={{ minHeight: '48px' }}>
+                             {fechandoCaixa ? (
+                               <><RefreshCw className="w-4 h-4 animate-spin mr-2" /> Fechando...</>
+                             ) : (
+                               <><Lock className="w-4 h-4" /> Fechar Caixa</>
+                             )}
                            </button>
                          </div>
                        </div>
