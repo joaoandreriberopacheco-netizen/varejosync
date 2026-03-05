@@ -1324,8 +1324,9 @@ export default function PDVCaixa() {
                    {!modoVisualizacao && (() => {
                       const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                       const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                      // Vale troca é não-monetário: desconta do esperado para comparação justa
-                      const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
+                      // Esperado = liquidez (que já inclui TODAS as formas de pagamento)
+                      // Vale é não-monetário, então não entra na comparação
+                      const esperado = caixaData.liquidez;
                       const diferenca = totalConferido - esperado;
                       const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
