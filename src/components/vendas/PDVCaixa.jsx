@@ -8,8 +8,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import MovimentoDialog from './caixa/MovimentoDialog';
+import ComprovanteMovimentoDialog from './caixa/ComprovanteMovimentoDialog';
+import DespesaDialog from './caixa/DespesaDialog';
+import ComprovanteDespesaDialog from './caixa/ComprovanteDespesaDialog';
+import ListaMovimentosDialog from './caixa/ListaMovimentosDialog';
+import SaldoConsolidadoDialog from './caixa/SaldoConsolidadoDialog';
+import CalculadoraCedulasDialog from './caixa/CalculadoraCedulasDialog';
+import RetornoEdicaoDialog from './caixa/RetornoEdicaoDialog';
+import VendasTurnoDialog from './caixa/VendasTurnoDialog';
+import VendaDetalheDialog from './caixa/VendaDetalheDialog';
+import SaldoValeDialog from './caixa/SaldoValeDialog';
+import ProcessarVendasView from './caixa/ProcessarVendasView';
 import {
   Receipt,
   DollarSign,
