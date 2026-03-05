@@ -62,7 +62,7 @@ function KpiStrip({ kpis }) {
     <div className="space-y-2.5">
       {/* Linha 1: entrou / saiu */}
       <div className="grid grid-cols-2 gap-2.5">
-        <div className="bg-white mr-10 p-4 rounded-2xl dark:bg-gray-800 shadow-sm">
+        <div className="bg-white p-4 rounded-2xl dark:bg-gray-800 shadow-sm">
           <div className="flex items-center gap-1.5 mb-2">
             <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
               <TrendingUp className="w-3 h-3 text-gray-500 dark:text-gray-400" />
