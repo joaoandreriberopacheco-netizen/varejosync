@@ -242,11 +242,9 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
       </div>
 
       {showCal && periodo === 'periodo' && (
-        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl" onMouseLeave={() => setHover(null)}>
-          <div className="flex flex-col md:flex-row gap-3">
-            <MiniCal base={baseLeft}  rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset(o => o - 1)} onNext={null} />
-            <div className="hidden md:block w-px bg-gray-100 dark:bg-gray-700" />
-            <MiniCal base={baseRight} rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={null} onNext={() => setOffset(o => o + 1)} />
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl">
+          <div className="flex flex-col gap-3">
+            <MiniCal base={baseLeft}  rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset(o => o - 1)} onNext={() => setOffset(o => o + 1)} />
           </div>
           {rs && re && (
             <div className="mt-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
@@ -329,20 +327,20 @@ function LancRow({ l, onClick }) {
   const data = l.data_pagamento || l.data_vencimento;
   const val  = Math.abs(l.valor || 0);
 
-  // Paleta glacial: ícone e valor sempre em cinza, sem cores vibrantes
+  // Ícone: cor apenas na seta. Valor: verde (receita pago), vermelho (despesa pago), cinza (prev)
   let icon, iconBg, valColor;
   if (isT) {
     icon = <ArrowRightLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />;
     iconBg = 'bg-gray-100 dark:bg-gray-700';
     valColor = 'text-gray-500 dark:text-gray-400';
   } else if (isR) {
-    icon = <ArrowDownLeft className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />;
+    icon = <ArrowDownLeft className={`w-3.5 h-3.5 ${pago ? 'text-green-500' : 'text-gray-400'}`} />;
     iconBg = 'bg-gray-100 dark:bg-gray-700';
     valColor = pago ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500';
   } else {
-    icon = <ArrowUpRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />;
+    icon = <ArrowUpRight className={`w-3.5 h-3.5 ${pago ? 'text-red-500' : 'text-gray-400'}`} />;
     iconBg = 'bg-gray-100 dark:bg-gray-700';
-    valColor = pago ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500';
+    valColor = pago ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-500';
   }
 
   return (
