@@ -2489,17 +2489,8 @@ export default function PDVCaixa() {
         />
 
 
-        {/* SaldoConsolidadoDialog PLACEHOLDER - will be replaced below */}
-        <Dialog open={showSaldoConsolidadoDialog} onOpenChange={setShowSaldoConsolidadoDialog}>
-          <style>{`
-            @media print {
-              body > * { display: none !important; }
-              #saldo-consolidado-print { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
-              @page { size: A4; margin: 15mm; }
-            }
-            #saldo-consolidado-print { display: contents; }
-          `}</style>
-          <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
+        {/* PLACEHOLDER REMOVED */}
+        <Dialog open={false} onOpenChange={() => {}}><DialogContent className="hidden">
             <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
               <button
                 onClick={() => setShowSaldoConsolidadoDialog(false)}
