@@ -62,21 +62,17 @@ function KpiStrip({ kpis }) {
     <div className="space-y-2.5">
       {/* Linha 1: entrou / saiu */}
       <div className="grid grid-cols-2 gap-2.5">
-        <div className="bg-white p-4 rounded-2xl dark:bg-gray-800 shadow-sm">
+        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl">
           <div className="flex items-center gap-1.5 mb-2">
-            <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <TrendingUp className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-            </div>
+            <TrendingUp className="w-3 h-3 text-gray-400" />
             <p className="text-[9px] uppercase tracking-wider text-gray-400">Receitas</p>
           </div>
-          <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{R(kpis.entrou)}</p>
+          <p className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">{R(kpis.entrou)}</p>
           {kpis.pEntrou > 0 && <p className="text-[9px] text-gray-400 mt-1">+{R(kpis.pEntrou)} prev.</p>}
         </div>
-        <div className="bg-white pt-4 pr-4 pb-4 pl-4 rounded-2xl dark:bg-gray-800 shadow-sm">
+        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl">
           <div className="flex items-center gap-1.5 mb-2">
-            <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <TrendingDown className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-            </div>
+            <TrendingDown className="w-3 h-3 text-gray-400" />
             <p className="text-[9px] uppercase tracking-wider text-gray-400">Despesas</p>
           </div>
           <p className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">{R(kpis.saiu)}</p>
@@ -85,29 +81,27 @@ function KpiStrip({ kpis }) {
       </div>
 
       {/* Linha 2: saldo + barra de execução */}
-      <div className="bg-gray-900 px-4 py-4 rounded-2xl dark:bg-gray-100">
+      <div className="bg-gray-100 dark:bg-gray-800 px-4 py-4 rounded-2xl">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Saldo de Execução</p>
-            <p className="text-lg font-bold text-white dark:text-gray-900">{R(kpis.saldo)}</p>
+            <p className="text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Saldo de Execução</p>
+            <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{R(kpis.saldo)}</p>
           </div>
           <div className="text-right">
-            <p className="text-[9px] text-gray-500 mb-0.5">Taxa de Gasto</p>
-            <p className="text-sm font-bold text-gray-300 dark:text-gray-700">{taxa}%</p>
+            <p className="text-[9px] text-gray-400 mb-0.5">Taxa de Gasto</p>
+            <p className="text-sm font-bold text-gray-600 dark:text-gray-300">{taxa}%</p>
           </div>
         </div>
-        {/* Barra de progresso — sem cores, apenas claridade */}
-        <div className="h-1 bg-gray-700 dark:bg-gray-300 rounded-full overflow-hidden">
+        <div className="h-1 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gray-400 dark:bg-gray-500 rounded-full transition-all"
+            className="h-full bg-gray-400 dark:bg-gray-400 rounded-full transition-all"
             style={{ width: `${Math.min(Number(taxa), 100)}%` }} />
-
         </div>
       </div>
 
       {/* Transferências */}
       {kpis.totalTransferencias > 0 &&
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+      <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-3">
           <ArrowRightLeft className="w-4 h-4 text-gray-400 flex-none" />
           <div className="flex-1 min-w-0">
             <p className="text-[9px] uppercase tracking-wider text-gray-400">Transferências</p>
@@ -116,7 +110,6 @@ function KpiStrip({ kpis }) {
         </div>
       }
     </div>);
-
 }
 
 // ─── Mini Calendar ────────────────────────────────────────────────────────────
