@@ -413,7 +413,7 @@ export default function FluxoCaixaTabV2() {
         <button onClick={() => setPendentes(true)}
           className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs text-left">
           <Clock className="w-3.5 h-3.5 flex-none" />
-          <span className="flex-1 truncate">{totalPend} lançamento{totalPend > 1 ? 's' : ''} aguardando conciliação</span>
+          <span className="flex-1 min-w-0 truncate">{totalPend} lançamento{totalPend > 1 ? 's' : ''} aguardando conciliação</span>
           <span className="font-semibold">Ver →</span>
         </button>
       )}
