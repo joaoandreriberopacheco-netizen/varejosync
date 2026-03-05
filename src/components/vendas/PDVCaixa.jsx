@@ -1241,7 +1241,7 @@ export default function PDVCaixa() {
                         onChange={(e) => setRecebimentosDinheiro(e.target.value)}
                         onFocus={(e) => e.target.select()}
                         className="w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-pointer"
-                        placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
+                        placeholder={formatarValorExibicao(caixaData.liquidez || 0)}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
