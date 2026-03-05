@@ -2454,129 +2454,18 @@ export default function PDVCaixa() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Reforços - Estilo PDV Glacial */}
-        <Dialog open={showReforcosDialog} onOpenChange={setShowReforcosDialog}>
-          <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
-              <button
-                onClick={() => setShowReforcosDialog(false)}
-                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                style={{ minWidth: '44px', minHeight: '44px' }}>
-                <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-              </button>
-              <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
-                Reforços do Turno
-              </h2>
-              <div className="w-10"></div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {movimentos.filter(m => m.tipo === 'Reforço').length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                    <Plus className="w-10 h-10 text-gray-400 dark:text-gray-600" />
-                  </div>
-                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhum reforço registrado</p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-w-4xl mx-auto">
-                  {movimentos.filter(m => m.tipo === 'Reforço').map((mov) => (
-                    <div key={mov.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{mov.numero}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(mov.created_date), 'HH:mm')}</span>
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{mov.usuario_responsavel_nome}</div>
-                        </div>
-                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-glacial">
-                          +{formatValor(mov.valor)}
-                        </div>
-                      </div>
-                      {mov.observacao && (
-                        <div className="text-sm text-gray-700 dark:text-gray-300 pt-3 border-t border-gray-100 dark:border-gray-700">
-                          {mov.observacao}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {movimentos.filter(m => m.tipo === 'Reforço').length > 0 && (
-              <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
-                <div className="flex justify-between items-center max-w-4xl mx-auto">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total do Turno</span>
-                  <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-glacial">
-                    +{formatValor(caixaData.reforcos)}
-                  </span>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Recolhimentos - Estilo PDV Glacial */}
-        <Dialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog}>
-          <DialogContent className="max-w-full w-full h-full m-0 p-0 rounded-none bg-gray-50 dark:bg-gray-900 flex flex-col">
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
-              <button
-                onClick={() => setShowSangriasDialog(false)}
-                className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                style={{ minWidth: '44px', minHeight: '44px' }}>
-                <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-              </button>
-              <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">
-                Recolhimentos do Turno
-              </h2>
-              <div className="w-10"></div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                    <Minus className="w-10 h-10 text-gray-400 dark:text-gray-600" />
-                  </div>
-                  <p className="text-base font-medium text-gray-600 dark:text-gray-400">Nenhum recolhimento registrado</p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-w-4xl mx-auto">
-                  {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((mov) => (
-                    <div key={mov.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{mov.numero}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(mov.created_date), 'HH:mm')}</span>
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{mov.usuario_responsavel_nome}</div>
-                        </div>
-                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 font-glacial">
-                          -{formatValor(mov.valor)}
-                        </div>
-                      </div>
-                      {mov.observacao && (
-                        <div className="text-sm text-gray-700 dark:text-gray-300 pt-3 border-t border-gray-100 dark:border-gray-700">
-                          {mov.observacao}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').length > 0 && (
-              <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
-                <div className="flex justify-between items-center max-w-4xl mx-auto">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total do Turno</span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 font-glacial">
-                    -{formatValor(caixaData.sangrias)}
-                  </span>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        <ListaMovimentosDialog
+          open={showReforcosDialog} onOpenChange={setShowReforcosDialog}
+          tipo="reforcos" movimentos={movimentos} despesasLista={caixaData.despesasLista}
+          totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas}
+          formatValor={formatValor}
+        />
+        <ListaMovimentosDialog
+          open={showSangriasDialog} onOpenChange={setShowSangriasDialog}
+          tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista}
+          totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas}
+          formatValor={formatValor}
+        />
 
         <ListaMovimentosDialog
           open={showDespesasDialog} onOpenChange={setShowDespesasDialog}
