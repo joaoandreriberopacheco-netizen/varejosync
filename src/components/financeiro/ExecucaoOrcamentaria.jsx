@@ -522,10 +522,10 @@ export default function ExecucaoOrcamentaria() {
       {/* Alerta pendentes */}
       {totalPend > 0 && !pendentes && (
         <button onClick={() => setPendentes(true)}
-          className="w-full flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs text-left">
-          <Clock className="w-3.5 h-3.5 flex-none" />
+          className="w-full flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-xs text-left">
+          <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
           <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
-          <span className="font-semibold flex-none">Ver →</span>
+          <span className="font-semibold flex-none text-gray-500">Ver →</span>
         </button>
       )}
 
