@@ -249,7 +249,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
               type="text"
               inputMode="decimal"
               value={saldoInicial}
-              onChange={(e) => setSaldoInicial(e.target.value)}
+              onChange={handleSaldoChange}
               className="absolute opacity-0 w-0 h-0 -z-10"
               autoFocus
             />
@@ -262,11 +262,13 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
                   VALOR
                 </p>
 
-                {/* Display do valor com cursor */}
+                {/* Display do valor com cursor fino */}
                 <div className="relative inline-block">
-                  <div className="text-6xl font-bold text-gray-900 dark:text-gray-800 font-mono mb-2 flex items-center justify-center gap-1">
-                    {saldoInicial || '0,00'}
-                    <span className="animate-pulse text-gray-600 dark:text-gray-700">|</span>
+                  <div className="text-6xl font-bold text-gray-900 dark:text-gray-800 font-mono mb-2 flex items-center justify-center gap-0.5">
+                    <span className={saldoInicial ? 'text-gray-900 dark:text-gray-800' : 'text-gray-300 dark:text-gray-600'}>
+                      {saldoInicial || '0,00'}
+                    </span>
+                    <span className="animate-pulse w-0.5 h-16 bg-gray-600 dark:bg-gray-700"></span>
                   </div>
                 </div>
 
