@@ -1280,10 +1280,10 @@ export default function PDVCaixa() {
                     <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
                       {(() => {
                         const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                        // Dinheiro conferido é o que está na gaveta (sem descontar troco, pois o dinheiro já entrou)
-                        // Total de todas as formas
+                        // Total conferido = dinheiro(conferido) + pix + crédito + débito
                         const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                        // Esperado = liquidez total (inclui troco já descontado nas vendas)
+                        // Esperado = saldo inicial + total de vendas (todas as formas) + reforços − recolhimentos − despesas
+                        // (= liquidez, que já inclui todas as vendas)
                         const esperado = caixaData.liquidez;
                         const diferenca = totalConferido - esperado;
                         const temDiferenca = Math.abs(diferenca) > 0.01;
