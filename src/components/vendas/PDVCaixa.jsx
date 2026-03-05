@@ -998,8 +998,9 @@ export default function PDVCaixa() {
   };
 
   useEffect(() => {
-    // Auto-preencher recebimentos com saldos já configurados
-    setRecebimentosDinheiro(formatarValorExibicao(caixaData.saldoAtual || 0));
+    // Auto-preencher recebimentos: Dinheiro = Liquidez - (PIX + Crédito + Débito + Vale)
+    const dinheiroCalculado = caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0);
+    setRecebimentosDinheiro(formatarValorExibicao(dinheiroCalculado));
     setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos?.pix || 0));
     setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos?.credito || 0));
     setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos?.debito || 0));
