@@ -2489,7 +2489,7 @@ export default function PDVCaixa() {
         />
 
 
-        {/* Dialog Saldo Consolidado */}
+        {/* SaldoConsolidadoDialog PLACEHOLDER - will be replaced below */}
         <Dialog open={showSaldoConsolidadoDialog} onOpenChange={setShowSaldoConsolidadoDialog}>
           <style>{`
             @media print {
