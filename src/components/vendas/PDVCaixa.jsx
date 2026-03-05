@@ -998,8 +998,8 @@ export default function PDVCaixa() {
   };
 
   useEffect(() => {
-    // Auto-preencher recebimentos: dinheiro = saldoAtual (valor esperado na gaveta); demais = valor das vendas
-    setRecebimentosDinheiro(formatarValorExibicao(caixaData.saldoAtual));
+    // Auto-preencher recebimentos: dinheiro = valor recebido em vendas apenas
+    setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
     setRecebimentosPix(formatarValorExibicao(caixaData.recebimentos.pix));
     setRecebimentosCredito(formatarValorExibicao(caixaData.recebimentos.credito || 0));
     setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.debito || 0));
@@ -1241,7 +1241,7 @@ export default function PDVCaixa() {
                         onChange={(e) => setRecebimentosDinheiro(e.target.value)}
                         onFocus={(e) => e.target.select()}
                         className="w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-pointer"
-                        placeholder={formatarValorExibicao(caixaData.saldoAtual)}
+                        placeholder={formatarValorExibicao(caixaData.recebimentos.dinheiro)}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
