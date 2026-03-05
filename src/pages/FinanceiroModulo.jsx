@@ -463,6 +463,10 @@ export default function FinanceiroModuloPage() {
           <TabsContent value="pagamentos" className="mt-0">
             <FormasPagamentoManager />
           </TabsContent>
+
+          <TabsContent value="orcamento" className="mt-0">
+            <ExecucaoOrcamentaria />
+          </TabsContent>
         </div>
       </Tabs>
 
