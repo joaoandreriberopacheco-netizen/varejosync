@@ -1294,10 +1294,12 @@ export default function PDVCaixa() {
 
                    {/* Fechamento inline no balanço */}
                    {!modoVisualizacao && (() => {
-                     const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                     const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                     const diferenca = totalConferido - caixaData.liquidez;
-                     const temDiferenca = Math.abs(diferenca) > 0.01;
+                      const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+                      const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+                      // Vale troca é não-monetário: desconta do esperado para comparação justa
+                      const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
+                      const diferenca = totalConferido - esperado;
+                      const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
                         const pw = window.open('', '_blank', 'width=800,height=900');
                         if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
