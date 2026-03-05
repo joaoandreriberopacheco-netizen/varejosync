@@ -170,14 +170,17 @@ function MiniCal({ base, rangeStart, rangeEnd, hover, onDay, onHover, onPrev, on
 }
 
 // ─── Periodo Picker ───────────────────────────────────────────────────────────
-const CHIPS = [
+const CHIPS_ROW1 = [
   { v: 'hoje',   l: 'Hoje' },
   { v: 'ontem',  l: 'Ontem' },
   { v: 'semana', l: 'Semana' },
+];
+const CHIPS_ROW2 = [
   { v: 'mes',    l: 'Mês' },
   { v: 'tudo',   l: 'Tudo' },
   { v: 'periodo', l: 'Período' },
 ];
+const ALL_CHIPS = [...CHIPS_ROW1, ...CHIPS_ROW2];
 
 function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom }) {
   const [showCal, setShowCal] = useState(false);
@@ -188,25 +191,6 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
   const baseLeft = addMonths(new Date(hoje.getFullYear(), hoje.getMonth(), 1), offset);
   const rs = customStart ? new Date(customStart) : null;
   const re = customEnd ? new Date(customEnd + 'T23:59:59') : null;
-
-  const idx = CHIPS.findIndex(c => c.v === periodo);
-  const current = CHIPS[idx] || CHIPS[0];
-
-  const goPrev = () => {
-    const newIdx = (idx - 1 + CHIPS.length) % CHIPS.length;
-    const next = CHIPS[newIdx];
-    onPeriodo(next.v);
-    if (next.v === 'periodo') setShowCal(true);
-    else setShowCal(false);
-  };
-
-  const goNext = () => {
-    const newIdx = (idx + 1) % CHIPS.length;
-    const next = CHIPS[newIdx];
-    onPeriodo(next.v);
-    if (next.v === 'periodo') setShowCal(true);
-    else setShowCal(false);
-  };
 
   const handleDay = (d) => {
     if (!rs || (rs && re)) {
@@ -223,37 +207,38 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
     ? `${format(rs, 'dd/MM')} – ${format(re, 'dd/MM')}`
     : rs ? `${format(rs, 'dd/MM')} – ...` : 'Período';
 
-  const label = periodo === 'periodo' ? rangeLabel : current.l;
+  const chipLabel = (c) => c.v === 'periodo' ? rangeLabel : c.l;
+
+  const renderChip = (c) => (
+    <button
+      key={c.v}
+      onClick={() => {
+        onPeriodo(c.v);
+        if (c.v === 'periodo') setShowCal(s => !s);
+        else setShowCal(false);
+      }}
+      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+        ${periodo === c.v
+          ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
+          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+      {chipLabel(c)}
+      {c.v === 'periodo' && periodo === 'periodo' && (rs || re) && (
+        <span onMouseDown={(e) => { e.stopPropagation(); onCustom('start', ''); onCustom('end', ''); onPeriodo('mes'); setShowCal(false); }}>
+          <X className="w-3 h-3 ml-0.5" />
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center gap-2">
-        <button
-          onClick={goPrev}
-          className="flex-none w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 active:scale-95 transition-transform">
-          <ChevronLeft className="w-3.5 h-3.5" />
-        </button>
-
-        <button
-          onClick={() => { if (periodo === 'periodo') setShowCal(s => !s); }}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 transition-colors">
-          {label}
-          {periodo === 'periodo' && (rs || re) && (
-            <span onMouseDown={(e) => { e.stopPropagation(); onCustom('start', ''); onCustom('end', ''); onPeriodo('mes'); setShowCal(false); }}>
-              <X className="w-3 h-3 ml-0.5" />
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={goNext}
-          className="flex-none w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 active:scale-95 transition-transform">
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex gap-1.5">{CHIPS_ROW1.map(renderChip)}</div>
+        <div className="flex gap-1.5">{CHIPS_ROW2.map(renderChip)}</div>
       </div>
 
       {showCal && periodo === 'periodo' &&
-        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl">
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl border border-gray-100 dark:border-gray-700">
           <MiniCal base={baseLeft} rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset(o => o - 1)} onNext={() => setOffset(o => o + 1)} />
           {rs && re &&
             <div className="mt-2 flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
