@@ -279,7 +279,7 @@ export default function FinanceiroModuloPage() {
         <p className="text-xs text-gray-500 dark:text-gray-400">Fluxo de Caixa, Contas e Projeções</p>
       </div>
 
-      <Tabs defaultValue="fluxo" className="w-full">
+      <Tabs defaultValue="contas" className="w-full">
         <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
           <div className="flex w-full">
             <TabsTrigger
