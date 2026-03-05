@@ -329,19 +329,20 @@ function LancRow({ l, onClick }) {
   const data = l.data_pagamento || l.data_vencimento;
   const val  = Math.abs(l.valor || 0);
 
+  // Paleta glacial: ícone e valor sempre em cinza, sem cores vibrantes
   let icon, iconBg, valColor;
   if (isT) {
-    icon = <ArrowRightLeft className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />;
+    icon = <ArrowRightLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />;
     iconBg = 'bg-gray-100 dark:bg-gray-700';
-    valColor = 'text-gray-600 dark:text-gray-300';
+    valColor = 'text-gray-500 dark:text-gray-400';
   } else if (isR) {
-    icon = <ArrowDownLeft className={`w-3.5 h-3.5 ${pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />;
-    iconBg = pago ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-700';
-    valColor = pago ? 'text-green-600 dark:text-green-400' : 'text-gray-400';
+    icon = <ArrowDownLeft className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />;
+    iconBg = 'bg-gray-100 dark:bg-gray-700';
+    valColor = pago ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500';
   } else {
-    icon = <ArrowUpRight className={`w-3.5 h-3.5 ${pago ? 'text-red-500 dark:text-red-400' : 'text-gray-400'}`} />;
-    iconBg = pago ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-700';
-    valColor = pago ? 'text-red-500 dark:text-red-400' : 'text-gray-400';
+    icon = <ArrowUpRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />;
+    iconBg = 'bg-gray-100 dark:bg-gray-700';
+    valColor = pago ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500';
   }
 
   return (
