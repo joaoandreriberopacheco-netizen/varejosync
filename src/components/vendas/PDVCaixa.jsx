@@ -570,14 +570,15 @@ export default function PDVCaixa() {
     setProcessandoVenda(true);
 
     try {
-      const pagamentosArray = [];
-      if (pagamentosDinheiro > 0) pagamentosArray.push({ forma_pagamento: 'Dinheiro', valor: pagamentosDinheiro, parcelas: 1 });
-      if (pagamentosPix > 0) pagamentosArray.push({ forma_pagamento: 'PIX', valor: pagamentosPix, parcelas: 1 });
-      if (pagamentosDebito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
-      if (pagamentosCredito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
-      if (pagamentosVale > 0 && valeEncontrado) {
-        pagamentosArray.push({ forma_pagamento: 'Vale Troca', valor: pagamentosVale, parcelas: 1, vale_codigo: valeEncontrado.codigo, vale_id: valeEncontrado.id });
-      }
+       const pagamentosArray = [];
+       // Dinheiro: usa valor_total (já descontar troco aqui, não no backend)
+       if (pagamentosDinheiro > 0) pagamentosArray.push({ forma_pagamento: 'Dinheiro', valor: pedidoSelecionado.valor_total, parcelas: 1 });
+       if (pagamentosPix > 0) pagamentosArray.push({ forma_pagamento: 'PIX', valor: pagamentosPix, parcelas: 1 });
+       if (pagamentosDebito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
+       if (pagamentosCredito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
+       if (pagamentosVale > 0 && valeEncontrado) {
+         pagamentosArray.push({ forma_pagamento: 'Vale Troca', valor: pagamentosVale, parcelas: 1, vale_codigo: valeEncontrado.codigo, vale_id: valeEncontrado.id });
+       }
 
       // ── CHAMADA AO BACKEND (atômico + selo frio + número único) ──
       const { data } = await processarVendaCaixa({
