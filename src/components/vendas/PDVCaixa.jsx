@@ -2012,8 +2012,6 @@ export default function PDVCaixa() {
           currentUser={currentUser} formatValor={formatValor}
         />
 
-        {/* Dialog de Fechamento removido — o fechamento agora é feito inline no balanço via FechamentoCaixaButton */}
-
         {/* Calculadora de Cédulas/Moedas */}
         <Dialog open={showCalculadoraCedulas} onOpenChange={setShowCalculadoraCedulas}>
           <DialogContent className="max-w-md dark:bg-gray-900 dark:text-gray-200">
