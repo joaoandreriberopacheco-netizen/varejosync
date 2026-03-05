@@ -54,8 +54,6 @@ import {
 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
-import { createPageUrl } from '@/utils';
-import { useNavigate } from 'react-router-dom';
 import LiberacaoEntrega from './LiberacaoEntrega';
 import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
