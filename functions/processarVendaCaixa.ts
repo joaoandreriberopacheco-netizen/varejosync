@@ -156,15 +156,14 @@ Deno.serve(async (req) => {
     }
   }
 
-  // 4d. Atualizar saldo do caixa (dinheiro) — adiciona apenas o valor da venda, não o recebido (troco é devolvido)
+  // 4d. Atualizar saldo do caixa (dinheiro) — soma o dinheiro recebido (valor já é valor_total)
   const pagDinheiro = pagamentos.find(p => p.forma_pagamento === 'Dinheiro');
   if (pagDinheiro && pagDinheiro.valor > 0 && conta_caixa_id) {
     try {
       const conta = await svc.entities.ContasFinanceiras.get(conta_caixa_id);
-      // O saldo do caixa aumenta apenas pelo valor da venda, não pelo dinheiro recebido
-      // Troco já foi descontado pela lógica do frontend: valor_venda = pagDinheiro.valor
+      // O saldo do caixa recebe o valor de dinheiro que foi submetido (já é valor_total da venda, sem troco)
       await svc.entities.ContasFinanceiras.update(conta_caixa_id, {
-        saldo_atual: (conta?.saldo_atual || 0) + rascunho.valor_total,
+        saldo_atual: (conta?.saldo_atual || 0) + pagDinheiro.valor,
       });
     } catch (err) {
       erros.push(`Saldo caixa: ${err.message}`);
