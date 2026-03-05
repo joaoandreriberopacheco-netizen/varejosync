@@ -1004,21 +1004,45 @@ export default function PDVCaixa() {
     setRecebimentosDebito(formatarValorExibicao(caixaData.recebimentos.debito || 0));
   }, [caixaData]);
 
-  const handleFecharCaixa = () => {
-    const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || caixaData.recebimentos.dinheiro;
-    const totalRecebimentos = dinheiroContado + caixaData.recebimentos.pix + caixaData.recebimentos.cartao;
-    const diferenca = Math.abs(totalRecebimentos - caixaData.saldoAtual);
+  const handleFecharCaixa = async () => {
+    const dinheiroContado = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
+    const totalConferido = dinheiroContado + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
+    const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
+    const diferenca = totalConferido - esperado;
     
-    if (diferenca > 0.01) {
+    if (Math.abs(diferenca) > 0.01) {
       toast({
         title: "Valores não conferem",
-        description: "Ajuste o valor de dinheiro antes de fechar o caixa.",
+        description: `Faltando ${formatValor(Math.abs(diferenca))}. Ajuste antes de fechar.`,
         variant: "destructive"
       });
       return;
     }
     
-    setShowFechamentoDialog(true);
+    setFechandoCaixa(true);
+    try {
+      await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+        status: 'Fechado',
+        data_fechamento: new Date().toISOString()
+      });
+
+      toast({
+        title: "✓ Caixa fechado com sucesso!",
+        className: "bg-emerald-100 text-emerald-800",
+        duration: 2000
+      });
+
+      setView('dashboard');
+      loadData();
+    } catch (error) {
+      toast({
+        title: "Erro ao fechar caixa",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setFechandoCaixa(false);
+    }
   };
 
   const formatValor = (valor) => {
