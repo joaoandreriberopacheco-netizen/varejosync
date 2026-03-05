@@ -32,15 +32,16 @@ function dateRange(periodo, cs, ce) {
 }
 
 // ─── Categoria Badge ──────────────────────────────────────────────────────────
+// Paleta glacial: apenas tons de cinza, sem cores vibrantes
 const CAT_CORES = {
-  'Venda de Produto':       { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-300' },
-  'Prestação de Serviço':   { bg: 'bg-teal-50 dark:bg-teal-900/20',      text: 'text-teal-700 dark:text-teal-300' },
-  'Compra de Mercadoria':   { bg: 'bg-red-50 dark:bg-red-900/20',         text: 'text-red-600 dark:text-red-400' },
-  'Salários':               { bg: 'bg-orange-50 dark:bg-orange-900/20',   text: 'text-orange-700 dark:text-orange-300' },
-  'Aluguel':                { bg: 'bg-purple-50 dark:bg-purple-900/20',   text: 'text-purple-700 dark:text-purple-300' },
-  'Impostos':               { bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-300' },
-  'Utilities':              { bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-blue-700 dark:text-blue-300' },
-  'Marketing':              { bg: 'bg-pink-50 dark:bg-pink-900/20',       text: 'text-pink-700 dark:text-pink-300' },
+  'Venda de Produto':       { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
+  'Prestação de Serviço':   { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
+  'Compra de Mercadoria':   { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
+  'Salários':               { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
+  'Aluguel':                { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
+  'Impostos':               { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
+  'Utilities':              { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
+  'Marketing':              { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-600 dark:text-gray-300' },
 };
 
 function CategoriaBadge({ cat }) {
