@@ -40,9 +40,12 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
 
   const loadCaixas = async () => {
     try {
-      const [todasContas, todosTurnos] = await Promise.all([
+      const [todasContas, todosTurnos, todasVendas, todosMovimentos, todasDespesas] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
+        base44.entities.PedidoVenda.list(),
+        base44.entities.MovimentosCaixa.list(),
+        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
       ]);
 
       const caixasPDV = todasContas.filter(c => 
@@ -50,17 +53,35 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
         (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
       );
 
-      // SELO FRIO: o seletor confia nos dados do turno — não recalcula nada.
-      // Os totais corretos já estão gravados no TurnoCaixa pelo PDVCaixa.
+      // Recalcular liquidez dinamicamente com dados reais
       const liquidez = {};
       caixasPDV.forEach(caixa => {
         const turnoAberto = todosTurnos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turnoAberto) {
+          // Somar vendas do turno
+          const vendasTurno = todasVendas.filter(v => v.turno_caixa_id === turnoAberto.id);
+          const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+          
+          // Somar reforços
+          const reforcos = todosMovimentos.filter(m => m.turno_caixa_id === turnoAberto.id && m.tipo === 'Reforço');
+          const totalReforcos = reforcos.reduce((sum, m) => sum + (m.valor || 0), 0);
+          
+          // Somar recolhimentos/sangrias
+          const sangrias = todosMovimentos.filter(m => m.turno_caixa_id === turnoAberto.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa'));
+          const totalSangrias = sangrias.reduce((sum, m) => sum + (m.valor || 0), 0);
+          
+          // Somar despesas
+          const despesas = todasDespesas.filter(d => d.turno_caixa_id === turnoAberto.id);
+          const totalDespesas = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
+          
+          const saldoInicial = turnoAberto.saldo_inicial || 0;
+          const liquidezCalculada = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
+          
           liquidez[caixa.id] = {
             turnoAberto: true,
-            saldoInicial: turnoAberto.saldo_inicial || 0,
-            totalVendas: turnoAberto.total_vendas || 0,
-            liquidez: (turnoAberto.saldo_inicial || 0) + (turnoAberto.total_vendas || 0) + (turnoAberto.total_reforcos || 0) - (turnoAberto.total_sangrias || 0) - (turnoAberto.total_despesas || 0),
+            saldoInicial: saldoInicial,
+            totalVendas: totalVendas,
+            liquidez: liquidezCalculada,
           };
         } else {
           liquidez[caixa.id] = { turnoAberto: false };
