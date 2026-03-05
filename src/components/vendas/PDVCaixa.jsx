@@ -2240,109 +2240,16 @@ export default function PDVCaixa() {
                       </div>
                     ))}
                   </div>
-                  </>
-                  )}
-                      </div>
-            {vendasFinalizadas.length > 0 && (
-              <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 p-4">
-                <div className="flex justify-between items-center max-w-4xl mx-auto">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total do Turno</span>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                    {formatValor(caixaData.totalVendas)}
-                  </span>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog de Detalhes da Venda */}
-        <Dialog open={!!vendaDetalhada} onOpenChange={() => setVendaDetalhada(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200">
-            {vendaDetalhada && (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="text-lg text-gray-800 dark:text-gray-200">
-                    Detalhes da Venda - {vendaDetalhada.numero}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">Cliente:</span>
-                      <p className="font-medium text-gray-800 dark:text-gray-200">{vendaDetalhada.cliente_nome}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">Vendedor:</span>
-                      <p className="font-medium text-gray-800 dark:text-gray-200">{vendaDetalhada.vendedor_nome}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">Horário:</span>
-                      <p className="font-medium text-gray-800 dark:text-gray-200">
-                        {format(new Date(vendaDetalhada.created_date), 'dd/MM/yyyy HH:mm')}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 dark:text-gray-400">Pagamento:</span>
-                      {vendaDetalhada.pagamentos?.map((p, idx) => (
-                        <p key={idx} className="font-medium text-gray-800 dark:text-gray-200">
-                          {p.forma_pagamento} - {formatValor(p.valor)}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">Itens da Venda</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Produto</TableHead>
-                          <TableHead className="text-right">Qtd</TableHead>
-                          <TableHead className="text-right">Preço Unit.</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {vendaDetalhada.itens?.map((item, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell>{item.produto_nome}</TableCell>
-                            <TableCell className="text-right">{item.quantidade}</TableCell>
-                            <TableCell className="text-right">{formatValor(item.preco_unitario_praticado)}</TableCell>
-                            <TableCell className="text-right font-semibold">{formatValor(item.total)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
-                      <span className="font-medium text-gray-800 dark:text-gray-200">
-                        {formatValor(vendaDetalhada.subtotal)}
-                      </span>
-                    </div>
-                    {vendaDetalhada.valor_desconto > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Desconto:</span>
-                        <span className="font-medium text-red-600 dark:text-red-400">
-                          -{formatValor(vendaDetalhada.valor_desconto)}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <span className="text-gray-800 dark:text-gray-200">Total:</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">
-                        {formatValor(vendaDetalhada.valor_total)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+                  <VendasTurnoDialog
+                    open={showVendasDialog} onOpenChange={setShowVendasDialog}
+                    vendasFinalizadas={vendasFinalizadas} turnoAtivo={turnoAtivo}
+                    caixaData={caixaData} formatValor={formatValor}
+                    onVerDetalhes={setVendaDetalhada}
+                  />
+                  <VendaDetalheDialog
+                    venda={vendaDetalhada} onClose={() => setVendaDetalhada(null)}
+                    formatValor={formatValor}
+                  />
 
         <ListaMovimentosDialog
           open={showReforcosDialog} onOpenChange={setShowReforcosDialog}
