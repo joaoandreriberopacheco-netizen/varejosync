@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Monitor, Lock } from 'lucide-react';
+import { Monitor, Lock, X, ChevronRight } from 'lucide-react';
 
 export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
   const [caixasDisponiveis, setCaixasDisponiveis] = useState([]);
