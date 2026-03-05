@@ -1371,7 +1371,7 @@ export default function PDVCaixa() {
                        setTimeout(() => { pw.print(); pw.close(); }, 300);
                      };
                      return (
-                       <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
+                       <div id="secao-fechamento-caixa" className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm max-w-4xl mx-auto">
                          <div className="flex items-center justify-between mb-3">
                            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Fechamento de Caixa</h3>
                            {!temDiferenca ? (
