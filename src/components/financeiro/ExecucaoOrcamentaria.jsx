@@ -215,31 +215,27 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center gap-1">
-        <button onClick={() => scrollRef.current && (scrollRef.current.scrollLeft -= 80)} className="flex-none w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto flex-1 min-w-0" style={{ scrollbarWidth: 'none', scrollBehavior: 'smooth' }}>
-          {CHIPS.map((c) =>
-          <button key={c.v} onClick={() => {onPeriodo(c.v);setShowCal(false);}}
-          className={`flex-none px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-                ${periodo === c.v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-              {c.l}
-            </button>
-          )}
-          <button onClick={() => {onPeriodo('periodo');setShowCal((s) => !s);}}
-          className={`flex-none flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-              ${periodo === 'periodo' ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-            {rangeLabel}
-            {periodo === 'periodo' && (rs || re) &&
-            <span onMouseDown={(e) => {e.stopPropagation();onCustom('start', '');onCustom('end', '');onPeriodo('mes');setShowCal(false);}}>
-                <X className="w-3 h-3 ml-0.5" />
-              </span>
-            }
+      <div
+        ref={scrollRef}
+        className="flex gap-1.5 overflow-x-auto py-0.5"
+        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
+      >
+        {CHIPS.map((c) => (
+          <button key={c.v} onClick={() => { onPeriodo(c.v); setShowCal(false); }}
+            className={`flex-none px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+              ${periodo === c.v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+            {c.l}
           </button>
-        </div>
-        <button onClick={() => scrollRef.current && (scrollRef.current.scrollLeft += 80)} className="flex-none w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-          <ChevronRight className="w-4 h-4" />
+        ))}
+        <button onClick={() => { onPeriodo('periodo'); setShowCal(s => !s); }}
+          className={`flex-none flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+            ${periodo === 'periodo' ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+          {rangeLabel}
+          {periodo === 'periodo' && (rs || re) && (
+            <span onMouseDown={(e) => { e.stopPropagation(); onCustom('start', ''); onCustom('end', ''); onPeriodo('mes'); setShowCal(false); }}>
+              <X className="w-3 h-3 ml-0.5" />
+            </span>
+          )}
         </button>
       </div>
 
