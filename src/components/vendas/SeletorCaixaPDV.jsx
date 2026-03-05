@@ -15,22 +15,19 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
   const [liquidezPorCaixa, setLiquidezPorCaixa] = useState({});
   const [descricaoSaldo, setDescricaoSaldo] = useState('');
 
-  // Formatação de moeda com máscara da direita para esquerda
-  const formatCurrency = (value) => {
-    const numbers = value.replace(/\D/g, '');
-    if (!numbers) return '';
-    
-    const padded = numbers.padStart(3, '0');
-    const integerPart = padded.slice(0, -2) || '0';
-    const decimalPart = padded.slice(-2);
-    
-    const formatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return `${formatted},${decimalPart}`;
-  };
-
   const handleSaldoChange = (e) => {
-    const formatted = formatCurrency(e.target.value);
-    setSaldoInicial(formatted);
+    const numbers = e.target.value.replace(/\D/g, '');
+    if (numbers.length > 10) return;
+    
+    if (!numbers) {
+      setSaldoInicial('');
+      return;
+    }
+    
+    const integerPart = numbers.slice(0, -2) || '0';
+    const decimalPart = numbers.slice(-2);
+    const formatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    setSaldoInicial(`${formatted},${decimalPart}`);
   };
 
   useEffect(() => {
