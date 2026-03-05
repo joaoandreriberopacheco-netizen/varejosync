@@ -217,8 +217,13 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
     <div className="relative w-full">
       <div
         ref={scrollRef}
-        className="flex gap-1.5 overflow-x-auto py-0.5"
-        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
+        className="flex gap-1.5 py-0.5"
+        style={{
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
       >
         {CHIPS.map((c) => (
           <button key={c.v} onClick={() => { onPeriodo(c.v); setShowCal(false); }}
