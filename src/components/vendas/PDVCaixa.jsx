@@ -2489,15 +2489,9 @@ export default function PDVCaixa() {
         />
 
 
-        {/* SaldoConsolidado extraído para SaldoConsolidadoDialog */}
+        {/* SaldoConsolidado extraído - componente separado acima */}
         <Dialog open={false} onOpenChange={() => {}}><DialogContent className="hidden"><div>
-              <button
-                onClick={() => {
-                    const el = document.getElementById('saldo-consolidado-print');
-                    const printContent = el ? el.innerHTML : '';
-                    const printWindow = window.open('', '_blank', 'width=800,height=900');
-                    if (!printWindow) { alert('Permita pop-ups para imprimir.'); return; }
-                    printWindow.document.write(`
+              <button onClick={() => {}}>
                     <html><head><title>Saldo Consolidado</title>
                     <style>
                       body { font-family: Inter, sans-serif; font-size: 12px; color: #111; margin: 10mm; }
