@@ -168,6 +168,7 @@ export default function PDVCaixa() {
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
   const [modoVisualizacao, setModoVisualizacao] = useState(false);
   const [showSeletorCaixa, setShowSeletorCaixa] = useState(true);
+  const [fechandoCaixa, setFechandoCaixa] = useState(false);
 
   // Renamed stats to caixaData and updated structure based on outline
   const [caixaData, setCaixaData] = useState({
