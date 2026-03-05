@@ -57,58 +57,57 @@ function CategoriaBadge({ cat }) {
 // ─── KPI Strip ────────────────────────────────────────────────────────────────
 function KpiStrip({ kpis }) {
   const taxa = kpis.entrou > 0 ? ((kpis.saiu / kpis.entrou) * 100).toFixed(0) : 0;
-  const taxaOk = taxa <= 80;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {/* Linha 1: entrou / saiu */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 mb-1">
-            <div className="w-5 h-5 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
-              <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400" />
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <TrendingUp className="w-3 h-3 text-gray-500 dark:text-gray-400" />
             </div>
             <p className="text-[9px] uppercase tracking-wider text-gray-400">Receitas</p>
           </div>
           <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{R(kpis.entrou)}</p>
-          {kpis.pEntrou > 0 && <p className="text-[9px] text-gray-400 mt-0.5">+{R(kpis.pEntrou)} prev.</p>}
+          {kpis.pEntrou > 0 && <p className="text-[9px] text-gray-400 mt-1">+{R(kpis.pEntrou)} prev.</p>}
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 mb-1">
-            <div className="w-5 h-5 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-              <TrendingDown className="w-3 h-3 text-red-500 dark:text-red-400" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <TrendingDown className="w-3 h-3 text-gray-500 dark:text-gray-400" />
             </div>
             <p className="text-[9px] uppercase tracking-wider text-gray-400">Despesas</p>
           </div>
-          <p className="text-sm font-bold text-red-500 truncate">{R(kpis.saiu)}</p>
-          {kpis.pSaiu > 0 && <p className="text-[9px] text-gray-400 mt-0.5">+{R(kpis.pSaiu)} prev.</p>}
+          <p className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate">{R(kpis.saiu)}</p>
+          {kpis.pSaiu > 0 && <p className="text-[9px] text-gray-400 mt-1">+{R(kpis.pSaiu)} prev.</p>}
         </div>
       </div>
 
       {/* Linha 2: saldo + barra de execução */}
-      <div className="bg-gray-900 dark:bg-gray-100 rounded-2xl p-3.5">
-        <div className="flex items-center justify-between mb-2">
+      <div className="bg-gray-900 dark:bg-gray-100 rounded-2xl p-4">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Saldo de Execução</p>
-            <p className={`text-lg font-bold ${kpis.saldo < 0 ? 'text-red-400' : 'text-white dark:text-gray-900'}`}>{R(kpis.saldo)}</p>
+            <p className="text-lg font-bold text-white dark:text-gray-900">{R(kpis.saldo)}</p>
           </div>
           <div className="text-right">
             <p className="text-[9px] text-gray-500 mb-0.5">Taxa de Gasto</p>
-            <p className={`text-sm font-bold ${taxaOk ? 'text-green-400' : 'text-red-400'}`}>{taxa}%</p>
+            <p className="text-sm font-bold text-gray-300 dark:text-gray-700">{taxa}%</p>
           </div>
         </div>
-        {/* Barra de progresso */}
-        <div className="h-1.5 bg-gray-700 dark:bg-gray-300 rounded-full overflow-hidden">
+        {/* Barra de progresso — sem cores, apenas claridade */}
+        <div className="h-1 bg-gray-700 dark:bg-gray-300 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${taxaOk ? 'bg-green-400' : 'bg-red-400'}`}
+            className="h-full bg-gray-400 dark:bg-gray-500 rounded-full transition-all"
             style={{ width: `${Math.min(Number(taxa), 100)}%` }}
           />
         </div>
       </div>
 
-      {/* Linha 3: totais por categoria - resumo */}
-      {(kpis.totalTransferencias > 0) && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm flex items-center gap-2">
+      {/* Transferências */}
+      {kpis.totalTransferencias > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
           <ArrowRightLeft className="w-4 h-4 text-gray-400 flex-none" />
           <div className="flex-1 min-w-0">
             <p className="text-[9px] uppercase tracking-wider text-gray-400">Transferências</p>
