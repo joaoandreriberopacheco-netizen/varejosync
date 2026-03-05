@@ -283,12 +283,6 @@ export default function FinanceiroModuloPage() {
         <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
           <div className="flex w-full">
             <TabsTrigger
-                value="fluxo"
-                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-              <TrendingUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Fluxo de Caixa</span>
-            </TabsTrigger>
-            <TabsTrigger
                 value="contas"
                 className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
               <Wallet className="w-4 h-4 text-gray-500 dark:text-gray-400" />
