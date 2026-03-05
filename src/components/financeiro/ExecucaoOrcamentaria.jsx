@@ -503,7 +503,7 @@ export default function ExecucaoOrcamentaria() {
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-3 pb-28">
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
 
       {/* Header de contexto */}
       <div className="flex items-center gap-2">
