@@ -306,6 +306,12 @@ export default function FinanceiroModuloPage() {
               <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Pagamentos</span>
             </TabsTrigger>
+            <TabsTrigger
+                value="orcamento"
+                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+              <Target className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Execução Orçamentária</span>
+            </TabsTrigger>
           </div>
         </TabsList>
 
