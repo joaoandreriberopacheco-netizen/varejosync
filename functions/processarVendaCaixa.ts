@@ -221,7 +221,10 @@ Deno.serve(async (req) => {
         }
       }
 
-      const hoje = new Date().toISOString().split('T')[0];
+      // Usa data local do servidor (UTC-5 para America/Rio_Branco)
+      const agora = new Date();
+      const offsetMs = -5 * 60 * 60 * 1000; // UTC-5
+      const hoje = new Date(agora.getTime() + offsetMs).toISOString().split('T')[0];
 
       await svc.entities.LancamentoFinanceiro.create({
         tipo: 'Receita',

@@ -60,10 +60,11 @@ Deno.serve(async (req) => {
         const contaDestinoNome = forma?.conta_destino_nome || pag.forma_pagamento || 'Caixa';
         const formaPgId = forma?.id || null;
 
-        // Data: usa created_date do pedido
+        // Data: usa created_date do pedido convertido para UTC-5 (America/Rio_Branco)
+        const offsetMs = -5 * 60 * 60 * 1000;
         const dataRef = pedido.created_date
-          ? new Date(pedido.created_date).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
+          ? new Date(new Date(pedido.created_date).getTime() + offsetMs).toISOString().split('T')[0]
+          : new Date(new Date().getTime() + offsetMs).toISOString().split('T')[0];
 
         await svc.entities.LancamentoFinanceiro.create({
           tipo: 'Receita',
