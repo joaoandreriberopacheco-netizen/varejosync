@@ -223,6 +223,15 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </>
         )}
 
+        {/* Anexos */}
+        <div className="px-5 pb-4">
+          <AnexosPanel
+            referenciaId={lancamento.id}
+            referenciaTipo="LancamentoFinanceiro"
+            referenciaNumero={lancamento.descricao}
+          />
+        </div>
+
         {/* Fechar */}
         <div className="px-5 pb-5 pt-1">
           <button onClick={onClose} className="w-full text-xs text-gray-400 py-2 hover:text-gray-600 dark:hover:text-gray-300">
