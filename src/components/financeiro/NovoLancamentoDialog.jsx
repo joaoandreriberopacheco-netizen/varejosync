@@ -196,7 +196,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         </div>
       </div>
 
-      {step === 'valor' ? (
+      {step === 'valor' && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
           <div className="text-center w-full">
             <p className="text-[0.7rem] uppercase tracking-widest text-gray-400 mb-2">Valor</p>
@@ -219,7 +219,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             Continuar <ChevronRight className="w-5 h-5" />
           </button>
         </div>
-      ) : (
+      )}
+      {step === 'detalhes' && (
         <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-3 pt-2">
           {/* Resumo */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm">
