@@ -145,7 +145,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     } else {
       // Lançamento único
       const isPago = status === 'Pago';
-      await base44.entities.LancamentoFinanceiro.create({
+      const novoLancamento = await base44.entities.LancamentoFinanceiro.create({
         tipo, descricao, valor: valorNumerico,
         data_vencimento: data, data_pagamento: isPago ? data : null,
         status, status_conciliacao: isPago ? 'Pendente' : 'N/A',
@@ -157,6 +157,12 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         const delta = tipo === 'Receita' ? valorNumerico : -valorNumerico;
         await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
+      // Para lançamento único, ir para step de anexos
+      toast({ title: 'Lançamento salvo!' });
+      onSaved?.();
+      setLancamentoCriado(novoLancamento);
+      setStep('anexos');
+      return;
     }
 
     toast({ title: 'Lançamento salvo!' });
