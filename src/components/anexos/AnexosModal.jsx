@@ -40,7 +40,7 @@ function AnexoCard({ anexo, onDelete }) {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 flex items-center gap-4">
+    <div className="bg-gray-800 rounded-2xl p-4 flex items-center gap-4">
       <ThumbnailIcon anexo={anexo} large />
       <div className="flex-1 min-w-0">
         <a
