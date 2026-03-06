@@ -5,7 +5,7 @@ import { deletarAnexo } from '@/functions/deletarAnexo';
 import { base44 } from '@/api/base44Client';
 import AnexosModal from './AnexosModal';
 
-export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNomero = '' }) {
+export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNomero = '', inline = false }) {
   const [anexos, setAnexos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
