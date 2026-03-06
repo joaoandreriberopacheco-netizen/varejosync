@@ -174,7 +174,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             const isActive = tipo === t.value;
             return (
               <button key={t.value} onClick={() => setTipo(t.value)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}>
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900 shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}>
                 <Icon className="w-3.5 h-3.5" />{t.label}
               </button>
             );
