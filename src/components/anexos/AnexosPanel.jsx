@@ -7,12 +7,12 @@ import { base44 } from '@/api/base44Client';
 const TIPOS_DOCUMENTO = ['Comprovante', 'Boleto', 'Nota Fiscal', 'Contrato', 'Orçamento', 'Outro'];
 
 const TIPO_CONFIG = {
-  'Nota Fiscal':  { color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  'Boleto':       { color: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-  'Comprovante':  { color: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  'Contrato':     { color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-  'Orçamento':    { color: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
-  'Outro':        { color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+  'Nota Fiscal':  { color: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' },
+  'Boleto':       { color: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' },
+  'Comprovante':  { color: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' },
+  'Contrato':     { color: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' },
+  'Orçamento':    { color: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' },
+  'Outro':        { color: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' },
 };
 
 const ORDER = ['Nota Fiscal', 'Boleto', 'Comprovante', 'Contrato', 'Orçamento', 'Outro'];
