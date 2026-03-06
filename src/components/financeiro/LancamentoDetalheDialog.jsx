@@ -138,6 +138,11 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               Ref: {lancamento.referencia_numero}
             </span>
           )}
+          {lancamento.is_recorrente && lancamento.data_vencimento && (
+            <span className="text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+              {format(new Date(lancamento.data_vencimento), "MMM/yyyy", { locale: ptBR }).toUpperCase()}
+            </span>
+          )}
           {isPendente && (
             <span className="flex items-center gap-1 text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
               <Clock className="w-2.5 h-2.5" /> Aguard. Conciliação
