@@ -269,7 +269,7 @@ export default function FiltrosFluxoCaixa({
         <button
           onClick={() => onPendentes(!pendentes)}
           className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-            ${pendentes ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+            ${pendentes ? 'bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
           <Clock className="w-3 h-3" /> Conciliação
         </button>
       </div>
