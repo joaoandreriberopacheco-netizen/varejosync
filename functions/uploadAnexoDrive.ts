@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
       tamanho_bytes: file_size || 0,
       origem: 'upload_manual',
       descricao,
+      tipo_documento,
     });
 
     return Response.json({ success: true, anexo });
