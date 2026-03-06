@@ -65,7 +65,7 @@ function LancRow({ l, onClick }) {
       className="w-full flex items-start gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left">
       <span className="bg-gray-100 rounded-xl flex-none w-8 h-8 flex items-center justify-center dark:bg-gray-700">{icon}</span>
       <span className="flex-1 min-w-0">
-        <span className={`block text-[0.82rem] font-medium whitespace-normal break-words leading-snug ${prev ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}`}>
+        <span className={`block text-[0.82rem] font-medium whitespace-normal break-words leading-snug text-gray-800 dark:text-gray-100`}>
           {l.descricao}
         </span>
         <span className="flex items-center flex-wrap gap-1 mt-0.5">
