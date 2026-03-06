@@ -14,16 +14,18 @@ export default function AnexoCompartilhado() {
   const [abrirNovo, setAbrirNovo] = useState(false);
   const [lancamentoCriadoId, setLancamentoCriadoId] = useState(null);
 
-  // Tenta capturar o arquivo compartilhado (via sessionStorage, colocado pelo Service Worker)
+  // Tenta capturar o arquivo compartilhado (via Cache Storage, colocado pelo Service Worker)
   useEffect(() => {
     const carregarArquivo = async () => {
       setCarregando(true);
 
-      // Tentativa 1: arquivo salvo pelo Service Worker no sessionStorage
-      const storedFile = sessionStorage.getItem('sharedFile');
-      if (storedFile) {
-        try {
-          const parsed = JSON.parse(storedFile);
+      // Tentativa 1: arquivo salvo pelo Service Worker no Cache Storage
+      try {
+        const cache = await caches.open('share-target-data');
+        const cachedResponse = await cache.match('/_shared_file_payload');
+        if (cachedResponse) {
+          const parsed = await cachedResponse.json();
+          await cache.delete('/_shared_file_payload'); // limpa após ler
           const byteString = atob(parsed.base64);
           const ab = new ArrayBuffer(byteString.length);
           const ia = new Uint8Array(ab);
@@ -32,11 +34,10 @@ export default function AnexoCompartilhado() {
           const file = new File([blob], parsed.name, { type: parsed.type });
           const previewUrl = URL.createObjectURL(blob);
           setArquivo({ file, previewUrl, nome: parsed.name, tipo: parsed.type });
-          sessionStorage.removeItem('sharedFile');
           setCarregando(false);
           return;
-        } catch {}
-      }
+        }
+      } catch {}
 
       // Tentativa 2: parâmetro de URL (texto/link compartilhado)
       const params = new URLSearchParams(window.location.search);
