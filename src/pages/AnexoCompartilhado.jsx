@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Image, File, Link2, Plus, Loader2, CheckCircle2, X, ArrowLeft } from 'lucide-react';
+import { FileText, Image as ImageIcon, File, Link2, Plus, Loader2, CheckCircle2, X, ArrowLeft } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 import BuscarLancamentoSheet from '@/components/anexos/BuscarLancamentoSheet';
