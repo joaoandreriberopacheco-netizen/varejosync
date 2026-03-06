@@ -83,24 +83,24 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-950 dark:bg-gray-950">
-      {/* Header escuro PDV */}
+    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-gray-950">
+      {/* Header */}
       <div className="flex items-center justify-between px-5 pt-6 pb-4">
         <div>
-          <h2 className="text-xl font-semibold text-white font-glacial">Anexos</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white font-glacial">Anexos</h2>
           {referenciaNomero && <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">{referenciaNomero}</p>}
         </div>
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+          className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Tipo Selector — grade PDV */}
+      {/* Tipo Selector */}
       <div className="px-5 pb-3">
-        <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-600 mb-2">Tipo do documento</p>
+        <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-2">Tipo do documento</p>
         <div className="grid grid-cols-3 gap-2">
           {TIPOS_DOCUMENTO.map(tipo => (
             <button
@@ -108,8 +108,8 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
               onClick={() => setTipoSelecionado(tipo)}
               className={`py-4 px-2 rounded-2xl text-sm font-medium transition-all ${
                 tipoSelecionado === tipo
-                  ? 'bg-white text-gray-900'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               {tipo}
@@ -118,12 +118,12 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
         </div>
       </div>
 
-      {/* Upload button — destaque */}
+      {/* Upload button */}
       <div className="px-5 pb-4">
         <button
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="w-full py-4 rounded-2xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center gap-2 text-gray-300 transition-colors border border-dashed border-gray-700"
+          className="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 transition-colors border border-dashed border-gray-300 dark:border-gray-700"
         >
           {uploading
             ? <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm font-medium">Enviando...</span></>
@@ -133,23 +133,23 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
         <input ref={inputRef} type="file" className="hidden" onChange={handleFileChange} />
       </div>
 
-      {/* Lista — fundo ligeiramente mais claro */}
-      <div className="flex-1 overflow-y-auto bg-gray-900 rounded-t-3xl px-5 py-5">
+      {/* Lista */}
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 rounded-t-3xl px-5 py-5 shadow-inner">
         {anexos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
-            <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center">
-              <File className="w-7 h-7 text-gray-600" />
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <File className="w-7 h-7 text-gray-400 dark:text-gray-600" />
             </div>
-            <p className="text-sm text-gray-500">Nenhum anexo ainda</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum anexo ainda</p>
           </div>
         ) : (
           <div className="space-y-5">
             {grupos.map(({ tipo, itens }) => (
               <div key={tipo}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-gray-500">{tipo}</span>
-                  <span className="text-[0.65rem] text-gray-700">·</span>
-                  <span className="text-[0.65rem] text-gray-500">{itens.length}</span>
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{tipo}</span>
+                  <span className="text-[0.65rem] text-gray-300 dark:text-gray-700">·</span>
+                  <span className="text-[0.65rem] text-gray-400 dark:text-gray-500">{itens.length}</span>
                 </div>
                 <div className="space-y-2">
                   {itens.map(anexo => (
