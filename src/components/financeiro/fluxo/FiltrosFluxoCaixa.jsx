@@ -108,7 +108,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
     <button key={c.v}
       onClick={() => { onPeriodo(c.v); if (c.v === 'periodo') setShowCal(s => !s); else setShowCal(false); }}
       className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-        ${periodo === c.v ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+        ${periodo === c.v ? 'bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
       {chipLabel(c)}
       {c.v === 'periodo' && periodo === 'periodo' && (rs || re) && (
         <span onMouseDown={(e) => { e.stopPropagation(); onCustom('start', ''); onCustom('end', ''); onPeriodo('mes'); setShowCal(false); }}>
