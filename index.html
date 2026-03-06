@@ -7,6 +7,17 @@
     <link rel="manifest" href="/manifest.json" />
     <title>Base44 APP</title>
   </head>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(registration => {
+        console.log('Service Worker registrado com sucesso:', registration);
+      }).catch(error => {
+        console.log('Falha no registro do Service Worker:', error);
+      });
+    });
+  }
+</script>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
