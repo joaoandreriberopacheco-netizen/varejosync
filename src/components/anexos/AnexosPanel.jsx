@@ -52,18 +52,18 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
 
   return (
     <>
-      {/* Trigger — clipe num círculo + contador */}
+      {/* Trigger — clipe fixo no canto inferior direito */}
       <button
         onClick={() => setModalOpen(true)}
-        className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 dark:bg-gray-200 hover:bg-gray-700 dark:hover:bg-white shadow-lg transition-colors"
         title="Anexos"
       >
         {loading
-          ? <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-          : <Paperclip className="w-4 h-4 text-gray-500 dark:text-gray-300" />
+          ? <Loader2 className="w-5 h-5 text-white dark:text-gray-800 animate-spin" />
+          : <Paperclip className="w-5 h-5 text-white dark:text-gray-800" />
         }
         {!loading && anexos.length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-gray-700 dark:bg-white text-white dark:text-gray-900 text-[0.55rem] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-[0.55rem] font-bold flex items-center justify-center shadow">
             {anexos.length > 9 ? '9+' : anexos.length}
           </span>
         )}
