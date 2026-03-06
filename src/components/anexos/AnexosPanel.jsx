@@ -103,13 +103,22 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
     if (!file) return;
     setUploading(true);
 
-    const form = new FormData();
-    form.append('file', file);
-    form.append('referencia_tipo', referenciaTipo);
-    form.append('referencia_id', referenciaId);
-    form.append('referencia_numero', referenciaNomero);
+    // Read file as base64
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    const base64 = btoa(binary);
 
-    await base44.functions.invoke('uploadAnexoDrive', form);
+    await base44.functions.invoke('uploadAnexoDrive', {
+      file_base64: base64,
+      file_name: file.name,
+      file_type: file.type || 'application/octet-stream',
+      file_size: file.size,
+      referencia_tipo: referenciaTipo,
+      referencia_id: referenciaId,
+      referencia_numero: referenciaNomero,
+    });
     await carregar();
     setUploading(false);
     e.target.value = '';
