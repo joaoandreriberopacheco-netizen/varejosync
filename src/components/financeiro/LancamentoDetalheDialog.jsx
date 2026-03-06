@@ -174,7 +174,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   type="date"
                   value={dataPagamento}
                   onChange={(e) => setDataPagamento(e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  disabled={!isPagoLocal}
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
