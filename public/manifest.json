@@ -1,28 +1,21 @@
 {
-  "name": "VarejoSync ERP",
+  "name": "VarejoSync",
   "short_name": "VarejoSync",
+  "description": "Sistema ERP para gestão de varejo",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "description": "Sistema de Gestão Empresarial VarejoSync",
-  "lang": "pt-BR",
+  "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "https://base44.com/logo_v2.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://base44.com/logo_v2.svg",
+      "src": "https://images.unsplash.com/photo-1600762145887-219e27c196a6?q=80&w=192&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "https://base44.com/logo_v2.svg",
+      "src": "https://images.unsplash.com/photo-1600762145887-219e27c196a6?q=80&w=512&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ],
   "share_target": {
@@ -32,7 +25,25 @@
     "params": {
       "title": "name",
       "text": "description",
-      "files": [{ "name": "comprovante", "accept": ["application/pdf", "image/*"] }]
+      "url": "link",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "image/*",
+            "application/pdf",
+            "video/*",
+            "audio/*",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
+            ".txt"
+          ]
+        }
+      ]
     }
   }
 }
