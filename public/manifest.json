@@ -1,0 +1,38 @@
+{
+  "name": "VarejoSync ERP",
+  "short_name": "VarejoSync",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "description": "Sistema de Gestão Empresarial VarejoSync",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "https://base44.com/logo_v2.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://base44.com/logo_v2.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "https://base44.com/logo_v2.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "share_target": {
+    "action": "/AnexoCompartilhado",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "name",
+      "text": "description",
+      "files": [{ "name": "comprovante", "accept": ["application/pdf", "image/*"] }]
+    }
+  }
+}
