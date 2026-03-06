@@ -109,7 +109,7 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
     form.append('referencia_id', referenciaId);
     form.append('referencia_numero', referenciaNomero);
 
-    await uploadAnexoDrive(form);
+    await base44.functions.invoke('uploadAnexoDrive', form);
     await carregar();
     setUploading(false);
     e.target.value = '';
