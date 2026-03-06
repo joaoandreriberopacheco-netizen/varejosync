@@ -264,16 +264,20 @@ export default function FiltrosFluxoCaixa({
       </div>
 
       {/* Filtros secundários */}
-      <div className="px-3 pb-2.5 pt-2 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
-        <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
-        <StatusFiltro sel={statusSel} onSel={onStatusSel} />
-        <button
-          onClick={() => onPendentes(!pendentes)}
-          className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-            ${pendentes ? 'bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-          <Clock className="w-3 h-3" /> Conciliação
-        </button>
+      <div className="px-3 pb-2.5 pt-2 flex flex-col gap-1.5">
+        <div className="flex gap-1.5">
+          <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
+          <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
+        </div>
+        <div className="flex gap-1.5">
+          <StatusFiltro sel={statusSel} onSel={onStatusSel} />
+          <button
+            onClick={() => onPendentes(!pendentes)}
+            className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+              ${pendentes ? 'bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+            <Clock className="w-3 h-3" /> Conciliação
+          </button>
+        </div>
       </div>
 
       {/* Contagem e limpar */}
