@@ -132,7 +132,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {format(rs, 'dd MMM yyyy', { locale: ptBR })} → {format(re, 'dd MMM yyyy', { locale: ptBR })}
               </span>
-              <button onClick={() => setShowCal(false)} className="text-xs font-semibold bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 px-3 py-1 rounded-lg">OK</button>
+              <button onClick={() => setShowCal(false)} className="text-xs font-semibold bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900 px-3 py-1 rounded-lg">OK</button>
             </div>
           )}
         </div>
