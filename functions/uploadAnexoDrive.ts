@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       drive_file_id: uploadData.id,
       url_thumbnail: uploadData.thumbnailLink || null,
       mime_type: mimeType,
-      tamanho_bytes: file.size || 0,
+      tamanho_bytes: file_size || 0,
       origem: 'upload_manual',
       descricao,
     });
