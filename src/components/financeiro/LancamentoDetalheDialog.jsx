@@ -231,17 +231,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </>
         )}
 
-        {/* Footer: Anexos + Fechar alinhados */}
-        <div className="px-5 pb-5 pt-2 flex items-center justify-between">
+        {/* Footer: só o clipe, alinhado à direita */}
+        <div className="px-5 pb-5 pt-2 flex items-center justify-end">
           <AnexosPanel
             referenciaId={lancamento.id}
             referenciaTipo="LancamentoFinanceiro"
             referenciaNumero={lancamento.descricao}
             inline
           />
-          <button onClick={onClose} className="text-xs text-gray-400 py-2 px-2 hover:text-gray-600 dark:hover:text-gray-300">
-            Fechar
-          </button>
         </div>
       </DialogContent>
     </Dialog>
