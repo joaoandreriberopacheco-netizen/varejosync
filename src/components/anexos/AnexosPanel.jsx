@@ -50,20 +50,29 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
     setAnexos(prev => prev.filter(a => a.id !== anexo.id));
   };
 
+  const fabClass = inline
+    ? "relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+    : "fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 dark:bg-gray-200 hover:bg-gray-700 dark:hover:bg-white shadow-lg transition-colors";
+  const iconClass = inline
+    ? "w-4 h-4 text-gray-500 dark:text-gray-300"
+    : "w-5 h-5 text-white dark:text-gray-800";
+  const badgeClass = inline
+    ? "absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-gray-700 dark:bg-white text-white dark:text-gray-900 text-[0.5rem] font-bold flex items-center justify-center"
+    : "absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-[0.55rem] font-bold flex items-center justify-center shadow";
+
   return (
     <>
-      {/* Trigger — clipe fixo no canto inferior direito */}
       <button
         onClick={() => setModalOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-gray-800 dark:bg-gray-200 hover:bg-gray-700 dark:hover:bg-white shadow-lg transition-colors"
+        className={fabClass}
         title="Anexos"
       >
         {loading
-          ? <Loader2 className="w-5 h-5 text-white dark:text-gray-800 animate-spin" />
-          : <Paperclip className="w-5 h-5 text-white dark:text-gray-800" />
+          ? <Loader2 className={`${iconClass} animate-spin`} />
+          : <Paperclip className={iconClass} />
         }
         {!loading && anexos.length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white text-[0.55rem] font-bold flex items-center justify-center shadow">
+          <span className={badgeClass}>
             {anexos.length > 9 ? '9+' : anexos.length}
           </span>
         )}
