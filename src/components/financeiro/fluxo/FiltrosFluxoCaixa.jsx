@@ -55,7 +55,7 @@ function MiniCal({ base, rangeStart, rangeEnd, hover, onDay, onHover, onPrev, on
               onClick={() => onDay(d)}
               onMouseEnter={() => onHover(d)}
               className={`text-center text-[0.7rem] py-1 rounded-lg transition-colors
-                ${isS || isE ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 font-bold' : ''}
+                ${isS || isE ? 'bg-gray-500 text-white dark:bg-gray-100 dark:text-gray-900 font-bold' : ''}
                 ${in_ && !isS && !isE ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200' : ''}
                 ${!isS && !isE && !in_ ? 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
               `}>
