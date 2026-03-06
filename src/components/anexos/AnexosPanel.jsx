@@ -180,26 +180,22 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Paperclip className="w-4 h-4 text-gray-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Anexos {anexos.length > 0 && <span className="text-gray-400 font-normal">({anexos.length})</span>}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <Paperclip className="w-4 h-4 text-gray-400 flex-none" />
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 flex-none">
+          Anexos {anexos.length > 0 && <span className="text-gray-400 font-normal">({anexos.length})</span>}
+        </span>
+        <div className="flex items-center gap-2 ml-auto flex-none">
           <TipoSelector value={tipoSelecionado} onChange={setTipoSelecionado} />
           <button
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-700 dark:hover:bg-white text-white dark:text-gray-900 text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-700 dark:hover:bg-white text-white dark:text-gray-900 text-xs font-medium transition-colors flex-none"
           >
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            {uploading ? 'Enviando...' : 'Anexar'}
+            <span className="hidden sm:inline">{uploading ? 'Enviando...' : 'Anexar'}</span>
           </button>
         </div>
-
         <input ref={inputRef} type="file" className="hidden" onChange={handleUpload} />
       </div>
 
