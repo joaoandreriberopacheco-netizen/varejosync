@@ -73,12 +73,9 @@ function AnexoItem({ anexo, onDelete }) {
           <span className="truncate">{anexo.nome_arquivo}</span>
           <ExternalLink className="w-3 h-3 flex-none opacity-50" />
         </a>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <TipoBadge tipo={anexo.tipo_documento || 'Comprovante'} />
-          {anexo.tamanho_bytes > 0 && (
-            <span className="text-[0.65rem] text-gray-400">{formatSize(anexo.tamanho_bytes)}</span>
-          )}
-        </div>
+        <p className="text-[0.65rem] text-gray-400 mt-0.5 truncate">
+          {formatSize(anexo.tamanho_bytes)}
+        </p>
       </div>
       <button
         onClick={handleDelete}
