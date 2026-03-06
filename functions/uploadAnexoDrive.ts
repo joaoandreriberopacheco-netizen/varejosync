@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { file_base64, file_name, file_type, file_size, referencia_tipo, referencia_id, referencia_numero = '', descricao = '' } = body;
+    const { file_base64, file_name, file_type, file_size, referencia_tipo, referencia_id, referencia_numero = '', descricao = '', tipo_documento = 'Comprovante' } = body;
 
     if (!file_base64 || !referencia_tipo || !referencia_id) {
       return Response.json({ error: 'Parâmetros obrigatórios ausentes' }, { status: 400 });
