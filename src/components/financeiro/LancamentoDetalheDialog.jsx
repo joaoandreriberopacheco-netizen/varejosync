@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import AnexosPanel from '@/components/anexos/AnexosPanel';
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
