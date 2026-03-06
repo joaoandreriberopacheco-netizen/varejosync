@@ -41,6 +41,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const [parcelas, setParcelas] = useState(2);
   const [dataFim, setDataFim] = useState('');
   const [step, setStep] = useState('valor');
+  const [lancamentoCriado, setLancamentoCriado] = useState(null);
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
 
