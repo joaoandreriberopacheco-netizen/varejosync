@@ -63,6 +63,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setParcelas(2);
       setDataFim('');
       setStep('valor');
+      setLancamentoCriado(null);
     }
   }, [open, tipoInicial, contaDefaultId]);
 
