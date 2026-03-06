@@ -299,7 +299,33 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             {isRecorrente && frequencia === 'Parcelado' ? `Criar ${parcelas} parcelas` : isRecorrente ? 'Criar Recorrência' : 'Confirmar Lançamento'}
           </button>
         </div>
-      )}
+      ) : step === 'anexos' && lancamentoCriado ? (
+        <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4 space-y-4">
+          {/* Resumo */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm">
+            <span className="text-sm text-gray-500 dark:text-gray-400">{lancamentoCriado.tipo} · {lancamentoCriado.descricao}</span>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">R$ {(lancamentoCriado.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+          </div>
+
+          <div className="flex items-center gap-2 px-1">
+            <Paperclip className="w-4 h-4 text-gray-400" />
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Anexar comprovante</p>
+            <span className="text-xs text-gray-400">(opcional)</span>
+          </div>
+
+          <AnexosPanel
+            referenciaId={lancamentoCriado.id}
+            referenciaTipo="LancamentoFinanceiro"
+            referenciaNumero={lancamentoCriado.descricao}
+          />
+
+          <button onClick={onClose}
+            className="w-full h-14 rounded-2xl bg-gray-500 dark:bg-white text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 mt-2">
+            <CheckCircle2 className="w-5 h-5" />
+            Concluir
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
