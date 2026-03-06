@@ -183,7 +183,7 @@ export default function ExecucaoOrcamentaria() {
         {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
           <button key={tipo}
             onClick={() => { setNovoTipo(tipo); setShowNovo(true); setFabOpen(false); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
             <Icon className="w-4 h-4" />{label}
           </button>
         ))}
