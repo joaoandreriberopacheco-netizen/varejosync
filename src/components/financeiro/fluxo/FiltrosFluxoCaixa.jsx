@@ -124,6 +124,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
       <div className="flex flex-col gap-1.5">
         <div className="flex gap-1.5">{row1.map(renderChip)}</div>
         <div className="flex gap-1.5">{row2.map(renderChip)}</div>
+        <div className="flex gap-1.5">{row3.map(renderChip)}</div>
       </div>
       {showCal && periodo === 'periodo' && (
         <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-xl border border-gray-100 dark:border-gray-700">
