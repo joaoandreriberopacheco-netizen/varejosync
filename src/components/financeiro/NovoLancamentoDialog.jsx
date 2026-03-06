@@ -192,6 +192,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         <div className="flex gap-1">
           <div className={`w-2 h-2 rounded-full transition-all ${step === 'valor' ? 'bg-gray-800 dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`} />
           <div className={`w-2 h-2 rounded-full transition-all ${step === 'detalhes' ? 'bg-gray-800 dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`} />
+          <div className={`w-2 h-2 rounded-full transition-all ${step === 'anexos' ? 'bg-gray-800 dark:bg-gray-200' : 'bg-gray-300 dark:bg-gray-600'}`} />
         </div>
       </div>
 
