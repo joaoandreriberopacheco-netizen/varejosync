@@ -101,8 +101,9 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
     : rs ? `${format(rs, 'dd/MM')} – ...` : 'Período';
 
   const chipLabel = (c) => c.v === 'periodo' ? rangeLabel : c.l;
-  const row1 = CHIPS.slice(0, 3);
-  const row2 = CHIPS.slice(3);
+  const row1 = CHIPS.slice(0, 2);
+  const row2 = CHIPS.slice(2, 4);
+  const row3 = CHIPS.slice(4);
 
   const renderChip = (c) => (
     <button key={c.v}

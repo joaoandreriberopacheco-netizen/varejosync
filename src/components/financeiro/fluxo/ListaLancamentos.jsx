@@ -52,11 +52,11 @@ function LancRow({ l, onClick }) {
     icon = <ArrowRightLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />;
     valColor = 'text-gray-500 dark:text-gray-400';
   } else if (isR) {
-    icon = <ArrowDownLeft className={`w-3.5 h-3.5 ${pago ? 'text-green-500' : 'text-gray-400'}`} />;
-    valColor = pago ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500';
+    icon = <ArrowDownLeft className={`w-3.5 h-3.5 ${pago ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />;
+    valColor = pago ? 'text-gray-800 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200';
   } else {
-    icon = <ArrowUpRight className={`w-3.5 h-3.5 ${pago ? 'text-red-500' : vencido ? 'text-red-400' : 'text-gray-400'}`} />;
-    valColor = pago ? 'text-red-500 dark:text-red-400' : vencido ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-gray-500';
+    icon = <ArrowUpRight className={`w-3.5 h-3.5 ${pago ? 'text-red-500' : vencido ? 'text-red-400' : 'text-gray-300 dark:text-gray-600'}`} />;
+    valColor = pago ? 'text-red-500 dark:text-red-400' : vencido ? 'text-red-400 dark:text-red-500' : 'text-gray-700 dark:text-gray-200';
   }
 
   return (
