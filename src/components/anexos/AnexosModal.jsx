@@ -40,24 +40,24 @@ function AnexoCard({ anexo, onDelete }) {
   };
 
   return (
-    <div className="bg-gray-800 rounded-2xl p-4 flex items-center gap-4">
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-4">
       <ThumbnailIcon anexo={anexo} large />
       <div className="flex-1 min-w-0">
         <a
           href={anexo.url_drive}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-gray-100 flex items-center gap-1.5 hover:text-white"
+          className="font-medium text-gray-800 dark:text-gray-100 flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-white"
         >
           <span className="truncate text-sm">{anexo.nome_arquivo}</span>
-          <ExternalLink className="w-3.5 h-3.5 flex-none text-gray-400" />
+          <ExternalLink className="w-3.5 h-3.5 flex-none text-gray-500 dark:text-gray-400" />
         </a>
-        <p className="text-xs text-gray-400 mt-0.5">{formatSize(anexo.tamanho_bytes)}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatSize(anexo.tamanho_bytes)}</p>
       </div>
       <button
         onClick={async () => { setDeleting(true); await onDelete(anexo); setDeleting(false); }}
         disabled={deleting}
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:bg-red-900/30 hover:text-red-400 transition-colors flex-none"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-none"
       >
         {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
       </button>
