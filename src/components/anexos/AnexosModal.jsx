@@ -57,7 +57,7 @@ function AnexoCard({ anexo, onDelete }) {
       <button
         onClick={async () => { setDeleting(true); await onDelete(anexo); setDeleting(false); }}
         disabled={deleting}
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors flex-none"
+        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:bg-red-900/30 hover:text-red-400 transition-colors flex-none"
       >
         {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
       </button>
