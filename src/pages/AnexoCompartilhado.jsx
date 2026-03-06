@@ -14,13 +14,21 @@ export default function AnexoCompartilhado() {
   const [abrirNovo, setAbrirNovo] = useState(false);
   const pollingRef = useRef(null);
 
+  // NOVO: Função super segura para converter o ficheiro para o servidor
+  const converterParaBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onload = () => resolve(reader.result.split(',')[1]); // Pega só o código Base64
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const prepararArquivo = (blob, fileName) => {
     let fileObj;
     try {
-      // Tenta criar o ficheiro (Falha em alguns Androids)
       fileObj = new File([blob], fileName, { type: blob.type });
     } catch (error) {
-      // Plano B: Enganar o sistema usando o Blob diretamente
       fileObj = blob;
       fileObj.name = fileName;
     }
@@ -145,17 +153,14 @@ export default function AnexoCompartilhado() {
     if (!arquivo?.file) return;
     setUploadando(true);
     try {
-      const buffer = await arquivo.file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      bytes.forEach(b => binary += String.fromCharCode(b));
-      const base64 = btoa(binary);
+      // Usa o conversor novo!
+      const base64 = await converterParaBase64(arquivo.file);
 
       await base44.functions.invoke('uploadAnexoDrive', {
         file_base64: base64,
         file_name: arquivo.nome,
-        file_type: arquivo.tipo,
-        file_size: arquivo.file.size || arquivo.file.size,
+        file_type: arquivo.tipo || 'application/pdf',
+        file_size: arquivo.file.size,
         referencia_tipo: 'LancamentoFinanceiro',
         referencia_id: lancamento.id,
         referencia_numero: lancamento.descricao || '',
@@ -164,6 +169,9 @@ export default function AnexoCompartilhado() {
       });
       setLancamentoVinculado(lancamento);
       setEtapa('sucesso');
+    } catch (error) {
+      console.error("Erro no Upload:", error);
+      alert("Falha ao enviar! O servidor disse: " + (error.message || JSON.stringify(error)));
     } finally {
       setUploadando(false);
     }
@@ -173,16 +181,12 @@ export default function AnexoCompartilhado() {
     if (!arquivo?.file || !lancamento) { setEtapa('sucesso'); return; }
     setUploadando(true);
     try {
-      const buffer = await arquivo.file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      bytes.forEach(b => binary += String.fromCharCode(b));
-      const base64 = btoa(binary);
+      const base64 = await converterParaBase64(arquivo.file);
 
       await base44.functions.invoke('uploadAnexoDrive', {
         file_base64: base64,
         file_name: arquivo.nome,
-        file_type: arquivo.tipo,
+        file_type: arquivo.tipo || 'application/pdf',
         file_size: arquivo.file.size,
         referencia_tipo: 'LancamentoFinanceiro',
         referencia_id: lancamento.id,
@@ -190,6 +194,9 @@ export default function AnexoCompartilhado() {
         tipo_documento: 'Comprovante',
         origem: 'compartilhamento_web',
       });
+    } catch (error) {
+      console.error("Erro no Upload:", error);
+      alert("Falha ao enviar! O servidor disse: " + (error.message || JSON.stringify(error)));
     } finally {
       setUploadando(false);
       setAbrirNovo(false);
@@ -256,26 +263,6 @@ export default function AnexoCompartilhado() {
                 Navegador: {navigator.userAgent.includes('Android') ? 'Android' : 'Outro'}
               </div>
 
-              {/* NOVO BOTÃO DE INSPEÇÃO DO CACHE */}
-              <button 
-                onClick={async () => {
-                  try {
-                    const cache = await caches.open('VarejoSync-shared-files');
-                    const keys = await cache.keys();
-                    if (keys.length === 0) {
-                      alert('O Cache está vazio! O ficheiro não chegou a ser guardado.');
-                    } else {
-                      const resp = await cache.match(keys[0]);
-                      const b = await resp.blob();
-                      alert(`Sucesso! Ficheiro encontrado no cache:\nTamanho: ${(b.size/1024).toFixed(1)} KB\nTipo: ${b.type}`);
-                    }
-                  } catch(e) { alert("Erro ao ler cache: " + e.message); }
-                }}
-                className="w-full bg-blue-600 text-white p-3 rounded-xl text-xs font-bold mt-2 shadow-sm"
-              >
-                📂 Inspecionar Cache
-              </button>
-
               <button 
                 onClick={() => {
                   if ('serviceWorker' in navigator) {
@@ -288,7 +275,7 @@ export default function AnexoCompartilhado() {
                 }}
                 className="w-full bg-red-500 text-white p-3 rounded-xl text-xs font-bold mt-2 shadow-sm"
               >
-                🔄 Forçar Atualização do App (Limpar SW)
+                🔄 Forçar Atualização do App
               </button>
             </div>
           )}
