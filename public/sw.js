@@ -84,15 +84,3 @@ self.addEventListener('message', (event) => {
   }
   console.log('SW: Mensagem recebida de cliente:', event.data);
 });
-
-// Adiciona um listener para a instalação para logar
-self.addEventListener('install', (event) => {
-  console.log('SW: Instalado!');
-  event.waitUntil(self.skipWaiting());
-});
-
-// Adiciona um listener para a ativação para logar
-self.addEventListener('activate', (event) => {
-  console.log('SW: Ativado!');
-  event.waitUntil(self.clients.claim());
-});
