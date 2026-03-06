@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Paperclip, Upload, X, FileText, Image, File, Trash2, ExternalLink, Loader2 } from 'lucide-react';
-import { uploadAnexoDrive } from '@/functions/uploadAnexoDrive';
 import { listarAnexos } from '@/functions/listarAnexos';
 import { deletarAnexo } from '@/functions/deletarAnexo';
+import { base44 } from '@/api/base44Client';
 
 function ThumbnailIcon({ anexo }) {
   const [imgError, setImgError] = useState(false);
