@@ -120,9 +120,16 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             <Icon className={`w-5 h-5 ${iconClass}`} />
           </span>
           <div>
-            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {isTransf ? '' : isReceita ? '+' : '−'}{R(lancamento.valor)}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                {isTransf ? '' : isReceita ? '+' : '−'}{R(lancamento.valor)}
+              </p>
+              {lancamento.is_recorrente && lancamento.data_vencimento && (
+                <span className="text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-medium">
+                  {format(new Date(lancamento.data_vencimento), "MMM/yyyy", { locale: ptBR }).toUpperCase()}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-400 mt-0.5">
               {lancamento.categoria || 'Sem categoria'}
               {lancamento.conta_financeira_nome ? ` · ${lancamento.conta_financeira_nome}` : ''}
@@ -136,11 +143,6 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           {lancamento.referencia_numero && (
             <span className="text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
               Ref: {lancamento.referencia_numero}
-            </span>
-          )}
-          {lancamento.is_recorrente && lancamento.data_vencimento && (
-            <span className="text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
-              {format(new Date(lancamento.data_vencimento), "MMM/yyyy", { locale: ptBR }).toUpperCase()}
             </span>
           )}
           {isPendente && (
