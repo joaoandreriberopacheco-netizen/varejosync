@@ -191,12 +191,12 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               </div>
             </div>
 
-            {/* Botão Salvar */}
+            {/* Botão Salvar — PDV style */}
             <button
               onClick={handleSalvarPagamento}
               disabled={saving}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
-              <Save className="w-4 h-4" />
+              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-transform disabled:opacity-50">
+              <Save className="w-5 h-5" />
               Salvar
             </button>
           </div>
