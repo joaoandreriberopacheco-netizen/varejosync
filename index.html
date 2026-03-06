@@ -2,23 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
+    <link rel="icon" type="image/svg+xml" href__="/logo-vrs.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Base44 APP</title>
+    <title>VarejoSync</title>
+    <link rel="manifest" href__="/manifest.json">
+    <meta name="theme-color" content="#ffffff">
   </head>
-    <body>
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-  <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(registration => {
-        console.log('Service Worker registrado com sucesso:', registration);
-      }).catch(error => {
-        console.log('Falha no registro do Service Worker:', error);
-      });
-    });
-  }
-</script></body>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registered: ', registration);
+            })
+            .catch(registrationError => {
+              console.log('ServiceWorker registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+  </body>
 </html>
