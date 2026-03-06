@@ -24,8 +24,8 @@ function ThumbnailIcon({ anexo, large = false }) {
   const isPdf = anexo.mime_type?.includes('pdf');
   const isImage = anexo.mime_type?.startsWith('image/');
   return (
-    <div className={`${size} bg-gray-700 flex items-center justify-center flex-none`}>
-      {isPdf ? <FileText className={`${iconSize} text-gray-400`} /> : isImage ? <Image className={`${iconSize} text-gray-400`} /> : <File className={`${iconSize} text-gray-400`} />}
+    <div className={`${size} bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-none`}>
+      {isPdf ? <FileText className={`${iconSize} text-gray-500 dark:text-gray-400`} /> : isImage ? <Image className={`${iconSize} text-gray-500 dark:text-gray-400`} /> : <File className={`${iconSize} text-gray-500 dark:text-gray-400`} />}
     </div>
   );
 }
