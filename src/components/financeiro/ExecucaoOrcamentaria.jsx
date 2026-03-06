@@ -189,7 +189,7 @@ export default function ExecucaoOrcamentaria() {
         ))}
         <button
           onClick={() => setFabOpen(o => !o)}
-          className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-200'}`}>
+          className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-gray-400 rotate-45' : 'bg-gray-500 dark:bg-gray-200'}`}>
           <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-gray-900'}`} />
         </button>
       </div>
