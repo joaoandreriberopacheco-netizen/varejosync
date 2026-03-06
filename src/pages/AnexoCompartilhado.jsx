@@ -16,58 +16,111 @@ export default function AnexoCompartilhado() {
 
   // Busca arquivo do cache 'VarejoSync-shared-files' usando a URL recebida via postMessage
   const carregarArquivoDoCache = async (fileUrl) => {
+    console.log('PAGE: carregarArquivoDoCache chamado para:', fileUrl);
     try {
       const cache = await caches.open('VarejoSync-shared-files');
       const resp = await cache.match(fileUrl);
-      if (!resp) return false;
+      if (!resp) {
+        console.warn('PAGE: carregarArquivoDoCache - Não encontrou arquivo no cache para:', fileUrl);
+        return false;
+      }
       const blob = await resp.blob();
-      if (blob.size === 0) return false;
-      await cache.delete(fileUrl);
+      if (blob.size === 0) {
+        console.warn('PAGE: carregarArquivoDoCache - Arquivo vazio no cache para:', fileUrl);
+        return false;
+      }
+      await cache.delete(fileUrl); // Remove do cache após carregar
+      console.log('PAGE: carregarArquivoDoCache - Arquivo carregado e removido do cache:', fileUrl);
       const fileName = fileUrl.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
       const file = new File([blob], fileName, { type: blob.type });
       const previewUrl = URL.createObjectURL(blob);
       setArquivo({ file, previewUrl, nome: fileName, tipo: blob.type });
       return true;
-    } catch {
+    } catch (e) {
+      console.error('PAGE: Erro em carregarArquivoDoCache:', e);
       return false;
     }
   };
 
   // Fallback: varre todo o cache 'VarejoSync-shared-files' em busca de qualquer arquivo
   const varrerCache = async () => {
+    console.log('PAGE: varrerCache chamado (fallback de polling).');
     try {
       const cache = await caches.open('VarejoSync-shared-files');
       const keys = await cache.keys();
-      if (keys.length === 0) return false;
-      const req = keys[0];
-      const resp = await cache.match(req);
-      if (!resp) return false;
-      const blob = await resp.blob();
-      if (blob.size === 0) return false;
-      await cache.delete(req);
-      const url = typeof req === 'string' ? req : req.url;
-      const fileName = url.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
-      const file = new File([blob], fileName, { type: blob.type });
-      const previewUrl = URL.createObjectURL(blob);
-      setArquivo({ file, previewUrl, nome: fileName, tipo: blob.type });
-      return true;
-    } catch {
+      if (keys.length === 0) {
+        console.log('PAGE: varrerCache - Cache vazio.');
+        return false;
+      }
+      
+      // Itera sobre as chaves para encontrar um arquivo válido (pode haver URLs de texto vazias)
+      for (const req of keys) {
+        const resp = await cache.match(req);
+        if (!resp) {
+          console.warn('PAGE: varrerCache - Não encontrou resposta para:', req.url);
+          continue;
+        }
+        const blob = await resp.blob();
+        if (blob.size > 0) { // Garante que é um arquivo real com conteúdo
+          await cache.delete(req); // Remove do cache após carregar
+          console.log('PAGE: varrerCache - Arquivo carregado e removido do cache (via varredura):', req.url);
+          const url = typeof req === 'string' ? req : req.url;
+          const fileName = url.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+          const file = new File([blob], fileName, { type: blob.type });
+          const previewUrl = URL.createObjectURL(blob);
+          setArquivo({ file, previewUrl, nome: fileName, tipo: blob.type });
+          return true;
+        } else {
+            // Se for um blob vazio, pode ser uma entrada de texto/URL sem arquivo
+            await cache.delete(req); // Limpa entradas vazias
+            console.log('PAGE: varrerCache - Entrada de cache vazia removida:', req.url);
+        }
+      }
+      return false; // Nenhum arquivo válido encontrado
+    } catch (e) {
+      console.error('PAGE: Erro em varrerCache:', e);
       return false;
     }
   };
 
   useEffect(() => {
     let tentativas = 0;
-    const MAX_TENTATIVAS = 20;
+    const MAX_TENTATIVAS = 30; // Aumenta as tentativas e o tempo de espera para dar tempo ao SW
+
+    const processSharedData = async (fileEntries) => {
+        if (!fileEntries || fileEntries.length === 0) {
+            console.log('PAGE: processSharedData - Nenhuma entrada de arquivo para processar.');
+            setCarregando(false);
+            return;
+        }
+
+        const firstFileEntry = fileEntries.find(entry => entry.url); // Pega a primeira entrada que tem URL (arquivo)
+        const textEntry = fileEntries.find(entry => entry.textContent); // Pega a primeira entrada que tem textContent (texto/URL)
+
+        if (firstFileEntry) {
+            const achou = await carregarArquivoDoCache(firstFileEntry.url);
+            if (!achou) {
+                console.warn('PAGE: carregarArquivoDoCache falhou via postMessage para:', firstFileEntry.url);
+                // Fallback para varrer o cache se o arquivo específico não for encontrado,
+                // caso o SW tenha salvo mas a URL específica não seja exata ou algo assim.
+                await varrerCache(); 
+            }
+        } else if (textEntry) {
+            // Se não houver arquivo, mas houver texto/URL compartilhado
+            console.log('PAGE: processSharedData - Texto/URL compartilhado detectado:', textEntry.textContent);
+            setArquivo({ file: null, previewUrl: null, nome: textEntry.name, tipo: textEntry.type, texto: textEntry.textContent });
+        } else {
+            console.warn('PAGE: processSharedData - Nenhuma informação de arquivo ou texto/URL para carregar.');
+        }
+        setCarregando(false);
+    };
 
     // Escuta mensagem do Service Worker com a URL do arquivo no cache
     const onMessage = async (event) => {
-      if (event.data?.type === 'SHARED_FILES' && event.data?.files?.length > 0) {
+      console.log('PAGE: Mensagem recebida do SW:', event.data?.type, event.data?.files);
+      if (event.data?.type === 'SHARED_FILES' && event.data?.files) {
         clearTimeout(pollingRef.current);
-        const fileInfo = event.data.files[0];
-        const achou = await carregarArquivoDoCache(fileInfo.url);
-        if (!achou) await varrerCache();
-        setCarregando(false);
+        await processSharedData(event.data.files);
       }
     };
 
@@ -75,30 +128,51 @@ export default function AnexoCompartilhado() {
 
     // Polling como fallback caso o postMessage chegue antes da página estar pronta
     const tentar = async () => {
-      const achou = await varrerCache();
-      if (achou) {
+      // Primeiro, verifica URL params para dados de texto/URL compartilhados
+      const params = new URLSearchParams(window.location.search);
+      const sharedText = params.get('text');
+      const sharedUrl = params.get('url');
+      const sharedTitle = params.get('title') || params.get('name');
+
+      if (sharedText || sharedUrl) {
+        console.log('PAGE: Dados de texto/URL encontrados via URL params.');
+        setArquivo({ file: null, previewUrl: null, nome: sharedTitle || 'Conteúdo Compartilhado', tipo: 'text/plain', texto: sharedText || sharedUrl });
         setCarregando(false);
+        clearTimeout(pollingRef.current);
         return;
       }
-
-      // URL params (texto/link compartilhado)
-      const params = new URLSearchParams(window.location.search);
-      const title = params.get('title') || params.get('name');
-      if (title) {
-        setArquivo({ file: null, previewUrl: null, nome: title, tipo: 'text/plain', texto: params.get('text') || params.get('url') });
+      
+      // Em seguida, tenta varrer o cache como último recurso de fallback para arquivos
+      const achouNoCache = await varrerCache();
+      if (achouNoCache) {
+        console.log('PAGE: Arquivo encontrado via varredura de cache no polling.');
         setCarregando(false);
+        clearTimeout(pollingRef.current);
         return;
       }
 
       tentativas++;
       if (tentativas < MAX_TENTATIVAS) {
-        pollingRef.current = setTimeout(tentar, 500);
+        pollingRef.current = setTimeout(tentar, 500); // Espera um pouco mais
       } else {
         setCarregando(false);
+        console.warn('PAGE: Polling atingiu limite de tentativas, nenhum arquivo ou texto/URL carregado.');
       }
     };
 
-    tentar();
+    // Inicia o polling/verificação inicial somente se não houver um "share-target=true" na URL
+    // indicando que a página foi carregada via share target.
+    // Se a URL contiver "share-target=true", dependemos primariamente da mensagem do SW.
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.get('share-target')) {
+      tentar();
+    } else {
+        // Se a página foi carregada via share target, espera um pouco para o SW salvar e mandar a mensagem.
+        // Isso ajuda a evitar que o polling varra o cache antes do SW ter a chance de salvar o arquivo.
+        console.log('PAGE: Carregada via Share Target, esperando mensagem do SW...');
+        pollingRef.current = setTimeout(() => tentar(), 2000); // Dá um tempo maior antes do fallback
+    }
+
 
     return () => {
       clearTimeout(pollingRef.current);
@@ -278,11 +352,17 @@ function ArquivoPreview({ arquivo }) {
 
   const isPdf = arquivo.tipo?.includes('pdf');
   const isImage = arquivo.tipo?.startsWith('image/');
+  const isText = arquivo.tipo?.includes('text/plain') || arquivo.texto; // Adiciona verificação para texto
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-sm">
       {isImage && arquivo.previewUrl ? (
         <img src={arquivo.previewUrl} alt={arquivo.nome} className="w-full max-h-56 object-cover" />
+      ) : isText ? ( // Mostra o texto se for texto compartilhado
+        <div className="p-5">
+            <p className="font-medium text-gray-800 dark:text-gray-100 text-sm">{arquivo.nome}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 whitespace-pre-wrap">{arquivo.texto}</p>
+        </div>
       ) : (
         <div className="flex items-center gap-4 p-5">
           <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-none">
@@ -327,3 +407,4 @@ function OpcaoCard({ icon: Icon, titulo, descricao, onClick }) {
     </button>
   );
 }
+Instru
