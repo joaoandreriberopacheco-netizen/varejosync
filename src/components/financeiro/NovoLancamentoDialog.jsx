@@ -255,7 +255,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
               <div className="flex gap-2">
                 {['Em Aberto', 'Pago'].map(s => (
                   <button key={s} onClick={() => setStatus(s)}
-                    className={`flex-1 h-12 rounded-2xl text-sm font-medium transition-all shadow-sm ${status === s ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
+                    className={`flex-1 h-12 rounded-2xl text-sm font-medium transition-all shadow-sm ${status === s ? 'bg-gray-500 dark:bg-white text-white dark:text-gray-900' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
                     {s}
                   </button>
                 ))}
