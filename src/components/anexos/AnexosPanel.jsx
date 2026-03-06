@@ -41,7 +41,7 @@ function ThumbnailIcon({ anexo }) {
 function TipoBadge({ tipo }) {
   const cfg = TIPO_CONFIG[tipo] || TIPO_CONFIG['Outro'];
   return (
-    <span className={`text-[0.6rem] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${cfg.color}`}>
+    <span className={`text-[0.6rem] font-medium px-1.5 py-0.5 rounded-md tracking-wide truncate max-w-[80px] ${cfg.color}`}>
       {tipo}
     </span>
   );
