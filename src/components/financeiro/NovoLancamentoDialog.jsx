@@ -159,7 +159,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       }
       // Para lançamento único, ir para step de anexos
       toast({ title: 'Lançamento salvo!' });
-      onSaved?.();
+      onSaved?.(novoLancamento);
       setLancamentoCriado(novoLancamento);
       setStep('anexos');
       return;
