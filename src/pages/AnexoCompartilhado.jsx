@@ -407,4 +407,3 @@ function OpcaoCard({ icon: Icon, titulo, descricao, onClick }) {
     </button>
   );
 }
-Instru
