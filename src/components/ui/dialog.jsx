@@ -36,7 +36,7 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-white/40 dark:bg-black/40 backdrop-blur-md flex items-center justify-center">
             <div className="fixed inset-0" onClick={() => setOpen(false)}></div>
             <div
                 ref={ref}
