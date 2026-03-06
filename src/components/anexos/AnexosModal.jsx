@@ -47,7 +47,7 @@ function AnexoCard({ anexo, onDelete }) {
           href={anexo.url_drive}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-gray-800 dark:text-gray-100 flex items-center gap-1.5 hover:text-gray-900"
+          className="font-medium text-gray-100 flex items-center gap-1.5 hover:text-white"
         >
           <span className="truncate text-sm">{anexo.nome_arquivo}</span>
           <ExternalLink className="w-3.5 h-3.5 flex-none text-gray-400" />
