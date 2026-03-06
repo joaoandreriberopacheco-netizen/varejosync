@@ -213,11 +213,12 @@ export default function AnexosPanel({ referenciaId, referenciaTipo, referenciaNo
           <p className="text-xs text-gray-400">Clique para anexar um documento</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {grupos.map(({ tipo, itens }) => (
             <div key={tipo}>
-              <div className="flex items-center gap-2 mb-1 px-2">
-                <TipoBadge tipo={tipo} />
+              <div className="flex items-center gap-1.5 mb-1 px-1">
+                <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{tipo}</span>
+                <span className="text-[0.65rem] text-gray-300 dark:text-gray-600">·</span>
                 <span className="text-[0.65rem] text-gray-400">{itens.length}</span>
               </div>
               <div className="space-y-0.5">
