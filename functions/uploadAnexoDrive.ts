@@ -6,20 +6,16 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const formData = await req.formData();
-    const file = formData.get('file');
-    const referencia_tipo = formData.get('referencia_tipo');
-    const referencia_id = formData.get('referencia_id');
-    const referencia_numero = formData.get('referencia_numero') || '';
-    const descricao = formData.get('descricao') || '';
+    const body = await req.json();
+    const { file_base64, file_name, file_type, file_size, referencia_tipo, referencia_id, referencia_numero = '', descricao = '' } = body;
 
-    if (!file || !referencia_tipo || !referencia_id) {
+    if (!file_base64 || !referencia_tipo || !referencia_id) {
       return Response.json({ error: 'Parâmetros obrigatórios ausentes' }, { status: 400 });
     }
 
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
 
-    // 1. Criar pasta "Comprovantes App" se não existir (busca pelo nome na raiz)
+    // 1. Criar pasta "Comprovantes - VarejoSync" se não existir
     const folderName = 'Comprovantes - VarejoSync';
     const searchRes = await fetch(
       `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`,
@@ -31,26 +27,22 @@ Deno.serve(async (req) => {
     if (searchData.files && searchData.files.length > 0) {
       folderId = searchData.files[0].id;
     } else {
-      // Criar pasta
       const createFolderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: folderName,
-          mimeType: 'application/vnd.google-apps.folder',
-        }),
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder' }),
       });
       const folder = await createFolderRes.json();
       folderId = folder.id;
     }
 
-    // 2. Upload do arquivo para a pasta
-    const fileBuffer = await file.arrayBuffer();
-    const fileName = file.name || `anexo_${Date.now()}`;
-    const mimeType = file.type || 'application/octet-stream';
+    // 2. Decodificar base64 para bytes
+    const binaryString = atob(file_base64);
+    const fileBytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) fileBytes[i] = binaryString.charCodeAt(i);
+    const fileBuffer = fileBytes.buffer;
+    const fileName = file_name || `anexo_${Date.now()}`;
+    const mimeType = file_type || 'application/octet-stream';
 
     const metadata = {
       name: `${referencia_tipo}_${referencia_numero || referencia_id}_${fileName}`,
