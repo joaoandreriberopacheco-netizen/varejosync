@@ -14,104 +14,78 @@ export default function AnexoCompartilhado() {
   const [abrirNovo, setAbrirNovo] = useState(false);
   const pollingRef = useRef(null);
 
-  const processarArquivoDoCache = async () => {
-    // Tenta múltiplos nomes de cache usados pelo SW
-    const cacheNames = ['share-target-data', 'VarejoSync-shared-files', 'shared-files'];
-    const payloadKeys = ['/_shared_file_payload', '/shared-file', '/_shared_file'];
-
-    for (const cacheName of cacheNames) {
-      try {
-        const cache = await caches.open(cacheName);
-        const keys = await cache.keys();
-        if (keys.length === 0) continue;
-
-        for (const payloadKey of payloadKeys) {
-          const cachedResponse = await cache.match(payloadKey);
-          if (cachedResponse) {
-            try {
-              const parsed = await cachedResponse.json();
-              await cache.delete(payloadKey);
-
-              const byteString = atob(parsed.base64);
-              const ab = new ArrayBuffer(byteString.length);
-              const ia = new Uint8Array(ab);
-              for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-              const blob = new Blob([ab], { type: parsed.type });
-              const file = new File([blob], parsed.name, { type: parsed.type });
-              const previewUrl = URL.createObjectURL(blob);
-              setArquivo({ file, previewUrl, nome: parsed.name, tipo: parsed.type });
-              return true;
-            } catch {}
-          }
-        }
-
-        // Tenta ler qualquer response armazenada no cache como blob direto
-        for (const req of keys) {
-          try {
-            const resp = await cache.match(req);
-            if (!resp) continue;
-
-            // Tenta JSON primeiro
-            const cloned = resp.clone();
-            try {
-              const parsed = await cloned.json();
-              if (parsed.base64 && parsed.name && parsed.type) {
-                await cache.delete(req);
-                const byteString = atob(parsed.base64);
-                const ab = new ArrayBuffer(byteString.length);
-                const ia = new Uint8Array(ab);
-                for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-                const blob = new Blob([ab], { type: parsed.type });
-                const url = req.url || req;
-                const fileName = typeof url === 'string' ? url.split('/').pop() || 'arquivo' : 'arquivo';
-                const file = new File([blob], parsed.name || fileName, { type: parsed.type });
-                const previewUrl = URL.createObjectURL(blob);
-                setArquivo({ file, previewUrl, nome: parsed.name || fileName, tipo: parsed.type });
-                return true;
-              }
-            } catch {}
-
-            // Tenta como blob direto
-            const blob = await resp.blob();
-            if (blob.size > 0) {
-              await cache.delete(req);
-              const url = typeof req === 'string' ? req : req.url;
-              const fileName = url.split('/').pop() || 'arquivo';
-              const file = new File([blob], fileName, { type: blob.type });
-              const previewUrl = URL.createObjectURL(blob);
-              setArquivo({ file, previewUrl, nome: fileName, tipo: blob.type });
-              return true;
-            }
-          } catch {}
-        }
-      } catch {}
+  // Busca arquivo do cache 'VarejoSync-shared-files' usando a URL recebida via postMessage
+  const carregarArquivoDoCache = async (fileUrl) => {
+    try {
+      const cache = await caches.open('VarejoSync-shared-files');
+      const resp = await cache.match(fileUrl);
+      if (!resp) return false;
+      const blob = await resp.blob();
+      if (blob.size === 0) return false;
+      await cache.delete(fileUrl);
+      const fileName = fileUrl.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+      const file = new File([blob], fileName, { type: blob.type });
+      const previewUrl = URL.createObjectURL(blob);
+      setArquivo({ file, previewUrl, nome: fileName, tipo: blob.type });
+      return true;
+    } catch {
+      return false;
     }
-    return false;
+  };
+
+  // Fallback: varre todo o cache 'VarejoSync-shared-files' em busca de qualquer arquivo
+  const varrerCache = async () => {
+    try {
+      const cache = await caches.open('VarejoSync-shared-files');
+      const keys = await cache.keys();
+      if (keys.length === 0) return false;
+      const req = keys[0];
+      const resp = await cache.match(req);
+      if (!resp) return false;
+      const blob = await resp.blob();
+      if (blob.size === 0) return false;
+      await cache.delete(req);
+      const url = typeof req === 'string' ? req : req.url;
+      const fileName = url.split('/').pop().replace(/^\d+-/, '') || 'arquivo';
+      const file = new File([blob], fileName, { type: blob.type });
+      const previewUrl = URL.createObjectURL(blob);
+      setArquivo({ file, previewUrl, nome: fileName, tipo: blob.type });
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   useEffect(() => {
     let tentativas = 0;
-    const MAX_TENTATIVAS = 20; // 10 segundos no total
+    const MAX_TENTATIVAS = 20;
 
+    // Escuta mensagem do Service Worker com a URL do arquivo no cache
+    const onMessage = async (event) => {
+      if (event.data?.type === 'SHARED_FILES' && event.data?.files?.length > 0) {
+        clearTimeout(pollingRef.current);
+        const fileInfo = event.data.files[0];
+        const achou = await carregarArquivoDoCache(fileInfo.url);
+        if (!achou) await varrerCache();
+        setCarregando(false);
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', onMessage);
+
+    // Polling como fallback caso o postMessage chegue antes da página estar pronta
     const tentar = async () => {
-      // Tentativa 1: Cache Storage
-      const achouNoCache = await processarArquivoDoCache();
-      if (achouNoCache) {
+      const achou = await varrerCache();
+      if (achou) {
         setCarregando(false);
         return;
       }
 
-      // Tentativa 2: URL params (texto/link compartilhado)
+      // URL params (texto/link compartilhado)
       const params = new URLSearchParams(window.location.search);
       const title = params.get('title') || params.get('name');
       if (title) {
-        setArquivo({
-          file: null,
-          previewUrl: null,
-          nome: title,
-          tipo: 'text/plain',
-          texto: params.get('text') || params.get('url'),
-        });
+        setArquivo({ file: null, previewUrl: null, nome: title, tipo: 'text/plain', texto: params.get('text') || params.get('url') });
         setCarregando(false);
         return;
       }
@@ -120,29 +94,10 @@ export default function AnexoCompartilhado() {
       if (tentativas < MAX_TENTATIVAS) {
         pollingRef.current = setTimeout(tentar, 500);
       } else {
-        // Esgotou tentativas - mostra tela mesmo sem arquivo
         setCarregando(false);
       }
     };
 
-    // Escuta mensagem do Service Worker (se ele enviar postMessage)
-    const onMessage = async (event) => {
-      if (event.data?.type === 'SHARED_FILES' || event.data?.type === 'SHARE_TARGET') {
-        clearTimeout(pollingRef.current);
-        const achou = await processarArquivoDoCache();
-        if (!achou && event.data?.files) {
-          // SW enviou os files diretamente via postMessage
-          const f = event.data.files[0];
-          if (f) {
-            const previewUrl = URL.createObjectURL(f);
-            setArquivo({ file: f, previewUrl, nome: f.name, tipo: f.type });
-          }
-        }
-        setCarregando(false);
-      }
-    };
-
-    navigator.serviceWorker?.addEventListener('message', onMessage);
     tentar();
 
     return () => {
