@@ -236,7 +236,7 @@ function ArquivoPreview({ arquivo }) {
             {isPdf
               ? <FileText className="w-7 h-7 text-gray-500 dark:text-gray-400" />
               : isImage
-                ? <Image className="w-7 h-7 text-gray-500 dark:text-gray-400" />
+                ? <ImageIcon className="w-7 h-7 text-gray-500 dark:text-gray-400" />
                 : <File className="w-7 h-7 text-gray-500 dark:text-gray-400" />
             }
           </div>
