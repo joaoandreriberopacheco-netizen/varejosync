@@ -1,31 +1,16 @@
-self.addEventListener('install', () => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
-});
-
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Web Share Target: intercepta POST para /AnexoCompartilhado
   if (event.request.method === 'POST' && url.pathname === '/AnexoCompartilhado') {
-    console.log('SW: Interceptou POST para /AnexoCompartilhado');
     
-    // O redirecionamento 303 indica que a resposta à solicitação POST pode ser encontrada sob outro URI
-    // e que o user agent DEVE recuperar o recurso usando um método GET.
-    // Isso é crucial para que a página de destino possa ser carregada.
-    event.respondWith(Response.redirect('/AnexoCompartilhado?share-target=true', 303));
-
-    event.waitUntil((async () => {
+    // 1. Interceptamos a requisição e seguramos a resposta
+    event.respondWith((async () => {
       try {
+        // IMPORTANTE: Ler o formData ANTES de responder
         const formData = await event.request.formData();
         const files = formData.getAll('files');
-        const text = formData.get('text'); // Adiciona captura de texto/URL
-        const title = formData.get('title'); // Adiciona captura de título
-
-        console.log('SW: Dados recebidos via formData:', { files: files.length, text, title });
+        const text = formData.get('description'); // De acordo com teu manifest
+        const title = formData.get('name');      // De acordo com teu manifest
 
         const cache = await caches.open('VarejoSync-shared-files');
         const fileEntries = [];
@@ -33,54 +18,46 @@ self.addEventListener('fetch', (event) => {
         for (const file of files) {
           if (file instanceof File) {
             const fileUrl = `/shared-file-${Date.now()}-${file.name}`;
-            await cache.put(fileUrl, new Response(file, { headers: { 'Content-Type': file.type } }));
+            await cache.put(fileUrl, new Response(file, { 
+              headers: { 'Content-Type': file.type } 
+            }));
             fileEntries.push({ name: file.name, type: file.type, size: file.size, url: fileUrl });
-            console.log('SW: Arquivo salvo no cache:', fileUrl);
           }
         }
-        
-        // Adiciona entradas para texto/URL se existirem
+
         if (text) {
-          fileEntries.push({ name: title || 'Texto Compartilhado', type: 'text/plain', url: '', textContent: text });
-          console.log('SW: Texto/URL recebido:', text);
+          fileEntries.push({ name: title || 'Texto', type: 'text/plain', textContent: text });
         }
 
-        // Aguarda a página abrir e envia postMessage
-        const sendMessage = async (retries = 15) => { // Aumenta retries
-          const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-          const targetClient = allClients.find(c => c.url.includes('/AnexoCompartilhado'));
-          
-          if (targetClient) {
-            targetClient.postMessage({ type: 'SHARED_FILES', files: fileEntries });
-            console.log('SW: Mensagem postada para a página AnexoCompartilhado.');
-          } else if (retries > 0) {
-            console.log(`SW: Página não encontrada, tentando novamente em 500ms. Tentativas restantes: ${retries - 1}`);
-            await new Promise(r => setTimeout(r, 500)); // Aumenta o timeout
-            await sendMessage(retries - 1);
-          } else {
-            console.error('SW: Não foi possível encontrar a página AnexoCompartilhado para postMessage após várias tentativas.');
-          }
-        };
+        // 2. Agora que os dados estão salvos no Cache, redirecionamos
+        // O cliente será enviado para a página que vai processar os ficheiros
+        setTimeout(() => {
+            enviarMensagemParaPagina(fileEntries);
+        }, 1000); // Pequeno delay para a página carregar
 
-        await sendMessage();
-      } catch (error) {
-        console.error('SW: Erro no evento fetch do Share Target:', error);
+        return Response.redirect('/AnexoCompartilhado?share-target=true', 303);
+      } catch (err) {
+        console.error('Erro ao processar partilha:', err);
+        return Response.redirect('/error', 303);
       }
     })());
     return;
   }
 
-  // Cache-first para demais requisições
+  // Cache-first padrão para o resto
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request).then(res => res || fetch(event.request))
   );
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data?.type === 'CACHE_NEW_ROUTE') {
-    event.waitUntil(
-      caches.open('VarejoSync-cache').then(cache => cache.add(event.data.url))
-    );
+// Função auxiliar para comunicar com a janela aberta
+async function enviarMensagemParaPagina(fileEntries, retries = 10) {
+  const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const targetClient = allClients.find(c => c.url.includes('/AnexoCompartilhado'));
+
+  if (targetClient && targetClient.visibilityState === 'visible') {
+    targetClient.postMessage({ type: 'SHARED_FILES', files: fileEntries });
+  } else if (retries > 0) {
+    setTimeout(() => enviarMensagemParaPagina(fileEntries, retries - 1), 500);
   }
-  console.log('SW: Mensagem recebida de cliente:', event.data);
-});
+}
