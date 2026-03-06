@@ -211,7 +211,7 @@ function TipoFiltro({ sel, onSel }) {
     <Popover>
       <PopoverTrigger asChild>
         <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${!todasSel ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+          ${!todasSel ? 'bg-gray-500 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
           <BarChart3 className="w-3 h-3" />
           {todasSel ? 'Tipo' : sel.join(', ')}
           <ChevronDown className="w-3 h-3" />
