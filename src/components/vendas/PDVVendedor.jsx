@@ -1004,7 +1004,13 @@ export default function PDVVendedor() {
               </div> :
             carrinho.map((item) =>
             <div key={item.produto_id} className="group p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <div className="flex items-start justify-between gap-1 mb-2">
+                  <div className="flex items-start gap-2 mb-2">
+                    {item.imagem_url
+                      ? <img src={item.imagem_url} alt={item.produto_nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 mt-0.5" />
+                      : <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Package className="w-3.5 h-3.5 text-gray-400" />
+                        </div>
+                    }
                     <p className="text-xs font-medium text-gray-800 dark:text-gray-200 leading-tight flex-1 truncate">{item.produto_nome}</p>
                     <button onClick={() => handleRemoveItem(item.produto_id)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0">
