@@ -117,7 +117,7 @@ export const MODULOS = [
 ];
 
 // ─── Contar permissões recursivamente ────────────────────────────
-function contarPermissoesModulo(permissoes, moduloKey, item = null) {
+export function contarPermissoes(permissoes, moduloKey, item = null) {
   let ativas = 0, total = 0;
   const modulo = item || MODULOS.find(m => m.key === moduloKey);
   if (!modulo) return { ativas: 0, total: 0 };
