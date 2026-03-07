@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Monitor } from 'lucide-react';
-import TabelaProdutosEditavel from '@/components/produtos/TabelaProdutosEditavel';
-import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa';
+import TabelaProdutosEditavel from '@/components/produtos/TabelaProdutosEditavel.js';
+import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa.js';
 
 export default function EditarProdutosEmMassa() {
   const [isMobile, setIsMobile] = useState(false);
