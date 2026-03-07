@@ -627,10 +627,9 @@ export default function VendasGestaoPage() {
               <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
             </div>
           </>
-        )}
+        }}
+        </div>}
       </div>
-        </TabsContent>
-      </Tabs>
 
       {/* Dialog de Formulário */}
       {isFormOpen && (
