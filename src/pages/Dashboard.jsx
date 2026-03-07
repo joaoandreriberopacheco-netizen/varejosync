@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import PullToRefreshWrapper from '@/components/ui/PullToRefreshWrapper';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { LayoutDashboard, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -27,84 +26,33 @@ export default function DashboardPage() {
     loadUser();
   }, []);
 
-  // Dashboards específicos por perfil (case-insensitive)
   const perfilLower = currentUser?.perfil?.toLowerCase() || '';
 
-  if (perfilLower === 'vendedor') {
-    return <DashboardVendedor />;
-  }
-
-  if (perfilLower === 'caixa' || perfilLower === 'operador de caixa') {
-    return <DashboardCaixa />;
-  }
+  if (perfilLower === 'vendedor') return <DashboardVendedor />;
+  if (perfilLower === 'caixa' || perfilLower === 'operador de caixa') return <DashboardCaixa />;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header com Logo */}
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Dashboard Estratégico</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Visão geral do seu negócio
-          </p>
-        </div>
-        
-
-
-
-
+    <div className="max-w-7xl mx-auto space-y-4">
+      <div>
+        <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Dashboard</h1>
+        <p className="text-xs text-gray-400 dark:text-gray-500">Visão geral do negócio</p>
       </div>
 
-      {/* Tabs - MOBILE: SÓ ÍCONES */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
-          <div className="flex justify-around w-full">
-            <TabsTrigger
-              value="geral"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+      <GlacialTabsList scrollable>
+        <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={setActiveTab} icon={LayoutDashboard} label="Geral" />
+        <GlacialTabsTrigger value="vendas"     activeValue={activeTab} onSelect={setActiveTab} icon={TrendingUp}      label="Vendas" />
+        <GlacialTabsTrigger value="compras"    activeValue={activeTab} onSelect={setActiveTab} icon={ShoppingCart}    label="Compras" />
+        <GlacialTabsTrigger value="estoque"    activeValue={activeTab} onSelect={setActiveTab} icon={Package}         label="Estoque" />
+        <GlacialTabsTrigger value="financeiro" activeValue={activeTab} onSelect={setActiveTab} icon={DollarSign}      label="Financeiro" />
+      </GlacialTabsList>
 
-              <LayoutDashboard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Geral</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="vendas"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-
-              <TrendingUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Vendas</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="compras"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-
-              <ShoppingCart className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Compras</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="estoque"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-
-              <Package className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Estoque</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="financeiro"
-              className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-
-              <DollarSign className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Financeiro</span>
-            </TabsTrigger>
-          </div>
-        </TabsList>
-
-        <div className="mt-6">
-          <TabsContent value="geral" className="mt-0"><GeralTab /></TabsContent>
-          <TabsContent value="vendas" className="mt-0"><VendasTab /></TabsContent>
-          <TabsContent value="compras" className="mt-0"><ComprasTab /></TabsContent>
-          <TabsContent value="estoque" className="mt-0"><EstoqueTab /></TabsContent>
-          <TabsContent value="financeiro" className="mt-0"><FinanceiroTab /></TabsContent>
-        </div>
-      </Tabs>
-    </div>);
-
+      <div>
+        {activeTab === 'geral'      && <GeralTab />}
+        {activeTab === 'vendas'     && <VendasTab />}
+        {activeTab === 'compras'    && <ComprasTab />}
+        {activeTab === 'estoque'    && <EstoqueTab />}
+        {activeTab === 'financeiro' && <FinanceiroTab />}
+      </div>
+    </div>
+  );
 }
