@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { avaliarFormula } from './utils/formulaParser.js';
-import { AlertCircle } from 'lucide-react';
+import { avaliarFormula } from './utils/formulaParser';
+import { ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
 
 const COLUNAS = [
   { key: 'codigo_interno', label: 'Código', tipo: 'text', largura: 100, readonly: true },
