@@ -149,29 +149,7 @@ function contarPermissoesModulo(permissoes, moduloKey, item = null) {
   return { ativas, total };
 }
 
-// ─── Linha de permissão ──────────────────────────────────────────
-// ver_editar: linha com label à esquerda e dois checkboxes nomeados à direita
-// toggle: linha com switch e label
 
-function Checkbox({ checked, onChange }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className={`w-5 h-5 rounded flex items-center justify-center transition-colors flex-shrink-0 ${
-        checked
-          ? 'bg-gray-800 dark:bg-gray-200'
-          : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600'
-      }`}
-    >
-      {checked && (
-        <svg className="w-3 h-3 text-white dark:text-gray-900" fill="none" viewBox="0 0 12 12">
-          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-    </button>
-  );
-}
 
 
 
