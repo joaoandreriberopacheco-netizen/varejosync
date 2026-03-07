@@ -248,56 +248,24 @@ function ModuloCard({ modulo, permissoes, onChange }) {
   );
 }
 
-// ─── Sanitiza permissões — garante que campos booleanos simples não sejam objetos ──
+// ─── Sanitiza permissões — simplificado para booleanos apenas ──
 function sanitizarPermissoes(permissoes) {
   if (!permissoes) return {};
-  const resultado = {};
   
-  const sanitizarModulo = (modulo, modPerm) => {
+  // Apenas garante que tudo seja booleano true/false
+  const limpar = (obj) => {
     const res = {};
-    modulo.permissoes.forEach(p => {
-      const val = modPerm?.[p.key];
-      if (p.tipo === 'ver_editar') {
-        res[p.key] = typeof val === 'object' && val !== null
-          ? { ver: val.ver === true, editar: val.editar === true }
-          : { ver: false, editar: false };
+    for (const [key, val] of Object.entries(obj || {})) {
+      if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+        res[key] = limpar(val);
       } else {
-        if (typeof val === 'object' && val !== null) {
-          res[p.key] = Object.values(val).some(v => v === true);
-        } else {
-          res[p.key] = val === true;
-        }
+        res[key] = val === true;
       }
-    });
+    }
     return res;
   };
-
-  MODULOS.forEach(modulo => {
-    const modPerm = permissoes[modulo.key];
-    if (!modPerm) return;
-    resultado[modulo.key] = sanitizarModulo(modulo, modPerm);
-    
-    // Submodulos
-    if (modulo.submodulos) {
-      modulo.submodulos.forEach(sub => {
-        const subPerm = modPerm[sub.key];
-        if (subPerm) {
-          resultado[modulo.key][sub.key] = sanitizarModulo(sub, subPerm);
-          
-          // Sub-submodulos
-          if (sub.submodulos) {
-            sub.submodulos.forEach(subsub => {
-              const subsubPerm = subPerm[subsub.key];
-              if (subsubPerm) {
-                resultado[modulo.key][sub.key][subsub.key] = sanitizarModulo(subsub, subsubPerm);
-              }
-            });
-          }
-        }
-      });
-    }
-  });
-  return resultado;
+  
+  return limpar(permissoes);
 }
 
 // ─── Tela completa de edição de perfil ──────────────────────────
