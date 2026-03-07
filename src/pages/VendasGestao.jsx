@@ -432,7 +432,8 @@ export default function VendasGestaoPage() {
         )}
         </div>}
 
-        {activeTab === 'pedidos' && <div className="space-y-6">
+        {activeTab === 'pedidos' && (
+        <div className="space-y-6">
           {/* Filtros para Pedidos */}
           <div className="space-y-3">
         {/* Linha 1: Busca e Status */}
