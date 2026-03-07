@@ -58,8 +58,8 @@ export const MODULOS = [
       { key: 'ver_custo_compra', label: 'Ver Custo de Compra' },
       { key: 'realizar_ajuste_estoque', label: 'Ajuste de Estoque' },
       { key: 'separacao_pedidos', label: 'Separação de Pedidos' },
-      { key: 'compras', label: 'Módulo de Compras', tipo: 'ver_editar' },
-      { key: 'logistica', label: 'Módulo de Logística', tipo: 'ver_editar' },
+      { key: 'compras', label: 'Módulo de Compras' },
+      { key: 'logistica', label: 'Módulo de Logística' },
       { key: 'armazenagem', label: 'Armazenagem' },
     ]
   },
