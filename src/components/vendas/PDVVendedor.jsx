@@ -97,8 +97,36 @@ export default function PDVVendedor() {
   }, [carrinho, produtos]);
 
   const [tipoAjuste, setTipoAjuste] = useState('desconto');
+  const [ajustePercentual, setAjustePercentual] = useState('');
+  const [ajusteValor, setAjusteValor] = useState('');
+  // valorAjuste e tipoValorAjuste mantidos para compatibilidade com o restante do código
   const [valorAjuste, setValorAjuste] = useState(0);
   const [tipoValorAjuste, setTipoValorAjuste] = useState('percentual');
+
+  // Two-way binding handlers
+  const handleAjustePercentualChange = (val) => {
+    setAjustePercentual(val);
+    const pct = parseFloat(val) || 0;
+    setValorAjuste(pct);
+    setTipoValorAjuste('percentual');
+    if (subtotal > 0 && pct > 0) {
+      setAjusteValor((subtotal * pct / 100).toFixed(2));
+    } else {
+      setAjusteValor('');
+    }
+  };
+
+  const handleAjusteValorChange = (val) => {
+    setAjusteValor(val);
+    const v = parseFloat(val) || 0;
+    setValorAjuste(v);
+    setTipoValorAjuste('valor');
+    if (subtotal > 0 && v > 0) {
+      setAjustePercentual((v / subtotal * 100).toFixed(2));
+    } else {
+      setAjustePercentual('');
+    }
+  };
 
   const inputProdutoRef = useRef(null);
   const quantidadeInputRef = useRef(null);
