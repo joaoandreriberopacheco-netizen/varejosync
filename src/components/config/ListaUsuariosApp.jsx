@@ -192,6 +192,7 @@ export default function ListaUsuariosApp() {
                 <TableHead className="text-xs text-gray-400 font-medium hidden sm:table-cell">Email</TableHead>
                 <TableHead className="text-xs text-gray-400 font-medium">Perfil</TableHead>
                 <TableHead className="text-xs text-gray-400 font-medium hidden md:table-cell">Caixas</TableHead>
+                <TableHead className="text-xs text-gray-400 font-medium hidden lg:table-cell">Tabela Preço</TableHead>
                 <TableHead className="text-right text-xs text-gray-400 font-medium">Ações</TableHead>
               </TableRow>
             </TableHeader>
