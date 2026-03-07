@@ -614,7 +614,6 @@ export default function VendasGestaoPage() {
             </div>
           </>
         )}
-        </div>
         </div>}
       </div>
 

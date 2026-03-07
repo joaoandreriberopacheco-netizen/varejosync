@@ -385,14 +385,6 @@ const PedidosCompraTab = () => {
   );
 };
 
-const HubLogisticoTab = () => {
-  return <GestaoManifestos />;
-};
-
-const SupermanifestosTab = () => {
-  return <GestaoSupermanifestos />;
-};
-
 export default function ComprasPage() {
   const [sugestaoKey, setSugestaoKey] = useState(0);
   const [activeTab, setActiveTab] = useState('sugestoes');
