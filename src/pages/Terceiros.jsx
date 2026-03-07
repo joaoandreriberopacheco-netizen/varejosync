@@ -169,14 +169,14 @@ export default function TerceirosPage() {
           </Select>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 h-10 md:h-9">
-            <Download className="w-4 h-4 text-gray-700 dark:text-gray-400" /> <span className="hidden sm:inline">Exportar</span>
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Exportar">
+            <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </Button>
-          <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 h-10 md:h-9">
-            <Upload className="w-4 h-4 text-gray-700 dark:text-gray-400" /> <span className="hidden sm:inline">Importar</span>
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Importar" onClick={() => setShowImportador(true)}>
+            <Upload className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </Button>
-          <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white h-11 md:h-9 px-4">
-            <PlusCircle className="w-4 h-4" /> Novo
+          <Button onClick={handleAddNew} className="gap-2 bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 text-white h-9 px-4 rounded-xl text-sm">
+            <PlusCircle className="w-4 h-4" /> <span className="hidden sm:inline">Novo</span>
           </Button>
         </div>
       </div>
