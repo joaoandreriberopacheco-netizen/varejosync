@@ -130,6 +130,7 @@ export default function Layout({ children, currentPageName }) {
 
   const handleProfileSwitch = async (newProfile) => {
     try {
+      // Para admins: trocar perfil simula permissões — usa perfil_acesso_id se disponível
       await base44.auth.updateMe({ perfil: newProfile });
       window.location.reload();
     } catch (error) {
