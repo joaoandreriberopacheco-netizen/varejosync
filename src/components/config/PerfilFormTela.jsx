@@ -173,45 +173,7 @@ function Checkbox({ checked, onChange }) {
   );
 }
 
-function LinhaPermissao({ perm, modulo, permissoes, onChange }) {
-  const valor = getPermissao(permissoes, modulo, perm.key);
-  
-  return (
-    <div className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors rounded-lg group">
-      <Switch
-        checked={valor}
-        onCheckedChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v))}
-        className="scale-100 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200 flex-shrink-0"
-      />
-      <label className="flex items-center gap-2 cursor-pointer flex-1">
-        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">{perm.label}</span>
-      </label>
-    </div>
-  );
-}
 
-function LinhaPermissaoSubmodulo({ perm, moduloKey, submoduloKey, permissoes, onChange }) {
-  const valor = permissoes?.[moduloKey]?.[submoduloKey]?.[perm.key] === true;
-  
-  return (
-    <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors rounded-lg group">
-      <Switch
-        checked={valor}
-        onCheckedChange={v => {
-          let novo = { ...permissoes };
-          if (!novo[moduloKey]) novo[moduloKey] = {};
-          if (!novo[moduloKey][submoduloKey]) novo[moduloKey][submoduloKey] = {};
-          novo[moduloKey][submoduloKey] = { ...novo[moduloKey][submoduloKey], [perm.key]: v };
-          onChange(novo);
-        }}
-        className="scale-100 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200 flex-shrink-0"
-      />
-      <label className="flex items-center gap-2 cursor-pointer flex-1">
-        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">{perm.label}</span>
-      </label>
-    </div>
-  );
-}
 
 function RenderizarHierarquia({ item, moduloKey, parentKey = null, permissoes, onChange, nivel = 0 }) {
   const temSubitens = item.submodulos && item.submodulos.length > 0;
