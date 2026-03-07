@@ -99,13 +99,14 @@ export default function RecomecarDoZero() {
 
   const deleteAllRecords = async (entityId) => {
     let deleted = 0;
-    for (let page = 0; page < 100; page++) {
-      const records = await base44.entities[entityId].list('-created_date', 100);
+    // Continua buscando e deletando até não restar nenhum registro
+    while (true) {
+      const records = await base44.entities[entityId].list('-created_date', 200);
       if (!records || records.length === 0) break;
       await Promise.all(records.map(r => base44.entities[entityId].delete(r.id)));
       deleted += records.length;
-      if (records.length < 100) break;
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Pequena pausa para não sobrecarregar a API
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     return deleted;
   };
