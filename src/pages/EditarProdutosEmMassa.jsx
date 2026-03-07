@@ -7,12 +7,33 @@ import 'ag-grid-community/styles/ag-theme-quartz.css';
 import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa';
 import { Button } from '@/components/ui/button';
 
+// Parser de fórmulas seguro
+const avaliarFormula = (valor) => {
+  if (typeof valor !== 'string' || !valor.trim()) return valor;
+  const trimmed = valor.trim();
+  if (!trimmed.startsWith('=')) {
+    const num = parseFloat(trimmed);
+    return isNaN(num) ? trimmed : num;
+  }
+  try {
+    const expressao = trimmed.substring(1);
+    if (!/^[\d\s+\-*/.()]+$/.test(expressao)) return null;
+    const resultado = Function('"use strict"; return (' + expressao + ')')();
+    if (typeof resultado !== 'number' || isNaN(resultado)) return null;
+    return Math.round(resultado * 100) / 100;
+  } catch {
+    return null;
+  }
+};
+
 export default function EditarProdutosEmMassa() {
   const [isMobile, setIsMobile] = useState(false);
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState({ busca: '', categoria: '', ativo: 'todos' });
   const [salvarLoading, setSalvarLoading] = useState(false);
+  const [alteracoes, setAlteracoes] = useState({});
+  const gridRef = useRef(null);
 
   // Detectar tamanho da tela
   useEffect(() => {
