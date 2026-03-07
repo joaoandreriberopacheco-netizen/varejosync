@@ -199,13 +199,38 @@ export default function EditarProdutosEmMassa() {
     <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
       {/* Header */}
       <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-glacial font-semibold text-gray-900 dark:text-white">
-          Editar Produtos em Massa
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
-          {Object.keys(alteracoes).length > 0 && ` • ${Object.keys(alteracoes).length} alteração${Object.keys(alteracoes).length !== 1 ? 's' : ''}`}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-glacial font-semibold text-gray-900 dark:text-white">
+              Editar Produtos em Massa
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
+              {Object.keys(alteracoes).length > 0 && ` • ${Object.keys(alteracoes).length} alteração${Object.keys(alteracoes).length !== 1 ? 's' : ''}`}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleUndo}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              title="Desfazer (Ctrl+Z)"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Desfazer
+            </Button>
+            <Button
+              onClick={handleSalvar}
+              disabled={Object.keys(alteracoes).length === 0 || salvarLoading}
+              size="sm"
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Save className="w-4 h-4" />
+              {salvarLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -214,16 +239,27 @@ export default function EditarProdutosEmMassa() {
         onFiltrosChange={setFiltros}
       />
 
-      {/* Grade */}
-      <div className="flex-1 overflow-hidden">
+      {/* Grade AG Grid */}
+      <div className="flex-1 overflow-hidden ag-theme-quartz dark:ag-theme-quartz-dark">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-gray-500 dark:text-gray-400">Carregando produtos...</div>
           </div>
         ) : (
-          <GradeEdicaoMassiva
-            produtos={produtosFiltrados}
-            onSalvar={handleSalvar}
+          <AgGridReact
+            ref={gridRef}
+            rowData={produtosFiltrados}
+            columnDefs={columnDefs}
+            defaultColDef={defaultColDef}
+            onCellValueChanged={handleCellValueChanged}
+            undoRedoCellEditing={true}
+            undoRedoCellEditingLimit={50}
+            animateRows={true}
+            domLayout="normal"
+            suppressCellFocus={false}
+            suppressRowClickSelection={false}
+            suppressMovableColumns={true}
+            getRowClass={(p) => alteracoes[p.data.id] ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
           />
         )}
       </div>
