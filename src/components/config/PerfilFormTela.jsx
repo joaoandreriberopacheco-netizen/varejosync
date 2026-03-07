@@ -54,10 +54,12 @@ export const MODULOS = [
     key: 'estoque', label: 'Estoque',
     permissoes: [
       { key: 'acesso', label: 'Módulo de Estoque' },
-      { key: 'produtos', label: 'Produtos', tipo: 'ver_editar' },
+      { key: 'visualizar_produtos', label: 'Produtos', tipo: 'ver_editar' },
       { key: 'ver_custo_compra', label: 'Ver Custo de Compra' },
       { key: 'realizar_ajuste_estoque', label: 'Ajuste de Estoque' },
       { key: 'separacao_pedidos', label: 'Separação de Pedidos' },
+      { key: 'conferencia_estoque', label: 'Conferência' },
+      { key: 'auditoria_estoque', label: 'Auditoria' },
       { key: 'compras', label: 'Módulo de Compras' },
       { key: 'logistica', label: 'Módulo de Logística' },
       { key: 'armazenagem', label: 'Armazenagem' },
