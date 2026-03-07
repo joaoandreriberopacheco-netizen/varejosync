@@ -432,7 +432,8 @@ export default function VendasGestaoPage() {
           </>
         )}
         </div>
-        </div>}
+        </div>
+        )}
 
         {activeTab === 'pedidos' && (
         <div className="space-y-6">
