@@ -20,7 +20,7 @@ const MODULO_ICONS = {
 export const MODULOS = [
   {
     key: 'pdv', label: 'PDV',
-    permissoes: [
+    submodulos: [
       { key: 'acesso_vendedor', label: 'Interface de Vendedor' },
       { key: 'acesso_caixa', label: 'Interface de Caixa' },
       { key: 'acesso_supermercado', label: 'Modo Supermercado' },
@@ -32,7 +32,7 @@ export const MODULOS = [
   },
   {
     key: 'dashboard', label: 'Dashboard',
-    permissoes: [
+    submodulos: [
       { key: 'acesso', label: 'Acesso ao Dashboard' },
       { key: 'ver_kpis_vendas', label: 'KPIs de Vendas' },
       { key: 'ver_kpis_financeiro', label: 'KPIs Financeiros' },
@@ -41,42 +41,35 @@ export const MODULOS = [
   },
   {
     key: 'vendas', label: 'Vendas',
-    permissoes: [
+    submodulos: [
       { key: 'acesso', label: 'Módulo de Vendas' },
-      { key: 'listar_pedidos', label: 'Listar Pedidos', tipo: 'ver_editar' },
+      { key: 'listar_pedidos', label: 'Listar Pedidos' },
       { key: 'cancelar_pedido', label: 'Cancelar Pedido' },
-      { key: 'controle_entregas', label: 'Controle de Entregas', tipo: 'ver_editar' },
+      { key: 'controle_entregas', label: 'Controle de Entregas' },
       { key: 'painel_gerencial', label: 'Painel Gerencial' },
       { key: 'vendas_perdidas', label: 'Vendas Perdidas' },
     ]
   },
   {
     key: 'estoque', label: 'Estoque',
-    permissoes: [
-      { key: 'acesso', label: 'Módulo de Estoque' },
-      { key: 'visualizar_produtos', label: 'Produtos', tipo: 'ver_editar' },
+    submodulos: [
+      { key: 'visualizar_produtos', label: 'Produtos' },
       { key: 'ver_custo_compra', label: 'Ver Custo de Compra' },
       { key: 'realizar_ajuste_estoque', label: 'Ajuste de Estoque' },
       { key: 'separacao_pedidos', label: 'Separação de Pedidos' },
       { key: 'conferencia_estoque', label: 'Conferência' },
       { key: 'auditoria_estoque', label: 'Auditoria' },
-    ],
-    submodulos: [
       {
         key: 'compras',
-        label: 'Compras',
-        permissoes: [
-          { key: 'acesso', label: 'Módulo de Compras' },
+        label: 'Módulo de Compras',
+        submodulos: [
           { key: 'sugestoes', label: 'Sugestões de Compra' },
           { key: 'cotacoes', label: 'Cotações' },
           { key: 'pedidos', label: 'Pedidos de Compra' },
-        ],
-        submodulos: [
           {
             key: 'hub_logistico',
             label: 'Hub Logístico',
-            permissoes: [
-              { key: 'acesso', label: 'Hub Logístico' },
+            submodulos: [
               { key: 'manifestos', label: 'Manifestos' },
               { key: 'supermanifestos', label: 'Supermanifestos' },
               { key: 'conferencia', label: 'Conferência' },
@@ -84,27 +77,15 @@ export const MODULOS = [
           }
         ]
       },
-      {
-        key: 'logistica',
-        label: 'Logística',
-        permissoes: [
-          { key: 'acesso', label: 'Módulo de Logística' },
-        ]
-      },
-      {
-        key: 'armazenagem',
-        label: 'Armazenagem',
-        permissoes: [
-          { key: 'acesso', label: 'Armazenagem' },
-        ]
-      }
+      { key: 'logistica', label: 'Módulo de Logística' },
+      { key: 'armazenagem', label: 'Armazenagem' },
     ]
   },
   {
     key: 'financeiro', label: 'Financeiro',
-    permissoes: [
+    submodulos: [
       { key: 'acesso', label: 'Módulo Financeiro' },
-      { key: 'contas', label: 'Contas e Saldos', tipo: 'ver_editar' },
+      { key: 'contas', label: 'Contas e Saldos' },
       { key: 'criar_lancamento', label: 'Criar Lançamento' },
       { key: 'aprovar_pagamentos', label: 'Aprovar Pagamentos' },
       { key: 'conciliar_movimentos', label: 'Conciliação Bancária' },
@@ -114,7 +95,7 @@ export const MODULOS = [
   },
   {
     key: 'relatorios', label: 'Relatórios',
-    permissoes: [
+    submodulos: [
       { key: 'acesso', label: 'Acesso a Relatórios' },
       { key: 'relatorio_vendas', label: 'Relatório de Vendas' },
       { key: 'relatorio_estoque', label: 'Relatório de Estoque' },
@@ -124,7 +105,7 @@ export const MODULOS = [
   },
   {
     key: 'configuracoes', label: 'Configurações',
-    permissoes: [
+    submodulos: [
       { key: 'acesso', label: 'Acesso às Configurações' },
       { key: 'gerenciar_usuarios', label: 'Gerenciar Usuários' },
       { key: 'gerenciar_perfis', label: 'Gerenciar Perfis de Acesso' },
