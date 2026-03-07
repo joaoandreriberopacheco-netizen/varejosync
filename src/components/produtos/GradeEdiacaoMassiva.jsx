@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { avaliarFormula } from './utils/formulaParser';
-import { ChevronDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { avaliarFormula } from './utils/formulaParser.js';
+import { AlertCircle } from 'lucide-react';
 
 const COLUNAS = [
   { key: 'codigo_interno', label: 'Código', tipo: 'text', largura: 100, readonly: true },
@@ -29,10 +29,13 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
     }))
   );
 
-  const [alteracoes, setAlteracoes] = useState({}); // Track which cells changed
+  const [alteracoes, setAlteracoes] = useState({});
   const [celulaSelecionada, setCelulaSelecionada] = useState(null);
+  const [celulaEmEdicao, setCelulaEmEdicao] = useState(null);
+  const [dragFillAtivo, setDragFillAtivo] = useState(null);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Calcular valores das colunas calculadas
   const calcularColunaCalculada = useCallback((produtoId, chaveColuna) => {
