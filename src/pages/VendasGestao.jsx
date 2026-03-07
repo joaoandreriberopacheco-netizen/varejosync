@@ -443,11 +443,10 @@ export default function VendasGestaoPage() {
               <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
             </div>
           </>
-        )}
-      </div>
-        </TabsContent>
+        }}
+        </div>}
 
-        <TabsContent value="pedidos" className="space-y-6">
+        {activeTab === 'pedidos' && <div className="space-y-6">
           {/* Filtros para Pedidos */}
           <div className="space-y-3">
         {/* Linha 1: Busca e Status */}
