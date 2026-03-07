@@ -206,28 +206,23 @@ export default function VendasGestaoPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header Ultra Minimalista */}
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-1">Gestão de Vendas</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Orçamentos, Pedidos e Acompanhamento de Vendas</p>
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Devolução</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Troca</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs border-gray-200 dark:border-gray-700" onClick={() => setShowAlterarPagamento(true)}>
-              <CreditCard className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Alt. Pagamento</span>
-            </Button>
-          </div>
+    <div className="max-w-7xl mx-auto space-y-4">
+      {/* Header glacial */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Gestão de Vendas</h1>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Orçamentos, pedidos e acompanhamento</p>
+        </div>
+        <div className="flex gap-1.5 flex-shrink-0">
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+            <RotateCcw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+            <RefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
+            <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </Button>
         </div>
       </div>
 
