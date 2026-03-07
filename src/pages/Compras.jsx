@@ -246,9 +246,9 @@ const PedidosCompraTab = () => {
       <div className="grid gap-3 md:gap-3">
         {/* Responsive: Cards for Mobile, Table for Desktop */}
         {pedidosFiltrados.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-            <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400">Nenhum pedido encontrado</p>
+          <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+            <ShoppingCart className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum pedido encontrado</p>
           </div>
         ) : (
           <>
