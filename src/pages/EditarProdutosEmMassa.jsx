@@ -78,28 +78,100 @@ export default function EditarProdutosEmMassa() {
     return matchBusca && matchCategoria && matchAtivo;
   });
 
-  const handleSalvar = async (alteracoesFiltradas) => {
+  // Definição de colunas AG Grid
+  const columnDefs = [
+    { field: 'codigo_interno', headerName: 'Código', width: 100, editable: false },
+    { field: 'nome', headerName: 'Produto', width: 250, editable: false },
+    {
+      field: 'valor_compra',
+      headerName: 'Valor Compra',
+      width: 120,
+      editable: true,
+      type: 'rightAligned',
+      cellClass: (p) => {
+        const val = p.data?.valor_compra;
+        return val < 0 ? 'bg-red-100 dark:bg-red-900/20' : '';
+      }
+    },
+    {
+      field: 'preco_venda_padrao',
+      headerName: 'Preço Venda',
+      width: 120,
+      editable: true,
+      type: 'rightAligned',
+      cellClass: (p) => {
+        const val = p.data?.preco_venda_padrao;
+        const custo = p.data?.valor_compra || 0;
+        if (val < custo) return 'bg-red-100 dark:bg-red-900/20';
+        const margem = ((val - custo) / val) * 100;
+        return margem < 20 ? 'bg-yellow-100 dark:bg-yellow-900/20' : '';
+      }
+    },
+    {
+      field: 'preco_venda_percentual',
+      headerName: 'Margem %',
+      width: 110,
+      editable: true,
+      type: 'rightAligned'
+    },
+    { field: 'estoque_atual', headerName: 'Estoque', width: 90, editable: false, type: 'rightAligned' },
+    { field: 'estoque_minimo', headerName: 'Mínimo', width: 90, editable: true, type: 'rightAligned' },
+    { field: 'ativo', headerName: 'Ativo', width: 70, editable: true, type: 'boolean' }
+  ];
+
+  const defaultColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true,
+    suppressMovable: false
+  };
+
+  const handleCellValueChanged = (event) => {
+    const { data, field, newValue, oldValue } = event;
+    
+    // Aplicar parser de fórmula se for número
+    let valorFinal = newValue;
+    if (['valor_compra', 'preco_venda_padrao', 'preco_venda_percentual', 'estoque_minimo'].includes(field)) {
+      valorFinal = avaliarFormula(newValue);
+    }
+
+    if (valorFinal === oldValue) return;
+
+    setAlteracoes(prev => ({
+      ...prev,
+      [data.id]: {
+        ...(prev[data.id] || {}),
+        [field]: valorFinal
+      }
+    }));
+  };
+
+  const handleSalvar = async () => {
     try {
       setSalvarLoading(true);
       
-      // Bulk update: enviar apenas as linhas alteradas
-      const updates = Object.entries(alteracoesFiltradas).map(([id, dados]) => ({
+      const updates = Object.entries(alteracoes).map(([id, dados]) => ({
         id,
         ...dados,
       }));
 
       if (updates.length > 0) {
-        // Usar bulkCreate ou update individual (ajustar conforme API Base44)
         for (const update of updates) {
           await base44.entities.Produto.update(update.id, update);
         }
+        setAlteracoes({});
+        await carregarProdutos();
       }
-
-      await carregarProdutos();
     } catch (error) {
-      console.error('Erro ao salvar produtos:', error);
+      console.error('Erro ao salvar:', error);
     } finally {
       setSalvarLoading(false);
+    }
+  };
+
+  const handleUndo = () => {
+    if (gridRef.current?.api) {
+      gridRef.current.api.undoCellEditing();
     }
   };
 
