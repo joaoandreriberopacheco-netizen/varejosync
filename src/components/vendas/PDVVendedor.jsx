@@ -877,49 +877,38 @@ export default function PDVVendedor() {
       </div>
 
       <div className="flex-1 flex overflow-hidden pb-20 md:pb-0">
-        {/* Área Principal - Glacial Style */}
-        <div className="flex-1 flex flex-col p-4 md:p-6 overflow-auto bg-gray-50 dark:bg-gray-900">
-          {/* Busca de Produto - Limpo e Expandido */}
-          <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <Search className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Consulta de Produtos</span>
-            </div>
+        {/* Área Principal */}
+        <div className="flex-1 flex flex-col p-3 md:p-5 overflow-auto bg-gray-50 dark:bg-gray-950">
+          {/* Busca de Produto */}
+          <div className="mb-3 md:mb-5 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2 w-full">
                 <div className="flex-1 relative min-w-0">
-                  <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                  <Barcode className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
                   ref={inputProdutoRef}
-                  placeholder="Nome, código ou código de barras..."
-                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-2 focus:ring-gray-300 focus:border-gray-400 placeholder:text-gray-400"
+                  placeholder="Buscar por nome, código ou código de barras..."
+                  className="w-full pl-10 pr-12 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-12 text-sm focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 placeholder:text-gray-400 dark:placeholder:text-gray-600"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoFocus={!isMobile} />
-
-                  <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowBarcodeScanner(true)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
-
-                    <Camera className="w-5 h-5" />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 w-9 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">
+                    <Camera className="w-4 h-4" />
                   </Button>
                 </div>
-                <div className="w-20 md:w-24 shrink-0">
+                <div className="w-16 md:w-20 shrink-0">
                   <Input
                   ref={quantidadeInputRef}
                   type="number"
                   inputMode="numeric"
                   placeholder="Qtd"
-                  className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-semibold focus:ring-2 focus:ring-gray-300"
+                  className="w-full bg-white dark:bg-gray-900 border-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-12 text-center text-base font-bold focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
                   onKeyDown={handleQuantidadeKeyDown}
                   min="1"
                   disabled={!produtoSelecionado} />
-
                 </div>
             </div>
             {showSuggestions && produtosSugeridos.length > 0 &&
