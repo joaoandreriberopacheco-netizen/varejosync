@@ -845,39 +845,33 @@ export default function PDVVendedor() {
         }
       </AnimatePresence>
 
-      {/* Header - Elegante */}
-      <div className="bg-white dark:bg-gray-800 p-4 md:p-4 flex items-center justify-between flex-shrink-0">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 md:w-10 md:h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <ShoppingCart className="w-5 h-5 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
+          <div className="w-9 h-9 rounded-xl bg-gray-900 dark:bg-white flex items-center justify-center shadow-sm">
+            <ShoppingCart className="w-4 h-4 text-white dark:text-gray-900" />
           </div>
           <div>
-            <h1 className="text-lg md:text-lg font-medium text-gray-800 dark:text-gray-100">PDV</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Ponto de Venda</p>
+            <h1 className="text-base font-semibold text-gray-900 dark:text-white leading-tight font-glacial">PDV</h1>
+            {tabelaPreco && <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-none">{tabelaPreco.nome_tabela}</p>}
           </div>
+          {rascunhoEmEdicaoId && (
+            <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">Editando</span>
+          )}
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          <div className="hidden lg:flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
-            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F1 Ajuda</span>
-            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F3 Avançar</span>
-            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">F4 Limpar</span>
+        <div className="flex items-center gap-1.5">
+          <div className="hidden lg:flex items-center gap-1.5 mr-2">
+            {['F1 Ajuda','F3 Avançar','F4 Limpar'].map(k => (
+              <span key={k} className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">{k}</span>
+            ))}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowReeditarDialog(true)}
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8 rounded-lg"
-            title="Reeditar rascunho">
-
-            <Edit className="w-5 h-5 md:w-4 md:h-4" />
+          <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
+            className="h-9 w-9 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800" title="Reeditar rascunho">
+            <Edit className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSair}
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 h-11 w-11 md:h-8 md:w-8 rounded-lg">
-
-            <Undo2 className="w-5 h-5 md:w-4 md:h-4" />
+          <Button variant="ghost" size="icon" onClick={handleSair}
+            className="h-9 w-9 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <Undo2 className="w-4 h-4" />
           </Button>
         </div>
       </div>
