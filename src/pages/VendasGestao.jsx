@@ -15,8 +15,7 @@ import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 
 export default function VendasGestaoPage() {
   const [pedidos, setPedidos] = useState([]);
