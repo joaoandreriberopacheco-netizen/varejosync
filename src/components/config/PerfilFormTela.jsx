@@ -216,30 +216,18 @@ function Checkbox({ checked, onChange }) {
 }
 
 function LinhaPermissao({ perm, modulo, permissoes, onChange }) {
-  if (perm.tipo === 'ver_editar') {
-    const ver = getPermissao(permissoes, modulo, perm.key, 'ver');
-    const editar = getPermissao(permissoes, modulo, perm.key, 'editar');
-    return (
-      <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-        <span className="text-xs text-gray-600 dark:text-gray-400">{perm.label}</span>
-        <Checkbox checked={ver} onChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v, 'ver'))} />
-        <Checkbox checked={editar} onChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v, 'editar'))} />
-      </div>
-    );
-  }
-
-  // toggle simples — ocupa as 3 colunas mas o switch fica na col1 (col 2+3 ficam vazias)
+  const valor = getPermissao(permissoes, modulo, perm.key);
+  
   return (
-    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-      <label className="flex items-center gap-2 cursor-pointer">
-        <Switch
-          checked={getPermissao(permissoes, modulo, perm.key)}
-          onCheckedChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v))}
-          className="scale-90 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200"
-        />
-        <span className="text-xs text-gray-600 dark:text-gray-400">{perm.label}</span>
+    <div className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors rounded-lg group">
+      <Switch
+        checked={valor}
+        onCheckedChange={v => onChange(setPermissao(permissoes, modulo, perm.key, v))}
+        className="scale-100 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200 flex-shrink-0"
+      />
+      <label className="flex items-center gap-2 cursor-pointer flex-1">
+        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">{perm.label}</span>
       </label>
-      <div className="w-5" /><div className="w-5" />
     </div>
   );
 }
