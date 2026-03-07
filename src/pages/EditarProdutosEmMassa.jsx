@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Monitor, Save, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
 import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa';
 import { Button } from '@/components/ui/button';
-import SpreadsheetNativa from '@/components/produtos/SpreadsheetNativa';
+import SpreadsheetNativa from '@/components/produtos/SpreadsheetNativa.jsx';
 
 export default function EditarProdutosEmMassa() {
   const [isMobile, setIsMobile] = useState(false);
