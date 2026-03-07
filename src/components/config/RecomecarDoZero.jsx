@@ -181,7 +181,7 @@ export default function RecomecarDoZero() {
       </div>
 
       <Dialog open={isOpen && !isAuthOpen} onOpenChange={(v) => { if (!isProcessing) setIsOpen(v); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-3xl">
+        <DialogContent className="max-w-2xl h-[90vh] flex flex-col bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <RefreshCw className="w-5 h-5" />
