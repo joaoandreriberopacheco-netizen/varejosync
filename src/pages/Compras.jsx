@@ -14,9 +14,12 @@ import { toast } from 'sonner';
 import PedidoCompraForm from '../components/compras/PedidoCompraForm';
 import SugestaoCompra from '../components/compras/SugestaoCompra';
 import CotacoesManager from '../components/compras/CotacoesManager';
-
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
 import DetalhesSupermanifesto from '../components/compras/DetalhesSupermanifesto';
+import GestaoManifestos from '../components/compras/GestaoManifestos';
+import GestaoSupermanifestos from '../components/compras/GestaoSupermanifestos';
+import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
+import PainelConferencias from '../components/compras/PainelConferencias';
 
 const getStatusBadge = (status) => {
   const variants = {
