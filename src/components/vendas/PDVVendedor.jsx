@@ -397,8 +397,11 @@ export default function PDVVendedor() {
       setClientes(clientesData);
 
       if (userData.tabela_preco_id) {
-        const tabela = await TabelaPreco.get(userData.tabela_preco_id);
+        const tabela = await base44.entities.TabelaPreco.get(userData.tabela_preco_id);
         setTabelaPreco(tabela);
+      } else {
+        const tabelas = await base44.entities.TabelaPreco.filter({ ativo: true, is_default: true });
+        if (tabelas.length > 0) setTabelaPreco(tabelas[0]);
       }
     } catch (error) {
       showFeedback('error', `Erro ao carregar: ${error.message}`, 3000);
