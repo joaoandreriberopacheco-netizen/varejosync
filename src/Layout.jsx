@@ -101,6 +101,15 @@ export default function Layout({ children, currentPageName }) {
       const user = await base44.auth.me();
       if (user) {
         setCurrentUser(user);
+        // Carregar PerfilDeAcesso vinculado (Quarter Master Logic)
+        if (user.perfil_acesso_id) {
+          try {
+            const perfis = await base44.entities.PerfilDeAcesso.filter({ id: user.perfil_acesso_id });
+            if (perfis && perfis.length > 0) setPerfilDeAcesso(perfis[0]);
+          } catch (e) {
+            console.warn("Perfil de acesso não encontrado:", e);
+          }
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
