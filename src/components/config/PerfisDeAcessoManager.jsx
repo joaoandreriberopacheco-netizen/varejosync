@@ -46,12 +46,12 @@ export default function PerfisDeAcessoManager() {
   const deletar = async (id) => {
     const emUso = usuarios.filter(u => u.perfil_acesso_id === id).length;
     if (emUso > 0) {
-      toast({ title: `Perfil em uso por ${emUso} usuário(s)`, description: 'Desvincule os usuários antes de excluir.', variant: 'destructive' });
+      notify.warning(`Perfil em uso por ${emUso} usuário(s)`, 'Desvincule os usuários antes de excluir.');
       return;
     }
     if (!window.confirm('Excluir este perfil?')) return;
     await base44.entities.PerfilDeAcesso.delete(id);
-    toast({ title: 'Perfil excluído', className: 'bg-green-50 text-green-800' });
+    notify.success('Perfil excluído');
     carregarDados();
   };
 
