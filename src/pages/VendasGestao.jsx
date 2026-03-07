@@ -429,7 +429,7 @@ export default function VendasGestaoPage() {
               <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
             </div>
           </>
-        }}
+        )}
         </div>}
 
         {activeTab === 'pedidos' && <div className="space-y-6">
