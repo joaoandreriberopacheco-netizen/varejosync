@@ -277,7 +277,7 @@ export default function RecomecarDoZero() {
                               key={entity.id}
                               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${
                                 selectedEntities.includes(entity.id)
-                                  ? 'bg-red-50 dark:bg-red-900/20'
+                                  ? 'bg-gray-100 dark:bg-gray-700'
                                   : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                               }`}
                             >
