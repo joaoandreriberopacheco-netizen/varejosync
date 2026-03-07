@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Monitor } from 'lucide-react';
-import TabelaProdutosEditavel from '@/components/produtos/TabelaProdutosEditavel';
+import GradeEdicaoMassiva from '@/components/produtos/GradeEdiacaoMassiva';
 import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa';
 
 export default function EditarProdutosEmMassa() {
