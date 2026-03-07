@@ -265,24 +265,31 @@ export default function LostSalesForm({ open, onClose, currentUser }) {
             </div>
 
             {showSuggestions && produtosSugeridos.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute z-50 w-full mt-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-h-52 overflow-y-auto border border-gray-100 dark:border-gray-800">
                 {produtosSugeridos.map((produto, idx) => (
                   <div
                     key={produto.id || idx}
-                    className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer border-b border-gray-50 dark:border-gray-800 last:border-b-0 transition-colors"
                     onClick={() => handleSelecionarProduto(produto)}
                   >
-                    <p className="font-medium text-sm text-gray-800 dark:text-gray-200">{produto.nome}</p>
-                    {formData.is_produto_do_mix && produto.estoque_atual !== undefined && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Estoque: {produto.estoque_atual} | Cód: {produto.codigo_interno}
-                      </p>
+                    {formData.is_produto_do_mix && (
+                      produto.imagem_url
+                        ? <img src={produto.imagem_url} alt={produto.nome} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                        : <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                            <Package className="w-4 h-4 text-gray-400" />
+                          </div>
                     )}
-                    {!formData.is_produto_do_mix && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400">
-                        Já registrado anteriormente
-                      </p>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{produto.nome}</p>
+                      {formData.is_produto_do_mix && produto.estoque_atual !== undefined && (
+                        <p className="text-xs text-gray-400">
+                          Estoque: {produto.estoque_atual} · #{produto.codigo_interno}
+                        </p>
+                      )}
+                      {!formData.is_produto_do_mix && (
+                        <p className="text-xs text-amber-500">Já registrado</p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
