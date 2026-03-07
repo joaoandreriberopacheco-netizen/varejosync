@@ -137,15 +137,15 @@ export default function TerceirosPage() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header - SEM CORES */}
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-1">Gestão de Terceiros</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Clientes, Fornecedores e Parceiros</p>
+    <div className="max-w-7xl mx-auto space-y-4">
+      {/* Header glacial */}
+      <div>
+        <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Terceiros</h1>
+        <p className="text-xs text-gray-400 dark:text-gray-500">Clientes, fornecedores e parceiros</p>
       </div>
 
       {/* Controles */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
