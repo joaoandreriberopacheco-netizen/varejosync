@@ -195,9 +195,10 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
         </button>
       </div>
 
-      <table className="w-full border-collapse flex-1">
-        <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
-          <tr className="border-b border-gray-200 dark:border-gray-700">
+      <div className="flex-1 overflow-auto" style={{ background: 'repeating-linear-gradient(0deg, transparent, transparent 35px, rgba(200,200,200,0.1) 35px, rgba(200,200,200,0.1) 36px)' }}>
+        <table className="w-full border-collapse" style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(200,200,200,0.08) 119px, rgba(200,200,200,0.08) 120px)' }}>
+          <thead className="sticky top-0 z-20 bg-gray-50 dark:bg-gray-800">
+            <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className="w-12 px-4 py-3 text-left">
               <input type="checkbox" className="rounded" />
             </th>
