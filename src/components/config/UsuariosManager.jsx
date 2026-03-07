@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/components/ui/use-toast';
+import { notify } from '@/components/ui/notify';
 import {
   Users, Shield, ChevronRight, ChevronDown, Search,
   UserPlus, Pencil, X, Check, ArrowLeft, AlertCircle,

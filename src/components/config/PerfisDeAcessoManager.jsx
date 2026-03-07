@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { notify } from '@/components/ui/notify';
 import { Plus, Trash2, Shield, Users, Pencil } from 'lucide-react';
 import PerfilFormTela, { MODULOS, contarPermissoes } from './PerfilFormTela';
 
