@@ -1120,13 +1120,19 @@ export default function PDVVendedor() {
                 </div> :
             carrinho.map((item) =>
             <div key={item.produto_id} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 pr-2">
+                    <div className="flex items-start gap-3 mb-3">
+                      {item.imagem_url
+                        ? <img src={item.imagem_url} alt={item.produto_nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                        : <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                            <Package className="w-5 h-5 text-gray-400" />
+                          </div>
+                      }
+                      <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.produto_nome}</p>
                         <p className="text-xs text-gray-400 mt-0.5">R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')} cada</p>
                       </div>
                       <button onClick={() => handleRemoveItem(item.produto_id)}
-                        className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg">
+                        className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg flex-shrink-0">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
