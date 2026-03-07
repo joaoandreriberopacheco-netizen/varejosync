@@ -206,14 +206,9 @@ export const ALL_MENU_ITEMS = [
         name: 'Separação de Pedidos',
         page: 'InterfaceSeparador',
         permissaoCheck: (p) => p?.estoque?.separacao_pedidos
-      },
-      {
-        name: 'Editar em Massa',
-        page: 'EditarProdutosEmMassa',
-        permissaoCheck: (p) => p?.estoque?.editar_produto
       }
-      ]
-      },
+    ]
+  },
   {
     name: 'Financeiro',
     icon: DollarSign,
