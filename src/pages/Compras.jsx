@@ -193,11 +193,11 @@ const PedidosCompraTab = () => {
             </Select>
             
             <div className="ml-auto flex gap-2 w-full sm:w-auto">
-              <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 w-full sm:w-auto rounded-lg shadow-sm border-teal-200 text-teal-700 hover:bg-teal-50">
+              <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 w-full sm:w-auto rounded-xl shadow-sm border-0 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
                 <FileText className="w-4 h-4" />
                 Importar NF
               </Button>
-              <Button onClick={handleAddNew} className="bg-teal-600 hover:bg-teal-700 text-white gap-2 w-full sm:w-auto rounded-lg shadow-sm">
+              <Button onClick={handleAddNew} className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white gap-2 w-full sm:w-auto rounded-xl shadow-sm">
                 <PlusCircle className="w-4 h-4" />
                 Novo Pedido
               </Button>
