@@ -61,11 +61,14 @@ export default function ListaUsuariosApp() {
   const handleSalvar = async () => {
     if (!editingUser) return;
     const perfilSelecionado = perfisAcesso.find(p => p.id === selectedPerfilId);
+    const tabelaSelecionada = tabelasPreco.find(t => t.id === selectedTabelaId);
     await base44.entities.User.update(editingUser.id, {
       perfil_acesso_id: selectedPerfilId || null,
       perfil_acesso_nome: perfilSelecionado?.nome || null,
       perfil: perfilSelecionado?.nome || editingUser.perfil,
-      caixas_pdv_autorizados_ids: selectedCaixas
+      caixas_pdv_autorizados_ids: selectedCaixas,
+      tabela_preco_id: selectedTabelaId || null,
+      tabela_preco_nome: tabelaSelecionada?.nome_tabela || null
     });
     toast({ title: 'Usuário atualizado', className: 'bg-green-50 text-green-800' });
     setIsDialogOpen(false);
