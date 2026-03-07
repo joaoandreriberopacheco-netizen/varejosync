@@ -193,19 +193,19 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.estoque?.armazenagem
       },
       {
-        name: 'Conferência',
-        page: 'ConferenciaEstoque',
-        permissaoCheck: (p) => p?.estoque?.conferencia
-      },
-      {
-        name: 'Auditoria',
-        page: 'AuditoriaEstoqueV2',
-        permissaoCheck: (p) => p?.estoque?.auditoria
-      },
-      {
         name: 'Separação de Pedidos',
         page: 'InterfaceSeparador',
         permissaoCheck: (p) => p?.estoque?.separacao_pedidos
+      },
+      {
+        name: 'Conferência',
+        page: 'ConferenciaEstoque',
+        permissaoCheck: (p) => p?.estoque?.conferencia_estoque
+      },
+      {
+        name: 'Auditoria',
+        page: 'AuditoriaEstoque',
+        permissaoCheck: (p) => p?.estoque?.auditoria_estoque
       }
       ]
       },

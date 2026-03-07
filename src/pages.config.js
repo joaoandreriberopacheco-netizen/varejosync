@@ -100,7 +100,6 @@ import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
 import ConferenciaEstoque from './pages/ConferenciaEstoque';
-import AuditoriaEstoqueV2 from './pages/AuditoriaEstoqueV2';
 import __Layout from './Layout.jsx';
 
 
@@ -158,7 +157,6 @@ export const PAGES = {
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
     "ConferenciaEstoque": ConferenciaEstoque,
-    "AuditoriaEstoqueV2": AuditoriaEstoqueV2,
 }
 
 export const pagesConfig = {
