@@ -60,15 +60,19 @@ export default function EditarProdutosEmMassa() {
   const handleSalvar = async () => {
     try {
       setSalvarLoading(true);
-      
-      const updates = Object.entries(alteracoes).map(([id, dados]) => ({
-        id,
-        ...dados,
-      }));
 
-      if (updates.length > 0) {
-        for (const update of updates) {
-          await base44.entities.Produto.update(update.id, update);
+      // Validar integridade: apenas linhas com dados essenciais
+      const linhasValidas = Object.entries(alteracoes).filter(([id, dados]) => {
+        const produto = produtos.find(p => p.id === id);
+        const nome = dados.nome !== undefined ? dados.nome : produto?.nome;
+        const preco = dados.preco_venda_padrao !== undefined ? dados.preco_venda_padrao : produto?.preco_venda_padrao;
+        return nome?.trim() && preco;
+      });
+
+      if (linhasValidas.length > 0) {
+        // BulkUpdate: apenas enviar alterações confirmadas
+        for (const [id, dados] of linhasValidas) {
+          await base44.entities.Produto.update(id, dados);
         }
         setAlteracoes({});
         await carregarProdutos();
