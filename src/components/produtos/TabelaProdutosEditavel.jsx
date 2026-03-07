@@ -213,45 +213,74 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
                   <input type="checkbox" className="rounded" />
                 </td>
                 {CAMPOS_EDISTAVEIS.map(campo => {
-                  const valor = getValor(produto, campo.key);
-                  const erros = validar(campo.key, valor, produto);
-                  const temErro = erros.length > 0;
+                   const valor = getValor(produto, campo.key);
+                   const erros = validar(campo.key, valor, produto);
+                   const temErro = erros.length > 0;
+                   const isSelected = cellSelection?.produtoId === produto.id && cellSelection?.campo === campo.key;
 
-                  return (
-                    <td 
-                      key={campo.key}
-                      style={{ width: campo.width, minWidth: campo.width }}
-                      className="px-3 py-2"
-                    >
-                      {campo.tipo === 'boolean' ? (
-                        <input
-                          type="checkbox"
-                          checked={valor ?? false}
-                          onChange={(e) => onAlteracao(produto.id, campo.key, e.target.checked)}
-                          className="rounded cursor-pointer"
-                        />
-                      ) : (
-                        <div className="relative">
-                          <input
-                            type={campo.tipo}
-                            value={valor}
-                            onChange={(e) => onAlteracao(produto.id, campo.key, e.target.value)}
-                            className={`w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded border transition-colors ${
-                              temErro
-                                ? 'border-red-300 dark:border-red-600'
-                                : 'border-gray-200 dark:border-gray-600 focus:border-blue-500'
-                            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
-                          />
-                          {temErro && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-1 rounded whitespace-nowrap overflow-hidden text-ellipsis z-20">
-                              {erros[0]}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
+                   return (
+                     <td 
+                       key={campo.key}
+                       style={{ width: campo.width, minWidth: campo.width }}
+                       className="px-3 py-2"
+                       onClick={() => setCellSelection({ produtoId: produto.id, campo: campo.key })}
+                     >
+                       {campo.tipo === 'boolean' ? (
+                         <input
+                           type="checkbox"
+                           checked={valor ?? false}
+                           onChange={(e) => onAlteracao(produto.id, campo.key, e.target.checked)}
+                           className="rounded cursor-pointer"
+                         />
+                       ) : (
+                         <div className="relative">
+                           <input
+                             type={campo.tipo}
+                             value={valor}
+                             onChange={(e) => onAlteracao(produto.id, campo.key, e.target.value)}
+                             className={`w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded border transition-colors ${
+                               isSelected ? 'ring-2 ring-blue-500 border-blue-500' : ''
+                             } ${
+                               temErro
+                                 ? 'border-red-300 dark:border-red-600'
+                                 : 'border-gray-200 dark:border-gray-600 focus:border-blue-500'
+                             } focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                             title={typeof valor === 'string' && valor.startsWith('=') ? `Fórmula: ${valor}` : ''}
+                           />
+                           {temErro && (
+                             <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-1 rounded whitespace-nowrap overflow-hidden text-ellipsis z-20">
+                               {erros[0]}
+                             </div>
+                           )}
+                         </div>
+                       )}
+                     </td>
+                   );
+                 })}
+                {colunasTemp.map(col => {
+                   const valor = getValor(produto, col.key);
+                   const isSelected = cellSelection?.produtoId === produto.id && cellSelection?.campo === col.key;
+
+                   return (
+                     <td 
+                       key={col.key}
+                       style={{ width: col.width, minWidth: col.width }}
+                       className="px-3 py-2 bg-yellow-50 dark:bg-yellow-900/10"
+                       onClick={() => setCellSelection({ produtoId: produto.id, campo: col.key })}
+                     >
+                       <input
+                         type="text"
+                         value={valor}
+                         onChange={(e) => onAlteracao(produto.id, col.key, e.target.value)}
+                         placeholder="=fórmula"
+                         className={`w-full px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-gray-900 dark:text-white rounded border transition-colors ${
+                           isSelected ? 'ring-2 ring-yellow-500 border-yellow-500' : 'border-yellow-200 dark:border-yellow-700'
+                         } focus:outline-none focus:ring-1 focus:ring-yellow-500`}
+                         title={typeof valor === 'string' && valor.startsWith('=') ? `Fórmula: ${valor}` : ''}
+                       />
+                     </td>
+                   );
+                 })}
                 <td className="px-4 py-2 text-center">
                   {produto.id.startsWith('novo_') && (
                     <button className="text-gray-400 hover:text-red-500 transition-colors">
