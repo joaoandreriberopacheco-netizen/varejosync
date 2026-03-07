@@ -26,7 +26,7 @@ export default function PerfisDeAcessoManager() {
   const handleSalvar = async (form) => {
     const editandoExistente = editando && editando !== 'novo';
     if (!form.nome.trim()) {
-      toast({ title: 'Informe um nome para o perfil', variant: 'destructive' });
+      notify.warning('Nome obrigatório', 'Informe um nome para o perfil.');
       return;
     }
     try {
@@ -35,11 +35,11 @@ export default function PerfisDeAcessoManager() {
       } else {
         await base44.entities.PerfilDeAcesso.create(form);
       }
-      toast({ title: editandoExistente ? 'Perfil atualizado' : 'Perfil criado', className: 'bg-green-50 text-green-800' });
+      notify.success(editandoExistente ? 'Perfil atualizado' : 'Perfil criado', 'As permissões foram salvas.');
       setEditando(null);
       carregarDados();
     } catch (e) {
-      toast({ title: 'Erro ao salvar', description: e.message, variant: 'destructive' });
+      notify.error('Erro ao salvar', e.message);
     }
   };
 

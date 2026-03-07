@@ -353,7 +353,7 @@ export default function UsuariosManager() {
       ? null // não podemos usar updateMe para outros usuários
       : null;
     await base44.entities.User.update(userId, dados);
-    toast({ title: 'Acesso atualizado', className: 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300' });
+    notify.success('Acesso atualizado', 'Permissões salvas com sucesso.');
     setEditando(null);
     carregarDados();
   };
