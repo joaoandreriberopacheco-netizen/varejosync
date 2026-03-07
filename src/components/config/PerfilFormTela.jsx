@@ -450,7 +450,7 @@ function ModuloCard({ modulo, permissoes, onChange }) {
       </button>
 
       {expandido && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700">
+        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-1">
           {/* Cabeçalho das colunas ver/editar */}
           {temVerEditar && (
             <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-2 pb-1.5">
@@ -470,6 +470,18 @@ function ModuloCard({ modulo, permissoes, onChange }) {
               modulo={modulo.key}
               permissoes={permissoes}
               onChange={onChange}
+            />
+          ))}
+          
+          {/* Submodulos */}
+          {temSubmodulos && modulo.submodulos.map(sub => (
+            <SubmoduloCard
+              key={sub.key}
+              submodulo={sub}
+              moduloKey={modulo.key}
+              permissoes={permissoes}
+              onChange={onChange}
+              nivel={1}
             />
           ))}
         </div>
