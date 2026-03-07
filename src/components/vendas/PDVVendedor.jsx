@@ -1317,12 +1317,56 @@ export default function PDVVendedor() {
 
             {/* Footer - Resumo e Ação */}
             <div className="p-4 bg-white dark:bg-gray-800 space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-base text-gray-600 dark:text-gray-400">
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                   <span>Subtotal</span>
                   <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
                 </div>
-                <div className="flex justify-between text-xl font-semibold text-gray-800 dark:text-gray-200">
+
+                {/* Desconto Two-Way - Mobile */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wide">Desconto</span>
+                    {tabelaPreco?.percentual_desconto_maximo > 0 && (
+                      <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <div className="relative flex-1">
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        max={tabelaPreco?.percentual_desconto_maximo || 100}
+                        step="0.01"
+                        value={ajustePercentual}
+                        onChange={(e) => handleAjustePercentualChange(e.target.value)}
+                        className="pr-6 h-10 bg-gray-50 dark:bg-gray-700 border-0 rounded-lg text-sm text-right focus:ring-1 focus:ring-gray-300"
+                        placeholder="0"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
+                    </div>
+                    <span className="text-gray-300 text-xs">=</span>
+                    <div className="relative flex-1">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.01"
+                        value={ajusteValor}
+                        onChange={(e) => handleAjusteValorChange(e.target.value)}
+                        className="pl-7 h-10 bg-gray-50 dark:bg-gray-700 border-0 rounded-lg text-sm focus:ring-1 focus:ring-gray-300"
+                        placeholder="0,00"
+                      />
+                    </div>
+                  </div>
+                  {ajusteExcedido && (
+                    <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>
+                  )}
+                </div>
+
+                <div className="flex justify-between text-xl font-semibold text-gray-800 dark:text-gray-200 pt-1 border-t border-gray-100 dark:border-gray-700">
                   <span>Total</span>
                   <span>R$ {valorTotal.toFixed(2).replace('.', ',')}</span>
                 </div>
