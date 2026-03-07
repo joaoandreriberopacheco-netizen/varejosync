@@ -502,7 +502,8 @@ export default function PDVVendedor() {
         preco_unitario_praticado: precoFinal,
         custo_unitario_momento: produtoSelecionado.preco_custo_calculado || 0,
         total: quantidade * precoFinal,
-        estoque_disponivel: produtoSelecionado.estoque_atual
+        estoque_disponivel: produtoSelecionado.estoque_atual,
+        imagem_url: produtoSelecionado.imagem_url || null
       }]);
     }
 
