@@ -253,7 +253,7 @@ const PedidosCompraTab = () => {
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="hidden md:block bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
               <Table>
                 <TableHeader className="bg-gray-50 dark:bg-gray-900/50">
                   <TableRow className="hover:bg-transparent border-gray-100 dark:border-gray-700">
