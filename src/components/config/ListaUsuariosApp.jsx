@@ -216,16 +216,26 @@ export default function ListaUsuariosApp() {
                       </TableCell>
                       <TableCell>{getBadgePerfil(user)}</TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {caixasVinculadas > 0 ? (
-                          <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                            <Monitor className="w-3 h-3" />
-                            {caixasVinculadas} caixa{caixasVinculadas !== 1 ? 's' : ''}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
+                         {caixasVinculadas > 0 ? (
+                           <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                             <Monitor className="w-3 h-3" />
+                             {caixasVinculadas} caixa{caixasVinculadas !== 1 ? 's' : ''}
+                           </span>
+                         ) : (
+                           <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
+                         )}
+                       </TableCell>
+                       <TableCell className="hidden lg:table-cell">
+                         {user.tabela_preco_nome ? (
+                           <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                             <Tag className="w-3 h-3" />
+                             {user.tabela_preco_nome}
+                           </span>
+                         ) : (
+                           <span className="text-[10px] text-gray-300 dark:text-gray-600 italic">usa padrão</span>
+                         )}
+                       </TableCell>
+                       <TableCell className="text-right">
                         <Button
                           size="sm" variant="ghost"
                           className="h-7 w-7 p-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
