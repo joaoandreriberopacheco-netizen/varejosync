@@ -169,6 +169,28 @@ export function contarPermissoes(permissoes, moduloKey) {
   return { ativas, total };
 }
 
+function contarPermissoesSubmodulo(permissoes, moduloKey, submodulo) {
+  let ativas = 0, total = 0;
+  submodulo.permissoes.forEach(p => {
+    if (p.tipo === 'ver_editar') {
+      total += 2;
+      if (permissoes?.[moduloKey]?.[submodulo.key]?.[p.key]?.ver === true) ativas++;
+      if (permissoes?.[moduloKey]?.[submodulo.key]?.[p.key]?.editar === true) ativas++;
+    } else {
+      total += 1;
+      if (permissoes?.[moduloKey]?.[submodulo.key]?.[p.key] === true) ativas++;
+    }
+  });
+  if (submodulo.submodulos) {
+    submodulo.submodulos.forEach(sub => {
+      const { ativas: subAtivas, total: subTotal } = contarPermissoesSubmodulo(permissoes, moduloKey, sub);
+      ativas += subAtivas;
+      total += subTotal;
+    });
+  }
+  return { ativas, total };
+}
+
 // ─── Linha de permissão ──────────────────────────────────────────
 // ver_editar: linha com label à esquerda e dois checkboxes nomeados à direita
 // toggle: linha com switch e label
