@@ -193,8 +193,8 @@ export default function TerceirosPage() {
       ) : (
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
           <Table>
-            <TableHeader className="bg-gray-50 dark:bg-gray-700">
-              <TableRow className="border-b border-gray-200 dark:border-gray-700">
+            <TableHeader className="bg-gray-50 dark:bg-gray-800">
+              <TableRow className="border-b border-gray-100 dark:border-gray-700">
                 <TableHead className="text-gray-700 dark:text-gray-300">Código</TableHead>
                 <TableHead className="text-gray-700 dark:text-gray-300">Nome / Razão Social</TableHead>
                 <TableHead className="text-gray-700 dark:text-gray-300">CPF / CNPJ</TableHead>
