@@ -91,27 +91,23 @@ export default function EditarProdutosEmMassa() {
     }]);
   });
 
-  const handleSalvar = async () => {
+  const handleSalvar = async (alteracoesFiltradas) => {
     try {
       setSalvarLoading(true);
       
-      // Separar novos produtos de produtos existentes
-      const novos = produtosFiltrados.filter(p => p.id.startsWith('novo_'));
-      const editados = produtosFiltrados.filter(p => !p.id.startsWith('novo_') && alteracoes[p.id]);
+      // Bulk update: enviar apenas as linhas alteradas
+      const updates = Object.entries(alteracoesFiltradas).map(([id, dados]) => ({
+        id,
+        ...dados,
+      }));
 
-      // Salvar novos produtos
-      for (const novo of novos) {
-        const dados = { ...novo, ...alteracoes[novo.id] };
-        delete dados.id;
-        await base44.entities.Produto.create(dados);
+      if (updates.length > 0) {
+        // Usar bulkCreate ou update individual (ajustar conforme API Base44)
+        for (const update of updates) {
+          await base44.entities.Produto.update(update.id, update);
+        }
       }
 
-      // Atualizar produtos existentes
-      for (const produto of editados) {
-        await base44.entities.Produto.update(produto.id, alteracoes[produto.id]);
-      }
-
-      setAlteracoes({});
       await carregarProdutos();
     } catch (error) {
       console.error('Erro ao salvar produtos:', error);
