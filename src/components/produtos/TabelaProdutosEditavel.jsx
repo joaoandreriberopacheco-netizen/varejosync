@@ -142,9 +142,30 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
   return (
     <div 
       ref={scrollRef}
-      className="overflow-x-auto overflow-y-auto h-full bg-white dark:bg-gray-900"
+      className="overflow-x-auto overflow-y-auto h-full bg-white dark:bg-gray-900 flex flex-col"
+      onKeyDown={(e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c') handleCopiar();
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v') handlePasteValores(e);
+      }}
     >
-      <table className="w-full border-collapse">
+      <div className="flex gap-2 p-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <button
+          onClick={handleColar}
+          className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+          title="Cole dados do Excel (Ctrl+V)"
+        >
+          Colar
+        </button>
+        <button
+          onClick={adicionarColunaTmp}
+          className="text-xs px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors flex items-center gap-1"
+        >
+          <Plus className="w-3 h-3" />
+          Coluna Temp
+        </button>
+      </div>
+
+      <table className="w-full border-collapse flex-1">
         <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
           <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className="w-12 px-4 py-3 text-left">
@@ -158,6 +179,21 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
               >
                 {campo.label}
                 {campo.obrigatorio && <span className="text-red-500">*</span>}
+              </th>
+            ))}
+            {colunasTemp.map(col => (
+              <th
+                key={col.key}
+                style={{ width: col.width, minWidth: col.width }}
+                className="px-3 py-3 text-left text-xs font-medium text-yellow-600 dark:text-yellow-400 whitespace-nowrap bg-yellow-50 dark:bg-yellow-900/20 relative"
+              >
+                {col.label}
+                <button
+                  onClick={() => removerColunaTmp(col.key)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-yellow-600 dark:text-yellow-400 hover:text-red-600"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </th>
             ))}
             <th className="w-12 px-4 py-3"></th>
