@@ -1089,71 +1089,54 @@ export default function PDVVendedor() {
 
         {/* Carrinho Mobile - Overlay */}
         {showCarrinhoMobile &&
-        <div className="md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 flex flex-col">
+        <div className="md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950 flex flex-col">
             {/* Header */}
-            <div className="p-4 bg-white dark:bg-gray-800 flex items-center justify-between">
-              <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowCarrinhoMobile(false)}
-              className="h-11 w-11 -ml-2">
-
-                <Undo2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </Button>
-              <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">Carrinho</h2>
-              <span className="text-sm text-gray-500 dark:text-gray-400 w-11 text-right">{carrinho.length} itens</span>
+            <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
+              <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div className="text-center">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Carrinho</h2>
+                <p className="text-[10px] text-gray-400">{totalItens} un · {carrinho.length} itens</p>
+              </div>
+              <div className="w-9" />
             </div>
 
             {/* Lista de Itens */}
-            <div className="flex-1 overflow-auto p-4 space-y-3">
+            <div className="flex-1 overflow-auto p-3 space-y-2">
               {carrinho.length === 0 ?
-            <div className="text-center py-16 text-gray-400">
-                  <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                  <p className="text-base">Carrinho vazio</p>
+            <div className="flex flex-col items-center justify-center h-full text-center py-16">
+                  <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center mb-4">
+                    <ShoppingCart className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+                  </div>
+                  <p className="text-base text-gray-400">Carrinho vazio</p>
                 </div> :
-
             carrinho.map((item) =>
-            <div key={item.produto_id} className="p-4 bg-white dark:bg-gray-800 rounded-xl">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1 pr-3">
-                        <h3 className="font-medium text-base text-gray-800 dark:text-gray-200 leading-tight">{item.produto_nome}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')} × {item.quantidade}
-                        </p>
+            <div key={item.produto_id} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 pr-2">
+                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.produto_nome}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')} cada</p>
                       </div>
-                      <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveItem(item.produto_id)}
-                  className="h-11 w-12 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
+                      <button onClick={() => handleRemoveItem(item.produto_id)}
+                        className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-1">
-                        <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
-                    className="h-11 w-11 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
-
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="text-lg font-semibold w-12 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
-                        <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
-                    disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
-                    className="h-11 w-11 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
-
-                          <Plus className="h-4 w-4" />
-                        </Button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
+                          className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700">
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="text-base font-bold w-10 text-center text-gray-900 dark:text-white">{item.quantidade}</span>
+                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
+                          disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
+                          className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700 disabled:opacity-40">
+                          <Plus className="w-4 h-4" />
+                        </button>
                       </div>
-                      <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                        R$ {item.total.toFixed(2).replace('.', ',')}
-                      </div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">R$ {item.total.toFixed(2).replace('.', ',')}</p>
                     </div>
                   </div>
             )
