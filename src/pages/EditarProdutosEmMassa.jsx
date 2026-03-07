@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Monitor } from 'lucide-react';
-import GradeEdicaoMassiva from '@/components/produtos/GradeEdiacaoMassiva';
+import { Monitor, Save, RotateCcw } from 'lucide-react';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
 import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa';
+import { Button } from '@/components/ui/button';
 
 export default function EditarProdutosEmMassa() {
   const [isMobile, setIsMobile] = useState(false);
