@@ -244,6 +244,59 @@ function LinhaPermissao({ perm, modulo, permissoes, onChange }) {
   );
 }
 
+function LinhaPermissaoSubmodulo({ perm, moduloKey, submoduloKey, permissoes, onChange }) {
+  if (perm.tipo === 'ver_editar') {
+    const ver = permissoes?.[moduloKey]?.[submoduloKey]?.[perm.key]?.ver === true;
+    const editar = permissoes?.[moduloKey]?.[submoduloKey]?.[perm.key]?.editar === true;
+    return (
+      <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+        <span className="text-xs text-gray-600 dark:text-gray-400">{perm.label}</span>
+        <Checkbox 
+          checked={ver} 
+          onChange={v => {
+            let novo = { ...permissoes };
+            if (!novo[moduloKey]) novo[moduloKey] = {};
+            if (!novo[moduloKey][submoduloKey]) novo[moduloKey][submoduloKey] = {};
+            novo[moduloKey][submoduloKey] = { ...novo[moduloKey][submoduloKey], [perm.key]: { ...(novo[moduloKey][submoduloKey][perm.key] || {}), ver: v } };
+            onChange(novo);
+          }}
+        />
+        <Checkbox 
+          checked={editar} 
+          onChange={v => {
+            let novo = { ...permissoes };
+            if (!novo[moduloKey]) novo[moduloKey] = {};
+            if (!novo[moduloKey][submoduloKey]) novo[moduloKey][submoduloKey] = {};
+            novo[moduloKey][submoduloKey] = { ...novo[moduloKey][submoduloKey], [perm.key]: { ...(novo[moduloKey][submoduloKey][perm.key] || {}), editar: v } };
+            onChange(novo);
+          }}
+        />
+      </div>
+    );
+  }
+
+  const valor = permissoes?.[moduloKey]?.[submoduloKey]?.[perm.key] === true;
+  return (
+    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+      <label className="flex items-center gap-2 cursor-pointer">
+        <Switch
+          checked={valor}
+          onCheckedChange={v => {
+            let novo = { ...permissoes };
+            if (!novo[moduloKey]) novo[moduloKey] = {};
+            if (!novo[moduloKey][submoduloKey]) novo[moduloKey][submoduloKey] = {};
+            novo[moduloKey][submoduloKey] = { ...novo[moduloKey][submoduloKey], [perm.key]: v };
+            onChange(novo);
+          }}
+          className="scale-90 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200"
+        />
+        <span className="text-xs text-gray-600 dark:text-gray-400">{perm.label}</span>
+      </label>
+      <div className="w-4" /><div className="w-4" />
+    </div>
+  );
+}
+
 function SubmoduloCard({ submodulo, moduloKey, permissoes, onChange, nivel = 1 }) {
   const [expandido, setExpandido] = useState(false);
   const chaveSubmodulo = `${moduloKey}.${submodulo.key}`;
