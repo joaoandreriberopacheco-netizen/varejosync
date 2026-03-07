@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { zerarEntidade } from '@/functions/zerarEntidade';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 
 // Ordem respeita dependências: registros filhos antes dos pais
