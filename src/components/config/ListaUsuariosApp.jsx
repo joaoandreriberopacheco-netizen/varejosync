@@ -54,6 +54,7 @@ export default function ListaUsuariosApp() {
     setEditingUser(user);
     setSelectedPerfilId(user.perfil_acesso_id || '');
     setSelectedCaixas(user.caixas_pdv_autorizados_ids || []);
+    setSelectedTabelaId(user.tabela_preco_id || '');
     setIsDialogOpen(true);
   };
 
