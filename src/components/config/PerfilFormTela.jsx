@@ -494,26 +494,50 @@ function ModuloCard({ modulo, permissoes, onChange }) {
 function sanitizarPermissoes(permissoes) {
   if (!permissoes) return {};
   const resultado = {};
-  MODULOS.forEach(modulo => {
-    const modPerm = permissoes[modulo.key];
-    if (!modPerm) return;
-    resultado[modulo.key] = {};
+  
+  const sanitizarModulo = (modulo, modPerm) => {
+    const res = {};
     modulo.permissoes.forEach(p => {
-      const val = modPerm[p.key];
+      const val = modPerm?.[p.key];
       if (p.tipo === 'ver_editar') {
-        // Espera objeto {ver, editar}
-        resultado[modulo.key][p.key] = typeof val === 'object' && val !== null
+        res[p.key] = typeof val === 'object' && val !== null
           ? { ver: val.ver === true, editar: val.editar === true }
           : { ver: false, editar: false };
       } else {
-        // Espera boolean simples — converte objeto para true se tiver qualquer chave true
         if (typeof val === 'object' && val !== null) {
-          resultado[modulo.key][p.key] = Object.values(val).some(v => v === true);
+          res[p.key] = Object.values(val).some(v => v === true);
         } else {
-          resultado[modulo.key][p.key] = val === true;
+          res[p.key] = val === true;
         }
       }
     });
+    return res;
+  };
+
+  MODULOS.forEach(modulo => {
+    const modPerm = permissoes[modulo.key];
+    if (!modPerm) return;
+    resultado[modulo.key] = sanitizarModulo(modulo, modPerm);
+    
+    // Submodulos
+    if (modulo.submodulos) {
+      modulo.submodulos.forEach(sub => {
+        const subPerm = modPerm[sub.key];
+        if (subPerm) {
+          resultado[modulo.key][sub.key] = sanitizarModulo(sub, subPerm);
+          
+          // Sub-submodulos
+          if (sub.submodulos) {
+            sub.submodulos.forEach(subsub => {
+              const subsubPerm = subPerm[subsub.key];
+              if (subsubPerm) {
+                resultado[modulo.key][sub.key][subsub.key] = sanitizarModulo(subsub, subsubPerm);
+              }
+            });
+          }
+        }
+      });
+    }
   });
   return resultado;
 }
