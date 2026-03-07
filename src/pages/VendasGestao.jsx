@@ -261,11 +261,11 @@ export default function VendasGestaoPage() {
       </div>
 
       {/* Abas */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-          <TabsTrigger value="rascunhos">Rascunhos</TabsTrigger>
-          <TabsTrigger value="pedidos">Pedidos de Venda</TabsTrigger>
-        </TabsList>
+      <GlacialTabsList className="max-w-xs">
+        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Rascunhos" icon={FileText} />
+        <GlacialTabsTrigger value="pedidos"   activeValue={activeTab} onSelect={setActiveTab} label="Pedidos"   icon={ShoppingCart} />
+      </GlacialTabsList>
+      <div>
 
         <TabsContent value="rascunhos" className="space-y-6">
           {/* Filtros para Rascunhos */}
