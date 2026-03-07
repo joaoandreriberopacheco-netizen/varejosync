@@ -912,165 +912,68 @@ export default function PDVVendedor() {
                 </div>
             </div>
             {showSuggestions && produtosSugeridos.length > 0 &&
-            <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
-                  <div className="sticky top-0 bg-gray-50 dark:bg-gray-700 px-3 py-2 border-b border-gray-200 dark:border-gray-600">
-                    <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {produtosSugeridos.length} produto{produtosSugeridos.length > 1 ? 's' : ''} encontrado{produtosSugeridos.length > 1 ? 's' : ''}
+            <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden max-h-[55vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
+                  <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                      {produtosSugeridos.length} resultado{produtosSugeridos.length > 1 ? 's' : ''}
                     </span>
+                    <span className="text-[10px] text-gray-400 hidden md:block">Tab para quantidade · Enter para adicionar</span>
                   </div>
                   {produtosSugeridos.map((produto, index) => {
                 const precoTabela = produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
                 const estoqueStatus = produto.estoque_atual <= 0 ? 'sem' : produto.estoque_atual <= 5 ? 'baixo' : 'ok';
+                const estoqueColor = estoqueStatus === 'sem' ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : estoqueStatus === 'baixo' ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
                 return (
-                  <div
-                    key={produto.id}
-                    className={`p-3 md:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer transition-all ${
-                    index === produtoSelecionadoIndex ? 'bg-gray-100 dark:bg-gray-700 border-l-4 border-l-gray-400' : ''}`
-                    }
+                  <div key={produto.id}
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${
+                    index === produtoSelecionadoIndex ? 'bg-gray-50 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}`}
                     onClick={() => handleSelecionarProduto(produto)}>
-
-                        {/* Mobile Layout */}
-                        <div className="flex md:hidden items-start gap-3">
-                          {produto.imagem_url ?
-                      <img
-                        src={produto.imagem_url}
-                        alt={produto.nome}
-                        className="flex-shrink-0 w-10 h-10 rounded-lg object-cover bg-gray-100 dark:bg-gray-700" /> :
-
-
-                      <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                      estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
-                      estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                      'bg-gray-100 dark:bg-gray-700'}`
-                      }>
-                              <Package className={`w-5 h-5 ${
-                        estoqueStatus === 'sem' ? 'text-red-500' :
-                        estoqueStatus === 'baixo' ? 'text-amber-500' :
-                        'text-gray-500 dark:text-gray-400'}`
-                        } />
-                            </div>
-                      }
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight">
-                                {produto.nome}
-                              </p>
-                              <p className="text-base font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                                R$ {precoTabela.toFixed(2).replace('.', ',')}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                              <span className="text-[10px] text-gray-400 font-mono">
-                                #{produto.codigo_interno || 'N/A'}
-                              </span>
-                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                          estoqueStatus === 'sem' ? 'bg-red-100 text-red-700' :
-                          estoqueStatus === 'baixo' ? 'bg-amber-100 text-amber-700' :
-                          'bg-emerald-100 text-emerald-700'}`
-                          }>
-                                {produto.estoque_atual} disp.
-                              </span>
-                            </div>
-                          </div>
+                    {produto.imagem_url
+                      ? <img src={produto.imagem_url} alt={produto.nome} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                      : <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                          <Package className={`w-4 h-4 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-gray-400'}`} />
                         </div>
-
-                        {/* Desktop Layout */}
-                        <div className="hidden md:flex items-start gap-4">
-                          {produto.imagem_url ?
-                      <img
-                        src={produto.imagem_url}
-                        alt={produto.nome}
-                        className="flex-shrink-0 w-12 h-12 rounded-xl object-cover bg-gray-100 dark:bg-gray-700" /> :
-
-
-                      <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
-                      estoqueStatus === 'sem' ? 'bg-red-100 dark:bg-red-900/30' :
-                      estoqueStatus === 'baixo' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                      'bg-gray-100 dark:bg-gray-700'}`
-                      }>
-                              <Package className={`w-6 h-6 ${
-                        estoqueStatus === 'sem' ? 'text-red-500' :
-                        estoqueStatus === 'baixo' ? 'text-amber-500' :
-                        'text-gray-500 dark:text-gray-400'}`
-                        } />
-                            </div>
-                      }
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-tight mb-1">
-                              {produto.nome}
-                            </p>
-                            <div className="flex items-center gap-3 text-xs">
-                              <span className="text-gray-500 dark:text-gray-400 font-mono">
-                                #{produto.codigo_interno || 'N/A'}
-                              </span>
-                              <span className={`font-medium px-2 py-0.5 rounded-full ${
-                          estoqueStatus === 'sem' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                          estoqueStatus === 'baixo' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                          'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'}`
-                          }>
-                                {produto.estoque_atual} em estoque
-                              </span>
-                            </div>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                              R$ {precoTabela.toFixed(2).replace('.', ',')}
-                            </p>
-                            <p className="text-[10px] text-gray-400">
-                              {tabelaPreco ? tabelaPreco.nome_tabela : 'Preço padrão'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>);
-
+                    }
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate leading-tight">{produto.nome}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${estoqueColor}`}>
+                          {produto.estoque_atual} un
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-base font-bold text-gray-900 dark:text-gray-100 flex-shrink-0">
+                      R$ {precoTabela.toFixed(2).replace('.', ',')}
+                    </p>
+                  </div>);
               })}
                 </div>
             }
                 {produtoSelecionado &&
-            <div className="mt-3 p-3 md:p-4 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1">
-                    {produtoSelecionado.imagem_url ?
-                  <img
-                    src={produtoSelecionado.imagem_url}
-                    alt={produtoSelecionado.nome}
-                    className="w-10 h-10 rounded-lg object-cover bg-gray-200 dark:bg-gray-700" /> :
-
-
-                  <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <Package className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <div className="mt-2 p-3 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                <div className="flex items-center gap-3">
+                  {produtoSelecionado.imagem_url
+                    ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                    : <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                        <Package className="w-4 h-4 text-gray-500" />
                       </div>
                   }
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span>R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} cada</span>
-                        <span>•</span>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Total: R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
+                    <p className="text-xs text-gray-400">
+                      R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} × {parseInt(quantidadeAtual) || 1}
+                      {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}</span>
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                    onClick={() => {
-                      setProdutoSelecionado(null);
-                      setQuantidadeAtual('');
-                      inputProdutoRef.current?.focus();
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-500 hover:text-gray-700 hover:bg-gray-200/50">
-
-                      Cancelar
+                  <div className="flex items-center gap-1.5">
+                    <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); inputProdutoRef.current?.focus(); }}
+                      variant="ghost" size="sm" className="h-8 text-gray-400 hover:text-gray-600 text-xs">
+                      <X className="w-3.5 h-3.5" />
                     </Button>
-                    <Button
-                    onClick={handleConfirmarAdicao}
-                    className="bg-gray-900 hover:bg-gray-800 text-white dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white font-medium px-6 shadow-sm"
-                    size="sm">
-
-                      Adicionar
+                    <Button onClick={handleConfirmarAdicao}
+                      className="h-8 px-4 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-xs font-semibold rounded-xl shadow-none">
+                      + Adicionar
                     </Button>
                   </div>
                 </div>
