@@ -191,12 +191,12 @@ export default function RecomecarDoZero() {
 
           <div className="flex-1 overflow-y-auto space-y-5 px-6 py-4">
             {/* Alerta */}
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl">
+            <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-2xl">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-red-900 dark:text-red-200 mb-0.5">Operação Irreversível</p>
-                  <p className="text-xs text-red-700 dark:text-red-300">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-0.5">Operação Irreversível</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Os registros deletados não poderão ser recuperados. Configurações (formas de pagamento, tabelas de preço, etc.) só serão apagadas se explicitamente selecionadas.
                   </p>
                 </div>
