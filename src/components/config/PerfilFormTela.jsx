@@ -116,57 +116,34 @@ export const MODULOS = [
   },
 ];
 
-// ─── Helpers de permissão ────────────────────────────────────────
-export function getPermissao(permissoes, modulo, chave, subtipo = null) {
-  if (subtipo) return permissoes?.[modulo]?.[chave]?.[subtipo] === true;
-  return permissoes?.[modulo]?.[chave] === true;
-}
-
-export function setPermissao(permissoes, modulo, chave, valor, subtipo = null) {
-  const novo = { ...permissoes };
-  if (!novo[modulo]) novo[modulo] = {};
-  if (subtipo) {
-    novo[modulo] = { ...novo[modulo], [chave]: { ...(novo[modulo][chave] || {}), [subtipo]: valor } };
-  } else {
-    novo[modulo] = { ...novo[modulo], [chave]: valor };
-  }
-  return novo;
-}
-
-export function contarPermissoes(permissoes, moduloKey) {
-  const mod = MODULOS.find(m => m.key === moduloKey);
-  if (!mod) return { ativas: 0, total: 0 };
+// ─── Contar permissões recursivamente ────────────────────────────
+function contarPermissoesModulo(permissoes, moduloKey, item = null) {
   let ativas = 0, total = 0;
-  mod.permissoes.forEach(p => {
-    if (p.tipo === 'ver_editar') {
-      total += 2;
-      if (permissoes?.[moduloKey]?.[p.key]?.ver === true) ativas++;
-      if (permissoes?.[moduloKey]?.[p.key]?.editar === true) ativas++;
-    } else {
-      total += 1;
-      if (permissoes?.[moduloKey]?.[p.key] === true) ativas++;
-    }
-  });
-  return { ativas, total };
-}
+  const modulo = item || MODULOS.find(m => m.key === moduloKey);
+  if (!modulo) return { ativas: 0, total: 0 };
 
-function contarPermissoesSubmodulo(permissoes, moduloKey, submodulo) {
-  let ativas = 0, total = 0;
-  submodulo.permissoes.forEach(p => {
-    if (p.tipo === 'ver_editar') {
-      total += 2;
-      if (permissoes?.[moduloKey]?.[submodulo.key]?.[p.key]?.ver === true) ativas++;
-      if (permissoes?.[moduloKey]?.[submodulo.key]?.[p.key]?.editar === true) ativas++;
-    } else {
+  if (modulo.submodulos) {
+    modulo.submodulos.forEach(sub => {
       total += 1;
-      if (permissoes?.[moduloKey]?.[submodulo.key]?.[p.key] === true) ativas++;
-    }
-  });
-  if (submodulo.submodulos) {
-    submodulo.submodulos.forEach(sub => {
-      const { ativas: subAtivas, total: subTotal } = contarPermissoesSubmodulo(permissoes, moduloKey, sub);
-      ativas += subAtivas;
-      total += subTotal;
+      const valor = permissoes?.[moduloKey]?.[sub.key];
+      if (valor === true) ativas++;
+      
+      // Contar sub-itens recursivamente
+      if (sub.submodulos) {
+        sub.submodulos.forEach(subsub => {
+          total += 1;
+          const subValor = permissoes?.[moduloKey]?.[sub.key]?.[subsub.key];
+          if (subValor === true) ativas++;
+          
+          if (subsub.submodulos) {
+            subsub.submodulos.forEach(() => {
+              total += 1;
+              const subsubValor = permissoes?.[moduloKey]?.[sub.key]?.[subsub.key]?.[subsub.key];
+              if (subsubValor === true) ativas++;
+            });
+          }
+        });
+      }
     });
   }
   return { ativas, total };
