@@ -4,6 +4,7 @@ import { createPageUrl } from '@/components/utils';
 
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/toaster";
+import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
 import { 
   LayoutDashboard, 
   Monitor,
