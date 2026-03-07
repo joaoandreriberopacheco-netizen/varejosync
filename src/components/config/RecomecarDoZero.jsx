@@ -301,7 +301,7 @@ export default function RecomecarDoZero() {
             )}
           </div>
 
-          <DialogFooter className="flex-shrink-0 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <DialogFooter className="flex-shrink-0 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
             <div className="flex items-center justify-between w-full">
               <span className="text-sm text-gray-400">
                 {selectedEntities.length > 0 ? `${selectedEntities.length} selecionada(s)` : 'Nenhuma selecionada'}
