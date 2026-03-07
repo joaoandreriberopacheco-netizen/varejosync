@@ -983,150 +983,109 @@ export default function PDVVendedor() {
 
         </div>
 
-        {/* Sidebar Carrinho - Desktop Only - Glacial Style */}
-        <div className="hidden md:flex w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-col flex-shrink-0">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-normal text-gray-700 dark:text-gray-200">Carrinho</h2>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{carrinho.length} itens</span>
-            </div>
+        {/* Sidebar Carrinho - Desktop Only */}
+        <div className="hidden md:flex w-72 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-800 flex-col flex-shrink-0">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Carrinho</h2>
+            {carrinho.length > 0 && (
+              <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{totalItens} un · {carrinho.length} itens</span>
+            )}
           </div>
 
-          {/* Lista de Itens - Glacial Style */}
-          <div className="flex-1 overflow-auto p-3 space-y-1">
+          {/* Lista de Itens */}
+          <div className="flex-1 overflow-auto p-3 space-y-1.5">
             {carrinho.length === 0 ?
-            <div className="text-center py-12 text-gray-400">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm">Carrinho vazio</p>
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
+                  <ShoppingCart className="w-6 h-6 text-gray-300 dark:text-gray-600" />
+                </div>
+                <p className="text-sm text-gray-400">Carrinho vazio</p>
+                <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-0.5">Busque um produto acima</p>
               </div> :
-
             carrinho.map((item) =>
-            <div key={item.produto_id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm text-gray-700 dark:text-gray-200 truncate">{item.produto_nome}</h3>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                        R$ {item.preco_unitario_praticado.toFixed(2)} x {item.quantidade}
-                      </p>
-                    </div>
-                    <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveItem(item.produto_id)}
-                  className="h-6 w-6 text-gray-400 hover:text-gray-600 hover:bg-transparent">
-
-                      <X className="h-3 w-3" />
-                    </Button>
+            <div key={item.produto_id} className="group p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-start justify-between gap-1 mb-2">
+                    <p className="text-xs font-medium text-gray-800 dark:text-gray-200 leading-tight flex-1 truncate">{item.produto_nome}</p>
+                    <button onClick={() => handleRemoveItem(item.produto_id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0">
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1">
-                      <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
-                    className="h-7 w-7 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600">
-
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="text-sm font-medium w-8 text-center text-gray-700 dark:text-gray-200">
-                        {item.quantidade}
-                      </span>
-                      <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
-                    disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
-                    className="h-7 w-7 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600">
-
-                        <Plus className="h-3 w-3" />
-                      </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
+                      <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
+                        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="text-xs font-bold w-7 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
+                      <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
+                        disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
+                        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
+                        <Plus className="w-3 h-3" />
+                      </button>
                     </div>
-                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                      R$ {item.total.toFixed(2)}
-                    </div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">R$ {item.total.toFixed(2)}</p>
                   </div>
                 </div>
             )
             }
           </div>
 
-          {/* Resumo e Ações - Glacial Style */}
-          <div className="border-t border-gray-100 dark:border-gray-700 p-4 space-y-3 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
-            {/* Botão Venda Perdida - Desktop */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowLostSalesForm(true)} className="bg-[#fff0f0] text-red-400 px-3 text-xs font-medium rounded-md inline-flex items-center justify-center ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-full hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-2">
-
-
-              <AlertCircle className="w-3.5 h-3.5" />
+          {/* Resumo e Ações */}
+          <div className="border-t border-gray-100 dark:border-gray-800 p-3 space-y-3 flex-shrink-0">
+            <button onClick={() => setShowLostSalesForm(true)}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors">
+              <AlertCircle className="w-3 h-3" />
               Registrar Venda Perdida
-            </Button>
+            </button>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-gray-500 dark:text-gray-400 text-xs">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[11px] text-gray-400">
                 <span>Subtotal</span>
                 <span>R$ {subtotal.toFixed(2)}</span>
               </div>
 
-              {/* Desconto Two-Way Binding */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
+              {/* Desconto Two-Way */}
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Desconto</Label>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
                   {tabelaPreco?.percentual_desconto_maximo > 0 && (
                     <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
                   )}
                 </div>
                 <div className="flex gap-1.5 items-center">
-                  {/* Campo % */}
                   <div className="relative flex-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max={tabelaPreco?.percentual_desconto_maximo || 100}
-                      step="0.01"
-                      value={ajustePercentual}
-                      onChange={(e) => handleAjustePercentualChange(e.target.value)}
-                      className="pr-6 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0 text-right"
-                      placeholder="0"
-                    />
+                    <Input type="number" min="0" max={tabelaPreco?.percentual_desconto_maximo || 100} step="0.01"
+                      value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
+                      className="pr-5 h-8 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-xs text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      placeholder="0" />
                     <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
                   </div>
-                  <span className="text-gray-300 dark:text-gray-600 text-xs">=</span>
-                  {/* Campo R$ */}
+                  <span className="text-gray-300 dark:text-gray-700 text-[10px]">=</span>
                   <div className="relative flex-1">
                     <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={ajusteValor}
-                      onChange={(e) => handleAjusteValorChange(e.target.value)}
-                      className="pl-7 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
-                      placeholder="0,00"
-                    />
+                    <Input type="number" min="0" step="0.01"
+                      value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
+                      className="pl-6 h-8 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-xs focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      placeholder="0,00" />
                   </div>
                 </div>
-                {ajusteExcedido && (
-                  <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>
-                )}
+                {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>}
               </div>
 
-              <div className="flex justify-between items-baseline pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center pt-1">
                 <span className="text-xs text-gray-500">Total</span>
-                <span className="text-gray-800 text-xl font-bold text-right dark:text-gray-100">R$ {valorTotal.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2)}</span>
               </div>
             </div>
 
-            <Button
-              onClick={handleAvancarParaCliente}
-              disabled={carrinho.length === 0 || ajusteExcedido}
-              className="w-full h-12 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white text-base font-medium">
-
-                Avançar (F3)
-              </Button>
+            <Button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
+              className="w-full h-11 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-xl shadow-none border-0 text-sm disabled:opacity-40">
+              Avançar
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </Button>
           </div>
-          </div>
+        </div>
 
         {/* Carrinho Mobile - Overlay */}
         {showCarrinhoMobile &&
