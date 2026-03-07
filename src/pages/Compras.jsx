@@ -491,26 +491,23 @@ function HubLogisticoCompleto() {
 
 function ConferenciaSubTab() {
   const [activeConf, setActiveConf] = useState('codigos');
+  const confTabs = [
+    { value: 'codigos', label: 'Gerar Códigos' },
+    { value: 'fiscalizacao', label: 'Fiscalização' },
+  ];
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 w-full">
-        {[
-          { value: 'codigos', label: 'Gerar Códigos' },
-          { value: 'fiscalizacao', label: 'Fiscalização' },
-        ].map(tab => (
-          <button
+      <GlacialTabsList>
+        {confTabs.map(tab => (
+          <GlacialTabsTrigger
             key={tab.value}
-            onClick={() => setActiveConf(tab.value)}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
-              activeConf === tab.value
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            {tab.label}
-          </button>
+            value={tab.value}
+            activeValue={activeConf}
+            onSelect={setActiveConf}
+            label={tab.label}
+          />
         ))}
-      </div>
+      </GlacialTabsList>
       {activeConf === 'codigos' && <ConferenciaTab />}
       {activeConf === 'fiscalizacao' && <PainelConferencias />}
     </div>
