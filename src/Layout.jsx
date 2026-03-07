@@ -145,7 +145,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // ── Quarter Master Logic: monta menu baseado em permissões resolvidas ──────
-  const menuItems = React.useMemo(() => {
+  const menuItems = useMemo(() => {
     if (!currentUser) return [];
     return buildMenuItems(currentUser, perfilDeAcesso);
   }, [currentUser, perfilDeAcesso]);
