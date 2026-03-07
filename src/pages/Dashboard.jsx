@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PullToRefreshWrapper from '@/components/ui/PullToRefreshWrapper';
 import { base44 } from '@/api/base44Client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
+import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import GeralTab from '../components/dashboard/tabs/GeralTab';
 import VendasTab from '../components/dashboard/tabs/VendasTab';
 import ComprasTab from '../components/dashboard/tabs/ComprasTab';
