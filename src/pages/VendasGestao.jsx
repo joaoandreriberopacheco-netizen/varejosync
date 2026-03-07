@@ -349,7 +349,7 @@ export default function VendasGestaoPage() {
             {/* Mobile: Cards */}
             <div className="md:hidden space-y-2">
               {rascunhosFiltrados.map(rascunho => (
-                <div key={rascunho.id} className="bg-white dark:bg-gray-800 rounded-xl p-4">
+                <div key={rascunho.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="inline-flex items-center gap-2 mb-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
