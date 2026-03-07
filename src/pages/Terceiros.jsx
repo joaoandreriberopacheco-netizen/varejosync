@@ -250,7 +250,7 @@ export default function TerceirosPage() {
 
       {/* Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl dark:bg-gray-800 dark:border-gray-700">
+        <DialogContent className="max-w-2xl dark:bg-gray-900 dark:border-gray-800">
           <DialogHeader>
             <DialogTitle className="text-gray-800 dark:text-gray-200">
               {selectedTerceiro ? 'Editar Terceiro' : 'Novo Terceiro'}
