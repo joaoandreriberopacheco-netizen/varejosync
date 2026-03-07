@@ -325,10 +325,10 @@ const PedidosCompraTab = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-9 w-9 text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg">
+                        <Button variant="ghost" size="icon" onClick={() => handleVerDetalhes(pedido)} className="h-9 w-9 text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-9 w-9 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(pedido)} className="h-9 w-9 text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
                           <Edit className="w-4 h-4" />
                         </Button>
                       </div>
