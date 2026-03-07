@@ -1193,44 +1193,31 @@ export default function PDVVendedor() {
         }
           </div>
 
-          {/* Barra Inferior Mobile - Compacta */}
-              <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 px-4 py-2 flex items-center justify-between z-40 border-t border-gray-100 dark:border-gray-700">
-                <div className="flex-1">
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide leading-none mb-0.5">Total</div>
-                  <div className="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowLostSalesForm(true)}
-            className="h-10 w-10 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20">
-
-                    <AlertCircle className="h-5 w-5" />
-                  </Button>
-                  <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowCarrinhoMobile(true)}
-            className="h-10 w-10 rounded-lg relative text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-
-                    <ShoppingCart className="h-5 w-5" />
-                    {carrinho.length > 0 &&
-            <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                        {carrinho.length}
-                      </span>
-            }
-                  </Button>
-                  <Button
-            onClick={handleAvancarParaCliente}
-            disabled={carrinho.length === 0}
-            className="h-10 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-sm font-medium rounded-lg">
-
-                    <UserPlus className="h-4 w-4 mr-1.5" />
-                    Cliente
-                  </Button>
-                </div>
-              </div>
+          {/* Barra Inferior Mobile */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 py-2.5 flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
+            </div>
+            <button onClick={() => setShowLostSalesForm(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex-shrink-0">
+              <AlertCircle className="w-5 h-5" />
+            </button>
+            <button onClick={() => setShowCarrinhoMobile(true)}
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0">
+              <ShoppingCart className="w-5 h-5" />
+              {carrinho.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {carrinho.length}
+                </span>
+              )}
+            </button>
+            <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0}
+              className="flex items-center gap-1.5 h-10 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0">
+              <UserPlus className="w-4 h-4" />
+              Cliente
+            </button>
+          </div>
 
       {/* Dialog de cliente - GLACIAL PROTOCOL */}
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
