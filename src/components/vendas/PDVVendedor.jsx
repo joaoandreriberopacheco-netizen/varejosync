@@ -188,6 +188,16 @@ export default function PDVVendedor() {
     verificarRascunhoParaEdicao();
   }, []);
 
+  // Resync valor R$ quando subtotal mudar e tiver % preenchido
+  useEffect(() => {
+    const pct = parseFloat(ajustePercentual) || 0;
+    if (pct > 0 && subtotal > 0) {
+      setAjusteValor((subtotal * pct / 100).toFixed(2));
+      setValorAjuste(pct);
+      setTipoValorAjuste('percentual');
+    }
+  }, [subtotal]);
+
   const loadConfiguracoesVenda = async () => {
     try {
       const configs = await base44.entities.ConfiguracoesVenda.list();
