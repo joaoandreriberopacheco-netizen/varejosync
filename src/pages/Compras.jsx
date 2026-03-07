@@ -306,7 +306,7 @@ const PedidosCompraTab = () => {
             {/* Mobile Cards View */}
             <div className="md:hidden grid gap-4 px-1">
               {pedidosFiltrados.map(pedido => (
-                <div key={pedido.id} className="group bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-teal-200 dark:hover:border-teal-800 transition-all duration-200 shadow-sm">
+                <div key={pedido.id} className="group bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-sm transition-all duration-200">
                   <div className="flex flex-col gap-5">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
