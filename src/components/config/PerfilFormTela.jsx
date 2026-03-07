@@ -60,9 +60,44 @@ export const MODULOS = [
       { key: 'separacao_pedidos', label: 'Separação de Pedidos' },
       { key: 'conferencia_estoque', label: 'Conferência' },
       { key: 'auditoria_estoque', label: 'Auditoria' },
-      { key: 'compras', label: 'Módulo de Compras' },
-      { key: 'logistica', label: 'Módulo de Logística' },
-      { key: 'armazenagem', label: 'Armazenagem' },
+    ],
+    submodulos: [
+      {
+        key: 'compras',
+        label: 'Compras',
+        permissoes: [
+          { key: 'acesso', label: 'Módulo de Compras' },
+          { key: 'sugestoes', label: 'Sugestões de Compra' },
+          { key: 'cotacoes', label: 'Cotações' },
+          { key: 'pedidos', label: 'Pedidos de Compra' },
+        ],
+        submodulos: [
+          {
+            key: 'hub_logistico',
+            label: 'Hub Logístico',
+            permissoes: [
+              { key: 'acesso', label: 'Hub Logístico' },
+              { key: 'manifestos', label: 'Manifestos' },
+              { key: 'supermanifestos', label: 'Supermanifestos' },
+              { key: 'conferencia', label: 'Conferência' },
+            ]
+          }
+        ]
+      },
+      {
+        key: 'logistica',
+        label: 'Logística',
+        permissoes: [
+          { key: 'acesso', label: 'Módulo de Logística' },
+        ]
+      },
+      {
+        key: 'armazenagem',
+        label: 'Armazenagem',
+        permissoes: [
+          { key: 'acesso', label: 'Armazenagem' },
+        ]
+      }
     ]
   },
   {
