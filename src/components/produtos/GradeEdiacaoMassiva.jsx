@@ -395,23 +395,23 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
       </div>
 
       {/* Legenda */}
-      <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 dark:text-gray-400 space-y-1">
-        <div className="flex gap-4">
+      <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 dark:text-gray-400 space-y-2">
+        <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-100 dark:bg-red-900/20 rounded" />
-            Preço menor que custo
+            <div className="w-3 h-3 bg-red-100 dark:bg-red-900/20 rounded" />
+            Preço &lt; Custo
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-yellow-100 dark:bg-yellow-900/20 rounded" />
+            <div className="w-3 h-3 bg-yellow-100 dark:bg-yellow-900/20 rounded" />
             Margem &lt; {MARGEM_CRITICA}%
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-50 dark:bg-blue-900/10 rounded" />
-            Linha alterada
+            <div className="w-3 h-3 bg-blue-50 dark:bg-blue-900/10 rounded" />
+            Alterado
           </div>
         </div>
         <div className="text-gray-600 dark:text-gray-300">
-          Dica: Use fórmulas (ex: =10*1.15) nas células de número. Navegue com setas do teclado.
+          <strong>Atalhos:</strong> Enter = editar | Esc = cancelar | Setas/Tab = navegar | Arraste canto = fill
         </div>
       </div>
     </div>
