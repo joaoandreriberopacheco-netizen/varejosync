@@ -255,39 +255,50 @@ function LinhaPermissaoSubmodulo({ perm, moduloKey, submoduloKey, permissoes, on
   );
 }
 
-function SubmoduloCard({ submodulo, moduloKey, permissoes, onChange, nivel = 1 }) {
-  const temSubmodulos = submodulo.submodulos && submodulo.submodulos.length > 0;
+function RenderizarHierarquia({ item, moduloKey, parentKey = null, permissoes, onChange, nivel = 0 }) {
+  const temSubitens = item.submodulos && item.submodulos.length > 0;
   
-  const { ativas, total } = contarPermissoesSubmodulo(permissoes, moduloKey, submodulo);
-  const temVerEditar = submodulo.permissoes.some(p => p.tipo === 'ver_editar');
+  // Usar chave composta para submodulos
+  const chaveItem = parentKey ? `${parentKey}.${item.key}` : `${moduloKey}.${item.key}`;
+  const valor = parentKey 
+    ? permissoes?.[moduloKey]?.[parentKey]?.[item.key] === true
+    : permissoes?.[moduloKey]?.[item.key] === true;
 
-  const paddingStyle = { paddingLeft: `${nivel * 1.5}rem` };
+  // Indentação: 0.75rem por nível, começando do nível 1
+  const paddingLeft = `${nivel > 0 ? nivel * 0.75 : 0}rem`;
 
   return (
-    <div style={paddingStyle} className="space-y-0">
-      {/* Cabeçalho ver/editar para sub-níveis */}
-      {temVerEditar && submodulo.permissoes.some(p => p.tipo === 'ver_editar') && (
-        <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-3 py-1 text-[9px] text-gray-400 dark:text-gray-500 font-medium hidden" style={{ paddingLeft: `${(nivel - 0.5) * 1.5}rem` }} />
-      )}
-
-      {/* Permissões do submodulo — sempre expandido */}
-      {submodulo.permissoes.map(p => (
-        <LinhaPermissaoSubmodulo
-          key={p.key}
-          perm={p}
-          moduloKey={moduloKey}
-          submoduloKey={submodulo.key}
-          permissoes={permissoes}
-          onChange={onChange}
+    <div key={item.key} className="space-y-0">
+      {/* Item atual — sempre com toggle */}
+      <div style={{ paddingLeft }} className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors rounded-lg group">
+        <Switch
+          checked={valor}
+          onCheckedChange={v => {
+            let novo = { ...permissoes };
+            if (parentKey) {
+              if (!novo[moduloKey]) novo[moduloKey] = {};
+              if (!novo[moduloKey][parentKey]) novo[moduloKey][parentKey] = {};
+              novo[moduloKey][parentKey] = { ...novo[moduloKey][parentKey], [item.key]: v };
+            } else {
+              if (!novo[moduloKey]) novo[moduloKey] = {};
+              novo[moduloKey] = { ...novo[moduloKey], [item.key]: v };
+            }
+            onChange(novo);
+          }}
+          className="scale-100 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200 flex-shrink-0"
         />
-      ))}
+        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 font-medium">
+          {item.label}
+        </span>
+      </div>
 
-      {/* Sub-submodulos recursivos — sempre visíveis */}
-      {temSubmodulos && submodulo.submodulos.map(sub => (
-        <SubmoduloCard
+      {/* Sub-itens recursivos — sempre visíveis com indentação aumentada */}
+      {temSubitens && item.submodulos.map(sub => (
+        <RenderizarHierarquia
           key={sub.key}
-          submodulo={sub}
+          item={sub}
           moduloKey={moduloKey}
+          parentKey={item.key}
           permissoes={permissoes}
           onChange={onChange}
           nivel={nivel + 1}
