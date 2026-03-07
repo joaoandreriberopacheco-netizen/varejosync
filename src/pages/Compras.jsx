@@ -385,11 +385,6 @@ const PedidosCompraTab = () => {
   );
 };
 
-import GestaoManifestos from '../components/compras/GestaoManifestos';
-import GestaoSupermanifestos from '../components/compras/GestaoSupermanifestos';
-import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
-import PainelConferencias from '../components/compras/PainelConferencias';
-
 const HubLogisticoTab = () => {
   return <GestaoManifestos />;
 };
