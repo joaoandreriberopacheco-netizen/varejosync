@@ -279,8 +279,8 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
     onSalvar(form);
   };
 
-  const totalAtivas = MODULOS.reduce((acc, m) => acc + contarPermissoesModulo(form.permissoes, m.key).ativas, 0);
-  const totalGeral = MODULOS.reduce((acc, m) => acc + contarPermissoesModulo(form.permissoes, m.key).total, 0);
+  const totalAtivas = MODULOS.reduce((acc, m) => acc + contarPermissoes(form.permissoes, m.key).ativas, 0);
+  const totalGeral = MODULOS.reduce((acc, m) => acc + contarPermissoes(form.permissoes, m.key).total, 0);
 
   return (
     <div className="min-h-[calc(100vh-120px)] flex flex-col">
