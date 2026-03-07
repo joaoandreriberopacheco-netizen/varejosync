@@ -208,7 +208,7 @@ function RenderizarHierarquia({ item, moduloKey, parentKey = null, permissoes, o
 
 function ModuloCard({ modulo, permissoes, onChange }) {
   const [expandido, setExpandido] = useState(false);
-  const { ativas, total } = contarPermissoesModulo(permissoes, modulo.key);
+  const { ativas, total } = contarPermissoes(permissoes, modulo.key);
   const Icon = MODULO_ICONS[modulo.key] || Shield;
 
   return (
