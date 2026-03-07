@@ -321,12 +321,15 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                   const isSelected =
                     celulaSelecionada?.produtoId === linha.id &&
                     celulaSelecionada?.chaveColuna === col.key;
+                  const isEmEdicao =
+                    celulaEmEdicao?.produtoId === linha.id &&
+                    celulaEmEdicao?.chaveColuna === col.key;
 
                   return (
                     <td
                       key={col.key}
                       style={{ width: col.largura }}
-                      className={`px-3 py-2 border-r border-gray-200 dark:border-gray-700 ${
+                      className={`px-3 py-2 border-r border-gray-200 dark:border-gray-700 relative ${
                         status === 'erro'
                           ? 'bg-red-100 dark:bg-red-900/20'
                           : status === 'aviso'
@@ -334,22 +337,53 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
                             : ''
                       }`}
                       onClick={() => !col.readonly && setCelulaSelecionada({ produtoId: linha.id, chaveColuna: col.key })}
+                      onMouseDown={(e) => !col.readonly && handleMouseDown(e, linha.id, col.key)}
                     >
                       {col.readonly || col.tipo === 'calculated' ? (
-                        <div className="text-xs text-gray-700 dark:text-gray-300">
+                        <div className="text-xs text-gray-700 dark:text-gray-300 pointer-events-none">
                           {valor}
                         </div>
-                      ) : (
+                      ) : isEmEdicao ? (
                         <input
-                          type={col.tipo === 'number' ? 'text' : 'text'}
+                          ref={inputRef}
+                          type="text"
                           value={valor}
                           onChange={(e) => handleEditarCelula(linha.id, col.key, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                              setCelulaEmEdicao(null);
+                            } else if (e.key === 'Enter') {
+                              setCelulaEmEdicao(null);
+                              const indexLinha = dados.findIndex(d => d.id === linha.id);
+                              if (indexLinha < dados.length - 1) {
+                                setCelulaSelecionada({
+                                  produtoId: dados[indexLinha + 1].id,
+                                  chaveColuna: col.key,
+                                });
+                              }
+                            } else {
+                              handleKeyDown(e, linha.id, col.key);
+                            }
+                          }}
+                          onBlur={() => setCelulaEmEdicao(null)}
+                          autoFocus
+                          className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-blue-500 text-gray-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={valor}
+                          readOnly
                           onKeyDown={(e) => handleKeyDown(e, linha.id, col.key)}
                           onFocus={() => setCelulaSelecionada({ produtoId: linha.id, chaveColuna: col.key })}
-                          className={`w-full px-2 py-1 text-xs bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white ${
-                            isSelected ? 'ring-1 ring-blue-500' : ''
+                          className={`w-full px-2 py-1 text-xs bg-transparent border-0 cursor-pointer text-gray-900 dark:text-white ${
+                            isSelected ? 'ring-1 ring-blue-500 rounded' : ''
                           }`}
                         />
+                      )}
+                      {/* Fill handle */}
+                      {!col.readonly && !col.tipo !== 'calculated' && isSelected && (
+                        <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500 cursor-cell hover:bg-blue-600" />
                       )}
                     </td>
                   );
