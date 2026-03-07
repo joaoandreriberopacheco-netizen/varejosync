@@ -49,9 +49,76 @@ const avaliarFormula = (formula, rowData, colunasTemp) => {
 
 export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlteracao }) {
   const scrollRef = useRef(null);
+  const [colunasTemp, setColunasTemp] = useState([]);
+  const [cellSelection, setCellSelection] = useState(null);
+  const clipboard = useRef(null);
 
   const getValor = (produto, campo) => {
-    return alteracoes[produto.id]?.[campo] ?? produto[campo] ?? '';
+    const valor = alteracoes[produto.id]?.[campo] ?? produto[campo] ?? '';
+    if (typeof valor === 'string' && valor.startsWith('=')) {
+      return avaliarFormula(valor, { ...produto, ...alteracoes[produto.id] }, colunasTemp);
+    }
+    return valor;
+  };
+
+  const adicionarColunaTmp = () => {
+    const novaCol = {
+      key: `temp_${Date.now()}`,
+      label: `Temp ${colunasTemp.length + 1}`,
+      tipo: 'text',
+      width: '120px',
+      temporaria: true
+    };
+    setColunasTemp([...colunasTemp, novaCol]);
+  };
+
+  const removerColunaTmp = (key) => {
+    setColunasTemp(colunasTemp.filter(c => c.key !== key));
+    const novasAlteracoes = { ...alteracoes };
+    Object.keys(novasAlteracoes).forEach(id => {
+      delete novasAlteracoes[id][key];
+    });
+    Object.keys(novasAlteracoes).forEach(id => {
+      if (Object.keys(novasAlteracoes[id]).length === 0) delete novasAlteracoes[id];
+    });
+  };
+
+  const handleColar = async (e) => {
+    const texto = await navigator.clipboard.readText();
+    const linhas = texto.split('\n').filter(l => l.trim());
+    const colunas = linhas[0].split('\t');
+    
+    linhas.forEach((linha, idxLinha) => {
+      const valores = linha.split('\t');
+      if (idxLinha < produtos.length) {
+        const produto = produtos[idxLinha];
+        colunas.forEach((header, idxCol) => {
+          const campo = CAMPOS_EDISTAVEIS.find(c => c.label === header.trim())?.key || 
+                       colunasTemp.find(c => c.label === header.trim())?.key;
+          if (campo && valores[idxCol]) {
+            onAlteracao(produto.id, campo, valores[idxCol].trim());
+          }
+        });
+      }
+    });
+  };
+
+  const handleCopiar = () => {
+    if (!cellSelection) return;
+    const { produtoId, campo } = cellSelection;
+    const produto = produtos.find(p => p.id === produtoId);
+    const valor = getValor(produto, campo);
+    navigator.clipboard.writeText(String(valor || ''));
+  };
+
+  const handlePasteValores = async (e) => {
+    e.preventDefault();
+    const texto = await navigator.clipboard.readText();
+    if (cellSelection) {
+      const { produtoId, campo } = cellSelection;
+      const valor = texto.trim();
+      onAlteracao(produtoId, campo, valor);
+    }
   };
 
   const validar = (campo, valor, produto) => {
