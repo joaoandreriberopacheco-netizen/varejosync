@@ -298,103 +298,43 @@ function LinhaPermissaoSubmodulo({ perm, moduloKey, submoduloKey, permissoes, on
 }
 
 function SubmoduloCard({ submodulo, moduloKey, permissoes, onChange, nivel = 1 }) {
-  const [expandido, setExpandido] = useState(false);
-  const chaveSubmodulo = `${moduloKey}.${submodulo.key}`;
   const temSubmodulos = submodulo.submodulos && submodulo.submodulos.length > 0;
   
   const { ativas, total } = contarPermissoesSubmodulo(permissoes, moduloKey, submodulo);
-  const Icon = MODULO_ICONS[submodulo.key] || Shield;
   const temVerEditar = submodulo.permissoes.some(p => p.tipo === 'ver_editar');
-
-  const toggleTodos = (e) => {
-    e.stopPropagation();
-    const tudo = ativas === total && total > 0;
-    let novo = { ...permissoes };
-    if (!novo[moduloKey]) novo[moduloKey] = {};
-    if (!novo[moduloKey][submodulo.key]) novo[moduloKey][submodulo.key] = {};
-    
-    submodulo.permissoes.forEach(p => {
-      if (p.tipo === 'ver_editar') {
-        novo[moduloKey][submodulo.key] = { ...novo[moduloKey][submodulo.key], [p.key]: { ver: !tudo, editar: !tudo } };
-      } else {
-        novo[moduloKey][submodulo.key] = { ...novo[moduloKey][submodulo.key], [p.key]: !tudo };
-      }
-    });
-    onChange(novo);
-  };
 
   const paddingStyle = { paddingLeft: `${nivel * 1.5}rem` };
 
   return (
-    <div style={paddingStyle} className="space-y-1">
-      <button
-        type="button"
-        onClick={() => setExpandido(!expandido)}
-        className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-      >
-        <div className="flex items-center gap-2 flex-1">
-          <Icon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{submodulo.label}</span>
-          {total > 0 && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-              ativas > 0 ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
-            }`}>{ativas}/{total}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          {total > 0 && (
-            <button
-              type="button"
-              onClick={toggleTodos}
-              className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline"
-            >
-              {ativas === total && total > 0 ? 'Limpar' : 'Todos'}
-            </button>
-          )}
-          {temSubmodulos || expandido ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
-        </div>
-      </button>
-
-      {expandido && (
-        <div className="space-y-1">
-          {/* Cabeçalho ver/editar */}
-          {temVerEditar && (
-            <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-3 pb-1">
-              <div />
-              <span className="w-4 text-center text-[9px] font-medium text-gray-400 dark:text-gray-500 flex items-center justify-center">
-                <Eye className="w-2.5 h-2.5" />
-              </span>
-              <span className="w-4 text-center text-[9px] font-medium text-gray-400 dark:text-gray-500 flex items-center justify-center">
-                <Pencil className="w-2.5 h-2.5" />
-              </span>
-            </div>
-          )}
-          
-          {/* Permissões do submodulo */}
-          {submodulo.permissoes.map(p => (
-            <LinhaPermissaoSubmodulo
-              key={p.key}
-              perm={p}
-              moduloKey={moduloKey}
-              submoduloKey={submodulo.key}
-              permissoes={permissoes}
-              onChange={onChange}
-            />
-          ))}
-
-          {/* Sub-submodulos recursivos */}
-          {temSubmodulos && submodulo.submodulos.map(sub => (
-            <SubmoduloCard
-              key={sub.key}
-              submodulo={sub}
-              moduloKey={moduloKey}
-              permissoes={permissoes}
-              onChange={onChange}
-              nivel={nivel + 1}
-            />
-          ))}
-        </div>
+    <div style={paddingStyle} className="space-y-0">
+      {/* Cabeçalho ver/editar para sub-níveis */}
+      {temVerEditar && submodulo.permissoes.some(p => p.tipo === 'ver_editar') && (
+        <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-3 py-1 text-[9px] text-gray-400 dark:text-gray-500 font-medium hidden" style={{ paddingLeft: `${(nivel - 0.5) * 1.5}rem` }} />
       )}
+
+      {/* Permissões do submodulo — sempre expandido */}
+      {submodulo.permissoes.map(p => (
+        <LinhaPermissaoSubmodulo
+          key={p.key}
+          perm={p}
+          moduloKey={moduloKey}
+          submoduloKey={submodulo.key}
+          permissoes={permissoes}
+          onChange={onChange}
+        />
+      ))}
+
+      {/* Sub-submodulos recursivos — sempre visíveis */}
+      {temSubmodulos && submodulo.submodulos.map(sub => (
+        <SubmoduloCard
+          key={sub.key}
+          submodulo={sub}
+          moduloKey={moduloKey}
+          permissoes={permissoes}
+          onChange={onChange}
+          nivel={nivel + 1}
+        />
+      ))}
     </div>
   );
 }
