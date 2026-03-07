@@ -8,12 +8,7 @@ export default function EditarProdutosEmMassa() {
   const [isMobile, setIsMobile] = useState(false);
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filtros, setFiltros] = useState({ 
-    busca: '', 
-    categoria: '', 
-    ativo: 'todos' 
-  });
-  const [alteracoes, setAlteracoes] = useState({});
+  const [filtros, setFiltros] = useState({ busca: '', categoria: '', ativo: 'todos' });
   const [salvarLoading, setSalvarLoading] = useState(false);
 
   // Detectar tamanho da tela
