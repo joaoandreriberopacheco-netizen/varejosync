@@ -104,8 +104,9 @@ export default function Layout({ children, currentPageName }) {
         // Carregar PerfilDeAcesso vinculado (Quarter Master Logic)
         if (user.perfil_acesso_id) {
           try {
-            const perfis = await base44.entities.PerfilDeAcesso.filter({ id: user.perfil_acesso_id });
-            if (perfis && perfis.length > 0) setPerfilDeAcesso(perfis[0]);
+            const perfis = await base44.entities.PerfilDeAcesso.list();
+            const encontrado = perfis.find(p => p.id === user.perfil_acesso_id);
+            if (encontrado) setPerfilDeAcesso(encontrado);
           } catch (e) {
             console.warn("Perfil de acesso não encontrado:", e);
           }
