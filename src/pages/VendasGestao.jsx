@@ -226,30 +226,23 @@ export default function VendasGestaoPage() {
         </div>
       </div>
 
-      {/* KPIs - Estilo Dashboard com Ícones */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6">
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
-          <FileText className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-200">{stats.orcamentos}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Orçamentos</p>
+      {/* KPIs glacial */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
+          <p className="text-[11px] text-gray-400 mb-1">Orçamentos</p>
+          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{stats.orcamentos}</div>
         </div>
-
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
-          <Clock className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-200">{stats.aprovados}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Aprovados</p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
+          <p className="text-[11px] text-gray-400 mb-1">Aprovados</p>
+          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{stats.aprovados}</div>
         </div>
-
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
-          <CheckCircle2 className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-200">{stats.finalizados}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Finalizados</p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
+          <p className="text-[11px] text-gray-400 mb-1">Finalizados</p>
+          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{stats.finalizados}</div>
         </div>
-
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
-          <DollarSign className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(stats.totalMes)}</div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Faturamento</p>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
+          <p className="text-[11px] text-gray-400 mb-1">Faturamento do Mês</p>
+          <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">R$ {formatValor(stats.totalMes)}</div>
         </div>
       </div>
 
