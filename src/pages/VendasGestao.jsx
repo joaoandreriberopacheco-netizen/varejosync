@@ -267,7 +267,7 @@ export default function VendasGestaoPage() {
       </GlacialTabsList>
       <div>
 
-        <TabsContent value="rascunhos" className="space-y-6">
+        {activeTab === 'rascunhos' && <div className="space-y-6">
           {/* Filtros para Rascunhos */}
           <div className="space-y-3">
         {/* Linha 1: Busca e Status */}
