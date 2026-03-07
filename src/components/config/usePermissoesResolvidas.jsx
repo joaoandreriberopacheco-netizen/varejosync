@@ -188,16 +188,6 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar
       },
       {
-        name: 'Armazenagem',
-        page: 'Armazenagem',
-        permissaoCheck: (p) => p?.estoque?.armazenagem
-      },
-      {
-        name: 'Separação de Pedidos',
-        page: 'InterfaceSeparador',
-        permissaoCheck: (p) => p?.estoque?.separacao_pedidos
-      },
-      {
         name: 'Conferência',
         page: 'ConferenciaEstoque',
         permissaoCheck: (p) => p?.estoque?.conferencia_estoque
@@ -206,9 +196,19 @@ export const ALL_MENU_ITEMS = [
         name: 'Auditoria',
         page: 'AuditoriaEstoque',
         permissaoCheck: (p) => p?.estoque?.auditoria_estoque
-      }
-      ]
       },
+      {
+        name: 'Armazenagem',
+        page: 'Armazenagem',
+        permissaoCheck: (p) => p?.estoque?.armazenagem
+      },
+      {
+        name: 'Separação de Pedidos',
+        page: 'InterfaceSeparador',
+        permissaoCheck: (p) => p?.estoque?.separacao_pedidos
+      }
+    ]
+  },
   {
     name: 'Financeiro',
     icon: DollarSign,
