@@ -514,7 +514,7 @@ export default function VendasGestaoPage() {
             {/* Mobile: Cards */}
             <div className="md:hidden space-y-2">
               {pedidosFiltrados.map(pedido => (
-                <div key={pedido.id} className="bg-white dark:bg-gray-800 rounded-xl p-4">
+                <div key={pedido.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-800 dark:text-gray-200 truncate">
