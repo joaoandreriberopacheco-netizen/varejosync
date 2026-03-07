@@ -22,11 +22,13 @@ export default function ListaUsuariosApp() {
   const [usuarios, setUsuarios] = useState([]);
   const [perfisAcesso, setPerfisAcesso] = useState([]);
   const [contasCaixa, setContasCaixa] = useState([]);
+  const [tabelasPreco, setTabelasPreco] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPerfilId, setSelectedPerfilId] = useState('');
   const [selectedCaixas, setSelectedCaixas] = useState([]);
+  const [selectedTabelaId, setSelectedTabelaId] = useState('');
   const [orfaos, setOrfaos] = useState([]);
   const { toast } = useToast();
 
