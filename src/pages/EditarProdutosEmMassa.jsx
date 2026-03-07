@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Monitor } from 'lucide-react';
-import GradeEdicaoMassiva from '@/components/produtos/GradeEdiacaoMassiva';
+import { Monitor, Save, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
 import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa';
+import { Button } from '@/components/ui/button';
+import SpreadsheetNativa from '@/components/produtos/SpreadsheetNativa';
 
 export default function EditarProdutosEmMassa() {
   const [isMobile, setIsMobile] = useState(false);
@@ -10,6 +11,8 @@ export default function EditarProdutosEmMassa() {
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState({ busca: '', categoria: '', ativo: 'todos' });
   const [salvarLoading, setSalvarLoading] = useState(false);
+  const [alteracoes, setAlteracoes] = useState({});
+  const spreadsheetRef = useRef(null);
 
   // Detectar tamanho da tela
   useEffect(() => {
@@ -54,74 +57,6 @@ export default function EditarProdutosEmMassa() {
     return matchBusca && matchCategoria && matchAtivo;
   });
 
-  // Definição de colunas AG Grid
-  const columnDefs = [
-    { field: 'codigo_interno', headerName: 'Código', width: 100, editable: false },
-    { field: 'nome', headerName: 'Produto', width: 250, editable: false },
-    {
-      field: 'valor_compra',
-      headerName: 'Valor Compra',
-      width: 120,
-      editable: true,
-      type: 'rightAligned',
-      cellClass: (p) => {
-        const val = p.data?.valor_compra;
-        return val < 0 ? 'bg-red-100 dark:bg-red-900/20' : '';
-      }
-    },
-    {
-      field: 'preco_venda_padrao',
-      headerName: 'Preço Venda',
-      width: 120,
-      editable: true,
-      type: 'rightAligned',
-      cellClass: (p) => {
-        const val = p.data?.preco_venda_padrao;
-        const custo = p.data?.valor_compra || 0;
-        if (val < custo) return 'bg-red-100 dark:bg-red-900/20';
-        const margem = ((val - custo) / val) * 100;
-        return margem < 20 ? 'bg-yellow-100 dark:bg-yellow-900/20' : '';
-      }
-    },
-    {
-      field: 'preco_venda_percentual',
-      headerName: 'Margem %',
-      width: 110,
-      editable: true,
-      type: 'rightAligned'
-    },
-    { field: 'estoque_atual', headerName: 'Estoque', width: 90, editable: false, type: 'rightAligned' },
-    { field: 'estoque_minimo', headerName: 'Mínimo', width: 90, editable: true, type: 'rightAligned' },
-    { field: 'ativo', headerName: 'Ativo', width: 70, editable: true, type: 'boolean' }
-  ];
-
-  const defaultColDef = {
-    sortable: true,
-    filter: true,
-    resizable: true,
-    suppressMovable: false
-  };
-
-  const handleCellValueChanged = (event) => {
-    const { data, field, newValue, oldValue } = event;
-    
-    // Aplicar parser de fórmula se for número
-    let valorFinal = newValue;
-    if (['valor_compra', 'preco_venda_padrao', 'preco_venda_percentual', 'estoque_minimo'].includes(field)) {
-      valorFinal = avaliarFormula(newValue);
-    }
-
-    if (valorFinal === oldValue) return;
-
-    setAlteracoes(prev => ({
-      ...prev,
-      [data.id]: {
-        ...(prev[data.id] || {}),
-        [field]: valorFinal
-      }
-    }));
-  };
-
   const handleSalvar = async () => {
     try {
       setSalvarLoading(true);
@@ -146,9 +81,7 @@ export default function EditarProdutosEmMassa() {
   };
 
   const handleUndo = () => {
-    if (gridRef.current?.api) {
-      gridRef.current.api.undoCellEditing();
-    }
+    setAlteracoes({});
   };
 
   if (isMobile) {
@@ -191,7 +124,8 @@ export default function EditarProdutosEmMassa() {
               variant="outline"
               size="sm"
               className="gap-2"
-              title="Desfazer (Ctrl+Z)"
+              title="Desfazer"
+              disabled={Object.keys(alteracoes).length === 0}
             >
               <RotateCcw className="w-4 h-4" />
               Desfazer
@@ -215,27 +149,18 @@ export default function EditarProdutosEmMassa() {
         onFiltrosChange={setFiltros}
       />
 
-      {/* Grade AG Grid */}
-      <div className="flex-1 overflow-hidden ag-theme-quartz dark:ag-theme-quartz-dark">
+      {/* Spreadsheet Nativa */}
+      <div className="flex-1 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-gray-500 dark:text-gray-400">Carregando produtos...</div>
           </div>
         ) : (
-          <AgGridReact
-            ref={gridRef}
-            rowData={produtosFiltrados}
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            onCellValueChanged={handleCellValueChanged}
-            undoRedoCellEditing={true}
-            undoRedoCellEditingLimit={50}
-            animateRows={true}
-            domLayout="normal"
-            suppressCellFocus={false}
-            suppressRowClickSelection={false}
-            suppressMovableColumns={true}
-            getRowClass={(p) => alteracoes[p.data.id] ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
+          <SpreadsheetNativa
+            ref={spreadsheetRef}
+            produtos={produtosFiltrados}
+            alteracoes={alteracoes}
+            onAlteracoes={setAlteracoes}
           />
         )}
       </div>
