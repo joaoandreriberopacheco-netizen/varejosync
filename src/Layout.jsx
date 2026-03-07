@@ -144,102 +144,11 @@ export default function Layout({ children, currentPageName }) {
     }));
   };
 
-  const getMenuItemsForProfile = () => {
-    // Normaliza o perfil para comparação case-insensitive
-    const perfilRaw = currentUser?.perfil || 'Admin';
-    const perfilNormalizado = {
-      'operador de caixa': 'Operador de Caixa',
-      'vendedor': 'Vendedor',
-      'gerente': 'Gerente',
-      'admin': 'Admin',
-      'estoquista': 'Estoquista',
-      'financeiro': 'Financeiro',
-    };
-    const perfil = perfilNormalizado[perfilRaw.toLowerCase()] || perfilRaw;
-    
-    const allMenuItems = [
-      { 
-        name: 'PDV', 
-        icon: Monitor, 
-        submenu: [
-          { name: 'Vendedor', page: 'PDV?mode=vendedor', roles: ['Admin', 'Vendedor', 'Gerente'] },
-          { name: 'Caixa', page: 'PDV?mode=caixa', roles: ['Admin', 'Operador de Caixa', 'Gerente'] },
-          { name: 'Supermercado', page: 'PDV?mode=supermercado', roles: ['Admin', 'Gerente'] },
-          { name: 'Auto-Atendimento', page: 'AutoAtendimento', roles: ['Admin', 'Gerente'] }
-        ],
-        roles: ['Admin', 'Vendedor', 'Operador de Caixa', 'Gerente']
-      },
-      { 
-        name: 'Início', 
-        icon: LayoutDashboard, 
-        page: 'DashboardCaixa',
-        roles: ['Operador de Caixa']
-      },
-      { 
-        name: 'Dashboard', 
-        icon: LayoutDashboard, 
-        page: 'Dashboard',
-        roles: ['Admin', 'Vendedor', 'Gerente', 'Financeiro']
-      },
-      {
-        name: 'Financeiro',
-        icon: DollarSign,
-        submenu: [
-          { name: 'Caixas Ativos', page: 'CaixasAtivos' },
-          { name: 'Turnos Fechados', page: 'TurnosFechados' },
-          ],
-          roles: ['Operador de Caixa']
-      },
-      { 
-        name: 'Vendas', 
-        icon: TrendingUp, 
-        submenu: [
-          { name: 'Gestão de Vendas', page: 'VendasGestao' },
-          { name: 'Vendas Perdidas', page: 'VendasPerdidas' },
-          { name: 'Controle de Entregas', page: 'ControleEntregas' },
-          { name: 'Painel Gerencial', page: 'PainelGerente' }
-        ],
-        roles: ['Admin', 'Gerente']
-      },
-      { 
-        name: 'Estoque', 
-        icon: Package, 
-        submenu: [
-          { name: 'Produtos', page: 'Produtos' },
-          { name: 'Compras', page: 'Compras' },
-          { name: 'Logística', page: 'Logistica' },
-          { name: 'Armazenagem', page: 'Armazenagem' },
-          { name: 'Separação de Pedidos', page: 'InterfaceSeparador', roles: ['Admin', 'Gerente', 'Estoquista'] }
-        ],
-        roles: ['Admin', 'Gerente', 'Estoquista']
-      },
-      { 
-        name: 'Financeiro', 
-        icon: DollarSign, 
-        submenu: [
-          { name: 'Fluxo de Caixa', page: 'FluxoCaixa' },
-          { name: 'Caixas Ativos', page: 'CaixasAtivos' },
-          { name: 'Turnos Fechados', page: 'TurnosFechados' },
-          { name: 'Gestão Financeira', page: 'FinanceiroModulo' },
-          { name: 'Formas de Pagamento', page: 'Configuracoes' }
-        ],
-        roles: ['Admin', 'Gerente', 'Financeiro']
-      },
-      { name: 'Relatórios', icon: BookOpen, page: 'Relatorios', roles: ['Admin', 'Gerente', 'Financeiro'] }
-    ];
-
-    return allMenuItems.filter(item => {
-      if (!item.roles || item.roles.includes(perfil)) {
-        if (item.submenu) {
-          item.submenu = item.submenu.filter(sub => !sub.roles || sub.roles.includes(perfil));
-        }
-        return true;
-      }
-      return false;
-    });
-  };
-
-  const menuItems = getMenuItemsForProfile();
+  // ── Quarter Master Logic: monta menu baseado em permissões resolvidas ──────
+  const menuItems = React.useMemo(() => {
+    if (!currentUser) return [];
+    return buildMenuItems(currentUser, perfilDeAcesso);
+  }, [currentUser, perfilDeAcesso]);
 
   const allSearchableItems = React.useMemo(() => {
     const items = [];
