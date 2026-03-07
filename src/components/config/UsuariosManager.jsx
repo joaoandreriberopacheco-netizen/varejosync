@@ -163,7 +163,6 @@ function EditarAcessoUsuario({ usuario, perfis, onSalvar, onCancelar }) {
   const [perfilId, setPerfilId] = useState(usuario.perfil_acesso_id || '');
   const [overrides, setOverrides] = useState(usuario.override_permissoes || {});
   const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
 
   const perfilSelecionado = perfis.find(p => p.id === perfilId);
   const permissoesBase = perfilSelecionado?.permissoes || {};

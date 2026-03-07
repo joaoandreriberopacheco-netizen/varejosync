@@ -10,8 +10,6 @@ export default function PerfisDeAcessoManager() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState(null); // null = lista, 'novo' = criar, perfil = editar
-  const { toast } = useToast();
-
   useEffect(() => { carregarDados(); }, []);
 
   const carregarDados = async () => {
