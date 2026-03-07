@@ -208,25 +208,8 @@ function RenderizarHierarquia({ item, moduloKey, parentKey = null, permissoes, o
 
 function ModuloCard({ modulo, permissoes, onChange }) {
   const [expandido, setExpandido] = useState(false);
-  const { ativas, total } = contarPermissoes(permissoes, modulo.key);
+  const { ativas, total } = contarPermissoesModulo(permissoes, modulo.key);
   const Icon = MODULO_ICONS[modulo.key] || Shield;
-  const temVerEditar = modulo.permissoes.some(p => p.tipo === 'ver_editar');
-  const temSubmodulos = modulo.submodulos && modulo.submodulos.length > 0;
-
-  const toggleTodos = (e) => {
-    e.stopPropagation();
-    const tudo = ativas === total && total > 0;
-    let novo = { ...permissoes };
-    modulo.permissoes.forEach(p => {
-      if (p.tipo === 'ver_editar') {
-        novo = setPermissao(novo, modulo.key, p.key, !tudo, 'ver');
-        novo = setPermissao(novo, modulo.key, p.key, !tudo, 'editar');
-      } else {
-        novo = setPermissao(novo, modulo.key, p.key, !tudo);
-      }
-    });
-    onChange(novo);
-  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
@@ -244,40 +227,19 @@ function ModuloCard({ modulo, permissoes, onChange }) {
             ativas > 0 ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
           }`}>{ativas}/{total}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleTodos}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline"
-          >
-            {ativas === total && total > 0 ? 'Limpar' : 'Todos'}
-          </button>
-          {expandido ? <ChevronDown className="w-3.5 h-3.5 text-gray-400" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
-        </div>
+        {expandido ? <ChevronDown className="w-3.5 h-3.5 text-gray-400" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
       </button>
 
       {expandido && (
         <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-0">
-          {/* Permissões do módulo principal */}
-          {modulo.permissoes.map(p => (
-            <LinhaPermissao
-              key={p.key}
-              perm={p}
-              modulo={modulo.key}
-              permissoes={permissoes}
-              onChange={onChange}
-            />
-          ))}
-          
-          {/* Submodulos — sempre expandidos */}
-          {temSubmodulos && modulo.submodulos.map(sub => (
-            <SubmoduloCard
-              key={sub.key}
-              submodulo={sub}
+          {modulo.submodulos && modulo.submodulos.map(item => (
+            <RenderizarHierarquia
+              key={item.key}
+              item={item}
               moduloKey={modulo.key}
               permissoes={permissoes}
               onChange={onChange}
-              nivel={1}
+              nivel={0}
             />
           ))}
         </div>
