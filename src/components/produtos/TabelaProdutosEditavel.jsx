@@ -122,6 +122,35 @@ export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlterac
     }
   };
 
+  const handleFillDown = (fromIdx, campo) => {
+    const fromProd = produtos[fromIdx];
+    const valor = getValor(fromProd, campo);
+    
+    for (let i = fromIdx + 1; i < produtos.length; i++) {
+      const prod = produtos[i];
+      const valAtual = getValor(prod, campo);
+      if (!valAtual || valAtual === '') {
+        onAlteracao(prod.id, campo, valor);
+      }
+    }
+  };
+
+  const reordenarColunasTemp = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(colunasTemp);
+    const [reordenated] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordenated);
+    setColunasTemp(items);
+  };
+
+  const validacaoLinha = (produto) => {
+    const campos_obrigatorios = CAMPOS_EDISTAVEIS.filter(c => c.obrigatorio);
+    return campos_obrigatorios.every(c => {
+      const valor = getValor(produto, c.key);
+      return valor && String(valor).trim() !== '';
+    });
+  };
+
   const validar = (campo, valor, produto) => {
     const erros = [];
     
