@@ -183,15 +183,15 @@ export default function TerceirosPage() {
 
       {/* Tabela */}
       {filteredTerceiros.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
-          <Users className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Nenhum terceiro cadastrado</p>
-          <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 text-white">
+        <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+          <Users className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Nenhum terceiro cadastrado</p>
+          <Button onClick={handleAddNew} className="gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm h-9 px-4">
             <PlusCircle className="w-4 h-4" /> Criar Primeiro Terceiro
           </Button>
         </div>
       ) : (
-        <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden bg-white dark:bg-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm overflow-hidden">
           <Table>
             <TableHeader className="bg-gray-50 dark:bg-gray-700">
               <TableRow className="border-b border-gray-200 dark:border-gray-700">
