@@ -317,7 +317,7 @@ export default function RecomecarDoZero() {
                 </Button>
                 <Button
                   onClick={handleInitiateDelete}
-                  className="bg-red-600 hover:bg-red-700 rounded-xl"
+                  className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 rounded-xl"
                   disabled={selectedEntities.length === 0 || isProcessing}
                 >
                   {isProcessing ? 'Processando...' : 'Autenticar e Zerar'}
