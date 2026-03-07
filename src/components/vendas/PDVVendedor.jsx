@@ -1173,96 +1173,48 @@ export default function PDVVendedor() {
                 <span>R$ {subtotal.toFixed(2)}</span>
               </div>
 
-              {/* Seção de Desconto Comercial - se permitido pela tabela */}
-              {tabelaPreco?.permite_desconto_comercial &&
+              {/* Desconto Two-Way Binding */}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
-                  <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Desconto Comercial</Label>
-                  <div className="flex gap-1">
-                    <Select value={tipoValorAjuste} onValueChange={setTipoValorAjuste}>
-                      <SelectTrigger className="w-14 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-xs">
-                        <SelectItem value="valor">R$</SelectItem>
-                        <SelectItem value="percentual">%</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Desconto</Label>
+                  {tabelaPreco?.percentual_desconto_maximo > 0 && (
+                    <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
+                  )}
+                </div>
+                <div className="flex gap-1.5 items-center">
+                  {/* Campo % */}
+                  <div className="relative flex-1">
                     <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    max={tipoValorAjuste === 'percentual' ? tabelaPreco?.percentual_desconto_maximo || 100 : undefined}
-                    value={valorAjuste}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0;
-                      if (tipoValorAjuste === 'percentual' && tabelaPreco?.percentual_desconto_maximo) {
-                        setValorAjuste(Math.min(val, tabelaPreco.percentual_desconto_maximo));
-                      } else {
-                        setValorAjuste(val);
-                      }
-                    }}
-                    className="flex-1 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
-                    placeholder="0" />
-
+                      type="number"
+                      min="0"
+                      max={tabelaPreco?.percentual_desconto_maximo || 100}
+                      step="0.01"
+                      value={ajustePercentual}
+                      onChange={(e) => handleAjustePercentualChange(e.target.value)}
+                      className="pr-6 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0 text-right"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
                   </div>
-                  {ajusteExcedido &&
-                <p className="text-[10px] text-red-500">
-                      Excede limite de {currentUser?.limite_desconto || 0}%
-                    </p>
-                }
-                  {valorAjusteCalculado > 0 && !ajusteExcedido &&
-                <p className="text-[10px] text-gray-500">
-                      - R$ {valorAjusteCalculado.toFixed(2)} ({percentualAjuste.toFixed(1)}%)
-                    </p>
-                }
+                  <span className="text-gray-300 dark:text-gray-600 text-xs">=</span>
+                  {/* Campo R$ */}
+                  <div className="relative flex-1">
+                    <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={ajusteValor}
+                      onChange={(e) => handleAjusteValorChange(e.target.value)}
+                      className="pl-7 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
+                      placeholder="0,00"
+                    />
+                  </div>
                 </div>
-              }
-
-              {/* Seção de Ajuste Manual - Clean Style */}
-              {!tabelaPreco?.permite_desconto_comercial &&
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
-                <Label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ajuste</Label>
-                <div className="flex gap-1">
-                  <Select value={tipoAjuste} onValueChange={setTipoAjuste}>
-                    <SelectTrigger className="w-20 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-xs">
-                      <SelectItem value="desconto">Desc.</SelectItem>
-                      <SelectItem value="acrescimo">Acrés.</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={tipoValorAjuste} onValueChange={setTipoValorAjuste}>
-                    <SelectTrigger className="w-14 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-xs">
-                      <SelectItem value="valor">R$</SelectItem>
-                      <SelectItem value="percentual">%</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={valorAjuste}
-                    onChange={(e) => setValorAjuste(parseFloat(e.target.value) || 0)}
-                    className="flex-1 bg-white dark:bg-gray-700/50 border-0 border-b border-gray-200 dark:border-gray-600 rounded-none h-8 text-sm focus:ring-0"
-                    placeholder="0" />
-
-                </div>
-                {ajusteExcedido &&
-                <p className="text-[10px] text-red-500">
-                    Excede limite de {currentUser?.limite_desconto || 0}%
-                  </p>
-                }
-                {valorAjusteCalculado > 0 && !ajusteExcedido &&
-                <p className="text-[10px] text-gray-500">
-                    {tipoAjuste === 'desconto' ? '-' : '+'} R$ {valorAjusteCalculado.toFixed(2)} ({percentualAjuste.toFixed(1)}%)
-                  </p>
-                }
+                {ajusteExcedido && (
+                  <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>
+                )}
               </div>
-              }
 
               <div className="flex justify-between items-baseline pt-3 border-t border-gray-200 dark:border-gray-700">
                 <span className="text-xs text-gray-500">Total</span>
