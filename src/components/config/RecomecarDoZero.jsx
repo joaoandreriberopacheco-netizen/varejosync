@@ -182,14 +182,14 @@ export default function RecomecarDoZero() {
 
       <Dialog open={isOpen && !isAuthOpen} onOpenChange={(v) => { if (!isProcessing) setIsOpen(v); }}>
         <DialogContent className="max-w-2xl h-[90vh] flex flex-col bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
-          <DialogHeader className="flex-shrink-0">
+          <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
             <DialogTitle className="text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <RefreshCw className="w-5 h-5" />
               Recomeçar do Zero
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-5 py-2 pr-1">
+          <div className="flex-1 overflow-y-auto space-y-5 px-6 py-4">
             {/* Alerta */}
             <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl">
               <div className="flex items-start gap-3">
