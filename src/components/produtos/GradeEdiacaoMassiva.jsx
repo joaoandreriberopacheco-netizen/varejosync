@@ -140,15 +140,19 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
     });
   }, [dados]);
 
-  // Navegação por teclado
+  // Iniciar edição ao pressionar Enter ou qualquer tecla em célula selecionada
   const handleKeyDown = useCallback((e, produtoId, chaveColuna) => {
-    if (!celulaSelecionada) return;
-
-    const indexLinha = dados.findIndex(d => d.id === produtoId);
-    const indexColuna = COLUNAS.findIndex(c => c.key === chaveColuna);
-
-    if (e.key === 'ArrowDown') {
+    const coluna = COLUNAS.find(c => c.key === chaveColuna);
+    
+    if (e.key === 'Enter' && !coluna?.readonly) {
       e.preventDefault();
+      setCelulaEmEdicao({ produtoId, chaveColuna });
+      setTimeout(() => inputRef.current?.focus(), 0);
+    } else if (e.key === 'Escape') {
+      setCelulaEmEdicao(null);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const indexLinha = dados.findIndex(d => d.id === produtoId);
       if (indexLinha < dados.length - 1) {
         setCelulaSelecionada({
           produtoId: dados[indexLinha + 1].id,
@@ -157,6 +161,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      const indexLinha = dados.findIndex(d => d.id === produtoId);
       if (indexLinha > 0) {
         setCelulaSelecionada({
           produtoId: dados[indexLinha - 1].id,
@@ -165,6 +170,7 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
       }
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
+      const indexColuna = COLUNAS.findIndex(c => c.key === chaveColuna);
       if (indexColuna < COLUNAS.length - 1) {
         setCelulaSelecionada({
           produtoId,
@@ -173,14 +179,28 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
       }
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
+      const indexColuna = COLUNAS.findIndex(c => c.key === chaveColuna);
       if (indexColuna > 0) {
         setCelulaSelecionada({
           produtoId,
           chaveColuna: COLUNAS[indexColuna - 1].key,
         });
       }
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const indexColuna = COLUNAS.findIndex(c => c.key === chaveColuna);
+      const novaColuna = e.shiftKey 
+        ? COLUNAS[indexColuna - 1] 
+        : COLUNAS[indexColuna + 1];
+      
+      if (novaColuna) {
+        setCelulaSelecionada({
+          produtoId,
+          chaveColuna: novaColuna.key,
+        });
+      }
     }
-  }, [celulaSelecionada, dados]);
+  }, [dados]);
 
   // Salvar alterações
   const handleSalvar = async () => {
