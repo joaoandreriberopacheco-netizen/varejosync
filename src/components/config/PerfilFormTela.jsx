@@ -263,10 +263,39 @@ function ModuloCard({ modulo, permissoes, onChange }) {
   );
 }
 
+// ─── Sanitiza permissões — garante que campos booleanos simples não sejam objetos ──
+function sanitizarPermissoes(permissoes) {
+  if (!permissoes) return {};
+  const resultado = {};
+  MODULOS.forEach(modulo => {
+    const modPerm = permissoes[modulo.key];
+    if (!modPerm) return;
+    resultado[modulo.key] = {};
+    modulo.permissoes.forEach(p => {
+      const val = modPerm[p.key];
+      if (p.tipo === 'ver_editar') {
+        // Espera objeto {ver, editar}
+        resultado[modulo.key][p.key] = typeof val === 'object' && val !== null
+          ? { ver: val.ver === true, editar: val.editar === true }
+          : { ver: false, editar: false };
+      } else {
+        // Espera boolean simples — converte objeto para true se tiver qualquer chave true
+        if (typeof val === 'object' && val !== null) {
+          resultado[modulo.key][p.key] = Object.values(val).some(v => v === true);
+        } else {
+          resultado[modulo.key][p.key] = val === true;
+        }
+      }
+    });
+  });
+  return resultado;
+}
+
 // ─── Tela completa de edição de perfil ──────────────────────────
 export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
   const VAZIO = { nome: '', descricao: '', menu_compacto: false, ativo: true, permissoes: {} };
-  const [form, setForm] = useState(perfil ? { ...VAZIO, ...perfil } : VAZIO);
+  const base = perfil ? { ...VAZIO, ...perfil } : VAZIO;
+  const [form, setForm] = useState({ ...base, permissoes: sanitizarPermissoes(base.permissoes) });
 
   const handleSalvar = () => {
     if (!form.nome.trim()) return;
