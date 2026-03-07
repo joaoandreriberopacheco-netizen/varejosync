@@ -334,7 +334,6 @@ export default function UsuariosManager() {
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState(null); // null = lista, objeto = usuário
   const [busca, setBusca] = useState('');
-  const { toast } = useToast();
 
   useEffect(() => { carregarDados(); }, []);
 
