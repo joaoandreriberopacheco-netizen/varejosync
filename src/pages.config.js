@@ -50,11 +50,13 @@
 import AnexoCompartilhado from './pages/AnexoCompartilhado';
 import Armazenagem from './pages/Armazenagem';
 import AuditoriaEstoque from './pages/AuditoriaEstoque';
+import AuditoriaEstoqueV2 from './pages/AuditoriaEstoqueV2';
 import AutoAtendimento from './pages/AutoAtendimento';
 import CaixasAtivos from './pages/CaixasAtivos';
 import Campanhas from './pages/Campanhas';
 import Compras from './pages/Compras';
 import ConferenciaEntrada from './pages/ConferenciaEntrada';
+import ConferenciaEstoque from './pages/ConferenciaEstoque';
 import ConferenciaItens from './pages/ConferenciaItens';
 import ConferenciaVolumes from './pages/ConferenciaVolumes';
 import Configuracoes from './pages/Configuracoes';
@@ -99,7 +101,7 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import ConferenciaEstoque from './pages/ConferenciaEstoque';
+import EditarProdutosEmMassa from './pages/EditarProdutosEmMassa';
 import __Layout from './Layout.jsx';
 
 
@@ -107,11 +109,13 @@ export const PAGES = {
     "AnexoCompartilhado": AnexoCompartilhado,
     "Armazenagem": Armazenagem,
     "AuditoriaEstoque": AuditoriaEstoque,
+    "AuditoriaEstoqueV2": AuditoriaEstoqueV2,
     "AutoAtendimento": AutoAtendimento,
     "CaixasAtivos": CaixasAtivos,
     "Campanhas": Campanhas,
     "Compras": Compras,
     "ConferenciaEntrada": ConferenciaEntrada,
+    "ConferenciaEstoque": ConferenciaEstoque,
     "ConferenciaItens": ConferenciaItens,
     "ConferenciaVolumes": ConferenciaVolumes,
     "Configuracoes": Configuracoes,
@@ -156,7 +160,7 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "ConferenciaEstoque": ConferenciaEstoque,
+    "EditarProdutosEmMassa": EditarProdutosEmMassa,
 }
 
 export const pagesConfig = {
