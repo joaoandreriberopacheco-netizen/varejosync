@@ -390,19 +390,8 @@ function ModuloCard({ modulo, permissoes, onChange }) {
       </button>
 
       {expandido && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-1">
-          {/* Cabeçalho das colunas ver/editar */}
-          {temVerEditar && (
-            <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-2 pb-1.5">
-              <div />
-              <span className="w-5 text-center text-[10px] font-medium text-gray-400 dark:text-gray-500 flex items-center gap-0.5 justify-center">
-                <Eye className="w-3 h-3" />
-              </span>
-              <span className="w-5 text-center text-[10px] font-medium text-gray-400 dark:text-gray-500 flex items-center gap-0.5 justify-center">
-                <Pencil className="w-3 h-3" />
-              </span>
-            </div>
-          )}
+        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-0">
+          {/* Permissões do módulo principal */}
           {modulo.permissoes.map(p => (
             <LinhaPermissao
               key={p.key}
@@ -413,7 +402,7 @@ function ModuloCard({ modulo, permissoes, onChange }) {
             />
           ))}
           
-          {/* Submodulos */}
+          {/* Submodulos — sempre expandidos */}
           {temSubmodulos && modulo.submodulos.map(sub => (
             <SubmoduloCard
               key={sub.key}
