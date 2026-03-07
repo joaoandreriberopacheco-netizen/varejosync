@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ChevronDown, Trash2, Plus, X } from 'lucide-react';
+import { ChevronDown, Trash2, Plus, X, GripVertical, Check } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const CAMPOS_EDISTAVEIS = [
   { key: 'codigo_interno', label: 'Código', tipo: 'text', width: '120px' },
