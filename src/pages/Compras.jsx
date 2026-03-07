@@ -397,119 +397,133 @@ const SupermanifestosTab = () => {
 
 export default function ComprasPage() {
   const [sugestaoKey, setSugestaoKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('sugestoes');
 
   const handleTabChange = (value) => {
+    setActiveTab(value);
     if (value === 'sugestoes') {
       setSugestaoKey(prev => prev + 1);
     }
   };
 
+  const tabs = [
+    { value: 'sugestoes', label: 'Sugestões', icon: ShoppingCart },
+    { value: 'cotacoes', label: 'Cotações', icon: FileText },
+    { value: 'pedidos', label: 'Pedidos', icon: DollarSign },
+    { value: 'hub-logistico', label: 'Hub Logístico', icon: Truck },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-2 py-4 md:p-6">
-      <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-2xl font-light text-gray-800 dark:text-gray-200">Módulo de Compras</h1>
-        <p className="text-sm text-gray-500 font-light">Gestão completa do ciclo de suprimentos</p>
+    <div className="max-w-7xl mx-auto space-y-0 px-0 md:px-2 py-2 md:py-4">
+      {/* Header */}
+      <div className="px-4 md:px-0 pb-4">
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white font-glacial">Compras</h1>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Gestão completa do ciclo de suprimentos</p>
       </div>
 
-      <Tabs defaultValue="sugestoes" onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="flex w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 gap-2 sm:gap-6 overflow-x-auto no-scrollbar">
-          <TabsTrigger 
-            value="sugestoes" 
-            className="flex-1 sm:flex-none border-b-2 border-transparent data-[state=active]:border-teal-600 rounded-none py-3 px-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-teal-700 font-medium transition-all flex items-center justify-center sm:justify-start gap-2"
+      {/* Tab Bar - PDV Style pill tabs */}
+      <div className="px-4 md:px-0">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 w-full overflow-x-auto no-scrollbar">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => handleTabChange(tab.value)}
+                className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                  isActive
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden sm:inline truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="px-4 md:px-0 pt-4">
+        {activeTab === 'sugestoes' && <SugestaoCompra key={sugestaoKey} />}
+        {activeTab === 'cotacoes' && <CotacoesManager />}
+        {activeTab === 'pedidos' && <PedidosCompraTab />}
+        {activeTab === 'hub-logistico' && (
+          <HubLogisticoCompleto />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HubLogisticoCompleto() {
+  const [activeSubTab, setActiveSubTab] = useState('manifestos');
+
+  const subTabs = [
+    { value: 'manifestos', label: 'Manifestos', icon: Truck },
+    { value: 'supermanifestos', label: 'Supermanifestos', icon: PackageIcon },
+    { value: 'conferencia', label: 'Conferência', icon: QrCode },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Sub tab bar */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 w-full overflow-x-auto no-scrollbar">
+        {subTabs.map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeSubTab === tab.value;
+          return (
+            <button
+              key={tab.value}
+              onClick={() => setActiveSubTab(tab.value)}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                isActive
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {activeSubTab === 'manifestos' && <GestaoManifestos />}
+      {activeSubTab === 'supermanifestos' && <GestaoSupermanifestos />}
+      {activeSubTab === 'conferencia' && (
+        <ConferenciaSubTab />
+      )}
+    </div>
+  );
+}
+
+function ConferenciaSubTab() {
+  const [activeConf, setActiveConf] = useState('codigos');
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1 w-full">
+        {[
+          { value: 'codigos', label: 'Gerar Códigos' },
+          { value: 'fiscalizacao', label: 'Fiscalização' },
+        ].map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveConf(tab.value)}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 ${
+              activeConf === tab.value
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
           >
-            <ShoppingCart className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Sugestões</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="cotacoes" 
-            className="flex-1 sm:flex-none border-b-2 border-transparent data-[state=active]:border-teal-600 rounded-none py-3 px-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-teal-700 font-medium transition-all flex items-center justify-center sm:justify-start gap-2"
-          >
-            <FileText className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Cotações</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="pedidos" 
-            className="flex-1 sm:flex-none border-b-2 border-transparent data-[state=active]:border-teal-600 rounded-none py-3 px-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-teal-700 font-medium transition-all flex items-center justify-center sm:justify-start gap-2"
-          >
-            <DollarSign className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Pedidos</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="hub-logistico" 
-            className="flex-1 sm:flex-none border-b-2 border-transparent data-[state=active]:border-teal-600 rounded-none py-3 px-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-teal-700 font-medium transition-all flex items-center justify-center sm:justify-start gap-2"
-          >
-            <Truck className="w-5 h-5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Hub Logístico</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="sugestoes" className="outline-none animate-in fade-in-50 duration-300">
-          <SugestaoCompra key={sugestaoKey} />
-        </TabsContent>
-
-        <TabsContent value="cotacoes" className="outline-none animate-in fade-in-50 duration-300">
-          <CotacoesManager />
-        </TabsContent>
-
-        <TabsContent value="pedidos" className="outline-none animate-in fade-in-50 duration-300">
-          <PedidosCompraTab />
-        </TabsContent>
-
-        <TabsContent value="hub-logistico" className="outline-none animate-in fade-in-50 duration-300">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-100 dark:border-gray-700 shadow-sm mt-4">
-            <Tabs defaultValue="manifestos" className="w-full">
-              <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-6 border-b border-gray-100 dark:border-gray-800 rounded-none mb-4">
-                <TabsTrigger 
-                  value="manifestos" 
-                  className="px-4 py-3 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center gap-2"
-                >
-                  <Truck className="w-4 h-4" />
-                  Manifestos
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="supermanifestos" 
-                  className="px-4 py-3 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center gap-2"
-                >
-                  <PackageIcon className="w-4 h-4" />
-                  Supermanifestos
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="conferencia" 
-                  className="px-4 py-3 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-gray-900 dark:data-[state=active]:border-gray-100 data-[state=active]:bg-transparent data-[state=active]:shadow-none text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center gap-2"
-                >
-                  <QrCode className="w-4 h-4" />
-                  Conferência
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="manifestos" className="p-2 mt-0">
-                <GestaoManifestos />
-              </TabsContent>
-              
-              <TabsContent value="supermanifestos" className="p-2 mt-0">
-                <GestaoSupermanifestos />
-              </TabsContent>
-              
-              <TabsContent value="conferencia" className="p-2 mt-0">
-                <Tabs defaultValue="codigos" className="w-full">
-                  <TabsList className="grid grid-cols-2 mb-4">
-                    <TabsTrigger value="codigos">GERAR CÓDIGOS</TabsTrigger>
-                    <TabsTrigger value="fiscalizacao">FISCALIZAÇÃO</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="codigos">
-                    <ConferenciaTab />
-                  </TabsContent>
-
-                  <TabsContent value="fiscalizacao">
-                    <PainelConferencias />
-                  </TabsContent>
-                </Tabs>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </TabsContent>
-      </Tabs>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      {activeConf === 'codigos' && <ConferenciaTab />}
+      {activeConf === 'fiscalizacao' && <PainelConferencias />}
     </div>
   );
 }
