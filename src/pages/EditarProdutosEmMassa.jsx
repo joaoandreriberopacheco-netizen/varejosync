@@ -40,50 +40,18 @@ export default function EditarProdutosEmMassa() {
     }
   };
 
-  const produtosFiltrados = useMemo(() => {
-    return produtos.filter(produto => {
-      const matchBusca = !filtros.busca || 
-        produto.nome?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-        produto.codigo_interno?.includes(filtros.busca);
-      
-      const matchCategoria = !filtros.categoria || produto.categoria_id === filtros.categoria;
-      
-      const matchAtivo = filtros.ativo === 'todos' || 
-        (filtros.ativo === 'ativo' ? produto.ativo : !produto.ativo);
-      
-      return matchBusca && matchCategoria && matchAtivo;
-    });
-  }, [produtos, filtros]);
-
-  const handleAlteracao = useCallback((produtoId, campo, valor) => {
-    setAlteracoes(prev => ({
-      ...prev,
-      [produtoId]: {
-        ...(prev[produtoId] || {}),
-        [campo]: valor
-      }
-    }));
-  });
-
-  const handleAdicionarLinha = useCallback(() => {
-    const novoId = 'novo_' + Date.now();
-    setProdutos(prev => [...prev, {
-      id: novoId,
-      codigo_interno: '',
-      nome: '',
-      campo_hierarquico_1: '',
-      campo_hierarquico_2: '',
-      campo_hierarquico_3: '',
-      campo_hierarquico_4: '',
-      campo_hierarquico_5: '',
-      valor_compra: 0,
-      preco_venda_padrao: 0,
-      estoque_minimo: 0,
-      estoque_ideal: 0,
-      estoque_maximo: 0,
-      ativo: true,
-      tipo: 'Produto'
-    }]);
+  // Filtrar produtos
+  const produtosFiltrados = produtos.filter(produto => {
+    const matchBusca = !filtros.busca || 
+      produto.nome?.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+      produto.codigo_interno?.includes(filtros.busca);
+    
+    const matchCategoria = !filtros.categoria || produto.categoria_id === filtros.categoria;
+    
+    const matchAtivo = filtros.ativo === 'todos' || 
+      (filtros.ativo === 'ativo' ? produto.ativo : !produto.ativo);
+    
+    return matchBusca && matchCategoria && matchAtivo;
   });
 
   const handleSalvar = async (alteracoesFiltradas) => {
