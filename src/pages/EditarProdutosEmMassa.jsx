@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Monitor, Save, RotateCcw } from 'lucide-react';
-import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import { Monitor } from 'lucide-react';
+import GradeEdicaoMassiva from '@/components/produtos/GradeEdiacaoMassiva';
 import FiltrosProdutosEmMassa from '@/components/produtos/FiltrosProdutosEmMassa';
-import { Button } from '@/components/ui/button';
 
 // Parser de fórmulas seguro
 const avaliarFormula = (valor) => {
