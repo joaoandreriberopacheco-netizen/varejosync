@@ -168,7 +168,7 @@ const PedidosCompraTab = () => {
   return (
     <div className="space-y-6">
       {/* Filtros e Ações - Glacial: Limpo, sem bordas pesadas */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 md:p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl p-3 md:p-4 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
             <div className="relative w-full sm:w-72">
