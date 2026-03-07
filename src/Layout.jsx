@@ -64,6 +64,7 @@ export default function Layout({ children, currentPageName }) {
   const [loadError, setLoadError] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
   const location = useLocation();
   const [isHovering, setIsHovering] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
