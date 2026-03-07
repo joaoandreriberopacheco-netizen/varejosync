@@ -290,6 +290,41 @@ export default function ListaUsuariosApp() {
               )}
             </div>
 
+            {/* Tabela de Preço */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                Tabela de Preço
+              </label>
+              {tabelasPreco.length === 0 ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-2 rounded-lg">
+                  Crie Tabelas de Preço primeiro na aba "Tabelas de Preço".
+                </p>
+              ) : (
+                <Select value={selectedTabelaId} onValueChange={setSelectedTabelaId}>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
+                    <SelectValue placeholder="Usar tabela padrão do sistema" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>
+                      <span className="text-gray-400 italic text-xs">Usar tabela padrão do sistema</span>
+                    </SelectItem>
+                    {tabelasPreco.map(t => (
+                      <SelectItem key={t.id} value={t.id}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{t.nome_tabela}</span>
+                          {t.is_default && <span className="text-[10px] text-yellow-500">★ padrão</span>}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 pl-1">
+                Se não selecionada, usa a tabela marcada como padrão.
+              </p>
+            </div>
+
             {/* Caixas PDV autorizados */}
             {contasCaixa.length > 0 && (
               <div className="space-y-1.5">
