@@ -115,30 +115,64 @@ export default function GradeEdicaoMassiva({ produtos, onSalvar }) {
     }));
   }, []);
 
-  // Drag-to-fill: preencher células abaixo com mesmo valor
-  const handleDragToFill = useCallback((produtoId, chaveColuna, linhasAbaixo) => {
-    const indexAtual = dados.findIndex(d => d.id === produtoId);
-    const valor = dados[indexAtual]?.[chaveColuna];
+  // Drag-to-fill com mouse
+  const handleMouseDown = useCallback((e, produtoId, chaveColuna) => {
+    if (e.button !== 0) return; // Apenas left-click
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isNearEdge = e.clientX > rect.right - 8 && e.clientY > rect.bottom - 8;
+    
+    if (isNearEdge) {
+      e.preventDefault();
+      setDragFillAtivo({ produtoId, chaveColuna, startY: e.clientY });
+    }
+  }, []);
 
-    if (valor === undefined || linhasAbaixo <= 0) return;
+  const handleMouseMove = useCallback((e) => {
+    if (!dragFillAtivo) return;
 
-    setDados(prev => {
-      const novo = [...prev];
-      for (let i = 1; i <= linhasAbaixo && indexAtual + i < novo.length; i++) {
-        const proximoId = novo[indexAtual + i].id;
-        novo[indexAtual + i] = { ...novo[indexAtual + i], [chaveColuna]: valor };
+    const indexAtual = dados.findIndex(d => d.id === dragFillAtivo.produtoId);
+    const cellHeight = 36; // altura aproximada da célula
+    const distancia = e.clientY - dragFillAtivo.startY;
+    const linhasAbaixo = Math.round(distancia / cellHeight);
 
-        setAlteracoes(p => ({
-          ...p,
-          [proximoId]: {
-            ...(p[proximoId] || {}),
-            [chaveColuna]: valor,
-          },
-        }));
-      }
-      return novo;
-    });
-  }, [dados]);
+    setDragFillAtivo(prev => ({ ...prev, linhasAbaixo }));
+  }, [dragFillAtivo, dados]);
+
+  const handleMouseUp = useCallback(() => {
+    if (dragFillAtivo?.linhasAbaixo > 0) {
+      const valor = dados.find(d => d.id === dragFillAtivo.produtoId)?.[dragFillAtivo.chaveColuna];
+      const indexAtual = dados.findIndex(d => d.id === dragFillAtivo.produtoId);
+
+      setDados(prev => {
+        const novo = [...prev];
+        for (let i = 1; i <= dragFillAtivo.linhasAbaixo && indexAtual + i < novo.length; i++) {
+          novo[indexAtual + i] = { ...novo[indexAtual + i], [dragFillAtivo.chaveColuna]: valor };
+          
+          setAlteracoes(p => ({
+            ...p,
+            [novo[indexAtual + i].id]: {
+              ...(p[novo[indexAtual + i].id] || {}),
+              [dragFillAtivo.chaveColuna]: valor,
+            },
+          }));
+        }
+        return novo;
+      });
+    }
+    setDragFillAtivo(null);
+  }, [dragFillAtivo, dados]);
+
+  useEffect(() => {
+    if (dragFillAtivo) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [dragFillAtivo, handleMouseMove, handleMouseUp]);
 
   // Iniciar edição ao pressionar Enter ou qualquer tecla em célula selecionada
   const handleKeyDown = useCallback((e, produtoId, chaveColuna) => {
