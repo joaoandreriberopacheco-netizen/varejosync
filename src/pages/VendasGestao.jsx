@@ -430,6 +430,7 @@ export default function VendasGestaoPage() {
             </div>
           </>
         )}
+        </div>
         </div>}
 
         {activeTab === 'pedidos' && (
