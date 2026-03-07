@@ -116,42 +116,21 @@ export default function EditarProdutosEmMassa() {
       <FiltrosProdutosEmMassa 
         filtros={filtros}
         onFiltrosChange={setFiltros}
-        onAdicionarLinha={handleAdicionarLinha}
       />
 
-      {/* Tabela */}
+      {/* Grade */}
       <div className="flex-1 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-gray-500 dark:text-gray-400">Carregando produtos...</div>
           </div>
         ) : (
-          <TabelaProdutosEditavel
+          <GradeEdicaoMassiva
             produtos={produtosFiltrados}
-            alteracoes={alteracoes}
-            onAlteracao={handleAlteracao}
+            onSalvar={handleSalvar}
           />
         )}
       </div>
-
-      {/* Footer com botões de ação */}
-      {Object.keys(alteracoes).length > 0 && (
-        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-3">
-          <button
-            onClick={() => setAlteracoes({})}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-          >
-            Descartar
-          </button>
-          <button
-            onClick={handleSalvar}
-            disabled={salvarLoading}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
-          >
-            {salvarLoading ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
