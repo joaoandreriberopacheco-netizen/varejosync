@@ -21,6 +21,7 @@ export function GlacialTabsList({ children, className, scrollable = false }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 export function GlacialTabsTrigger({ value, activeValue, onSelect, icon: Icon, label, className }) {
   const isActive = value === activeValue;
   return (
