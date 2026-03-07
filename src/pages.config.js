@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AnexoCompartilhado from './pages/AnexoCompartilhado';
 import Armazenagem from './pages/Armazenagem';
 import AuditoriaEstoque from './pages/AuditoriaEstoque';
 import AutoAtendimento from './pages/AutoAtendimento';
@@ -98,11 +99,11 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import AnexoCompartilhado from './pages/AnexoCompartilhado';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AnexoCompartilhado": AnexoCompartilhado,
     "Armazenagem": Armazenagem,
     "AuditoriaEstoque": AuditoriaEstoque,
     "AutoAtendimento": AutoAtendimento,
@@ -154,7 +155,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "AnexoCompartilhado": AnexoCompartilhado,
 }
 
 export const pagesConfig = {
