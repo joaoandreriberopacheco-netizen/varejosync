@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 
 import { base44 } from '@/api/base44Client';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
 import { 
   LayoutDashboard, 
