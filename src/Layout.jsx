@@ -581,7 +581,7 @@ export default function Layout({ children, currentPageName }) {
                 </div>
                 <button 
                   onClick={() => base44.auth.logout()}
-                  className="w-full flex items-center justify-center p-2 rounded text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="w-full flex items-center justify-center p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   title="Sair"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
