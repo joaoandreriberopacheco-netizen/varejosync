@@ -205,7 +205,7 @@ export default function TerceirosPage() {
             </TableHeader>
             <TableBody>
               {filteredTerceiros.map(terceiro => (
-                <TableRow key={terceiro.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <TableRow key={terceiro.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <TableCell className="font-mono text-xs text-gray-600 dark:text-gray-400">{terceiro.codigo_interno}</TableCell>
                   <TableCell className="font-medium text-gray-800 dark:text-gray-200">{terceiro.nome}</TableCell>
                   <TableCell className="text-gray-600 dark:text-gray-400">{terceiro.cpf_cnpj || '-'}</TableCell>
