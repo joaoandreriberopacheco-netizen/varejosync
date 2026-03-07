@@ -616,6 +616,8 @@ export default function VendasGestaoPage() {
           </>
         )}
         </div>
+        </div>
+        )}
       </div>
 
       {/* Dialog de Formulário */}
