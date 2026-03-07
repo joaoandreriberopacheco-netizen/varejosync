@@ -608,31 +608,6 @@ export default function Layout({ children, currentPageName }) {
         {isMobile && !isFullscreen && <MobileBottomNav currentPageName={currentPageName} />}
         {isMobile && !isFullscreen && <MobileUserMenu darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
       </div>
-      <AlertDialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
-        <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-700">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-gray-900 dark:text-white">Excluir Conta</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-500 dark:text-gray-400">
-              Esta ação é irreversível. Sua conta será permanentemente excluída e você perderá acesso ao sistema. Deseja continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={async () => {
-                try {
-                  await base44.auth.logout('/');
-                } catch {
-                  window.location.href = '/';
-                }
-              }}
-            >
-              Excluir minha conta
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <Toaster />
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="p-0 gap-0 max-w-xl bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 top-[20%] translate-y-0">
