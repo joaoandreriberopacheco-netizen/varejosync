@@ -1144,70 +1144,49 @@ export default function PDVVendedor() {
             </div>
 
             {/* Footer - Resumo e Ação */}
-            <div className="p-4 bg-white dark:bg-gray-800 space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>Subtotal</span>
-                  <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
-                </div>
+            <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 space-y-3 flex-shrink-0">
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Subtotal</span>
+                <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
+              </div>
 
-                {/* Desconto Two-Way - Mobile */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wide">Desconto</span>
-                    {tabelaPreco?.percentual_desconto_maximo > 0 && (
-                      <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <div className="relative flex-1">
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        max={tabelaPreco?.percentual_desconto_maximo || 100}
-                        step="0.01"
-                        value={ajustePercentual}
-                        onChange={(e) => handleAjustePercentualChange(e.target.value)}
-                        className="pr-6 h-10 bg-gray-50 dark:bg-gray-700 border-0 rounded-lg text-sm text-right focus:ring-1 focus:ring-gray-300"
-                        placeholder="0"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
-                    </div>
-                    <span className="text-gray-300 text-xs">=</span>
-                    <div className="relative flex-1">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        step="0.01"
-                        value={ajusteValor}
-                        onChange={(e) => handleAjusteValorChange(e.target.value)}
-                        className="pl-7 h-10 bg-gray-50 dark:bg-gray-700 border-0 rounded-lg text-sm focus:ring-1 focus:ring-gray-300"
-                        placeholder="0,00"
-                      />
-                    </div>
-                  </div>
-                  {ajusteExcedido && (
-                    <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>
+              {/* Desconto Two-Way - Mobile */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
+                  {tabelaPreco?.percentual_desconto_maximo > 0 && (
+                    <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
                   )}
                 </div>
-
-                <div className="flex justify-between text-xl font-semibold text-gray-800 dark:text-gray-200 pt-1 border-t border-gray-100 dark:border-gray-700">
-                  <span>Total</span>
-                  <span>R$ {valorTotal.toFixed(2).replace('.', ',')}</span>
+                <div className="flex gap-2 items-center">
+                  <div className="relative flex-1">
+                    <Input type="number" inputMode="decimal" min="0" max={tabelaPreco?.percentual_desconto_maximo || 100} step="0.01"
+                      value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
+                      className="pr-6 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-gray-200"
+                      placeholder="0" />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
+                  </div>
+                  <span className="text-gray-300 dark:text-gray-700 text-xs">=</span>
+                  <div className="relative flex-1">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                    <Input type="number" inputMode="decimal" min="0" step="0.01"
+                      value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
+                      className="pl-7 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm focus:ring-1 focus:ring-gray-200"
+                      placeholder="0,00" />
+                  </div>
                 </div>
+                {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>}
               </div>
-              <Button
-              onClick={() => {
-                setShowCarrinhoMobile(false);
-                handleAvancarParaCliente();
-              }}
-              disabled={carrinho.length === 0}
-              className="w-full h-14 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-lg font-medium rounded-xl">
 
-                Avançar
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">Total</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2).replace('.', ',')}</span>
+              </div>
+
+              <Button onClick={() => { setShowCarrinhoMobile(false); handleAvancarParaCliente(); }}
+                disabled={carrinho.length === 0 || ajusteExcedido}
+                className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-2xl shadow-none border-0 disabled:opacity-40">
+                Avançar <ArrowRight className="w-4 h-4 ml-1.5 inline" />
               </Button>
             </div>
           </div>
