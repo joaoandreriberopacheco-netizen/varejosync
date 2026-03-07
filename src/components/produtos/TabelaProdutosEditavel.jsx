@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { ChevronDown, Trash2 } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { ChevronDown, Trash2, Plus, X } from 'lucide-react';
 
 const CAMPOS_EDISTAVEIS = [
   { key: 'codigo_interno', label: 'Código', tipo: 'text', width: '120px' },
@@ -21,6 +21,31 @@ const CAMPOS_EDISTAVEIS = [
   { key: 'estoque_maximo', label: 'Est. Máx.', tipo: 'number', width: '100px' },
   { key: 'ativo', label: 'Ativo', tipo: 'boolean', width: '80px' },
 ];
+
+// Função para avaliar fórmulas simples
+const avaliarFormula = (formula, rowData, colunasTemp) => {
+  try {
+    if (!formula.startsWith('=')) return formula;
+    let expr = formula.substring(1).toUpperCase();
+    
+    // Substituir referências de colunas por valores
+    Object.keys(rowData).forEach(key => {
+      const val = rowData[key];
+      expr = expr.replace(new RegExp(key.toUpperCase(), 'g'), val || 0);
+    });
+    
+    colunasTemp.forEach((col, idx) => {
+      const colName = col.key.toUpperCase();
+      const val = rowData[col.key] || 0;
+      expr = expr.replace(new RegExp(colName, 'g'), val || 0);
+    });
+    
+    // Avaliar expressão matemática simples
+    return Function('"use strict"; return (' + expr + ')')();
+  } catch (e) {
+    return formula;
+  }
+};
 
 export default function TabelaProdutosEditavel({ produtos, alteracoes, onAlteracao }) {
   const scrollRef = useRef(null);
