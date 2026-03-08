@@ -4,44 +4,44 @@ import { ChevronDown, Zap, TrendingUp, Percent, Calendar } from 'lucide-react';
 const DecomposicaoIEP = ({ produto, janelaGiro }) => {
   const [expandido, setExpandido] = useState(false);
 
-  // Mock de cálculos e fórmulas que geraram o IEP
+  // Cálculos e fórmulas que geraram o IEP
   const decomposicao = {
     margem: {
-      titulo: 'Potencial (Margem Bruta)',
+      titulo: 'Rentabilidade (Margem Bruta)',
       valor: produto.margem,
       score: 85,
       calculos: [
-        { item: 'Preço Venda', valor: 'R$ 100,00', peso: '100%' },
-        { item: 'Custo Direto', valor: 'R$ 54,80', peso: '-54.8%' },
+        { item: 'Preço de Venda', valor: 'R$ 100,00', peso: '100%' },
+        { item: 'Custo do Produto', valor: 'R$ 54,80', peso: '-54.8%' },
         { item: 'Frete Padrão', valor: 'R$ 2,10', peso: '-2.1%' },
-        { item: 'IPI/ICMS (ST)', valor: 'R$ 8,70', peso: '-8.7%' },
+        { item: 'Impostos (IPI/ICMS)', valor: 'R$ 8,70', peso: '-8.7%' },
         { item: '= MARGEM BRUTA', valor: '45.2%', peso: '✓', destaque: true }
       ],
-      interpretacao: 'Margem bruta 45.2% está 17.5% acima da média da categoria (38.5%). Produto altamente rentável por unidade.'
+      interpretacao: 'Margem bruta de 45.2% está 17.5% acima da média da categoria (38.5%). Produto altamente rentável por unidade vendida.'
     },
     giro: {
-      titulo: 'Cinética (Frequência de Giro)',
+      titulo: 'Mobilidade (Velocidade de Giro)',
       valor: produto.giro,
       score: 72,
       calculos: [
-        { item: 'Estoque Médio', valor: '240 unidades', peso: 'base' },
-        { item: 'Saídas em 90d', valor: '360 unidades', peso: 'período' },
-        { item: '= Taxa de Giro', valor: '1.5x / 90d', peso: 'cálculo' },
-        { item: '= DIAS PADRÃO', valor: '24 dias', peso: '✓', destaque: true }
+        { item: 'Estoque Médio em Período', valor: '240 unidades', peso: 'base' },
+        { item: 'Saídas em 90 Dias', valor: '360 unidades', peso: 'período' },
+        { item: '= Índice de Giro', valor: '1.5x / 90d', peso: 'cálculo' },
+        { item: '= DIAS EM ESTOQUE', valor: '24 dias', peso: '✓', destaque: true }
       ],
-      interpretacao: 'Giro de 24 dias é 25% melhor que a média (32 dias). Produto move rápido, bom para fluxo de caixa e menor risco de obsolescência.'
+      interpretacao: 'Giro de 24 dias é 25% melhor que a média (32 dias). Produto move rápido, favorece fluxo de caixa e reduz risco de obsolescência.'
     },
     anexacao: {
-      titulo: 'Magnética (Taxa de Anexação)',
+      titulo: 'Adesão (Taxa de Venda Complementar)',
       valor: produto.anexacao,
       score: 68,
       calculos: [
-        { item: 'Transações com Produto', valor: '1,200', peso: 'período' },
-        { item: 'Transações + 2+ itens', valor: '816', peso: 'com anexo' },
+        { item: 'Total de Transações', valor: '1,200', peso: 'período' },
+        { item: 'Transações com 2+ Itens', valor: '816', peso: 'com venda adicional' },
         { item: 'Taxa: 816/1200', valor: '68%', peso: '✓', destaque: true },
-        { item: '= PODER DE CROSS-SELL', valor: '68%', peso: '✓', destaque: true }
+        { item: '= POTENCIAL DE CROSS-SELL', valor: '68%', peso: '✓', destaque: true }
       ],
-      interpretacao: '68% de anexação está 13 pontos acima da média (55%). Produto é ímã para venda adicional, aumenta ticket médio.'
+      interpretacao: 'Taxa de anexação de 68% está 13 pontos acima da média (55%). Produto incentiva venda complementar e aumenta ticket médio.'
     }
   };
 
