@@ -78,7 +78,7 @@ export function buildTree(produtos) {
 
 // ── Deep Collapse: funde cadeia de filho-único sem SKUs diretos ───────────────
 // Retorna { label, node } onde label é o path fundido e node é o nó final diverso
-function deepCollapse(node) {
+export function deepCollapse(node) {
   const childKeys = Object.keys(node.children);
   if (childKeys.length === 1 && node.skus.length === 0) {
     const child = node.children[childKeys[0]];

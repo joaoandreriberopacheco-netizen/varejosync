@@ -1301,6 +1301,7 @@ export default function ProdutosPage() {
                   <TreeGrid
                     produtos={filteredProdutos}
                     onEdit={handleEdit}
+                    visibleColumns={visibleColumns}
                   />
                 </div>
               )}

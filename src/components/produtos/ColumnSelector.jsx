@@ -35,7 +35,8 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
           columns: [
             { id: 'preco_custo', label: 'Custo Total' },
             { id: 'valor_compra', label: 'Valor Compra' },
-            { id: 'markup', label: 'Markup %' }
+            { id: 'markup', label: 'Markup %' },
+            { id: 'inventario_valorizado', label: 'Inventário Valorizado' }
           ]
         }
       ]
