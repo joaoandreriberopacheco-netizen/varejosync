@@ -239,10 +239,10 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       {/* Lista itens scrollável */}
       <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-4">
         {itensAgrupados.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-700">
+          <div className="flex flex-col items-center justify-center py-16 text-gray-300 dark:text-gray-700">
             <Package className="w-10 h-10 mb-3" />
-            <p className="text-sm">Nenhum produto conferido</p>
-            {!bloqueada && <p className="text-xs mt-1 text-gray-800">Busque ou escaneie produtos acima</p>}
+            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum produto conferido</p>
+            {!bloqueada && <p className="text-xs mt-1 text-gray-300 dark:text-gray-700">Busque ou escaneie produtos acima</p>}
           </div>
         )}
 
