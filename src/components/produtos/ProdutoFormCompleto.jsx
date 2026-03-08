@@ -413,7 +413,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-6 md:py-8">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-8">
           {/* ABA DESCRITIVO */}
           <TabsContent value="descritivo" className="space-y-6 mt-0">
             {/* Image Upload */}
