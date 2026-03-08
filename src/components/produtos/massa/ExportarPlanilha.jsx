@@ -79,19 +79,7 @@ export default function ExportarPlanilha() {
         });
       });
 
-      await ws.protect('', {
-        selectLockedCells: true,
-        selectUnlockedCells: true,
-        formatCells: true,
-        formatColumns: true,
-        formatRows: true,
-        insertColumns: true,
-        insertRows: false,
-        deleteColumns: false,
-        deleteRows: false,
-        sort: true,
-        autoFilter: true,
-      });
+      // Sem proteção — usuário edita livremente; colunas não-editáveis ficam visualmente destacadas pelo fundo escuro do header
 
       ws.autoFilter = { from: 'A1', to: `${String.fromCharCode(64 + COLUNAS_CONFIG.length)}1` };
 
