@@ -2,9 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
-import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha';
-import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualizacao';
+import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha.jsx';
+import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha.jsx';
+import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualizacao.jsx';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null); // { alterados, erros }
