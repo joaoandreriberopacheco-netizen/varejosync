@@ -1,29 +1,18 @@
 import { useMemo } from 'react';
 
-// ── IQR Mean ──────────────────────────────────────────────────────────────────
+// ── IQR Mean: remove outliers e retorna média do miolo ───────────────────────
 export function iqrMean(values) {
   if (!values || values.length === 0) return 0;
   if (values.length === 1) return values[0];
   const sorted = [...values].sort((a, b) => a - b);
   const q1 = sorted[Math.floor(sorted.length * 0.25)];
-  const q3 = sorted[Math.min(Math.ceil(sorted.length * 0.75), sorted.length - 1)];
+  const q3 = sorted[Math.ceil(sorted.length * 0.75) - 1] ?? sorted[sorted.length - 1];
   const core = sorted.filter(v => v >= q1 && v <= q3);
   const used = core.length > 0 ? core : sorted;
   return used.reduce((s, v) => s + v, 0) / used.length;
 }
 
-// ── Enriquece SKU com campo calculado ────────────────────────────────────────
-function enrichSku(p) {
-  return {
-    ...p,
-    inventario_valorizado: (p.preco_custo_calculado || 0) * (p.estoque_atual || 0),
-    margem_pct: p.preco_venda_padrao > 0
-      ? ((p.preco_venda_padrao - (p.preco_custo_calculado || 0)) / p.preco_venda_padrao) * 100
-      : 0,
-  };
-}
-
-// ── Coleta todos os SKUs descendentes ───────────────────────────────────────
+// ── Coleta todos os SKUs descendentes de um nó ────────────────────────────────
 export function collectSkus(node) {
   const skus = [...node.skus];
   for (const child of Object.values(node.children)) {
@@ -32,34 +21,41 @@ export function collectSkus(node) {
   return skus;
 }
 
-// ── Agrega métricas IQR para um conjunto de SKUs ──────────────────────────
+// ── Agrega métricas IQR para um conjunto de SKUs ─────────────────────────────
 export function aggregateSkus(skus) {
-  const precos    = skus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0);
-  const custos    = skus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0);
-  const margens   = skus.map(p => p.margem_pct || 0).filter(v => v > 0);
-  const lastros   = skus.map(p => p.inventario_valorizado || 0).filter(v => v > 0);
-  const estoque   = skus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
+  const precos   = skus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0);
+  const custos   = skus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0);
+  const margens  = skus.map(p => {
+    const pv = p.preco_venda_padrao || 0;
+    const pc = p.preco_custo_calculado || 0;
+    return pv > 0 ? ((pv - pc) / pv) * 100 : 0;
+  }).filter(v => v > 0);
+  const lastros  = skus.map(p =>
+    (p.preco_custo_calculado || 0) * (p.estoque_atual || 0)
+  ).filter(v => v > 0);
+  const estoqueTotal = skus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
 
   return {
-    precoMedioIQR:  iqrMean(precos),
-    custoMedioIQR:  iqrMean(custos),
-    margemMediaIQR: iqrMean(margens),
-    lastroTotalIQR: lastros.reduce((s, v) => s + v, 0), // soma real do inventário
-    estoqueTotal:   estoque,
-    count:          skus.length,
+    precoMedio:   iqrMean(precos),
+    custoMedio:   iqrMean(custos),
+    margemMedia:  iqrMean(margens),
+    lastroTotal:  lastros.reduce((s, v) => s + v, 0), // soma real do inventário
+    lastroMedio:  iqrMean(lastros),
+    estoqueTotal,
+    count: skus.length,
   };
 }
 
-// ── Constrói árvore: h1-h4 agrupadores, h5 dado do SKU (nunca nó) ───────────
+// ── Constrói a árvore: h1-h4 são agrupadores; h5 é dado do SKU, nunca nó ─────
 export function buildTree(produtos) {
   const root = {};
 
-  for (const raw of produtos) {
-    const p  = enrichSku(raw);
+  for (const p of produtos) {
     const h1 = (p.campo_hierarquico_1 || '(sem grupo)').trim();
     const h2 = (p.campo_hierarquico_2 || '').trim();
     const h3 = (p.campo_hierarquico_3 || '').trim();
     const h4 = (p.campo_hierarquico_4 || '').trim();
+    // h5 → atributo visual do SKU, nunca cria nó
 
     const ensure = (parent, key, level) => {
       if (!parent[key]) parent[key] = { label: key, level, children: {}, skus: [] };
@@ -73,28 +69,28 @@ export function buildTree(produtos) {
     const n3 = ensure(n2.children, h3, 3);
     if (!h4) { n3.skus.push(p); continue; }
     const n4 = ensure(n3.children, h4, 4);
-    n4.skus.push(p);
+    n4.skus.push(p); // h4 é o nível folha; SKU vai aqui
   }
 
   return root;
 }
 
-// ── Achatamento por Divergência ──────────────────────────────────────────────
-// Cessa quando: (a) nó tem 2+ filhos, (b) nó tem SKUs diretos, ou (c) chegou ao SKU.
+// ── Deep Collapse: funde cadeia de filho-único sem SKUs diretos ───────────────
+// Retorna { label, node } onde label é o path fundido e node é o nó final diverso
 function deepCollapse(node) {
   const childKeys = Object.keys(node.children);
-  // Parar: divergência (2+ filhos) ou SKUs diretos
-  if (childKeys.length !== 1 || node.skus.length > 0) {
-    return { label: node.label, node };
+  if (childKeys.length === 1 && node.skus.length === 0) {
+    const child = node.children[childKeys[0]];
+    const inner = deepCollapse(child);
+    return {
+      label: `${node.label} › ${inner.label}`,
+      node: inner.node,
+    };
   }
-  const child = node.children[childKeys[0]];
-  const inner = deepCollapse(child);
-  return {
-    label: `${node.label} › ${inner.label}`,
-    node:  inner.node,
-  };
+  return { label: node.label, node };
 }
 
+// Reconstrói a chave após deep collapse percorrendo o caminho fundido
 function resolveCollapsedKey(baseKey, startNode, targetNode) {
   if (startNode === targetNode) return baseKey;
   const childKey = Object.keys(startNode.children)[0];
@@ -105,33 +101,45 @@ function resolveCollapsedKey(baseKey, startNode, targetNode) {
   );
 }
 
-// ── Flatten recursivo ────────────────────────────────────────────────────────
+// ── Flatten recursivo com deep collapsing ─────────────────────────────────────
 export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0) {
   const rows = [];
 
   for (const [key, node] of Object.entries(treeNode)) {
-    const rawKey  = parentKey ? `${parentKey}||${key}` : key;
+    const rawKey   = parentKey ? `${parentKey}||${key}` : key;
     const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
-    const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
-    const allSkus = collectSkus(finalNode);
-    const agg     = aggregateSkus(allSkus);
+    const nodeKey  = resolveCollapsedKey(rawKey, node, finalNode);
+    const allSkus  = collectSkus(finalNode);
+    const agg      = aggregateSkus(allSkus);
     const rowLevel = visualLevel + 1;
 
     rows.push({
-      type:  'group',
-      key:   nodeKey,
+      type: 'group',
+      key:  nodeKey,
       label: collapsedLabel,
       level: rowLevel,
-      node:  finalNode,
+      node: finalNode,
       ...agg,
     });
 
     if (expandedKeys.has(nodeKey)) {
+      // Sub-grupos do nó final
       if (Object.keys(finalNode.children).length > 0) {
         rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, rowLevel));
       }
+      // SKUs diretos do nó final (sem duplicação — só aparecem aqui)
       for (const sku of finalNode.skus) {
-        rows.push({ type: 'sku', key: sku.id, produto: sku, level: rowLevel + 1 });
+        rows.push({
+          type:    'sku',
+          key:     sku.id,
+          produto: sku,
+          level:   rowLevel + 1,
+          // inventario valorizado inline
+          lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
+          margem:  sku.preco_venda_padrao > 0
+            ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
+            : 0,
+        });
       }
     }
   }
@@ -139,28 +147,30 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
   return rows;
 }
 
-// ── Expande até nível visual alvo ───────────────────────────────────────────
+// ── Expande até nível visual alvo ────────────────────────────────────────────
 export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', visualLevel = 0) {
   const keys = new Set();
   if (visualLevel >= targetLevel) return keys;
 
   for (const [key, node] of Object.entries(treeNode)) {
-    const rawKey   = parentKey ? `${parentKey}||${key}` : key;
+    const rawKey  = parentKey ? `${parentKey}||${key}` : key;
     const { node: finalNode } = deepCollapse(node);
-    const nodeKey  = resolveCollapsedKey(rawKey, node, finalNode);
+    const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
     const rowLevel = visualLevel + 1;
 
     keys.add(nodeKey);
 
     if (rowLevel < targetLevel && Object.keys(finalNode.children).length > 0) {
-      buildExpandedForLevel(finalNode.children, targetLevel, nodeKey, rowLevel)
-        .forEach(k => keys.add(k));
+      const childKeys = buildExpandedForLevel(
+        finalNode.children, targetLevel, nodeKey, rowLevel
+      );
+      childKeys.forEach(k => keys.add(k));
     }
   }
   return keys;
 }
 
-// ── Hook principal ───────────────────────────────────────────────────────────
+// ── Hook principal ────────────────────────────────────────────────────────────
 export function useTreeGrid(produtos) {
   return useMemo(() => buildTree(produtos), [produtos]);
 }
