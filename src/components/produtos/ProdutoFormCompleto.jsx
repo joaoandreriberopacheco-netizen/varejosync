@@ -18,7 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const gerarNomeCompleto = (data) => {
     const campos = [data.campo_hierarquico_1, data.campo_hierarquico_2, data.campo_hierarquico_3, data.campo_hierarquico_4, data.campo_hierarquico_5];
-    return campos.filter(Boolean).join(' | ').toUpperCase();
+    return campos.map(c => (c || '').trim()).filter(Boolean).join(' ').trim();
   };
 
   const [formData, setFormData] = useState(produto ? {
