@@ -138,10 +138,10 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold font-glacial text-white truncate">{conferenciaInicial?.nome_conferencia}</h2>
-          <p className="text-xs text-gray-500">
+          <h2 className="text-sm font-semibold font-glacial text-gray-900 dark:text-white truncate">{conferenciaInicial?.nome_conferencia}</h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             {itensAgrupados.length} produto{itensAgrupados.length !== 1 ? "s" : ""} contados
-            {saving && <span className="ml-2 text-gray-600">· salvando...</span>}
+            {saving && <span className="ml-2 text-gray-400 dark:text-gray-600">· salvando...</span>}
           </p>
         </div>
         {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-600 flex-shrink-0" />}
