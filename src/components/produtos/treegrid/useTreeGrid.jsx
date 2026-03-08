@@ -1,17 +1,18 @@
 import { useMemo } from 'react';
 
-// ── IQR Mean ──────────────────────────────────────────────────────────────────
+// ── IQR Mean: remove outliers e retorna média do miolo ───────────────────────
 export function iqrMean(values) {
   if (!values || values.length === 0) return 0;
+  if (values.length === 1) return values[0];
   const sorted = [...values].sort((a, b) => a - b);
-  const q1Idx = Math.floor(sorted.length * 0.25);
-  const q3Idx = Math.ceil(sorted.length * 0.75);
-  const core = sorted.slice(q1Idx, q3Idx);
-  if (core.length === 0) return sorted[0];
-  return core.reduce((s, v) => s + v, 0) / core.length;
+  const q1 = sorted[Math.floor(sorted.length * 0.25)];
+  const q3 = sorted[Math.ceil(sorted.length * 0.75) - 1] ?? sorted[sorted.length - 1];
+  const core = sorted.filter(v => v >= q1 && v <= q3);
+  const used = core.length > 0 ? core : sorted;
+  return used.reduce((s, v) => s + v, 0) / used.length;
 }
 
-// ── Coleta todos os SKUs de um nó recursivamente ──────────────────────────────
+// ── Coleta todos os SKUs descendentes de um nó ────────────────────────────────
 export function collectSkus(node) {
   const skus = [...node.skus];
   for (const child of Object.values(node.children)) {
@@ -20,7 +21,32 @@ export function collectSkus(node) {
   return skus;
 }
 
-// ── Constrói a árvore hierárquica: h1..h4 são agrupadores, h5 é só dado do SKU
+// ── Agrega métricas IQR para um conjunto de SKUs ─────────────────────────────
+export function aggregateSkus(skus) {
+  const precos   = skus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0);
+  const custos   = skus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0);
+  const margens  = skus.map(p => {
+    const pv = p.preco_venda_padrao || 0;
+    const pc = p.preco_custo_calculado || 0;
+    return pv > 0 ? ((pv - pc) / pv) * 100 : 0;
+  }).filter(v => v > 0);
+  const lastros  = skus.map(p =>
+    (p.preco_custo_calculado || 0) * (p.estoque_atual || 0)
+  ).filter(v => v > 0);
+  const estoqueTotal = skus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
+
+  return {
+    precoMedio:   iqrMean(precos),
+    custoMedio:   iqrMean(custos),
+    margemMedia:  iqrMean(margens),
+    lastroTotal:  lastros.reduce((s, v) => s + v, 0), // soma real do inventário
+    lastroMedio:  iqrMean(lastros),
+    estoqueTotal,
+    count: skus.length,
+  };
+}
+
+// ── Constrói a árvore: h1-h4 são agrupadores; h5 é dado do SKU, nunca nó ─────
 export function buildTree(produtos) {
   const root = {};
 
@@ -29,88 +55,90 @@ export function buildTree(produtos) {
     const h2 = (p.campo_hierarquico_2 || '').trim();
     const h3 = (p.campo_hierarquico_3 || '').trim();
     const h4 = (p.campo_hierarquico_4 || '').trim();
-    // h5 é atributo de exibição do SKU, nunca agrupador
+    // h5 → atributo visual do SKU, nunca cria nó
 
-    if (!root[h1]) root[h1] = { label: h1, level: 1, children: {}, skus: [] };
+    const ensure = (parent, key, level) => {
+      if (!parent[key]) parent[key] = { label: key, level, children: {}, skus: [] };
+      return parent[key];
+    };
 
-    if (!h2) { root[h1].skus.push(p); continue; }
-    if (!root[h1].children[h2])
-      root[h1].children[h2] = { label: h2, level: 2, children: {}, skus: [] };
-
-    if (!h3) { root[h1].children[h2].skus.push(p); continue; }
-    if (!root[h1].children[h2].children[h3])
-      root[h1].children[h2].children[h3] = { label: h3, level: 3, children: {}, skus: [] };
-
-    if (!h4) { root[h1].children[h2].children[h3].skus.push(p); continue; }
-    if (!root[h1].children[h2].children[h3].children[h4])
-      root[h1].children[h2].children[h3].children[h4] = { label: h4, level: 4, children: {}, skus: [] };
-
-    // h4 existe → SKU cai aqui (h5 é só label exibido na linha SKU se quiser)
-    root[h1].children[h2].children[h3].children[h4].skus.push(p);
+    const n1 = ensure(root, h1, 1);
+    if (!h2) { n1.skus.push(p); continue; }
+    const n2 = ensure(n1.children, h2, 2);
+    if (!h3) { n2.skus.push(p); continue; }
+    const n3 = ensure(n2.children, h3, 3);
+    if (!h4) { n3.skus.push(p); continue; }
+    const n4 = ensure(n3.children, h4, 4);
+    n4.skus.push(p); // h4 é o nível folha; SKU vai aqui
   }
 
   return root;
 }
 
-// ── Deep Collapse: funde recursivamente cadeias de filho-único sem SKUs diretos
-// Retorna { label, node, level } onde label é o path fundido e node é o nó final
-function deepCollapse(node, baseLabel) {
+// ── Deep Collapse: funde cadeia de filho-único sem SKUs diretos ───────────────
+// Retorna { label, node } onde label é o path fundido e node é o nó final diverso
+function deepCollapse(node) {
   const childKeys = Object.keys(node.children);
-  // Condição de fusão: exatamente 1 filho e nenhum SKU direto neste nó
   if (childKeys.length === 1 && node.skus.length === 0) {
-    const childKey = childKeys[0];
-    const childNode = node.children[childKey];
-    const mergedLabel = baseLabel ? `${baseLabel} › ${childNode.label}` : childNode.label;
-    return deepCollapse(childNode, mergedLabel);
+    const child = node.children[childKeys[0]];
+    const inner = deepCollapse(child);
+    return {
+      label: `${node.label} › ${inner.label}`,
+      node: inner.node,
+    };
   }
-  // Parou de fundir: retorna o estado actual
-  return { label: baseLabel, node, level: node.level };
+  return { label: node.label, node };
+}
+
+// Reconstrói a chave após deep collapse percorrendo o caminho fundido
+function resolveCollapsedKey(baseKey, startNode, targetNode) {
+  if (startNode === targetNode) return baseKey;
+  const childKey = Object.keys(startNode.children)[0];
+  return resolveCollapsedKey(
+    `${baseKey}||${childKey}`,
+    startNode.children[childKey],
+    targetNode
+  );
 }
 
 // ── Flatten recursivo com deep collapsing ─────────────────────────────────────
-export function flattenTree(treeNode, expandedKeys, parentKey = '', parentLevel = 0) {
+export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0) {
   const rows = [];
 
   for (const [key, node] of Object.entries(treeNode)) {
-    const rawKey = parentKey ? `${parentKey}||${key}` : key;
-
-    // Tentar colapso profundo
-    const collapsed = deepCollapse(node, node.label);
-    // A chave de expansão é baseada no caminho até o nó final fundido
-    const nodeKey = collapsed.node === node
-      ? rawKey
-      : buildCollapsedKey(rawKey, node, collapsed.node);
-
-    const allSkus = collectSkus(collapsed.node);
-    const displayLevel = parentLevel + 1; // nível visual (não o do dado)
+    const rawKey   = parentKey ? `${parentKey}||${key}` : key;
+    const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
+    const nodeKey  = resolveCollapsedKey(rawKey, node, finalNode);
+    const allSkus  = collectSkus(finalNode);
+    const agg      = aggregateSkus(allSkus);
+    const rowLevel = visualLevel + 1;
 
     rows.push({
       type: 'group',
-      key: nodeKey,
-      label: collapsed.label,
-      level: displayLevel,
-      isMerged: collapsed.node !== node,
-      node: collapsed.node,
-      allSkus,
-      estoqueTotal: allSkus.reduce((s, p) => s + (p.estoque_atual || 0), 0),
-      precoMedioIQR: iqrMean(allSkus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0)),
-      custoMedioIQR: iqrMean(allSkus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0)),
-      count: allSkus.length,
+      key:  nodeKey,
+      label: collapsedLabel,
+      level: rowLevel,
+      node: finalNode,
+      ...agg,
     });
 
     if (expandedKeys.has(nodeKey)) {
-      const finalNode = collapsed.node;
-      // Filhos-grupo (se ainda houver diversidade)
+      // Sub-grupos do nó final
       if (Object.keys(finalNode.children).length > 0) {
-        rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, displayLevel));
+        rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, rowLevel));
       }
-      // SKUs diretos do nó final (sem duplicação)
+      // SKUs diretos do nó final (sem duplicação — só aparecem aqui)
       for (const sku of finalNode.skus) {
         rows.push({
-          type: 'sku',
-          key: sku.id,
+          type:    'sku',
+          key:     sku.id,
           produto: sku,
-          level: displayLevel + 1,
+          level:   rowLevel + 1,
+          // inventario valorizado inline
+          lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
+          margem:  sku.preco_venda_padrao > 0
+            ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
+            : 0,
         });
       }
     }
@@ -119,31 +147,22 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', parentLevel 
   return rows;
 }
 
-// Constrói a chave do nó final após deep collapse atravessando o caminho
-function buildCollapsedKey(startKey, startNode, targetNode) {
-  if (startNode === targetNode) return startKey;
-  const childKey = Object.keys(startNode.children)[0];
-  const childNode = startNode.children[childKey];
-  return buildCollapsedKey(`${startKey}||${childKey}`, childNode, targetNode);
-}
-
-// ── Expande até determinado nível visual ─────────────────────────────────────
-export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', parentLevel = 0) {
+// ── Expande até nível visual alvo ────────────────────────────────────────────
+export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', visualLevel = 0) {
   const keys = new Set();
-  if (parentLevel >= targetLevel) return keys;
+  if (visualLevel >= targetLevel) return keys;
 
   for (const [key, node] of Object.entries(treeNode)) {
-    const rawKey = parentKey ? `${parentKey}||${key}` : key;
-    const collapsed = deepCollapse(node, node.label);
-    const nodeKey = collapsed.node === node
-      ? rawKey
-      : buildCollapsedKey(rawKey, node, collapsed.node);
+    const rawKey  = parentKey ? `${parentKey}||${key}` : key;
+    const { node: finalNode } = deepCollapse(node);
+    const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
+    const rowLevel = visualLevel + 1;
 
-    const displayLevel = parentLevel + 1;
-    if (displayLevel <= targetLevel) {
-      keys.add(nodeKey);
+    keys.add(nodeKey);
+
+    if (rowLevel < targetLevel && Object.keys(finalNode.children).length > 0) {
       const childKeys = buildExpandedForLevel(
-        collapsed.node.children, targetLevel, nodeKey, displayLevel
+        finalNode.children, targetLevel, nodeKey, rowLevel
       );
       childKeys.forEach(k => keys.add(k));
     }
@@ -151,7 +170,7 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', par
   return keys;
 }
 
+// ── Hook principal ────────────────────────────────────────────────────────────
 export function useTreeGrid(produtos) {
-  const tree = useMemo(() => buildTree(produtos), [produtos]);
-  return tree;
+  return useMemo(() => buildTree(produtos), [produtos]);
 }
