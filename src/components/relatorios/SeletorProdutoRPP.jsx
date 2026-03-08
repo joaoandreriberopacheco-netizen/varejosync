@@ -170,17 +170,17 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       <div className="text-right">
-                        <p className="font-black text-sm text-gray-900 dark:text-white">
-                          Classe {produto.classe}
-                        </p>
-                        <p className={`text-xs font-bold ${
-                          produto.iep >= 75 ? 'text-emerald-600 dark:text-emerald-400' :
-                          produto.iep >= 50 ? 'text-amber-500 dark:text-amber-400' :
-                          'text-rose-600 dark:text-rose-400'
-                        }`}>
-                          IEP {produto.iep}
-                        </p>
-                      </div>
+                           <p className="font-black text-sm text-gray-900 dark:text-white">
+                             Classe {produto.classe}
+                           </p>
+                           <p className={`text-xs font-bold ${
+                             produto.scoreIEP >= 75 ? 'text-emerald-600 dark:text-emerald-400' :
+                             produto.scoreIEP >= 50 ? 'text-amber-500 dark:text-amber-400' :
+                             'text-rose-600 dark:text-rose-400'
+                           }`}>
+                             IEP {produto.scoreIEP}
+                           </p>
+                         </div>
                       <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition" />
                     </div>
                   </div>
