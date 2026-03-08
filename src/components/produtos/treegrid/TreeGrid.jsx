@@ -43,7 +43,8 @@ const COL_DEFS = [
 export const ALL_COLS     = COL_DEFS;
 export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'margem', 'inventario_valorizado'];
 
-const INDENT = 14;
+const INDENT_GROUP = 14; // indentação de grupos (hierarquia visual)
+const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — nunca varia com profundidade
 const W_ACAO = 36;
 
 // ── Dot de status ─────────────────────────────────────────────────────────────
