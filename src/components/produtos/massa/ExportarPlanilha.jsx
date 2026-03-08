@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import ExcelJS from 'exceljs';
-import { COLUNAS_CONFIG } from './colunasConfig.js';
+import { COLUNAS_CONFIG } from './colunasConfig.jsx';
 
 export default function ExportarPlanilha() {
   const [loading, setLoading] = useState(false);
