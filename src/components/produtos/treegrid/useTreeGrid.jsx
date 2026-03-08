@@ -119,8 +119,28 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     const agg      = aggregateSkus(allSkus);
     const rowLevel = visualLevel + 1;
 
-    // Leaf group = nó final sem sub-filhos → auto-expande (achatamento agressivo)
     const isLeafGroup = Object.keys(finalNode.children).length === 0;
+    const isRoot      = visualLevel === 0;
+
+    // Achatamento Agressivo: sub-grupos leaf (não raiz) omitem cabeçalho,
+    // os SKUs aparecem diretamente no nível do pai
+    if (!isRoot && isLeafGroup) {
+      if (expandedKeys.has(parentKey) || parentKey === '') {
+        for (const sku of finalNode.skus) {
+          rows.push({
+            type:    'sku',
+            key:     sku.id,
+            produto: sku,
+            level:   rowLevel,
+            lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
+            margem:  sku.preco_venda_padrao > 0
+              ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
+              : 0,
+          });
+        }
+      }
+      continue;
+    }
 
     rows.push({
       type: 'group',
@@ -132,13 +152,10 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
       ...agg,
     });
 
-    // Leaf groups sempre mostram SKUs; grupos normais só se expandidos
     if (isLeafGroup || expandedKeys.has(nodeKey)) {
-      // Sub-grupos do nó final (só existem em grupos normais)
       if (Object.keys(finalNode.children).length > 0) {
         rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, rowLevel));
       }
-      // SKUs diretos do nó final
       for (const sku of finalNode.skus) {
         rows.push({
           type:    'sku',
