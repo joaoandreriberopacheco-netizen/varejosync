@@ -165,7 +165,7 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
                         {produto.nome}
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {produto.categoria}
+                        {produto.categoria} • Código: {produto.codigo_interno}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
