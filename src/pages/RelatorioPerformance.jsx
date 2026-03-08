@@ -171,39 +171,39 @@ const RelatorioPerformance = ({ dados, onClose }) => {
                 <Target className="w-4 h-4" /> Raio-X Operacional
               </h3>
               <div className="space-y-3 print:space-y-2">
-                {/* Potencial */}
-                <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <div className="flex-1">
-                    <span className="font-bold text-gray-700 dark:text-gray-300">Potencial (Margem)</span>
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">média: {pilares.margem.mediaCat}</span>
+                {/* Rentabilidade */}
+                  <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
+                    <div className="flex-1">
+                      <span className="font-bold text-gray-700 dark:text-gray-300">Rentabilidade (Margem %)</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">categoria: {pilares.margem.mediaCat}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.margem.valorReal}</span>
+                      <span className={`font-black ${getScoreColor(pilares.margem.score)}`}>{pilares.margem.score}</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.margem.valorReal}</span>
-                    <span className={`font-black ${getScoreColor(pilares.margem.score)}`}>{pilares.margem.score}</span>
+                  {/* Mobilidade */}
+                  <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
+                    <div className="flex-1">
+                      <span className="font-bold text-gray-700 dark:text-gray-300">Mobilidade (Dias de Giro)</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">categoria: {pilares.giro.mediaCat}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.giro.valorReal}</span>
+                      <span className={`font-black ${getScoreColor(pilares.giro.score)}`}>{pilares.giro.score}</span>
+                    </div>
                   </div>
-                </div>
-                {/* Cinética */}
-                <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <div className="flex-1">
-                    <span className="font-bold text-gray-700 dark:text-gray-300">Cinética (Frequência)</span>
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">média: {pilares.giro.mediaCat}</span>
+                  {/* Adesão */}
+                  <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
+                    <div className="flex-1">
+                      <span className="font-bold text-gray-700 dark:text-gray-300">Adesão (Taxa de Anexação)</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">categoria: {pilares.anexacao.mediaCat}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.anexacao.valorReal}</span>
+                      <span className={`font-black ${getScoreColor(pilares.anexacao.score)}`}>{pilares.anexacao.score}</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.giro.valorReal}</span>
-                    <span className={`font-black ${getScoreColor(pilares.giro.score)}`}>{pilares.giro.score}</span>
-                  </div>
-                </div>
-                {/* Magnética */}
-                <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <div className="flex-1">
-                    <span className="font-bold text-gray-700 dark:text-gray-300">Magnética (Anexação)</span>
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">média: {pilares.anexacao.mediaCat}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.anexacao.valorReal}</span>
-                    <span className={`font-black ${getScoreColor(pilares.anexacao.score)}`}>{pilares.anexacao.score}</span>
-                  </div>
-                </div>
               </div>
             </div>
 
