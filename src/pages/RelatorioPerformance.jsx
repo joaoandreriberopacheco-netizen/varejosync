@@ -216,16 +216,16 @@ const RelatorioPerformance = ({ dados, onClose }) => {
               <p className="text-xs leading-relaxed opacity-90 print:text-gray-700">{diagnostico.texto}</p>
             </div>
 
-            {/* Filtro IQR */}
-            {outliers && outliers.length > 0 && (
-              <div className="mb-6 print:mb-4">
-                <h3 className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-3 print:mb-2">
-                  <AlertTriangle className="w-4 h-4" /> Filtro de Ruído (IQR)
-                </h3>
-                <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 rounded p-3 text-xs print:bg-white print:border-rose-200">
-                  <p className="text-rose-800 dark:text-rose-200 font-bold mb-2 flex items-center gap-1 print:text-rose-900">
-                    <Info className="w-3 h-3" /> Itens ignorados para não distorcer a média:
-                  </p>
+            {/* Análise de Outliers */}
+             {outliers && outliers.length > 0 && (
+               <div className="mb-6 print:mb-4">
+                 <h3 className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-3 print:mb-2">
+                   <AlertTriangle className="w-4 h-4" /> Itens Excluídos da Análise
+                 </h3>
+                 <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/50 rounded p-3 text-xs print:bg-white print:border-rose-200">
+                   <p className="text-rose-800 dark:text-rose-200 font-bold mb-2 flex items-center gap-1 print:text-rose-900">
+                     <Info className="w-3 h-3" /> Itens removidos para cálculo de médias (variações extremas):
+                   </p>
                   <ul className="list-disc pl-4 space-y-1 text-rose-700 dark:text-rose-300 print:text-rose-800">
                     {outliers.map((out, idx) => (
                       <li key={idx}>
