@@ -143,28 +143,43 @@ export default function RelatoriosPage() {
         </Tabs>
       </div>
 
-      {showRPP && (
-        <RelatorioPerformance 
-          dados={{
-            nome: 'Cimento Portland Standard 50kg',
-            tipo: 'SKU',
-            categoria: 'Cimento Portland',
-            lucro90dias: 45200.00,
-            classeABCD: 'A',
-            scoreIEP: 85,
-            pilares: {
-              margem: { valorReal: '45.2%', score: 85, mediaCat: '38.5%' },
-              giro: { valorReal: '24 dias', score: 72, mediaCat: '32 dias' },
-              anexacao: { valorReal: '68%', score: 68, mediaCat: '55%' }
-            },
-            outliers: [],
-            empresa: {
-              departamento: 'Inteligência & Compras',
-              nome: 'VarejoSync',
-              email: 'inteligencia@varejosynq.com.br'
-            }
+      {showSeletor && (
+        <SeletorProdutoRPP
+          onSelectProduct={(produto) => {
+            setDadosProdutoSelecionado({
+              nome: produto.nome,
+              tipo: produto.nivelHierarquico,
+              categoria: produto.categoria,
+              lucro90dias: produto.lucro90d,
+              classeABCD: produto.classe,
+              scoreIEP: produto.iep,
+              janelaGiro: produto.janelaGiro,
+              pilares: {
+                margem: { valorReal: `${produto.margem.toFixed(1)}%`, score: 85, mediaCat: '38.5%' },
+                giro: { valorReal: `${produto.giro} dias`, score: 72, mediaCat: '32 dias' },
+                anexacao: { valorReal: `${produto.anexacao}%`, score: 68, mediaCat: '55%' }
+              },
+              outliers: [],
+              empresa: {
+                departamento: 'Inteligência & Compras',
+                nome: 'VarejoSync',
+                email: 'inteligencia@varejosynq.com.br'
+              }
+            });
+            setShowSeletor(false);
+            setShowRPP(true);
           }}
-          onClose={() => setShowRPP(false)} 
+          onClose={() => setShowSeletor(false)}
+        />
+      )}
+
+      {showRPP && dadosProdutoSelecionado && (
+        <RelatorioPerformance 
+          dados={dadosProdutoSelecionado}
+          onClose={() => {
+            setShowRPP(false);
+            setDadosProdutoSelecionado(null);
+          }} 
         />
       )}
     </div>
