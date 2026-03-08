@@ -179,7 +179,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-11 h-11 rounded-xl bg-gray-900 flex items-center justify-center text-gray-500 flex-shrink-0"
+              className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center text-gray-500 dark:text-gray-500 flex-shrink-0"
             >
               <Camera className="w-4 h-4" />
             </button>
