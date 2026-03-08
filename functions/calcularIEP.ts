@@ -23,70 +23,70 @@ Deno.serve(async (req) => {
       })
     ]);
 
-    // 2. CÁLCULO DE PERFORMANCE (IEP) E PESO ECONÔMICO (PIB)
-    const listaAnalise = produtos.map(produto => {
+    // 2. CÁLCULO INDIVIDUAL DE PERFORMANCE (IEP)
+    const metricasIndividuais = produtos.map(produto => {
       const vendas = todosPedidos.filter(p => p.itens?.some(it => it.produto_id === produto.id));
       
-      if (vendas.length === 0) return { id: produto.id, score: 0, lucroAbsoluto: 0, trava: produto.iep_trava_manual };
+      if (vendas.length === 0) return { id: produto.id, score: 10, lucro: 0, grupo_id: produto.hierarquia_nivel_1_id };
 
-      // --- CÁLCULO DO IEP (EFICIÊNCIA RELATIVA - O IDH) ---
-      const dadosItens = vendas.flatMap(p => p.itens.filter(it => it.produto_id === produto.id));
-      const faturamentoTotal = dadosItens.reduce((acc, i) => acc + (i.total || 0), 0);
-      const lucroTotal = dadosItens.reduce((acc, i) => acc + ((i.total || 0) - ((i.custo_unitario_momento || 0) * i.quantidade)), 0);
+      const itens = vendas.flatMap(p => p.itens.filter(it => it.produto_id === produto.id));
+      const faturamento = itens.reduce((acc, i) => acc + (i.total || 0), 0);
+      const custo = itens.reduce((acc, i) => acc + ((i.custo_unitario_momento || 0) * i.quantidade), 0);
+      const lucro = faturamento - custo;
       
-      // Pilar 1: Potencial (Margem Relativa com peso 60% dentro do pilar)
-      const margemRelativa = faturamentoTotal > 0 ? (lucroTotal / faturamentoTotal) * 100 : 0;
-      const scorePotencial = Math.min(100, margemRelativa * 2); // Ex: 30% de margem = 60 pts
-
-      // Pilar 2: Cinética (Giro/Frequência)
+      // IEP (Desempenho Técnico): Sem peso de participação na rentabilidade total
+      const margemRelativa = faturamento > 0 ? (lucro / faturamento) * 100 : 0;
+      const scorePotencial = Math.min(100, margemRelativa * 2.5); 
       const scoreCinetico = Math.min(100, (vendas.length / 90) * 100);
-
-      // Pilar 3: Magnética (Anexação/Attach Rate)
-      const anexacao = (vendas.filter(p => p.itens.length > 1).length / vendas.length) * 100;
-      const scoreMagnetico = anexacao;
-
-      // IEP FINAL (O DNA de Desempenho)
-      const iepScore = Math.round((scorePotencial * 0.5) + (scoreCinetico * 0.25) + (scoreMagnetico * 0.25));
+      const attachRate = (vendas.filter(p => p.itens.length > 1).length / vendas.length) * 100;
 
       return {
         id: produto.id,
-        codigo: produto.codigo_interno,
-        score: iepScore,
-        lucroAbsoluto: lucroTotal,
+        score: Math.round((scorePotencial * 0.4) + (scoreCinetico * 0.3) + (attachRate * 0.3)),
+        lucro: lucro,
+        grupo_id: produto.hierarquia_nivel_1_id || 'unassigned',
         trava: produto.iep_trava_manual || false
       };
     });
 
-    // 3. CLASSIFICAÇÃO POR PARETO DE LUCRO (A ESCALA SOCIAL)
-    // Aqui definimos quem manda na empresa pelo volume de dinheiro
-    listaAnalise.sort((a, b) => b.lucroAbsoluto - a.lucroAbsoluto);
-    
-    const totalLucroCompanhia = listaAnalise.reduce((acc, p) => acc + p.lucroAbsoluto, 0);
-    let lucroAcumulado = 0;
-    const META_MINIMA_IEP_A = 60; // Régua de corte para eficiência do Classe A
+    // 3. ANÁLISE DE CLASSE (ABCD) POR GRUPO HIERÁRQUICO
+    // Agregação de lucro por Nível 1
+    const lucroPorGrupo = metricasIndividuais.reduce((acc, curr) => {
+      acc[curr.grupo_id] = (acc[curr.grupo_id] || 0) + curr.lucro;
+      return acc;
+    }, {} as Record<string, number>);
 
-    for (const p of listaAnalise) {
-      lucroAcumulado += p.lucroAbsoluto;
-      const percAcumulado = (lucroAcumulado / totalLucroCompanhia) * 100;
+    const rankingGrupos = Object.entries(lucroPorGrupo)
+      .map(([id, lucro]) => ({ id, lucro }))
+      .sort((a, b) => b.lucro - a.lucro);
 
-      let classe = 'D';
-      if (percAcumulado <= 60) classe = 'A'; // O "A" são os itens que somados dão 60% do lucro
-      else if (percAcumulado <= 85) classe = 'B'; // Os próximos 25% do lucro
-      else if (percAcumulado <= 95) classe = 'C'; 
+    const lucroTotalCompanhia = rankingGrupos.reduce((acc, g) => acc + g.lucro, 0);
+    let acumulado = 0;
+    const mapaClassesGrupo: Record<string, string> = {};
+
+    rankingGrupos.forEach(grupo => {
+      acumulado += grupo.lucro;
+      const percentual = (acumulado / lucroTotalCompanhia) * 100;
+
+      if (percentual <= 70) mapaClassesGrupo[grupo.id] = 'A';
+      else if (percentual <= 85) mapaClassesGrupo[grupo.id] = 'B';
+      else if (percentual <= 95) mapaClassesGrupo[grupo.id] = 'C';
+      else mapaClassesGrupo[grupo.id] = 'D';
+    });
+
+    // 4. ATUALIZAÇÃO DOS PRODUTOS
+    for (const p of metricasIndividuais) {
+      const classeDoGrupo = mapaClassesGrupo[p.grupo_id] || 'D';
       
-      // REGRA DO COMANDANTE: Gigante doente é rebaixado
-      if (classe === 'A' && p.score < META_MINIMA_IEP_A) {
-        classe = 'B';
+      const updateData: any = { iep_score: p.score };
+      if (!p.trava) {
+        updateData.iep_classe = classeDoGrupo;
       }
 
-      // PERSISTÊNCIA
-      const updateData: any = { iep_score: p.score };
-      if (!p.trava) updateData.iep_classe = classe;
-      
       await base44.entities.Produto.update(p.id, updateData);
     }
 
-    return Response.json({ status: 'sucesso', total: listaAnalise.length });
+    return Response.json({ status: 'sucesso', processados: metricasIndividuais.length });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
