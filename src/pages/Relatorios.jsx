@@ -143,12 +143,12 @@ export default function RelatoriosPage() {
       {showRPP && (
         <RelatorioPerformance 
           dados={{
-            nome: 'Cimento Portland Standard 50kg',
+            nome: 'Produto Exemplo',
             tipo: 'SKU',
-            categoria: 'Cimento Portland',
-            lucro90dias: 45200.00,
             classeABCD: 'A',
             scoreIEP: 85,
+            categoria: 'Cimento Portland',
+            lucro90dias: 45200.00,
             pilares: {
               margem: { valorReal: '45.2%', score: 85, mediaCat: '38.5%' },
               giro: { valorReal: '24 dias', score: 72, mediaCat: '32 dias' },
