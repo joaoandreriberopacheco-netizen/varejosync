@@ -340,7 +340,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Footer — botão finalizar */}
       {!bloqueada && (
-        <div className="flex-shrink-0 px-4 pb-20 pt-3 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-900">
+        <div className="flex-shrink-0 px-4 pb-4 pt-3 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-900" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           <Button
             onClick={abrirConfirmacao}
             disabled={verificandoDivergencias || itens.length === 0}
