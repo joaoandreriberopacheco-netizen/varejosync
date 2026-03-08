@@ -520,7 +520,7 @@ export default function Layout({ children, currentPageName }) {
             isMobile 
               ? 'ml-0 pt-12 pb-16' 
               : (isOpen ? 'ml-64' : 'ml-16')
-          } ${(!isMobile && currentPageName === 'Produtos') ? 'overflow-hidden' : ''}`}
+          } ${(!isMobile && currentPageName === 'Produtos') ? 'h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
           {(!isMobile && currentPageName === 'Produtos') ? (
