@@ -1,9 +1,44 @@
 import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
-import { COLUNAS_CONFIG } from './colunasConfig.jsx';
+
+const COLUNAS_CONFIG = [
+  { key: 'id',                      label: 'ID (não editar)',        editavel: false, tipo: 'string' },
+  { key: 'codigo_interno',          label: 'Cód. Interno',           editavel: false, tipo: 'string' },
+  { key: 'campo_hierarquico_1',     label: 'Nível 1 (*)',            editavel: true,  tipo: 'string' },
+  { key: 'campo_hierarquico_2',     label: 'Nível 2',                editavel: true,  tipo: 'string' },
+  { key: 'campo_hierarquico_3',     label: 'Nível 3',                editavel: true,  tipo: 'string' },
+  { key: 'campo_hierarquico_4',     label: 'Nível 4',                editavel: true,  tipo: 'string' },
+  { key: 'campo_hierarquico_5',     label: 'Nível 5',                editavel: true,  tipo: 'string' },
+  { key: 'codigo_barras',           label: 'Cód. Barras',            editavel: true,  tipo: 'string' },
+  { key: 'marca',                   label: 'Marca',                  editavel: true,  tipo: 'string' },
+  { key: 'tipo',                    label: 'Tipo',                   editavel: true,  tipo: 'string' },
+  { key: 'categoria_nome',          label: 'Categoria',              editavel: true,  tipo: 'string' },
+  { key: 'area_codigo',             label: 'Área',                   editavel: true,  tipo: 'string' },
+  { key: 'valor_compra',            label: 'Valor Compra (R$)',      editavel: true,  tipo: 'numero' },
+  { key: 'custo_frete_padrao',      label: 'Frete Padrão (R$)',      editavel: true,  tipo: 'numero' },
+  { key: 'custo_imposto1_padrao',   label: 'Imposto 1',              editavel: true,  tipo: 'numero' },
+  { key: 'custo_imposto2_padrao',   label: 'Imposto 2',              editavel: true,  tipo: 'numero' },
+  { key: 'desconto_compra_padrao',  label: 'Desconto Compra',        editavel: true,  tipo: 'numero' },
+  { key: 'preco_venda_padrao',      label: 'Preço Venda (*)',        editavel: true,  tipo: 'numero' },
+  { key: 'preco_venda_percentual',  label: 'Margem %',               editavel: true,  tipo: 'numero' },
+  { key: 'unidade_principal',       label: 'Unidade',                editavel: true,  tipo: 'string' },
+  { key: 'unidades_por_pacote',     label: 'Qtd/Pacote',             editavel: true,  tipo: 'numero' },
+  { key: 'estoque_minimo',          label: 'Estoque Mínimo',         editavel: true,  tipo: 'numero' },
+  { key: 'estoque_ideal',           label: 'Estoque Ideal',          editavel: true,  tipo: 'numero' },
+  { key: 'estoque_maximo',          label: 'Estoque Máximo',         editavel: true,  tipo: 'numero' },
+  { key: 'tempo_reposicao_dias',    label: 'Tempo Reposição (dias)', editavel: true,  tipo: 'numero' },
+  { key: 'peso_kg',                 label: 'Peso (kg)',              editavel: true,  tipo: 'numero' },
+  { key: 'dimensoes_cm',            label: 'Dimensões (cm)',         editavel: true,  tipo: 'string' },
+  { key: 'ativo',                   label: 'Ativo (SIM/NÃO)',        editavel: true,  tipo: 'boolean' },
+];
+
+function getCellValue(cell) {
+  if (!cell) return null;
+  if (cell.type === ExcelJS.ValueType.Formula) return cell.result ?? null;
+  return cell.value ?? null;
+}
 
 export default function ImportarPlanilha({ onParsed }) {
   const [arquivo, setArquivo] = useState(null);
@@ -16,20 +51,17 @@ export default function ImportarPlanilha({ onParsed }) {
     setParsing(true);
 
     try {
-      // Carregar produtos atuais para comparação
       const produtosAtuais = await base44.entities.Produto.list('-updated_date', 2000);
       const mapaAtual = {};
       produtosAtuais.forEach(p => { mapaAtual[p.id] = p; });
 
-      // Ler Excel
       const buffer = await file.arrayBuffer();
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
 
-      // Mapear cabeçalhos da planilha → índice de coluna
       const headerRow = ws.getRow(1);
-      const colIndexMap = {}; // key → colNumber
+      const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
         const label = (cell.value || '').toString().trim();
         const colConfig = COLUNAS_CONFIG.find(c => c.label === label);
@@ -40,19 +72,16 @@ export default function ImportarPlanilha({ onParsed }) {
       const erros = [];
 
       ws.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) return; // pular cabeçalho
+        if (rowNumber === 1) return;
 
-        // Extrair ID
         const idColIndex = colIndexMap['id'];
         if (!idColIndex) return;
-        const idCell = row.getCell(idColIndex);
-        const id = getCellValue(idCell);
+        const id = getCellValue(row.getCell(idColIndex));
         if (!id) return;
 
         const produtoAtual = mapaAtual[id];
-        if (!produtoAtual) return; // ID não encontrado, ignorar
+        if (!produtoAtual) return;
 
-        // Montar diff: apenas campos editáveis que mudaram
         const diff = {};
         let temAlteracao = false;
 
@@ -60,10 +89,8 @@ export default function ImportarPlanilha({ onParsed }) {
           const colIdx = colIndexMap[col.key];
           if (!colIdx) return;
 
-          const cell = row.getCell(colIdx);
-          let novoValor = getCellValue(cell);
+          let novoValor = getCellValue(row.getCell(colIdx));
 
-          // Converter tipo
           if (col.tipo === 'numero') {
             novoValor = novoValor !== '' && novoValor !== null ? parseFloat(novoValor) : null;
             if (isNaN(novoValor)) novoValor = null;
@@ -73,15 +100,13 @@ export default function ImportarPlanilha({ onParsed }) {
             novoValor = novoValor !== null && novoValor !== undefined ? String(novoValor).trim() : '';
           }
 
-          const valorAtual = produtoAtual[col.key];
-          const mudou = String(novoValor ?? '') !== String(valorAtual ?? '');
+          const mudou = String(novoValor ?? '') !== String(produtoAtual[col.key] ?? '');
           if (mudou) {
             diff[col.key] = novoValor;
             temAlteracao = true;
           }
         });
 
-        // Validação básica
         if (temAlteracao) {
           const nomeAtual = diff.campo_hierarquico_1 ?? produtoAtual.campo_hierarquico_1;
           const precoAtual = diff.preco_venda_padrao ?? produtoAtual.preco_venda_padrao;
@@ -105,12 +130,6 @@ export default function ImportarPlanilha({ onParsed }) {
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) handleArquivo(file);
-  };
-
   const handleRemover = () => {
     setArquivo(null);
     onParsed(null);
@@ -123,7 +142,7 @@ export default function ImportarPlanilha({ onParsed }) {
         <div
           className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
           onClick={() => inputRef.current?.click()}
-          onDrop={handleDrop}
+          onDrop={e => { e.preventDefault(); handleArquivo(e.dataTransfer.files[0]); }}
           onDragOver={e => e.preventDefault()}
         >
           <Upload className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
@@ -148,7 +167,6 @@ export default function ImportarPlanilha({ onParsed }) {
           )}
         </div>
       )}
-
       <input
         ref={inputRef}
         type="file"
@@ -158,13 +176,4 @@ export default function ImportarPlanilha({ onParsed }) {
       />
     </div>
   );
-}
-
-// Extrair valor "de face" (resultado de fórmula ou valor direto)
-function getCellValue(cell) {
-  if (!cell) return null;
-  if (cell.type === ExcelJS.ValueType.Formula) {
-    return cell.result ?? null;
-  }
-  return cell.value ?? null;
 }
