@@ -343,8 +343,8 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
         <div className="flex-shrink-0 px-4 pb-20 pt-3 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-900">
           <Button
             onClick={abrirConfirmacao}
-            disabled={verificandoDivergencias}
-            className="w-full h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none font-semibold"
+            disabled={verificandoDivergencias || itens.length === 0}
+            className="w-full h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none font-semibold disabled:opacity-30"
           >
             {verificandoDivergencias
               ? <Loader2 className="w-4 h-4 animate-spin" />
