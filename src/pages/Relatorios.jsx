@@ -33,6 +33,7 @@ export default function RelatoriosPage() {
     { nome: "Produtos com Estoque Crítico", descricao: "Itens abaixo do estoque mínimo" },
     { nome: "Produtos Sem Giro", descricao: "Itens parados há mais de X dias" },
     { nome: "Histórico de Movimentações", descricao: "Rastreabilidade completa de entradas/saídas" },
+    { nome: "Relatório de Performance de Produto", descricao: "Dossiê tático com análise IEP, pilares operacionais e insights IA" },
   ];
 
   const relatoriosFinanceiros = [
