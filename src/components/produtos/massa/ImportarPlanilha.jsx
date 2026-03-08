@@ -2,42 +2,21 @@ import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
-
-const COLUNAS_CONFIG = [
-  { key: 'id',                      label: 'ID (não editar)',        editavel: false, tipo: 'string' },
-  { key: 'codigo_interno',          label: 'Cód. Interno',           editavel: false, tipo: 'string' },
-  { key: 'campo_hierarquico_1',     label: 'Nível 1 (*)',            editavel: true,  tipo: 'string' },
-  { key: 'campo_hierarquico_2',     label: 'Nível 2',                editavel: true,  tipo: 'string' },
-  { key: 'campo_hierarquico_3',     label: 'Nível 3',                editavel: true,  tipo: 'string' },
-  { key: 'campo_hierarquico_4',     label: 'Nível 4',                editavel: true,  tipo: 'string' },
-  { key: 'campo_hierarquico_5',     label: 'Nível 5',                editavel: true,  tipo: 'string' },
-  { key: 'codigo_barras',           label: 'Cód. Barras',            editavel: true,  tipo: 'string' },
-  { key: 'marca',                   label: 'Marca',                  editavel: true,  tipo: 'string' },
-  { key: 'tipo',                    label: 'Tipo',                   editavel: true,  tipo: 'string' },
-  { key: 'categoria_nome',          label: 'Categoria',              editavel: true,  tipo: 'string' },
-  { key: 'area_codigo',             label: 'Área',                   editavel: true,  tipo: 'string' },
-  { key: 'valor_compra',            label: 'Valor Compra (R$)',      editavel: true,  tipo: 'numero' },
-  { key: 'custo_frete_padrao',      label: 'Frete Padrão (R$)',      editavel: true,  tipo: 'numero' },
-  { key: 'custo_imposto1_padrao',   label: 'Imposto 1',              editavel: true,  tipo: 'numero' },
-  { key: 'custo_imposto2_padrao',   label: 'Imposto 2',              editavel: true,  tipo: 'numero' },
-  { key: 'desconto_compra_padrao',  label: 'Desconto Compra',        editavel: true,  tipo: 'numero' },
-  { key: 'preco_venda_padrao',      label: 'Preço Venda (*)',        editavel: true,  tipo: 'numero' },
-  { key: 'preco_venda_percentual',  label: 'Margem %',               editavel: true,  tipo: 'numero' },
-  { key: 'unidade_principal',       label: 'Unidade',                editavel: true,  tipo: 'string' },
-  { key: 'unidades_por_pacote',     label: 'Qtd/Pacote',             editavel: true,  tipo: 'numero' },
-  { key: 'estoque_minimo',          label: 'Estoque Mínimo',         editavel: true,  tipo: 'numero' },
-  { key: 'estoque_ideal',           label: 'Estoque Ideal',          editavel: true,  tipo: 'numero' },
-  { key: 'estoque_maximo',          label: 'Estoque Máximo',         editavel: true,  tipo: 'numero' },
-  { key: 'tempo_reposicao_dias',    label: 'Tempo Reposição (dias)', editavel: true,  tipo: 'numero' },
-  { key: 'peso_kg',                 label: 'Peso (kg)',              editavel: true,  tipo: 'numero' },
-  { key: 'dimensoes_cm',            label: 'Dimensões (cm)',         editavel: true,  tipo: 'string' },
-  { key: 'ativo',                   label: 'Ativo (SIM/NÃO)',        editavel: true,  tipo: 'boolean' },
-];
+import { COLUNAS_CONFIG } from './colunasConfig';
+import { toast } from 'sonner';
 
 function getCellValue(cell) {
   if (!cell) return null;
+  // Sempre pega o resultado final de fórmulas
+  if (cell.value !== null && typeof cell.value === 'object' && 'result' in cell.value) {
+    return cell.value.result ?? null;
+  }
   if (cell.type === ExcelJS.ValueType.Formula) return cell.result ?? null;
   return cell.value ?? null;
+}
+
+function concatHierarquia(h1, h2, h3, h4, h5) {
+  return [h1, h2, h3, h4, h5].filter(Boolean).join(' ');
 }
 
 export default function ImportarPlanilha({ onParsed }) {
@@ -60,32 +39,33 @@ export default function ImportarPlanilha({ onParsed }) {
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
 
+      // Mapear cabeçalhos → índice de coluna
       const headerRow = ws.getRow(1);
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
-        const label = (cell.value || '').toString().trim();
+        const label = (getCellValue(cell) || '').toString().trim();
         const colConfig = COLUNAS_CONFIG.find(c => c.label === label);
         if (colConfig) colIndexMap[colConfig.key] = colNumber;
       });
 
-      const alterados = [];
+      const alterados = [];  // { id, dados, nome, isNew }
       const erros = [];
 
       ws.eachRow((row, rowNumber) => {
         if (rowNumber === 1) return;
 
         const idColIndex = colIndexMap['id'];
-        if (!idColIndex) return;
-        const id = getCellValue(row.getCell(idColIndex));
-        if (!id) return;
+        const id = idColIndex ? String(getCellValue(row.getCell(idColIndex)) || '').trim() : '';
 
-        const produtoAtual = mapaAtual[id];
-        if (!produtoAtual) return;
+        const h1ColIndex = colIndexMap['campo_hierarquico_1'];
+        const h1 = h1ColIndex ? String(getCellValue(row.getCell(h1ColIndex)) || '').trim() : '';
 
-        const diff = {};
-        let temAlteracao = false;
+        // Linha vazia (sem ID e sem h1) — ignorar
+        if (!id && !h1) return;
 
-        COLUNAS_CONFIG.filter(c => c.editavel).forEach(col => {
+        // ── Extrair todos os campos editáveis ────────────────────────────────
+        const dadosExtraidos = {};
+        COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
           const colIdx = colIndexMap[col.key];
           if (!colIdx) return;
 
@@ -100,6 +80,73 @@ export default function ImportarPlanilha({ onParsed }) {
             novoValor = novoValor !== null && novoValor !== undefined ? String(novoValor).trim() : '';
           }
 
+          dadosExtraidos[col.key] = novoValor;
+        });
+
+        // ── Custo calculado (lido da coluna calculada ou recalculado) ────────
+        const custoCalcColIdx = colIndexMap['custo_total_calculado'];
+        let custoCalcPlanilha = null;
+        if (custoCalcColIdx) {
+          const raw = getCellValue(row.getCell(custoCalcColIdx));
+          custoCalcPlanilha = raw !== null ? parseFloat(raw) : null;
+        }
+
+        const custoRecalculado =
+          (parseFloat(dadosExtraidos.valor_compra) || 0)
+          + (parseFloat(dadosExtraidos.custo_frete_padrao) || 0)
+          + (parseFloat(dadosExtraidos.custo_imposto1_padrao) || 0)
+          + (parseFloat(dadosExtraidos.custo_imposto2_padrao) || 0)
+          - (parseFloat(dadosExtraidos.desconto_compra_padrao) || 0);
+
+        const custoFinal = custoCalcPlanilha ?? custoRecalculado;
+        const precoVenda = parseFloat(dadosExtraidos.preco_venda_padrao) || 0;
+
+        // ── VALIDAÇÃO FAIL-FAST: preço < custo ───────────────────────────────
+        if (precoVenda > 0 && custoFinal > 0 && precoVenda < custoFinal) {
+          toast.error(
+            `Linha ${rowNumber}: Preço de Venda (R$ ${precoVenda.toFixed(2)}) é menor que o Custo Total (R$ ${custoFinal.toFixed(2)}). Importação cancelada.`,
+            { duration: 8000 }
+          );
+          onParsed(null);
+          setParsing(false);
+          setArquivo(null);
+          if (inputRef.current) inputRef.current.value = '';
+          return false; // sinaliza abort — ws.eachRow não tem break nativo
+        }
+
+        // ── Recalcular nome e preco_venda_percentual ─────────────────────────
+        const nomeGerado = concatHierarquia(
+          dadosExtraidos.campo_hierarquico_1,
+          dadosExtraidos.campo_hierarquico_2,
+          dadosExtraidos.campo_hierarquico_3,
+          dadosExtraidos.campo_hierarquico_4,
+          dadosExtraidos.campo_hierarquico_5,
+        );
+        dadosExtraidos.nome = nomeGerado;
+
+        if (custoFinal > 0 && precoVenda > 0) {
+          dadosExtraidos.preco_venda_percentual = parseFloat(
+            (((precoVenda - custoFinal) / custoFinal) * 100).toFixed(2)
+          );
+        }
+        dadosExtraidos.preco_custo_calculado = custoFinal;
+
+        // ── Novo produto (ID vazio, h1 preenchido) ───────────────────────────
+        if (!id) {
+          if (!h1) return;
+          alterados.push({ id: null, dados: dadosExtraidos, nome: nomeGerado, isNew: true });
+          return;
+        }
+
+        // ── Produto existente: calcular diff ─────────────────────────────────
+        const produtoAtual = mapaAtual[id];
+        if (!produtoAtual) return;
+
+        const diff = {};
+        let temAlteracao = false;
+
+        COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
+          const novoValor = dadosExtraidos[col.key];
           const mudou = String(novoValor ?? '') !== String(produtoAtual[col.key] ?? '');
           if (mudou) {
             diff[col.key] = novoValor;
@@ -107,18 +154,21 @@ export default function ImportarPlanilha({ onParsed }) {
           }
         });
 
+        // Sempre injeta nome e margem recalculados se houve alteração
         if (temAlteracao) {
+          diff.nome = nomeGerado;
+          if (dadosExtraidos.preco_venda_percentual !== undefined) {
+            diff.preco_venda_percentual = dadosExtraidos.preco_venda_percentual;
+          }
+          diff.preco_custo_calculado = custoFinal;
+
           const nomeAtual = diff.campo_hierarquico_1 ?? produtoAtual.campo_hierarquico_1;
-          const precoAtual = diff.preco_venda_padrao ?? produtoAtual.preco_venda_padrao;
           if (!nomeAtual) {
-            erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Nível 1 (nome) é obrigatório.` });
+            erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Nível 1 é obrigatório.` });
             return;
           }
-          if (!precoAtual) {
-            erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Preço de venda é obrigatório.` });
-            return;
-          }
-          alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeAtual });
+
+          alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeAtual, isNew: false });
         }
       });
 
