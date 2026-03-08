@@ -104,6 +104,30 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
     await salvarItens(novosItens);
   };
 
+  // Verifica divergências vs sistema antes de finalizar
+  const abrirConfirmacao = async () => {
+    setVerificandoDivergencias(true);
+    // Busca estoque atual dos produtos contados
+    const ids = [...new Set(itens.map(i => i.produto_id))];
+    const divs = [];
+    for (const grupo of itensAgrupados) {
+      const prod = produtos.find(p => p.id === grupo.produto_id);
+      if (prod && prod.estoque_atual !== undefined && prod.estoque_atual !== null) {
+        if (Math.abs(grupo.total - prod.estoque_atual) > 0.001) {
+          divs.push({
+            produto_id: grupo.produto_id,
+            produto_nome: grupo.produto_nome,
+            contado: grupo.total,
+            sistema: prod.estoque_atual,
+          });
+        }
+      }
+    }
+    setDivergencias(divs);
+    setVerificandoDivergencias(false);
+    setModalConfirmar(true);
+  };
+
   // Ao finalizar, vai para "Aguardando Auditoria" — responsável vai auditar
   const finalizar = async () => {
     setFinalizando(true);
@@ -113,6 +137,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       itens_conferidos: itens,
     });
     setFinalizando(false);
+    setModalConfirmar(false);
     onVoltar();
   };
 
