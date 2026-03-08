@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Search, Plus, Minus, Trash2,
   CheckCircle2, Loader2, Package, ChevronDown, ChevronUp,
-  ClipboardCheck, X, Camera, Lock
+  ClipboardCheck, X, Camera, Lock, AlertTriangle, SendHorizonal, RotateCcw
 } from "lucide-react";
 
 // Tela de CONTAGEM CEGA — operário NÃO vê estoque do sistema
