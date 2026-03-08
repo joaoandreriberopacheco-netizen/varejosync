@@ -44,8 +44,8 @@ export default function RelatoriosPage() {
     { nome: "Análise de Margem", descricao: "Margem bruta e líquida por produto/categoria" },
   ];
 
-  const RelatorioCard = ({ relatorio }) => (
-    <Card className="hover:shadow-md transition-shadow">
+  const RelatorioCard = ({ relatorio, onClickAbrir }) => (
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onClickAbrir?.(relatorio.nome)}>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
