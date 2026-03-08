@@ -6,6 +6,8 @@ import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, Ba
 import { Link } from 'react-router-dom';
 
 export default function RelatoriosPage() {
+  const [showRPP, setShowRPP] = useState(false);
+  const [rppModal, setRppModal] = useState(null);
   const relatoriosGerenciais = [
     { nome: "Relatório de Ponto de Equilíbrio", descricao: "Análise mensal do ponto de equilíbrio operacional" },
     { nome: "Índice de Eficiência Operacional", descricao: "Lucro bruto vs. investimento em compras" },
