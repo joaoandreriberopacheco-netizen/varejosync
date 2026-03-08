@@ -125,16 +125,16 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   }, []);
 
   if (loading) return (
-    <div className="fixed inset-0 bg-gray-950 flex items-center justify-center z-50">
-      <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-400 dark:text-gray-500" />
     </div>
   );
 
   return (
-    <div className="fixed inset-0 bg-gray-950 z-50 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-5 pb-3 flex-shrink-0">
-        <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-gray-300">
+      <div className="flex items-center gap-3 px-4 pt-5 pb-3 flex-shrink-0 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900">
+        <button onClick={onVoltar} className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
