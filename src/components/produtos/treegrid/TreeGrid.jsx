@@ -127,7 +127,7 @@ function groupCellValue(colId, agg) {
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
 function GroupRow({ row, isExpanded, onToggle, activeCols }) {
-  const indent = (row.level - 1) * INDENT;
+  const indent = (row.level - 1) * INDENT_GROUP;
   // Leaf groups (achatamento agressivo) não têm chevron clicável
   const isLeaf = row.isLeafGroup;
 
