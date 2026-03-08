@@ -22,6 +22,9 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
   const [loading, setLoading] = useState(true);
   const [itemExpandido, setItemExpandido] = useState(null);
   const [modalQtd, setModalQtd] = useState(null);
+  const [modalConfirmar, setModalConfirmar] = useState(false); // modal de confirmação de envio
+  const [divergencias, setDivergencias] = useState([]); // produtos com diferença vs sistema
+  const [verificandoDivergencias, setVerificandoDivergencias] = useState(false);
   const qtdInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const buscaRef = useRef(null);
