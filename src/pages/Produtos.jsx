@@ -1295,13 +1295,11 @@ export default function ProdutosPage() {
                 />
               </div>
 
-              {/* DESKTOP: Tabela Dinâmica Hierárquica */}
+              {/* DESKTOP: Tree Grid Hierárquico */}
               {viewMode === 'dinamica' && (
                 <div className="hidden md:block w-full">
-                  <TabelaDinamica
+                  <TreeGrid
                     produtos={filteredProdutos}
-                    visibleColumns={visibleColumns}
-                    fornecedorMap={fornecedorMap}
                     onEdit={handleEdit}
                   />
                 </div>
