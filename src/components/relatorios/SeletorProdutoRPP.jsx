@@ -88,20 +88,23 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
           {/* Controles de Seleção */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* Nível Hierárquico */}
-            <div>
-              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest block mb-2">
-                <Layers className="w-3 h-3 inline mr-1" /> Nível Hierárquico
-              </label>
-              <select
-                value={nivelSelecionado}
-                onChange={(e) => setNivelSelecionado(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
-              >
-                <option value="SKU">SKU (Produto Unitário)</option>
-                <option value="Nivel2">Nível 2 (Modelo/Tipo)</option>
-                <option value="Nivel1">Nível 1 (Categoria)</option>
-              </select>
-            </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest block mb-2">
+                  <Layers className="w-3 h-3 inline mr-1" /> Nível de Análise
+                </label>
+                <select
+                  value={nivelSelecionado}
+                  onChange={(e) => setNivelSelecionado(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+                >
+                  <option value="sku">SKU (Produto Unitário)</option>
+                  <option value="nivel2">Nível 2 (Modelo/Tipo)</option>
+                  <option value="nivel3">Nível 3 (Especificação)</option>
+                  <option value="nivel4">Nível 4 (Variante)</option>
+                  <option value="nivel5">Nível 5 (Marca/Origem)</option>
+                  <option value="nivel1">Nível 1 (Categoria)</option>
+                </select>
+              </div>
 
             {/* Janela Temporal */}
             <div>
