@@ -4,31 +4,38 @@ import { Button } from '@/components/ui/button';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from './useTreeGrid';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
-const fmtR = (n) =>
-  (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtPct = (n) => `${(n ?? 0).toFixed(1)}%`;
 
-// Larguras fixas das colunas de dados (px) — nunca variam com indentação
-const W = { foto: 36, preco: 108, custo: 96, margem: 80, lastro: 108, acao: 36 };
+// Colunas configuráveis — IDs usados em visibleColumns
+const COLS = {
+  preco:      { id: 'preco',      label: 'Preço Venda',   w: 108 },
+  custo:      { id: 'custo',      label: 'Custo',         w: 96  },
+  margem:     { id: 'margem',     label: 'Margem',        w: 80  },
+  inventario: { id: 'inventario', label: 'Inventário R$', w: 108 },
+};
+const ALL_COLS = Object.values(COLS);
+const DEFAULT_COLS = ALL_COLS.map(c => c.id);
+
 const INDENT = 14; // px por nível visual
+const W_ACAO = 36;
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-function GroupRow({ row, isExpanded, onToggle }) {
+function GroupRow({ row, isExpanded, onToggle, visibleColumns }) {
   const indent = (row.level - 1) * INDENT;
+  const show = (id) => visibleColumns.includes(id);
 
   return (
     <tr
       className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer select-none"
       onClick={onToggle}
     >
-      {/* Col 1 — Nome (sticky) */}
+      {/* Col Fixa — Nome */}
       <td
-        className="py-2 sticky left-0 bg-white dark:bg-gray-900 z-10 border-r border-gray-100 dark:border-gray-800"
-        style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 200 }}
+        className="py-2 sticky left-0 bg-white dark:bg-gray-900 z-30 border-r border-gray-100 dark:border-gray-800"
+        style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          {/* Espaço reservado para foto — alinha com SKUs */}
-          <div style={{ width: W.foto, flexShrink: 0 }} />
           <ChevronRight
             className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
           />
@@ -41,65 +48,69 @@ function GroupRow({ row, isExpanded, onToggle }) {
         </div>
       </td>
 
-      {/* Col 3 — Preço médio IQR */}
-      <td className="text-right py-2 px-2" style={{ width: W.preco, minWidth: W.preco }}>
-        {row.precoMedio > 0
-          ? <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">~{fmtR(row.precoMedio)}</span>
-          : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
-      </td>
+      {show('preco') && (
+        <td className="text-right py-2 px-2" style={{ width: COLS.preco.w, minWidth: COLS.preco.w }}>
+          {row.precoMedio > 0
+            ? <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">~{fmtR(row.precoMedio)}</span>
+            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
+        </td>
+      )}
 
-      {/* Col 4 — Custo médio IQR */}
-      <td className="text-right py-2 px-2" style={{ width: W.custo, minWidth: W.custo }}>
-        {row.custoMedio > 0
-          ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(row.custoMedio)}</span>
-          : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
-      </td>
+      {show('custo') && (
+        <td className="text-right py-2 px-2" style={{ width: COLS.custo.w, minWidth: COLS.custo.w }}>
+          {row.custoMedio > 0
+            ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(row.custoMedio)}</span>
+            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
+        </td>
+      )}
 
-      {/* Col 5 — Margem média IQR */}
-      <td className="text-right py-2 px-2" style={{ width: W.margem, minWidth: W.margem }}>
-        {row.margemMedia > 0
-          ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtPct(row.margemMedia)}</span>
-          : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
-      </td>
+      {show('margem') && (
+        <td className="text-right py-2 px-2" style={{ width: COLS.margem.w, minWidth: COLS.margem.w }}>
+          {row.margemMedia > 0
+            ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtPct(row.margemMedia)}</span>
+            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
+        </td>
+      )}
 
-      {/* Col 6 — Lastro (inventário valorizado total) */}
-      <td className="text-right py-2 px-2" style={{ width: W.lastro, minWidth: W.lastro }}>
-        {row.lastroTotal > 0
-          ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(row.lastroTotal)}</span>
-          : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
-      </td>
+      {show('inventario') && (
+        <td className="text-right py-2 px-2" style={{ width: COLS.inventario.w, minWidth: COLS.inventario.w }}>
+          {row.lastroTotal > 0
+            ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(row.lastroTotal)}</span>
+            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
+        </td>
+      )}
 
-      {/* Col 7 — Ação */}
-      <td style={{ width: W.acao, minWidth: W.acao }} />
+      <td style={{ width: W_ACAO, minWidth: W_ACAO }} />
     </tr>
   );
 }
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-function SkuRow({ row, onEdit }) {
+function SkuRow({ row, onEdit, visibleColumns }) {
   const p = row.produto;
   const indent = (row.level - 1) * INDENT;
+  const show = (id) => visibleColumns.includes(id);
 
   const estoqueAtual  = p.estoque_atual  || 0;
   const estoqueMinimo = p.estoque_minimo || 0;
   const dotColor =
-    !p.ativo              ? 'bg-gray-400'
-    : estoqueAtual <= 0   ? 'bg-red-500 animate-pulse'
-    : estoqueAtual <= estoqueMinimo ? 'bg-orange-400'
+    !p.ativo                          ? 'bg-gray-400'
+    : estoqueAtual <= 0               ? 'bg-red-500 animate-pulse'
+    : estoqueAtual <= estoqueMinimo   ? 'bg-orange-400'
     : 'bg-green-500';
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
-      {/* Col 1 — Imagem + Nome (sticky) — imagem é a âncora visual (Marco 0) */}
+      {/* Col Fixa — Marco 0: Imagem + Status + Nome + Código */}
       <td
-        className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-10 border-r border-gray-100 dark:border-gray-800"
-        style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 200 }}
+        className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-30 border-r border-gray-100 dark:border-gray-800"
+        style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {/* Foto — Marco 0: ponto de ancoragem visual */}
+          {/* Imagem — Marco 0 (âncora visual) */}
           <div
             className="flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center"
-            style={{ width: W.foto, height: W.foto }}
+            style={{ width: 32, height: 32 }}
           >
             {p.imagem_url
               ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
@@ -123,36 +134,44 @@ function SkuRow({ row, onEdit }) {
         </div>
       </td>
 
-      {/* Col 3 — Preço Venda */}
-      <td className="text-right py-1.5 px-2" style={{ width: W.preco, minWidth: W.preco }}>
-        <span className="text-xs text-gray-700 dark:text-gray-200 tabular-nums">
-          {p.preco_venda_padrao ? `R$ ${fmtR(p.preco_venda_padrao)}` : '—'}
-        </span>
-      </td>
+      {show('preco') && (
+        <td className="text-right py-1.5 px-2" style={{ width: COLS.preco.w, minWidth: COLS.preco.w }}>
+          <span className="text-xs font-normal text-gray-600 dark:text-gray-300 tabular-nums">
+            {p.preco_venda_padrao ? `R$ ${fmtR(p.preco_venda_padrao)}` : '—'}
+          </span>
+        </td>
+      )}
 
-      {/* Col 4 — Custo */}
-      <td className="text-right py-1.5 px-2" style={{ width: W.custo, minWidth: W.custo }}>
-        <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-          {p.preco_custo_calculado ? `R$ ${fmtR(p.preco_custo_calculado)}` : '—'}
-        </span>
-      </td>
+      {show('custo') && (
+        <td className="text-right py-1.5 px-2" style={{ width: COLS.custo.w, minWidth: COLS.custo.w }}>
+          <span className="text-xs font-normal text-gray-400 dark:text-gray-500 tabular-nums">
+            {p.preco_custo_calculado ? `R$ ${fmtR(p.preco_custo_calculado)}` : '—'}
+          </span>
+        </td>
+      )}
 
-      {/* Col 5 — Margem */}
-      <td className="text-right py-1.5 px-2" style={{ width: W.margem, minWidth: W.margem }}>
-        <span className={`text-xs tabular-nums ${row.margem >= 30 ? 'text-green-600 dark:text-green-400' : row.margem > 0 ? 'text-gray-500 dark:text-gray-400' : 'text-red-500'}`}>
-          {row.margem > 0 ? fmtPct(row.margem) : '—'}
-        </span>
-      </td>
+      {show('margem') && (
+        <td className="text-right py-1.5 px-2" style={{ width: COLS.margem.w, minWidth: COLS.margem.w }}>
+          <span className={`text-xs font-normal tabular-nums ${
+            row.margem >= 30 ? 'text-green-600 dark:text-green-400'
+            : row.margem > 0 ? 'text-gray-400 dark:text-gray-500'
+            : 'text-red-400'
+          }`}>
+            {row.margem > 0 ? fmtPct(row.margem) : '—'}
+          </span>
+        </td>
+      )}
 
-      {/* Col 6 — Lastro (inventário valorizado) */}
-      <td className="text-right py-1.5 px-2" style={{ width: W.lastro, minWidth: W.lastro }}>
-        <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-          {row.lastro > 0 ? fmtR(row.lastro) : '—'}
-        </span>
-      </td>
+      {show('inventario') && (
+        <td className="text-right py-1.5 px-2" style={{ width: COLS.inventario.w, minWidth: COLS.inventario.w }}>
+          <span className="text-xs font-normal text-gray-400 dark:text-gray-500 tabular-nums">
+            {p.inventario_valorizado > 0 ? fmtR(p.inventario_valorizado) : '—'}
+          </span>
+        </td>
+      )}
 
-      {/* Col 7 — Editar */}
-      <td className="py-1.5 text-center" style={{ width: W.acao, minWidth: W.acao }}>
+      {/* Editar */}
+      <td className="py-1.5 text-center" style={{ width: W_ACAO, minWidth: W_ACAO }}>
         <Button
           variant="ghost"
           size="icon"
@@ -166,15 +185,13 @@ function SkuRow({ row, onEdit }) {
   );
 }
 
-// ── Manete de Potência (controle de nível) ────────────────────────────────────
+// ── Manete de Nível ────────────────────────────────────────────────────────────
 function LevelControl({ level, onChange }) {
-  const levels = [1, 2, 3, 4].map(v => ({ v, label: String(v) }));
-  levels.push({ v: 99, label: 'all' });
-
+  const levels = [1, 2, 3, 4, 99];
   return (
     <div className="flex items-center gap-1 select-none">
       <span className="text-[10px] text-gray-400 dark:text-gray-500 mr-1">nível</span>
-      {levels.map(({ v, label }) => (
+      {levels.map(v => (
         <button
           key={v}
           onClick={() => onChange(v)}
@@ -184,7 +201,7 @@ function LevelControl({ level, onChange }) {
               : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
         >
-          {label}
+          {v === 99 ? 'all' : v}
         </button>
       ))}
     </div>
@@ -192,14 +209,12 @@ function LevelControl({ level, onChange }) {
 }
 
 // ── Componente Principal ───────────────────────────────────────────────────────
-export default function TreeGrid({ produtos, onEdit }) {
+export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_COLS }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [masterLevel, setMasterLevel]   = useState(1);
 
   const tree = useTreeGrid(produtos);
 
-  // Nível 1 → apenas raízes colapsadas (expandedKeys vazio)
-  // Nível 2+ → expande até o nível visual escolhido
   useEffect(() => {
     if (masterLevel === 1) {
       setExpandedKeys(new Set());
@@ -218,8 +233,7 @@ export default function TreeGrid({ produtos, onEdit }) {
     });
   }, []);
 
-  const tableMinWidth =
-    200 + W.foto + W.preco + W.custo + W.margem + W.lastro + W.acao;
+  const show = (id) => visibleColumns.includes(id);
 
   return (
     <div className="w-full">
@@ -232,54 +246,54 @@ export default function TreeGrid({ produtos, onEdit }) {
       </div>
 
       {/* Scroll container */}
-      <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <table
           style={{
             tableLayout: 'auto',
             borderCollapse: 'collapse',
-            minWidth: tableMinWidth,
-            width: '100%',
+            width: 'max-content',
+            minWidth: '100%',
           }}
         >
           <thead>
             <tr className="border-b-2 border-gray-200 dark:border-gray-700">
               <th
-                className="text-left py-2 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                style={{ paddingLeft: 8, paddingRight: 8, minWidth: 200 }}
+                className="text-left py-2 sticky left-0 bg-white dark:bg-gray-900 z-30 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                style={{ paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
               >
                 Produto
               </th>
-              <th
-                className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
-                style={{ width: W.preco, minWidth: W.preco }}
-              >
-                Preço Venda
-              </th>
-              <th
-                className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                style={{ width: W.custo, minWidth: W.custo }}
-              >
-                Custo
-              </th>
-              <th
-                className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                style={{ width: W.margem, minWidth: W.margem }}
-              >
-                Margem
-              </th>
-              <th
-                className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
-                style={{ width: W.lastro, minWidth: W.lastro }}
-              >
-                Inventário R$
-              </th>
-              <th style={{ width: W.acao, minWidth: W.acao }} />
+              {show('preco') && (
+                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
+                  style={{ width: COLS.preco.w, minWidth: COLS.preco.w }}>
+                  Preço Venda
+                </th>
+              )}
+              {show('custo') && (
+                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                  style={{ width: COLS.custo.w, minWidth: COLS.custo.w }}>
+                  Custo
+                </th>
+              )}
+              {show('margem') && (
+                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                  style={{ width: COLS.margem.w, minWidth: COLS.margem.w }}>
+                  Margem
+                </th>
+              )}
+              {show('inventario') && (
+                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
+                  style={{ width: COLS.inventario.w, minWidth: COLS.inventario.w }}>
+                  Inventário R$
+                </th>
+              )}
+              <th style={{ width: W_ACAO, minWidth: W_ACAO }} />
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-sm text-gray-400">
+                <td colSpan={visibleColumns.length + 2} className="py-12 text-center text-sm text-gray-400">
                   Nenhum produto encontrado.
                 </td>
               </tr>
@@ -291,11 +305,13 @@ export default function TreeGrid({ produtos, onEdit }) {
                       row={row}
                       isExpanded={expandedKeys.has(row.key)}
                       onToggle={() => handleToggle(row.key)}
+                      visibleColumns={visibleColumns}
                     />
                   : <SkuRow
                       key={row.key}
                       row={row}
                       onEdit={onEdit}
+                      visibleColumns={visibleColumns}
                     />
               )
             )}
@@ -305,3 +321,6 @@ export default function TreeGrid({ produtos, onEdit }) {
     </div>
   );
 }
+
+// Exporta constantes úteis para o seletor de colunas externo
+export { ALL_COLS, DEFAULT_COLS };

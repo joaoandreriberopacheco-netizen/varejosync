@@ -51,6 +51,7 @@ export function buildTree(produtos) {
   const root = {};
 
   for (const p of produtos) {
+    p.inventario_valorizado = (p.preco_custo_calculado || 0) * (p.estoque_atual || 0);
     const h1 = (p.campo_hierarquico_1 || '(sem grupo)').trim();
     const h2 = (p.campo_hierarquico_2 || '').trim();
     const h3 = (p.campo_hierarquico_3 || '').trim();
