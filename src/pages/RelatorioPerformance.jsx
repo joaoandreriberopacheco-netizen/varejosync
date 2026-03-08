@@ -160,7 +160,10 @@ const RelatorioPerformance = ({ dados, onClose }) => {
               <div className="space-y-3 print:space-y-2">
                 {/* Potencial */}
                 <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <span className="font-bold text-gray-700 dark:text-gray-300">Potencial (Margem)</span>
+                  <div>
+                    <span className="font-bold text-gray-700 dark:text-gray-300">Potencial (Margem)</span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-2">vs {pilares.margem.mediaCat}</span>
+                  </div>
                   <div className="text-right">
                     <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.margem.valorReal}</span>
                     <span className={`font-black ${getScoreColor(pilares.margem.score)}`}>{pilares.margem.score}</span>
@@ -168,7 +171,10 @@ const RelatorioPerformance = ({ dados, onClose }) => {
                 </div>
                 {/* Cinética */}
                 <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <span className="font-bold text-gray-700 dark:text-gray-300">Cinética (Frequência)</span>
+                  <div>
+                    <span className="font-bold text-gray-700 dark:text-gray-300">Cinética (Frequência)</span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-2">vs {pilares.giro.mediaCat}</span>
+                  </div>
                   <div className="text-right">
                     <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.giro.valorReal}</span>
                     <span className={`font-black ${getScoreColor(pilares.giro.score)}`}>{pilares.giro.score}</span>
@@ -176,7 +182,10 @@ const RelatorioPerformance = ({ dados, onClose }) => {
                 </div>
                 {/* Magnética */}
                 <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <span className="font-bold text-gray-700 dark:text-gray-300">Magnética (Anexação)</span>
+                  <div>
+                    <span className="font-bold text-gray-700 dark:text-gray-300">Magnética (Anexação)</span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-2">vs {pilares.anexacao.mediaCat}</span>
+                  </div>
                   <div className="text-right">
                     <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.anexacao.valorReal}</span>
                     <span className={`font-black ${getScoreColor(pilares.anexacao.score)}`}>{pilares.anexacao.score}</span>
