@@ -6,171 +6,200 @@ import { useTreeGrid, flattenTree, buildExpandedForLevel } from './useTreeGrid';
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtPct = (n) => `${(n ?? 0).toFixed(1)}%`;
+const fmtN   = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
-// IDs alinhados com ColumnSelector
-const COLS = {
-  preco_venda:           { id: 'preco_venda',           label: 'Preço Venda',       w: 108 },
-  preco_custo:           { id: 'preco_custo',            label: 'Custo',             w: 96  },
-  margem:                { id: 'margem',                 label: 'Margem',            w: 80  },
-  inventario_valorizado: { id: 'inventario_valorizado',  label: 'Inventário R$',     w: 108 },
-};
-export const ALL_COLS    = Object.values(COLS);
-export const DEFAULT_COLS = ALL_COLS.map(c => c.id);
+// ── Definição completa de colunas (alinhadas com ColumnSelector) ──────────────
+// id = mesmo id usado no ColumnSelector; label, w = largura em px
+const COL_DEFS = [
+  // descritivo
+  { id: 'status',              label: 'Status',         w: 72  },
+  { id: 'codigo_interno',      label: 'Código',         w: 96  },
+  { id: 'codigo_barras',       label: 'Cód. Barras',    w: 120 },
+  { id: 'categoria',           label: 'Categoria',      w: 120 },
+  { id: 'tags',                label: 'Tags',           w: 110 },
+  // comercial
+  { id: 'fornecedor',          label: 'Fornecedor',     w: 130 },
+  { id: 'preco_venda',         label: 'Preço Venda',    w: 108 },
+  { id: 'margem',              label: 'Margem',         w: 80  },
+  // custos & markup
+  { id: 'preco_custo',         label: 'Custo Total',    w: 104 },
+  { id: 'valor_compra',        label: 'Vl. Compra',     w: 100 },
+  { id: 'markup',              label: 'Markup %',       w: 80  },
+  { id: 'inventario_valorizado',label: 'Inventário R$', w: 108 },
+  // logístico
+  { id: 'estoque_atual',       label: 'Estoque',        w: 96  },
+  { id: 'estoque_minimo',      label: 'Est. Mín',       w: 80  },
+  { id: 'estoque_ideal',       label: 'Est. Ideal',     w: 80  },
+  { id: 'estoque_maximo',      label: 'Est. Máx',       w: 80  },
+  { id: 'tempo_reposicao',     label: 'Repos.',         w: 72  },
+  { id: 'peso',                label: 'Peso',           w: 72  },
+  { id: 'dimensoes',           label: 'Dimensões',      w: 112 },
+  // sistema
+  { id: 'tipo',                label: 'Tipo',           w: 80  },
+  { id: 'unidade',             label: 'Unid.',          w: 64  },
+  { id: 'unidades_pacote',     label: 'Un/Pct',         w: 72  },
+];
+
+export const ALL_COLS     = COL_DEFS;
+export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'margem', 'inventario_valorizado'];
 
 const INDENT = 14;
 const W_ACAO = 36;
 
+// ── Dot de status ─────────────────────────────────────────────────────────────
+function StatusDot({ produto }) {
+  const e = produto.estoque_atual  || 0;
+  const m = produto.estoque_minimo || 0;
+  const cls = !produto.ativo           ? 'bg-gray-400'
+    : e <= 0                           ? 'bg-red-500 animate-pulse'
+    : e <= m                           ? 'bg-orange-400'
+    : 'bg-green-500';
+  const label = !produto.ativo ? 'Inativo' : e <= 0 ? 'Crítico' : e <= m ? 'Baixo' : 'OK';
+  return (
+    <div className="flex items-center gap-1">
+      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cls}`} />
+      <span className="text-[10px] text-gray-500 dark:text-gray-400">{label}</span>
+    </div>
+  );
+}
+
+// Valor de uma célula de dados para SKU
+function skuCellValue(colId, produto, margem, lastro) {
+  switch (colId) {
+    case 'status':               return <StatusDot produto={produto} />;
+    case 'codigo_interno':       return <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">{produto.codigo_interno || '—'}</span>;
+    case 'codigo_barras':        return <span className="text-[10px] font-mono text-gray-400">{produto.codigo_barras || '—'}</span>;
+    case 'categoria':            return <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">{produto.categoria_nome || '—'}</span>;
+    case 'tags':                 return (
+      <div className="flex flex-wrap gap-0.5 max-w-[100px]">
+        {(produto.tags || []).slice(0, 2).map(t => (
+          <span key={t} className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1 rounded">#{t}</span>
+        ))}
+      </div>
+    );
+    case 'fornecedor':           return <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px] block">{produto.fornecedor_padrao_codigo || '—'}</span>;
+    case 'preco_venda':          return <span className="text-xs text-gray-700 dark:text-gray-200 tabular-nums">{produto.preco_venda_padrao ? `R$ ${fmtR(produto.preco_venda_padrao)}` : '—'}</span>;
+    case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'text-green-600 dark:text-green-400' : margem > 0 ? 'text-gray-500 dark:text-gray-400' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
+    case 'preco_custo':          return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.preco_custo_calculado ? `R$ ${fmtR(produto.preco_custo_calculado)}` : '—'}</span>;
+    case 'valor_compra':         return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.valor_compra ? `R$ ${fmtR(produto.valor_compra)}` : '—'}</span>;
+    case 'markup':               return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.preco_venda_percentual ? `${fmtN(produto.preco_venda_percentual)}%` : '—'}</span>;
+    case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
+    case 'estoque_atual':        return <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">{fmtN(produto.estoque_atual)} {produto.unidade_principal || ''}</span>;
+    case 'estoque_minimo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_minimo)}</span>;
+    case 'estoque_ideal':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_ideal)}</span>;
+    case 'estoque_maximo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_maximo)}</span>;
+    case 'tempo_reposicao':      return <span className="text-xs text-gray-400 tabular-nums">{produto.tempo_reposicao_dias || 0}d</span>;
+    case 'peso':                 return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.peso_kg)}kg</span>;
+    case 'dimensoes':            return <span className="text-xs text-gray-400">{produto.dimensoes_cm || '—'}</span>;
+    case 'tipo':                 return <span className="text-xs text-gray-400">{produto.tipo || '—'}</span>;
+    case 'unidade':              return <span className="text-xs text-gray-400">{produto.unidade_principal || '—'}</span>;
+    case 'unidades_pacote':      return <span className="text-xs text-gray-400">{produto.unidades_por_pacote || 1}</span>;
+    default:                     return <span className="text-xs text-gray-400">—</span>;
+  }
+}
+
+// Valor agregado (IQR) para linhas de grupo
+function groupCellValue(colId, agg) {
+  const tilde = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(v)}</span> : dash();
+  const tildeP = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtPct(v)}</span> : dash();
+  const dash = () => <span className="text-xs text-gray-300 dark:text-gray-700">—</span>;
+  switch (colId) {
+    case 'preco_venda':          return tilde(agg.precoMedio);
+    case 'preco_custo':          return tilde(agg.custoMedio);
+    case 'valor_compra':         return tilde(agg.valorCompraMedio);
+    case 'markup':               return tildeP(agg.markupMedio);
+    case 'margem':               return tildeP(agg.margemMedia);
+    case 'inventario_valorizado':return agg.lastroTotal > 0
+      ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(agg.lastroTotal)}</span>
+      : dash();
+    case 'estoque_atual':        return <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtN(agg.estoqueTotal)}</span>;
+    case 'estoque_minimo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMinTotal)}</span>;
+    case 'estoque_ideal':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueIdealTotal)}</span>;
+    case 'estoque_maximo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMaxTotal)}</span>;
+    case 'peso':                 return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.pesoTotal)}kg</span>;
+    case 'status':               return agg.criticalCount > 0
+      ? <span className="text-[10px] text-red-500">{agg.criticalCount} crítico{agg.criticalCount > 1 ? 's' : ''}</span>
+      : <span className="text-[10px] text-green-600">OK</span>;
+    default:                     return <span className="text-xs text-gray-300 dark:text-gray-700">—</span>;
+  }
+}
+
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-function GroupRow({ row, isExpanded, onToggle, visibleColumns }) {
+function GroupRow({ row, isExpanded, onToggle, activeCols }) {
   const indent = (row.level - 1) * INDENT;
-  const show = (id) => visibleColumns.includes(id);
+  // Leaf groups (achatamento agressivo) não têm chevron clicável
+  const isLeaf = row.isLeafGroup;
 
   return (
     <tr
-      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer select-none"
-      onClick={onToggle}
+      className={`border-b border-gray-100 dark:border-gray-800 ${isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'} select-none`}
+      onClick={isLeaf ? undefined : onToggle}
     >
-      {/* Col Fixa — Nome (sticky) */}
+      {/* Célula fixa — Nome */}
       <td
-        className="py-2 sticky left-0 bg-white dark:bg-gray-900 z-30 border-r border-gray-100 dark:border-gray-800"
+        className="py-2 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
         style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <ChevronRight
-            className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-          />
+          {!isLeaf && (
+            <ChevronRight
+              className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+            />
+          )}
+          {isLeaf && <div className="w-3.5 flex-shrink-0" />}
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-100 truncate uppercase tracking-wide">
             {row.label}
           </span>
-          <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 ml-0.5">
-            ({row.count})
-          </span>
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 ml-0.5">({row.count})</span>
         </div>
       </td>
-
-      {show('preco_venda') && (
-        <td className="text-right py-2 px-2" style={{ width: COLS.preco_venda.w, minWidth: COLS.preco_venda.w }}>
-          {row.precoMedio > 0
-            ? <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">~{fmtR(row.precoMedio)}</span>
-            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
+      {activeCols.map(col => (
+        <td key={col.id} className="text-right py-2 px-2 whitespace-nowrap"
+          style={{ width: col.w, minWidth: col.w }}>
+          {groupCellValue(col.id, row)}
         </td>
-      )}
-
-      {show('preco_custo') && (
-        <td className="text-right py-2 px-2" style={{ width: COLS.preco_custo.w, minWidth: COLS.preco_custo.w }}>
-          {row.custoMedio > 0
-            ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(row.custoMedio)}</span>
-            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
-        </td>
-      )}
-
-      {show('margem') && (
-        <td className="text-right py-2 px-2" style={{ width: COLS.margem.w, minWidth: COLS.margem.w }}>
-          {row.margemMedia > 0
-            ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtPct(row.margemMedia)}</span>
-            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
-        </td>
-      )}
-
-      {show('inventario_valorizado') && (
-        <td className="text-right py-2 px-2" style={{ width: COLS.inventario_valorizado.w, minWidth: COLS.inventario_valorizado.w }}>
-          {row.lastroTotal > 0
-            ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(row.lastroTotal)}</span>
-            : <span className="text-xs text-gray-300 dark:text-gray-700">—</span>}
-        </td>
-      )}
-
+      ))}
       <td style={{ width: W_ACAO, minWidth: W_ACAO }} />
     </tr>
   );
 }
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-function SkuRow({ row, onEdit, visibleColumns }) {
+function SkuRow({ row, onEdit, activeCols }) {
   const p = row.produto;
   const indent = (row.level - 1) * INDENT;
-  const show = (id) => visibleColumns.includes(id);
-
-  const estoqueAtual  = p.estoque_atual  || 0;
-  const estoqueMinimo = p.estoque_minimo || 0;
-  const dotColor =
-    !p.ativo                        ? 'bg-gray-400'
-    : estoqueAtual <= 0             ? 'bg-red-500 animate-pulse'
-    : estoqueAtual <= estoqueMinimo ? 'bg-orange-400'
-    : 'bg-green-500';
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
-      {/* Col Fixa — Marco 0: Imagem à extrema esquerda + Status + Nome + Código */}
+      {/* Célula fixa — Marco 0: Imagem + Status dot + Nome + Código */}
       <td
-        className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-30 border-r border-gray-100 dark:border-gray-800"
+        className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
         style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {/* Imagem — Marco 0 (âncora visual, extrema esquerda) */}
-          <div
-            className="flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center"
-            style={{ width: 32, height: 32 }}
-          >
+          {/* Imagem — Marco 0 */}
+          <div className="flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center"
+            style={{ width: 32, height: 32 }}>
             {p.imagem_url
               ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
               : <Package className="w-3.5 h-3.5 text-gray-300" />}
           </div>
-          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
-          <span className="text-xs font-normal text-gray-500 dark:text-gray-400 truncate uppercase">
-            {p.nome}
-          </span>
+          <span className="text-xs font-normal text-gray-500 dark:text-gray-400 truncate uppercase">{p.nome}</span>
           {p.codigo_interno && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-600 flex-shrink-0 font-mono">
-              {p.codigo_interno}
-            </span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-600 flex-shrink-0 font-mono">{p.codigo_interno}</span>
           )}
         </div>
       </td>
-
-      {show('preco_venda') && (
-        <td className="text-right py-1.5 px-2" style={{ width: COLS.preco_venda.w, minWidth: COLS.preco_venda.w }}>
-          <span className="text-xs font-normal text-gray-600 dark:text-gray-300 tabular-nums">
-            {p.preco_venda_padrao ? `R$ ${fmtR(p.preco_venda_padrao)}` : '—'}
-          </span>
+      {activeCols.map(col => (
+        <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
+          style={{ width: col.w, minWidth: col.w }}>
+          {skuCellValue(col.id, p, row.margem, row.lastro)}
         </td>
-      )}
-
-      {show('preco_custo') && (
-        <td className="text-right py-1.5 px-2" style={{ width: COLS.preco_custo.w, minWidth: COLS.preco_custo.w }}>
-          <span className="text-xs font-normal text-gray-400 dark:text-gray-500 tabular-nums">
-            {p.preco_custo_calculado ? `R$ ${fmtR(p.preco_custo_calculado)}` : '—'}
-          </span>
-        </td>
-      )}
-
-      {show('margem') && (
-        <td className="text-right py-1.5 px-2" style={{ width: COLS.margem.w, minWidth: COLS.margem.w }}>
-          <span className={`text-xs font-normal tabular-nums ${
-            row.margem >= 30 ? 'text-green-600 dark:text-green-400'
-            : row.margem > 0 ? 'text-gray-400 dark:text-gray-500'
-            : 'text-red-400'
-          }`}>
-            {row.margem > 0 ? fmtPct(row.margem) : '—'}
-          </span>
-        </td>
-      )}
-
-      {show('inventario_valorizado') && (
-        <td className="text-right py-1.5 px-2" style={{ width: COLS.inventario_valorizado.w, minWidth: COLS.inventario_valorizado.w }}>
-          <span className="text-xs font-normal text-gray-400 dark:text-gray-500 tabular-nums">
-            {p.inventario_valorizado > 0 ? fmtR(p.inventario_valorizado) : '—'}
-          </span>
-        </td>
-      )}
-
+      ))}
       <td className="py-1.5 text-center" style={{ width: W_ACAO, minWidth: W_ACAO }}>
-        <Button
-          variant="ghost"
-          size="icon"
+        <Button variant="ghost" size="icon"
           className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => { e.stopPropagation(); onEdit(p); }}
-        >
+          onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
           <Edit className="w-3 h-3 text-gray-500" />
         </Button>
       </td>
@@ -184,9 +213,7 @@ function LevelControl({ level, onChange }) {
     <div className="flex items-center gap-1 select-none">
       <span className="text-[10px] text-gray-400 dark:text-gray-500 mr-1">nível</span>
       {[1, 2, 3, 4, 99].map(v => (
-        <button
-          key={v}
-          onClick={() => onChange(v)}
+        <button key={v} onClick={() => onChange(v)}
           className={`min-w-[24px] h-6 px-1.5 rounded text-[10px] font-semibold transition-colors ${
             level === v
               ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900'
@@ -225,65 +252,60 @@ export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_CO
     });
   }, []);
 
-  const show = (id) => visibleColumns.includes(id);
+  // Colunas activas na ordem de COL_DEFS
+  const activeCols = useMemo(
+    () => COL_DEFS.filter(c => visibleColumns.includes(c.id)),
+    [visibleColumns]
+  );
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between py-2 px-1 mb-1">
+    <div className="flex flex-col h-full w-full">
+      {/* ── Toolbar fixa — não rola com a tabela ── */}
+      <div className="flex-none flex items-center justify-between py-2 px-1 mb-1 bg-white dark:bg-gray-900">
         <span className="text-[11px] text-gray-400 dark:text-gray-500">{produtos.length} SKUs</span>
         <LevelControl level={masterLevel} onChange={setMasterLevel} />
       </div>
 
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      {/* ── Scroll container — apenas a tabela rola ── */}
+      <div className="flex-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
-          <thead>
+          {/* thead sticky no topo durante scroll vertical */}
+          <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900">
             <tr className="border-b-2 border-gray-200 dark:border-gray-700">
               <th
-                className="text-left py-2 sticky left-0 bg-white dark:bg-gray-900 z-30 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                className="text-left py-2 sticky left-0 bg-white dark:bg-gray-900 z-40 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
                 style={{ paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
               >
                 Produto
               </th>
-              {show('preco_venda') && (
-                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
-                  style={{ width: COLS.preco_venda.w, minWidth: COLS.preco_venda.w }}>
-                  Preço Venda
+              {activeCols.map(col => (
+                <th key={col.id}
+                  className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
+                  style={{ width: col.w, minWidth: col.w }}>
+                  {col.label}
                 </th>
-              )}
-              {show('preco_custo') && (
-                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                  style={{ width: COLS.preco_custo.w, minWidth: COLS.preco_custo.w }}>
-                  Custo
-                </th>
-              )}
-              {show('margem') && (
-                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                  style={{ width: COLS.margem.w, minWidth: COLS.margem.w }}>
-                  Margem
-                </th>
-              )}
-              {show('inventario_valorizado') && (
-                <th className="text-right py-2 px-2 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap"
-                  style={{ width: COLS.inventario_valorizado.w, minWidth: COLS.inventario_valorizado.w }}>
-                  Inventário R$
-                </th>
-              )}
+              ))}
               <th style={{ width: W_ACAO, minWidth: W_ACAO }} />
             </tr>
           </thead>
+
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={visibleColumns.length + 2} className="py-12 text-center text-sm text-gray-400">
+                <td colSpan={activeCols.length + 2} className="py-12 text-center text-sm text-gray-400">
                   Nenhum produto encontrado.
                 </td>
               </tr>
             ) : (
               rows.map(row =>
                 row.type === 'group'
-                  ? <GroupRow key={row.key} row={row} isExpanded={expandedKeys.has(row.key)}
-                      onToggle={() => handleToggle(row.key)} visibleColumns={visibleColumns} />
-                  : <SkuRow key={row.key} row={row} onEdit={onEdit} visibleColumns={visibleColumns} />
+                  ? <GroupRow key={row.key} row={row}
+                      isExpanded={expandedKeys.has(row.key)}
+                      onToggle={() => handleToggle(row.key)}
+                      activeCols={activeCols} />
+                  : <SkuRow key={row.key} row={row}
+                      onEdit={onEdit}
+                      activeCols={activeCols} />
               )
             )}
           </tbody>
