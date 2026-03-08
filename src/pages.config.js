@@ -68,6 +68,7 @@ import DashboardVendedor from './pages/DashboardVendedor';
 import DevolucaoTroca from './pages/DevolucaoTroca';
 import DiscriminarVolumes from './pages/DiscriminarVolumes';
 import EdicaoMassivaCustos from './pages/EdicaoMassivaCustos';
+import EditarProdutosEmMassa from './pages/EditarProdutosEmMassa';
 import EstimativaEmbalagensIA from './pages/EstimativaEmbalagensIA';
 import Estoque from './pages/Estoque';
 import ExclusaoDocumentos from './pages/ExclusaoDocumentos';
@@ -101,7 +102,7 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import EditarProdutosEmMassa from './pages/EditarProdutosEmMassa';
+import ConferenciaEditor from './pages/ConferenciaEditor';
 import __Layout from './Layout.jsx';
 
 
@@ -127,6 +128,7 @@ export const PAGES = {
     "DevolucaoTroca": DevolucaoTroca,
     "DiscriminarVolumes": DiscriminarVolumes,
     "EdicaoMassivaCustos": EdicaoMassivaCustos,
+    "EditarProdutosEmMassa": EditarProdutosEmMassa,
     "EstimativaEmbalagensIA": EstimativaEmbalagensIA,
     "Estoque": Estoque,
     "ExclusaoDocumentos": ExclusaoDocumentos,
@@ -160,7 +162,7 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "EditarProdutosEmMassa": EditarProdutosEmMassa,
+    "ConferenciaEditor": ConferenciaEditor,
 }
 
 export const pagesConfig = {
