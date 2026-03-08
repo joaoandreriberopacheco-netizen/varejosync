@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
+import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
+import DecomposicaoIEP from '@/components/relatorios/DecomposicaoIEP';
 
 export default function RelatoriosPage() {
   const [showRPP, setShowRPP] = useState(false);
@@ -143,12 +145,12 @@ export default function RelatoriosPage() {
       {showRPP && (
         <RelatorioPerformance 
           dados={{
-            nome: 'Produto Exemplo',
+            nome: 'Cimento Portland Standard 50kg',
             tipo: 'SKU',
-            classeABCD: 'A',
-            scoreIEP: 85,
             categoria: 'Cimento Portland',
             lucro90dias: 45200.00,
+            classeABCD: 'A',
+            scoreIEP: 85,
             pilares: {
               margem: { valorReal: '45.2%', score: 85, mediaCat: '38.5%' },
               giro: { valorReal: '24 dias', score: 72, mediaCat: '32 dias' },
