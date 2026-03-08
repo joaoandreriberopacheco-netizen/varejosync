@@ -141,6 +141,27 @@ export default function ExportarPlanilha() {
         });
       });
 
+      // ── Desbloquear células editáveis nas linhas em branco ────────────────
+      // O Excel bloqueia todas as células não tocadas por padrão ao ativar proteção.
+      // É necessário iterar as linhas vazias e definir explicitamente locked: false
+      // nas colunas editáveis para que o usuário possa cadastrar novos produtos.
+      const firstBlankRow = produtos.length + 2;
+      const lastBlankRow  = maxRows;
+
+      for (let r = firstBlankRow; r <= lastBlankRow; r++) {
+        const row = ws.getRow(r);
+        COLUNAS_CONFIG.forEach((col, idx) => {
+          const cell = row.getCell(idx + 1);
+          if (col.editavel) {
+            cell.protection = { locked: false };
+          } else {
+            // ID e calculado: mantém locked nas linhas vazias também
+            cell.protection = { locked: true };
+          }
+        });
+        row.commit();
+      }
+
       // ── Formatação Condicional ─────────────────────────────────────────────
       const dataRange = `A2:${lastCol}${maxRows}`;
       const precoRange = `${letPrecoVenda}2:${letPrecoVenda}${maxRows}`;
