@@ -1,147 +1,101 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Save, Loader2, RotateCcw, Search, AlertCircle } from 'lucide-react';
-import SpreadsheetNativa from '@/components/produtos/SpreadsheetNativa';
+import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
+import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha';
+import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualizacao';
 
 export default function EditarProdutosEmMassa() {
-  const [produtos, setProdutos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [salvarLoading, setSalvarLoading] = useState(false);
-  const [alteracoes, setAlteracoes] = useState({});
-  const [busca, setBusca] = useState('');
+  const [parsedData, setParsedData] = useState(null); // { alterados, erros }
+  const [salvando, setSalvando] = useState(false);
+  const [salvouOk, setSalvouOk] = useState(false);
 
-  const carregarProdutos = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await base44.entities.Produto.list('-updated_date', 500);
-      setProdutos(data);
-    } finally {
-      setLoading(false);
-    }
+  const handleParsed = useCallback((data) => {
+    setParsedData(data);
+    setSalvouOk(false);
   }, []);
 
-  useEffect(() => {
-    carregarProdutos();
-  }, [carregarProdutos]);
-
-  const produtosFiltrados = produtos.filter(p => {
-    if (!busca) return true;
-    const q = busca.toLowerCase();
-    return (
-      (p.nome || '').toLowerCase().includes(q) ||
-      (p.codigo_interno || '').toLowerCase().includes(q) ||
-      (p.campo_hierarquico_1 || '').toLowerCase().includes(q)
-    );
-  });
-
-  const totalAlteracoes = Object.keys(alteracoes).length;
-
-  const handleSalvar = async () => {
+  const handleConfirmar = async () => {
+    if (!parsedData?.alterados?.length) return;
+    setSalvando(true);
     try {
-      setSalvarLoading(true);
-
-      const linhasValidas = Object.entries(alteracoes).filter(([id, dados]) => {
-        const produto = produtos.find(p => p.id === id);
-        const preco = dados.preco_venda_padrao !== undefined ? dados.preco_venda_padrao : produto?.preco_venda_padrao;
-        return preco;
-      });
-
-      for (const [id, dados] of linhasValidas) {
+      for (const { id, dados } of parsedData.alterados) {
         await base44.entities.Produto.update(id, dados);
       }
-
-      setAlteracoes({});
-      await carregarProdutos();
+      setSalvouOk(true);
+      setParsedData(null);
     } finally {
-      setSalvarLoading(false);
+      setSalvando(false);
     }
   };
 
-  const handleDescartar = () => {
-    setAlteracoes({});
-  };
+  const podeConfirmar = parsedData && parsedData.alterados?.length > 0 && parsedData.erros?.length === 0;
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-white dark:bg-gray-900 overflow-hidden">
-      {/* Cabeçalho */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
-            Edição em Massa
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {produtos.length} produtos carregados
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
+          Edição em Massa
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Exporte a planilha, edite offline e importe de volta para sincronizar.
+        </p>
+      </div>
+
+      {/* Step 1 – Exportar */}
+      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+        <StepLabel number={1} label="Baixar planilha" />
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Gera um <strong>.xlsx</strong> com todos os produtos. Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
+        </p>
+        <ExportarPlanilha />
+      </div>
+
+      {/* Step 2 – Importar */}
+      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+        <StepLabel number={2} label="Subir planilha editada" />
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Selecione o arquivo <strong>.xlsx</strong> modificado. Colunas extras ou não reconhecidas serão ignoradas.
+        </p>
+        <ImportarPlanilha onParsed={handleParsed} />
+      </div>
+
+      {/* Step 3 – Preview & Confirmar */}
+      {parsedData && (
+        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm space-y-4">
+          <StepLabel number={3} label="Validar e confirmar" />
+          <ResumoPrevisualizacao data={parsedData} />
+          <Button
+            onClick={handleConfirmar}
+            disabled={!podeConfirmar || salvando}
+            className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium"
+          >
+            {salvando ? 'Sincronizando...' : `Confirmar Sincronização (${parsedData.alterados?.length ?? 0} registros)`}
+          </Button>
+        </div>
+      )}
+
+      {/* Sucesso */}
+      {salvouOk && (
+        <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
+          <p className="text-sm font-medium text-green-700 dark:text-green-400">
+            ✓ Sincronização concluída com sucesso!
           </p>
         </div>
+      )}
+    </div>
+  );
+}
 
-        <div className="flex-1 max-w-sm">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              placeholder="Buscar produto..."
-              className="pl-9 h-8 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
-            />
-          </div>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {totalAlteracoes > 0 && (
-            <>
-              <Badge variant="secondary" className="text-xs">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                {totalAlteracoes} alterado{totalAlteracoes > 1 ? 's' : ''}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDescartar}
-                className="h-8 text-xs text-gray-500"
-              >
-                <RotateCcw className="w-3 h-3 mr-1" />
-                Descartar
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSalvar}
-                disabled={salvarLoading}
-                className="h-8 text-xs bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700"
-              >
-                {salvarLoading ? (
-                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                ) : (
-                  <Save className="w-3 h-3 mr-1" />
-                )}
-                Salvar
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Corpo */}
-      <div className="flex-1 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-sm text-gray-500">Carregando produtos...</span>
-          </div>
-        ) : produtosFiltrados.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-            Nenhum produto encontrado.
-          </div>
-        ) : (
-          <SpreadsheetNativa
-            produtos={produtosFiltrados}
-            alteracoes={alteracoes}
-            onAlteracoes={setAlteracoes}
-          />
-        )}
-      </div>
+function StepLabel({ number, label }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="w-6 h-6 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-bold flex items-center justify-center">
+        {number}
+      </span>
+      <span className="font-semibold text-gray-800 dark:text-white text-sm font-glacial">{label}</span>
     </div>
   );
 }
