@@ -153,12 +153,13 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
                  Nenhum produto encontrado
                </div>
              )}
-             {!carregando && produtosFiltrados.map((produto) => (
-                <button
-                  key={produto.id}
-                  onClick={() => handleSelectProduct(produto)}
-                  className="w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition text-left group"
-                >
+             {!carregando && produtosFiltrados.map((produto) => {
+                 return (
+                 <button
+                   key={produto.id}
+                   onClick={() => handleSelectProduct(produto)}
+                   className="w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition text-left group"
+                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">
