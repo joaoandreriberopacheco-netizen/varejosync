@@ -201,9 +201,10 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
                       <p className="text-gray-900 dark:text-white font-bold mt-0.5">{produto.anexacao}%</p>
                     </div>
                   </div>
-                </button>
-              ))
-            )}
+                  </button>
+                  );
+                  }))
+                  )}
           </div>
         </div>
 
