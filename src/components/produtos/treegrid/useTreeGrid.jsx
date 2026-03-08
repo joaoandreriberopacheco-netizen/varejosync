@@ -23,26 +23,31 @@ export function collectSkus(node) {
 
 // ── Agrega métricas IQR para um conjunto de SKUs ─────────────────────────────
 export function aggregateSkus(skus) {
-  const precos   = skus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0);
-  const custos   = skus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0);
-  const margens  = skus.map(p => {
+  const precos        = skus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0);
+  const custos        = skus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0);
+  const valorCompras  = skus.map(p => p.valor_compra || 0).filter(v => v > 0);
+  const markups       = skus.map(p => p.preco_venda_percentual || 0).filter(v => v > 0);
+  const margens       = skus.map(p => {
     const pv = p.preco_venda_padrao || 0;
     const pc = p.preco_custo_calculado || 0;
     return pv > 0 ? ((pv - pc) / pv) * 100 : 0;
   }).filter(v => v > 0);
-  const lastros  = skus.map(p =>
-    (p.preco_custo_calculado || 0) * (p.estoque_atual || 0)
-  ).filter(v => v > 0);
-  const estoqueTotal = skus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
+  const lastros = skus.map(p => (p.preco_custo_calculado || 0) * (p.estoque_atual || 0));
 
   return {
-    precoMedio:   iqrMean(precos),
-    custoMedio:   iqrMean(custos),
-    margemMedia:  iqrMean(margens),
-    lastroTotal:  lastros.reduce((s, v) => s + v, 0), // soma real do inventário
-    lastroMedio:  iqrMean(lastros),
-    estoqueTotal,
+    precoMedio:      iqrMean(precos),
+    custoMedio:      iqrMean(custos),
+    valorCompraMedio:iqrMean(valorCompras),
+    markupMedio:     iqrMean(markups),
+    margemMedia:     iqrMean(margens),
+    lastroTotal:     lastros.reduce((s, v) => s + v, 0),
+    estoqueTotal:    skus.reduce((s, p) => s + (p.estoque_atual || 0), 0),
+    estoqueMinTotal: skus.reduce((s, p) => s + (p.estoque_minimo || 0), 0),
+    estoqueIdealTotal: skus.reduce((s, p) => s + (p.estoque_ideal || 0), 0),
+    estoqueMaxTotal: skus.reduce((s, p) => s + (p.estoque_maximo || 0), 0),
+    pesoTotal:       skus.reduce((s, p) => s + (p.peso_kg || 0), 0),
     count: skus.length,
+    criticalCount: skus.filter(p => p.ativo && (p.estoque_atual || 0) <= 0).length,
   };
 }
 
@@ -114,28 +119,32 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     const agg      = aggregateSkus(allSkus);
     const rowLevel = visualLevel + 1;
 
+    // Leaf group = nó final sem sub-filhos → auto-expande (achatamento agressivo)
+    const isLeafGroup = Object.keys(finalNode.children).length === 0;
+
     rows.push({
       type: 'group',
       key:  nodeKey,
       label: collapsedLabel,
       level: rowLevel,
       node: finalNode,
+      isLeafGroup,
       ...agg,
     });
 
-    if (expandedKeys.has(nodeKey)) {
-      // Sub-grupos do nó final
+    // Leaf groups sempre mostram SKUs; grupos normais só se expandidos
+    if (isLeafGroup || expandedKeys.has(nodeKey)) {
+      // Sub-grupos do nó final (só existem em grupos normais)
       if (Object.keys(finalNode.children).length > 0) {
         rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, rowLevel));
       }
-      // SKUs diretos do nó final (sem duplicação — só aparecem aqui)
+      // SKUs diretos do nó final
       for (const sku of finalNode.skus) {
         rows.push({
           type:    'sku',
           key:     sku.id,
           produto: sku,
           level:   rowLevel + 1,
-          // inventario valorizado inline
           lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
           margem:  sku.preco_venda_padrao > 0
             ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
