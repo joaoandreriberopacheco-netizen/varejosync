@@ -262,9 +262,13 @@ export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_CO
           {/* thead sticky no topo durante scroll vertical */}
           <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900">
             <tr className="border-b-2 border-gray-200 dark:border-gray-700">
+              {/* Cabeçalho coluna edit */}
+              <th className="sticky left-0 bg-white dark:bg-gray-900 z-40"
+                style={{ width: W_EDIT, minWidth: W_EDIT }} />
+              {/* Cabeçalho coluna Produto — sticky após o edit */}
               <th
-                className="text-left py-2 sticky left-0 bg-white dark:bg-gray-900 z-40 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-                style={{ paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
+                className="text-left py-2 sticky bg-white dark:bg-gray-900 z-40 border-r border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+                style={{ left: W_EDIT, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
               >
                 Produto
               </th>
@@ -275,7 +279,6 @@ export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_CO
                   {col.label}
                 </th>
               ))}
-              <th style={{ width: W_ACAO, minWidth: W_ACAO }} />
             </tr>
           </thead>
 
