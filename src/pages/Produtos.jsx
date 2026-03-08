@@ -112,6 +112,16 @@ export default function ProdutosPage() {
   const [visibleColumns, setVisibleColumns] = useState([
     'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
   ]);
+  // ── Estado do TreeGrid hoistado para o painel fixo ──────────────────────────
+  const [treeLevel, setTreeLevel] = useState(1);
+  const [treeExpandedKeys, setTreeExpandedKeys] = useState(new Set());
+  const handleTreeToggle = React.useCallback((key) => {
+    setTreeExpandedKeys(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
