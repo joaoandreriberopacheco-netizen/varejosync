@@ -56,7 +56,7 @@ export default function ConferenciaEstoque() {
           <p className="text-xs text-gray-400 dark:text-gray-500">{conferencias.length} conferência{conferencias.length !== 1 ? "s" : ""}</p>
         </div>
         <Button
-          onClick={() => navigate(createPageUrl("ConferenciaEditor"))}
+          onClick={() => setShowNova(true)}
           className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl h-9 px-4 text-sm font-medium shadow-none"
         >
           <Plus className="w-4 h-4 mr-1.5" />
