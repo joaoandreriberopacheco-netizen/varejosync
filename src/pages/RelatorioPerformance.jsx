@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, Target, BrainCircuit, AlertTriangle, Building2, Mail, Info, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import DecomposicaoIEP from '@/components/relatorios/DecomposicaoIEP';
 
 const RelatorioPerformance = ({ dados, onClose }) => {
   // Mock de dados com contexto de negócio (categoria, lucro 90d, médias categoria)
