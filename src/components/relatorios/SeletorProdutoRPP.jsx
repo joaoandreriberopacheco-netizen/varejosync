@@ -1,62 +1,60 @@
-import React, { useState } from 'react';
-import { ChevronRight, Calendar, Layers } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, Calendar, Layers, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { base44 } from '@/api/base44Client';
 
 const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [nivelSelecionado, setNivelSelecionado] = useState('SKU');
+  const [nivelSelecionado, setNivelSelecionado] = useState('sku');
   const [janelaTemporalSelecionada, setJanelaTemporalSelecionada] = useState('90d');
+  const [produtos, setProdutos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState(null);
 
-  // Mock de produtos para demonstração
-  const produtosMock = [
-    {
-      id: 1,
-      nome: 'Cimento Portland Standard 50kg',
-      categoria: 'Cimento Portland',
-      nivel1: 'Cimento Portland',
-      nivel2: 'Standard',
-      nivel3: '50kg',
-      classe: 'A',
-      iep: 85,
-      lucro90d: 45200,
-      margem: 45.2,
-      giro: 24,
-      anexacao: 68
-    },
-    {
-      id: 2,
-      nome: 'Placa Drywall Standard 12.5mm',
-      categoria: 'Placas de Drywall',
-      nivel1: 'Placa Drywall',
-      nivel2: 'Standard',
-      nivel3: '12.5mm',
-      classe: 'C',
-      iep: 78,
-      lucro90d: 12500,
-      margem: 38.5,
-      giro: 18,
-      anexacao: 72
-    },
-    {
-      id: 3,
-      nome: 'Torneira Monocomando Cromada',
-      categoria: 'Metais',
-      nivel1: 'Torneira',
-      nivel2: 'Monocomando',
-      nivel3: 'Cromada',
-      classe: 'B',
-      iep: 62,
-      lucro90d: 8300,
-      margem: 41.2,
-      giro: 32,
-      anexacao: 55
+  useEffect(() => {
+    carregarProdutos();
+  }, []);
+
+  const carregarProdutos = async () => {
+    try {
+      setCarregando(true);
+      const todosProdutos = await base44.entities.Produto.list();
+      
+      // Estruturar produtos com seus níveis hierárquicos
+      const produtosComDados = todosProdutos.map(p => ({
+        id: p.id,
+        nome: p.nome || 'Sem nome',
+        codigo_interno: p.codigo_interno,
+        categoria: p.categoria_nome || p.campo_hierarquico_1 || 'Sem categoria',
+        nivel1: p.campo_hierarquico_1,
+        nivel2: p.campo_hierarquico_2,
+        nivel3: p.campo_hierarquico_3,
+        nivel4: p.campo_hierarquico_4,
+        nivel5: p.campo_hierarquico_5,
+        classe: p.classe_abc || 'N/A',
+        scoreIEP: p.score_iep || 0,
+        lucro90d: p.lucro_90dias || 0,
+        margem: p.margem_percentual || 0,
+        giro: p.giro_dias || 0,
+        anexacao: p.taxa_anexacao || 0
+      }));
+      
+      setProdutos(produtosComDados);
+      setErro(null);
+    } catch (err) {
+      console.error('Erro ao carregar produtos:', err);
+      setErro('Erro ao carregar produtos. Tente novamente.');
+      setProdutos([]);
+    } finally {
+      setCarregando(false);
     }
-  ];
+  };
 
-  const produtosFiltrados = produtosMock.filter(p =>
+  const produtosFiltrados = produtos.filter(p =>
     p.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.categoria.toLowerCase().includes(searchQuery.toLowerCase())
+    p.categoria.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.codigo_interno?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSelectProduct = (produto) => {
