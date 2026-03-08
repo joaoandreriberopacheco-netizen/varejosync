@@ -58,15 +58,20 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
   );
 
   const handleSelectProduct = (produto) => {
+    const labelNivel = {
+      'sku': 'SKU (Produto Unitário)',
+      'nivel2': 'Nível 2 (Modelo/Tipo)',
+      'nivel3': 'Nível 3 (Especificação)',
+      'nivel1': 'Nível 1 (Categoria)',
+      'nivel4': 'Nível 4 (Variante)',
+      'nivel5': 'Nível 5 (Marca/Origem)'
+    };
+
     onSelectProduct({
       ...produto,
-      nivelHierarquico: nivelSelecionado,
-      janelaGiro: janelaTemporalSelecionada,
-      valorReal: {
-        margem: `${produto.margem.toFixed(1)}%`,
-        giro: `${produto.giro} dias`,
-        anexacao: `${produto.anexacao}%`
-      }
+      nivelSelecionado: nivelSelecionado,
+      labelNivel: labelNivel[nivelSelecionado] || nivelSelecionado,
+      janelaGiro: janelaTemporalSelecionada
     });
   };
 
