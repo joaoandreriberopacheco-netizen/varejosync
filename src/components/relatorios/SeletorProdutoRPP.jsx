@@ -135,14 +135,25 @@ const SeletorProdutoRPP = ({ onSelectProduct, onClose }) => {
         </div>
 
         {/* Lista de Produtos */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
-            {produtosFiltrados.length === 0 ? (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                Nenhum produto encontrado
-              </div>
-            ) : (
-              produtosFiltrados.map((produto) => (
+         <div className="flex-1 overflow-y-auto">
+           <div className="divide-y divide-gray-200 dark:divide-gray-800">
+             {carregando && (
+               <div className="p-6 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                 Carregando produtos...
+               </div>
+             )}
+             {erro && (
+               <div className="p-6 text-center text-rose-600 dark:text-rose-400">
+                 {erro}
+               </div>
+             )}
+             {!carregando && produtosFiltrados.length === 0 && (
+               <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                 Nenhum produto encontrado
+               </div>
+             )}
+             {!carregando && produtosFiltrados.map((produto) => (
                 <button
                   key={produto.id}
                   onClick={() => handleSelectProduct(produto)}
