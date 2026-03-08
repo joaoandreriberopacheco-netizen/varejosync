@@ -37,6 +37,11 @@ export default function ConferenciaEstoque() {
     navigate(createPageUrl(`ConferenciaEditor?id=${conf.id}`));
   };
 
+  const handleCriada = (nova) => {
+    setShowNova(false);
+    navigate(createPageUrl(`ConferenciaEditor?id=${nova.id}`));
+  };
+
   const grupos = {
     ativas: conferencias.filter(c => ["Em Andamento", "Aguardando Auditoria", "Rascunho"].includes(c.status)),
     concluidas: conferencias.filter(c => ["Concluída", "Cancelada"].includes(c.status)),
