@@ -330,28 +330,28 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
       {modalQtd && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalQtd(null)} />
-          <div className="relative bg-gray-900 rounded-t-3xl p-6 w-full max-w-sm shadow-2xl">
-            <p className="text-xs text-gray-600 mb-1">Produto selecionado</p>
-            <p className="text-sm font-semibold text-white mb-5 leading-snug">{modalQtd.produto.nome}</p>
-            <label className="text-xs text-gray-600 mb-2 block">Quantidade contada</label>
+          <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl p-6 w-full max-w-sm shadow-2xl">
+            <p className="text-xs text-gray-400 dark:text-gray-600 mb-1">Produto selecionado</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white mb-5 leading-snug">{modalQtd.produto.nome}</p>
+            <label className="text-xs text-gray-400 dark:text-gray-600 mb-2 block">Quantidade contada</label>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String(Math.max(0, (parseFloat(m.qtdStr) || 0) - 1)) }))} className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center">
-                <Minus className="w-5 h-5 text-gray-300" />
+              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String(Math.max(0, (parseFloat(m.qtdStr) || 0) - 1)) }))} className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <Minus className="w-5 h-5 text-gray-500 dark:text-gray-300" />
               </button>
               <Input
                 ref={qtdInputRef} type="number" inputMode="numeric"
                 value={modalQtd.qtdStr}
                 onChange={e => setModalQtd(m => ({ ...m, qtdStr: e.target.value }))}
                 onKeyDown={e => e.key === "Enter" && confirmarQtd()}
-                className="flex-1 text-center text-3xl font-bold font-glacial border-0 bg-gray-800 text-white rounded-2xl h-14 focus-visible:ring-1 focus-visible:ring-gray-700"
+                className="flex-1 text-center text-3xl font-bold font-glacial border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl h-14 focus-visible:ring-1 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-700"
               />
-              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String((parseFloat(m.qtdStr) || 0) + 1) }))} className="w-14 h-14 rounded-2xl bg-gray-800 flex items-center justify-center">
-                <Plus className="w-5 h-5 text-gray-300" />
+              <button onClick={() => setModalQtd(m => ({ ...m, qtdStr: String((parseFloat(m.qtdStr) || 0) + 1) }))} className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <Plus className="w-5 h-5 text-gray-500 dark:text-gray-300" />
               </button>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-gray-800 text-gray-400 hover:bg-gray-700">Cancelar</Button>
-              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-white hover:bg-gray-100 text-gray-900 shadow-none font-semibold">
+              <Button variant="ghost" onClick={() => setModalQtd(null)} className="flex-1 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">Cancelar</Button>
+              <Button onClick={confirmarQtd} className="flex-1 h-12 rounded-2xl bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 shadow-none font-semibold">
                 <CheckCircle2 className="w-4 h-4 mr-1.5" /> Confirmar
               </Button>
             </div>
