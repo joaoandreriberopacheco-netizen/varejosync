@@ -247,33 +247,33 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
         )}
 
         {itensAgrupados.map((grupo) => (
-          <div key={grupo.produto_id} className="bg-gray-900 rounded-2xl overflow-hidden">
+          <div key={grupo.produto_id} className="bg-gray-50 dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
             <button
               onClick={() => setItemExpandido(prev => prev === grupo.produto_id ? null : grupo.produto_id)}
               className="w-full flex items-start gap-3 p-3.5 text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Package className="w-4 h-4 text-gray-500" />
+              <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Package className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white leading-snug break-words">{grupo.produto_nome}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug break-words">{grupo.produto_nome}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">{grupo.entradas.length} entrada{grupo.entradas.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-                <span className="text-xl font-bold font-glacial text-white">{grupo.total}</span>
-                {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-gray-600" /> : <ChevronDown className="w-4 h-4 text-gray-600" />}
+                <span className="text-xl font-bold font-glacial text-gray-900 dark:text-white">{grupo.total}</span>
+                {itemExpandido === grupo.produto_id ? <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-600" /> : <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-600" />}
               </div>
             </button>
 
             {itemExpandido === grupo.produto_id && (
-              <div className="border-t border-gray-800 divide-y divide-gray-800">
+              <div className="border-t border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
                 {grupo.entradas.map((entrada, eIdx) => (
                   <div key={entrada.idx} className="flex items-center gap-2 px-3 py-2.5 min-w-0">
-                    <span className="text-xs text-gray-600 w-14 flex-shrink-0">Entrada {eIdx + 1}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-600 w-14 flex-shrink-0">Entrada {eIdx + 1}</span>
                     <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                       {!bloqueada && (
-                        <button onClick={() => atualizarQtd(entrada.idx, -1)} className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center">
-                          <Minus className="w-3 h-3 text-gray-400" />
+                        <button onClick={() => atualizarQtd(entrada.idx, -1)} className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <Minus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                         </button>
                       )}
                       <Input
@@ -281,14 +281,14 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                         value={entrada.qtd}
                         readOnly={bloqueada}
                         onChange={e => !bloqueada && definirQtd(entrada.idx, e.target.value)}
-                        className="w-14 text-center text-sm font-medium border-0 bg-transparent text-white focus-visible:ring-0 p-0 h-7"
+                        className="w-14 text-center text-sm font-medium border-0 bg-transparent text-gray-900 dark:text-white focus-visible:ring-0 p-0 h-7"
                       />
                       {!bloqueada && (
                         <>
-                          <button onClick={() => atualizarQtd(entrada.idx, 1)} className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center">
-                            <Plus className="w-3 h-3 text-gray-400" />
+                          <button onClick={() => atualizarQtd(entrada.idx, 1)} className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                            <Plus className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                           </button>
-                          <button onClick={() => removerItem(entrada.idx)} className="w-7 h-7 rounded-lg bg-red-950/60 flex items-center justify-center ml-1">
+                          <button onClick={() => removerItem(entrada.idx)} className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-950/60 flex items-center justify-center ml-1">
                             <Trash2 className="w-3 h-3 text-red-500" />
                           </button>
                         </>
@@ -299,7 +299,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 {!bloqueada && (
                   <button
                     onClick={() => { const prod = produtos.find(p => p.id === grupo.produto_id); if (prod) selecionarProduto(prod); }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-gray-600 hover:text-gray-400"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400"
                   >
                     <Plus className="w-3 h-3" /> Adicionar outra entrada
                   </button>
