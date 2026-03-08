@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
-import { COLUNAS_CONFIG, COLUNAS_POR_KEY } from './colunasConfig';
+import { COLUNAS_CONFIG } from './colunasConfig.js';
 
 export default function ImportarPlanilha({ onParsed }) {
   const [arquivo, setArquivo] = useState(null);
