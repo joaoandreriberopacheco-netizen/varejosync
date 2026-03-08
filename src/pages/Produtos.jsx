@@ -1312,6 +1312,10 @@ export default function ProdutosPage() {
                     produtos={filteredProdutos}
                     onEdit={handleEdit}
                     visibleColumns={visibleColumns}
+                    masterLevel={treeLevel}
+                    onLevelChange={setTreeLevel}
+                    expandedKeys={treeExpandedKeys}
+                    onToggle={handleTreeToggle}
                   />
                 </div>
               )}
