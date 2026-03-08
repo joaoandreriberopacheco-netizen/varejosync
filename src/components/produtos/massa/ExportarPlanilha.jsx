@@ -70,7 +70,7 @@ export default function ExportarPlanilha() {
       const lastCol        = colLetter(COLUNAS_CONFIG.length);
 
       // ── Data validation por coluna (schema-driven) ─────────────────────────
-      const EXTRA_BLANK_ROWS = 200; // linhas em branco disponíveis para novos produtos
+      const EXTRA_BLANK_ROWS = 1000; // linhas em branco disponíveis para novos produtos
       const maxRows = 1 + produtos.length + EXTRA_BLANK_ROWS;
 
       COLUNAS_CONFIG.forEach((col, idx) => {
