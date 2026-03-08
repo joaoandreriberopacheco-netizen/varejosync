@@ -93,12 +93,24 @@ function GrupoHeader({ label, count, estoqueTotal, expanded, onToggle, depth, fo
 // ── Renderização recursiva de um nó (com deep collapse) ─────────────────────────
 function RenderNode({ nodeKey, node, depth, expanded, toggle, onEdit, formatarNumero }) {
   const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
-  // Reconstruir a chave final após colapso profundo
   const finalKey = buildCollapsedKey(nodeKey, node, finalNode);
 
-  const allSkus     = collectSkus(finalNode);
+  const isLeaf       = Object.keys(finalNode.children).length === 0;
+  const allSkus      = collectSkus(finalNode);
   const estoqueTotal = allSkus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
-  const isExpanded  = expanded[finalKey] !== false; // default aberto
+  const isExpanded   = expanded[finalKey] !== false; // default aberto
+
+  // ── Achatamento Agressivo: leaf sub-grupos omitem o cabeçalho ───────────────
+  // depth > 0 = não é raiz; leaf = sem sub-filhos → mostra SKUs diretamente
+  if (depth > 0 && isLeaf) {
+    return (
+      <>
+        {finalNode.skus.map(p => (
+          <ProdutoCard key={p.id} produto={p} onEdit={onEdit} formatarNumero={formatarNumero} />
+        ))}
+      </>
+    );
+  }
 
   return (
     <div>
@@ -114,7 +126,6 @@ function RenderNode({ nodeKey, node, depth, expanded, toggle, onEdit, formatarNu
 
       {isExpanded && (
         <div>
-          {/* Sub-grupos do nó final */}
           {Object.entries(finalNode.children).map(([childKey, childNode]) => (
             <RenderNode
               key={childKey}
@@ -127,7 +138,6 @@ function RenderNode({ nodeKey, node, depth, expanded, toggle, onEdit, formatarNu
               formatarNumero={formatarNumero}
             />
           ))}
-          {/* SKUs diretos */}
           {finalNode.skus.map(p => (
             <ProdutoCard key={p.id} produto={p} onEdit={onEdit} formatarNumero={formatarNumero} />
           ))}
