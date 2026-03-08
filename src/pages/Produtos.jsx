@@ -55,7 +55,7 @@ import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import MassImageUploader from '../components/produtos/MassImageUploader';
 import TabelaDinamica from '../components/produtos/TabelaDinamica';
-import TreeGrid from '../components/produtos/treegrid/TreeGrid';
+import TreeGrid, { LevelControl } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica from '../components/produtos/MobileHierarquica';
 
 
