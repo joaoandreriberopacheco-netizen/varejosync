@@ -149,10 +149,10 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Banner bloqueio */}
       {bloqueada && (
-        <div className="mx-4 mb-3 flex items-center gap-2.5 bg-gray-900 rounded-2xl px-4 py-3">
-          <Lock className="w-4 h-4 text-gray-600 flex-shrink-0" />
-          <p className="text-xs text-gray-400">
-            Conferência <strong className="text-gray-300">{conferenciaInicial.status}</strong> — somente visualização.
+        <div className="mx-4 mb-3 flex items-center gap-2.5 bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3">
+          <Lock className="w-4 h-4 text-gray-500 dark:text-gray-600 flex-shrink-0" />
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Conferência <strong className="text-gray-700 dark:text-gray-300">{conferenciaInicial.status}</strong> — somente visualização.
           </p>
         </div>
       )}
