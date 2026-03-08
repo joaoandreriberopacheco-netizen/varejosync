@@ -144,7 +144,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             {saving && <span className="ml-2 text-gray-400 dark:text-gray-600">· salvando...</span>}
           </p>
         </div>
-        {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-600 flex-shrink-0" />}
+        {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-400 dark:text-gray-600 flex-shrink-0" />}
       </div>
 
       {/* Banner bloqueio */}
