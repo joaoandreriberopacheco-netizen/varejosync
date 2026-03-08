@@ -1297,7 +1297,7 @@ export default function ProdutosPage() {
 
               {/* DESKTOP: Tree Grid Hierárquico */}
               {viewMode === 'dinamica' && (
-                <div className="hidden md:block w-full">
+                <div className="hidden md:flex md:flex-col w-full h-full">
                   <TreeGrid
                     produtos={filteredProdutos}
                     onEdit={handleEdit}
