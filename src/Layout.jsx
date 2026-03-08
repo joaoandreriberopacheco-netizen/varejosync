@@ -520,12 +520,18 @@ export default function Layout({ children, currentPageName }) {
             isMobile 
               ? 'ml-0 pt-12 pb-16' 
               : (isOpen ? 'ml-64' : 'ml-16')
-          }`}
+          } ${(!isMobile && currentPageName === 'Produtos') ? 'overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
-          <div className="p-4 md:p-6 overflow-x-hidden max-w-full">
-            {children}
-          </div>
+          {(!isMobile && currentPageName === 'Produtos') ? (
+            <div className="h-full overflow-hidden">
+              {children}
+            </div>
+          ) : (
+            <div className="p-4 md:p-6 overflow-x-hidden max-w-full">
+              {children}
+            </div>
+          )}
         </div>
         {isMobile && !isFullscreen && <MobileBottomNav currentPageName={currentPageName} />}
         {isMobile && !isFullscreen && <MobileUserMenu darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
