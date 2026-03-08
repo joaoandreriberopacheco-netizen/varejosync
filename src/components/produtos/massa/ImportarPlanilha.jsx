@@ -16,7 +16,7 @@ function getCellValue(cell) {
 }
 
 function concatHierarquia(h1, h2, h3, h4, h5) {
-  return [h1, h2, h3, h4, h5].filter(Boolean).join(' ');
+  return [h1, h2, h3, h4, h5].map(v => (v || '').trim()).filter(Boolean).join(' ').trim();
 }
 
 export default function ImportarPlanilha({ onParsed }) {
