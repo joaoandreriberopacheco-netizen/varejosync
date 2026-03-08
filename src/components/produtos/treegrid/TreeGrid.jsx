@@ -129,9 +129,13 @@ function GroupRow({ row, isExpanded, onToggle, activeCols }) {
       className={`border-b border-gray-100 dark:border-gray-800 ${isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'} select-none`}
       onClick={isLeaf ? undefined : onToggle}
     >
+      {/* Célula de edit vazia para grupos */}
+      <td className="sticky left-0 bg-white dark:bg-gray-900 z-20"
+        style={{ width: W_EDIT, minWidth: W_EDIT }} />
+      {/* Célula de nome do grupo */}
       <td
-        className="py-2 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
-        style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 220 }}
+        className="py-2 sticky bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
+        style={{ left: W_EDIT, paddingLeft: 4 + indent, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-1.5 min-w-0">
           {!isLeaf && (
@@ -152,7 +156,6 @@ function GroupRow({ row, isExpanded, onToggle, activeCols }) {
           {groupCellValue(col.id, row)}
         </td>
       ))}
-      <td style={{ width: W_ACAO, minWidth: W_ACAO }} />
     </tr>
   );
 }
