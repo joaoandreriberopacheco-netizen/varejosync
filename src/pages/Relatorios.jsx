@@ -117,7 +117,17 @@ export default function RelatoriosPage() {
 
           <TabsContent value="estoque">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatoriosEstoque.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
+              {relatoriosEstoque.map((rel, i) => (
+                <RelatorioCard 
+                  key={i} 
+                  relatorio={rel}
+                  onClickAbrir={(nome) => {
+                    if (nome === "Relatório de Performance de Produto") {
+                      setShowRPP(true);
+                    }
+                  }}
+                />
+              ))}
             </div>
           </TabsContent>
 
