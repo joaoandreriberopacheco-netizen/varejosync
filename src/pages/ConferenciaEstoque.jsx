@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import NovaConferenciaDialog from "@/components/estoque/auditoria/NovaConferenciaDialog.jsx";
 
 const statusConfig = {
   "Rascunho": { icon: Clock, color: "text-gray-400", bg: "bg-gray-100 dark:bg-gray-800", label: "Rascunho" },
