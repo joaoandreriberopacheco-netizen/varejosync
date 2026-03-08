@@ -20,8 +20,7 @@ export function collectSkus(node) {
   return skus;
 }
 
-// ── Constrói a árvore hierárquica usando h1..h5 ───────────────────────────────
-// h5 é sempre SKU (bottom line) — nunca vira nó agrupador
+// ── Constrói a árvore hierárquica: h1..h4 são agrupadores, h5 é só dado do SKU
 export function buildTree(produtos) {
   const root = {};
 
@@ -30,80 +29,68 @@ export function buildTree(produtos) {
     const h2 = (p.campo_hierarquico_2 || '').trim();
     const h3 = (p.campo_hierarquico_3 || '').trim();
     const h4 = (p.campo_hierarquico_4 || '').trim();
-    // h5 é sempre atributo do produto, nunca agrupador
+    // h5 é atributo de exibição do SKU, nunca agrupador
 
     if (!root[h1]) root[h1] = { label: h1, level: 1, children: {}, skus: [] };
 
     if (!h2) { root[h1].skus.push(p); continue; }
-    if (!root[h1].children[h2]) root[h1].children[h2] = { label: h2, level: 2, children: {}, skus: [] };
+    if (!root[h1].children[h2])
+      root[h1].children[h2] = { label: h2, level: 2, children: {}, skus: [] };
 
     if (!h3) { root[h1].children[h2].skus.push(p); continue; }
-    if (!root[h1].children[h2].children[h3]) root[h1].children[h2].children[h3] = { label: h3, level: 3, children: {}, skus: [] };
+    if (!root[h1].children[h2].children[h3])
+      root[h1].children[h2].children[h3] = { label: h3, level: 3, children: {}, skus: [] };
 
     if (!h4) { root[h1].children[h2].children[h3].skus.push(p); continue; }
-    if (!root[h1].children[h2].children[h3].children[h4]) root[h1].children[h2].children[h3].children[h4] = { label: h4, level: 4, children: {}, skus: [] };
+    if (!root[h1].children[h2].children[h3].children[h4])
+      root[h1].children[h2].children[h3].children[h4] = { label: h4, level: 4, children: {}, skus: [] };
 
-    // h4 existe → SKU vai diretamente no nível 4 (h5 já é dado do produto)
+    // h4 existe → SKU cai aqui (h5 é só label exibido na linha SKU se quiser)
     root[h1].children[h2].children[h3].children[h4].skus.push(p);
   }
 
   return root;
 }
 
-// ── Smart Flatten: funde nó único em linha só se ele não tem SKUs directos ────
-// Regra: se um nó tem exactamente 1 filho e 0 SKUs directos → funde o label
-function shouldCollapse(node) {
-  const childCount = Object.keys(node.children).length;
-  return childCount === 1 && node.skus.length === 0;
+// ── Deep Collapse: funde recursivamente cadeias de filho-único sem SKUs diretos
+// Retorna { label, node, level } onde label é o path fundido e node é o nó final
+function deepCollapse(node, baseLabel) {
+  const childKeys = Object.keys(node.children);
+  // Condição de fusão: exatamente 1 filho e nenhum SKU direto neste nó
+  if (childKeys.length === 1 && node.skus.length === 0) {
+    const childKey = childKeys[0];
+    const childNode = node.children[childKey];
+    const mergedLabel = baseLabel ? `${baseLabel} › ${childNode.label}` : childNode.label;
+    return deepCollapse(childNode, mergedLabel);
+  }
+  // Parou de fundir: retorna o estado actual
+  return { label: baseLabel, node, level: node.level };
 }
 
-// Flatten recursivo com achatamento inteligente
-export function flattenTree(treeNode, expandedKeys, parentKey = '') {
+// ── Flatten recursivo com deep collapsing ─────────────────────────────────────
+export function flattenTree(treeNode, expandedKeys, parentKey = '', parentLevel = 0) {
   const rows = [];
 
   for (const [key, node] of Object.entries(treeNode)) {
-    const nodeKey = parentKey ? `${parentKey}||${key}` : key;
-    const allSkus = collectSkus(node);
+    const rawKey = parentKey ? `${parentKey}||${key}` : key;
 
-    // Smart collapse: se só 1 filho e sem SKUs directos, funde e passa para o filho
-    if (shouldCollapse(node)) {
-      const childKey = Object.keys(node.children)[0];
-      const childNode = node.children[childKey];
-      const mergedLabel = `${node.label} › ${childNode.label}`;
-      const mergedNodeKey = `${nodeKey}||${childKey}`;
-      const childAllSkus = collectSkus(childNode);
+    // Tentar colapso profundo
+    const collapsed = deepCollapse(node, node.label);
+    // A chave de expansão é baseada no caminho até o nó final fundido
+    const nodeKey = collapsed.node === node
+      ? rawKey
+      : buildCollapsedKey(rawKey, node, collapsed.node);
 
-      rows.push({
-        type: 'group',
-        key: mergedNodeKey,
-        label: mergedLabel,
-        level: node.level,   // mantém nível visual do pai
-        node: childNode,
-        allSkus: childAllSkus,
-        estoqueTotal: childAllSkus.reduce((s, p) => s + (p.estoque_atual || 0), 0),
-        precoMedioIQR: iqrMean(childAllSkus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0)),
-        custoMedioIQR: iqrMean(childAllSkus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0)),
-        count: childAllSkus.length,
-      });
+    const allSkus = collectSkus(collapsed.node);
+    const displayLevel = parentLevel + 1; // nível visual (não o do dado)
 
-      if (expandedKeys.has(mergedNodeKey)) {
-        if (Object.keys(childNode.children).length > 0) {
-          rows.push(...flattenTree(childNode.children, expandedKeys, mergedNodeKey));
-        }
-        for (const sku of childNode.skus) {
-          rows.push({ type: 'sku', key: sku.id, produto: sku, level: node.level + 1 });
-        }
-      }
-      continue;
-    }
-
-    // Caso normal
     rows.push({
       type: 'group',
       key: nodeKey,
-      label: node.label,
-      level: node.level,
-      node,
+      label: collapsed.label,
+      level: displayLevel,
+      isMerged: collapsed.node !== node,
+      node: collapsed.node,
       allSkus,
       estoqueTotal: allSkus.reduce((s, p) => s + (p.estoque_atual || 0), 0),
       precoMedioIQR: iqrMean(allSkus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0)),
@@ -112,11 +99,19 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '') {
     });
 
     if (expandedKeys.has(nodeKey)) {
-      if (Object.keys(node.children).length > 0) {
-        rows.push(...flattenTree(node.children, expandedKeys, nodeKey));
+      const finalNode = collapsed.node;
+      // Filhos-grupo (se ainda houver diversidade)
+      if (Object.keys(finalNode.children).length > 0) {
+        rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, displayLevel));
       }
-      for (const sku of node.skus) {
-        rows.push({ type: 'sku', key: sku.id, produto: sku, level: node.level + 1 });
+      // SKUs diretos do nó final (sem duplicação)
+      for (const sku of finalNode.skus) {
+        rows.push({
+          type: 'sku',
+          key: sku.id,
+          produto: sku,
+          level: displayLevel + 1,
+        });
       }
     }
   }
@@ -124,30 +119,32 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '') {
   return rows;
 }
 
-// ── Expande até determinado nível ─────────────────────────────────────────────
-export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '') {
+// Constrói a chave do nó final após deep collapse atravessando o caminho
+function buildCollapsedKey(startKey, startNode, targetNode) {
+  if (startNode === targetNode) return startKey;
+  const childKey = Object.keys(startNode.children)[0];
+  const childNode = startNode.children[childKey];
+  return buildCollapsedKey(`${startKey}||${childKey}`, childNode, targetNode);
+}
+
+// ── Expande até determinado nível visual ─────────────────────────────────────
+export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', parentLevel = 0) {
   const keys = new Set();
-  if (targetLevel < 1) return keys;
+  if (parentLevel >= targetLevel) return keys;
 
   for (const [key, node] of Object.entries(treeNode)) {
-    const nodeKey = parentKey ? `${parentKey}||${key}` : key;
+    const rawKey = parentKey ? `${parentKey}||${key}` : key;
+    const collapsed = deepCollapse(node, node.label);
+    const nodeKey = collapsed.node === node
+      ? rawKey
+      : buildCollapsedKey(rawKey, node, collapsed.node);
 
-    // Smart collapse companion: se vai fundir, usa a chave mesclada
-    if (shouldCollapse(node)) {
-      const childKey = Object.keys(node.children)[0];
-      const childNode = node.children[childKey];
-      const mergedKey = `${nodeKey}||${childKey}`;
-      if (node.level <= targetLevel) {
-        keys.add(mergedKey);
-        const childKeys = buildExpandedForLevel(childNode.children, targetLevel, mergedKey);
-        childKeys.forEach(k => keys.add(k));
-      }
-      continue;
-    }
-
-    if (node.level <= targetLevel) {
+    const displayLevel = parentLevel + 1;
+    if (displayLevel <= targetLevel) {
       keys.add(nodeKey);
-      const childKeys = buildExpandedForLevel(node.children, targetLevel, nodeKey);
+      const childKeys = buildExpandedForLevel(
+        collapsed.node.children, targetLevel, nodeKey, displayLevel
+      );
       childKeys.forEach(k => keys.add(k));
     }
   }
