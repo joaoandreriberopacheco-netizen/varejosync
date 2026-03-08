@@ -8,43 +8,37 @@ const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 
 const fmtPct = (n) => `${(n ?? 0).toFixed(1)}%`;
 const fmtN   = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
-// ── Definição completa de colunas (alinhadas com ColumnSelector) ──────────────
-// id = mesmo id usado no ColumnSelector; label, w = largura em px
+// ── Definição completa de colunas ─────────────────────────────────────────────
 const COL_DEFS = [
-  // descritivo
-  { id: 'status',              label: 'Status',         w: 72  },
-  { id: 'codigo_interno',      label: 'Código',         w: 96  },
-  { id: 'codigo_barras',       label: 'Cód. Barras',    w: 120 },
-  { id: 'categoria',           label: 'Categoria',      w: 120 },
-  { id: 'tags',                label: 'Tags',           w: 110 },
-  // comercial
-  { id: 'fornecedor',          label: 'Fornecedor',     w: 130 },
-  { id: 'preco_venda',         label: 'Preço Venda',    w: 108 },
-  { id: 'margem',              label: 'Margem',         w: 80  },
-  // custos & markup
-  { id: 'preco_custo',         label: 'Custo Total',    w: 104 },
-  { id: 'valor_compra',        label: 'Vl. Compra',     w: 100 },
-  { id: 'markup',              label: 'Markup %',       w: 80  },
-  { id: 'inventario_valorizado',label: 'Inventário R$', w: 108 },
-  // logístico
-  { id: 'estoque_atual',       label: 'Estoque',        w: 96  },
-  { id: 'estoque_minimo',      label: 'Est. Mín',       w: 80  },
-  { id: 'estoque_ideal',       label: 'Est. Ideal',     w: 80  },
-  { id: 'estoque_maximo',      label: 'Est. Máx',       w: 80  },
-  { id: 'tempo_reposicao',     label: 'Repos.',         w: 72  },
-  { id: 'peso',                label: 'Peso',           w: 72  },
-  { id: 'dimensoes',           label: 'Dimensões',      w: 112 },
-  // sistema
-  { id: 'tipo',                label: 'Tipo',           w: 80  },
-  { id: 'unidade',             label: 'Unid.',          w: 64  },
-  { id: 'unidades_pacote',     label: 'Un/Pct',         w: 72  },
+  { id: 'status',               label: 'Status',         w: 72  },
+  { id: 'codigo_interno',       label: 'Código',         w: 96  },
+  { id: 'codigo_barras',        label: 'Cód. Barras',    w: 120 },
+  { id: 'categoria',            label: 'Categoria',      w: 120 },
+  { id: 'tags',                 label: 'Tags',           w: 110 },
+  { id: 'fornecedor',           label: 'Fornecedor',     w: 130 },
+  { id: 'preco_venda',          label: 'Preço Venda',    w: 108 },
+  { id: 'margem',               label: 'Margem',         w: 80  },
+  { id: 'preco_custo',          label: 'Custo Total',    w: 104 },
+  { id: 'valor_compra',         label: 'Vl. Compra',     w: 100 },
+  { id: 'markup',               label: 'Markup %',       w: 80  },
+  { id: 'inventario_valorizado', label: 'Inventário R$', w: 108 },
+  { id: 'estoque_atual',        label: 'Estoque',        w: 96  },
+  { id: 'estoque_minimo',       label: 'Est. Mín',       w: 80  },
+  { id: 'estoque_ideal',        label: 'Est. Ideal',     w: 80  },
+  { id: 'estoque_maximo',       label: 'Est. Máx',       w: 80  },
+  { id: 'tempo_reposicao',      label: 'Repos.',         w: 72  },
+  { id: 'peso',                 label: 'Peso',           w: 72  },
+  { id: 'dimensoes',            label: 'Dimensões',      w: 112 },
+  { id: 'tipo',                 label: 'Tipo',           w: 80  },
+  { id: 'unidade',              label: 'Unid.',          w: 64  },
+  { id: 'unidades_pacote',      label: 'Un/Pct',         w: 72  },
 ];
 
 export const ALL_COLS     = COL_DEFS;
 export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'margem', 'inventario_valorizado'];
 
-const INDENT_GROUP = 14; // indentação de grupos (hierarquia visual)
-const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — nunca varia com profundidade
+const INDENT_GROUP = 14;
+const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — alinhamento uniforme
 const W_ACAO = 36;
 
 // ── Dot de status ─────────────────────────────────────────────────────────────
@@ -64,7 +58,7 @@ function StatusDot({ produto }) {
   );
 }
 
-// Valor de uma célula de dados para SKU
+// ── Valor de célula SKU ───────────────────────────────────────────────────────
 function skuCellValue(colId, produto, margem, lastro) {
   switch (colId) {
     case 'status':               return <StatusDot produto={produto} />;
@@ -99,36 +93,35 @@ function skuCellValue(colId, produto, margem, lastro) {
   }
 }
 
-// Valor agregado (IQR) para linhas de grupo
+// ── Valor agregado para grupos ────────────────────────────────────────────────
 function groupCellValue(colId, agg) {
-  const tilde = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(v)}</span> : dash();
+  const tilde  = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtR(v)}</span> : dash();
   const tildeP = v => v > 0 ? <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">~{fmtPct(v)}</span> : dash();
-  const dash = () => <span className="text-xs text-gray-300 dark:text-gray-700">—</span>;
+  const dash   = () => <span className="text-xs text-gray-300 dark:text-gray-700">—</span>;
   switch (colId) {
-    case 'preco_venda':          return tilde(agg.precoMedio);
-    case 'preco_custo':          return tilde(agg.custoMedio);
-    case 'valor_compra':         return tilde(agg.valorCompraMedio);
-    case 'markup':               return tildeP(agg.markupMedio);
-    case 'margem':               return tildeP(agg.margemMedia);
-    case 'inventario_valorizado':return agg.lastroTotal > 0
+    case 'preco_venda':           return tilde(agg.precoMedio);
+    case 'preco_custo':           return tilde(agg.custoMedio);
+    case 'valor_compra':          return tilde(agg.valorCompraMedio);
+    case 'markup':                return tildeP(agg.markupMedio);
+    case 'margem':                return tildeP(agg.margemMedia);
+    case 'inventario_valorizado': return agg.lastroTotal > 0
       ? <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtR(agg.lastroTotal)}</span>
       : dash();
-    case 'estoque_atual':        return <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtN(agg.estoqueTotal)}</span>;
-    case 'estoque_minimo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMinTotal)}</span>;
-    case 'estoque_ideal':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueIdealTotal)}</span>;
-    case 'estoque_maximo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMaxTotal)}</span>;
-    case 'peso':                 return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.pesoTotal)}kg</span>;
-    case 'status':               return agg.criticalCount > 0
+    case 'estoque_atual':         return <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{fmtN(agg.estoqueTotal)}</span>;
+    case 'estoque_minimo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMinTotal)}</span>;
+    case 'estoque_ideal':         return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueIdealTotal)}</span>;
+    case 'estoque_maximo':        return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.estoqueMaxTotal)}</span>;
+    case 'peso':                  return <span className="text-xs text-gray-400 tabular-nums">{fmtN(agg.pesoTotal)}kg</span>;
+    case 'status':                return agg.criticalCount > 0
       ? <span className="text-[10px] text-red-500">{agg.criticalCount} crítico{agg.criticalCount > 1 ? 's' : ''}</span>
       : <span className="text-[10px] text-green-600">OK</span>;
-    default:                     return <span className="text-xs text-gray-300 dark:text-gray-700">—</span>;
+    default:                      return dash();
   }
 }
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
 function GroupRow({ row, isExpanded, onToggle, activeCols }) {
   const indent = (row.level - 1) * INDENT_GROUP;
-  // Leaf groups (achatamento agressivo) não têm chevron clicável
   const isLeaf = row.isLeafGroup;
 
   return (
@@ -136,7 +129,6 @@ function GroupRow({ row, isExpanded, onToggle, activeCols }) {
       className={`border-b border-gray-100 dark:border-gray-800 ${isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'} select-none`}
       onClick={isLeaf ? undefined : onToggle}
     >
-      {/* Célula fixa — Nome */}
       <td
         className="py-2 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
         style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 220 }}
@@ -168,18 +160,14 @@ function GroupRow({ row, isExpanded, onToggle, activeCols }) {
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
 function SkuRow({ row, onEdit, activeCols }) {
   const p = row.produto;
-  // Todos os SKUs têm indentação fixa — alinhamento uniforme independente da profundidade
-  const skuPaddingLeft = INDENT_SKU;
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
-      {/* Célula fixa — Marco 0: Imagem + Status dot + Nome + Código */}
       <td
         className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
-        style={{ paddingLeft: skuPaddingLeft, paddingRight: 8, minWidth: 220 }}
+        style={{ paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {/* Imagem — Marco 0 */}
           <div className="flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center"
             style={{ width: 32, height: 32 }}>
             {p.imagem_url
@@ -209,7 +197,7 @@ function SkuRow({ row, onEdit, activeCols }) {
   );
 }
 
-// ── Controle de Nível (exportado para uso no painel fixo externo) ─────────────
+// ── Controle de Nível (exportado para uso externo no painel fixo) ─────────────
 export function LevelControl({ level, onChange }) {
   return (
     <div className="flex items-center gap-1 select-none">
@@ -230,35 +218,31 @@ export function LevelControl({ level, onChange }) {
 }
 
 // ── Componente Principal ───────────────────────────────────────────────────────
-export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_COLS, masterLevel, onLevelChange, expandedKeys: extExpandedKeys, onToggle: extToggle }) {
-  // Suporta estado interno (standalone) ou controlado externamente (via painel fixo)
-  const [internalExpandedKeys, setInternalExpandedKeys] = useState(new Set());
-  const [internalLevel, setInternalLevel] = useState(1);
-
-  const level = masterLevel !== undefined ? masterLevel : internalLevel;
-  const expandedKeys = extExpandedKeys !== undefined ? extExpandedKeys : internalExpandedKeys;
+// masterLevel é controlado pelo pai (painel fixo da página Produtos).
+// expandedKeys é gerenciado internamente — toggle manual do usuário funciona
+// independente do nível selecionado.
+export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_COLS, masterLevel = 1 }) {
+  const [expandedKeys, setExpandedKeys] = useState(new Set());
 
   const tree = useTreeGrid(produtos);
 
+  // Quando o nível muda, recalcula quais grupos ficam expandidos
   useEffect(() => {
-    const newKeys = level === 1 ? new Set() : buildExpandedForLevel(tree, level - 1);
-    if (extExpandedKeys === undefined) {
-      setInternalExpandedKeys(newKeys);
-    }
-  }, [level, tree]);
+    setExpandedKeys(
+      masterLevel === 1 ? new Set() : buildExpandedForLevel(tree, masterLevel - 1)
+    );
+  }, [masterLevel, tree]);
 
   const rows = useMemo(() => flattenTree(tree, expandedKeys), [tree, expandedKeys]);
 
   const handleToggle = useCallback((key) => {
-    if (extToggle) { extToggle(key); return; }
-    setInternalExpandedKeys(prev => {
+    setExpandedKeys(prev => {
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
-  }, [extToggle]);
+  }, []);
 
-  // Colunas activas na ordem de COL_DEFS
   const activeCols = useMemo(
     () => COL_DEFS.filter(c => visibleColumns.includes(c.id)),
     [visibleColumns]
@@ -266,7 +250,7 @@ export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_CO
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* ── Scroll container — tabela rola livremente; coluna Produto é sticky ── */}
+      {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
       <div className="flex-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
           {/* thead sticky no topo durante scroll vertical */}
