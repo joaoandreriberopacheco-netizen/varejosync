@@ -109,6 +109,7 @@ export default function ConferenciaEstoque() {
           </>
         )}
       </div>
+      <NovaConferenciaDialog open={showNova} onClose={() => setShowNova(false)} onCriada={handleCriada} />
     </div>
   );
 }
