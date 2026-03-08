@@ -166,9 +166,19 @@ function SkuRow({ row, onEdit, activeCols }) {
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
+      {/* Botão editar — sticky, congelado à esquerda */}
+      <td className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 text-center"
+        style={{ width: W_EDIT, minWidth: W_EDIT }}>
+        <Button variant="ghost" size="icon"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+          <Edit className="w-3 h-3 text-gray-500" />
+        </Button>
+      </td>
+      {/* Coluna Produto — sticky logo após o botão de editar */}
       <td
-        className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
-        style={{ paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
+        className="py-1.5 sticky bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
+        style={{ left: W_EDIT, paddingLeft: INDENT_SKU, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center"
@@ -189,13 +199,6 @@ function SkuRow({ row, onEdit, activeCols }) {
           {skuCellValue(col.id, p, row.margem, row.lastro)}
         </td>
       ))}
-      <td className="py-1.5 text-center" style={{ width: W_ACAO, minWidth: W_ACAO }}>
-        <Button variant="ghost" size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
-          <Edit className="w-3 h-3 text-gray-500" />
-        </Button>
-      </td>
     </tr>
   );
 }
