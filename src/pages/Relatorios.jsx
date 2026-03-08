@@ -127,7 +127,7 @@ export default function RelatoriosPage() {
                   relatorio={rel}
                   onClickAbrir={(nome) => {
                     if (nome === "Relatório de Performance de Produto") {
-                      setShowRPP(true);
+                      setShowSeletor(true);
                     }
                   }}
                 />
