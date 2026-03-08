@@ -138,6 +138,38 @@ export default function RelatoriosPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {showRPP && (
+        <>
+          {typeof window !== 'undefined' && (
+            (() => {
+              const RelatorioPerformance = require('./RelatorioPerformance').default;
+              const mockDados = {
+                nome: 'Produto Exemplo',
+                tipo: 'SKU',
+                classeABCD: 'A',
+                scoreIEP: 85,
+                pilares: {
+                  margem: { valorReal: '45.2%', score: 85 },
+                  giro: { valorReal: '24 dias', score: 72 },
+                  anexacao: { valorReal: '68%', score: 68 }
+                },
+                insight: {
+                  titulo: 'Estrela em Ascensão',
+                  texto: 'Produto com excelente margem e frequência de venda. Recomenda-se aumentar estoque e destaque em PDV.'
+                },
+                outliers: [],
+                empresa: {
+                  departamento: 'Inteligência & Compras',
+                  nome: 'VarejoSync',
+                  email: 'inteligencia@varejosynq.com.br'
+                }
+              };
+              return <RelatorioPerformance dados={mockDados} onClose={() => setShowRPP(false)} />;
+            })()
+          )}
+        </>
+      )}
     </div>
   );
 }
