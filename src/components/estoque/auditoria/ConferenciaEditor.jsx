@@ -168,7 +168,7 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
                 placeholder="Buscar produto por nome ou código..."
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
-                className="pl-9 pr-9 rounded-xl border-0 bg-gray-900 text-white placeholder:text-gray-600 h-11 focus-visible:ring-1 focus-visible:ring-gray-700"
+                className="pl-9 pr-9 rounded-xl border-0 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 h-11 focus-visible:ring-1 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-700"
                 autoComplete="off"
               />
               {busca && (
