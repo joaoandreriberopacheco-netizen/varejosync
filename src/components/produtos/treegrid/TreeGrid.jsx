@@ -209,8 +209,8 @@ function SkuRow({ row, onEdit, activeCols }) {
   );
 }
 
-// ── Manete de Nível ────────────────────────────────────────────────────────────
-function LevelControl({ level, onChange }) {
+// ── Controle de Nível (exportado para uso no painel fixo externo) ─────────────
+export function LevelControl({ level, onChange }) {
   return (
     <div className="flex items-center gap-1 select-none">
       <span className="text-[10px] text-gray-400 dark:text-gray-500 mr-1">nível</span>
@@ -230,29 +230,33 @@ function LevelControl({ level, onChange }) {
 }
 
 // ── Componente Principal ───────────────────────────────────────────────────────
-export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_COLS }) {
-  const [expandedKeys, setExpandedKeys] = useState(new Set());
-  const [masterLevel, setMasterLevel]   = useState(1);
+export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_COLS, masterLevel, onLevelChange, expandedKeys: extExpandedKeys, onToggle: extToggle }) {
+  // Suporta estado interno (standalone) ou controlado externamente (via painel fixo)
+  const [internalExpandedKeys, setInternalExpandedKeys] = useState(new Set());
+  const [internalLevel, setInternalLevel] = useState(1);
+
+  const level = masterLevel !== undefined ? masterLevel : internalLevel;
+  const expandedKeys = extExpandedKeys !== undefined ? extExpandedKeys : internalExpandedKeys;
 
   const tree = useTreeGrid(produtos);
 
   useEffect(() => {
-    if (masterLevel === 1) {
-      setExpandedKeys(new Set());
-    } else {
-      setExpandedKeys(buildExpandedForLevel(tree, masterLevel - 1));
+    const newKeys = level === 1 ? new Set() : buildExpandedForLevel(tree, level - 1);
+    if (extExpandedKeys === undefined) {
+      setInternalExpandedKeys(newKeys);
     }
-  }, [masterLevel, tree]);
+  }, [level, tree]);
 
   const rows = useMemo(() => flattenTree(tree, expandedKeys), [tree, expandedKeys]);
 
   const handleToggle = useCallback((key) => {
-    setExpandedKeys(prev => {
+    if (extToggle) { extToggle(key); return; }
+    setInternalExpandedKeys(prev => {
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
-  }, []);
+  }, [extToggle]);
 
   // Colunas activas na ordem de COL_DEFS
   const activeCols = useMemo(
@@ -262,13 +266,7 @@ export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_CO
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* ── Toolbar fixa — não rola com a tabela ── */}
-      <div className="flex-none flex items-center justify-between py-2 px-1 mb-1 bg-white dark:bg-gray-900">
-        <span className="text-[11px] text-gray-400 dark:text-gray-500">{produtos.length} SKUs</span>
-        <LevelControl level={masterLevel} onChange={setMasterLevel} />
-      </div>
-
-      {/* ── Scroll container — apenas a tabela rola ── */}
+      {/* ── Scroll container — tabela rola livremente; coluna Produto é sticky ── */}
       <div className="flex-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
           {/* thead sticky no topo durante scroll vertical */}
