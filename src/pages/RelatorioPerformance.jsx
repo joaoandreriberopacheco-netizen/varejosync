@@ -153,6 +153,18 @@ const RelatorioPerformance = ({ dados, onClose }) => {
               </div>
             </div>
 
+            {/* Decomposição do IEP */}
+            <div className="mb-6 print:hidden">
+              <DecomposicaoIEP 
+                produto={{
+                  margem: parseFloat(pilares.margem.valorReal),
+                  giro: parseInt(pilares.giro.valorReal),
+                  anexacao: parseInt(pilares.anexacao.valorReal)
+                }}
+                janelaGiro={dados?.janelaGiro || '90d'}
+              />
+            </div>
+
             {/* Pilares Técnicos */}
             <div className="mb-6 print:mb-4">
               <h3 className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest flex items-center gap-2 mb-3 print:mb-2">
