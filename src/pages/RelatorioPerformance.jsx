@@ -3,21 +3,20 @@ import { Download, Target, BrainCircuit, AlertTriangle, Building2, Mail, Info, X
 import { Button } from '@/components/ui/button';
 
 const RelatorioPerformance = ({ dados, onClose }) => {
-  // Mock de dados (SKU ou Categoria, Classes, Pilares, Insight IA, Outliers)
+  // Mock de dados com contexto de negócio (categoria, lucro 90d, médias categoria)
   const {
     nome = 'Produto Exemplo',
     tipo = 'SKU',
     classeABCD = 'A',
     scoreIEP = 85,
+    categoria = 'Cimento Portland',
+    lucro90dias = 45200.00,
     pilares = {
-      margem: { valorReal: '45.2%', score: 85 },
-      giro: { valorReal: '24 dias', score: 72 },
-      anexacao: { valorReal: '68%', score: 68 }
+      margem: { valorReal: '45.2%', score: 85, mediaCat: '38.5%' },
+      giro: { valorReal: '24 dias', score: 72, mediaCat: '32 dias' },
+      anexacao: { valorReal: '68%', score: 68, mediaCat: '55%' }
     },
-    insight = {
-      titulo: 'Estrela em Ascensão',
-      texto: 'Produto com excelente margem e frequência de venda. Recomenda-se aumentar estoque e destaque em PDV.'
-    },
+    insight = null,
     outliers = [],
     empresa = {
       departamento: 'Inteligência & Compras',
@@ -25,6 +24,49 @@ const RelatorioPerformance = ({ dados, onClose }) => {
       email: 'inteligencia@varejosy nc.com.br'
     }
   } = dados || {};
+
+  // Gera diagnóstico inteligente baseado na matriz ABCD vs IEP
+  const gerarDiagnostico = () => {
+    const classe = classeABCD;
+    const iep = scoreIEP;
+
+    if (classe === 'A' && iep >= 70) {
+      return {
+        titulo: 'O GENERAL',
+        texto: 'Item de elite que sustenta a empresa. Domina faturamento e margem com máxima eficiência. Use este volume para extrair prazo extra e desconto estruturado do fornecedor. Capa importante para negociação estratégica.'
+      };
+    }
+    if (classe === 'A' && iep < 50) {
+      return {
+        titulo: 'GIGANTE AVARIADO',
+        texto: 'Alto volume, mas motor engasgado na margem. Exigir desconto urgente do fornecedor ou revisão de mix de compra. Risco potencial de sangragem de caixa. Priorize renegociação.'
+      };
+    }
+    if ((classe === 'C' || classe === 'D') && iep >= 70) {
+      return {
+        titulo: 'ESTRELA EM ASCENSÃO',
+        texto: 'Vende pouco, mas margem e giro impecáveis. Dar mais exposição, aumentar investimento em PDV e campanhas. Potencial de crescimento fora da curva. Blindar estoque para oportunidade.'
+      };
+    }
+    if ((classe === 'C' || classe === 'D') && iep < 50) {
+      return {
+        titulo: 'PESO MORTO',
+        texto: 'Volume inexpressivo e eficiência baixa. Descontinuar rapidamente. Libera espaço e capital de giro para itens que geram retorno real.'
+      };
+    }
+    if (classe === 'B') {
+      return {
+        titulo: 'COLUNA VERTEBRAL',
+        texto: iep >= 70 
+          ? 'Sustém a operação com equilíbrio de volume e eficiência. Manter rigor em estoque e operação. Potencial de upgrade para Classe A.'
+          : 'Representa volume médio com eficiência limitada. Revisar precificação e análise competitiva. Candidato a otimização ou descontinuação.'
+      };
+    }
+
+    return insight || { titulo: 'ANÁLISE PENDENTE', texto: 'Verifique dados de entrada.' };
+  };
+
+  const diagnostico = gerarDiagnostico();
 
   const getScoreColor = (score) => {
     if (score >= 75) return 'text-emerald-600 dark:text-emerald-400';
