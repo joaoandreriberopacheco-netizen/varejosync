@@ -19,6 +19,7 @@ const statusConfig = {
 export default function ConferenciaEstoque() {
   const [conferencias, setConferencias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showNova, setShowNova] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
