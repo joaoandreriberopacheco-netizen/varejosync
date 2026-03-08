@@ -20,8 +20,12 @@ export default function EditarProdutosEmMassa() {
     if (!parsedData?.alterados?.length) return;
     setSalvando(true);
     try {
-      for (const { id, dados } of parsedData.alterados) {
-        await base44.entities.Produto.update(id, dados);
+      for (const { id, dados, isNew } of parsedData.alterados) {
+        if (isNew) {
+          await base44.entities.Produto.create(dados);
+        } else {
+          await base44.entities.Produto.update(id, dados);
+        }
       }
       setSalvouOk(true);
       setParsedData(null);

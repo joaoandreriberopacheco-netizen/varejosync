@@ -55,6 +55,7 @@ import AutoAtendimento from './pages/AutoAtendimento';
 import CaixasAtivos from './pages/CaixasAtivos';
 import Campanhas from './pages/Campanhas';
 import Compras from './pages/Compras';
+import ConferenciaEditor from './pages/ConferenciaEditor';
 import ConferenciaEntrada from './pages/ConferenciaEntrada';
 import ConferenciaEstoque from './pages/ConferenciaEstoque';
 import ConferenciaItens from './pages/ConferenciaItens';
@@ -102,7 +103,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import ConferenciaEditor from './pages/ConferenciaEditor';
 import __Layout from './Layout.jsx';
 
 
@@ -115,6 +115,7 @@ export const PAGES = {
     "CaixasAtivos": CaixasAtivos,
     "Campanhas": Campanhas,
     "Compras": Compras,
+    "ConferenciaEditor": ConferenciaEditor,
     "ConferenciaEntrada": ConferenciaEntrada,
     "ConferenciaEstoque": ConferenciaEstoque,
     "ConferenciaItens": ConferenciaItens,
@@ -162,7 +163,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "ConferenciaEditor": ConferenciaEditor,
 }
 
 export const pagesConfig = {
