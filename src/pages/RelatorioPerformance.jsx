@@ -122,7 +122,24 @@ const RelatorioPerformance = ({ dados, onClose }) => {
                   {tipo === 'SKU' ? 'Unidade' : 'Nível'}
                 </span>
               </div>
-              
+
+              {/* Contexto de Negócio: Categoria + Lucro 90d */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded p-3 mb-4 print:bg-white print:border-gray-200">
+                <div className="flex justify-between items-baseline text-xs print:text-gray-700">
+                  <span>
+                    <span className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Categoria:</span>
+                    <span className="text-gray-900 dark:text-white font-bold ml-2">{categoria}</span>
+                  </span>
+                  <span>
+                    <span className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Lucro 90d:</span>
+                    <span className="text-gray-900 dark:text-white font-bold ml-2 font-mono">
+                      R$ {lucro90dias.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Classe + IEP */}
               <div className="flex gap-3 bg-gray-50 dark:bg-gray-800/50 p-4 rounded border border-gray-100 dark:border-gray-700">
                 <div className="flex-1 text-center border-r border-gray-200 dark:border-gray-700">
                   <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Classe</p>
