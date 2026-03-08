@@ -33,34 +33,34 @@ const RelatorioPerformance = ({ dados, onClose }) => {
 
     if (classe === 'A' && iep >= 70) {
       return {
-        titulo: 'O GENERAL',
-        texto: 'Item de elite que sustenta a empresa. Domina faturamento e margem com máxima eficiência. Use este volume para extrair prazo extra e desconto estruturado do fornecedor. Capa importante para negociação estratégica.'
+        titulo: 'DESTAQUE ESTRATÉGICO',
+        texto: 'Item de topo que sustenta a lucratividade. Alto faturamento aliado à margem eficiente. Aproveite este volume para renegociar prazos e condições com fornecedores. Proteja o estoque e invista em visibilidade.'
       };
     }
     if (classe === 'A' && iep < 50) {
       return {
-        titulo: 'GIGANTE AVARIADO',
-        texto: 'Alto volume, mas motor engasgado na margem. Exigir desconto urgente do fornecedor ou revisão de mix de compra. Risco potencial de sangragem de caixa. Priorize renegociação.'
+        titulo: 'VOLUME COM MARGEM CRÍTICA',
+        texto: 'Alto volume, mas margem comprimida. Ação urgente: renegociar desconto com fornecedor ou revisar mix de compra. Risco de impacto no caixa. Priorize renegociação comercial.'
       };
     }
     if ((classe === 'C' || classe === 'D') && iep >= 70) {
       return {
-        titulo: 'ESTRELA EM ASCENSÃO',
-        texto: 'Vende pouco, mas margem e giro impecáveis. Dar mais exposição, aumentar investimento em PDV e campanhas. Potencial de crescimento fora da curva. Blindar estoque para oportunidade.'
+        titulo: 'OPORTUNIDADE EM CRESCIMENTO',
+        texto: 'Baixo volume, mas métricas operacionais excelentes. Recomendação: aumentar exposição, investir em marketing e PDV. Grande potencial de escalabilidade. Garanta disponibilidade em estoque.'
       };
     }
     if ((classe === 'C' || classe === 'D') && iep < 50) {
       return {
-        titulo: 'PESO MORTO',
-        texto: 'Volume inexpressivo e eficiência baixa. Descontinuar rapidamente. Libera espaço e capital de giro para itens que geram retorno real.'
+        titulo: 'REVISÃO URGENTE NECESSÁRIA',
+        texto: 'Volume baixo e eficiência insuficiente. Recomendação: analisar descontinuação. Libera espaço e capital de giro para itens com melhor retorno operacional.'
       };
     }
     if (classe === 'B') {
       return {
-        titulo: 'COLUNA VERTEBRAL',
+        titulo: 'EIXO OPERACIONAL',
         texto: iep >= 70 
-          ? 'Sustém a operação com equilíbrio de volume e eficiência. Manter rigor em estoque e operação. Potencial de upgrade para Classe A.'
-          : 'Representa volume médio com eficiência limitada. Revisar precificação e análise competitiva. Candidato a otimização ou descontinuação.'
+          ? 'Item intermediário com bom equilíbrio volume-eficiência. Manter disciplina em estoque e precificação. Potencial para promoção para Classe A com ações pontuais.'
+          : 'Volume intermediário com eficiência comprometida. Revisar precificação e competitividade. Candidato a otimização ou descontinuação conforme resultado.'
       };
     }
 
