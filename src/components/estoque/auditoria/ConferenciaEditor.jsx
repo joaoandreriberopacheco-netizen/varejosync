@@ -206,18 +206,18 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
             />
           </div>
           {produtosFiltrados.length > 0 && (
-            <div className="absolute top-full left-4 right-4 z-30 mt-1 bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto">
-              <div className="divide-y divide-gray-800">
+            <div className="absolute top-full left-4 right-4 z-30 mt-1 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto border border-gray-100 dark:border-gray-800">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {produtosFiltrados.map(prod => {
                   const nome = prod.nome || [prod.campo_hierarquico_1, prod.campo_hierarquico_2, prod.campo_hierarquico_3].filter(Boolean).join(" ");
                   const contagens = itens.filter(i => i.produto_id === prod.id);
                   const totalContado = contagens.reduce((s, i) => s + (i.quantidade_contada || 0), 0);
                   return (
-                    <button key={prod.id} onClick={() => selecionarProduto(prod)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-800 transition-colors">
+                    <button key={prod.id} onClick={() => selecionarProduto(prod)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{nome}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{nome}</p>
                         {(prod.codigo_interno || prod.codigo_barras) && (
-                          <p className="text-xs text-gray-600">{prod.codigo_interno || prod.codigo_barras}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-600">{prod.codigo_interno || prod.codigo_barras}</p>
                         )}
                       </div>
                       {contagens.length > 0 && (
