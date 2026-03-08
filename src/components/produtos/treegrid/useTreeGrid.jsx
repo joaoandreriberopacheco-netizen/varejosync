@@ -122,22 +122,21 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     const isLeafGroup = Object.keys(finalNode.children).length === 0;
     const isRoot      = visualLevel === 0;
 
-    // Achatamento Agressivo: sub-grupos leaf (não raiz) omitem cabeçalho,
-    // os SKUs aparecem diretamente no nível do pai
+    // Achatamento Agressivo: sub-grupos leaf (não raiz) omitem cabeçalho —
+    // função só é chamada recursivamente quando o pai está expandido, logo
+    // não precisamos revalidar expandedKeys aqui.
     if (!isRoot && isLeafGroup) {
-      if (expandedKeys.has(parentKey) || parentKey === '') {
-        for (const sku of finalNode.skus) {
-          rows.push({
-            type:    'sku',
-            key:     sku.id,
-            produto: sku,
-            level:   rowLevel,
-            lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
-            margem:  sku.preco_venda_padrao > 0
-              ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
-              : 0,
-          });
-        }
+      for (const sku of finalNode.skus) {
+        rows.push({
+          type:    'sku',
+          key:     sku.id,
+          produto: sku,
+          level:   rowLevel,
+          lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
+          margem:  sku.preco_venda_padrao > 0
+            ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
+            : 0,
+        });
       }
       continue;
     }
