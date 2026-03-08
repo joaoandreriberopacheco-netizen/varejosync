@@ -1,3 +1,4 @@
+
 // Configuração central de colunas para exportação/importação
 // editavel: true = célula desbloqueada no Excel + campo incluído no diff
 // tipo: 'string' | 'numero' | 'boolean'
@@ -19,7 +20,7 @@ export const COLUNAS_CONFIG = [
   { key: 'marca',                   label: 'Marca',                 editavel: true,  width: 16, tipo: 'string' },
   { key: 'tipo',                    label: 'Tipo',                  editavel: true,  width: 12, tipo: 'string' },
 
-  // --- Categorização (IDs bloqueados, nomes editáveis para referência) ---
+  // --- Categorização ---
   { key: 'categoria_nome',          label: 'Categoria',             editavel: true,  width: 20, tipo: 'string' },
   { key: 'area_codigo',             label: 'Área',                  editavel: true,  width: 14, tipo: 'string' },
 
