@@ -1237,8 +1237,8 @@ export default function ProdutosPage() {
       <div className="flex-1 overflow-hidden w-full min-w-0">
         <div className="h-full w-full min-w-0 px-3 md:px-4 pb-4">
           <div className="h-full flex flex-col">
-            {/* Contador + Botão Colunas */}
-            <div className="flex items-center justify-between py-2 flex-none">
+            {/* Painel de Comando Fixo — NÃO rola com a tabela */}
+            <div className="flex items-center justify-between py-2 flex-none flex-wrap gap-2">
               <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-3">
                 <span>{filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''}</span>
                 {filteredProdutos.length > 0 && (
@@ -1255,18 +1255,18 @@ export default function ProdutosPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="dark:bg-gray-800 dark:border-gray-700">
-                        <DropdownMenuItem onClick={() => setSortOrder('az')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                          A → Z
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortOrder('za')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                          Z → A
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortOrder('az')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">A → Z</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSortOrder('za')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">Z → A</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </>
                 )}
               </div>
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 flex-wrap">
+                {/* Seletor de Nível — só aparece no Tree Grid */}
+                {viewMode === 'dinamica' && (
+                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
+                )}
                 {/* Toggle Tabela Dinâmica / Plana */}
                 <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded p-0.5 gap-0.5">
                   <button
