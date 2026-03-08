@@ -160,9 +160,9 @@ const RelatorioPerformance = ({ dados, onClose }) => {
               <div className="space-y-3 print:space-y-2">
                 {/* Potencial */}
                 <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <div className="flex-1">
+                  <div>
                     <span className="font-bold text-gray-700 dark:text-gray-300">Potencial (Margem)</span>
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">média: {pilares.margem.mediaCat}</span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-2">vs {pilares.margem.mediaCat}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.margem.valorReal}</span>
@@ -171,9 +171,9 @@ const RelatorioPerformance = ({ dados, onClose }) => {
                 </div>
                 {/* Cinética */}
                 <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <div className="flex-1">
+                  <div>
                     <span className="font-bold text-gray-700 dark:text-gray-300">Cinética (Frequência)</span>
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">média: {pilares.giro.mediaCat}</span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-2">vs {pilares.giro.mediaCat}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.giro.valorReal}</span>
@@ -182,9 +182,9 @@ const RelatorioPerformance = ({ dados, onClose }) => {
                 </div>
                 {/* Magnética */}
                 <div className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 dark:border-gray-700 pb-2">
-                  <div className="flex-1">
+                  <div>
                     <span className="font-bold text-gray-700 dark:text-gray-300">Magnética (Anexação)</span>
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-2">média: {pilares.anexacao.mediaCat}</span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 ml-2">vs {pilares.anexacao.mediaCat}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-xs text-gray-500 dark:text-gray-400 mr-2">{pilares.anexacao.valorReal}</span>
@@ -199,8 +199,8 @@ const RelatorioPerformance = ({ dados, onClose }) => {
               <h3 className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 mb-2 text-gray-400 dark:text-gray-500 print:text-gray-600">
                 <BrainCircuit className="w-4 h-4" /> Diagnóstico do Sistema
               </h3>
-              <p className="font-bold text-sm mb-1 uppercase print:text-gray-900">{insight.titulo}</p>
-              <p className="text-xs leading-relaxed opacity-90 print:text-gray-700">{insight.texto}</p>
+              <p className="font-bold text-sm mb-1 uppercase print:text-gray-900">{diagnostico.titulo}</p>
+              <p className="text-xs leading-relaxed opacity-90 print:text-gray-700">{diagnostico.texto}</p>
             </div>
 
             {/* Filtro IQR */}
