@@ -9,8 +9,9 @@ import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
 import DecomposicaoIEP from '@/components/relatorios/DecomposicaoIEP';
 
 export default function RelatoriosPage() {
+  const [showSeletor, setShowSeletor] = useState(false);
   const [showRPP, setShowRPP] = useState(false);
-  const [rppModal, setRppModal] = useState(null);
+  const [dadosProdutoSelecionado, setDadosProdutoSelecionado] = useState(null);
   const relatoriosGerenciais = [
     { nome: "Relatório de Ponto de Equilíbrio", descricao: "Análise mensal do ponto de equilíbrio operacional" },
     { nome: "Índice de Eficiência Operacional", descricao: "Lucro bruto vs. investimento em compras" },
