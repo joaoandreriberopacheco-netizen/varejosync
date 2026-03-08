@@ -168,14 +168,15 @@ function GroupRow({ row, isExpanded, onToggle, activeCols }) {
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
 function SkuRow({ row, onEdit, activeCols }) {
   const p = row.produto;
-  const indent = (row.level - 1) * INDENT;
+  // Todos os SKUs têm indentação fixa — alinhamento uniforme independente da profundidade
+  const skuPaddingLeft = INDENT_SKU;
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
       {/* Célula fixa — Marco 0: Imagem + Status dot + Nome + Código */}
       <td
         className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 border-r border-gray-100 dark:border-gray-800"
-        style={{ paddingLeft: 8 + indent, paddingRight: 8, minWidth: 220 }}
+        style={{ paddingLeft: skuPaddingLeft, paddingRight: 8, minWidth: 220 }}
       >
         <div className="flex items-center gap-2 min-w-0">
           {/* Imagem — Marco 0 */}
