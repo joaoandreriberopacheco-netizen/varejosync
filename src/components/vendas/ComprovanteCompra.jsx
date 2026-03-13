@@ -52,11 +52,36 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           {`
             /* Deixamos o tamanho da página em "auto" para que a impressora decida (A4 ou 80mm) */
             @page { margin: 0.5cm; size: auto; }
-            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { 
+              margin: 0; 
+              padding: 0; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact;
+              color: #000 !important;
+            }
             body * { visibility: hidden; }
             #area-comprovante, #area-comprovante * { visibility: visible; }
             /* O container ocupa 100% da largura do papel que a impressora fornecer */
             #area-comprovante { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+            
+            /* Força preto em todos os textos na impressão */
+            * {
+              color: #000 !important;
+            }
+            /* Aumenta peso da fonte para impressão nítida */
+            h1, h2, h3 {
+              font-weight: 900 !important;
+            }
+            .font-semibold, .font-bold {
+              font-weight: 800 !important;
+            }
+            .font-black {
+              font-weight: 900 !important;
+            }
+            /* Bordas pretas sólidas */
+            .border-gray-200, .border-gray-400, .border-black {
+              border-color: #000 !important;
+            }
           `}
         </style>
 
