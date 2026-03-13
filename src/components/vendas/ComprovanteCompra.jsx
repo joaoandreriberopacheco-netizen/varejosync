@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
-  const printedRef = React.useRef(false);
+  const printedRef = useRef(false);
 
   useEffect(() => {
     if (open && !printedRef.current) {
