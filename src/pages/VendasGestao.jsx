@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Printer } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, X } from 'lucide-react';
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
@@ -37,6 +37,7 @@ export default function VendasGestaoPage() {
   const [showAlterarPagamento, setShowAlterarPagamento] = useState(false);
   const [showComprovante, setShowComprovante] = useState(false);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
+  const [showFiltros, setShowFiltros] = useState(false);
   const [stats, setStats] = useState({
     orcamentos: 0,
     aprovados: 0,
@@ -216,8 +217,8 @@ export default function VendasGestaoPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
-      {/* Header glacial */}
-      <div className="flex items-start justify-between gap-3">
+      {/* Header limpo */}
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Gestão de Vendas</h1>
           <p className="text-xs text-gray-400 dark:text-gray-500">Orçamentos, pedidos e acompanhamento</p>
@@ -235,113 +236,136 @@ export default function VendasGestaoPage() {
         </div>
       </div>
 
-      {/* KPIs glacial */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
-          <p className="text-[11px] text-gray-400 mb-1">Orçamentos</p>
-          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{stats.orcamentos}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
-          <p className="text-[11px] text-gray-400 mb-1">Aprovados</p>
-          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{stats.aprovados}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
-          <p className="text-[11px] text-gray-400 mb-1">Finalizados</p>
-          <div className="text-2xl font-semibold text-gray-800 dark:text-gray-100">{stats.finalizados}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
-          <p className="text-[11px] text-gray-400 mb-1">Faturamento do Mês</p>
-          <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">R$ {formatValor(stats.totalMes)}</div>
-        </div>
-      </div>
-
-      {/* Abas */}
-      <GlacialTabsList className="max-w-xs">
-        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Rascunhos" icon={FileText} />
-        <GlacialTabsTrigger value="pedidos"   activeValue={activeTab} onSelect={setActiveTab} label="Pedidos"   icon={ShoppingCart} />
-      </GlacialTabsList>
-      <div>
-
-        {activeTab === 'rascunhos' && (
-        <div className="space-y-6">
-          {/* Filtros para Rascunhos */}
-          <div className="space-y-3">
-        {/* Linha 1: Busca e Status */}
-        <div className="flex items-center gap-3">
+      {/* Barra de Busca com Filtro */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input 
-              placeholder="Nº ou cliente..." 
-              className="pl-6 bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none focus:border-gray-400 h-9 text-sm" 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por número, cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 h-11 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl"
             />
           </div>
-          <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-            <SelectTrigger className="w-[120px] bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-9 text-sm">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-              <SelectItem value="todos">Todos</SelectItem>
-              {activeTab === 'rascunhos' ? (
-                <>
-                  <SelectItem value="Criado">Criado</SelectItem>
-                  <SelectItem value="Em Edição">Em Edição</SelectItem>
-                  <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                  <SelectItem value="Retornado para Edição">Retornado</SelectItem>
-                  <SelectItem value="Convertido">Convertido</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  <SelectItem value="Expirado">Expirado</SelectItem>
-                </>
-              ) : (
-                <>
-                  <SelectItem value="Orçamento">Orçamento</SelectItem>
-                  <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-                  <SelectItem value="Aguardando Aprovação">Ag. Aprovação</SelectItem>
-                  <SelectItem value="Aguardando Pagamento">Ag. Pagamento</SelectItem>
-                  <SelectItem value="Aprovado">Aprovado</SelectItem>
-                  <SelectItem value="Pronto para Expedição">Expedição</SelectItem>
-                  <SelectItem value="Finalizado">Finalizado</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
-                </>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Linha 2: Período e Botão */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <Input
-            type="date"
-            value={dataInicio}
-            onChange={(e) => setDataInicio(e.target.value)}
-            className="w-[110px] md:w-[130px] border-0 border-b border-gray-200 dark:border-gray-700 rounded-none text-sm h-9 bg-transparent"
-          />
-          <span className="text-gray-400 text-sm">-</span>
-          <Input
-            type="date"
-            value={dataFim}
-            onChange={(e) => setDataFim(e.target.value)}
-            className="w-[110px] md:w-[130px] border-0 border-b border-gray-200 dark:border-gray-700 rounded-none text-sm h-9 bg-transparent"
-          />
-          {(dataInicio || dataFim) && (
-            <Button variant="ghost" size="sm" onClick={() => { setDataInicio(''); setDataFim(''); }} className="h-8 px-2 text-xs">
-              Limpar
-            </Button>
-          )}
-          <Button onClick={handleAddNew} variant="outline" size="sm" className="gap-1 h-9 px-3 text-sm ml-auto border-gray-300 dark:border-gray-600">
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Novo Pedido</span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 rounded-xl border-gray-200 dark:border-gray-700"
+            onClick={() => setShowFiltros(!showFiltros)}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Contagem */}
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 pt-2">
-          <span>{quantidadeFiltrada} pedido(s)</span>
-          <span className="font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
-        </div>
+        {/* Painel de Filtros Expansível */}
+        {showFiltros && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 space-y-3 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
+              <button onClick={() => setShowFiltros(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Tipo de Pedido */}
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Tipo</label>
+              <GlacialTabsList className="w-full">
+                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Rascunhos" icon={FileText} />
+                <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
+              </GlacialTabsList>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
+              <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+                <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {activeTab === 'rascunhos' ? (
+                    <>
+                      <SelectItem value="Criado">Criado</SelectItem>
+                      <SelectItem value="Em Edição">Em Edição</SelectItem>
+                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
+                      <SelectItem value="Convertido">Convertido</SelectItem>
+                      <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="Orçamento">Orçamento</SelectItem>
+                      <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
+                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
+                      <SelectItem value="Em Separação">Em Separação</SelectItem>
+                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
+                      <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Período */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">De</label>
+                <Input
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                  className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Até</label>
+                <Input
+                  type="date"
+                  value={dataFim}
+                  onChange={(e) => setDataFim(e.target.value)}
+                  className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                />
+              </div>
+            </div>
+
+            {/* Botões */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFiltro('todos');
+                  setDataInicio('');
+                  setDataFim('');
+                }}
+              >
+                Limpar
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => setShowFiltros(false)}
+              >
+                Aplicar
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
+
+      <div>
+
+        {activeTab === 'rascunhos' && (
+        <div className="space-y-4">
+          {/* Total no topo */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-gray-400">{quantidadeFiltrada} pedido(s)</span>
+            <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
+          </div>
 
           {/* Lista de Rascunhos */}
           <div>
@@ -433,11 +457,7 @@ export default function VendasGestaoPage() {
               </Table>
             </div>
 
-            {/* Subtotal */}
-            <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-sm text-gray-500">Subtotal ({quantidadeFiltrada})</span>
-              <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
-            </div>
+
           </>
         )}
         </div>
@@ -445,71 +465,12 @@ export default function VendasGestaoPage() {
         )}
 
         {activeTab === 'pedidos' && (
-        <div className="space-y-6">
-          {/* Filtros para Pedidos */}
-          <div className="space-y-3">
-        {/* Linha 1: Busca e Status */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input 
-              placeholder="Nº ou cliente..." 
-              className="pl-6 bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none focus:border-gray-400 h-9 text-sm" 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-            />
+        <div className="space-y-4">
+          {/* Total no topo */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-gray-400">{quantidadeFiltrada} pedido(s)</span>
+            <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
           </div>
-          <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-            <SelectTrigger className="w-[120px] bg-transparent border-0 border-b border-gray-200 dark:border-gray-700 rounded-none h-9 text-sm">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-              <SelectItem value="todos">Todos</SelectItem>
-              <SelectItem value="Orçamento">Orçamento</SelectItem>
-              <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
-              <SelectItem value="Aguardando Aprovação">Ag. Aprovação</SelectItem>
-              <SelectItem value="Aguardando Pagamento">Ag. Pagamento</SelectItem>
-              <SelectItem value="Aprovado">Aprovado</SelectItem>
-              <SelectItem value="Pronto para Expedição">Expedição</SelectItem>
-              <SelectItem value="Finalizado">Finalizado</SelectItem>
-              <SelectItem value="Cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Linha 2: Período e Botão */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <Input
-            type="date"
-            value={dataInicio}
-            onChange={(e) => setDataInicio(e.target.value)}
-            className="w-[110px] md:w-[130px] border-0 border-b border-gray-200 dark:border-gray-700 rounded-none text-sm h-9 bg-transparent"
-          />
-          <span className="text-gray-400 text-sm">-</span>
-          <Input
-            type="date"
-            value={dataFim}
-            onChange={(e) => setDataFim(e.target.value)}
-            className="w-[110px] md:w-[130px] border-0 border-b border-gray-200 dark:border-gray-700 rounded-none text-sm h-9 bg-transparent"
-          />
-          {(dataInicio || dataFim) && (
-            <Button variant="ghost" size="sm" onClick={() => { setDataInicio(''); setDataFim(''); }} className="h-8 px-2 text-xs">
-              Limpar
-            </Button>
-          )}
-          <Button onClick={handleAddNew} variant="outline" size="sm" className="gap-1 h-9 px-3 text-sm ml-auto border-gray-300 dark:border-gray-600">
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Novo Pedido</span>
-          </Button>
-        </div>
-
-        {/* Contagem */}
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 pt-2">
-          <span>{quantidadeFiltrada} pedido(s)</span>
-          <span className="font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
-        </div>
-      </div>
 
           {/* Lista de Pedidos */}
           <div>
@@ -626,11 +587,7 @@ export default function VendasGestaoPage() {
               </Table>
             </div>
 
-            {/* Subtotal Pedidos */}
-            <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-sm text-gray-500">Subtotal ({quantidadeFiltrada})</span>
-              <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
-            </div>
+
           </>
         )}
         </div>
