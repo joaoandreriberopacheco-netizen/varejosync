@@ -1,15 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, Share2, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
+  // O "Cadeado" para impedir ordens de impressão sobrepostas no navegador
+  const jaImprimiu = useRef(false);
+
   useEffect(() => {
-    if (open) {
+    if (open && !jaImprimiu.current) {
+      jaImprimiu.current = true;
       setTimeout(() => {
         window.print();
       }, 500);
+    } else if (!open) {
+      jaImprimiu.current = false;
     }
   }, [open]);
 
@@ -43,29 +49,46 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center">
+      <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center print:bg-transparent print:shadow-none print:border-none">
         
-        {/* CSS ESTRITO PARA 72MM (ÁREA ÚTIL DE IMPRESSÃO) */}
+        {/* A VACINA CONTRA O "EFEITO CARIMBO" */}
         <style type="text/css">
           {`
             @media print {
               @page { margin: 0; size: auto; }
-              body { margin: 0; background: transparent; }
-              body * { visibility: hidden; }
-              #area-comprovante, #area-comprovante * { visibility: visible; }
-              /* 270px equivale aos 72mm de área útil da cabeça de impressão */
-              #area-comprovante { position: absolute; left: 0; top: 0; width: 270px; padding: 0; box-shadow: none !important; background: transparent !important; }
+              
+              /* 1. MATA AS PÁGINAS EXTRAS: Apaga o site de fundo (React Root) */
+              #root, #__next { display: none !important; }
+              
+              /* 2. MATA O CARIMBO: Remove a posição "Fixa" do Dialog para ele não se repetir */
+              div[role="dialog"] {
+                position: relative !important;
+                transform: none !important;
+                top: 0 !important;
+                left: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+              }
+
+              /* 3. Garante o tamanho exato de 72mm */
+              #area-comprovante {
+                width: 270px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+
               .no-print { display: none !important; }
             }
 
             /* Estilos Globais do Cupom */
             .cupom-termico {
-              width: 270px; /* Reduzido para 72mm */
+              width: 270px; /* Layout congelado em 72mm */
               background: #fff;
               color: #000;
               font-family: Arial, sans-serif;
-              font-size: 11px; /* Fonte base reduzida para caber nos 72mm */
-              padding: 8px; /* Margens internas menores */
+              font-size: 11px;
+              padding: 5px;
               margin: 20px auto;
               line-height: 1.2;
             }
@@ -76,7 +99,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             .bold { font-weight: bold; }
             
             .linha-separadora {
-              border-bottom: 1px solid #000;
+              border-bottom: 1px dashed #000; /* Tracejado imprime melhor em algumas térmicas */
               margin: 4px 0;
             }
 
@@ -87,9 +110,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               margin: 4px 0;
             }
             .tabela-itens th {
-              font-weight: normal;
-              border-top: 1px solid #000;
-              border-bottom: 1px solid #000;
+              font-weight: bold;
+              border-top: 1px dashed #000;
+              border-bottom: 1px dashed #000;
               padding: 2px 0;
               text-align: right;
             }
@@ -106,22 +129,28 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             /* Grid de Totais */
             .grid-totais {
               display: grid;
-              grid-template-columns: 1fr 65px; /* Ajustado para os 72mm */
+              grid-template-columns: 1fr 65px;
               row-gap: 3px;
             }
             .grid-totais > div:nth-child(odd) {
               text-align: right;
-              padding-right: 10px; /* Menos espaço para não empurrar os números */
+              padding-right: 10px;
             }
             .grid-totais > div:nth-child(even) {
               text-align: right;
             }
+
+            .flex-linha {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 2px;
+            }
           `}
         </style>
 
-        <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8">
+        <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8 print:max-h-none print:overflow-visible print:pb-0">
           
-          <div className="flex gap-2 my-4 no-print w-[270px] justify-end flex-wrap">
+          <div className="flex gap-2 my-4 w-[270px] justify-end flex-wrap print:hidden">
             <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
               <Share2 className="w-4 h-4 mr-1" /> Partilhar
             </Button>
@@ -134,7 +163,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           </div>
 
           {/* ÁREA DE IMPRESSÃO - LAYOUT 72MM */}
-          <div id="area-comprovante" className="cupom-termico shadow-lg">
+          <div id="area-comprovante" className="cupom-termico shadow-lg print:shadow-none">
             
             <div className="t-center">
               <h2 className="bold" style={{ fontSize: '16px', margin: '2px 0', textTransform: 'uppercase' }}>VAREJOSYNC</h2>
@@ -149,7 +178,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+            <div className="flex-linha">
               <div style={{ width: '45%' }}>
                 <div>Data:</div>
                 <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')}</div>
@@ -162,7 +191,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="flex-linha">
               <div style={{ width: '45%' }}>
                 <div>Hora:</div>
                 <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'HH:mm')}</div>
@@ -231,13 +260,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             <div className="bold" style={{ marginTop: '6px', fontSize: '10px', textTransform: 'uppercase' }}>Método de Pagamento</div>
             {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
               pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '2px' }}>
+                <div key={idx} className="flex-linha" style={{ fontSize: '10px', marginTop: '2px' }}>
                   <div className="uppercase">{pag.forma_pagamento}</div>
                   <div>R$ {formatValor(pag.valor)}</div>
                 </div>
               ))
             ) : (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '2px' }}>
+              <div className="flex-linha" style={{ fontSize: '10px', marginTop: '2px' }}>
                 <div>A DEFINIR / DINHEIRO</div>
                 <div>R$ {formatValor(pedido.valor_total)}</div>
               </div>
