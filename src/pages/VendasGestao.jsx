@@ -27,8 +27,8 @@ export default function VendasGestaoPage() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
+
+
   const [showDetalhes, setShowDetalhes] = useState(false);
   const [pedidoDetalhes, setPedidoDetalhes] = useState(null);
   const [activeTab, setActiveTab] = useState('pedidos');
@@ -161,22 +161,9 @@ export default function VendasGestaoPage() {
     : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
   const quantidadeFiltrada = activeTab === 'pedidos' ? pedidosFiltrados.length : rascunhosFiltrados.length;
 
-  const handleSave = async (data) => {
-    setIsLoading(true);
-    if (data.id) {
-      await base44.entities.PedidoVenda.update(data.id, data);
-    } else {
-      const allPOs = await base44.entities.PedidoVenda.list();
-      const nextNumber = (allPOs.length > 0 ? Math.max(...allPOs.map(p => parseInt(p.numero?.split('-')[1] || 0))) : 0) + 1;
-      await base44.entities.PedidoVenda.create({ ...data, numero: `PV-${String(nextNumber).padStart(5, '0')}` });
-    }
-    loadPedidos();
-    // setIsFormOpen(false); // Mantendo aberto para feedback
-  };
-
   const handleEdit = (pedido) => {
-    setPedidoSelecionado(pedido);
-    setIsFormOpen(true);
+    // Navegar para edição ou abrir modal conforme necessário
+    console.log('Editar pedido:', pedido);
   };
 
   const handleVerDetalhes = (pedido) => {
@@ -589,18 +576,6 @@ export default function VendasGestaoPage() {
         </div>
         )}
       </div>
-
-      {/* Dialog de Formulário */}
-      {isFormOpen && (
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          {/* DialogContent is implicitly handled by PedidoVendaForm as it wraps itself in a DialogContent */}
-          <PedidoVendaForm
-            pedido={pedidoSelecionado}
-            onSave={handleSave}
-            onClose={() => setIsFormOpen(false)}
-          />
-        </Dialog>
-      )}
 
       {/* Dialogs de operações */}
       <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
