@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
-import { User, LogOut, Settings, Sun, Moon, X } from 'lucide-react';
+import { User, LogOut, Settings, Sun, Moon, X, Printer, Trash2, HelpCircle, MoreVertical } from 'lucide-react';
 
 export default function MobileUserMenu({ darkMode, toggleDarkMode }) {
   const [open, setOpen] = useState(false);
@@ -82,6 +82,35 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode }) {
                   {darkMode ? 'Modo Claro' : 'Modo Escuro'}
                 </span>
               </button>
+
+              {/* Reimpressão */}
+              <button
+                onClick={() => { window.location.href = createPageUrl('ReimpressaoDocumentos'); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Printer className="w-5 h-5 text-gray-500" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">Reimpressão</span>
+              </button>
+
+              {/* Excluir Documentos */}
+              <button
+                onClick={() => { window.location.href = createPageUrl('ExclusaoDocumentos'); setOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Trash2 className="w-5 h-5 text-gray-500" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">Excluir Documentos</span>
+              </button>
+
+              {/* Ajuda IA */}
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <HelpCircle className="w-5 h-5 text-gray-500" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">Ajuda (IA)</span>
+              </button>
+
+              {/* Divisor */}
+              <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
 
               {/* Configurações */}
               <button
