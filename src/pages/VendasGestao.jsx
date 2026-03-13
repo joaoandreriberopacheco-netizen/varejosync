@@ -6,10 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Printer } from 'lucide-react';
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
+import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
+import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,6 +35,8 @@ export default function VendasGestaoPage() {
   const [showDevolucao, setShowDevolucao] = useState(false); // unused, kept for safety
   const [showTroca, setShowTroca] = useState(false); // unused, kept for safety
   const [showAlterarPagamento, setShowAlterarPagamento] = useState(false);
+  const [showComprovante, setShowComprovante] = useState(false);
+  const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
   const [stats, setStats] = useState({
     orcamentos: 0,
     aprovados: 0,
@@ -177,6 +181,11 @@ export default function VendasGestaoPage() {
   const handleVerDetalhes = (pedido) => {
     setPedidoDetalhes(pedido);
     setShowDetalhes(true);
+  };
+
+  const handleReimprimir = (pedido) => {
+    setPedidoParaImprimir(pedido);
+    setShowComprovante(true);
   };
 
   const handleAddNew = () => {
@@ -551,6 +560,9 @@ export default function VendasGestaoPage() {
                         <DropdownMenuItem onClick={() => handleEdit(pedido)}>
                           <Edit className="w-4 h-4 mr-2" /> Editar
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleReimprimir(pedido)}>
+                          <Printer className="w-4 h-4 mr-2" /> Reimprimir
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -587,6 +599,9 @@ export default function VendasGestaoPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEdit(pedido)}>
                               <Edit className="w-4 h-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleReimprimir(pedido)}>
+                              <Printer className="w-4 h-4 mr-2" /> Reimprimir
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -647,6 +662,25 @@ export default function VendasGestaoPage() {
           setPedidoDetalhes(null);
         }}
       />
+
+      {/* Dialog de Reimpressão */}
+      {showComprovante && pedidoParaImprimir && (
+        <Dialog open={showComprovante} onOpenChange={setShowComprovante}>
+          <DialogContent className="max-w-md p-0">
+            {pedidoParaImprimir.tipo === 'Pedido' ? (
+              <ComprovantePreVenda
+                pedido={pedidoParaImprimir}
+                onClose={() => setShowComprovante(false)}
+              />
+            ) : (
+              <ComprovanteCompra
+                pedido={pedidoParaImprimir}
+                onClose={() => setShowComprovante(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
