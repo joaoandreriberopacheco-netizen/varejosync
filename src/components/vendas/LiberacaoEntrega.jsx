@@ -1,200 +1,257 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
-import QRCode from 'qrcode';
+import { format } from 'date-fns';
 
-export default function LiberacaoEntrega({ open, onClose, pedido, cliente }) {
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
-
-  useEffect(() => {
-    if (open && pedido?.id) {
-      QRCode.toDataURL(pedido.id, {
-        width: 150,
-        margin: 0,
-        color: { dark: '#000000', light: '#FFFFFF' }
-      }).then(url => {
-        setQrCodeUrl(url);
-      });
-    }
-  }, [open, pedido?.id]);
-
+export default function LiberacaoEntrega({ open, onClose, pedido }) {
+  
+  // Impressão Automática
   useEffect(() => {
     if (open) {
-      setTimeout(() => {
-        window.print();
-      }, 500);
+      setTimeout(() => window.print(), 500);
     }
   }, [open]);
 
+  if (!pedido) return null;
+
+  // Formatação de Valores
   const formatValor = (valor) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor || 0);
+    const num = parseFloat(valor) || 0;
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  if (!pedido) return null;
+  // Ordenação Alfabética dos Itens
+  const itensOrdenados = pedido.itens ? [...pedido.itens].sort((a, b) => {
+    const nomeA = a.produto_nome || '';
+    const nomeB = b.produto_nome || '';
+    return nomeA.localeCompare(nomeB);
+  }) : [];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl p-0 bg-gray-100 flex justify-center overflow-hidden max-h-[95vh]">
+      <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center">
         
-        {/* Estilos de Impressão Fluida */}
-        <style type="text/css" media="print">
+        {/* CSS ESTRITO PARA IMPRESSÃO TÉRMICA (80mm) */}
+        <style type="text/css">
           {`
-            @page { margin: 0; size: auto; }
-            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body * { visibility: hidden; }
-            #area-liberacao, #area-liberacao * { visibility: visible; }
-            /* Na impressora, tira o padding para aproveitar os 80mm na totalidade */
-            #area-liberacao { position: absolute; left: 0; top: 0; width: 100%; padding: 3mm; }
+            @media print {
+              @page { margin: 0; size: auto; }
+              body { margin: 0; background: transparent; }
+              body * { visibility: hidden; }
+              #area-liberacao, #area-liberacao * { visibility: visible; }
+              #area-liberacao { position: absolute; left: 0; top: 0; width: 300px; padding: 0; box-shadow: none !important; }
+              .no-print { display: none !important; }
+            }
+
+            /* Estilos Globais do Cupom */
+            .cupom-termico {
+              width: 300px;
+              background: #fff;
+              color: #000;
+              font-family: Arial, sans-serif;
+              font-size: 12px;
+              padding: 10px;
+              margin: 20px auto;
+              line-height: 1.2;
+            }
+
+            .t-center { text-align: center; }
+            .t-right { text-align: right; }
+            .t-left { text-align: left; }
+            .bold { font-weight: bold; }
+            
+            .linha-separadora {
+              border-bottom: 1px solid #000;
+              margin: 5px 0;
+            }
+
+            /* Tabela de Produtos */
+            .tabela-itens {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 5px 0;
+            }
+            .tabela-itens th {
+              font-weight: normal;
+              border-top: 1px solid #000;
+              border-bottom: 1px solid #000;
+              padding: 3px 0;
+              text-align: right;
+            }
+            .tabela-itens td {
+              text-align: right;
+              vertical-align: top;
+              padding: 3px 0;
+            }
+            .tabela-itens th:first-child, .tabela-itens td:first-child {
+              text-align: left;
+              width: 50%;
+            }
+
+            /* Grid de Totais */
+            .grid-totais {
+              display: grid;
+              grid-template-columns: 1fr 70px;
+              row-gap: 3px;
+            }
+            .grid-totais > div:nth-child(odd) {
+              text-align: right;
+              padding-right: 15px;
+            }
+            .grid-totais > div:nth-child(even) {
+              text-align: right;
+            }
           `}
         </style>
 
-        {/* Área imprimível - Fundo branco, sem caixas arredondadas */}
-        <div 
-          id="area-liberacao"
-          className="bg-white w-full p-4 sm:p-8 font-sans text-gray-900 overflow-y-auto print:shadow-none"
-        >
-          {/* Botões (Visíveis apenas no ecrã) */}
-          <div className="flex justify-end gap-2 mb-4 print:hidden">
-            <Button onClick={() => window.print()} size="sm" className="h-8">
-              <Printer className="w-3 h-3 mr-2" /> Imprimir
+        <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8">
+          
+          {/* Botões de Ação (Apenas na Tela) */}
+          <div className="flex gap-2 my-4 no-print w-[300px] justify-end">
+            <Button onClick={() => window.print()} size="sm" className="h-8 bg-black text-white hover:bg-gray-800">
+              <Printer className="w-4 h-4 mr-2" /> Imprimir
             </Button>
-            <Button variant="outline" onClick={onClose} size="sm" className="h-8">
-              <X className="w-3 h-3 mr-1" /> Fechar
+            <Button variant="outline" onClick={onClose} size="sm" className="h-8 border-black text-black">
+              <X className="w-4 h-4 mr-1" /> Fechar
             </Button>
           </div>
 
-          {/* Cabeçalho */}
-          <div className="text-center pb-3 border-b-2 border-gray-800 mb-4">
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight uppercase">Liberação para Entrega</h1>
-            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-widest mt-1">Documento de Controle Interno</p>
-          </div>
-
-          {/* Secção de Dados (Layout Plano, estilo Talão) */}
-          <div className="flex flex-col sm:flex-row gap-6 mb-6">
+          {/* ÁREA DE IMPRESSÃO - O LAYOUT ALVO */}
+          <div id="area-liberacao" className="cupom-termico shadow-lg">
             
-            {/* Coluna de Info (Esquerda no A4, Topo no 80mm) */}
-            <div className="flex-1 text-xs sm:text-sm space-y-1.5">
-              
-              <div className="flex justify-between border-b border-gray-100 pb-1">
-                <span className="text-gray-500">Pedido:</span>
-                <span className="font-bold text-base">{pedido.numero}</span>
-              </div>
-              
-              {pedido.senha_atendimento && (
-                <div className="flex justify-between border-b border-gray-100 pb-1">
-                  <span className="text-gray-500">Senha:</span>
-                  <span className="font-bold">{pedido.senha_atendimento}</span>
-                </div>
-              )}
-              
-              <div className="flex justify-between border-b border-gray-100 pb-1">
-                <span className="text-gray-500">Data/Hora:</span>
-                <span>{new Date(pedido.created_date).toLocaleDateString('pt-BR')} às {new Date(pedido.created_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
-              
-              <div className="flex justify-between border-b border-gray-100 pb-1 mt-2">
-                <span className="text-gray-500">Cliente:</span>
-                <span className="font-bold truncate max-w-[200px]">{pedido.cliente_nome}</span>
-              </div>
-              
-              <div className="flex justify-between border-b border-gray-100 pb-1">
-                <span className="text-gray-500">Entrega:</span>
-                <span className="font-bold uppercase">
-                  {pedido.metodo_entrega === 'Delivery' ? '🚚 Delivery' : '🏪 Retirada no Balcão'}
-                </span>
-              </div>
-
-            </div>
-
-            {/* Coluna QR Code (Direita no A4, Fundo no 80mm) */}
-            <div className="w-full sm:w-48 flex flex-col items-center justify-center pt-2 sm:pt-0">
-              <span className="text-[10px] font-bold text-gray-800 mb-1 text-center">ESCANEIE PARA SEPARAR</span>
-              {qrCodeUrl && (
-                <img 
-                  src={qrCodeUrl} 
-                  alt="QR Code" 
-                  className="w-28 h-28 sm:w-32 sm:h-32 mb-1"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Itens do Pedido (Estilo ClipCareers + Talão) */}
-          <div className="mb-6">
-            <div className="bg-gray-100 text-[10px] sm:text-xs font-bold text-gray-600 uppercase px-2 py-1.5 flex justify-between mb-1">
-              <span>Qtd / Produto</span>
-              <span>Total</span>
+            <div className="t-right bold" style={{ fontSize: '11px', minHeight: '14px' }}>
+              {/* Espaço reservado para 'DUPLICADO' */}
             </div>
             
-            {pedido.itens?.map((item, idx) => (
-              <div key={idx} className="flex justify-between items-start py-2 border-b border-gray-100 print:break-inside-avoid px-1">
-                <div className="flex gap-2 min-w-0 pr-2">
-                  <span className="font-bold text-sm">{item.quantidade}x</span>
-                  <div className="flex flex-col">
-                    <span className="font-medium text-[12px] sm:text-sm break-words leading-tight">{item.produto_nome}</span>
-                    <span className="text-[10px] text-gray-500 mt-0.5">Unit: {formatValor(item.preco_unitario_praticado)}</span>
-                  </div>
-                </div>
-                <div className="font-bold text-[12px] sm:text-sm whitespace-nowrap">
-                  {formatValor(item.total)}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Totais */}
-          <div className="flex flex-col items-end text-xs sm:text-sm mb-8 pr-1">
-            <div className="w-full sm:w-1/2 space-y-1">
-              <div className="flex justify-between text-gray-500">
-                <span>Subtotal:</span>
-                <span>{formatValor(pedido.subtotal)}</span>
-              </div>
-              {pedido.valor_desconto > 0 && (
-                <div className="flex justify-between text-red-500">
-                  <span>Desconto:</span>
-                  <span>-{formatValor(pedido.valor_desconto)}</span>
-                </div>
-              )}
-              {pedido.valor_frete > 0 && (
-                <div className="flex justify-between text-gray-500">
-                  <span>Frete:</span>
-                  <span>{formatValor(pedido.valor_frete)}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-sm sm:text-base border-t border-gray-800 pt-1 mt-1">
-                <span>VALOR TOTAL:</span>
-                <span>{formatValor(pedido.valor_total)}</span>
+            {/* Cabeçalho da Empresa */}
+            <div className="t-center">
+              <h2 className="bold" style={{ fontSize: '16px', margin: '2px 0' }}>CASA ISRAEL</h2>
+              <div style={{ fontSize: '12px' }}>
+                <p>CARLOS FREDERICO FARIAS PACHECO</p>
+                <p>CN:84501063/0001_11</p>
+                <p>AV. AMIZADE # 2293</p>
+                <p>Teléfono: (97)3412-2845</p>
               </div>
             </div>
-          </div>
 
-          {/* Assinaturas / Controle */}
-          <div className="border-t-2 border-gray-800 pt-4 print:break-inside-avoid">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-              <div>
-                <p className="text-[10px] text-gray-500 mb-4">Separado por:</p>
-                <div className="border-b border-gray-400"></div>
+            <div className="linha-separadora"></div>
+
+            {/* Título do Documento */}
+            <div className="t-center bold" style={{ fontSize: '14px', margin: '6px 0' }}>
+              Liberação de Entrega Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || '36884'}
+            </div>
+
+            {/* Dados do Pedido */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+              <div style={{ width: '45%' }}>
+                <div>Fecha:</div>
+                <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')}</div>
               </div>
-              <div>
-                <p className="text-[10px] text-gray-500 mb-4">Data/Hora:</p>
-                <div className="border-b border-gray-400"></div>
-              </div>
-              <div className="sm:col-span-2 mt-2">
-                <p className="text-[10px] text-gray-500 mb-6">Assinatura do Recebedor:</p>
-                <div className="border-b border-gray-400"></div>
+              <div style={{ width: '55%', paddingLeft: '10px' }}>
+                <div>Caja:</div>
+                <div className="t-center uppercase" style={{ fontSize: '11px' }}>
+                  {pedido.cliente_nome?.substring(0, 15) || 'CAIXA CENTRAL'}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Rodapé */}
-          <div className="text-center text-[9px] text-gray-400 mt-6 pt-2">
-            <p>VarejoSync ERP</p>
-          </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '45%' }}>
+                <div>Hora:</div>
+                <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'HH:mm')}</div>
+              </div>
+              <div style={{ width: '55%', paddingLeft: '10px' }}>
+                <div>Vend.:</div>
+                <div className="t-center uppercase">{pedido.vendedor_nome?.substring(0, 15) || 'VENDEDOR'}</div>
+              </div>
+            </div>
 
+            {/* Tabela de Produtos */}
+            <table className="tabela-itens" style={{ marginTop: '10px' }}>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Cant.</th>
+                  <th>Val. U.</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itensOrdenados.map((item, idx) => (
+                  <tr key={idx}>
+                    <td style={{ fontSize: '10px', textTransform: 'uppercase' }}>
+                      {item.produto_nome?.substring(0, 22)}
+                    </td>
+                    <td>{formatValor(item.quantidade)}</td>
+                    <td>{formatValor(item.preco_unitario_praticado)}</td>
+                    <td>{formatValor(item.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="linha-separadora"></div>
+
+            {/* Totais */}
+            <div className="grid-totais">
+              <div>Subtotal</div>
+              <div>{formatValor(pedido.subtotal)}</div>
+              
+              <div>Descuento</div>
+              <div>{formatValor(pedido.valor_desconto || 0)}</div>
+            </div>
+
+            <div className="linha-separadora"></div>
+            
+            <div className="grid-totais bold" style={{ fontSize: '13px' }}>
+              <div>Total</div>
+              <div>${formatValor(pedido.valor_total)}</div>
+            </div>
+
+            <div className="linha-separadora"></div>
+
+            <div className="grid-totais bold">
+              <div>Troco</div>
+              <div>$0.00</div>
+            </div>
+
+            {/* Formas de Pagamento */}
+            <div className="bold" style={{ marginTop: '8px' }}>Formas de Pago :</div>
+            {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
+              pedido.pagamentos.map((pag, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '2px' }}>
+                  <div className="uppercase">{pag.forma_pagamento}</div>
+                  <div>{formatValor(pag.valor)}</div>
+                </div>
+              ))
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '2px' }}>
+                <div>Efectivo</div>
+                <div>{formatValor(pedido.valor_total)}</div>
+              </div>
+            )}
+
+            {/* Mensagem Padronizada de Rodapé */}
+            <div style={{ marginTop: '15px', fontSize: '12px' }}>
+              <p>PREZADO CLIENTE, ATENÇÃO!</p>
+              <br />
+              <p>* Entregas apenas com a apresentação</p>
+              <p>&nbsp;&nbsp;deste comprovante de compra.</p>
+              <p>* Não se faz devolução de dinheiro.</p>
+              <br />
+              <p>Muito obrigagado pela sua preferência!</p>
+              <br />
+              <p>Jesus te ama!</p>
+            </div>
+
+            {/* Linha de Assinatura Simples para Logística */}
+            <div className="t-center" style={{ marginTop: '25px' }}>
+              <div style={{ borderBottom: '1px solid #000', width: '80%', margin: '0 auto' }}></div>
+              <p style={{ fontSize: '10px', marginTop: '2px' }}>Assinatura Recebedor</p>
+            </div>
+
+          </div>
         </div>
       </DialogContent>
     </Dialog>
