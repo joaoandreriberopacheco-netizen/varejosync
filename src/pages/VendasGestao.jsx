@@ -189,11 +189,6 @@ export default function VendasGestaoPage() {
     setShowComprovante(true);
   };
 
-  const handleAddNew = () => {
-    setPedidoSelecionado(null);
-    setIsFormOpen(true);
-  };
-
   // getStatusBadge function is no longer used due to direct inline styling, but kept here for completeness
   // if Badge component was to be reintroduced. For this exact change, it could be removed.
   const getStatusBadge = (status) => {
@@ -213,6 +208,11 @@ export default function VendasGestaoPage() {
   const formatValor = (valor) => {
     const num = parseFloat(valor) || 0;
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const handleAddNew = () => {
+    setPedidoSelecionado(null);
+    setIsFormOpen(true);
   };
 
   return (
@@ -347,7 +347,7 @@ export default function VendasGestaoPage() {
               </Button>
               <Button
                 size="sm"
-                className="flex-1"
+                className="flex-1 bg-gray-800 dark:bg-gray-700"
                 onClick={() => setShowFiltros(false)}
               >
                 Aplicar
@@ -355,6 +355,12 @@ export default function VendasGestaoPage() {
             </div>
           </div>
         )}
+
+        {/* Botão Novo Pedido */}
+        <Button onClick={handleAddNew} className="w-full md:w-auto gap-2 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 rounded-xl">
+          <Plus className="w-4 h-4" />
+          Novo Pedido
+        </Button>
       </div>
 
       <div>
