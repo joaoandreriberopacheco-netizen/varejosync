@@ -19,13 +19,20 @@ import {
   Clock,
   ShoppingBag,
   Banknote,
-  ArrowLeft
+  ArrowLeft,
+  MoreVertical,
+  Share2,
+  Printer
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
+import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 
 export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
   const [lancamentosFinanceiros, setLancamentosFinanceiros] = useState([]);
   const [movimentosEstoque, setMovimentosEstoque] = useState([]);
+  const [showComprovante, setShowComprovante] = useState(false);
 
   useEffect(() => {
     if (pedido && isOpen) {
@@ -72,6 +79,29 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
     return statusMap[status] || 'bg-gray-100 text-gray-700';
   };
 
+  const handleCompartilhar = async () => {
+    const texto = `Comprovante de Venda\n\nPedido: ${pedido.numero}\nCliente: ${pedido.cliente_nome || 'N/A'}\nValor: ${formatValor(pedido.valor_total)}\nData: ${pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm') : 'N/A'}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Comprovante - ${pedido.numero}`,
+          text: texto
+        });
+      } catch (err) {
+        console.log('Compartilhamento cancelado');
+      }
+    } else {
+      // Fallback: copiar para clipboard
+      await navigator.clipboard.writeText(texto);
+      alert('Comprovante copiado para área de transferência!');
+    }
+  };
+
+  const handleImprimir = () => {
+    setShowComprovante(true);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-50 dark:bg-gray-900 border-0 p-0">
@@ -88,12 +118,33 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                   <p className="text-sm font-normal text-gray-500 dark:text-gray-400">{pedido.numero}</p>
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="w-11 h-11 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {pedido.status === 'Pedido Concluído' && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="w-11 h-11 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="dark:bg-gray-800">
+                      <DropdownMenuItem onClick={handleCompartilhar}>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Compartilhar Comprovante
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleImprimir}>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimir Comprovante
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <button
+                  onClick={onClose}
+                  className="w-11 h-11 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </div>
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -458,6 +509,25 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
           </Tabs>
         </div>
       </DialogContent>
+
+      {/* Dialog de Impressão */}
+      {showComprovante && (
+        <Dialog open={showComprovante} onOpenChange={setShowComprovante}>
+          <DialogContent className="max-w-md p-0">
+            {pedido.tipo === 'Pedido' ? (
+              <ComprovantePreVenda
+                pedido={pedido}
+                onClose={() => setShowComprovante(false)}
+              />
+            ) : (
+              <ComprovanteCompra
+                pedido={pedido}
+                onClose={() => setShowComprovante(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }
