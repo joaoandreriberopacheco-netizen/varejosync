@@ -1,21 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
-  const printedRef = useRef(false);
-
   useEffect(() => {
-    if (open && !printedRef.current) {
-      printedRef.current = true;
+    if (open) {
       setTimeout(() => {
         window.print();
       }, 500);
-    }
-    if (!open) {
-      printedRef.current = false;
     }
   }, [open]);
 
@@ -52,36 +46,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           {`
             /* Deixamos o tamanho da página em "auto" para que a impressora decida (A4 ou 80mm) */
             @page { margin: 0.5cm; size: auto; }
-            body { 
-              margin: 0; 
-              padding: 0; 
-              -webkit-print-color-adjust: exact; 
-              print-color-adjust: exact;
-              color: #000 !important;
-            }
+            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body * { visibility: hidden; }
             #area-comprovante, #area-comprovante * { visibility: visible; }
             /* O container ocupa 100% da largura do papel que a impressora fornecer */
             #area-comprovante { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
-            
-            /* Força preto em todos os textos na impressão */
-            * {
-              color: #000 !important;
-            }
-            /* Aumenta peso da fonte para impressão nítida */
-            h1, h2, h3 {
-              font-weight: 900 !important;
-            }
-            .font-semibold, .font-bold {
-              font-weight: 800 !important;
-            }
-            .font-black {
-              font-weight: 900 !important;
-            }
-            /* Bordas pretas sólidas */
-            .border-gray-200, .border-gray-400, .border-black {
-              border-color: #000 !important;
-            }
           `}
         </style>
 
@@ -92,61 +61,61 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         >
           
           {/* Cabeçalho */}
-          <div className="text-center pb-4 mb-6 border-b-2 border-black">
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-black mb-2">VAREJOSYNC</h1>
-            <p className="text-base font-bold text-black">Obrigado pela sua preferência!</p>
+          <div className="text-center pb-4 mb-6 border-b border-gray-100">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-red-600 mb-1">VAREJOSYNC</h1>
+            <p className="text-sm text-gray-500">Obrigado pela sua preferência!</p>
           </div>
 
           {/* Informações do Pedido - Layout responsivo (Grid adapta-se ao espaço) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm sm:text-base mb-6 pb-6 border-b-2 border-black">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm text-gray-600 mb-6">
             <div>
-              <p className="mb-2"><span className="font-bold text-black uppercase">Recibo:</span> <span className="text-black font-bold">{pedido.numero}</span></p>
-              <p><span className="font-bold text-black uppercase">Data:</span> <span className="text-black font-bold">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span></p>
+              <p className="mb-1"><span className="font-semibold text-gray-400 uppercase tracking-wider text-[10px] sm:text-xs">Recibo:</span> <span className="text-gray-900 font-medium">{pedido.numero}</span></p>
+              <p><span className="font-semibold text-gray-400 uppercase tracking-wider text-[10px] sm:text-xs">Data:</span> <span className="text-gray-900">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span></p>
             </div>
             <div className="sm:text-right">
-              <p className="mb-2"><span className="font-bold text-black uppercase">Cliente:</span> <span className="text-black font-bold">{pedido.cliente_nome}</span></p>
+              <p className="mb-1"><span className="font-semibold text-gray-400 uppercase tracking-wider text-[10px] sm:text-xs">Cliente:</span> <span className="text-gray-900 font-medium">{pedido.cliente_nome}</span></p>
             </div>
           </div>
 
-          {/* Lista de Itens - Simples e Legível */}
-          <div className="mb-6">
-            <h3 className="text-base font-black text-black uppercase mb-4 pb-2 border-b border-black">
-              Itens do Pedido
+          {/* Lista de Itens - Estilo Clip Careers + Responsividade */}
+          <div className="mb-6 space-y-2 sm:space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 hidden sm:block">
+              Detalhes da Compra
             </h3>
             
             {pedido.itens?.map((item, idx) => (
               <div 
                 key={idx} 
-                className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-400"
+                className="border border-gray-200 bg-gray-50/50 rounded-md p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:border-gray-300 print:break-inside-avoid"
               >
                 {/* Descrição do Produto */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-base sm:text-lg text-black break-words leading-tight">
+                  <p className="font-semibold text-[13px] sm:text-sm text-gray-900 break-words leading-tight">
                     {item.produto_nome}
                   </p>
                   {/* Visível apenas no 80mm (Mobile/Estreito) */}
-                  <p className="text-sm font-bold text-black mt-2 sm:hidden">
-                    Qtd: <span className="font-black text-2xl">{item.quantidade}</span> x R$ {formatValor(item.preco_unitario_praticado)}
+                  <p className="text-[11px] text-gray-500 mt-1 sm:hidden">
+                    Qtd: <span className="font-bold text-lg text-gray-900">{item.quantidade}</span> x R$ {formatValor(item.preco_unitario_praticado)}
                   </p>
                 </div>
                 
                 {/* Valores (Preço unitário e Total) */}
-                <div className="flex justify-end items-center gap-8 sm:gap-10">
+                <div className="flex justify-end items-end sm:items-center gap-6 sm:gap-8">
                   {/* Quantidade e Preço - Visível apenas no A4 (Desktop/Largo) */}
-                  <div className="hidden sm:flex flex-col items-center min-w-[70px]">
-                    <span className="text-xs font-bold uppercase text-black mb-1">Qtd</span>
-                    <span className="font-black text-3xl text-black">{item.quantidade}</span>
+                  <div className="hidden sm:flex flex-col items-center text-sm text-gray-500 min-w-[60px]">
+                    <span className="text-[10px] uppercase">Qtd</span>
+                    <span className="font-bold text-2xl text-gray-900">{item.quantidade}</span>
                   </div>
                   
-                  <div className="hidden sm:flex flex-col items-end min-w-[100px]">
-                    <span className="text-xs font-bold uppercase text-black mb-1">Preço Un.</span>
-                    <span className="font-bold text-base text-black">R$ {formatValor(item.preco_unitario_praticado)}</span>
+                  <div className="hidden sm:flex flex-col items-end text-sm text-gray-500 min-w-[80px]">
+                    <span className="text-[10px] uppercase">Preço Un.</span>
+                    <span>R$ {formatValor(item.preco_unitario_praticado)}</span>
                   </div>
                   
                   {/* Total do Item - Visível em ambos */}
-                  <div className="flex flex-col items-end min-w-[100px]">
-                    <span className="text-xs font-bold uppercase text-black mb-1 hidden sm:block">Total</span>
-                    <span className="font-black text-base sm:text-lg text-black">
+                  <div className="flex flex-col items-end min-w-[90px]">
+                    <span className="hidden sm:block text-[10px] uppercase text-gray-500">Total</span>
+                    <span className="font-bold text-[13px] sm:text-sm text-gray-900">
                       R$ {formatValor(item.total)}
                     </span>
                   </div>
@@ -156,28 +125,28 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           </div>
 
           {/* Valores Totais */}
-          <div className="border-t-2 border-black pt-6 mb-6 flex flex-col items-end">
-            <div className="w-full sm:w-1/2 space-y-3 text-sm sm:text-base">
-              <div className="flex justify-between font-bold text-black">
+          <div className="border-t border-gray-200 pt-4 mb-6 flex flex-col items-end">
+            <div className="w-full sm:w-1/2 space-y-2 text-xs sm:text-sm text-gray-600">
+              <div className="flex justify-between">
                 <span>Subtotal:</span>
                 <span>R$ {formatValor(pedido.subtotal)}</span>
               </div>
               
               {pedido.valor_desconto > 0 && (
-                <div className="flex justify-between font-bold text-black">
+                <div className="flex justify-between text-red-500">
                   <span>Desconto:</span>
                   <span>- R$ {formatValor(pedido.valor_desconto)}</span>
                 </div>
               )}
               
               {pedido.valor_acrescimo > 0 && (
-                <div className="flex justify-between font-bold text-black">
+                <div className="flex justify-between">
                   <span>Acréscimo:</span>
                   <span>+ R$ {formatValor(pedido.valor_acrescimo)}</span>
                 </div>
               )}
               
-              <div className="flex justify-between font-black text-xl sm:text-2xl text-black pt-4 border-t-2 border-black mt-3">
+              <div className="flex justify-between font-bold text-base sm:text-lg text-gray-900 pt-3 border-t border-gray-200 mt-2">
                 <span>TOTAL:</span>
                 <span>R$ {formatValor(pedido.valor_total)}</span>
               </div>
@@ -186,10 +155,10 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
           {/* Formas de Pagamento */}
           {pedido.pagamentos && pedido.pagamentos.length > 0 && (
-            <div className="text-sm sm:text-base mb-6 pb-6 border-b-2 border-black">
-              <p className="font-black text-black uppercase mb-3">Formas de Pagamento</p>
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-6 bg-gray-50 p-3 rounded-md border border-gray-100">
+              <p className="font-semibold text-gray-400 uppercase tracking-wider mb-2">Método de Pagamento</p>
               {pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex justify-between text-black font-bold py-2">
+                <div key={idx} className="flex justify-between text-gray-900 font-medium">
                   <span>{pag.forma_pagamento}</span>
                   <span>R$ {formatValor(pag.valor)}</span>
                 </div>
@@ -198,9 +167,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           )}
 
           {/* Rodapé */}
-          <div className="text-center text-xs sm:text-sm font-bold text-black border-t-2 border-black pt-4">
+          <div className="text-center text-[10px] sm:text-xs text-gray-400 border-t border-gray-200 pt-3">
             <p>VarejoSync ERP - Documento Auxiliar</p>
-            <p className="mt-2">Gerado em {format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
+            <p>Gerado em {format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
           </div>
 
         </div>
