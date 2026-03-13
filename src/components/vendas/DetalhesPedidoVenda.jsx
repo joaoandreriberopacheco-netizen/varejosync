@@ -21,8 +21,7 @@ import {
   Banknote,
   ArrowLeft,
   MoreVertical,
-  Share2,
-  Printer
+  Share2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -79,26 +78,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
     return statusMap[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const handleCompartilhar = async () => {
-    const texto = `Comprovante de Venda\n\nPedido: ${pedido.numero}\nCliente: ${pedido.cliente_nome || 'N/A'}\nValor: ${formatValor(pedido.valor_total)}\nData: ${pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm') : 'N/A'}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Comprovante - ${pedido.numero}`,
-          text: texto
-        });
-      } catch (err) {
-        console.log('Compartilhamento cancelado');
-      }
-    } else {
-      // Fallback: copiar para clipboard
-      await navigator.clipboard.writeText(texto);
-      alert('Comprovante copiado para área de transferência!');
-    }
-  };
-
-  const handleImprimir = () => {
+  const handleCompartilhar = () => {
     setShowComprovante(true);
   };
 
@@ -129,11 +109,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                     <DropdownMenuContent align="end" className="dark:bg-gray-800">
                       <DropdownMenuItem onClick={handleCompartilhar}>
                         <Share2 className="w-4 h-4 mr-2" />
-                        Compartilhar Comprovante
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleImprimir}>
-                        <Printer className="w-4 h-4 mr-2" />
-                        Imprimir Comprovante
+                        Compartilhar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
