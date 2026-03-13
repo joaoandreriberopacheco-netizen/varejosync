@@ -210,11 +210,6 @@ export default function VendasGestaoPage() {
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const handleAddNew = () => {
-    setPedidoSelecionado(null);
-    setIsFormOpen(true);
-  };
-
   return (
     <div className="max-w-7xl mx-auto space-y-4">
       {/* Header limpo */}
@@ -355,12 +350,6 @@ export default function VendasGestaoPage() {
             </div>
           </div>
         )}
-
-        {/* Botão Novo Pedido */}
-        <Button onClick={handleAddNew} className="w-full md:w-auto gap-2 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 rounded-xl">
-          <Plus className="w-4 h-4" />
-          Novo Pedido
-        </Button>
       </div>
 
       <div>
