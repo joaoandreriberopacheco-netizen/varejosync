@@ -665,21 +665,19 @@ export default function VendasGestaoPage() {
 
       {/* Dialog de Reimpressão */}
       {showComprovante && pedidoParaImprimir && (
-        <Dialog open={showComprovante} onOpenChange={setShowComprovante}>
-          <DialogContent className="max-w-md p-0">
-            {pedidoParaImprimir.tipo === 'Pedido' ? (
-              <ComprovantePreVenda
-                pedido={pedidoParaImprimir}
-                onClose={() => setShowComprovante(false)}
-              />
-            ) : (
-              <ComprovanteCompra
-                pedido={pedidoParaImprimir}
-                onClose={() => setShowComprovante(false)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+        pedidoParaImprimir.tipo === 'Pedido' ? (
+          <ComprovantePreVenda
+            pedido={pedidoParaImprimir}
+            open={showComprovante}
+            onClose={() => setShowComprovante(false)}
+          />
+        ) : (
+          <ComprovanteCompra
+            pedido={pedidoParaImprimir}
+            open={showComprovante}
+            onClose={() => setShowComprovante(false)}
+          />
+        )
       )}
     </div>
   );

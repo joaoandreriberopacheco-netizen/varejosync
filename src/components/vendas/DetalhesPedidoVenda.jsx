@@ -488,21 +488,19 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
 
       {/* Dialog de Impressão */}
       {showComprovante && (
-        <Dialog open={showComprovante} onOpenChange={setShowComprovante}>
-          <DialogContent className="max-w-md p-0">
-            {pedido.tipo === 'Pedido' ? (
-              <ComprovantePreVenda
-                pedido={pedido}
-                onClose={() => setShowComprovante(false)}
-              />
-            ) : (
-              <ComprovanteCompra
-                pedido={pedido}
-                onClose={() => setShowComprovante(false)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+        pedido.tipo === 'Pedido' ? (
+          <ComprovantePreVenda
+            pedido={pedido}
+            open={showComprovante}
+            onClose={() => setShowComprovante(false)}
+          />
+        ) : (
+          <ComprovanteCompra
+            pedido={pedido}
+            open={showComprovante}
+            onClose={() => setShowComprovante(false)}
+          />
+        )
       )}
     </Dialog>
   );
