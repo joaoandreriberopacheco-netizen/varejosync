@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer } from 'lucide-react';
+import { Printer, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ComprovantePreVenda({ preVenda, open, onClose }) {
@@ -12,6 +12,21 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
       }, 500);
     }
   }, [open]);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Pré-Venda ${preVenda.senha_atendimento || 'Nº'}`,
+          text: `Comprovante de pré-venda - ${preVenda.cliente_nome}`,
+        });
+      } catch (err) {
+        console.log('Compartilhamento cancelado ou não suportado');
+      }
+    } else {
+      window.print();
+    }
+  };
 
   if (!preVenda) return null;
 
@@ -113,6 +128,10 @@ export default function ComprovantePreVenda({ preVenda, open, onClose }) {
 
           {/* Botões (não aparecem na impressão) */}
           <div className="mt-6 flex justify-center gap-3 print:hidden">
+            <Button variant="outline" onClick={handleShare} className="gap-2 border-gray-800 text-gray-800">
+              <Share2 className="w-4 h-4" />
+              Compartilhar
+            </Button>
             <Button onClick={() => window.print()} className="gap-2 bg-gray-800 hover:bg-gray-700">
               <Printer className="w-4 h-4" />
               Imprimir

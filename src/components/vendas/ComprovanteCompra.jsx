@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer } from 'lucide-react';
+import { Printer, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
@@ -12,6 +12,21 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       }, 500);
     }
   }, [open]);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Pedido ${pedido.numero || 'Nº'}`,
+          text: `Comprovante de pedido - ${pedido.cliente_nome}`,
+        });
+      } catch (err) {
+        console.log('Compartilhamento cancelado ou não suportado');
+      }
+    } else {
+      window.print();
+    }
+  };
 
   if (!pedido) return null;
 
@@ -71,9 +86,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             {pedido.itens?.map((item, idx) => (
               <div 
                 key={idx} 
-                /* Aqui está o "quadro sutil". O sm:flex-row coloca em linha no A4, 
-                   e o padrão flex-col empilha no 80mm */
-                className="border border-gray-200 bg-gray-50/50 rounded-md p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 print:border-gray-300 print:break-inside-avoid"
+                className="border border-gray-200 bg-gray-50/50 rounded-md p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:border-gray-300 print:break-inside-avoid"
               >
                 {/* Descrição do Produto */}
                 <div className="flex-1 min-w-0">
@@ -82,21 +95,26 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                   </p>
                   {/* Visível apenas no 80mm (Mobile/Estreito) */}
                   <p className="text-[11px] text-gray-500 mt-1 sm:hidden">
-                    Qtd: {item.quantidade} x R$ {formatValor(item.preco_unitario_praticado)}
+                    Qtd: <span className="font-bold text-lg text-gray-900">{item.quantidade}</span> x R$ {formatValor(item.preco_unitario_praticado)}
                   </p>
                 </div>
                 
                 {/* Valores (Preço unitário e Total) */}
-                <div className="flex justify-end items-end sm:items-center gap-4 sm:gap-6">
-                  {/* Visível apenas no A4 (Desktop/Largo) */}
-                  <div className="hidden sm:flex flex-col items-end text-sm text-gray-500">
-                    <span className="text-[10px] uppercase">Qtd x Preço</span>
-                    <span>{item.quantidade} x R$ {formatValor(item.preco_unitario_praticado)}</span>
+                <div className="flex justify-end items-end sm:items-center gap-6 sm:gap-8">
+                  {/* Quantidade e Preço - Visível apenas no A4 (Desktop/Largo) */}
+                  <div className="hidden sm:flex flex-col items-center text-sm text-gray-500 min-w-[60px]">
+                    <span className="text-[10px] uppercase">Qtd</span>
+                    <span className="font-bold text-2xl text-gray-900">{item.quantidade}</span>
                   </div>
                   
-                  {/* Total do Item - Visível em ambos, mas adapta o tamanho */}
-                  <div className="flex flex-col items-end">
-                    <span className="hidden sm:block text-[10px] uppercase text-gray-500">Subtotal</span>
+                  <div className="hidden sm:flex flex-col items-end text-sm text-gray-500 min-w-[80px]">
+                    <span className="text-[10px] uppercase">Preço Un.</span>
+                    <span>R$ {formatValor(item.preco_unitario_praticado)}</span>
+                  </div>
+                  
+                  {/* Total do Item - Visível em ambos */}
+                  <div className="flex flex-col items-end min-w-[90px]">
+                    <span className="hidden sm:block text-[10px] uppercase text-gray-500">Total</span>
                     <span className="font-bold text-[13px] sm:text-sm text-gray-900">
                       R$ {formatValor(item.total)}
                     </span>
@@ -158,7 +176,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
         {/* Botões - Escondidos na impressão */}
         <div className="absolute top-4 right-4 flex gap-2 print:hidden">
-           <Button variant="outline" size="sm" onClick={() => window.print()} className="shadow-sm">
+          <Button variant="outline" size="sm" onClick={handleShare} className="shadow-sm">
+            <Share2 className="w-4 h-4 mr-2" />
+            Compartilhar
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="shadow-sm">
             <Printer className="w-4 h-4 mr-2" />
             Imprimir
           </Button>
