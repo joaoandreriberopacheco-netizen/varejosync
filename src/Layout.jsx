@@ -418,15 +418,14 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           {/* More Menu - 3 Pontinhos */}
-          {(isOpen || isMobile) && (
-            <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0 p-2">
-              <DropdownMenu open={showMoreMenu} onOpenChange={setShowMoreMenu}>
-                <DropdownMenuTrigger asChild>
-                  <button className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">
-                    <MoreVertical className="w-4 h-4" />
-                    <span className="text-sm flex-1 text-left">Mais</span>
-                  </button>
-                </DropdownMenuTrigger>
+          <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0 p-2">
+            <DropdownMenu open={showMoreMenu} onOpenChange={setShowMoreMenu}>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">
+                  <MoreVertical className="w-4 h-4" />
+                  {(isOpen || isMobile) && <span className="text-sm flex-1 text-left">Mais</span>}
+                </button>
+              </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
                   <DropdownMenuItem 
                     onClick={() => { 
@@ -465,9 +464,8 @@ export default function Layout({ children, currentPageName }) {
                     <span>Configurações</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
+            </DropdownMenu>
+          </div>
 
           {/* User Profile */}
           <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
