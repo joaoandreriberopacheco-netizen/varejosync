@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, Share2 } from 'lucide-react';
+import { Printer, Share2, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
@@ -13,6 +13,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
   }, [open]);
 
+  // Mantemos a função de partilha original (WhatsApp, etc.)
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -30,165 +31,233 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
   if (!pedido) return null;
 
+  // Formatação para o padrão brasileiro/vírgula
   const formatValor = (valor) => {
     const num = parseFloat(valor) || 0;
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  // Ordenação Alfabética dos Itens
+  const itensOrdenados = pedido.itens ? [...pedido.itens].sort((a, b) => {
+    const nomeA = a.produto_nome || '';
+    const nomeB = b.produto_nome || '';
+    return nomeA.localeCompare(nomeB);
+  }) : [];
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      {/* O max-w-2xl permite que o modal expanda bem na tela (para simular o A4), 
-          mas esprema automaticamente se for aberto num ecrã pequeno ou POS */}
-      <DialogContent className="max-w-2xl p-0 bg-gray-200 flex justify-center overflow-hidden">
+      <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center">
         
-        {/* Estilos de Impressão Fluida */}
-        <style type="text/css" media="print">
+        {/* A "VACINA" TÉRMICA: CSS ESTRITO PARA 80MM */}
+        <style type="text/css">
           {`
-            /* Deixamos o tamanho da página em "auto" para que a impressora decida (A4 ou 80mm) */
-            @page { margin: 0.5cm; size: auto; }
-            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body * { visibility: hidden; }
-            #area-comprovante, #area-comprovante * { visibility: visible; }
-            /* O container ocupa 100% da largura do papel que a impressora fornecer */
-            #area-comprovante { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+            @media print {
+              @page { margin: 0; size: auto; }
+              body { margin: 0; background: transparent; }
+              body * { visibility: hidden; }
+              #area-comprovante, #area-comprovante * { visibility: visible; }
+              /* Força a impressora a não passar dos 80mm (300px) e remove sombras/fundos */
+              #area-comprovante { position: absolute; left: 0; top: 0; width: 300px; padding: 0; box-shadow: none !important; background: transparent !important; }
+              .no-print { display: none !important; }
+            }
+
+            /* Estilos Globais do Cupom (Tela e Papel) */
+            .cupom-termico {
+              width: 300px; /* Largura estrita de 80mm */
+              background: #fff;
+              color: #000; /* Preto puro, nada de cinzento! */
+              font-family: Arial, sans-serif;
+              font-size: 12px;
+              padding: 10px;
+              margin: 20px auto;
+              line-height: 1.2;
+            }
+
+            .t-center { text-align: center; }
+            .t-right { text-align: right; }
+            .t-left { text-align: left; }
+            .bold { font-weight: bold; }
+            
+            .linha-separadora {
+              border-bottom: 1px solid #000;
+              margin: 5px 0;
+            }
+
+            /* Tabela de Produtos (O Segredo do Alinhamento) */
+            .tabela-itens {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 5px 0;
+            }
+            .tabela-itens th {
+              font-weight: normal;
+              border-top: 1px solid #000;
+              border-bottom: 1px solid #000;
+              padding: 3px 0;
+              text-align: right;
+            }
+            .tabela-itens td {
+              text-align: right;
+              vertical-align: top;
+              padding: 3px 0;
+            }
+            .tabela-itens th:first-child, .tabela-itens td:first-child {
+              text-align: left;
+              width: 50%;
+            }
+
+            /* Grid de Totais */
+            .grid-totais {
+              display: grid;
+              grid-template-columns: 1fr 75px; /* Mais espaço para não cortar os centavos */
+              row-gap: 3px;
+            }
+            .grid-totais > div:nth-child(odd) {
+              text-align: right;
+              padding-right: 15px;
+            }
+            .grid-totais > div:nth-child(even) {
+              text-align: right;
+            }
           `}
         </style>
 
-        {/* Container Principal */}
-        <div 
-          id="area-comprovante"
-          className="bg-white p-4 sm:p-8 w-full font-sans text-gray-800 shadow-lg print:shadow-none overflow-y-auto max-h-[90vh] print:max-h-none print:overflow-visible"
-        >
+        <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8">
           
-          {/* Cabeçalho */}
-          <div className="text-center pb-4 mb-6 border-b border-gray-100">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-red-600 mb-1">VAREJOSYNC</h1>
-            <p className="text-sm text-gray-500">Obrigado pela sua preferência!</p>
+          {/* Botões de Ação (Apenas na Tela) - Mantive o teu botão "Compartilhar" */}
+          <div className="flex gap-2 my-4 no-print w-[300px] justify-end flex-wrap">
+            <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
+              <Share2 className="w-4 h-4 mr-1" /> Partilhar
+            </Button>
+            <Button onClick={() => window.print()} size="sm" className="h-8 bg-black text-white hover:bg-gray-800">
+              <Printer className="w-4 h-4 mr-1" /> Imprimir
+            </Button>
+            <Button variant="outline" onClick={onClose} size="sm" className="h-8 border-black text-black">
+              <X className="w-4 h-4 mr-1" /> Fechar
+            </Button>
           </div>
 
-          {/* Informações do Pedido - Layout responsivo (Grid adapta-se ao espaço) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm text-gray-600 mb-6">
-            <div>
-              <p className="mb-1"><span className="font-semibold text-gray-400 uppercase tracking-wider text-[10px] sm:text-xs">Recibo:</span> <span className="text-gray-900 font-medium">{pedido.numero}</span></p>
-              <p><span className="font-semibold text-gray-400 uppercase tracking-wider text-[10px] sm:text-xs">Data:</span> <span className="text-gray-900">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span></p>
-            </div>
-            <div className="sm:text-right">
-              <p className="mb-1"><span className="font-semibold text-gray-400 uppercase tracking-wider text-[10px] sm:text-xs">Cliente:</span> <span className="text-gray-900 font-medium">{pedido.cliente_nome}</span></p>
-            </div>
-          </div>
-
-          {/* Lista de Itens - Estilo Clip Careers + Responsividade */}
-          <div className="mb-6 space-y-2 sm:space-y-3">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 hidden sm:block">
-              Detalhes da Compra
-            </h3>
+          {/* ÁREA DE IMPRESSÃO - O LAYOUT CLÁSSICO */}
+          <div id="area-comprovante" className="cupom-termico shadow-lg">
             
-            {pedido.itens?.map((item, idx) => (
-              <div 
-                key={idx} 
-                className="border border-gray-200 bg-gray-50/50 rounded-md p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:border-gray-300 print:break-inside-avoid"
-              >
-                {/* Descrição do Produto */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[13px] sm:text-sm text-gray-900 break-words leading-tight">
-                    {item.produto_nome}
-                  </p>
-                  {/* Visível apenas no 80mm (Mobile/Estreito) */}
-                  <p className="text-[11px] text-gray-500 mt-1 sm:hidden">
-                    Qtd: <span className="font-bold text-lg text-gray-900">{item.quantidade}</span> x R$ {formatValor(item.preco_unitario_praticado)}
-                  </p>
-                </div>
-                
-                {/* Valores (Preço unitário e Total) */}
-                <div className="flex justify-end items-end sm:items-center gap-6 sm:gap-8">
-                  {/* Quantidade e Preço - Visível apenas no A4 (Desktop/Largo) */}
-                  <div className="hidden sm:flex flex-col items-center text-sm text-gray-500 min-w-[60px]">
-                    <span className="text-[10px] uppercase">Qtd</span>
-                    <span className="font-bold text-2xl text-gray-900">{item.quantidade}</span>
-                  </div>
-                  
-                  <div className="hidden sm:flex flex-col items-end text-sm text-gray-500 min-w-[80px]">
-                    <span className="text-[10px] uppercase">Preço Un.</span>
-                    <span>R$ {formatValor(item.preco_unitario_praticado)}</span>
-                  </div>
-                  
-                  {/* Total do Item - Visível em ambos */}
-                  <div className="flex flex-col items-end min-w-[90px]">
-                    <span className="hidden sm:block text-[10px] uppercase text-gray-500">Total</span>
-                    <span className="font-bold text-[13px] sm:text-sm text-gray-900">
-                      R$ {formatValor(item.total)}
-                    </span>
-                  </div>
-                </div>
+            {/* Cabeçalho da Empresa */}
+            <div className="t-center">
+              <h2 className="bold" style={{ fontSize: '18px', margin: '2px 0', textTransform: 'uppercase' }}>VAREJOSYNC</h2>
+              <div style={{ fontSize: '12px' }}>
+                <p>Obrigado pela sua preferência!</p>
               </div>
-            ))}
-          </div>
+            </div>
 
-          {/* Valores Totais */}
-          <div className="border-t border-gray-200 pt-4 mb-6 flex flex-col items-end">
-            <div className="w-full sm:w-1/2 space-y-2 text-xs sm:text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>R$ {formatValor(pedido.subtotal)}</span>
+            <div className="linha-separadora"></div>
+
+            {/* Cabeçalho do Pedido */}
+            <div className="t-center bold" style={{ fontSize: '14px', margin: '6px 0' }}>
+              RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+              <div style={{ width: '45%' }}>
+                <div>Data:</div>
+                <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')}</div>
               </div>
+              <div style={{ width: '55%', paddingLeft: '10px' }}>
+                <div>Cliente:</div>
+                <div className="t-center uppercase" style={{ fontSize: '11px' }}>
+                  {pedido.cliente_nome?.substring(0, 18) || 'AVULSO'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '45%' }}>
+                <div>Hora:</div>
+                <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'HH:mm')}</div>
+              </div>
+              <div style={{ width: '55%', paddingLeft: '10px' }}>
+                <div>Vend.:</div>
+                <div className="t-center uppercase">{pedido.vendedor_nome?.substring(0, 15) || 'VENDEDOR'}</div>
+              </div>
+            </div>
+
+            {/* Detalhes dos Itens */}
+            <table className="tabela-itens" style={{ marginTop: '10px' }}>
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Qtd</th>
+                  <th>Preço</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itensOrdenados.map((item, idx) => (
+                  <tr key={idx}>
+                    <td style={{ fontSize: '10px', textTransform: 'uppercase' }}>
+                      {item.produto_nome?.substring(0, 22)}
+                    </td>
+                    <td>{item.quantidade}</td>
+                    <td>{formatValor(item.preco_unitario_praticado)}</td>
+                    <td>{formatValor(item.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="linha-separadora"></div>
+
+            {/* Finalmentes: Totais */}
+            <div className="grid-totais">
+              <div>Subtotal</div>
+              <div>{formatValor(pedido.subtotal)}</div>
               
               {pedido.valor_desconto > 0 && (
-                <div className="flex justify-between text-red-500">
-                  <span>Desconto:</span>
-                  <span>- R$ {formatValor(pedido.valor_desconto)}</span>
-                </div>
+                <>
+                  <div>Desconto</div>
+                  <div>-{formatValor(pedido.valor_desconto)}</div>
+                </>
               )}
-              
+
               {pedido.valor_acrescimo > 0 && (
-                <div className="flex justify-between">
-                  <span>Acréscimo:</span>
-                  <span>+ R$ {formatValor(pedido.valor_acrescimo)}</span>
-                </div>
+                <>
+                  <div>Acréscimo</div>
+                  <div>+{formatValor(pedido.valor_acrescimo)}</div>
+                </>
               )}
-              
-              <div className="flex justify-between font-bold text-base sm:text-lg text-gray-900 pt-3 border-t border-gray-200 mt-2">
-                <span>TOTAL:</span>
-                <span>R$ {formatValor(pedido.valor_total)}</span>
-              </div>
             </div>
-          </div>
 
-          {/* Formas de Pagamento */}
-          {pedido.pagamentos && pedido.pagamentos.length > 0 && (
-            <div className="text-[11px] sm:text-xs text-gray-500 mb-6 bg-gray-50 p-3 rounded-md border border-gray-100">
-              <p className="font-semibold text-gray-400 uppercase tracking-wider mb-2">Método de Pagamento</p>
-              {pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex justify-between text-gray-900 font-medium">
-                  <span>{pag.forma_pagamento}</span>
-                  <span>R$ {formatValor(pag.valor)}</span>
+            <div className="linha-separadora"></div>
+            
+            <div className="grid-totais bold" style={{ fontSize: '14px' }}>
+              <div>TOTAL</div>
+              <div>R$ {formatValor(pedido.valor_total)}</div>
+            </div>
+
+            <div className="linha-separadora"></div>
+
+            {/* Formas de Pagamento */}
+            <div className="bold" style={{ marginTop: '8px', fontSize: '11px', textTransform: 'uppercase' }}>Método de Pagamento</div>
+            {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
+              pedido.pagamentos.map((pag, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '2px' }}>
+                  <div className="uppercase">{pag.forma_pagamento}</div>
+                  <div>R$ {formatValor(pag.valor)}</div>
                 </div>
-              ))}
+              ))
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '2px' }}>
+                <div>A DEFINIR / DINHEIRO</div>
+                <div>R$ {formatValor(pedido.valor_total)}</div>
+              </div>
+            )}
+
+            {/* Rodapé Auxiliar */}
+            <div className="t-center" style={{ marginTop: '20px', fontSize: '10px', color: '#666' }}>
+              <p>VarejoSync ERP - Documento Auxiliar</p>
+              <p>Gerado em {format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
             </div>
-          )}
 
-          {/* Rodapé */}
-          <div className="text-center text-[10px] sm:text-xs text-gray-400 border-t border-gray-200 pt-3">
-            <p>VarejoSync ERP - Documento Auxiliar</p>
-            <p>Gerado em {format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
           </div>
-
         </div>
-
-        {/* Botões - Escondidos na impressão */}
-        <div className="absolute top-4 right-4 flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleShare} className="shadow-sm">
-            <Share2 className="w-4 h-4 mr-2" />
-            Compartilhar
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => window.print()} className="shadow-sm">
-            <Printer className="w-4 h-4 mr-2" />
-            Imprimir
-          </Button>
-          <Button variant="secondary" size="sm" onClick={onClose} className="shadow-sm">
-            Fechar
-          </Button>
-        </div>
-
       </DialogContent>
     </Dialog>
   );
