@@ -55,6 +55,7 @@ export default function ExportarEstoque() {
       });
 
       await ws.protect('', {
+        deleteRows: true,
         formatCells: true,
         selectLockedCells: true,
         selectUnlockedCells: true,

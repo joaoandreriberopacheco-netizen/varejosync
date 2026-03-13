@@ -201,6 +201,7 @@ export default function ExportarPlanilha() {
       // ── Proteção da planilha (sem senha) ──────────────────────────────────
       await ws.protect('', {
         insertColumns: true,
+        deleteRows: true,
         formatCells: true,
         selectLockedCells: true,
         selectUnlockedCells: true,
