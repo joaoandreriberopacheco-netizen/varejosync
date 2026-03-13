@@ -428,7 +428,21 @@ export default function Layout({ children, currentPageName }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
                   <DropdownMenuItem 
-                    onClick={() => { window.location.href = createPageUrl('ExclusaoDocumentos'); }}
+                    onClick={() => { 
+                      window.location.href = createPageUrl('ReimpressaoDocumentos'); 
+                      setShowMoreMenu(false);
+                      if (isMobile) setIsOpen(false);
+                    }}
+                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    <Printer className="w-4 h-4 mr-2" />
+                    <span>Reimpressão</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => { 
+                      window.location.href = createPageUrl('ExclusaoDocumentos'); 
+                      setShowMoreMenu(false);
+                      if (isMobile) setIsOpen(false);
+                    }}
                     className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
                     <Trash2 className="w-4 h-4 mr-2" />
                     <span>Excluir Documentos</span>
@@ -439,7 +453,11 @@ export default function Layout({ children, currentPageName }) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={() => window.location.href = createPageUrl('Configuracoes')}
+                    onClick={() => {
+                      window.location.href = createPageUrl('Configuracoes');
+                      setShowMoreMenu(false);
+                      if (isMobile) setIsOpen(false);
+                    }}
                     className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
                   >
                     <Settings className="w-4 h-4 mr-2" />
