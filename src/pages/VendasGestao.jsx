@@ -667,7 +667,7 @@ export default function VendasGestaoPage() {
       {showComprovante && pedidoParaImprimir && (
         pedidoParaImprimir.tipo === 'Pedido' ? (
           <ComprovantePreVenda
-            pedido={pedidoParaImprimir}
+            preVenda={pedidoParaImprimir}
             open={showComprovante}
             onClose={() => setShowComprovante(false)}
           />

@@ -490,7 +490,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
       {showComprovante && (
         pedido.tipo === 'Pedido' ? (
           <ComprovantePreVenda
-            pedido={pedido}
+            preVenda={pedido}
             open={showComprovante}
             onClose={() => setShowComprovante(false)}
           />
