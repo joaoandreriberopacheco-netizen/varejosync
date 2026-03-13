@@ -13,7 +13,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     }
   }, [open]);
 
-  // Mantemos a função de partilha original (WhatsApp, etc.)
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -31,13 +30,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
   if (!pedido) return null;
 
-  // Formatação para o padrão brasileiro/vírgula
   const formatValor = (valor) => {
     const num = parseFloat(valor) || 0;
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  // Ordenação Alfabética dos Itens
   const itensOrdenados = pedido.itens ? [...pedido.itens].sort((a, b) => {
     const nomeA = a.produto_nome || '';
     const nomeB = b.produto_nome || '';
@@ -48,7 +45,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center">
         
-        {/* A "VACINA" TÉRMICA: CSS ESTRITO PARA 80MM */}
+        {/* CSS ESTRITO PARA 72MM (ÁREA ÚTIL DE IMPRESSÃO) */}
         <style type="text/css">
           {`
             @media print {
@@ -56,19 +53,19 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               body { margin: 0; background: transparent; }
               body * { visibility: hidden; }
               #area-comprovante, #area-comprovante * { visibility: visible; }
-              /* Força a impressora a não passar dos 80mm (300px) e remove sombras/fundos */
-              #area-comprovante { position: absolute; left: 0; top: 0; width: 300px; padding: 0; box-shadow: none !important; background: transparent !important; }
+              /* 270px equivale aos 72mm de área útil da cabeça de impressão */
+              #area-comprovante { position: absolute; left: 0; top: 0; width: 270px; padding: 0; box-shadow: none !important; background: transparent !important; }
               .no-print { display: none !important; }
             }
 
-            /* Estilos Globais do Cupom (Tela e Papel) */
+            /* Estilos Globais do Cupom */
             .cupom-termico {
-              width: 300px; /* Largura estrita de 80mm */
+              width: 270px; /* Reduzido para 72mm */
               background: #fff;
-              color: #000; /* Preto puro, nada de cinzento! */
+              color: #000;
               font-family: Arial, sans-serif;
-              font-size: 12px;
-              padding: 10px;
+              font-size: 11px; /* Fonte base reduzida para caber nos 72mm */
+              padding: 8px; /* Margens internas menores */
               margin: 20px auto;
               line-height: 1.2;
             }
@@ -80,26 +77,26 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             
             .linha-separadora {
               border-bottom: 1px solid #000;
-              margin: 5px 0;
+              margin: 4px 0;
             }
 
-            /* Tabela de Produtos (O Segredo do Alinhamento) */
+            /* Tabela de Produtos */
             .tabela-itens {
               width: 100%;
               border-collapse: collapse;
-              margin: 5px 0;
+              margin: 4px 0;
             }
             .tabela-itens th {
               font-weight: normal;
               border-top: 1px solid #000;
               border-bottom: 1px solid #000;
-              padding: 3px 0;
+              padding: 2px 0;
               text-align: right;
             }
             .tabela-itens td {
               text-align: right;
               vertical-align: top;
-              padding: 3px 0;
+              padding: 2px 0;
             }
             .tabela-itens th:first-child, .tabela-itens td:first-child {
               text-align: left;
@@ -109,12 +106,12 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             /* Grid de Totais */
             .grid-totais {
               display: grid;
-              grid-template-columns: 1fr 75px; /* Mais espaço para não cortar os centavos */
+              grid-template-columns: 1fr 65px; /* Ajustado para os 72mm */
               row-gap: 3px;
             }
             .grid-totais > div:nth-child(odd) {
               text-align: right;
-              padding-right: 15px;
+              padding-right: 10px; /* Menos espaço para não empurrar os números */
             }
             .grid-totais > div:nth-child(even) {
               text-align: right;
@@ -124,8 +121,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
         <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8">
           
-          {/* Botões de Ação (Apenas na Tela) - Mantive o teu botão "Compartilhar" */}
-          <div className="flex gap-2 my-4 no-print w-[300px] justify-end flex-wrap">
+          <div className="flex gap-2 my-4 no-print w-[270px] justify-end flex-wrap">
             <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
               <Share2 className="w-4 h-4 mr-1" /> Partilhar
             </Button>
@@ -137,21 +133,19 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             </Button>
           </div>
 
-          {/* ÁREA DE IMPRESSÃO - O LAYOUT CLÁSSICO */}
+          {/* ÁREA DE IMPRESSÃO - LAYOUT 72MM */}
           <div id="area-comprovante" className="cupom-termico shadow-lg">
             
-            {/* Cabeçalho da Empresa */}
             <div className="t-center">
-              <h2 className="bold" style={{ fontSize: '18px', margin: '2px 0', textTransform: 'uppercase' }}>VAREJOSYNC</h2>
-              <div style={{ fontSize: '12px' }}>
+              <h2 className="bold" style={{ fontSize: '16px', margin: '2px 0', textTransform: 'uppercase' }}>VAREJOSYNC</h2>
+              <div style={{ fontSize: '11px' }}>
                 <p>Obrigado pela sua preferência!</p>
               </div>
             </div>
 
             <div className="linha-separadora"></div>
 
-            {/* Cabeçalho do Pedido */}
-            <div className="t-center bold" style={{ fontSize: '14px', margin: '6px 0' }}>
+            <div className="t-center bold" style={{ fontSize: '13px', margin: '5px 0' }}>
               RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
             </div>
 
@@ -160,9 +154,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                 <div>Data:</div>
                 <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')}</div>
               </div>
-              <div style={{ width: '55%', paddingLeft: '10px' }}>
+              <div style={{ width: '55%', paddingLeft: '5px' }}>
                 <div>Cliente:</div>
-                <div className="t-center uppercase" style={{ fontSize: '11px' }}>
+                <div className="t-center uppercase" style={{ fontSize: '10px' }}>
                   {pedido.cliente_nome?.substring(0, 18) || 'AVULSO'}
                 </div>
               </div>
@@ -173,14 +167,15 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                 <div>Hora:</div>
                 <div className="t-center">{format(new Date(pedido.created_date || new Date()), 'HH:mm')}</div>
               </div>
-              <div style={{ width: '55%', paddingLeft: '10px' }}>
+              <div style={{ width: '55%', paddingLeft: '5px' }}>
                 <div>Vend.:</div>
-                <div className="t-center uppercase">{pedido.vendedor_nome?.substring(0, 15) || 'VENDEDOR'}</div>
+                <div className="t-center uppercase" style={{ fontSize: '10px' }}>
+                  {pedido.vendedor_nome?.substring(0, 15) || 'VENDEDOR'}
+                </div>
               </div>
             </div>
 
-            {/* Detalhes dos Itens */}
-            <table className="tabela-itens" style={{ marginTop: '10px' }}>
+            <table className="tabela-itens" style={{ marginTop: '8px' }}>
               <thead>
                 <tr>
                   <th>Descrição</th>
@@ -192,8 +187,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               <tbody>
                 {itensOrdenados.map((item, idx) => (
                   <tr key={idx}>
-                    <td style={{ fontSize: '10px', textTransform: 'uppercase' }}>
-                      {item.produto_nome?.substring(0, 22)}
+                    <td style={{ fontSize: '9px', textTransform: 'uppercase' }}>
+                      {item.produto_nome?.substring(0, 20)}
                     </td>
                     <td>{item.quantidade}</td>
                     <td>{formatValor(item.preco_unitario_praticado)}</td>
@@ -205,7 +200,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <div className="linha-separadora"></div>
 
-            {/* Finalmentes: Totais */}
             <div className="grid-totais">
               <div>Subtotal</div>
               <div>{formatValor(pedido.subtotal)}</div>
@@ -227,31 +221,29 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <div className="linha-separadora"></div>
             
-            <div className="grid-totais bold" style={{ fontSize: '14px' }}>
+            <div className="grid-totais bold" style={{ fontSize: '13px' }}>
               <div>TOTAL</div>
               <div>R$ {formatValor(pedido.valor_total)}</div>
             </div>
 
             <div className="linha-separadora"></div>
 
-            {/* Formas de Pagamento */}
-            <div className="bold" style={{ marginTop: '8px', fontSize: '11px', textTransform: 'uppercase' }}>Método de Pagamento</div>
+            <div className="bold" style={{ marginTop: '6px', fontSize: '10px', textTransform: 'uppercase' }}>Método de Pagamento</div>
             {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
               pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '2px' }}>
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '2px' }}>
                   <div className="uppercase">{pag.forma_pagamento}</div>
                   <div>R$ {formatValor(pag.valor)}</div>
                 </div>
               ))
             ) : (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginTop: '2px' }}>
                 <div>A DEFINIR / DINHEIRO</div>
                 <div>R$ {formatValor(pedido.valor_total)}</div>
               </div>
             )}
 
-            {/* Rodapé Auxiliar */}
-            <div className="t-center" style={{ marginTop: '20px', fontSize: '10px', color: '#666' }}>
+            <div className="t-center" style={{ marginTop: '15px', fontSize: '9px', color: '#666' }}>
               <p>VarejoSync ERP - Documento Auxiliar</p>
               <p>Gerado em {format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
             </div>
