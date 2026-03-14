@@ -85,9 +85,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           
           .cupom-termico { 
             width: 270px; background: #fff; color: #000; 
-            font-family: 'Roboto Mono', 'Courier New', monospace; 
-            font-size: 9px; padding: 4px; margin: 0 auto; line-height: 1.3; 
+            font-family: 'Roboto Mono', monospace !important; 
+            font-size: 9px; padding: 4px; margin: 0 auto; line-height: 1.4; 
             font-weight: 300;
+          }
+          
+          .cupom-termico * {
+            font-family: 'Roboto Mono', monospace !important;
           }
           
           .t-center { text-align: center; }
@@ -173,38 +177,29 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div style={{ fontSize: '8px', marginBottom: '1px', display: 'grid', gridTemplateColumns: '15px 1fr 25px 20px 45px 45px', gap: '4px' }}>
-              <span>NO.</span>
-              <span>| DESCRIÇÃO</span>
-              <span style={{ textAlign: 'right' }}>| QTD</span>
-              <span>| UND</span>
-              <span style={{ textAlign: 'right' }}>| PREÇO</span>
-              <span style={{ textAlign: 'right' }}>| TOTAL</span>
+            <div style={{ fontSize: '8.5px', marginBottom: '2px' }}>
+              NO. | DESCRIÇÃO         | QTD | UND |  PREÇO |  TOTAL
             </div>
             
             <LinhaHifens />
 
             {itensOrdenados.map((item, idx) => {
               const nomeCompleto = item.produto_nome || '';
-              const linha1MaxChars = 28;
-              const linha1 = nomeCompleto.substring(0, linha1MaxChars);
-              const resto = nomeCompleto.substring(linha1MaxChars);
+              const maxPrimeiraLinha = 20;
               
               return (
-                <div key={idx} style={{ marginBottom: '5px', fontSize: '8px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '15px 1fr', gap: '4px' }}>
-                    <span>{idx + 1}</span>
-                    <span>| {linha1}</span>
+                <div key={idx} style={{ marginBottom: '6px', fontSize: '8.5px', fontFamily: 'Roboto Mono, monospace' }}>
+                  <div>
+                    {String(idx + 1).padStart(2, ' ')} | {nomeCompleto.substring(0, maxPrimeiraLinha)}
                   </div>
-                  {resto && (
-                    <div style={{ paddingLeft: '19px' }}>| {resto}</div>
+                  {nomeCompleto.length > maxPrimeiraLinha && (
+                    <div style={{ paddingLeft: '16px' }}>
+                      | {nomeCompleto.substring(maxPrimeiraLinha)}
+                    </div>
                   )}
-                  <div style={{ display: 'grid', gridTemplateColumns: '15px 25px 20px 45px 45px', gap: '4px', paddingLeft: '19px' }}>
-                    <span></span>
-                    <span style={{ textAlign: 'right' }}>| {parseFloat(item.quantidade).toFixed(0)}</span>
-                    <span>| UN</span>
-                    <span style={{ textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</span>
-                    <span style={{ textAlign: 'right' }}>| {formatValor(item.total)}</span>
+                  <div style={{ paddingLeft: '16px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>| {String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ')} | UN</span>
+                    <span>| {formatValor(item.preco_unitario_praticado).padStart(6, ' ')} | {formatValor(item.total).padStart(6, ' ')}</span>
                   </div>
                 </div>
               );
