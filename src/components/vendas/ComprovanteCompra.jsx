@@ -75,10 +75,10 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         <style dangerouslySetInnerHTML={{ __html: `
           @media print {
             @page { margin: 0 !important; size: 80mm auto !important; }
-            body > div:first-of-type { display: none !important; }
-            div[role="dialog"] { 
+            body * { visibility: hidden !important; }
+            .cupom-termico, .cupom-termico * { visibility: visible !important; }
+            .cupom-termico { 
               position: absolute !important; left: 0 !important; top: 0 !important; 
-              transform: none !important; max-height: none !important; overflow: visible !important;
             }
             .no-print { display: none !important; }
           }
@@ -182,16 +182,16 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             {itensOrdenados.map((item, idx) => {
               const nomeCompleto = item.produto_nome || '';
-              const maxCaracteres = 46;
+              const maxCaracteres = 44;
               
               return (
-                <div key={idx} style={{ marginBottom: '3px', fontSize: '9px' }}>
+                <div key={idx} style={{ marginBottom: '5px', fontSize: '9px' }}>
                   <div>{idx + 1} | {nomeCompleto.substring(0, maxCaracteres)}</div>
                   {nomeCompleto.length > maxCaracteres && (
-                    <div style={{ paddingLeft: '8px' }}>| {nomeCompleto.substring(maxCaracteres)}</div>
+                    <div style={{ paddingLeft: '12px' }}>  | {nomeCompleto.substring(maxCaracteres)}</div>
                   )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '8px' }}>
-                    <span>| {parseFloat(item.quantidade).toFixed(0)} | UN | {formatValor(item.preco_unitario_praticado)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '12px' }}>
+                    <span>  | {parseFloat(item.quantidade).toFixed(0)} | UN | {formatValor(item.preco_unitario_praticado)}</span>
                     <span>| {formatValor(item.total)}</span>
                   </div>
                 </div>
@@ -219,17 +219,24 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
               pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex-linha" style={{ fontSize: idx === 0 ? '12px' : '9px' }}>
+                <div key={idx} className="flex-linha" style={{ fontSize: '10px' }}>
                   <div className="uppercase">{pag.forma_pagamento}:</div>
                   <div>{formatValor(pag.valor)}</div>
                 </div>
               ))
             ) : (
-              <div className="flex-linha" style={{ fontSize: '12px' }}>
+              <div className="flex-linha" style={{ fontSize: '10px' }}>
                 <div>DINHEIRO:</div>
                 <div>{formatValor(pedido.valor_total)}</div>
               </div>
             )}
+
+            <LinhaHifens />
+
+            <div style={{ fontSize: '9px', marginTop: '3px' }}>
+              <div>Vendedor: {pedido.vendedor_nome || 'N/D'}</div>
+              <div>Caixa: {pedido.usuario_caixa_nome || pedido.vendedor_nome || 'N/D'}</div>
+            </div>
 
             <LinhaHifens />
 
