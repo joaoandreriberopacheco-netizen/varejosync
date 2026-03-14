@@ -125,10 +125,26 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           <div className="cupom-termico print:shadow-none shadow-lg">
             
             <div className="t-center">
-              <h2 className="bold" style={{ fontSize: '18px', margin: '2px 0', textTransform: 'uppercase' }}>VAREJOSYNC</h2>
-              <div style={{ fontSize: '11px' }}>
-                <p>Obrigado pela sua preferência!</p>
-              </div>
+              <h2 className="bold" style={{ fontSize: '14px', margin: '2px 0', textTransform: 'uppercase' }}>
+                {dadosEmpresa?.razao_social || 'VAREJOSYNC'}
+              </h2>
+              {dadosEmpresa && (
+                <div style={{ fontSize: '10px', lineHeight: '1.3' }}>
+                  {dadosEmpresa.endereco && (
+                    <p>{dadosEmpresa.endereco}{dadosEmpresa.numero ? ', ' + dadosEmpresa.numero : ''}</p>
+                  )}
+                  {(dadosEmpresa.bairro || dadosEmpresa.cidade) && (
+                    <p>
+                      {dadosEmpresa.bairro && `${dadosEmpresa.bairro} - `}
+                      {dadosEmpresa.cidade && dadosEmpresa.cidade}
+                      {dadosEmpresa.estado && `/${dadosEmpresa.estado}`}
+                    </p>
+                  )}
+                  {dadosEmpresa.cep && <p>CEP: {dadosEmpresa.cep}</p>}
+                  {dadosEmpresa.cnpj && <p>CNPJ: {dadosEmpresa.cnpj}</p>}
+                  {dadosEmpresa.telefone && <p>Tel: {dadosEmpresa.telefone}</p>}
+                </div>
+              )}
             </div>
 
             <LinhaHifens />
