@@ -185,10 +185,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             <table className="tabela-itens">
               <thead>
                 <tr>
-                  <th style={{ width: '46%', textAlign: 'left' }}>DESC.</th>
-                  <th style={{ width: '14%', textAlign: 'center' }}>|QTD</th>
+                  <th style={{ width: '35%', textAlign: 'left' }}>DESC.</th>
+                  <th style={{ width: '12%', textAlign: 'center' }}>|QTD</th>
+                  <th style={{ width: '12%', textAlign: 'center' }}>|UND</th>
                   <th style={{ width: '20%', textAlign: 'right' }}>|PRECO</th>
-                  <th style={{ width: '20%', textAlign: 'right' }}>|TOTAL</th>
+                  <th style={{ width: '21%', textAlign: 'right' }}>|TOTAL</th>
                 </tr>
               </thead>
             </table>
