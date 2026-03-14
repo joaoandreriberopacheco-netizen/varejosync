@@ -10,12 +10,26 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
 
   useEffect(() => {
-    if (open && !jaImprimiu.current) {
-      jaImprimiu.current = true;
-      setTimeout(() => {
-        window.print();
-      }, 500);
-    } else if (!open) {
+    if (open) {
+      const carregarDadosEmpresa = async () => {
+        try {
+          const empresas = await base44.entities.DadosEmpresa.list();
+          if (empresas && empresas.length > 0) {
+            setDadosEmpresa(empresas[0]);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados da empresa:', error);
+        }
+      };
+      carregarDadosEmpresa();
+
+      if (!jaImprimiu.current) {
+        jaImprimiu.current = true;
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
+    } else {
       jaImprimiu.current = false;
     }
   }, [open]);
