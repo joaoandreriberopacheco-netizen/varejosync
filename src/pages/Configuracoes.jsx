@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Percent, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Percent, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
 import TabelasPrecoManager from '../components/config/TabelasPrecoManager';
 import ConfiguracoesVendaManager from '../components/config/ConfiguracoesVendaManager';
@@ -14,6 +14,7 @@ import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
 import DadosEmpresaManager from '../components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '../components/config/PerfisDeAcessoManager';
 import RecomecarDoZero from '../components/config/RecomecarDoZero';
+import PersonalizacaoComprovanteManager from '../components/config/PersonalizacaoComprovanteManager';
 
 export default function ConfiguracoesPage() {
   const [tab, setTab] = useState('vendas');
@@ -44,14 +45,16 @@ export default function ConfiguracoesPage() {
         {tab === 'vendas' && (
           <div className="space-y-4">
             <GlacialSubTabsList>
-              <GlacialSubTabsTrigger value="fluxo"    activeValue={vendaTab} onSelect={setVendaTab} icon={Sliders}  label="Fluxo & Parâmetros" />
-              <GlacialSubTabsTrigger value="tabelas"  activeValue={vendaTab} onSelect={setVendaTab} icon={Tags}     label="Tabelas de Preço" />
-              <GlacialSubTabsTrigger value="desconto" activeValue={vendaTab} onSelect={setVendaTab} icon={Percent}  label="Políticas de Desconto" />
+              <GlacialSubTabsTrigger value="fluxo"       activeValue={vendaTab} onSelect={setVendaTab} icon={Sliders}  label="Fluxo & Parâmetros" />
+              <GlacialSubTabsTrigger value="tabelas"     activeValue={vendaTab} onSelect={setVendaTab} icon={Tags}     label="Tabelas de Preço" />
+              <GlacialSubTabsTrigger value="desconto"    activeValue={vendaTab} onSelect={setVendaTab} icon={Percent}  label="Políticas de Desconto" />
+              <GlacialSubTabsTrigger value="comprovante" activeValue={vendaTab} onSelect={setVendaTab} icon={Receipt}  label="Comprovante" />
             </GlacialSubTabsList>
             <div>
-              {vendaTab === 'fluxo'    && <ConfiguracoesVendaManager />}
-              {vendaTab === 'tabelas'  && <TabelasPrecoManager />}
-              {vendaTab === 'desconto' && <PoliticasDescontoManager />}
+              {vendaTab === 'fluxo'       && <ConfiguracoesVendaManager />}
+              {vendaTab === 'tabelas'     && <TabelasPrecoManager />}
+              {vendaTab === 'desconto'    && <PoliticasDescontoManager />}
+              {vendaTab === 'comprovante' && <PersonalizacaoComprovanteManager />}
             </div>
           </div>
         )}

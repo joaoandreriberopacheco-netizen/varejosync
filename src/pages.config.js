@@ -94,7 +94,9 @@ import PDV from './pages/PDV';
 import PDVAuditoria from './pages/PDVAuditoria';
 import PainelGerente from './pages/PainelGerente';
 import Produtos from './pages/Produtos';
+import ReimpressaoDocumentos from './pages/ReimpressaoDocumentos';
 import RelatorioMargem from './pages/RelatorioMargem';
+import RelatorioPerformance from './pages/RelatorioPerformance';
 import Relatorios from './pages/Relatorios';
 import TabelasPreco from './pages/TabelasPreco';
 import Terceiros from './pages/Terceiros';
@@ -103,7 +105,6 @@ import Veiculos from './pages/Veiculos';
 import Vendas from './pages/Vendas';
 import VendasGestao from './pages/VendasGestao';
 import VendasPerdidas from './pages/VendasPerdidas';
-import RelatorioPerformance from './pages/RelatorioPerformance';
 import __Layout from './Layout.jsx';
 
 
@@ -155,7 +156,9 @@ export const PAGES = {
     "PDVAuditoria": PDVAuditoria,
     "PainelGerente": PainelGerente,
     "Produtos": Produtos,
+    "ReimpressaoDocumentos": ReimpressaoDocumentos,
     "RelatorioMargem": RelatorioMargem,
+    "RelatorioPerformance": RelatorioPerformance,
     "Relatorios": Relatorios,
     "TabelasPreco": TabelasPreco,
     "Terceiros": Terceiros,
@@ -164,7 +167,6 @@ export const PAGES = {
     "Vendas": Vendas,
     "VendasGestao": VendasGestao,
     "VendasPerdidas": VendasPerdidas,
-    "RelatorioPerformance": RelatorioPerformance,
 }
 
 export const pagesConfig = {
