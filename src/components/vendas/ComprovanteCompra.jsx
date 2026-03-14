@@ -85,8 +85,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           
           .cupom-termico { 
             width: 270px; background: #fff; color: #000; 
-            font-family: 'Iosevka Charon Mono', 'Courier New', monospace; 
-            font-size: 10px; padding: 4px; margin: 0 auto; line-height: 1.2; 
+            font-family: 'Roboto Mono', 'Courier New', monospace; 
+            font-size: 9px; padding: 4px; margin: 0 auto; line-height: 1.3; 
+            font-weight: 300;
           }
           
           .t-center { text-align: center; }
@@ -172,26 +173,38 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div style={{ fontSize: '9px', marginBottom: '1px' }}>
-              NO. | DESCRIÇÃO | QTD | UND | PREÇO | TOTAL
+            <div style={{ fontSize: '8px', marginBottom: '1px', display: 'grid', gridTemplateColumns: '15px 1fr 25px 20px 45px 45px', gap: '4px' }}>
+              <span>NO.</span>
+              <span>| DESCRIÇÃO</span>
+              <span style={{ textAlign: 'right' }}>| QTD</span>
+              <span>| UND</span>
+              <span style={{ textAlign: 'right' }}>| PREÇO</span>
+              <span style={{ textAlign: 'right' }}>| TOTAL</span>
             </div>
             
             <LinhaHifens />
 
             {itensOrdenados.map((item, idx) => {
               const nomeCompleto = item.produto_nome || '';
-              const linha1MaxChars = 32;
+              const linha1MaxChars = 28;
               const linha1 = nomeCompleto.substring(0, linha1MaxChars);
               const resto = nomeCompleto.substring(linha1MaxChars);
               
               return (
-                <div key={idx} style={{ marginBottom: '6px', fontSize: '9px' }}>
-                  <div>{idx + 1} | {linha1}</div>
+                <div key={idx} style={{ marginBottom: '5px', fontSize: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '15px 1fr', gap: '4px' }}>
+                    <span>{idx + 1}</span>
+                    <span>| {linha1}</span>
+                  </div>
                   {resto && (
-                    <div style={{ paddingLeft: '12px' }}>  | {resto}</div>
+                    <div style={{ paddingLeft: '19px' }}>| {resto}</div>
                   )}
-                  <div style={{ paddingLeft: '12px' }}>
-                    | {parseFloat(item.quantidade).toFixed(0)} | UN | {formatValor(item.preco_unitario_praticado)} | {formatValor(item.total)}
+                  <div style={{ display: 'grid', gridTemplateColumns: '15px 25px 20px 45px 45px', gap: '4px', paddingLeft: '19px' }}>
+                    <span></span>
+                    <span style={{ textAlign: 'right' }}>| {parseFloat(item.quantidade).toFixed(0)}</span>
+                    <span>| UN</span>
+                    <span style={{ textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</span>
+                    <span style={{ textAlign: 'right' }}>| {formatValor(item.total)}</span>
                   </div>
                 </div>
               );
