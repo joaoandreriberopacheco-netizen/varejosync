@@ -1,5 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inconsolata:wdth,wght@50..200,200..900&family=Roboto+Mono:wght@300;400;500;600;700&display=swap');
+/* 1. FONTES DO SISTEMA (Base, UI, Menus) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+/* 2. FONTE IMPRESSÃO ALTERNATIVA (Iosevka - Ultra Condensada) */
 @import url('https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
+/* 3. FONTE IMPRESSÃO PRINCIPAL (Ubuntu Sans Mono - Estilo Recibo Autêntico) */
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap');
 
 .font-glacial {
   font-family: 'Quicksand', sans-serif;
@@ -247,93 +253,4 @@ textarea,
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
-}
-
-/* ==========================================
-   UTILIDADES PARA TOUCH
-   ========================================== */
-
-/* Área de toque expandida para ícones pequenos */
-.touch-target {
-  position: relative;
-}
-
-.touch-target::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  bottom: -8px;
-  left: -8px;
-}
-
-/* Feedback visual de toque */
-@media (hover: none) {
-  button:active,
-  [role="button"]:active {
-    opacity: 0.7;
-    transform: scale(0.98);
-  }
-}
-
-/* ==========================================
-   TRANSFORMAÇÃO DE TEXTO - VERSALETE
-   ========================================== */
-
-/* Aplica maiúsculas em textos de exibição de dados */
-.uppercase-data,
-table td:not(:has(input)):not(:has(select)):not(:has(textarea)),
-table th,
-.badge,
-h1, h2, h3, h4, h5, h6,
-p, span, div:not(:has(input)):not(:has(select)):not(:has(textarea)) {
-  text-transform: uppercase;
-}
-
-/* Mantém normal em inputs durante edição */
-input, textarea, select, 
-[contenteditable="true"],
-[role="textbox"] {
-  text-transform: none !important;
-}
-
-/* Força maiúsculas em placeholders também */
-::placeholder {
-  text-transform: uppercase;
-}
-
-/* ==========================================
-   DARK MODE AJUSTES
-   ========================================== */
-
-.dark {
-  color-scheme: dark;
-}
-
-/* ==========================================
-   ANIMAÇÕES
-   ========================================== */
-
-@keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s ease-in-out infinite;
-}
-
-/* Shake para erros */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
-.animate-shake {
-  animation: shake 0.3s ease-in-out;
 }
