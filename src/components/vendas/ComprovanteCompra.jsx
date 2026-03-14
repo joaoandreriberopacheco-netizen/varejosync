@@ -5,6 +5,7 @@ import { Printer, Share2, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
+  // O "Cadeado" para impedir impressões duplicadas
   const jaImprimiu = useRef(false);
 
   useEffect(() => {
@@ -50,19 +51,18 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center print:bg-transparent print:shadow-none print:border-none">
         
-        <style type="text/css">
-          {`
-            @media print {
-              /* A VACINA DAS MARGENS: Força a impressora a assumir o papel de 80mm e anula as margens padrão do Chrome */
-              @page { 
-                margin: 0 !important; 
-                size: 80mm auto !important; 
-              }
-              
-              /* Apaga o site de fundo (React Root) */
-              #root, #__next { display: none !important; }
-              
-              /* Só imprime o que tem a classe ATIVA. Ignora os "fantasmas". */
-              .area-comprovante-ativo, .area-comprovante-ativo * { 
-                display: block !important; 
-                visibility: visible !important
+        {/* A VACINA DAS MARGENS E DO TEMPLATE */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media print {
+            @page { 
+              margin: 0 !important; 
+              size: 80mm auto !important; 
+            }
+            
+            /* Apaga o site de fundo (React Root) */
+            #root, #__next { display: none !important; }
+            
+            /* Só imprime o que tem a classe ATIVA. Ignora os "fantasmas". */
+            .area-comprovante-ativo, .area-comprovante-ativo * { 
+              display: block !important; 
+              visibility: visible !important;
