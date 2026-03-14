@@ -1,13 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, Share2, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Printer, Share2, X, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
+import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const jaImprimiu = useRef(false);
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
+  const [ipImpressora, setIpImpressora] = useState('');
+  const [imprimindoTermica, setImprimindoTermica] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -22,6 +27,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         }
       };
       carregarDadosEmpresa();
+
+      const ipSalvo = localStorage.getItem('ip_impressora_termica');
+      if (ipSalvo) setIpImpressora(ipSalvo);
 
       if (!jaImprimiu.current) {
         jaImprimiu.current = true;
@@ -46,6 +54,33 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       }
     } else {
       window.print();
+    }
+  };
+
+  const handleImprimirTermica = async () => {
+    if (!ipImpressora) {
+      toast.error('Informe o IP da impressora térmica');
+      return;
+    }
+
+    setImprimindoTermica(true);
+    try {
+      const response = await imprimirCupomTermico({ 
+        pedido_id: pedido.id, 
+        ip_impressora: ipImpressora 
+      });
+      
+      if (response.data.success) {
+        toast.success('Cupom enviado para impressora térmica!');
+        localStorage.setItem('ip_impressora_termica', ipImpressora);
+      } else {
+        toast.error(response.data.error || 'Erro ao imprimir');
+      }
+    } catch (error) {
+      toast.error('Falha na comunicação com a impressora');
+      console.error(error);
+    } finally {
+      setImprimindoTermica(false);
     }
   };
 
@@ -116,16 +151,36 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
         <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8 print:max-h-none print:overflow-visible print:pb-0">
           
-          <div className="flex gap-2 my-4 w-[275px] justify-end flex-wrap no-print">
-            <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
-              <Share2 className="w-4 h-4 mr-1" /> Partilhar
-            </Button>
-            <Button onClick={() => window.print()} size="sm" className="h-8 bg-black text-white hover:bg-gray-800">
-              <Printer className="w-4 h-4 mr-1" /> Imprimir
-            </Button>
-            <Button variant="outline" onClick={onClose} size="sm" className="h-8 border-black text-black">
-              <X className="w-4 h-4 mr-1" /> Fechar
-            </Button>
+          <div className="flex flex-col gap-2 my-4 w-[275px] no-print">
+            <div className="flex gap-2 items-center">
+              <Input 
+                placeholder="IP da impressora (ex: 192.168.1.100)"
+                value={ipImpressora}
+                onChange={(e) => setIpImpressora(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <Button 
+                onClick={handleImprimirTermica} 
+                disabled={imprimindoTermica}
+                size="sm" 
+                className="h-8 bg-green-600 text-white hover:bg-green-700 whitespace-nowrap"
+              >
+                <Zap className="w-4 h-4 mr-1" /> 
+                {imprimindoTermica ? 'Enviando...' : 'Térmica'}
+              </Button>
+            </div>
+            
+            <div className="flex gap-2 justify-end flex-wrap">
+              <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
+                <Share2 className="w-4 h-4 mr-1" /> Partilhar
+              </Button>
+              <Button onClick={() => window.print()} size="sm" className="h-8 bg-black text-white hover:bg-gray-800">
+                <Printer className="w-4 h-4 mr-1" /> PDF
+              </Button>
+              <Button variant="outline" onClick={onClose} size="sm" className="h-8 border-black text-black">
+                <X className="w-4 h-4 mr-1" /> Fechar
+              </Button>
+            </div>
           </div>
 
           <div className="cupom-termico print:shadow-none shadow-lg">
