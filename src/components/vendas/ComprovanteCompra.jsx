@@ -84,9 +84,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           }
           
           .cupom-termico { 
-            width: 268px; background: #fff; color: #000; 
-            font-family: 'Iosevka Charon Mono', 'Courier New', 'Consolas', monospace; 
-            font-size: 10px; padding: 3px 2px; margin: 0 auto; line-height: 1.15; 
+            width: 270px; background: #fff; color: #000; 
+            font-family: 'Iosevka Charon Mono', 'Courier New', monospace; 
+            font-size: 10px; padding: 4px; margin: 0 auto; line-height: 1.2; 
           }
           
           .t-center { text-align: center; }
@@ -109,7 +109,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
         <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8 print:max-h-none print:overflow-visible print:pb-0">
           
-          <div className="flex gap-2 my-4 w-[268px] justify-end flex-wrap no-print">
+          <div className="flex gap-2 my-4 w-[270px] justify-end flex-wrap no-print">
             <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
               <Share2 className="w-4 h-4 mr-1" /> Partilhar
             </Button>
@@ -163,36 +163,35 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <div style={{ fontSize: '10px', marginTop: '4px' }}>
               <div>
-                DATA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')} | 
-                HORA: {format(new Date(pedido.created_date || new Date()), 'HH:mm')} | 
-                VEND: {pedido.vendedor_nome?.substring(0, 8) || 'N/D'}
+                DATA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')} | HORA: {format(new Date(pedido.created_date || new Date()), 'HH:mm')}
               </div>
               <div style={{ marginTop: '2px' }}>
-                CLIENTE: <span className="uppercase">{pedido.cliente_nome?.substring(0, 22) || 'AVULSO'}</span>
+                CLIENTE: <span className="uppercase">{pedido.cliente_nome?.substring(0, 30) || 'AVULSO'}</span>
               </div>
             </div>
 
             <LinhaHifens />
 
             <div style={{ fontSize: '9px', marginBottom: '1px' }}>
-              NO. | ITEM NAME      | QTY | UOM | UNIT PRICE | AMOUNT
+              NO. | DESCRIÇÃO | QTD | UND | PREÇO | TOTAL
             </div>
             
             <LinhaHifens />
 
             {itensOrdenados.map((item, idx) => {
               const nomeCompleto = item.produto_nome || '';
-              const maxCaracteres = 44;
+              const linha1MaxChars = 32;
+              const linha1 = nomeCompleto.substring(0, linha1MaxChars);
+              const resto = nomeCompleto.substring(linha1MaxChars);
               
               return (
-                <div key={idx} style={{ marginBottom: '5px', fontSize: '9px' }}>
-                  <div>{idx + 1} | {nomeCompleto.substring(0, maxCaracteres)}</div>
-                  {nomeCompleto.length > maxCaracteres && (
-                    <div style={{ paddingLeft: '12px' }}>  | {nomeCompleto.substring(maxCaracteres)}</div>
+                <div key={idx} style={{ marginBottom: '6px', fontSize: '9px' }}>
+                  <div>{idx + 1} | {linha1}</div>
+                  {resto && (
+                    <div style={{ paddingLeft: '12px' }}>  | {resto}</div>
                   )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '12px' }}>
-                    <span>  | {parseFloat(item.quantidade).toFixed(0)} | UN | {formatValor(item.preco_unitario_praticado)}</span>
-                    <span>| {formatValor(item.total)}</span>
+                  <div style={{ paddingLeft: '12px' }}>
+                    | {parseFloat(item.quantidade).toFixed(0)} | UN | {formatValor(item.preco_unitario_praticado)} | {formatValor(item.total)}
                   </div>
                 </div>
               );
