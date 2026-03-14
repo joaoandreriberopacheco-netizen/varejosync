@@ -86,14 +86,14 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             .no-print { display: none !important; }
           }
           
-          /* COUSINE APLICADA E NEGRITO BANIDO */
+          /* IOSEVKA APLICADA E NEGRITO ABSOLUTAMENTE BANIDO */
           .cupom-termico, 
           .cupom-termico *,
           .cupom-termico div,
           .cupom-termico span,
           .cupom-termico th,
           .cupom-termico td { 
-            font-family: 'Cousine', monospace !important; 
+            font-family: 'Iosevka Charon Mono', monospace !important; 
             font-feature-settings: normal !important;
             -webkit-font-smoothing: antialiased;
             font-weight: 400 !important; /* Força tudo a ser normal, sem negrito */
@@ -107,12 +107,12 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           .t-center { text-align: center; }
           .uppercase { text-transform: uppercase; }
           
-          /* TABELA DE FERRO */
+          /* TABELA DE FERRO (Fixa as colunas para não haver "desabamento") */
           .tabela-itens { 
             width: 100%; border-collapse: collapse; margin: 3px 0; table-layout: fixed; 
           }
           .tabela-itens th, .tabela-itens td { 
-            padding: 2px 0; 
+            padding: 1px 0; 
             vertical-align: top;
             word-wrap: break-word; 
           }
@@ -185,90 +185,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            {/* A TABELA DE FERRO DA VINCOMMERCE */}
-            <table className="tabela-itens" style={{ fontSize: '10px' }}>
+            <table className="tabela-itens" style={{ fontSize: '11px' }}>
               <thead>
                 <tr className="uppercase">
                   <th style={{ width: '8%', textAlign: 'left' }}>NO.</th>
-                  <th style={{ width: '38%', textAlign: 'left' }}>| ITEM NAME</th>
-                  <th style={{ width: '12%', textAlign: 'center' }}>| QTY</th>
+                  <th style={{ width: '38%', textAlign: 'left' }}>| DESCRIÇÃO</th>
+                  <th style={{ width: '12%', textAlign: 'center' }}>| QTD</th>
                   <th style={{ width: '10%', textAlign: 'center' }}>| UN</th>
-                  <th style={{ width: '15%', textAlign: 'right' }}>| PRICE</th>
-                  <th style={{ width: '17%', textAlign: 'right' }}>| AMOUNT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {itensOrdenados.map((item, idx) => (
-                  <tr key={idx}>
-                    <td style={{ textAlign: 'left' }}>{idx + 1}</td>
-                    <td style={{ textAlign: 'left' }} className="uppercase">| {item.produto_nome}</td>
-                    <td style={{ textAlign: 'center' }}>| {parseFloat(item.quantidade).toFixed(0)}</td>
-                    <td style={{ textAlign: 'center' }}>| UN</td>
-                    <td style={{ textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</td>
-                    <td style={{ textAlign: 'right' }}>| {formatValor(item.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <LinhaHifens />
-
-            <div style={{ fontSize: '11px', marginTop: '4px' }}>
-              {pedido.valor_desconto > 0 && (
-                <div className="flex-linha">
-                  <span>Desconto:</span>
-                  <span>-{formatValor(pedido.valor_desconto)}</span>
-                </div>
-              )}
-              
-              <div className="flex-linha">
-                <span>Subtotal:</span>
-                <span>{formatValor(pedido.subtotal)}</span>
-              </div>
-            </div>
-            
-            {/* HIERARQUIA GIGANTE PARA O TOTAL (SEM NEGRITO) */}
-            <div className="flex-linha uppercase" style={{ fontSize: '18px', margin: '8px 0 6px 0' }}>
-              <span>TOTAL PAYMENT:</span>
-              <span>{formatValor(pedido.valor_total)}</span>
-            </div>
-
-            {/* FORMAS DE PAGAMENTO EM TAMANHO MAIOR */}
-            {(pedido.pagamentos || []).map((pag, idx) => (
-              <div key={idx} className="flex-linha uppercase" style={{ fontSize: '14px', marginTop: '2px' }}>
-                <span>{pag.forma_pagamento}:</span>
-                <span>{formatValor(pag.valor)}</span>
-              </div>
-            ))}
-            {(!pedido.pagamentos || pedido.pagamentos.length === 0) && (
-              <div className="flex-linha uppercase" style={{ fontSize: '14px', marginTop: '2px' }}>
-                <span>DINHEIRO:</span>
-                <span>{formatValor(pedido.valor_total)}</span>
-              </div>
-            )}
-
-            <LinhaHifens />
-
-            <div style={{ fontSize: '10px', marginTop: '4px' }}>
-              <div>Vendedor: {pedido.vendedor_nome || 'N/D'}</div>
-              <div>Caixa: {pedido.usuario_caixa_nome || pedido.vendedor_nome || 'N/D'}</div>
-            </div>
-
-            <LinhaHifens />
-
-            {dadosEmpresa?.mensagem_rodape && (
-              <div className="t-center uppercase" style={{ marginTop: '8px', fontSize: '13px' }}>
-                {dadosEmpresa.mensagem_rodape}
-              </div>
-            )}
-            <div className="t-center" style={{ marginTop: '15px', fontSize: '9px', opacity: 0.8 }}>
-              <p>VAREJOSYNC ERP</p>
-              <p>{format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
-            </div>
-
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+                  <th style={{ width: '15%', textAlign: '
