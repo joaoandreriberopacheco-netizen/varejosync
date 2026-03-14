@@ -1,188 +1,233 @@
-import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Printer, Share2 } from "lucide-react";
+import React, { useEffect, useRef } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Printer, Share2, X } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function ComprovanteCompra({ pedido, open, onOpenChange }) {
-  const [isPrinting, setIsPrinting] = useState(false);
+export default function ComprovanteCompra({ pedido, open, onClose }) {
+  const jaImprimiu = useRef(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && !jaImprimiu.current) {
+      jaImprimiu.current = true;
       setTimeout(() => {
-        handlePrint();
+        window.print();
       }, 500);
+    } else if (!open) {
+      jaImprimiu.current = false;
     }
   }, [open]);
-
-  const handlePrint = () => {
-    setIsPrinting(true);
-    setTimeout(() => {
-      window.print();
-      setIsPrinting(false);
-    }, 100);
-  };
 
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Recibo ${pedido.numero}`,
-          text: `Comprovante de compra - ${pedido.numero}\nTotal: R$ ${pedido.valor_total?.toFixed(2)}`,
+          title: `Pedido ${pedido.numero || 'Nº'}`,
+          text: `Comprovante de pedido - ${pedido.cliente_nome}`,
         });
       } catch (err) {
-        console.log('Compartilhamento cancelado');
+        console.log('Compartilhamento cancelado ou não suportado');
       }
+    } else {
+      window.print();
     }
   };
 
   if (!pedido) return null;
 
+  const formatValor = (valor) => {
+    const num = parseFloat(valor) || 0;
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const itensOrdenados = pedido.itens ? [...pedido.itens].sort((a, b) => {
+    const nomeA = a.produto_nome || '';
+    const nomeB = b.produto_nome || '';
+    return nomeA.localeCompare(nomeB);
+  }) : [];
+
+  const LinhaHifens = () => (
+    <div className="overflow-hidden whitespace-nowrap text-center" style={{ margin: '2px 0', letterSpacing: '1px' }}>
+      ----------------------------------------------------------------------------------
+    </div>
+  );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 bg-white dark:bg-gray-900">
-        <style>{`
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center print:bg-transparent print:shadow-none print:border-none">
+        
+        <style dangerouslySetInnerHTML={{ __html: `
           @media print {
-            body * { visibility: hidden; }
-            #comprovante-print, #comprovante-print * { visibility: visible; }
-            #comprovante-print { 
-              position: absolute; 
-              left: 0; 
-              top: 0; 
-              width: 100%;
-              background: white !important;
-              color: black !important;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            #comprovante-print * {
-              color: #000 !important;
-              background: transparent !important;
-              text-shadow: none !important;
-            }
-            #comprovante-print .font-bold {
-              font-weight: 700 !important;
+            @page { margin: 0 !important; size: 80mm auto !important; }
+            body > div:first-of-type { display: none !important; }
+            div[role="dialog"] { 
+              position: absolute !important; left: 0 !important; top: 0 !important; 
+              transform: none !important; max-height: none !important; overflow: visible !important;
             }
             .no-print { display: none !important; }
-            @page { 
-              size: 80mm auto; 
-              margin: 5mm;
-            }
           }
-        `}</style>
+          
+          .cupom-termico { 
+            width: 270px; background: #fff; color: #000; 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 11px; padding: 5px; margin: 0 auto; line-height: 1.2; 
+          }
+          
+          .t-center { text-align: center; }
+          .t-right { text-align: right; }
+          .bold { font-weight: bold; }
+          .uppercase { text-transform: uppercase; }
+          
+          /* O SEGREDO DA GRELHA: table-layout fixed impede que as colunas se esmaguem */
+          .tabela-itens { 
+            width: 100%; border-collapse: collapse; margin: 2px 0; table-layout: fixed; 
+          }
+          .tabela-itens th, .tabela-itens td { 
+            padding: 2px 0; white-space: nowrap; overflow: hidden; 
+          }
+          
+          .grid-totais { display: grid; grid-template-columns: 1fr 75px; row-gap: 2px; }
+          .grid-totais > div:nth-child(odd) { text-align: right; padding-right: 5px; }
+          .grid-totais > div:nth-child(even) { text-align: right; }
+          .flex-linha { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        `}} />
 
-        {!isPrinting && (
-          <div className="no-print flex gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
-            <Button onClick={handlePrint} className="flex-1 bg-gray-900 text-white hover:bg-gray-800">
-              <Printer className="w-4 h-4 mr-2" />
-              Imprimir
+        <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8 print:max-h-none print:overflow-visible print:pb-0">
+          
+          <div className="flex gap-2 my-4 w-[270px] justify-end flex-wrap no-print">
+            <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
+              <Share2 className="w-4 h-4 mr-1" /> Partilhar
             </Button>
-            <Button onClick={handleShare} variant="outline" className="flex-1">
-              <Share2 className="w-4 h-4 mr-2" />
-              Compartilhar
+            <Button onClick={() => window.print()} size="sm" className="h-8 bg-black text-white hover:bg-gray-800">
+              <Printer className="w-4 h-4 mr-1" /> Imprimir
+            </Button>
+            <Button variant="outline" onClick={onClose} size="sm" className="h-8 border-black text-black">
+              <X className="w-4 h-4 mr-1" /> Fechar
             </Button>
           </div>
-        )}
 
-        <div id="comprovante-print" className="p-6 font-mono text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-          {/* Cabeçalho */}
-          <div className="text-center mb-4">
-            <h2 className="text-2xl font-bold mb-1 tracking-wider">VAREJOSYNC</h2>
-            <p className="text-xs">Obrigado pela sua preferência!</p>
-          </div>
-
-          <div className="border-t border-dashed border-gray-400 my-3"></div>
-
-          {/* Número do Recibo */}
-          <div className="text-center text-base font-bold mb-3">
-            RECIBO Nº {pedido.numero || pedido.senha_atendimento}
-          </div>
-
-          {/* Informações */}
-          <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-            <div>
-              <div>DATA:</div>
-              <div className="text-center font-bold">{format(new Date(pedido.created_date), 'dd/MM/yyyy')}</div>
+          <div className="cupom-termico print:shadow-none shadow-lg">
+            
+            <div className="t-center">
+              <h2 className="bold" style={{ fontSize: '18px', margin: '2px 0', textTransform: 'uppercase' }}>VAREJOSYNC</h2>
+              <div style={{ fontSize: '11px' }}>
+                <p>Obrigado pela sua preferência!</p>
+              </div>
             </div>
-            <div>
-              <div>CLIENTE:</div>
-              <div className="text-center font-bold uppercase">{pedido.cliente_nome || 'AVULSO'}</div>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-            <div>
-              <div>HORA:</div>
-              <div className="text-center font-bold">{format(new Date(pedido.created_date), 'HH:mm')}</div>
-            </div>
-            <div>
-              <div>VEND.:</div>
-              <div className="text-center font-bold uppercase">{pedido.vendedor_nome || 'SISTEMA'}</div>
-            </div>
-          </div>
+            <LinhaHifens />
 
-          <div className="border-t border-dashed border-gray-400 my-3"></div>
+            <div className="t-center bold" style={{ fontSize: '13px', margin: '4px 0' }}>
+              RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
+            </div>
 
-          {/* Itens */}
-          <table className="w-full text-xs mb-3">
-            <thead>
-              <tr className="border-b border-dashed border-gray-400">
-                <th className="text-left pb-1 font-bold">DESC.</th>
-                <th className="text-right pb-1 font-bold">QTD</th>
-                <th className="text-right pb-1 font-bold">PREÇO</th>
-                <th className="text-right pb-1 font-bold">TOTAL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pedido.itens?.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="text-left uppercase py-1 pr-1">{item.produto_nome}</td>
-                  <td className="text-right py-1">{item.quantidade}</td>
-                  <td className="text-right py-1">{item.preco_unitario_praticado?.toFixed(2)}</td>
-                  <td className="text-right font-bold py-1">{item.total?.toFixed(2)}</td>
+            <div className="flex-linha mt-2">
+              <div style={{ width: '45%' }}>
+                <div>DATA:</div>
+                <div className="t-center bold">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')}</div>
+              </div>
+              <div style={{ width: '55%' }}>
+                <div style={{ paddingLeft: '5px' }}>CLIENTE:</div>
+                <div className="t-center uppercase bold" style={{ paddingLeft: '5px' }}>
+                  {pedido.cliente_nome?.substring(0, 16) || 'AVULSO'}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-linha mt-1 mb-2">
+              <div style={{ width: '45%' }}>
+                <div>HORA:</div>
+                <div className="t-center bold">{format(new Date(pedido.created_date || new Date()), 'HH:mm')}</div>
+              </div>
+              <div style={{ width: '55%' }}>
+                <div style={{ paddingLeft: '5px' }}>VEND.:</div>
+                <div className="t-center uppercase bold" style={{ paddingLeft: '5px' }}>
+                  {pedido.vendedor_nome?.substring(0, 14) || 'VENDEDOR'}
+                </div>
+              </div>
+            </div>
+
+            <LinhaHifens />
+
+            {/* A TABELA DE FERRO (Larguras exatas e Paredes "|") */}
+            <table className="tabela-itens">
+              <thead>
+                <tr>
+                  <th style={{ width: '46%', textAlign: 'left' }}>DESC.</th>
+                  <th style={{ width: '14%', textAlign: 'center' }}>|QTD</th>
+                  <th style={{ width: '20%', textAlign: 'right' }}>|PRECO</th>
+                  <th style={{ width: '20%', textAlign: 'right' }}>|TOTAL</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+            </table>
+            
+            <LinhaHifens />
 
-          <div className="border-t border-dashed border-gray-400 my-3"></div>
+            <table className="tabela-itens">
+              <tbody>
+                {itensOrdenados.map((item, idx) => (
+                  <tr key={idx}>
+                    <td style={{ width: '46%', textAlign: 'left', textTransform: 'uppercase' }}>
+                      {item.produto_nome?.substring(0, 15)}
+                    </td>
+                    <td style={{ width: '14%', textAlign: 'center' }}>| {item.quantidade}</td>
+                    <td style={{ width: '20%', textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</td>
+                    <td style={{ width: '20%', textAlign: 'right' }} className="bold">| {formatValor(item.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          {/* Subtotal */}
-          <div className="flex justify-between text-xs mb-2">
-            <span>Subtotal:</span>
-            <span>{pedido.subtotal?.toFixed(2)}</span>
-          </div>
+            <LinhaHifens />
 
-          {pedido.valor_desconto > 0 && (
-            <div className="flex justify-between text-xs mb-2">
-              <span>Desconto:</span>
-              <span>-{pedido.valor_desconto?.toFixed(2)}</span>
+            <div className="grid-totais">
+              <div>Subtotal:</div>
+              <div>{formatValor(pedido.subtotal)}</div>
+              
+              {pedido.valor_desconto > 0 && (
+                <>
+                  <div>Desconto:</div>
+                  <div>-{formatValor(pedido.valor_desconto)}</div>
+                </>
+              )}
+
+              {pedido.valor_acrescimo > 0 && (
+                <>
+                  <div>Acréscimo:</div>
+                  <div>+{formatValor(pedido.valor_acrescimo)}</div>
+                </>
+              )}
             </div>
-          )}
 
-          <div className="border-t border-dashed border-gray-400 my-3"></div>
-
-          {/* Total */}
-          <div className="flex justify-between text-base font-bold mb-3">
-            <span>TOTAL:</span>
-            <span>R$ {pedido.valor_total?.toFixed(2)}</span>
-          </div>
-
-          <div className="border-t border-dashed border-gray-400 my-3"></div>
-
-          {/* Formas de Pagamento */}
-          <div className="text-xs font-bold uppercase mb-2">PAGAMENTO:</div>
-          {pedido.pagamentos?.map((pag, idx) => (
-            <div key={idx} className="flex justify-between text-xs mb-1">
-              <span className="uppercase">{pag.forma_pagamento}</span>
-              <span className="font-bold">R$ {pag.valor?.toFixed(2)}</span>
+            <LinhaHifens />
+            
+            <div className="grid-totais bold" style={{ fontSize: '13px', margin: '4px 0' }}>
+              <div>TOTAL:</div>
+              <div>R$ {formatValor(pedido.valor_total)}</div>
             </div>
-          ))}
 
-          {/* Rodapé */}
-          <div className="text-center mt-6 text-xs text-gray-600 dark:text-gray-400">
-            <p>VAREJOSYNC ERP</p>
-            <p>{format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
+            <LinhaHifens />
+
+            <div className="bold" style={{ margin: '4px 0', textTransform: 'uppercase' }}>PAGAMENTO:</div>
+            {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
+              pedido.pagamentos.map((pag, idx) => (
+                <div key={idx} className="flex-linha">
+                  <div className="uppercase">{pag.forma_pagamento}</div>
+                  <div className="bold">R$ {formatValor(pag.valor)}</div>
+                </div>
+              ))
+            ) : (
+              <div className="flex-linha">
+                <div>DINHEIRO</div>
+                <div className="bold">R$ {formatValor(pedido.valor_total)}</div>
+              </div>
+            )}
+
+            <div className="t-center" style={{ marginTop: '15px', fontSize: '9px' }}>
+              <p>VAREJOSYNC ERP</p>
+              <p>{format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
+            </div>
+
           </div>
         </div>
       </DialogContent>
