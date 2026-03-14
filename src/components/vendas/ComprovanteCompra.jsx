@@ -85,7 +85,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           
           .cupom-termico { 
             width: 270px; background: #fff; color: #000; 
-            font-family: 'Courier', monospace; 
+            font-family: 'Courier New', 'Consolas', 'Liberation Mono', monospace; 
             font-size: 11px; padding: 5px; margin: 0 auto; line-height: 1.2; 
           }
           
