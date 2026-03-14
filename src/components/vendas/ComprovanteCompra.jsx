@@ -6,13 +6,12 @@
     <title>Comprovante VarejoSync</title>
     
     <style>
-        /* ==========================================
+        /* ------------------------------------------
            1. ESTILOS GLOBAIS (Base para ambos)
-           ========================================== */
+           ------------------------------------------ */
         * { box-sizing: border-box; }
         
         body {
-            /* Fundo cinza para a tela, fonte monoespaçada nativa */
             background-color: #e5e7eb;
             font-family: 'Courier New', Courier, monospace; 
             margin: 0;
@@ -42,7 +41,6 @@
         .btn-black { background: #000; color: #fff; }
         .btn-black:hover { background: #333; }
 
-        /* Estrutura do Recibo */
         #recibo {
             background-color: #fff;
             color: #000;
@@ -50,60 +48,57 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        /* Utilitários de Texto */
         .t-center { text-align: center; }
         .t-right { text-align: right; }
         .t-left { text-align: left; }
         .bold { font-weight: bold; }
         .uppercase { text-transform: uppercase; }
 
-        /* Linha Tracejada (Funciona bem em A4 e Térmica) */
+        /* Linha Tracejada Única e Elegante */
         .linha-separadora {
             border-bottom: 1px dashed #000;
             margin: 6px 0;
         }
 
-        /* Tabela Clássica */
-        table { width: 100%; border-collapse: collapse; margin: 6px 0; }
-        th, td { text-align: right; vertical-align: top; padding: 2px 0; }
+        /* Tabela Minimalista */
+        table { width: 100%; border-collapse: collapse; margin: 4px 0; }
+        th { font-weight: bold; padding: 4px 0 2px 0; border-bottom: 1px dashed #000; text-align: right; }
+        td { text-align: right; vertical-align: top; padding: 4px 0; }
         th:first-child, td:first-child { text-align: left; width: 50%; }
 
         .flex-linha { display: flex; justify-content: space-between; margin-bottom: 2px; }
 
-        /* ==========================================
+        /* ------------------------------------------
            2. FORMATO TÉRMICA (80mm)
-           ========================================== */
+           ------------------------------------------ */
         .formato-termica {
-            width: 270px; /* Os nossos 72mm úteis */
+            width: 270px; 
             font-size: 11px;
             padding: 10px;
         }
 
-        /* ==========================================
+        /* ------------------------------------------
            3. FORMATO A4
-           ========================================== */
+           ------------------------------------------ */
         .formato-a4 {
             width: 100%;
-            max-width: 800px; /* Não deixa ficar largo demais num monitor gigante */
-            font-size: 14px;  /* Fonte maior para ficar legível na folha A4 */
+            max-width: 800px; 
+            font-size: 14px;  
             padding: 30px 40px;
         }
 
-        /* ==========================================
-           4. REGRAS DE IMPRESSÃO UNIVERSAIS
-           ========================================== */
+        /* ------------------------------------------
+           4. REGRAS DE IMPRESSÃO
+           ------------------------------------------ */
         @media print {
             body { background: transparent; padding: 0; display: block; }
             .botoes-acao { display: none !important; }
             #recibo { box-shadow: none !important; margin: 0 !important; }
-            
-            /* Tira o limite de largura do A4 na impressão para usar a folha toda */
             .formato-a4 { max-width: none; padding: 0; }
         }
     </style>
 
     <style id="estilo-impressao-dinamico"></style>
-
 </head>
 <body>
 
@@ -154,10 +149,10 @@
         <table>
             <thead>
                 <tr>
-                    <th style="border-top: 1px dashed #000; border-bottom: 1px dashed #000;">DESC.</th>
-                    <th style="border-top: 1px dashed #000; border-bottom: 1px dashed #000;">QTD</th>
-                    <th style="border-top: 1px dashed #000; border-bottom: 1px dashed #000;">PREÇO</th>
-                    <th style="border-top: 1px dashed #000; border-bottom: 1px dashed #000;">TOTAL</th>
+                    <th>DESC.</th>
+                    <th>QTD</th>
+                    <th>PREÇO</th>
+                    <th>TOTAL</th>
                 </tr>
             </thead>
             <tbody>
@@ -210,18 +205,14 @@
             const estiloDinamico = document.getElementById('estilo-impressao-dinamico');
 
             if (formato === 'termica') {
-                // Altera a classe CSS do HTML
                 recibo.className = 'formato-termica';
-                // Injeta a regra da impressora de rolo (Anula as margens)
                 estiloDinamico.innerHTML = `
                     @media print {
                         @page { size: 80mm auto !important; margin: 0 !important; }
                     }
                 `;
             } else if (formato === 'a4') {
-                // Altera a classe CSS do HTML para expandir
                 recibo.className = 'formato-a4';
-                // Injeta a regra da impressora A4 (Adiciona margem para não cortar nas bordas)
                 estiloDinamico.innerHTML = `
                     @media print {
                         @page { size: A4 portrait !important; margin: 15mm !important; }
@@ -229,7 +220,6 @@
                 `;
             }
 
-            // Dá 100 milissegundos para o navegador aplicar o CSS antes de abrir a janela de impressão
             setTimeout(() => {
                 window.print();
             }, 100);
