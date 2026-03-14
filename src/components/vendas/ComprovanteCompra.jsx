@@ -85,13 +85,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           
           .cupom-termico { 
             width: 270px; background: #fff; color: #000; 
-            font-family: 'Roboto Mono', monospace !important; 
+            font-family: 'Iosevka Charon Mono', 'Courier New', monospace !important; 
             font-size: 9px; padding: 4px; margin: 0 auto; line-height: 1.4; 
             font-weight: 300;
           }
           
           .cupom-termico * {
-            font-family: 'Roboto Mono', monospace !important;
+            font-family: 'Iosevka Charon Mono', 'Courier New', monospace !important;
           }
           
           .t-center { text-align: center; }
@@ -177,29 +177,59 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div style={{ fontSize: '8.5px', marginBottom: '2px' }}>
-              NO. | DESCRIÇÃO         | QTD | UND |  PREÇO |  TOTAL
+            <div style={{ fontSize: '8.5px', marginBottom: '1px' }}>
+              NO | DESCRIÇÃO              | QTD | UN |  PREÇO |  TOTAL
             </div>
             
             <LinhaHifens />
 
             {itensOrdenados.map((item, idx) => {
-              const nomeCompleto = item.produto_nome || '';
-              const maxPrimeiraLinha = 20;
+              const nomeCompleto = (item.produto_nome || '').toUpperCase();
+              const qtd = parseFloat(item.quantidade).toFixed(0);
+              const preco = formatValor(item.preco_unitario_praticado);
+              const total = formatValor(item.total);
+              
+              // Largura máxima para descrição na primeira linha: 22 caracteres
+              const maxDescricao = 22;
+              let linhasDescricao = [];
+              let resto = nomeCompleto;
+              
+              // Quebra a descrição sem cortar palavras
+              while (resto.length > 0) {
+                if (resto.length <= maxDescricao) {
+                  linhasDescricao.push(resto);
+                  break;
+                }
+                
+                // Tenta quebrar no espaço mais próximo
+                let breakPoint = resto.lastIndexOf(' ', maxDescricao);
+                if (breakPoint === -1 || breakPoint === 0) {
+                  // Se não há espaço, corta na posição máxima
+                  linhasDescricao.push(resto.substring(0, maxDescricao));
+                  resto = resto.substring(maxDescricao);
+                } else {
+                  linhasDescricao.push(resto.substring(0, breakPoint));
+                  resto = resto.substring(breakPoint + 1);
+                }
+              }
               
               return (
-                <div key={idx} style={{ marginBottom: '6px', fontSize: '8.5px', fontFamily: 'Roboto Mono, monospace' }}>
+                <div key={idx} style={{ marginBottom: '4px', fontSize: '8.5px' }}>
+                  {/* Primeira linha: NO + primeira parte da descrição */}
                   <div>
-                    {String(idx + 1).padStart(2, ' ')} | {nomeCompleto.substring(0, maxPrimeiraLinha)}
+                    {String(idx + 1).padStart(2, ' ')} | {linhasDescricao[0].padEnd(maxDescricao, ' ')}
                   </div>
-                  {nomeCompleto.length > maxPrimeiraLinha && (
-                    <div style={{ paddingLeft: '16px' }}>
-                      | {nomeCompleto.substring(maxPrimeiraLinha)}
+                  
+                  {/* Linhas adicionais da descrição (se houver) */}
+                  {linhasDescricao.slice(1).map((linha, i) => (
+                    <div key={i}>
+                       {'   | ' + linha.padEnd(maxDescricao, ' ')}
                     </div>
-                  )}
-                  <div style={{ paddingLeft: '16px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>| {String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ')} | UN</span>
-                    <span>| {formatValor(item.preco_unitario_praticado).padStart(6, ' ')} | {formatValor(item.total).padStart(6, ' ')}</span>
+                  ))}
+                  
+                  {/* Linha de valores alinhados */}
+                  <div>
+                    {'   | ' + ' '.repeat(maxDescricao) + ' | ' + qtd.padStart(3, ' ') + ' | UN | ' + preco.padStart(6, ' ') + ' | ' + total.padStart(6, ' ')}
                   </div>
                 </div>
               );
