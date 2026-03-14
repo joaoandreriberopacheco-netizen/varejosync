@@ -1,11 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, Share2, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { base44 } from '@/api/base44Client';
 
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const jaImprimiu = useRef(false);
+  const [dadosEmpresa, setDadosEmpresa] = useState(null);
 
   useEffect(() => {
     if (open && !jaImprimiu.current) {
