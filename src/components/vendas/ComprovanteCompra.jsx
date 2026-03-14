@@ -63,8 +63,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   }) : [];
 
   const LinhaHifens = () => (
-    <div className="overflow-hidden whitespace-nowrap" style={{ margin: '1px 0', letterSpacing: '0' }}>
-      ------------------------------------------------
+    <div className="overflow-hidden whitespace-nowrap text-center" style={{ margin: '2px 0', letterSpacing: '0.5px' }}>
+      --------------------------------------------------
     </div>
   );
 
@@ -81,48 +81,50 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             body * { visibility: hidden !important; }
             .cupom-termico, .cupom-termico * { visibility: visible !important; }
             .cupom-termico { 
-              position: absolute !important; left: 0 !important; top: 0 !important; 
+              position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important;
             }
             .no-print { display: none !important; }
           }
           
+          /* 1. MUDANÇA DA FONTE: Ubuntu Sans Mono */
           .cupom-termico, 
           .cupom-termico *,
-          .cupom-termico pre,
           .cupom-termico div,
-          .cupom-termico span { 
-            font-family: 'Iosevka Charon Mono', monospace !important; 
+          .cupom-termico span,
+          .cupom-termico th,
+          .cupom-termico td { 
+            font-family: 'Ubuntu Sans Mono', monospace !important; 
             font-feature-settings: normal !important;
             -webkit-font-smoothing: antialiased;
           }
           
           .cupom-termico { 
-            width: 270px; background: #fff; color: #000; 
-            font-size: 9px; padding: 4px; margin: 0 auto; line-height: 1.3; 
-            font-weight: 300;
+            width: 275px; background: #fff; color: #000; 
+            font-size: 11px; padding: 5px; margin: 0 auto; line-height: 1.2; 
           }
           
           .t-center { text-align: center; }
+          .t-left { text-align: left; }
           .t-right { text-align: right; }
           .uppercase { text-transform: uppercase; }
+          .bold { font-weight: bold; }
           
-          /* O SEGREDO DA GRELHA: table-layout fixed impede que as colunas se esmaguem */
+          /* 2. PAGINAÇÃO ESTILO GRINGO: Tabela Fixa */
           .tabela-itens { 
             width: 100%; border-collapse: collapse; margin: 2px 0; table-layout: fixed; 
           }
           .tabela-itens th, .tabela-itens td { 
-            padding: 2px 0; white-space: nowrap; overflow: hidden; 
+            padding: 2px 0; 
+            vertical-align: top;
+            word-wrap: break-word; /* Se o nome for grande, quebra a linha só na coluna dele */
           }
           
-          .grid-totais { display: grid; grid-template-columns: 1fr 75px; row-gap: 2px; }
-          .grid-totais > div:nth-child(odd) { text-align: right; padding-right: 5px; }
-          .grid-totais > div:nth-child(even) { text-align: right; }
           .flex-linha { display: flex; justify-content: space-between; margin-bottom: 2px; }
         `}} />
 
         <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8 print:max-h-none print:overflow-visible print:pb-0">
           
-          <div className="flex gap-2 my-4 w-[270px] justify-end flex-wrap no-print">
+          <div className="flex gap-2 my-4 w-[275px] justify-end flex-wrap no-print">
             <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
               <Share2 className="w-4 h-4 mr-1" /> Partilhar
             </Button>
@@ -146,11 +148,11 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                   />
                 </div>
               )}
-              <h2 style={{ fontSize: '14px', margin: '2px 0', textTransform: 'uppercase' }}>
+              <h2 className="bold uppercase" style={{ fontSize: '15px', margin: '2px 0' }}>
                 {dadosEmpresa?.razao_social || 'VAREJOSYNC'}
               </h2>
               {dadosEmpresa && (
-                <div style={{ fontSize: '10px', lineHeight: '1.3' }}>
+                <div style={{ fontSize: '11px', lineHeight: '1.3' }}>
                   {dadosEmpresa.endereco && (
                     <p>{dadosEmpresa.endereco}{dadosEmpresa.numero ? ', ' + dadosEmpresa.numero : ''}</p>
                   )}
@@ -170,73 +172,57 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div className="t-center" style={{ fontSize: '13px', margin: '4px 0' }}>
+            <div className="t-center bold" style={{ fontSize: '13px', margin: '4px 0' }}>
               RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
             </div>
 
-            <div style={{ fontSize: '10px', marginTop: '4px' }}>
-              <div>
-                DATA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')} | HORA: {format(new Date(pedido.created_date || new Date()), 'HH:mm')}
+            <div style={{ fontSize: '11px', marginTop: '4px' }}>
+              <div className="flex-linha">
+                <span>DATA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yy')}</span>
+                <span>HORA: {format(new Date(pedido.created_date || new Date()), 'HH:mm')}</span>
               </div>
               <div style={{ marginTop: '2px' }}>
-                CLIENTE: <span className="uppercase">{pedido.cliente_nome?.substring(0, 30) || 'AVULSO'}</span>
+                CLIENTE: <span className="uppercase bold">{pedido.cliente_nome?.substring(0, 30) || 'AVULSO'}</span>
               </div>
             </div>
 
             <LinhaHifens />
 
-            <pre style={{ fontSize: '8px', marginBottom: '1px', fontFamily: 'inherit' }}>
-NO | DESCRIÇÃO        | QTD | UN | PREÇO | TOTAL
-            </pre>
-            
-            <LinhaHifens />
-
-            {itensOrdenados.map((item, idx) => {
-              const nomeCompleto = (item.produto_nome || '').toUpperCase();
-              const qtd = parseFloat(item.quantidade).toFixed(0);
-              const preco = formatValor(item.preco_unitario_praticado);
-              const total = formatValor(item.total);
-              
-              // Colunas ajustadas para 48 chars: NO(2) | DESC(16) | QTD(3) | UN(2) | PREÇO(5) | TOTAL(5)
-              const maxDescricao = 16;
-              let linhasDescricao = [];
-              let resto = nomeCompleto;
-              
-              // Quebra a descrição sem cortar palavras
-              while (resto.length > 0) {
-                if (resto.length <= maxDescricao) {
-                  linhasDescricao.push(resto);
-                  break;
-                }
-                
-                let breakPoint = resto.lastIndexOf(' ', maxDescricao);
-                if (breakPoint === -1 || breakPoint === 0) {
-                  linhasDescricao.push(resto.substring(0, maxDescricao));
-                  resto = resto.substring(maxDescricao);
-                } else {
-                  linhasDescricao.push(resto.substring(0, breakPoint));
-                  resto = resto.substring(breakPoint + 1);
-                }
-              }
-              
-              return (
-                <pre key={idx} style={{ marginBottom: '3px', fontSize: '8px', fontFamily: 'inherit' }}>
-{String(idx + 1).padStart(2, ' ')} | {linhasDescricao[0].padEnd(maxDescricao, ' ')}
-{linhasDescricao.slice(1).map((linha) => 
-`   | ${linha.padEnd(maxDescricao, ' ')}`
-).join('\n')}
-{linhasDescricao.length > 0 ? `   | ${' '.repeat(maxDescricao)} | ${qtd.padStart(3, ' ')} | UN | ${preco.padStart(5, ' ')} | ${total.padStart(5, ' ')}` : ''}
-                </pre>
-              );
-            })}
+            {/* A TABELA DE FERRO (Padrão VinCommerce Autêntico) */}
+            <table className="tabela-itens" style={{ fontSize: '11px' }}>
+              <thead>
+                <tr className="uppercase bold">
+                  <th style={{ width: '8%', textAlign: 'left' }}>NO.</th>
+                  <th style={{ width: '36%', textAlign: 'left' }}>|DESCRIÇÃO</th>
+                  <th style={{ width: '13%', textAlign: 'center' }}>|QTD</th>
+                  <th style={{ width: '11%', textAlign: 'center' }}>|UN</th>
+                  <th style={{ width: '16%', textAlign: 'right' }}>|PREÇO</th>
+                  <th style={{ width: '16%', textAlign: 'right' }}>|TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itensOrdenados.map((item, idx) => (
+                  <tr key={idx}>
+                    <td style={{ textAlign: 'left' }}>{idx + 1}</td>
+                    <td style={{ textAlign: 'left' }} className="uppercase">|{item.produto_nome}</td>
+                    <td style={{ textAlign: 'center' }}>|{parseFloat(item.quantidade).toFixed(0)}</td>
+                    <td style={{ textAlign: 'center' }}>|UN</td>
+                    <td style={{ textAlign: 'right' }}>|{formatValor(item.preco_unitario_praticado)}</td>
+                    <td style={{ textAlign: 'right' }} className="bold">|{formatValor(item.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
             <LinhaHifens />
 
-            <div style={{ fontSize: '9px', marginTop: '2px' }}>
-              <div className="flex-linha">
-                <div>Desconto:</div>
-                <div>{pedido.valor_desconto > 0 ? '-' + formatValor(pedido.valor_desconto) : '0,00'}</div>
-              </div>
+            <div style={{ fontSize: '11px', marginTop: '4px' }}>
+              {pedido.valor_desconto > 0 && (
+                <div className="flex-linha">
+                  <div>Desconto:</div>
+                  <div>-{formatValor(pedido.valor_desconto)}</div>
+                </div>
+              )}
               
               <div className="flex-linha">
                 <div>Subtotal:</div>
@@ -244,28 +230,33 @@ NO | DESCRIÇÃO        | QTD | UN | PREÇO | TOTAL
               </div>
             </div>
             
-            <div className="flex-linha" style={{ fontSize: '13px', margin: '3px 0 2px 0' }}>
-              <div>TOTAL PAGAMENTO:</div>
-              <div>{formatValor(pedido.valor_total)}</div>
+            {/* 3. HIERARQUIA DE TAMANHO AGRESSIVA NO TOTAL */}
+            <div className="flex-linha bold uppercase" style={{ fontSize: '16px', margin: '6px 0 4px 0' }}>
+              <div>TOTAL:</div>
+              <div>R$ {formatValor(pedido.valor_total)}</div>
             </div>
 
+            <LinhaHifens />
+
+            {/* HIERARQUIA DE TAMANHO NAS FORMAS DE PAGAMENTO */}
+            <div className="bold" style={{ fontSize: '12px', marginBottom: '4px' }}>PAGAMENTO:</div>
             {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
               pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex-linha" style={{ fontSize: '10px' }}>
-                  <div className="uppercase">{pag.forma_pagamento}:</div>
-                  <div>{formatValor(pag.valor)}</div>
+                <div key={idx} className="flex-linha bold uppercase" style={{ fontSize: '14px', marginTop: '2px' }}>
+                  <div>{pag.forma_pagamento}:</div>
+                  <div>R$ {formatValor(pag.valor)}</div>
                 </div>
               ))
             ) : (
-              <div className="flex-linha" style={{ fontSize: '10px' }}>
+              <div className="flex-linha bold uppercase" style={{ fontSize: '14px', marginTop: '2px' }}>
                 <div>DINHEIRO:</div>
-                <div>{formatValor(pedido.valor_total)}</div>
+                <div>R$ {formatValor(pedido.valor_total)}</div>
               </div>
             )}
 
             <LinhaHifens />
 
-            <div style={{ fontSize: '9px', marginTop: '3px' }}>
+            <div style={{ fontSize: '10px', marginTop: '4px' }}>
               <div>Vendedor: {pedido.vendedor_nome || 'N/D'}</div>
               <div>Caixa: {pedido.usuario_caixa_nome || pedido.vendedor_nome || 'N/D'}</div>
             </div>
@@ -273,11 +264,11 @@ NO | DESCRIÇÃO        | QTD | UN | PREÇO | TOTAL
             <LinhaHifens />
 
             {dadosEmpresa?.mensagem_rodape && (
-              <div className="t-center" style={{ marginTop: '6px', fontSize: '11px' }}>
+              <div className="t-center bold uppercase" style={{ marginTop: '8px', fontSize: '12px' }}>
                 {dadosEmpresa.mensagem_rodape}
               </div>
             )}
-            <div className="t-center" style={{ marginTop: '15px', fontSize: '9px' }}>
+            <div className="t-center" style={{ marginTop: '15px', fontSize: '9px', opacity: 0.8 }}>
               <p>VAREJOSYNC ERP</p>
               <p>{format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
             </div>
