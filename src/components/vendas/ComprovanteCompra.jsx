@@ -133,3 +133,99 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             <LinhaHifens />
 
             <div className="t-center bold" style={{ fontSize: '12px' }}>RECIBO No: {pedido.numero?.replace(/\D/g, '').slice(-5)}</div>
+
+            <div className="t-center" style={{ fontSize: '10px', marginTop: '2px' }}>
+              {format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm')}
+            </div>
+
+            <LinhaHifens />
+
+            {/* Itens */}
+            <div style={{ marginTop: '4px' }}>
+              <table className="tabela-itens">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #000' }}>
+                    <th style={{ textAlign: 'left', width: '55%' }}>ITEM</th>
+                    <th style={{ textAlign: 'center', width: '15%' }}>QTD</th>
+                    <th style={{ textAlign: 'right', width: '15%' }}>UNIT</th>
+                    <th style={{ textAlign: 'right', width: '15%' }}>TOTAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedido.itens?.map((item, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px dotted #ccc' }}>
+                      <td style={{ paddingRight: '2px', textOverflow: 'ellipsis' }}>{item.produto_nome}</td>
+                      <td style={{ textAlign: 'center' }}>{item.quantidade}</td>
+                      <td style={{ textAlign: 'right' }}>{formatValor(item.preco_unitario_praticado)}</td>
+                      <td style={{ textAlign: 'right' }}>{formatValor(item.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <LinhaHifens />
+
+            {/* Totais */}
+            <div className="grid-totais" style={{ marginTop: '4px' }}>
+              <div className="bold">SUBTOTAL:</div>
+              <div className="t-right bold">R$ {formatValor(pedido.subtotal)}</div>
+
+              {pedido.valor_desconto > 0 && (
+                <>
+                  <div>Desconto:</div>
+                  <div className="t-right">-R$ {formatValor(pedido.valor_desconto)}</div>
+                </>
+              )}
+
+              {pedido.valor_frete > 0 && (
+                <>
+                  <div>Frete:</div>
+                  <div className="t-right">R$ {formatValor(pedido.valor_frete)}</div>
+                </>
+              )}
+
+              <div className="bold" style={{ fontSize: '13px', marginTop: '2px' }}>TOTAL:</div>
+              <div className="t-right bold" style={{ fontSize: '13px', marginTop: '2px' }}>R$ {formatValor(pedido.valor_total)}</div>
+            </div>
+
+            <LinhaHifens />
+
+            {/* Pagamentos */}
+            {pedido.pagamentos && pedido.pagamentos.length > 0 && (
+              <>
+                <div className="bold t-center" style={{ fontSize: '11px', marginTop: '4px' }}>FORMA DE PAGAMENTO</div>
+                <div style={{ marginTop: '2px' }}>
+                  {pedido.pagamentos.map((pag, idx) => (
+                    <div key={idx} className="flex-linha">
+                      <span>{pag.forma_pagamento} {pag.parcelas > 1 ? `(${pag.parcelas}x)` : ''}</span>
+                      <span className="bold">R$ {formatValor(pag.valor)}</span>
+                    </div>
+                  ))}
+                </div>
+                <LinhaHifens />
+              </>
+            )}
+
+            {/* Cliente */}
+            {pedido.cliente_nome && (
+              <div className="t-center" style={{ fontSize: '10px', marginTop: '4px' }}>
+                <div className="bold">CLIENTE</div>
+                <div>{pedido.cliente_nome}</div>
+              </div>
+            )}
+
+            {/* Rodapé */}
+            <div className="t-center" style={{ fontSize: '9px', marginTop: '8px', color: '#666' }}>
+              {dadosEmpresa?.mensagem_rodape || 'Obrigado pela preferência!'}
+            </div>
+            <div className="t-center" style={{ fontSize: '9px', marginTop: '2px', color: '#666' }}>
+              VarejoSync - Sistema ERP
+            </div>
+
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
