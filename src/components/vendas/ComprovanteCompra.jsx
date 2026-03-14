@@ -83,15 +83,20 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             .no-print { display: none !important; }
           }
           
-          .cupom-termico { 
-            width: 270px; background: #fff; color: #000; 
-            font-family: 'Iosevka Charon Mono', 'Courier New', monospace !important; 
-            font-size: 9px; padding: 4px; margin: 0 auto; line-height: 1.4; 
-            font-weight: 300;
+          .cupom-termico, 
+          .cupom-termico *,
+          .cupom-termico pre,
+          .cupom-termico div,
+          .cupom-termico span { 
+            font-family: 'Iosevka Charon Mono', monospace !important; 
+            font-feature-settings: normal !important;
+            -webkit-font-smoothing: antialiased;
           }
           
-          .cupom-termico * {
-            font-family: 'Iosevka Charon Mono', 'Courier New', monospace !important;
+          .cupom-termico { 
+            width: 270px; background: #fff; color: #000; 
+            font-size: 9px; padding: 4px; margin: 0 auto; line-height: 1.3; 
+            font-weight: 300;
           }
           
           .t-center { text-align: center; }
@@ -177,9 +182,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div style={{ fontSize: '8.5px', marginBottom: '1px' }}>
-              NO | DESCRIÇÃO              | QTD | UN |  PREÇO |  TOTAL
-            </div>
+            <pre style={{ fontSize: '8.5px', marginBottom: '1px', fontFamily: 'inherit' }}>
+NO | DESCRIÇÃO           | QTD | UN |  PREÇO |   TOTAL
+            </pre>
             
             <LinhaHifens />
 
@@ -189,8 +194,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               const preco = formatValor(item.preco_unitario_praticado);
               const total = formatValor(item.total);
               
-              // Largura máxima para descrição na primeira linha: 22 caracteres
-              const maxDescricao = 22;
+              // Colunas: NO(2) | DESC(19) | QTD(3) | UN(2) | PREÇO(6) | TOTAL(7)
+              const maxDescricao = 19;
               let linhasDescricao = [];
               let resto = nomeCompleto;
               
@@ -201,10 +206,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                   break;
                 }
                 
-                // Tenta quebrar no espaço mais próximo
                 let breakPoint = resto.lastIndexOf(' ', maxDescricao);
                 if (breakPoint === -1 || breakPoint === 0) {
-                  // Se não há espaço, corta na posição máxima
                   linhasDescricao.push(resto.substring(0, maxDescricao));
                   resto = resto.substring(maxDescricao);
                 } else {
@@ -214,24 +217,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               }
               
               return (
-                <div key={idx} style={{ marginBottom: '4px', fontSize: '8.5px' }}>
-                  {/* Primeira linha: NO + primeira parte da descrição */}
-                  <div>
-                    {String(idx + 1).padStart(2, ' ')} | {linhasDescricao[0].padEnd(maxDescricao, ' ')}
-                  </div>
-                  
-                  {/* Linhas adicionais da descrição (se houver) */}
-                  {linhasDescricao.slice(1).map((linha, i) => (
-                    <div key={i}>
-                       {'   | ' + linha.padEnd(maxDescricao, ' ')}
-                    </div>
-                  ))}
-                  
-                  {/* Linha de valores alinhados */}
-                  <div>
-                    {'   | ' + ' '.repeat(maxDescricao) + ' | ' + qtd.padStart(3, ' ') + ' | UN | ' + preco.padStart(6, ' ') + ' | ' + total.padStart(6, ' ')}
-                  </div>
-                </div>
+                <pre key={idx} style={{ marginBottom: '4px', fontSize: '8.5px', fontFamily: 'inherit' }}>
+{String(idx + 1).padStart(2, ' ')} | {linhasDescricao[0].padEnd(maxDescricao, ' ')}
+{linhasDescricao.slice(1).map((linha) => 
+`   | ${linha.padEnd(maxDescricao, ' ')}`
+).join('\n')}
+{linhasDescricao.length > 0 ? `   | ${' '.repeat(maxDescricao)} | ${qtd.padStart(3, ' ')} | UN | ${preco.padStart(6, ' ')} | ${total.padStart(7, ' ')}` : ''}
+                </pre>
               );
             })}
 
