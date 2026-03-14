@@ -198,16 +198,28 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <table className="tabela-itens">
               <tbody>
-                {itensOrdenados.map((item, idx) => (
-                  <tr key={idx}>
-                    <td style={{ width: '46%', textAlign: 'left', textTransform: 'uppercase' }}>
-                      {item.produto_nome?.substring(0, 15)}
-                    </td>
-                    <td style={{ width: '14%', textAlign: 'center' }}>| {item.quantidade}</td>
-                    <td style={{ width: '20%', textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</td>
-                    <td style={{ width: '20%', textAlign: 'right' }} className="bold">| {formatValor(item.total)}</td>
-                  </tr>
-                ))}
+                {itensOrdenados.map((item, idx) => {
+                  const nomeCompleto = item.produto_nome || '';
+                  const linha1 = nomeCompleto.substring(0, 12).toUpperCase();
+                  const linha2 = nomeCompleto.length > 12 ? nomeCompleto.substring(12, 24).toUpperCase() : '';
+                  
+                  return (
+                    <React.Fragment key={idx}>
+                      <tr>
+                        <td style={{ width: '35%', textAlign: 'left' }}>{linha1}</td>
+                        <td style={{ width: '12%', textAlign: 'center' }}>| {parseFloat(item.quantidade).toFixed(0)}</td>
+                        <td style={{ width: '12%', textAlign: 'center' }}>| UN</td>
+                        <td style={{ width: '20%', textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</td>
+                        <td style={{ width: '21%', textAlign: 'right' }} className="bold">| {formatValor(item.total)}</td>
+                      </tr>
+                      {linha2 && (
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: 'left', paddingLeft: '0' }}>{linha2}</td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
 
