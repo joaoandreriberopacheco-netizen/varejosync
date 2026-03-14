@@ -85,13 +85,12 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           
           .cupom-termico { 
             width: 270px; background: #fff; color: #000; 
-            font-family: 'Courier New', 'Consolas', 'Liberation Mono', monospace; 
+            font-family: 'Iosevka Charon Mono', 'Courier New', 'Consolas', monospace; 
             font-size: 11px; padding: 5px; margin: 0 auto; line-height: 1.2; 
           }
           
           .t-center { text-align: center; }
           .t-right { text-align: right; }
-          .bold { font-weight: bold; }
           .uppercase { text-transform: uppercase; }
           
           /* O SEGREDO DA GRELHA: table-layout fixed impede que as colunas se esmaguem */
@@ -134,7 +133,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                   />
                 </div>
               )}
-              <h2 className="bold" style={{ fontSize: '14px', margin: '2px 0', textTransform: 'uppercase' }}>
+              <h2 style={{ fontSize: '14px', margin: '2px 0', textTransform: 'uppercase' }}>
                 {dadosEmpresa?.razao_social || 'VAREJOSYNC'}
               </h2>
               {dadosEmpresa && (
@@ -158,7 +157,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div className="t-center bold" style={{ fontSize: '13px', margin: '4px 0' }}>
+            <div className="t-center" style={{ fontSize: '13px', margin: '4px 0' }}>
               RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
             </div>
 
@@ -169,7 +168,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                 VEND: {pedido.vendedor_nome?.substring(0, 8) || 'N/D'}
               </div>
               <div style={{ marginTop: '2px' }}>
-                CLIENTE: <span className="uppercase bold">{pedido.cliente_nome?.substring(0, 22) || 'AVULSO'}</span>
+                CLIENTE: <span className="uppercase">{pedido.cliente_nome?.substring(0, 22) || 'AVULSO'}</span>
               </div>
             </div>
 
@@ -179,11 +178,12 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             <table className="tabela-itens">
               <thead>
                 <tr>
-                  <th style={{ width: '35%', textAlign: 'left' }}>DESC.</th>
-                  <th style={{ width: '12%', textAlign: 'center' }}>|QTD</th>
-                  <th style={{ width: '12%', textAlign: 'center' }}>|UND</th>
-                  <th style={{ width: '20%', textAlign: 'right' }}>|PRECO</th>
-                  <th style={{ width: '21%', textAlign: 'right' }}>|TOTAL</th>
+                  <th style={{ width: '8%', textAlign: 'left' }}>NO.</th>
+                  <th style={{ width: '30%', textAlign: 'left' }}>|ITEM NAME</th>
+                  <th style={{ width: '10%', textAlign: 'center' }}>|QTY</th>
+                  <th style={{ width: '10%', textAlign: 'center' }}>|UOM</th>
+                  <th style={{ width: '20%', textAlign: 'right' }}>|UNIT PRICE</th>
+                  <th style={{ width: '22%', textAlign: 'right' }}>|AMOUNT</th>
                 </tr>
               </thead>
             </table>
@@ -194,21 +194,23 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               <tbody>
                 {itensOrdenados.map((item, idx) => {
                   const nomeCompleto = item.produto_nome || '';
-                  const linha1 = nomeCompleto.substring(0, 12).toUpperCase();
-                  const linha2 = nomeCompleto.length > 12 ? nomeCompleto.substring(12, 24).toUpperCase() : '';
+                  const linha1 = nomeCompleto.substring(0, 20).toUpperCase();
+                  const resto = nomeCompleto.substring(20);
                   
                   return (
                     <React.Fragment key={idx}>
                       <tr>
-                        <td style={{ width: '35%', textAlign: 'left' }}>{linha1}</td>
-                        <td style={{ width: '12%', textAlign: 'center' }}>| {parseFloat(item.quantidade).toFixed(0)}</td>
-                        <td style={{ width: '12%', textAlign: 'center' }}>| UN</td>
+                        <td style={{ width: '8%', textAlign: 'left' }}>{idx + 1}</td>
+                        <td style={{ width: '30%', textAlign: 'left' }}>| {linha1}</td>
+                        <td style={{ width: '10%', textAlign: 'center' }}>| {parseFloat(item.quantidade).toFixed(0)}</td>
+                        <td style={{ width: '10%', textAlign: 'center' }}>| UN</td>
                         <td style={{ width: '20%', textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</td>
-                        <td style={{ width: '21%', textAlign: 'right' }} className="bold">| {formatValor(item.total)}</td>
+                        <td style={{ width: '22%', textAlign: 'right' }}>| {formatValor(item.total)}</td>
                       </tr>
-                      {linha2 && (
+                      {resto && (
                         <tr>
-                          <td colSpan="5" style={{ textAlign: 'left', paddingLeft: '0' }}>{linha2}</td>
+                          <td style={{ width: '8%' }}></td>
+                          <td colSpan="5" style={{ textAlign: 'left', paddingLeft: '2px', lineHeight: '1.1' }}>| {resto.toUpperCase()}</td>
                         </tr>
                       )}
                     </React.Fragment>
@@ -219,10 +221,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div className="grid-totais">
-              <div>Subtotal:</div>
-              <div>{formatValor(pedido.subtotal)}</div>
-              
+            <div className="grid-totais" style={{ fontSize: '10px' }}>
               {pedido.valor_desconto > 0 && (
                 <>
                   <div>Desconto:</div>
@@ -236,39 +235,36 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
                   <div>+{formatValor(pedido.valor_acrescimo)}</div>
                 </>
               )}
-            </div>
 
-            <LinhaHifens />
+              <div>Subtotal:</div>
+              <div>{formatValor(pedido.subtotal)}</div>
+            </div>
             
-            <div className="grid-totais bold" style={{ fontSize: '13px', margin: '4px 0' }}>
-              <div>TOTAL:</div>
-              <div>R$ {formatValor(pedido.valor_total)}</div>
+            <div className="grid-totais" style={{ fontSize: '14px', margin: '4px 0' }}>
+              <div>TOTAL PAYMENT:</div>
+              <div>{formatValor(pedido.valor_total)}</div>
             </div>
 
-            <LinhaHifens />
-
-            <div className="bold" style={{ margin: '6px 0 4px 0', fontSize: '13px' }}>PAGAMENTO:</div>
             {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
               pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex-linha" style={{ fontSize: idx === 0 ? '12px' : '11px', fontWeight: idx === 0 ? 'bold' : 'normal' }}>
-                  <div className="uppercase">{pag.forma_pagamento}</div>
-                  <div className="bold">R$ {formatValor(pag.valor)}</div>
+                <div key={idx} className="flex-linha" style={{ fontSize: '11px' }}>
+                  <div className="uppercase">{pag.forma_pagamento}:</div>
+                  <div>{formatValor(pag.valor)}</div>
                 </div>
               ))
             ) : (
-              <div className="flex-linha" style={{ fontSize: '12px', fontWeight: 'bold' }}>
-                <div>DINHEIRO</div>
-                <div className="bold">R$ {formatValor(pedido.valor_total)}</div>
+              <div className="flex-linha" style={{ fontSize: '11px' }}>
+                <div>DINHEIRO:</div>
+                <div>{formatValor(pedido.valor_total)}</div>
               </div>
             )}
 
+            <LinhaHifens />
+
             {dadosEmpresa?.mensagem_rodape && (
-              <>
-                <LinhaHifens />
-                <div className="t-center bold" style={{ marginTop: '6px', fontSize: '11px' }}>
-                  {dadosEmpresa.mensagem_rodape}
-                </div>
-              </>
+              <div className="t-center" style={{ marginTop: '6px', fontSize: '11px' }}>
+                {dadosEmpresa.mensagem_rodape}
+              </div>
             )}
             <div className="t-center" style={{ marginTop: '15px', fontSize: '9px' }}>
               <p>VAREJOSYNC ERP</p>
