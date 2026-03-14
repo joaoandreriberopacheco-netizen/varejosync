@@ -1,229 +1,191 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprovante VarejoSync</title>
-    
-    <style>
-        /* ------------------------------------------
-           1. ESTILOS GLOBAIS (Base para ambos)
-           ------------------------------------------ */
-        * { box-sizing: border-box; }
-        
-        body {
-            background-color: #e5e7eb;
-            font-family: 'Courier New', Courier, monospace; 
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+import React, { useEffect, useState } from 'react';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Printer, Share2 } from "lucide-react";
+import { format } from 'date-fns';
 
-        .botoes-acao {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
+export default function ComprovanteCompra({ pedido, open, onOpenChange }) {
+  const [isPrinting, setIsPrinting] = useState(false);
 
-        button {
-            padding: 10px 15px;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            cursor: pointer;
-            border: 1px solid #000;
-            background: #fff;
-            border-radius: 4px;
-        }
-        
-        button:hover { background: #f0f0f0; }
-        .btn-black { background: #000; color: #fff; }
-        .btn-black:hover { background: #333; }
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        handlePrint();
+      }, 500);
+    }
+  }, [open]);
 
-        #recibo {
-            background-color: #fff;
-            color: #000;
-            line-height: 1.2;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+  const handlePrint = () => {
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+    }, 100);
+  };
 
-        .t-center { text-align: center; }
-        .t-right { text-align: right; }
-        .t-left { text-align: left; }
-        .bold { font-weight: bold; }
-        .uppercase { text-transform: uppercase; }
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Recibo ${pedido.numero}`,
+          text: `Comprovante de compra - ${pedido.numero}\nTotal: R$ ${pedido.valor_total?.toFixed(2)}`,
+        });
+      } catch (err) {
+        console.log('Compartilhamento cancelado');
+      }
+    }
+  };
 
-        /* Linha Tracejada Única e Elegante */
-        .linha-separadora {
-            border-bottom: 1px dashed #000;
-            margin: 6px 0;
-        }
+  if (!pedido) return null;
 
-        /* Tabela Minimalista */
-        table { width: 100%; border-collapse: collapse; margin: 4px 0; }
-        th { font-weight: bold; padding: 4px 0 2px 0; border-bottom: 1px dashed #000; text-align: right; }
-        td { text-align: right; vertical-align: top; padding: 4px 0; }
-        th:first-child, td:first-child { text-align: left; width: 50%; }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md p-0 gap-0 bg-white dark:bg-gray-900">
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            #comprovante-print, #comprovante-print * { visibility: visible; }
+            #comprovante-print { 
+              position: absolute; 
+              left: 0; 
+              top: 0; 
+              width: 100%;
+              background: white !important;
+              color: black !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            #comprovante-print * {
+              color: #000 !important;
+              background: transparent !important;
+              text-shadow: none !important;
+            }
+            #comprovante-print .font-bold {
+              font-weight: 700 !important;
+            }
+            .no-print { display: none !important; }
+            @page { 
+              size: 80mm auto; 
+              margin: 5mm;
+            }
+          }
+        `}</style>
 
-        .flex-linha { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        {!isPrinting && (
+          <div className="no-print flex gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
+            <Button onClick={handlePrint} className="flex-1 bg-gray-900 text-white hover:bg-gray-800">
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimir
+            </Button>
+            <Button onClick={handleShare} variant="outline" className="flex-1">
+              <Share2 className="w-4 h-4 mr-2" />
+              Compartilhar
+            </Button>
+          </div>
+        )}
 
-        /* ------------------------------------------
-           2. FORMATO TÉRMICA (80mm)
-           ------------------------------------------ */
-        .formato-termica {
-            width: 270px; 
-            font-size: 11px;
-            padding: 10px;
-        }
+        <div id="comprovante-print" className="p-6 font-mono text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+          {/* Cabeçalho */}
+          <div className="text-center mb-4">
+            <h2 className="text-2xl font-bold mb-1 tracking-wider">VAREJOSYNC</h2>
+            <p className="text-xs">Obrigado pela sua preferência!</p>
+          </div>
 
-        /* ------------------------------------------
-           3. FORMATO A4
-           ------------------------------------------ */
-        .formato-a4 {
-            width: 100%;
-            max-width: 800px; 
-            font-size: 14px;  
-            padding: 30px 40px;
-        }
+          <div className="border-t border-dashed border-gray-400 my-3"></div>
 
-        /* ------------------------------------------
-           4. REGRAS DE IMPRESSÃO
-           ------------------------------------------ */
-        @media print {
-            body { background: transparent; padding: 0; display: block; }
-            .botoes-acao { display: none !important; }
-            #recibo { box-shadow: none !important; margin: 0 !important; }
-            .formato-a4 { max-width: none; padding: 0; }
-        }
-    </style>
+          {/* Número do Recibo */}
+          <div className="text-center text-base font-bold mb-3">
+            RECIBO Nº {pedido.numero || pedido.senha_atendimento}
+          </div>
 
-    <style id="estilo-impressao-dinamico"></style>
-</head>
-<body>
-
-    <div class="botoes-acao no-print">
-        <button onclick="imprimir('termica')" class="btn-black">🖨️ Imprimir Térmica (80mm)</button>
-        <button onclick="imprimir('a4')">📄 Imprimir Folha A4</button>
-    </div>
-
-    <div id="recibo" class="formato-termica">
-        
-        <div class="t-center">
-            <h2 class="bold uppercase" style="font-size: 1.5em; margin: 2px 0; letter-spacing: 1px;">VAREJOSYNC</h2>
+          {/* Informações */}
+          <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
             <div>
-                <p>Obrigado pela sua preferência!</p>
+              <div>DATA:</div>
+              <div className="text-center font-bold">{format(new Date(pedido.created_date), 'dd/MM/yyyy')}</div>
             </div>
-        </div>
-
-        <div class="linha-separadora"></div>
-
-        <div class="t-center bold" style="font-size: 1.2em; margin: 6px 0;">
-            RECIBO Nº 00009
-        </div>
-
-        <div class="flex-linha">
-            <div style="width: 45%;">
-                <div>DATA:</div>
-                <div class="t-center bold">13/03/2026</div>
+            <div>
+              <div>CLIENTE:</div>
+              <div className="text-center font-bold uppercase">{pedido.cliente_nome || 'AVULSO'}</div>
             </div>
-            <div style="width: 55%;">
-                <div style="padding-left: 5px;">CLIENTE:</div>
-                <div class="t-center uppercase bold" style="padding-left: 5px;">AVULSO</div>
-            </div>
-        </div>
+          </div>
 
-        <div class="flex-linha" style="margin-top: 4px;">
-            <div style="width: 45%;">
-                <div>HORA:</div>
-                <div class="t-center bold">17:27</div>
+          <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+            <div>
+              <div>HORA:</div>
+              <div className="text-center font-bold">{format(new Date(pedido.created_date), 'HH:mm')}</div>
             </div>
-            <div style="width: 55%;">
-                <div style="padding-left: 5px;">VEND.:</div>
-                <div class="t-center uppercase bold" style="padding-left: 5px;">VENDEDOR</div>
+            <div>
+              <div>VEND.:</div>
+              <div className="text-center font-bold uppercase">{pedido.vendedor_nome || 'SISTEMA'}</div>
             </div>
-        </div>
+          </div>
 
-        <div class="linha-separadora"></div>
+          <div className="border-t border-dashed border-gray-400 my-3"></div>
 
-        <table>
+          {/* Itens */}
+          <table className="w-full text-xs mb-3">
             <thead>
-                <tr>
-                    <th>DESC.</th>
-                    <th>QTD</th>
-                    <th>PREÇO</th>
-                    <th>TOTAL</th>
-                </tr>
+              <tr className="border-b border-dashed border-gray-400">
+                <th className="text-left pb-1 font-bold">DESC.</th>
+                <th className="text-right pb-1 font-bold">QTD</th>
+                <th className="text-right pb-1 font-bold">PREÇO</th>
+                <th className="text-right pb-1 font-bold">TOTAL</th>
+              </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="uppercase" style="padding-right: 2px;">PARAFUSO DRYWALL...</td>
-                    <td>12</td>
-                    <td>30,80</td>
-                    <td class="bold">369,60</td>
+              {pedido.itens?.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="text-left uppercase py-1 pr-1">{item.produto_nome}</td>
+                  <td className="text-right py-1">{item.quantidade}</td>
+                  <td className="text-right py-1">{item.preco_unitario_praticado?.toFixed(2)}</td>
+                  <td className="text-right font-bold py-1">{item.total?.toFixed(2)}</td>
                 </tr>
+              ))}
             </tbody>
-        </table>
+          </table>
 
-        <div class="linha-separadora"></div>
+          <div className="border-t border-dashed border-gray-400 my-3"></div>
 
-        <div class="flex-linha">
-            <div>Subtotal:</div>
-            <div>369,60</div>
-        </div>
+          {/* Subtotal */}
+          <div className="flex justify-between text-xs mb-2">
+            <span>Subtotal:</span>
+            <span>{pedido.subtotal?.toFixed(2)}</span>
+          </div>
 
-        <div class="linha-separadora"></div>
-        
-        <div class="flex-linha bold" style="font-size: 1.3em; margin: 6px 0;">
-            <div>TOTAL:</div>
-            <div>R$ 369,60</div>
-        </div>
+          {pedido.valor_desconto > 0 && (
+            <div className="flex justify-between text-xs mb-2">
+              <span>Desconto:</span>
+              <span>-{pedido.valor_desconto?.toFixed(2)}</span>
+            </div>
+          )}
 
-        <div class="linha-separadora"></div>
+          <div className="border-t border-dashed border-gray-400 my-3"></div>
 
-        <div class="bold uppercase" style="margin: 6px 0 4px 0;">PAGAMENTO:</div>
-        
-        <div class="flex-linha">
-            <div class="uppercase">DINHEIRO</div>
-            <div class="bold">R$ 300,00</div>
-        </div>
-        <div class="flex-linha">
-            <div class="uppercase">PIX</div>
-            <div class="bold">R$ 69,60</div>
-        </div>
+          {/* Total */}
+          <div className="flex justify-between text-base font-bold mb-3">
+            <span>TOTAL:</span>
+            <span>R$ {pedido.valor_total?.toFixed(2)}</span>
+          </div>
 
-        <div class="t-center" style="margin-top: 20px; font-size: 0.9em; color: #333;">
+          <div className="border-t border-dashed border-gray-400 my-3"></div>
+
+          {/* Formas de Pagamento */}
+          <div className="text-xs font-bold uppercase mb-2">PAGAMENTO:</div>
+          {pedido.pagamentos?.map((pag, idx) => (
+            <div key={idx} className="flex justify-between text-xs mb-1">
+              <span className="uppercase">{pag.forma_pagamento}</span>
+              <span className="font-bold">R$ {pag.valor?.toFixed(2)}</span>
+            </div>
+          ))}
+
+          {/* Rodapé */}
+          <div className="text-center mt-6 text-xs text-gray-600 dark:text-gray-400">
             <p>VAREJOSYNC ERP</p>
-            <p>13/03/2026 17:27:00</p>
+            <p>{format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
+          </div>
         </div>
-
-    </div>
-
-    <script>
-        function imprimir(formato) {
-            const recibo = document.getElementById('recibo');
-            const estiloDinamico = document.getElementById('estilo-impressao-dinamico');
-
-            if (formato === 'termica') {
-                recibo.className = 'formato-termica';
-                estiloDinamico.innerHTML = `
-                    @media print {
-                        @page { size: 80mm auto !important; margin: 0 !important; }
-                    }
-                `;
-            } else if (formato === 'a4') {
-                recibo.className = 'formato-a4';
-                estiloDinamico.innerHTML = `
-                    @media print {
-                        @page { size: A4 portrait !important; margin: 15mm !important; }
-                    }
-                `;
-            }
-
-            setTimeout(() => {
-                window.print();
-            }, 100);
-        }
-    </script>
-</body>
-</html>
+      </DialogContent>
+    </Dialog>
+  );
+}
