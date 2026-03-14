@@ -70,7 +70,10 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 bg-gray-200 flex justify-center print:bg-transparent print:shadow-none print:border-none">
+      <DialogContent 
+        className="max-w-md p-0 bg-gray-200 flex justify-center print:bg-transparent print:shadow-none print:border-none"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         
         <style dangerouslySetInnerHTML={{ __html: `
           @media print {
@@ -182,8 +185,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <pre style={{ fontSize: '8.5px', marginBottom: '1px', fontFamily: 'inherit' }}>
-NO | DESCRIÇÃO           | QTD | UN |  PREÇO |   TOTAL
+            <pre style={{ fontSize: '8px', marginBottom: '1px', fontFamily: 'inherit' }}>
+NO | DESCRIÇÃO        | QTD | UN | PREÇO | TOTAL
             </pre>
             
             <LinhaHifens />
@@ -194,8 +197,8 @@ NO | DESCRIÇÃO           | QTD | UN |  PREÇO |   TOTAL
               const preco = formatValor(item.preco_unitario_praticado);
               const total = formatValor(item.total);
               
-              // Colunas: NO(2) | DESC(19) | QTD(3) | UN(2) | PREÇO(6) | TOTAL(7)
-              const maxDescricao = 19;
+              // Colunas ajustadas para 48 chars: NO(2) | DESC(16) | QTD(3) | UN(2) | PREÇO(5) | TOTAL(5)
+              const maxDescricao = 16;
               let linhasDescricao = [];
               let resto = nomeCompleto;
               
@@ -217,12 +220,12 @@ NO | DESCRIÇÃO           | QTD | UN |  PREÇO |   TOTAL
               }
               
               return (
-                <pre key={idx} style={{ marginBottom: '4px', fontSize: '8.5px', fontFamily: 'inherit' }}>
+                <pre key={idx} style={{ marginBottom: '3px', fontSize: '8px', fontFamily: 'inherit' }}>
 {String(idx + 1).padStart(2, ' ')} | {linhasDescricao[0].padEnd(maxDescricao, ' ')}
 {linhasDescricao.slice(1).map((linha) => 
 `   | ${linha.padEnd(maxDescricao, ' ')}`
 ).join('\n')}
-{linhasDescricao.length > 0 ? `   | ${' '.repeat(maxDescricao)} | ${qtd.padStart(3, ' ')} | UN | ${preco.padStart(6, ' ')} | ${total.padStart(7, ' ')}` : ''}
+{linhasDescricao.length > 0 ? `   | ${' '.repeat(maxDescricao)} | ${qtd.padStart(3, ' ')} | UN | ${preco.padStart(5, ' ')} | ${total.padStart(5, ' ')}` : ''}
                 </pre>
               );
             })}
