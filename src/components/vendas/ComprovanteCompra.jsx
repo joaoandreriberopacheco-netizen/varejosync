@@ -63,8 +63,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   }) : [];
 
   const LinhaHifens = () => (
-    <div className="overflow-hidden whitespace-nowrap text-center" style={{ margin: '2px 0', letterSpacing: '1px' }}>
-      ----------------------------------------------------------------------------------
+    <div className="overflow-hidden whitespace-nowrap" style={{ margin: '1px 0', letterSpacing: '0' }}>
+      ------------------------------------------------
     </div>
   );
 
@@ -84,9 +84,9 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           }
           
           .cupom-termico { 
-            width: 270px; background: #fff; color: #000; 
+            width: 268px; background: #fff; color: #000; 
             font-family: 'Iosevka Charon Mono', 'Courier New', 'Consolas', monospace; 
-            font-size: 11px; padding: 5px; margin: 0 auto; line-height: 1.2; 
+            font-size: 10px; padding: 3px 2px; margin: 0 auto; line-height: 1.15; 
           }
           
           .t-center { text-align: center; }
@@ -109,7 +109,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
         <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8 print:max-h-none print:overflow-visible print:pb-0">
           
-          <div className="flex gap-2 my-4 w-[270px] justify-end flex-wrap no-print">
+          <div className="flex gap-2 my-4 w-[268px] justify-end flex-wrap no-print">
             <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
               <Share2 className="w-4 h-4 mr-1" /> Partilhar
             </Button>
@@ -174,86 +174,58 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            {/* A TABELA DE FERRO (Larguras exatas e Paredes "|") */}
-            <table className="tabela-itens">
-              <thead>
-                <tr>
-                  <th style={{ width: '8%', textAlign: 'left' }}>NO.</th>
-                  <th style={{ width: '30%', textAlign: 'left' }}>|ITEM NAME</th>
-                  <th style={{ width: '10%', textAlign: 'center' }}>|QTY</th>
-                  <th style={{ width: '10%', textAlign: 'center' }}>|UOM</th>
-                  <th style={{ width: '20%', textAlign: 'right' }}>|UNIT PRICE</th>
-                  <th style={{ width: '22%', textAlign: 'right' }}>|AMOUNT</th>
-                </tr>
-              </thead>
-            </table>
-            
-            <LinhaHifens />
-
-            <table className="tabela-itens">
-              <tbody>
-                {itensOrdenados.map((item, idx) => {
-                  const nomeCompleto = item.produto_nome || '';
-                  const linha1 = nomeCompleto.substring(0, 20).toUpperCase();
-                  const resto = nomeCompleto.substring(20);
-                  
-                  return (
-                    <React.Fragment key={idx}>
-                      <tr>
-                        <td style={{ width: '8%', textAlign: 'left' }}>{idx + 1}</td>
-                        <td style={{ width: '30%', textAlign: 'left' }}>| {linha1}</td>
-                        <td style={{ width: '10%', textAlign: 'center' }}>| {parseFloat(item.quantidade).toFixed(0)}</td>
-                        <td style={{ width: '10%', textAlign: 'center' }}>| UN</td>
-                        <td style={{ width: '20%', textAlign: 'right' }}>| {formatValor(item.preco_unitario_praticado)}</td>
-                        <td style={{ width: '22%', textAlign: 'right' }}>| {formatValor(item.total)}</td>
-                      </tr>
-                      {resto && (
-                        <tr>
-                          <td style={{ width: '8%' }}></td>
-                          <td colSpan="5" style={{ textAlign: 'left', paddingLeft: '2px', lineHeight: '1.1' }}>| {resto.toUpperCase()}</td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            <LinhaHifens />
-
-            <div className="grid-totais" style={{ fontSize: '10px' }}>
-              {pedido.valor_desconto > 0 && (
-                <>
-                  <div>Desconto:</div>
-                  <div>-{formatValor(pedido.valor_desconto)}</div>
-                </>
-              )}
-
-              {pedido.valor_acrescimo > 0 && (
-                <>
-                  <div>Acréscimo:</div>
-                  <div>+{formatValor(pedido.valor_acrescimo)}</div>
-                </>
-              )}
-
-              <div>Subtotal:</div>
-              <div>{formatValor(pedido.subtotal)}</div>
+            <div style={{ fontSize: '9px', marginBottom: '1px' }}>
+              NO. | ITEM NAME      | QTY | UOM | UNIT PRICE | AMOUNT
             </div>
             
-            <div className="grid-totais" style={{ fontSize: '14px', margin: '4px 0' }}>
-              <div>TOTAL PAYMENT:</div>
+            <LinhaHifens />
+
+            {itensOrdenados.map((item, idx) => {
+              const nomeCompleto = item.produto_nome || '';
+              const maxCaracteres = 46;
+              
+              return (
+                <div key={idx} style={{ marginBottom: '3px', fontSize: '9px' }}>
+                  <div>{idx + 1} | {nomeCompleto.substring(0, maxCaracteres)}</div>
+                  {nomeCompleto.length > maxCaracteres && (
+                    <div style={{ paddingLeft: '8px' }}>| {nomeCompleto.substring(maxCaracteres)}</div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '8px' }}>
+                    <span>| {parseFloat(item.quantidade).toFixed(0)} | UN | {formatValor(item.preco_unitario_praticado)}</span>
+                    <span>| {formatValor(item.total)}</span>
+                  </div>
+                </div>
+              );
+            })}
+
+            <LinhaHifens />
+
+            <div style={{ fontSize: '9px', marginTop: '2px' }}>
+              <div className="flex-linha">
+                <div>Desconto:</div>
+                <div>{pedido.valor_desconto > 0 ? '-' + formatValor(pedido.valor_desconto) : '0,00'}</div>
+              </div>
+              
+              <div className="flex-linha">
+                <div>Subtotal:</div>
+                <div>{formatValor(pedido.subtotal)}</div>
+              </div>
+            </div>
+            
+            <div className="flex-linha" style={{ fontSize: '13px', margin: '3px 0 2px 0' }}>
+              <div>TOTAL PAGAMENTO:</div>
               <div>{formatValor(pedido.valor_total)}</div>
             </div>
 
             {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
               pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex-linha" style={{ fontSize: '11px' }}>
+                <div key={idx} className="flex-linha" style={{ fontSize: idx === 0 ? '12px' : '9px' }}>
                   <div className="uppercase">{pag.forma_pagamento}:</div>
                   <div>{formatValor(pag.valor)}</div>
                 </div>
               ))
             ) : (
-              <div className="flex-linha" style={{ fontSize: '11px' }}>
+              <div className="flex-linha" style={{ fontSize: '12px' }}>
                 <div>DINHEIRO:</div>
                 <div>{formatValor(pedido.valor_total)}</div>
               </div>
