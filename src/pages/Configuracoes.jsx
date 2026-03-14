@@ -11,10 +11,10 @@ import ConfigEstoqueManager from '../components/config/ConfigEstoqueManager';
 import MaquininhasManager from '../components/config/MaquininhasManager';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
-import DadosEmpresaManager from '../components/config/DadosEmpresaManager';
-import PerfisDeAcessoManager from '../components/config/PerfisDeAcessoManager';
-import RecomecarDoZero from '../components/config/RecomecarDoZero';
-import PersonalizacaoComprovanteManager from '../components/config/PersonalizacaoComprovanteManager';
+import DadosEmpresaManager from '@/components/config/DadosEmpresaManager';
+import PerfisDeAcessoManager from '@/components/config/PerfisDeAcessoManager';
+import RecomecarDoZero from '@/components/config/RecomecarDoZero';
+import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
 
 export default function ConfiguracoesPage() {
   const [tab, setTab] = useState('vendas');
