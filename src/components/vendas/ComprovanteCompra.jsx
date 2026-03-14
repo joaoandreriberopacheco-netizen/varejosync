@@ -85,7 +85,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           
           .cupom-termico { 
             width: 270px; background: #fff; color: #000; 
-            font-family: 'Courier New', Courier, monospace; 
+            font-family: 'Courier', monospace; 
             font-size: 11px; padding: 5px; margin: 0 auto; line-height: 1.2; 
           }
           
@@ -125,6 +125,15 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           <div className="cupom-termico print:shadow-none shadow-lg">
             
             <div className="t-center">
+              {dadosEmpresa?.logo_url && (
+                <div style={{ margin: '4px auto 6px' }}>
+                  <img 
+                    src={dadosEmpresa.logo_url} 
+                    alt="Logo" 
+                    style={{ maxWidth: '100px', maxHeight: '60px', filter: 'grayscale(100%) contrast(200%)' }}
+                  />
+                </div>
+              )}
               <h2 className="bold" style={{ fontSize: '14px', margin: '2px 0', textTransform: 'uppercase' }}>
                 {dadosEmpresa?.razao_social || 'VAREJOSYNC'}
               </h2>
@@ -153,29 +162,14 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
             </div>
 
-            <div className="flex-linha mt-2">
-              <div style={{ width: '45%' }}>
-                <div>DATA:</div>
-                <div className="t-center bold">{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')}</div>
+            <div style={{ fontSize: '10px', marginTop: '4px' }}>
+              <div>
+                DATA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy')} | 
+                HORA: {format(new Date(pedido.created_date || new Date()), 'HH:mm')} | 
+                VEND: {pedido.vendedor_nome?.substring(0, 8) || 'N/D'}
               </div>
-              <div style={{ width: '55%' }}>
-                <div style={{ paddingLeft: '5px' }}>CLIENTE:</div>
-                <div className="t-center uppercase bold" style={{ paddingLeft: '5px' }}>
-                  {pedido.cliente_nome?.substring(0, 16) || 'AVULSO'}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-linha mt-1 mb-2">
-              <div style={{ width: '45%' }}>
-                <div>HORA:</div>
-                <div className="t-center bold">{format(new Date(pedido.created_date || new Date()), 'HH:mm')}</div>
-              </div>
-              <div style={{ width: '55%' }}>
-                <div style={{ paddingLeft: '5px' }}>VEND.:</div>
-                <div className="t-center uppercase bold" style={{ paddingLeft: '5px' }}>
-                  {pedido.vendedor_nome?.substring(0, 14) || 'VENDEDOR'}
-                </div>
+              <div style={{ marginTop: '2px' }}>
+                CLIENTE: <span className="uppercase bold">{pedido.cliente_nome?.substring(0, 22) || 'AVULSO'}</span>
               </div>
             </div>
 
@@ -253,21 +247,29 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
             <LinhaHifens />
 
-            <div className="bold" style={{ margin: '4px 0', textTransform: 'uppercase' }}>PAGAMENTO:</div>
+            <div className="bold" style={{ margin: '6px 0 4px 0', fontSize: '13px' }}>PAGAMENTO:</div>
             {pedido.pagamentos && pedido.pagamentos.length > 0 ? (
               pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex-linha">
+                <div key={idx} className="flex-linha" style={{ fontSize: idx === 0 ? '12px' : '11px', fontWeight: idx === 0 ? 'bold' : 'normal' }}>
                   <div className="uppercase">{pag.forma_pagamento}</div>
                   <div className="bold">R$ {formatValor(pag.valor)}</div>
                 </div>
               ))
             ) : (
-              <div className="flex-linha">
+              <div className="flex-linha" style={{ fontSize: '12px', fontWeight: 'bold' }}>
                 <div>DINHEIRO</div>
                 <div className="bold">R$ {formatValor(pedido.valor_total)}</div>
               </div>
             )}
 
+            {dadosEmpresa?.mensagem_rodape && (
+              <>
+                <LinhaHifens />
+                <div className="t-center bold" style={{ marginTop: '6px', fontSize: '11px' }}>
+                  {dadosEmpresa.mensagem_rodape}
+                </div>
+              </>
+            )}
             <div className="t-center" style={{ marginTop: '15px', fontSize: '9px' }}>
               <p>VAREJOSYNC ERP</p>
               <p>{format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
