@@ -62,7 +62,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     return nomeA.localeCompare(nomeB);
   }) : [];
 
-  // 2. A LINHA INFINITA: Substituímos o texto por uma borda tracejada de CSS
   const LinhaTracejada = () => (
     <div style={{ borderTop: '1px dashed #000', margin: '4px 0', width: '100%' }}></div>
   );
@@ -85,7 +84,6 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             .no-print { display: none !important; }
           }
           
-          /* IOSEVKA E SEM NEGRITO */
           .cupom-termico, 
           .cupom-termico *,
           .cupom-termico div,
@@ -101,48 +99,5 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           .cupom-termico { 
             width: 275px; background: #fff; color: #000; 
             font-size: 11px; padding: 5px; margin: 0 auto; 
-            /* COMPENSA O ESPAÇO DO ESTICAMENTO VERTICAL */
             padding-bottom: 25px;
           }
-          
-          /* 1. O ESTICAMENTO TÉRMICO (ScaleY) */
-          .efeito-bobina {
-            transform: scaleY(1.12); /* Estica a fonte verticalmente em 12% */
-            transform-origin: top center;
-            line-height: 1.15;
-          }
-
-          .t-center { text-align: center; }
-          .uppercase { text-transform: uppercase; }
-          
-          /* A TABELA DE FERRO COM ALINHAMENTO PELA BASE */
-          .tabela-itens { 
-            width: 100%; border-collapse: collapse; margin: 2px 0; table-layout: fixed; 
-          }
-          /* Cabeçalho com bordas tracejadas duplas igual ao gringo */
-          .tabela-itens th {
-            border-top: 1px dashed #000;
-            border-bottom: 1px dashed #000;
-            padding: 3px 0;
-            vertical-align: bottom;
-          }
-          .tabela-itens td { 
-            padding: 1px 0; 
-            /* 3. A ÂNCORA MÁGICA: Os números sempre colam na última linha do produto */
-            vertical-align: bottom; 
-            word-wrap: break-word; 
-          }
-          
-          .flex-linha { display: flex; justify-content: space-between; margin-bottom: 2px; }
-        `}} />
-
-        <div className="w-full flex flex-col items-center max-h-[90vh] overflow-y-auto pb-8 print:max-h-none print:overflow-visible print:pb-0">
-          
-          <div className="flex gap-2 my-4 w-[275px] justify-end flex-wrap no-print">
-            <Button variant="outline" onClick={handleShare} size="sm" className="h-8 border-black text-black">
-              <Share2 className="w-4 h-4 mr-1" /> Partilhar
-            </Button>
-            <Button onClick={() => window.print()} size="sm" className="h-8 bg-black text-white hover:bg-gray-800">
-              <Printer className="w-4 h-4 mr-1" /> Imprimir
-            </Button>
-            <Button
