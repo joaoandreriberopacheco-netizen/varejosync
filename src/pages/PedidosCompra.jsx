@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog } from '@/components/ui/dialog';
-import { ShoppingCart, PlusCircle, Search, Edit, Eye, FileText, CalendarRange } from 'lucide-react';
-import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+import { Plus, FileText } from 'lucide-react';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
+import KpiCompras from '@/components/compras/KpiCompras';
+import FiltrosCompras from '@/components/compras/FiltrosCompras';
+import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 
 export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
