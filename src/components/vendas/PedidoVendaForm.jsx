@@ -458,27 +458,22 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
         </div>
       </Tabs>
 
-      {/* Footer - FIXO */}
-      <DialogFooter className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <FileText className="w-4 h-4" />
-            <span>{formData.itens.length} item(s) • Total: <strong className="text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</strong></span>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving || descontoExcedido || !formData.cliente_id || formData.itens.length === 0}
-              className="flex-1 sm:flex-none bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white"
-            >
-              {isSaving ? 'Salvando...' : 'Salvar Pedido'}
-            </Button>
-          </div>
+      {/* Footer com resumo */}
+      <DialogFooter className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 w-full">
+          <FileText className="w-4 h-4" />
+          <span>{formData.itens.length} item(s) • Total: <strong className="text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</strong></span>
         </div>
       </DialogFooter>
+
+      {/* FAB Button */}
+      <PedidoFAB 
+        pedido={{ ...formData, subtotal, valor_total: valorTotal }}
+        onSave={handleSave}
+        isSaving={isSaving}
+        isDisabled={descontoExcedido || !formData.cliente_id || formData.itens.length === 0}
+        empresa={empresa}
+      />
     </DialogContent>
   );
 }
