@@ -64,9 +64,59 @@ function TurnoRow({ turno, vendas, movimentos }) {
       {/* Detalhes expandidos */}
       {expanded && (
         <div className="px-4 pb-4 bg-gray-50/50 dark:bg-gray-800/20">
+          {/* Saldos e Movimentação */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3 mt-3">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Saldos do Turno</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Saldo Inicial:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.saldo_inicial || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">+ Vendas:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_vendas || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">+ Reforços:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_reforcos || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">- Sangrias:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.total_sangrias || 0)}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700 font-bold">
+                <span className="text-gray-800 dark:text-gray-200">Saldo do Turno:</span>
+                <span className="text-gray-900 dark:text-white font-mono">R$ {fmt(turno.saldo_final || 0)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recebimentos */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">RECEBIMENTOS</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Dinheiro:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_dinheiro || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">PIX:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_pix || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Cartão Débito:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_debito || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Cartão Crédito:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt(turno.recebimentos_credito || 0)}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Movimentos de Caixa */}
           {(reforcos.length > 0 || sangrias.length > 0) && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3 mt-3">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3">
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Movimentos de Caixa</div>
               <div className="space-y-1">
                 {[...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
@@ -112,34 +162,32 @@ function TurnoRow({ turno, vendas, movimentos }) {
             </div>
           )}
 
-          {/* Contagem Final de Caixa */}
+          {/* Conferência Final */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Contagem Final de Caixa</div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Dinheiro Contado</div>
-                  <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.dinheiro_conferido || 0)}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Saldo Final</div>
-                  <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.saldo_final || 0)}</div>
-                </div>
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">CONFERÊNCIA</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Dinheiro na Gaveta:</span>
+                <span className="font-semibold text-gray-900 dark:text-white font-mono">R$ {fmt((turno.recebimentos_dinheiro || 0) + (turno.saldo_inicial || 0) + (turno.total_reforcos || 0) - (turno.total_sangrias || 0))}</span>
               </div>
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-                <div className="flex justify-between items-center">
-                  <div className="text-xs text-gray-400 dark:text-gray-500">Diferença</div>
-                  <div className={`text-lg font-bold font-glacial ${Math.abs(diferenca) < 0.01 ? 'text-gray-400 dark:text-gray-500' : diferenca > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                    {diferenca > 0 ? '+' : ''}R$ {fmt(diferenca)}
-                  </div>
-                </div>
+              <div className="flex justify-between font-bold">
+                <span className="text-gray-800 dark:text-gray-200">Total Conferido:</span>
+                <span className="text-gray-900 dark:text-white font-mono">R$ {fmt(turno.dinheiro_conferido || 0)}</span>
               </div>
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400 dark:text-gray-500">Fechado por</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</span>
-                </div>
+              <div className={`flex justify-between font-bold pt-2 border-t border-gray-300 dark:border-gray-600 ${
+                Math.abs(diferenca) < 0.01 
+                  ? 'text-gray-400 dark:text-gray-500' 
+                  : diferenca > 0 
+                    ? 'text-emerald-600 dark:text-emerald-400' 
+                    : 'text-red-600 dark:text-red-400'
+              }`}>
+                <span>Diferença:</span>
+                <span className="font-mono">{diferenca >= 0 ? '+' : ''}R$ {fmt(diferenca)}</span>
               </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-center">
+              <span className="text-gray-400 dark:text-gray-500">Fechado por: </span>
+              <span className="font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</span>
             </div>
           </div>
         </div>
