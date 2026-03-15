@@ -7,10 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck } from 'lucide-react';
+import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck, Save } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AnaliseEntrega from './AnaliseEntrega';
-import PedidoFAB from './PedidoFAB';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -38,17 +37,15 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     currentUser: null,
   });
   const [isSaving, setIsSaving] = useState(false);
-  const [empresa, setEmpresa] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const loadDependencies = async () => {
-      const [clientesData, produtosData, tabelasPrecoData, userData, empresaData] = await Promise.all([
+      const [clientesData, produtosData, tabelasPrecoData, userData] = await Promise.all([
         base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] }),
         base44.entities.Produto.list(),
         base44.entities.TabelaPreco.list(),
-        base44.auth.me(),
-        base44.entities.DadosEmpresa.list()
+        base44.auth.me()
       ]);
       setDependencies({
         clientes: clientesData,
@@ -56,9 +53,6 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
         tabelasPreco: tabelasPrecoData,
         currentUser: userData
       });
-      if (empresaData && empresaData.length > 0) {
-        setEmpresa(empresaData[0]);
-      }
       if (!pedido) {
         setFormData(prev => ({
           ...prev,
@@ -184,10 +178,16 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
           <DialogTitle className="text-lg md:text-xl font-normal text-gray-800 dark:text-gray-200">
             {pedido?.id ? `Editar: ${pedido.numero}` : 'Novo Pedido de Venda'}
           </DialogTitle>
-          <Button variant="outline" size="sm" onClick={onClose} className="border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 h-8 px-3 text-xs md:text-sm">
-            <X className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-            Fechar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose} className="border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 h-8 px-3 text-xs md:text-sm">
+              <X className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={isSaving || descontoExcedido} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white h-8 px-3 text-xs md:text-sm">
+              <Save className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+              {isSaving ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
         </div>
       </DialogHeader>
 
@@ -458,22 +458,27 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
         </div>
       </Tabs>
 
-      {/* Footer com resumo */}
-      <DialogFooter className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 w-full">
-          <FileText className="w-4 h-4" />
-          <span>{formData.itens.length} item(s) • Total: <strong className="text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</strong></span>
+      {/* Footer - FIXO */}
+      <DialogFooter className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <FileText className="w-4 h-4" />
+            <span>{formData.itens.length} item(s) • Total: <strong className="text-gray-800 dark:text-gray-200">{formatCurrency(valorTotal)}</strong></span>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={isSaving || descontoExcedido || !formData.cliente_id || formData.itens.length === 0}
+              className="flex-1 sm:flex-none bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white"
+            >
+              {isSaving ? 'Salvando...' : 'Salvar Pedido'}
+            </Button>
+          </div>
         </div>
       </DialogFooter>
-
-      {/* FAB Button */}
-      <PedidoFAB 
-        pedido={{ ...formData, subtotal, valor_total: valorTotal }}
-        onSave={handleSave}
-        isSaving={isSaving}
-        isDisabled={descontoExcedido || !formData.cliente_id || formData.itens.length === 0}
-        empresa={empresa}
-      />
     </DialogContent>
   );
 }
