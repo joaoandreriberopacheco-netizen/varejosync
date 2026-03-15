@@ -60,6 +60,7 @@ import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 
 export default function PDVCaixa() {
+  const navigate = useNavigate();
   const [configVenda, setConfigVenda] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
