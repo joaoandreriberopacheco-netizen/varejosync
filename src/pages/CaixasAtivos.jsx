@@ -10,9 +10,11 @@ export default function CaixasAtivosPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTurno, setSelectedTurno] = useState(null);
   const [detalhes, setDetalhes] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     loadTurnos();
+    base44.auth.me().then(setCurrentUser).catch(console.error);
   }, []);
 
   const loadTurnos = async () => {
@@ -157,6 +159,7 @@ export default function CaixasAtivosPage() {
                 <button
                   onClick={() => handleVerDetalhes(turno)}
                   className="w-full h-11 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+                  style={{ minHeight: '44px' }}
                 >
                   <Eye className="w-4 h-4" />
                   <span>Ver Detalhes</span>

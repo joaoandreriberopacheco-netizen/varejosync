@@ -1261,26 +1261,28 @@ export default function PDVCaixa() {
                     Recebimentos do Turno
                   </h3>
                   <div className="space-y-2">
-                    {/* Dinheiro - campo editável clicável */}
+                    {/* Dinheiro - campo editável clicável (bloqueado em modo visualização) */}
                     <div
-                      className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                      className={`flex items-center justify-between py-2 px-3 rounded-xl ${modoVisualizacao ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700'} transition-colors group`}
                       onClick={() => {
+                        if (modoVisualizacao) return;
                         const el = document.getElementById('input-dinheiro-conferido');
                         el?.focus();
                         el?.select();
                       }}>
                       <div>
                         <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">toque para conferir</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{modoVisualizacao ? 'somente leitura' : 'toque para conferir'}</p>
                       </div>
                       <input
                         id="input-dinheiro-conferido"
                         type="text"
                         inputMode="decimal"
                         value={recebimentosDinheiro}
-                        onChange={(e) => setRecebimentosDinheiro(e.target.value)}
+                        onChange={(e) => !modoVisualizacao && setRecebimentosDinheiro(e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        className="w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-pointer"
+                        disabled={modoVisualizacao}
+                        className={`w-36 text-right text-lg font-bold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white ${modoVisualizacao ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                         placeholder={formatarValorExibicao(caixaData.saldoAtual || 0)}
                         onClick={(e) => e.stopPropagation()}
                       />
