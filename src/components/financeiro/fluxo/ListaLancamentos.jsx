@@ -106,6 +106,9 @@ function Grupo({ label, items, totais, onRow }) {
         <div className="flex items-center gap-2">
           {totais.r > 0 && <span className="text-[0.62rem] text-gray-500 dark:text-gray-400 font-medium">+{R(totais.r)}</span>}
           {totais.d > 0 && <span className="text-[0.62rem] text-gray-400 dark:text-gray-500 font-medium">−{R(totais.d)}</span>}
+          <span className={`text-[0.62rem] font-bold ${(totais.r || 0) - (totais.d || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+            {(totais.r || 0) - (totais.d || 0) >= 0 ? '+' : '−'}{R(Math.abs((totais.r || 0) - (totais.d || 0)))}
+          </span>
           <ChevronRight className={`w-3 h-3 text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} />
         </div>
       </button>
