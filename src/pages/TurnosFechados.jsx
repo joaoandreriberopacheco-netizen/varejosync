@@ -269,16 +269,15 @@ export default function TurnosFechadosPage() {
   };
 
   const handleAuthSuccess = async (authData) => {
-    setShowAuthDialog(false);
-    await confirmarReabertura(authData);
-  };
-
-  const confirmarReabertura = async (authData) => {
-    if (!turnoParaReabrir) return;
+    if (!turnoParaReabrir) {
+      setShowAuthDialog(false);
+      return;
+    }
     
     setReabrindo(true);
+    setShowAuthDialog(false);
+    
     try {
-      // Registrar autenticação
       console.log('Reabertura autenticada por:', authData.intervenienteName);
       // Verificar se existe outro turno aberto para o mesmo caixa
       const turnosAbertos = await base44.entities.TurnoCaixa.filter({ 
@@ -291,8 +290,6 @@ export default function TurnosFechadosPage() {
           description: `Existe outro turno aberto (${turnosAbertos[0].numero}) neste caixa. Feche-o antes de reabrir este turno.`,
           duration: 5000
         });
-        setReabrindo(false);
-        setTurnoParaReabrir(null);
         return;
       }
 
@@ -336,15 +333,15 @@ export default function TurnosFechadosPage() {
           `\n[REABERTURA] ${format(new Date(), 'dd/MM/yyyy HH:mm')} - Autorizado por ${authData.intervenienteName} (${authData.operationCode})`
       });
 
+      // Remover o turno da lista local imediatamente
+      setTurnos(prev => prev.filter(t => t.id !== turnoParaReabrir.id));
+      
       toast.success('Turno reaberto com sucesso!', {
         description: `Turno ${turnoParaReabrir.numero} reaberto. Autorizado por: ${authData.intervenienteName}`,
       });
 
-      // Remover o turno da lista local imediatamente
-      setTurnos(prev => prev.filter(t => t.id !== turnoParaReabrir.id));
-      
-      // Recarregar dados do servidor
-      loadData();
+      // Recarregar dados do servidor em background
+      setTimeout(() => loadData(), 500);
     } catch (error) {
       console.error('Erro ao reabrir turno:', error);
       toast.error('Erro ao reabrir turno', {
