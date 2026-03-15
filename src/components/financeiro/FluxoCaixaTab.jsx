@@ -304,9 +304,16 @@ export default function FluxoCaixaTab() {
         </div>
 
         {showFilters && (
-          <>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 space-y-3 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
+              <button onClick={() => setShowFilters(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
             {/* Período picker com carrossel + calendário */}
-            <div style={{ padding: '10px 8px 6px', position: 'relative' }}>
+            <div style={{ position: 'relative' }}>
               <PeriodoPicker
                 periodo={periodo} onPeriodo={setPeriodo}
                 customStart={customStart} customEnd={customEnd}
@@ -315,10 +322,8 @@ export default function FluxoCaixaTab() {
             </div>
 
             {/* Filtros secundários */}
-            <div style={{ padding: '6px 12px 10px' }}>
-              <FiltrosSecundarios contas={contas} contasSel={contasSel} onContas={setContasSel} pendentes={pendentes} onPendentes={setPendentes} />
-            </div>
-          </>
+            <FiltrosSecundarios contas={contas} contasSel={contasSel} onContas={setContasSel} pendentes={pendentes} onPendentes={setPendentes} />
+          </div>
         )}
       </div>
 
