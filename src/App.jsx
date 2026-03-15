@@ -20,6 +20,7 @@ import Cotacoes from '@/pages/Cotacoes';
 import PedidosCompra from '@/pages/PedidosCompra';
 import ContasFinanceiras from '@/pages/ContasFinanceiras';
 import AprovacoesFinanceiras from '@/pages/AprovacoesFinanceiras';
+import TemplatesCompra from '@/pages/TemplatesCompra';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -124,6 +125,11 @@ const AuthenticatedApp = () => {
       <Route path="/AprovacoesFinanceiras" element={
         <LayoutWrapper currentPageName="AprovacoesFinanceiras">
           <AprovacoesFinanceiras />
+        </LayoutWrapper>
+      } />
+      <Route path="/TemplatesCompra" element={
+        <LayoutWrapper currentPageName="TemplatesCompra">
+          <TemplatesCompra />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

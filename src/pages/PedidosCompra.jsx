@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Dialog } from '@/components/ui/dialog';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
@@ -8,6 +9,7 @@ import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ActionMenuCompras from '@/components/compras/ActionMenuCompras';
 
 export default function PedidosCompraPage() {
+  const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -61,23 +63,8 @@ export default function PedidosCompraPage() {
     setPedidoSelecionado(null);
   };
 
-  const handleDownloadTemplate = async () => {
-    try {
-      const response = await fetch('/api/functions/gerarTemplatePedidoCompra', { method: 'POST' });
-      if (!response.ok) throw new Error('Erro ao gerar template');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `template_pedido_compra_${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Erro:', error);
-    }
+  const handleDownloadTemplate = () => {
+    navigate('/TemplatesCompra');
   };
 
   const filtrados = useMemo(() => {
