@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Eye, TrendingUp, DollarSign, Clock, ChevronRight, PieChart, Receipt, Plus, Minus } from 'lucide-react';
+import { Wallet, Eye, TrendingUp, DollarSign, Clock, ChevronRight, PieChart, Receipt, Plus, Minus, ArrowLeft, Monitor, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import VendasTurnoDialog from '@/components/vendas/caixa/VendasTurnoDialog';
+import VendaDetalheDialog from '@/components/vendas/caixa/VendaDetalheDialog';
+import ListaMovimentosDialog from '@/components/vendas/caixa/ListaMovimentosDialog';
 
 export default function CaixasAtivosPage() {
   const [turnosAtivos, setTurnosAtivos] = useState([]);
@@ -12,6 +15,12 @@ export default function CaixasAtivosPage() {
   const [selectedTurno, setSelectedTurno] = useState(null);
   const [detalhes, setDetalhes] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showVendasDialog, setShowVendasDialog] = useState(false);
+  const [showReforcosDialog, setShowReforcosDialog] = useState(false);
+  const [showSangriasDialog, setShowSangriasDialog] = useState(false);
+  const [showDespesasDialog, setShowDespesasDialog] = useState(false);
+  const [vendaDetalhada, setVendaDetalhada] = useState(null);
+  const [activeTab, setActiveTab] = useState('balanco');
 
   useEffect(() => {
     loadTurnos();
@@ -176,165 +185,226 @@ export default function CaixasAtivosPage() {
         )}
       </div>
 
-      {/* Dialog de Detalhes Completo */}
-      <Dialog open={!!selectedTurno} onOpenChange={() => { setSelectedTurno(null); setDetalhes(null); }}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 border-none p-0">
-          {selectedTurno && (
-            <div className="flex flex-col h-full">
-              <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-                <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white font-glacial">
-                  {selectedTurno.conta_caixa_pdv_nome}
-                </DialogTitle>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Turno {selectedTurno.numero} · {selectedTurno.usuario_abertura_nome}
-                </p>
-              </DialogHeader>
+      {/* Dialog de Detalhes - View Fullscreen tipo PDV */}
+      <Dialog open={!!selectedTurno} onOpenChange={() => { setSelectedTurno(null); setDetalhes(null); setActiveTab('balanco'); }}>
+        <DialogContent className="max-w-full w-screen h-screen m-0 p-0 bg-gray-50 dark:bg-gray-900 border-none rounded-none">
+          {selectedTurno && detalhes && (
+            <div className="h-full flex flex-col">
+              {/* Header */}
+              <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
+                <button
+                  onClick={() => { setSelectedTurno(null); setDetalhes(null); setActiveTab('balanco'); }}
+                  className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  style={{ minWidth: '44px', minHeight: '44px' }}>
+                  <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                </button>
+                
+                <div className="flex-1 text-center">
+                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                    {selectedTurno.conta_caixa_pdv_nome}
+                  </h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Somente visualização</p>
+                </div>
+                
+                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  {format(new Date(), 'HH:mm')}
+                </div>
+              </div>
 
-              {detalhes ? (
-                <Tabs defaultValue="balanco" className="flex-1 flex flex-col overflow-hidden">
-                  <TabsList className="mx-6 mt-4 bg-transparent border-b border-gray-100 dark:border-gray-800 rounded-none p-0 gap-1">
-                    <TabsTrigger value="balanco" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm px-4 py-2 rounded-t-xl rounded-b-none">
-                      <PieChart className="w-4 h-4 mr-2" />
-                      Balanço
-                    </TabsTrigger>
-                    <TabsTrigger value="vendas" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm px-4 py-2 rounded-t-xl rounded-b-none">
-                      <Receipt className="w-4 h-4 mr-2" />
-                      Vendas
-                    </TabsTrigger>
-                    <TabsTrigger value="movimentos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm px-4 py-2 rounded-t-xl rounded-b-none">
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Movimentos
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="balanco" className="flex-1 overflow-auto p-6 mt-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {/* Movimentações do Turno */}
+              {/* Conteúdo com Tabs */}
+              <div className="flex-1 overflow-hidden">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                  {/* KPIs Superiores - Desktop */}
+                  <div className="hidden md:block p-4 pb-0 bg-gray-50 dark:bg-gray-900">
+                    <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
                       <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                        <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
-                          Movimentações do Turno
-                        </h3>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between py-1">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Inicial</span>
-                            <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.saldoInicial)}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-1">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Total Vendas</span>
-                            <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.totalVendas)}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-1">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Reforços</span>
-                            <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.reforcos)}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-1">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Recolhimentos</span>
-                            <span className="text-base font-medium text-blue-600 dark:text-blue-400">{formatValor(detalhes.sangrias)}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-1">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Despesas</span>
-                            <span className="text-base font-medium text-red-600 dark:text-red-400">{formatValor(detalhes.despesas)}</span>
-                          </div>
-                          <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
-                              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(detalhes.liquidez)}</span>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Saldo do Turno</div>
+                        <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(detalhes.liquidez)}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Inicial + vendas + reforços − recolhimentos</div>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Dinheiro na Gaveta</div>
+                        <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
+                          {formatValor(detalhes.liquidez - (detalhes.recebimentos?.pix || 0) - (detalhes.recebimentos?.credito || 0) - (detalhes.recebimentos?.debito || 0) - (detalhes.recebimentos?.vale || 0))}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabs Navigation - Desktop */}
+                  <div className="hidden md:block border-b border-gray-100 dark:border-gray-700 px-4 bg-gray-50 dark:bg-gray-900">
+                    <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
+                      <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                        <PieChart className="w-4 h-4" />
+                        <span className="text-sm">Balanço</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="vendas" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                        <Receipt className="w-4 h-4" />
+                        <span className="text-sm">Vendas</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="movimentos" className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
+                        <Wallet className="w-4 h-4" />
+                        <span className="text-sm">Movimentos</span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <TabsContent value="balanco" className="flex-1 overflow-auto mt-0 p-4 bg-gray-50 dark:bg-gray-900">
+                    <div className="max-w-4xl mx-auto">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Movimentações */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                          <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">Movimentações do Turno</h3>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between py-1">
+                              <div className="flex items-center gap-1">
+                                <div className="w-7"></div>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Inicial</span>
+                              </div>
+                              <span className="text-base font-medium text-gray-900 dark:text-gray-100 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(detalhes.saldoInicial)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setShowVendasDialog(true)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
+                                  <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                                </button>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Total Vendas</span>
+                              </div>
+                              <span className="text-base font-medium text-gray-900 dark:text-gray-100 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(detalhes.totalVendas)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setShowReforcosDialog(true)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
+                                  <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                                </button>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Reforços</span>
+                              </div>
+                              <span className="text-base font-medium text-gray-900 dark:text-gray-100 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(detalhes.reforcos)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setShowSangriasDialog(true)} className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
+                                  <Eye className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                                </button>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Recolhimentos</span>
+                              </div>
+                              <span className="text-base font-medium text-blue-600 dark:text-blue-400 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(detalhes.sangrias)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setShowDespesasDialog(true)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0" style={{ minWidth: '28px', minHeight: '28px' }}>
+                                  <Eye className="w-4 h-4 text-red-400 dark:text-red-500" />
+                                </button>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Despesas</span>
+                              </div>
+                              <span className="text-base font-medium text-red-600 dark:text-red-400 tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(detalhes.despesas)}</span>
+                            </div>
+                            <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>
+                                  {formatValor(detalhes.liquidez)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">Inicial + vendas + reforços − recolhimentos</p>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Recebimentos do Turno */}
-                      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                        <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">
-                          Recebimentos do Turno
-                        </h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
-                            <span className="text-base font-medium text-gray-900 dark:text-white">{formatValor(detalhes.recebimentos.dinheiro)}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-2 px-3">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>
-                            <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.recebimentos.pix)}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-2 px-3">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Crédito</span>
-                            <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.recebimentos.credito || 0)}</span>
-                          </div>
-                          <div className="flex items-center justify-between py-2 px-3">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Débito</span>
-                            <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.recebimentos.debito || 0)}</span>
-                          </div>
-                          {(detalhes.recebimentos.vale || 0) > 0 && (
-                            <div className="flex items-center justify-between py-2 px-3">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Vale Troca</span>
-                                <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
+                        {/* Recebimentos */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                          <h3 className="text-gray-900 mb-4 text-base font-semibold dark:text-white font-glacial">Recebimentos do Turno</h3>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-60">
+                              <div>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
+                                <p className="text-xs text-gray-400 dark:text-gray-500">somente leitura</p>
                               </div>
-                              <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">{formatValor(detalhes.recebimentos.vale)}</span>
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">{formatValor(detalhes.recebimentos.dinheiro)}</span>
                             </div>
-                          )}
+                            <div className="flex items-center justify-between py-2 px-3">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>
+                              <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.recebimentos.pix)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2 px-3">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Crédito</span>
+                              <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.recebimentos.credito || 0)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2 px-3">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Cartão Débito</span>
+                              <span className="text-base font-medium text-gray-900 dark:text-gray-100">{formatValor(detalhes.recebimentos.debito || 0)}</span>
+                            </div>
+                            {(detalhes.recebimentos.vale || 0) > 0 && (
+                              <div className="flex items-center justify-between py-2 px-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">Vale Troca</span>
+                                  <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
+                                </div>
+                                <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">{formatValor(detalhes.recebimentos.vale)}</span>
+                              </div>
+                            )}
+                            
+                            {/* Total Conferido - indicador visual */}
+                            <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                              <div className="flex items-center justify-between px-1">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Conferido</span>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                                  {formatValor(detalhes.liquidez)}
+                                </span>
+                              </div>
+                              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">✓ Valores Conferem</span>
+                                  <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 font-glacial">{formatValor(0)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="vendas" className="flex-1 overflow-auto p-6 mt-0">
-                    <div className="space-y-3">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{detalhes.vendasCount} {detalhes.vendasCount === 1 ? 'venda' : 'vendas'} · Total: {formatValor(detalhes.totalVendas)}</p>
+                  <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0">
+                    <div className="max-w-4xl mx-auto space-y-3">
+                      <div className="mb-4">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Finalizadas</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                          {detalhes.vendasCount} {detalhes.vendasCount === 1 ? 'Venda' : 'Vendas'}
+                        </div>
+                      </div>
                       {detalhes.vendas.map(v => (
-                        <div key={v.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-white">{v.cliente_nome}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">{v.numero} · {v.created_date ? format(new Date(v.created_date), 'HH:mm', { locale: ptBR }) : ''}</div>
+                        <div key={v.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm" onClick={() => setVendaDetalhada(v)}>
+                          <div className="flex items-start justify-between gap-4 mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-base font-medium text-gray-900 dark:text-white truncate">{v.cliente_nome}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{v.numero} · {v.created_date ? format(new Date(v.created_date), 'HH:mm', { locale: ptBR }) : ''}</div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-gray-900 dark:text-white font-glacial">{formatValor(v.valor_total)}</div>
-                              <div className="text-xs text-gray-400">{v.itens?.length || 0} itens</div>
+                              <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                                {formatValor(v.valor_total)}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{v.itens?.length || 0} itens</div>
                             </div>
                           </div>
-                          {v.pagamentos && v.pagamentos.length > 0 && (
-                            <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-2 space-y-1">
-                              {v.pagamentos.map((p, idx) => (
-                                <div key={idx} className="flex justify-between text-sm">
-                                  <span className="text-gray-500 dark:text-gray-400">{p.forma_pagamento}</span>
-                                  <span className="text-gray-900 dark:text-white">{formatValor(p.valor)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="movimentos" className="flex-1 overflow-auto p-6 mt-0">
-                    <div className="space-y-2">
+                  <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0">
+                    <div className="max-w-4xl mx-auto space-y-2">
                       {(() => {
-                        const itensMovimentos = detalhes.movimentos.map(m => ({
-                          id: m.id,
-                          tipo: m.tipo,
-                          valor: m.valor,
-                          descricao: m.observacao || m.tipo,
-                          hora: m.created_date,
-                          cor: m.tipo === 'Reforço' ? 'emerald' : 'blue',
-                        }));
-                        const itensDespesas = (detalhes.despesasLista || []).map(d => ({
-                          id: d.id,
-                          tipo: 'Despesa',
-                          valor: d.valor,
-                          descricao: d.descricao,
-                          hora: d.created_date,
-                          cor: 'red',
-                        }));
+                        const itensMovimentos = detalhes.movimentos.map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
+                        const itensDespesas = (detalhes.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
                         const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
                         
                         if (todos.length === 0) return (
-                          <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-                            <Wallet className="w-12 h-12 mx-auto mb-2" />
-                            <p>Nenhuma movimentação</p>
+                          <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600">
+                            <Wallet className="w-10 h-10 mb-2" />
+                            <p className="text-sm">Nenhuma movimentação</p>
                           </div>
                         );
 
@@ -355,16 +425,81 @@ export default function CaixasAtivosPage() {
                       })()}
                     </div>
                   </TabsContent>
+
+                  {/* Barra de Navegação - Mobile */}
+                  <TabsList className="md:hidden grid grid-cols-3 h-16 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-none p-0 flex-shrink-0">
+                    <TabsTrigger value="balanco" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                      <PieChart className="w-5 h-5" />
+                      <span className="text-xs">Balanço</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="vendas" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                      <Receipt className="w-5 h-5" />
+                      <span className="text-xs">Vendas</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="movimentos" className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-gray-50 dark:data-[state=active]:bg-gray-700 h-full rounded-none border-0">
+                      <Wallet className="w-5 h-5" />
+                      <span className="text-xs">Movimentos</span>
+                    </TabsTrigger>
+                  </TabsList>
                 </Tabs>
-              ) : (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin"></div>
-                </div>
-              )}
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialogs auxiliares */}
+      {detalhes && (
+        <>
+          <VendasTurnoDialog
+            open={showVendasDialog}
+            onOpenChange={setShowVendasDialog}
+            vendasFinalizadas={detalhes.vendas}
+            turnoAtivo={selectedTurno}
+            caixaData={detalhes}
+            formatValor={formatValor}
+            onVerDetalhes={setVendaDetalhada}
+          />
+          <VendaDetalheDialog
+            venda={vendaDetalhada}
+            onClose={() => setVendaDetalhada(null)}
+            formatValor={formatValor}
+          />
+          <ListaMovimentosDialog
+            open={showReforcosDialog}
+            onOpenChange={setShowReforcosDialog}
+            tipo="reforcos"
+            movimentos={detalhes.movimentos}
+            despesasLista={detalhes.despesasLista}
+            totalReforcos={detalhes.reforcos}
+            totalSangrias={detalhes.sangrias}
+            totalDespesas={detalhes.despesas}
+            formatValor={formatValor}
+          />
+          <ListaMovimentosDialog
+            open={showSangriasDialog}
+            onOpenChange={setShowSangriasDialog}
+            tipo="sangrias"
+            movimentos={detalhes.movimentos}
+            despesasLista={detalhes.despesasLista}
+            totalReforcos={detalhes.reforcos}
+            totalSangrias={detalhes.sangrias}
+            totalDespesas={detalhes.despesas}
+            formatValor={formatValor}
+          />
+          <ListaMovimentosDialog
+            open={showDespesasDialog}
+            onOpenChange={setShowDespesasDialog}
+            tipo="despesas"
+            movimentos={detalhes.movimentos}
+            despesasLista={detalhes.despesasLista}
+            totalReforcos={detalhes.reforcos}
+            totalSangrias={detalhes.sangrias}
+            totalDespesas={detalhes.despesas}
+            formatValor={formatValor}
+          />
+        </>
+      )}
     </div>
   );
 }
