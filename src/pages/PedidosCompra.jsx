@@ -72,27 +72,8 @@ export default function PedidosCompraPage() {
     });
   }, [pedidos, search, statusSel, fornecedorSel]);
 
-  const kpis = useMemo(() => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    let pendentes = 0, atrasados = 0;
-    filtrados.forEach(p => {
-      const status = p.status?.toLowerCase() || '';
-      if (status !== 'recebido' && status !== 'cancelado') {
-        pendentes++;
-        if (p.data_prevista_entrega && new Date(p.data_prevista_entrega) < hoje) {
-          atrasados++;
-        }
-      }
-    });
-
-    return {
-      total: filtrados.length,
-      valorTotal: filtrados.reduce((acc, p) => acc + (p.valor_total || 0), 0),
-      pendentes,
-      atrasados,
-    };
+  const valorTotal = useMemo(() => {
+    return filtrados.reduce((acc, p) => acc + (p.valor_total || 0), 0);
   }, [filtrados]);
 
   const grupos = useMemo(() => {
