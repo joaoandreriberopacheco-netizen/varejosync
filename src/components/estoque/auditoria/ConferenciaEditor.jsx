@@ -356,9 +356,9 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Modal confirmação envio para auditoria */}
       {modalConfirmar && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-center md:items-end justify-center p-4 md:p-0">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !finalizando && setModalConfirmar(false)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl p-6 w-full max-w-sm shadow-2xl max-h-[80vh] flex flex-col">
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl md:rounded-t-3xl md:rounded-b-none p-6 w-full max-w-sm shadow-2xl max-h-[80vh] md:max-h-[85vh] flex flex-col">
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${divergencias.length > 0 ? 'bg-amber-50 dark:bg-amber-950/40' : 'bg-green-50 dark:bg-green-950/40'}`}>
                 {divergencias.length > 0
@@ -429,9 +429,9 @@ export default function ConferenciaEditor({ conferencia: conferenciaInicial, onV
 
       {/* Modal qtd */}
       {modalQtd && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-center md:items-end justify-center p-4 md:p-0">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalQtd(null)} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-t-3xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl md:rounded-t-3xl md:rounded-b-none p-6 w-full max-w-sm shadow-2xl">
             <p className="text-xs text-gray-400 dark:text-gray-600 mb-1">Produto selecionado</p>
             <p className="text-sm font-semibold text-gray-900 dark:text-white mb-5 leading-snug">{modalQtd.produto.nome}</p>
             <label className="text-xs text-gray-400 dark:text-gray-600 mb-2 block">Quantidade contada</label>
