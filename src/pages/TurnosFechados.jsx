@@ -210,14 +210,20 @@ export default function TurnosFechadosPage() {
 
   const loadData = async () => {
     setIsLoading(true);
-    const [t, v, m] = await Promise.all([
-      base44.entities.TurnoCaixa.filter({ status: 'Fechado' }, '-data_fechamento', 100),
-      base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 500),
-      base44.entities.MovimentosCaixa.list('-created_date', 500),
-    ]);
-    setTurnos(t);
-    setVendas(v);
-    setMovimentos(m);
+    try {
+      const [t, v, m] = await Promise.all([
+        base44.entities.TurnoCaixa.filter({ status: 'Fechado' }, '-data_fechamento', 100),
+        base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 500),
+        base44.entities.MovimentosCaixa.list('-created_date', 500),
+      ]);
+      console.log('Turnos carregados:', t);
+      console.log('Exemplo de turno:', t[0]);
+      setTurnos(t);
+      setVendas(v);
+      setMovimentos(m);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    }
     setIsLoading(false);
   };
 
