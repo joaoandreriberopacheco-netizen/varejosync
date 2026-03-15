@@ -79,6 +79,7 @@ function LancamentoItem({ lancamento, onClick }) {
             className={isPrevisto ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-100'}
           >{lancamento.descricao}</p>
           {isPrevisto && <span style={{ fontSize: '0.62rem', padding: '1px 5px', borderRadius: 4, flexShrink: 0, marginTop: 2 }} className="bg-gray-100 dark:bg-gray-700 text-gray-400">prev.</span>}
+          {lancamento.is_custo_mercadoria && <span style={{ fontSize: '0.62rem', padding: '1px 5px', borderRadius: 4, flexShrink: 0, marginTop: 2 }} className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">CMV</span>}
         </div>
         <p style={{ fontSize: '0.7rem', marginTop: 2 }} className="text-gray-400 dark:text-gray-500">
           {dataRef ? format(new Date(dataRef), 'dd MMM', { locale: ptBR }) : '—'}
@@ -170,6 +171,7 @@ export default function FluxoCaixaTab() {
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const [periodo, setPeriodo] = useState('mes');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
@@ -279,7 +281,7 @@ export default function FluxoCaixaTab() {
       {/* ── Busca + Filtros ─────────────────────────────────────────────── */}
       <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: 16, overflow: 'visible' }} className="bg-white dark:bg-gray-800 shadow-sm">
         {/* Busca */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid #f9fafb' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: showFilters ? '1px solid rgba(0,0,0,0.05)' : 'none' }} className="dark:border-white/5">
           <Search style={{ width: 15, height: 15, flexShrink: 0 }} className="text-gray-400" />
           <input
             value={search}
@@ -289,21 +291,32 @@ export default function FluxoCaixaTab() {
             className="text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
           />
           {search && <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><X style={{ width: 14, height: 14 }} className="text-gray-400" /></button>}
+          <button 
+            onClick={() => setShowFilters(s => !s)} 
+            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', borderRadius: 8 }} 
+            className={`${showFilters ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+          >
+            <SlidersHorizontal style={{ width: 15, height: 15 }} />
+          </button>
         </div>
 
-        {/* Período picker com carrossel + calendário */}
-        <div style={{ padding: '10px 8px 6px', position: 'relative' }}>
-          <PeriodoPicker
-            periodo={periodo} onPeriodo={setPeriodo}
-            customStart={customStart} customEnd={customEnd}
-            onCustom={(k, v) => k === 'start' ? setCustomStart(v) : setCustomEnd(v)}
-          />
-        </div>
+        {showFilters && (
+          <>
+            {/* Período picker com carrossel + calendário */}
+            <div style={{ padding: '10px 8px 6px', position: 'relative' }}>
+              <PeriodoPicker
+                periodo={periodo} onPeriodo={setPeriodo}
+                customStart={customStart} customEnd={customEnd}
+                onCustom={(k, v) => k === 'start' ? setCustomStart(v) : setCustomEnd(v)}
+              />
+            </div>
 
-        {/* Filtros secundários */}
-        <div style={{ padding: '6px 12px 10px' }}>
-          <FiltrosSecundarios contas={contas} contasSel={contasSel} onContas={setContasSel} pendentes={pendentes} onPendentes={setPendentes} />
-        </div>
+            {/* Filtros secundários */}
+            <div style={{ padding: '6px 12px 10px' }}>
+              <FiltrosSecundarios contas={contas} contasSel={contasSel} onContas={setContasSel} pendentes={pendentes} onPendentes={setPendentes} />
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Lista ───────────────────────────────────────────────────────── */}

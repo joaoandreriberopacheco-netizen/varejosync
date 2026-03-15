@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, Paperclip } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, Paperclip, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format, addWeeks, addMonths, addYears } from 'date-fns';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const TIPOS = [
   { value: 'Receita', label: 'Receita', icon: ArrowDownLeft },
@@ -42,12 +43,16 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const [dataFim, setDataFim] = useState('');
   const [step, setStep] = useState('valor');
   const [lancamentoCriado, setLancamentoCriado] = useState(null);
+  const [isCustoMercadoria, setIsCustoMercadoria] = useState(false);
+  const [pedidoCompraId, setPedidoCompraId] = useState('');
+  const [pedidosCompra, setPedidosCompra] = useState([]);
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
 
   useEffect(() => {
     if (open) {
       base44.entities.ContasFinanceiras.filter({ ativo: true }).then(setContas);
+      base44.entities.PedidoCompra.list('-created_date', 50).then(setPedidosCompra);
       setTipo(tipoInicial || 'Despesa');
       setValorCents('0');
       setDescricao('');
@@ -64,6 +69,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setDataFim('');
       setStep('valor');
       setLancamentoCriado(null);
+      setIsCustoMercadoria(false);
+      setPedidoCompraId('');
     }
   }, [open, tipoInicial, contaDefaultId]);
 
@@ -80,6 +87,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     if (!contaId) { toast({ title: 'Selecione a conta', variant: 'destructive' }); return; }
 
     const conta = contas.find(c => c.id === contaId);
+    const pedidoCompra = pedidoCompraId ? pedidosCompra.find(p => p.id === pedidoCompraId) : null;
 
     if (tipo === 'Transferência') {
       if (!contaDestinoId) { toast({ title: 'Selecione a conta destino', variant: 'destructive' }); return; }
@@ -110,6 +118,9 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             is_recorrente: true, frequencia_recorrencia: frequencia,
             numero_parcelas_total: parcelas, parcela_atual: i + 1,
             grupo_lancamento_id: grupoId,
+            is_custo_mercadoria: isCustoMercadoria,
+            pedido_compra_vinculado_id: pedidoCompra?.id,
+            pedido_compra_vinculado_numero: pedidoCompra?.numero,
           });
         }
       } else {
@@ -131,6 +142,9 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             is_recorrente: true, frequencia_recorrencia: frequencia,
             parcela_atual: i + 1, grupo_lancamento_id: grupoId,
             data_fim_recorrencia: dataFim || null,
+            is_custo_mercadoria: isCustoMercadoria,
+            pedido_compra_vinculado_id: pedidoCompra?.id,
+            pedido_compra_vinculado_numero: pedidoCompra?.numero,
           });
           i++;
           dtAtual = addFn(baseDate, i);
@@ -152,6 +166,9 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         categoria, categoria_id: categoriaId, tags,
         conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
         referencia_tipo: 'Manual',
+        is_custo_mercadoria: isCustoMercadoria,
+        pedido_compra_vinculado_id: pedidoCompra?.id,
+        pedido_compra_vinculado_numero: pedidoCompra?.numero,
       });
       if (isPago && conta) {
         const delta = tipo === 'Receita' ? valorNumerico : -valorNumerico;
@@ -283,6 +300,39 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
               {/* Tags */}
               <TagsInput tags={tags} onChange={setTags} />
+
+              {/* Custo de Mercadoria - Apenas para Despesa */}
+              {tipo === 'Despesa' && (
+                <>
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox checked={isCustoMercadoria} onCheckedChange={setIsCustoMercadoria} />
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm text-gray-700 dark:text-gray-200">Custo de Mercadoria Vendida (CMV)</span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {isCustoMercadoria && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+                      <Select value={pedidoCompraId} onValueChange={setPedidoCompraId}>
+                        <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-gray-200 text-sm px-4">
+                          <SelectValue placeholder="Vincular a Pedido de Compra (opcional)" />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                          <SelectItem value={null}>Nenhum</SelectItem>
+                          {pedidosCompra.map(p => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.numero} - {p.fornecedor_nome} - R$ {(p.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </>
+              )}
 
               {/* Recorrência */}
               <RecorrenciaConfig
