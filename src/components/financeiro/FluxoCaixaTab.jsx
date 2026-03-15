@@ -293,7 +293,7 @@ export default function FluxoCaixaTab() {
             />
           </div>
           <button
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={toggleFilters}
             className={`h-11 w-11 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${
               showFilters 
                 ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' 
