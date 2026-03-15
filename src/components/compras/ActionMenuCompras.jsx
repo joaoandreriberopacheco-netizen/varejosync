@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, FileText, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, FileText, X, Download } from 'lucide-react';
 
 export default function ActionMenuCompras({ onNovopedido, onImportarNF }) {
   const [isOpen, setIsOpen] = useState(false);
