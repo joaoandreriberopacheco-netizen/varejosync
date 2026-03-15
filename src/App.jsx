@@ -14,7 +14,6 @@ import Home from '@/pages/Home';
 import Notificacoes from '@/pages/Notificacoes';
 import PDVCaixa from '@/pages/PDVCaixa';
 import PDVVendedor from '@/pages/PDVVendedor';
-import PDVCaixa from '@/pages/PDVCaixa';
 import CaixasAtivos from '@/pages/CaixasAtivos';
 import SugestoesCompra from '@/pages/SugestoesCompra';
 import Cotacoes from '@/pages/Cotacoes';
@@ -95,11 +94,6 @@ const AuthenticatedApp = () => {
       <Route path="/PDVVendedor" element={
         <LayoutWrapper currentPageName="PDVVendedor">
           <PDVVendedor />
-        </LayoutWrapper>
-      } />
-      <Route path="/PDVCaixa" element={
-        <LayoutWrapper currentPageName="PDVCaixa">
-          <PDVCaixa />
         </LayoutWrapper>
       } />
       <Route path="/CaixasAtivos" element={
