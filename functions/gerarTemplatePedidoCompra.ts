@@ -61,8 +61,9 @@ Deno.serve(async (req) => {
 
     // Gerar arquivo
     const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const uint8Array = new Uint8Array(buffer);
 
-    return new Response(buffer, {
+    return new Response(uint8Array, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
