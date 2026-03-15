@@ -5,7 +5,6 @@ import { Dialog } from '@/components/ui/dialog';
 import { Plus, FileText } from 'lucide-react';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
-import KpiCompras from '@/components/compras/KpiCompras';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 
