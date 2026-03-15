@@ -262,28 +262,30 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
-        <GlacialSidebar
-          isOpen={isMobile ? showMobileMenu : isOpen}
-          onClose={() => setShowMobileMenu(false)}
-          menuItems={menuItems}
-          currentPageName={currentPageName}
-          isMobile={isMobile}
-        />
+        {/* Sidebar Mobile */}
+        {isMobile && (
+          <GlacialSidebar
+            isOpen={showMobileMenu}
+            onClose={() => setShowMobileMenu(false)}
+            menuItems={menuItems}
+            currentPageName={currentPageName}
+            isMobile={true}
+          />
+        )}
 
-        <aside
-          className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width,transform] duration-200 ease-out z-40 flex flex-col ${
-            isMobile 
-              ? 'w-0 -translate-x-full'
-              : (isOpen ? 'w-64' : 'w-16')
-          } overflow-hidden`}
-          style={{ 
-            willChange: isMobile ? 'transform' : 'width',
-            boxShadow: '1px 0 0 0 rgba(0,0,0,0.05)',
-            display: 'none'
-          }}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
+        {/* Sidebar Desktop */}
+        {!isMobile && (
+          <aside
+            className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width] duration-200 ease-out z-40 flex flex-col ${
+              isOpen ? 'w-64' : 'w-16'
+            }`}
+            style={{ 
+              boxShadow: '1px 0 0 0 rgba(0,0,0,0.05)',
+              willChange: 'width'
+            }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
           {/* Header */}
           <div className="p-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
             {(isOpen || isMobile) ? (
@@ -546,6 +548,7 @@ export default function Layout({ children, currentPageName }) {
             )}
           </div>
         </aside>
+        )}
 
         <div 
           className={`flex-1 transition-[margin] duration-200 ease-out ${
