@@ -20,6 +20,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('0,00');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (turnoAtivo && caixaSelecionado) {
@@ -28,6 +29,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   }, [turnoAtivo, caixaSelecionado]);
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [vendas, movs, despesas] = await Promise.all([
         base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
@@ -75,6 +77,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       setRecebimentosDinheiro(formatarValorExibicao(dinheiroEsperado));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,6 +168,14 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     pw.focus();
     setTimeout(() => { pw.print(); pw.close(); }, 300);
   };
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
