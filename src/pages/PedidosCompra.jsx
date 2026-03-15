@@ -150,6 +150,12 @@ export default function PedidosCompraPage() {
         onClose={() => setShowImportador(false)}
         onSuccess={loadData}
       />
+
+      {/* Menu de ações FAB */}
+      <ActionMenuCompras
+        onNovopedido={() => { setPedidoSelecionado(null); setIsFormOpen(true); }}
+        onImportarNF={() => setShowImportador(true)}
+      />
     </div>
   );
 }
