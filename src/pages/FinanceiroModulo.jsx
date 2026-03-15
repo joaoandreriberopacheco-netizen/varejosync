@@ -351,23 +351,16 @@ export default function FinanceiroModuloPage() {
                   return (
                     <div
                       key={account.id}
-                      className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden flex flex-col"
+                      className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden flex flex-col border-l-2"
+                      style={{ borderLeftColor: account.cor || '#10B981' }}
                     >
-                      {/* Topo colorido */}
-                      <div
-                        className="h-1.5 w-full"
-                        style={{ backgroundColor: account.cor || '#10B981' }}
-                      />
                       <div className="p-4 flex-1 flex flex-col gap-3">
                         {/* Nome e tipo */}
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-9 h-9 rounded-xl flex items-center justify-center text-white"
-                              style={{ backgroundColor: account.cor || '#10B981' }}
-                            >
-                              {tipoIconMap[account.tipo] || <Wallet className="w-5 h-5" />}
-                            </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                            {tipoIconMap[account.tipo] || <Wallet className="w-5 h-5" />}
+                          </div>
                             <div>
                               <p className="font-semibold text-gray-800 dark:text-gray-100 leading-tight">{account.nome}</p>
                               <p className="text-xs text-gray-400 dark:text-gray-500">{account.tipo}</p>
