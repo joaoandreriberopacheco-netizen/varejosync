@@ -2,20 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { RefreshCw, ChevronDown, ChevronRight, Lock, TrendingUp, TrendingDown, Wallet, DollarSign, Search, RotateCcw, AlertCircle } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronRight, Lock, Search, RotateCcw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 
 const fmt = (v) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -201,20 +192,22 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
               <span className="font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</span>
             </div>
 
-            {/* Botão de Reabertura - Apenas Admin */}
-            {currentUser?.role === 'admin' && (
-              <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                <Button
-                  onClick={() => onReabrir(turno)}
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-2 text-amber-600 hover:text-amber-700 border-amber-200 hover:border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-900/20"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Reabrir Turno
-                </Button>
+            {/* Botão de Reabertura - Com autenticação */}
+            <div className="mt-4 pt-3 border-t-2 border-amber-200 dark:border-amber-800">
+              <div className="flex items-start gap-2 mb-3 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                <span>Reabertura requer autenticação do gestor responsável</span>
               </div>
-            )}
+              <Button
+                onClick={() => onReabrir(turno)}
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 text-amber-700 hover:text-amber-800 border-2 border-amber-400 hover:border-amber-500 hover:bg-amber-50 dark:text-amber-300 dark:border-amber-600 dark:hover:bg-amber-900/30 font-semibold"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Solicitar Reabertura
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -232,6 +225,7 @@ export default function TurnosFechadosPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [turnoParaReabrir, setTurnoParaReabrir] = useState(null);
   const [reabrindo, setReabrindo] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -271,13 +265,21 @@ export default function TurnosFechadosPage() {
 
   const handleReabrirTurno = async (turno) => {
     setTurnoParaReabrir(turno);
+    setShowAuthDialog(true);
   };
 
-  const confirmarReabertura = async () => {
+  const handleAuthSuccess = async (authData) => {
+    setShowAuthDialog(false);
+    await confirmarReabertura(authData);
+  };
+
+  const confirmarReabertura = async (authData) => {
     if (!turnoParaReabrir) return;
     
     setReabrindo(true);
     try {
+      // Registrar autenticação
+      console.log('Reabertura autenticada por:', authData.intervenienteName);
       // Verificar se existe outro turno aberto para o mesmo caixa
       const turnosAbertos = await base44.entities.TurnoCaixa.filter({ 
         conta_caixa_pdv_id: turnoParaReabrir.conta_caixa_pdv_id,
@@ -324,16 +326,18 @@ export default function TurnosFechadosPage() {
         });
       }
 
-      // Reabrir o turno
+      // Reabrir o turno (com dados de auditoria)
       await base44.entities.TurnoCaixa.update(turnoParaReabrir.id, {
         status: 'Aberto',
         data_fechamento: null,
         usuario_fechamento_id: null,
-        usuario_fechamento_nome: null
+        usuario_fechamento_nome: null,
+        observacoes: (turnoParaReabrir.observacoes || '') + 
+          `\n[REABERTURA] ${format(new Date(), 'dd/MM/yyyy HH:mm')} - Autorizado por ${authData.intervenienteName} (${authData.operationCode})`
       });
 
       toast.success('Turno reaberto com sucesso!', {
-        description: `O turno ${turnoParaReabrir.numero} foi reaberto e está pronto para uso.`,
+        description: `Turno ${turnoParaReabrir.numero} reaberto. Autorizado por: ${authData.intervenienteName}`,
       });
 
       // Remover o turno da lista local imediatamente
@@ -369,7 +373,7 @@ export default function TurnosFechadosPage() {
           </Button>
         </div>
 
-        {/* Filtros */}
+        {/* Barra de Busca */}
         <div className="flex gap-2 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -387,44 +391,6 @@ export default function TurnosFechadosPage() {
             className="w-44"
           />
         </div>
-
-        {/* KPIs rápidos */}
-        {!isLoading && turnosFiltrados.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
-                <Lock className="w-3.5 h-3.5" />
-                Turnos
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{turnosFiltrados.length}</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
-                <TrendingUp className="w-3.5 h-3.5" />
-                Total Vendas
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(totalVendasFiltrado)}</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
-                <Wallet className="w-3.5 h-3.5" />
-                Saldo Final Total
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                R$ {fmt(turnosFiltrados.reduce((s, t) => s + (t.saldo_final || 0), 0))}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
-                {Math.abs(totalDiferencas) < 0.01 ? <DollarSign className="w-3.5 h-3.5" /> : totalDiferencas > 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                Diferença Total
-              </div>
-              <div className={`text-2xl font-bold font-glacial ${Math.abs(totalDiferencas) < 0.01 ? 'text-gray-400 dark:text-gray-500' : totalDiferencas > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                {totalDiferencas > 0 ? '+' : ''}R$ {fmt(totalDiferencas)}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Lista */}
         {isLoading ? (
@@ -445,52 +411,17 @@ export default function TurnosFechadosPage() {
         )}
       </div>
 
-      {/* Dialog de Confirmação de Reabertura */}
-      <AlertDialog open={!!turnoParaReabrir} onOpenChange={(open) => !open && setTurnoParaReabrir(null)}>
-        <AlertDialogContent className="dark:bg-gray-800 dark:border-gray-700">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-              <AlertCircle className="w-5 h-5" />
-              Confirmar Reabertura de Turno
-            </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-gray-400">
-              Você está prestes a reabrir o turno <strong className="text-gray-900 dark:text-white">{turnoParaReabrir?.numero}</strong>.
-              <br/><br/>
-              Esta operação irá:
-              <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
-                <li>Alterar o status do turno de "Fechado" para "Aberto"</li>
-                <li>Reverter a transferência de R$ {fmt(turnoParaReabrir?.dinheiro_conferido || 0)} do Caixa Geral de volta para o caixa PDV</li>
-                <li>Limpar os dados de fechamento (data, usuário)</li>
-                <li>Permitir novas vendas e movimentações neste turno</li>
-              </ul>
-              <br/>
-              <strong className="text-amber-600 dark:text-amber-400">Atenção:</strong> Só é possível reabrir um turno se não houver outro turno aberto no mesmo caixa.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={reabrindo} className="dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmarReabertura}
-              disabled={reabrindo}
-              className="bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
-            >
-              {reabrindo ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Reabrindo...
-                </>
-              ) : (
-                <>
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Confirmar Reabertura
-                </>
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Modal de Autenticação */}
+      <OperacaoAuthenticator
+        isOpen={showAuthDialog}
+        onClose={() => {
+          setShowAuthDialog(false);
+          setTurnoParaReabrir(null);
+          setReabrindo(false);
+        }}
+        onSuccess={handleAuthSuccess}
+        operationName={`Reabertura de Turno ${turnoParaReabrir?.numero || ''}`}
+      />
     </div>
   );
 }
