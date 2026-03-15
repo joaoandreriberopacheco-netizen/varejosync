@@ -45,20 +45,13 @@ Deno.serve(async (req) => {
     XLSX.utils.book_append_sheet(wb, wsItens, 'Itens');
 
     // Escrever como buffer
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-    const binaryString = atob(excelBuffer);
-    const bytes = new Uint8Array(binaryString.length);
-    
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'arraybuffer' });
 
-    return new Response(bytes, {
+    return new Response(excelBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="template_pedido_compra.xlsx"',
-        'Content-Length': bytes.length.toString()
+        'Content-Disposition': 'attachment; filename="template_pedido_compra.xlsx"'
       }
     });
   } catch (error) {
