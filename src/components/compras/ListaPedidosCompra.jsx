@@ -57,7 +57,7 @@ function PedidoRow({ pedido, statusNome, onEdit }) {
   );
 }
 
-function GrupoStatus({ status, label, pedidos, statusPedidoCompra, onEdit }) {
+function GrupoDia({ label, pedidos, statusPedidoCompra, onEdit }) {
   const [open, setOpen] = useState(true);
   const getStatusNome = (codigo) => {
     const s = statusPedidoCompra.find(sp => sp.codigo === codigo);
@@ -70,7 +70,7 @@ function GrupoStatus({ status, label, pedidos, statusPedidoCompra, onEdit }) {
     <div className="w-full">
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-1 py-2 group">
         <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-          {label} ({pedidos.length})
+          {label}
         </p>
         <div className="flex items-center gap-2">
           <span className="text-[0.62rem] font-bold text-gray-600 dark:text-gray-300">{R(valorTotal)}</span>
