@@ -83,12 +83,12 @@ export default function HomePage() {
 
   const getQuickActionsForUser = (user) => {
     const allActions = [
-      { id: 'pdv', icon: Monitor, label: 'PDV', page: 'PDV?mode=vendedor', color: 'bg-gray-900 dark:bg-white', textColor: 'text-white dark:text-gray-900' },
-      { id: 'vendas', icon: TrendingUp, label: 'Vendas', page: 'VendasGestao', color: 'bg-gray-900 dark:bg-white', textColor: 'text-white dark:text-gray-900' },
-      { id: 'produtos', icon: Package, label: 'Produtos', page: 'Produtos', color: 'bg-gray-900 dark:bg-white', textColor: 'text-white dark:text-gray-900' },
-      { id: 'caixa', icon: Wallet, label: 'Caixa', page: 'BalancoCaixa', color: 'bg-gray-900 dark:bg-white', textColor: 'text-white dark:text-gray-900' },
-      { id: 'compras', icon: ShoppingCart, label: 'Compras', page: 'Compras', color: 'bg-gray-900 dark:bg-white', textColor: 'text-white dark:text-gray-900' },
-      { id: 'financeiro', icon: DollarSign, label: 'Financeiro', page: 'FluxoCaixa', color: 'bg-gray-900 dark:bg-white', textColor: 'text-white dark:text-gray-900' },
+      { id: 'pdv', icon: Monitor, label: 'PDV', page: 'PDV?mode=vendedor', color: 'bg-gray-200 dark:bg-gray-700', textColor: 'text-gray-700 dark:text-gray-300' },
+      { id: 'vendas', icon: TrendingUp, label: 'Vendas', page: 'VendasGestao', color: 'bg-gray-200 dark:bg-gray-700', textColor: 'text-gray-700 dark:text-gray-300' },
+      { id: 'produtos', icon: Package, label: 'Produtos', page: 'Produtos', color: 'bg-gray-200 dark:bg-gray-700', textColor: 'text-gray-700 dark:text-gray-300' },
+      { id: 'caixa', icon: Wallet, label: 'Caixa', page: 'BalancoCaixa', color: 'bg-gray-200 dark:bg-gray-700', textColor: 'text-gray-700 dark:text-gray-300' },
+      { id: 'compras', icon: ShoppingCart, label: 'Compras', page: 'Compras', color: 'bg-gray-200 dark:bg-gray-700', textColor: 'text-gray-700 dark:text-gray-300' },
+      { id: 'financeiro', icon: DollarSign, label: 'Financeiro', page: 'FluxoCaixa', color: 'bg-gray-200 dark:bg-gray-700', textColor: 'text-gray-700 dark:text-gray-300' },
     ];
 
     return allActions.slice(0, 6);
