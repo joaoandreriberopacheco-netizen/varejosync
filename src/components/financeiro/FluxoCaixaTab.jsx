@@ -308,7 +308,11 @@ export default function FluxoCaixaTab() {
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 space-y-3 shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
-              <button onClick={toggleFilters} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <button 
+                onClick={toggleFilters} 
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                title="Fechar filtros"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
