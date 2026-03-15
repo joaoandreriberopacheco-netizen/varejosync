@@ -279,34 +279,36 @@ export default function FinanceiroModuloPage() {
         <p className="text-xs text-gray-500 dark:text-gray-400">Fluxo de Caixa, Contas e Projeções</p>
       </div>
 
-      <Tabs defaultValue="contas" className="w-full">
-        <TabsList className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0">
-          <div className="flex w-full">
-            <TabsTrigger
-                value="contas"
-                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-              <Wallet className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Contas</span>
-            </TabsTrigger>
-            <TabsTrigger
-                value="aprovacoes"
-                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-              <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Aprovações</span>
-            </TabsTrigger>
-            <TabsTrigger
-                value="pagamentos"
-                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-              <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Pagamentos</span>
-            </TabsTrigger>
-            <TabsTrigger
-                value="orcamento"
-                className="flex-1 flex items-center justify-center gap-2 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-3 min-h-[48px] data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-              <Target className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="hidden md:inline text-sm font-normal text-gray-600 dark:text-gray-400">Execução Orçamentária</span>
-            </TabsTrigger>
-          </div>
+      <Tabs defaultValue="contas" className="w-full mt-4">
+        <TabsList className="w-full bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-1.5 h-auto">
+          <TabsTrigger
+            value="contas"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+          >
+            <Wallet className="w-4 h-4" />
+            <span className="hidden md:inline text-sm font-medium">Contas</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="aprovacoes"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+          >
+            <AlertCircle className="w-4 h-4" />
+            <span className="hidden md:inline text-sm font-medium">Aprovações</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="pagamentos"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+          >
+            <CreditCard className="w-4 h-4" />
+            <span className="hidden md:inline text-sm font-medium">Pagamentos</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="orcamento"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:shadow-sm transition-all"
+          >
+            <Target className="w-4 h-4" />
+            <span className="hidden md:inline text-sm font-medium">Execução Orçamentária</span>
+          </TabsTrigger>
         </TabsList>
 
         <div className="mt-2 w-full min-w-0 overflow-x-hidden">
