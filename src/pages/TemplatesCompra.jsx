@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, Upload, FileSpreadsheet, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
+import { gerarTemplatePedidoCompra } from '@/functions/gerarTemplatePedidoCompra';
 
 export default function TemplatesCompra() {
   const [activeTab, setActiveTab] = useState('download'); // 'download' ou 'import'
@@ -15,10 +16,10 @@ export default function TemplatesCompra() {
     setIsGenerating(true);
     setMessage(null);
     try {
-      const response = await fetch('/api/functions/gerarTemplatePedidoCompra', { method: 'POST' });
-      if (!response.ok) throw new Error('Erro ao gerar template');
+      const result = await gerarTemplatePedidoCompra();
       
-      const blob = await response.blob();
+      // result.data contém o blob do arquivo
+      const blob = new Blob([result.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
