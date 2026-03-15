@@ -85,7 +85,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                 </div>
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(caixaData.saldoInicial ?? turnoAtivo?.saldo_inicial ?? 0)}</span>
               </div>
-              {vendasFinalizadas.length > 0 && vendasFinalizadas.map((v) => {
+              {(vendasFinalizadas || []).length > 0 && vendasFinalizadas.map((v) => {
                 const pagamentos = (v.pagamentos || []);
                 const temMultiplos = pagamentos.length > 1;
                 return (
@@ -106,7 +106,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                   </div>
                 );
               })}
-              {movimentos.filter(m => m.tipo === 'Reforço').map((m) => (
+              {(movimentos || []).filter(m => m.tipo === 'Reforço').map((m) => (
                 <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
                   <div>
                     <div className="text-sm text-gray-700 dark:text-gray-300">Reforço · {m.numero}</div>
@@ -115,7 +115,7 @@ export default function SaldoConsolidadoDialog({ open, onOpenChange, caixaData, 
                   <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{formatValor(m.valor)}</span>
                 </div>
               ))}
-              {movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((m) => (
+              {(movimentos || []).filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map((m) => (
                 <div key={m.id} className="px-5 py-3 flex justify-between items-center border-b border-gray-50 dark:border-gray-700/50">
                   <div>
                     <div className="text-sm text-gray-700 dark:text-gray-300">Recolhimento · {m.numero}</div>
