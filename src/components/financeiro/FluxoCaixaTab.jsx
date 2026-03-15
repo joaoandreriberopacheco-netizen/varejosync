@@ -287,10 +287,10 @@ export default function FluxoCaixaTab() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar movimentações..."
-            style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontSize: '0.85rem' }}
+            style={{ flex: 1, minWidth: 200, maxWidth: 'calc(100% - 80px)', background: 'transparent', border: 'none', outline: 'none', fontSize: '0.85rem' }}
             className="text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
           />
-          {search && <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><X style={{ width: 14, height: 14 }} className="text-gray-400" /></button>}
+          {search && <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px' }}><X style={{ width: 14, height: 14 }} className="text-gray-400" /></button>}
           <button 
             onClick={() => setShowFilters(s => !s)} 
             style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '6px', borderRadius: 8 }} 
