@@ -199,8 +199,12 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
                 <span>Reabertura requer autenticação do gestor responsável</span>
               </div>
               <button
-                onClick={() => onReabrir(turno)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReabrir(turno);
+                }}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-semibold text-sm shadow-sm border-2 border-amber-300 dark:border-amber-700 active:scale-[0.98] transition-transform"
+                style={{ minHeight: '48px' }}
               >
                 <RotateCcw className="w-4 h-4" />
                 Solicitar Reabertura
