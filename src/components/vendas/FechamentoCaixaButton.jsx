@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Lock } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
+import { createPageUrl } from '@/utils';
 
 /**
  * Botão de fechar caixa inline — sem dialog redundante.
@@ -16,6 +18,8 @@ export default function FechamentoCaixaButton({
   onFechado,
 }) {
   const { toast } = useToast();
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [turnoFechado, setTurnoFechado] = useState(null);
 
   const handleFechar = async () => {
     const dinheiroConferido =
@@ -65,24 +69,44 @@ export default function FechamentoCaixaButton({
         });
       }
 
-      toast({
-        title: '✓ Caixa fechado!',
-        description: 'Turno encerrado.',
-        className: 'bg-emerald-100 text-emerald-800',
-      });
-      onFechado();
+      // Buscar turno atualizado para o relatório
+      const turnoAtualizado = await base44.entities.TurnoCaixa.filter({ id: turnoAtivo.id });
+      setTurnoFechado(turnoAtualizado[0]);
+      setShowRelatorio(true);
     } catch (error) {
       toast({ title: 'Erro ao fechar caixa', description: error.message, variant: 'destructive' });
     }
   };
 
+  const handleContinuar = () => {
+    setShowRelatorio(false);
+    toast({
+      title: '✓ Caixa fechado!',
+      description: 'Turno encerrado.',
+      className: 'bg-emerald-100 text-emerald-800',
+    });
+    setTimeout(() => {
+      window.location.href = createPageUrl('PDV') + '?mode=caixa';
+    }, 500);
+  };
+
   return (
-    <button
-      onClick={handleFechar}
-      className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
-      style={{ minHeight: '48px' }}
-    >
-      <Lock className="w-4 h-4" /> Fechar Caixa
-    </button>
+    <>
+      <button
+        onClick={handleFechar}
+        className="flex-1 h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm"
+        style={{ minHeight: '48px' }}
+      >
+        <Lock className="w-4 h-4" /> Fechar Caixa
+      </button>
+
+      <RelatorioFechamentoCaixa
+        turno={turnoFechado}
+        caixaData={{ ...caixaData, dinheiroConferido: parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0 }}
+        open={showRelatorio}
+        onClose={() => setShowRelatorio(false)}
+        onContinuar={handleContinuar}
+      />
+    </>
   );
 }
