@@ -15,6 +15,9 @@ import Notificacoes from '@/pages/Notificacoes';
 import BalancoCaixa from '@/pages/BalancoCaixa';
 import ProcessarVendas from '@/pages/ProcessarVendas';
 import MovimentosCaixa from '@/pages/MovimentosCaixa';
+import PDVVendedor from '@/pages/PDVVendedor';
+import PDVCaixa from '@/pages/PDVCaixa';
+import CaixasAtivos from '@/pages/CaixasAtivos';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -94,6 +97,21 @@ const AuthenticatedApp = () => {
       <Route path="/MovimentosCaixa" element={
         <LayoutWrapper currentPageName="MovimentosCaixa">
           <MovimentosCaixa />
+        </LayoutWrapper>
+      } />
+      <Route path="/PDVVendedor" element={
+        <LayoutWrapper currentPageName="PDVVendedor">
+          <PDVVendedor />
+        </LayoutWrapper>
+      } />
+      <Route path="/PDVCaixa" element={
+        <LayoutWrapper currentPageName="PDVCaixa">
+          <PDVCaixa />
+        </LayoutWrapper>
+      } />
+      <Route path="/CaixasAtivos" element={
+        <LayoutWrapper currentPageName="CaixasAtivos">
+          <CaixasAtivos />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

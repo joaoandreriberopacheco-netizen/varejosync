@@ -130,22 +130,12 @@ export const ALL_MENU_ITEMS = [
     submenu: [
       {
         name: 'Vendedor',
-        page: 'PDV?mode=vendedor',
+        page: 'PDVVendedor',
         permissaoCheck: (p) => p?.pdv?.acesso_vendedor
       },
       {
-        name: 'Balanço de Caixa',
-        page: 'BalancoCaixa',
-        permissaoCheck: (p) => p?.pdv?.acesso_caixa
-      },
-      {
-        name: 'Processar Vendas',
-        page: 'ProcessarVendas',
-        permissaoCheck: (p) => p?.pdv?.acesso_caixa
-      },
-      {
-        name: 'Movimentos',
-        page: 'MovimentosCaixa',
+        name: 'Caixa',
+        page: 'PDVCaixa',
         permissaoCheck: (p) => p?.pdv?.acesso_caixa
       },
       {
@@ -159,6 +149,12 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.pdv?.acesso_auto_atendimento
       }
     ]
+  },
+  {
+    name: 'Movimentos Caixa',
+    icon: Wallet,
+    page: 'MovimentosCaixa',
+    permissaoCheck: (p) => p?.pdv?.acesso_caixa
   },
   {
     name: 'Vendas',

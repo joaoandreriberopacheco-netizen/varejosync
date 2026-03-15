@@ -185,7 +185,17 @@ export default function Layout({ children, currentPageName }) {
       }
     };
     document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
+    
+    // Listener para evento global de busca
+    const handleGlobalSearch = () => {
+      setIsSearchOpen(true);
+    };
+    window.addEventListener('open-global-search', handleGlobalSearch);
+    
+    return () => {
+      document.removeEventListener("keydown", down);
+      window.removeEventListener('open-global-search', handleGlobalSearch);
+    };
   }, []);
 
   const handleMouseEnter = React.useCallback(() => {

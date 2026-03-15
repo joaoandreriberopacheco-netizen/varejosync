@@ -1,267 +1,276 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '../utils';
-import { DollarSign, TrendingUp, TrendingDown, Wallet, RefreshCw, ChevronRight } from 'lucide-react';
-
+import { Wallet, Eye, TrendingUp, DollarSign, Clock, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 export default function CaixasAtivosPage() {
-  const [caixas, setCaixas] = useState([]);
-  const [caixaDetalhes, setCaixaDetalhes] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [turnosAtivos, setTurnosAtivos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTurno, setSelectedTurno] = useState(null);
+  const [detalhes, setDetalhes] = useState(null);
 
   useEffect(() => {
-    loadData();
+    loadTurnos();
   }, []);
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadTurnos = async () => {
+    try {
+      const turnos = await base44.entities.TurnoCaixa.filter({ status: 'Aberto' });
+      setTurnosAtivos(turnos);
+    } catch (error) {
+      console.error('Erro ao carregar turnos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Buscar todos os caixas físicos ativos
-    const todasContas = await base44.entities.ContasFinanceiras.list();
-    const caixasFisicos = todasContas.filter(c => c.tipo === 'Caixa Físico' && c.ativo);
-    
-    setCaixas(caixasFisicos);
+  const loadDetalhes = async (turno) => {
+    try {
+      const [vendas, movimentos, despesas] = await Promise.all([
+        base44.entities.PedidoVenda.filter({ turno_caixa_id: turno.id }),
+        base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turno.id }),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Despesa' })
+      ]);
 
-    // Para cada caixa, buscar detalhes
-    const detalhes = {};
-    const hoje = new Date();
-    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
-    
-    // Carregar dados em paralelo para performance
-    const [todosLancamentos, todosMovimentos, todosPedidos] = await Promise.all([
-      base44.entities.LancamentoFinanceiro.list(),
-      base44.entities.MovimentosCaixa.list(),
-      base44.entities.PedidoVenda.list()
-    ]);
-
-    for (const caixa of caixasFisicos) {
-      // Buscar recebimentos (LancamentoFinanceiro tipo Receita)
-      const recebimentosHoje = todosLancamentos.filter(l => 
-        l.tipo === 'Receita' && 
-        new Date(l.created_date) >= inicioDia &&
-        l.referencia_id // Tem referência a um pedido
-      );
-
-      // Buscar recolhimentos (MovimentosCaixa tipo Sangria)
-      const recolhimentosHoje = todosMovimentos.filter(m => 
-        m.tipo === 'Sangria' && 
-        m.conta_id === caixa.id &&
-        new Date(m.created_date) >= inicioDia
-      );
-
-      // Buscar reforços
-      const reforcosHoje = todosMovimentos.filter(m => 
-        m.tipo === 'Reforço' && 
-        m.conta_id === caixa.id &&
-        new Date(m.created_date) >= inicioDia
-      );
-
-      const totalRecebimentos = recebimentosHoje.reduce((sum, l) => sum + (l.valor || 0), 0);
-      const totalRecolhimentos = recolhimentosHoje.reduce((sum, m) => sum + (m.valor || 0), 0);
-      const totalReforcos = reforcosHoje.reduce((sum, m) => sum + (m.valor || 0), 0);
-
-      // Buscar pedidos de venda para detalhar formas de pagamento
-      const pedidosHoje = todosPedidos.filter(p => {
-        const pedidoData = new Date(p.created_date);
-        return pedidoData >= inicioDia && p.status === 'Finalizado';
-      });
-
-      // Inicializar formas de pagamento padrão do PDV
-      const formasPagamento = {
-        'Dinheiro': 0,
-        'PIX': 0,
-        'Cartão Débito': 0,
-        'Cartão Crédito': 0
-      };
+      const totalVendas = vendas.reduce((sum, v) => sum + (v.valor_total || 0), 0);
+      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0;
       
-      // Consolidar valores dos pedidos
-      pedidosHoje.forEach(pedido => {
-        if (pedido.pagamentos && Array.isArray(pedido.pagamentos)) {
-          pedido.pagamentos.forEach(pag => {
-            const forma = pag.forma_pagamento || 'Não Especificado';
-            if (!formasPagamento[forma]) {
-              formasPagamento[forma] = 0;
-            }
-            formasPagamento[forma] += pag.valor || 0;
+      vendas.forEach(v => {
+        if (v.pagamentos) {
+          v.pagamentos.forEach(p => {
+            const fp = (p.forma_pagamento || '').toLowerCase();
+            if (fp === 'dinheiro') totalDinheiro += p.valor || 0;
+            else if (fp === 'pix') totalPix += p.valor || 0;
+            else if (fp.includes('crédito')) totalCredito += p.valor || 0;
+            else if (fp.includes('débito')) totalDebito += p.valor || 0;
           });
         }
       });
 
-      detalhes[caixa.id] = {
-        totalRecebimentos,
-        totalRecolhimentos,
-        totalReforcos,
-        formasPagamento,
-        quantidadeRecebimentos: recebimentosHoje.length,
-        quantidadeRecolhimentos: recolhimentosHoje.length
-      };
-    }
+      const totalReforcos = movimentos.filter(m => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
+      const totalSangrias = movimentos.filter(m => m.tipo === 'Sangria').reduce((s, m) => s + (m.valor || 0), 0);
+      const totalDespesas = despesas.reduce((s, d) => s + (d.valor || 0), 0);
 
-    setCaixaDetalhes(detalhes);
-    setIsLoading(false);
-  };
+      const saldoInicial = turno.saldo_inicial || 0;
+      const saldoCaixa = saldoInicial + totalDinheiro + totalReforcos - totalSangrias - totalDespesas;
+      const liquidez = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
 
-
-
-  const formatarMoeda = (valor) => {
-    if (!valor) return '0,00';
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
-  // Calcular totais consolidados
-  const totalSaldoConsolidado = caixas.reduce((sum, c) => sum + (c.saldo_atual || 0), 0);
-  const totalRecebimentosConsolidado = Object.values(caixaDetalhes).reduce((sum, d) => sum + (d.totalRecebimentos || 0), 0);
-  const totalRecolhimentosConsolidado = Object.values(caixaDetalhes).reduce((sum, d) => sum + (d.totalRecolhimentos || 0), 0);
-  const totalReforcosConsolidado = Object.values(caixaDetalhes).reduce((sum, d) => sum + (d.totalReforcos || 0), 0);
-
-  // Consolidar formas de pagamento de todos os caixas
-  const formasPagamentoConsolidadas = {};
-  Object.values(caixaDetalhes).forEach(detalhes => {
-    if (detalhes.formasPagamento) {
-      Object.entries(detalhes.formasPagamento).forEach(([forma, valor]) => {
-        if (!formasPagamentoConsolidadas[forma]) {
-          formasPagamentoConsolidadas[forma] = 0;
-        }
-        formasPagamentoConsolidadas[forma] += valor;
+      setDetalhes({
+        vendas: vendas.length,
+        totalVendas,
+        saldoCaixa,
+        liquidez,
+        recebimentos: { dinheiro: totalDinheiro, pix: totalPix, credito: totalCredito, debito: totalDebito },
+        reforcos: totalReforcos,
+        sangrias: totalSangrias,
+        despesas: totalDespesas,
       });
+    } catch (error) {
+      console.error('Erro ao carregar detalhes:', error);
     }
-  });
+  };
 
-  if (isLoading) {
+  const formatValor = (valor) => {
+    return `R$ ${(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  };
+
+  const handleVerDetalhes = async (turno) => {
+    setSelectedTurno(turno);
+    await loadDetalhes(turno);
+  };
+
+  if (loading) {
     return (
-      <div className="p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2 animate-pulse"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse"></div>
-          </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {[1,2,3,4].map(i => (
-              <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-            ))}
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-lg font-medium text-gray-800 dark:text-gray-200">Caixas Ativos</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Monitoramento em tempo real dos caixas operacionais</p>
-          </div>
-          <Button onClick={loadData} variant="outline" size="sm" className="dark:bg-gray-800 dark:border-gray-700">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
-          </Button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
+      <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
+            Caixas Ativos
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {turnosAtivos.length} {turnosAtivos.length === 1 ? 'turno ativo' : 'turnos ativos'}
+          </p>
         </div>
 
-        {/* KPIs Consolidados */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 dark:text-gray-400">Caixas Abertos</div>
-              <Wallet className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        {turnosAtivos.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 text-center shadow-sm">
+            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Wallet className="w-10 h-10 text-gray-400" />
             </div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">{caixas.length}</div>
-          </div>
-
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 dark:text-gray-400">Saldo Total</div>
-              <DollarSign className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              R$ {formatarMoeda(totalSaldoConsolidado)}
-            </div>
-          </div>
-
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 dark:text-gray-400">Recebimentos Hoje</div>
-              <TrendingUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              R$ {formatarMoeda(totalRecebimentosConsolidado)}
-            </div>
-          </div>
-
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 dark:text-gray-400">Recolhimentos Hoje</div>
-              <TrendingDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              R$ {formatarMoeda(totalRecolhimentosConsolidado)}
-            </div>
-          </div>
-        </div>
-
-        {/* Lista de Caixas */}
-        {caixas.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Wallet className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-3" />
-            <p className="text-gray-600 dark:text-gray-400">Nenhum caixa ativo no momento</p>
+            <p className="text-base font-medium text-gray-600 dark:text-gray-400">
+              Nenhum caixa ativo no momento
+            </p>
           </div>
         ) : (
-          <>
-            {/* Resumo Consolidado de Formas de Pagamento */}
-            {Object.keys(formasPagamentoConsolidadas).length > 0 && (
-              <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">
-                  Recebimentos por Forma de Pagamento (Hoje)
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                  {Object.entries(formasPagamentoConsolidadas).map(([forma, valor]) => (
-                    <div key={forma}>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">{forma}</div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        R$ {formatarMoeda(valor)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Lista Simples de Caixas */}
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {caixas.map(caixa => (
-                <Link 
-                  key={caixa.id}
-                  to={createPageUrl(`FinanceiroModulo`)}
-                  className="flex items-center justify-between py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                >
+          <div className="grid gap-4 md:grid-cols-2">
+            {turnosAtivos.map((turno) => (
+              <div
+                key={turno.id}
+                className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm"
+              >
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {caixa.nome}
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                      {turno.conta_caixa_pdv_nome}
                     </h3>
-                    {caixa.observacoes && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{caixa.observacoes}</p>
-                    )}
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {turno.usuario_abertura_nome}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="text-xs text-gray-600 dark:text-gray-400">Saldo Disponível</div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        R$ {formatarMoeda(caixa.saldo_atual || 0)}
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  <div className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full">
+                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      Aberto
+                    </span>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </>
+                </div>
+
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Turno</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {turno.numero}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Abertura</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {turno.data_abertura ? format(new Date(turno.data_abertura), 'dd/MM HH:mm', { locale: ptBR }) : '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Saldo Inicial</span>
+                    <span className="text-base font-semibold text-gray-900 dark:text-white font-glacial">
+                      {formatValor(turno.saldo_inicial)}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleVerDetalhes(turno)}
+                  className="w-full h-11 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Ver Detalhes</span>
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+
+      {/* Dialog de Detalhes */}
+      <Dialog open={!!selectedTurno} onOpenChange={() => { setSelectedTurno(null); setDetalhes(null); }}>
+        <DialogContent className="max-w-2xl bg-white dark:bg-gray-900 border-none">
+          {selectedTurno && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white font-glacial">
+                  {selectedTurno.conta_caixa_pdv_nome}
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Turno {selectedTurno.numero} · {selectedTurno.usuario_abertura_nome}
+                </p>
+              </div>
+
+              {detalhes ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Liquidez Total</div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                        {formatValor(detalhes.liquidez)}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Dinheiro em Caixa</div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                        {formatValor(detalhes.saldoCaixa)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      Movimentações
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Vendas</span>
+                        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                          {detalhes.vendas} · {formatValor(detalhes.totalVendas)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Reforços</span>
+                        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                          +{formatValor(detalhes.reforcos)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Recolhimentos</span>
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          -{formatValor(detalhes.sangrias)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Despesas</span>
+                        <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                          -{formatValor(detalhes.despesas)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      Recebimentos
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {formatValor(detalhes.recebimentos.dinheiro)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {formatValor(detalhes.recebimentos.pix)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Crédito</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {formatValor(detalhes.recebimentos.credito)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Débito</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {formatValor(detalhes.recebimentos.debito)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-900 dark:border-gray-700 dark:border-t-white rounded-full animate-spin"></div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
