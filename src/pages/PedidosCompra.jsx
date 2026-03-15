@@ -53,39 +53,73 @@ export default function PedidosCompraPage() {
     } else {
       const { id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
-         const count = pedidos.length + 1;
-         newPedido.numero = `PC-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`;
+        const count = pedidos.length + 1;
+        newPedido.numero = `PC-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`;
       }
       await base44.entities.PedidoCompra.create(newPedido);
     }
-    await loadPedidos();
+    await loadData();
+    setIsFormOpen(false);
+    setPedidoSelecionado(null);
   };
 
-  let pedidosFiltrados = pedidos.filter(pedido => {
-    const matchSearch = pedido.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       pedido.fornecedor_nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFiltro === 'todos' || pedido.status === statusFiltro;
-    return matchSearch && matchStatus;
-  });
-
-  if (dataInicio && dataFim) {
-    const inicio = startOfDay(new Date(dataInicio));
-    const fim = endOfDay(new Date(dataFim));
-    pedidosFiltrados = pedidosFiltrados.filter(p => {
-      if (!p.created_date) return false;
-      const pedidoDate = parseISO(p.created_date);
-      return isWithinInterval(pedidoDate, { start: inicio, end: fim });
+  const filtrados = useMemo(() => {
+    return pedidos.filter(p => {
+      const searchLower = search.toLowerCase();
+      if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
+      if (statusSel.length > 0 && !statusSel.includes(p.status)) return false;
+      if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
+      return true;
     });
-  }
+  }, [pedidos, search, statusSel, fornecedorSel]);
 
-  const formatValor = (valor) => {
-    return (valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-  };
+  const kpis = useMemo(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    let pendentes = 0, atrasados = 0;
+    filtrados.forEach(p => {
+      const status = p.status?.toLowerCase() || '';
+      if (status !== 'recebido' && status !== 'cancelado') {
+        pendentes++;
+        if (p.data_prevista_entrega && new Date(p.data_prevista_entrega) < hoje) {
+          atrasados++;
+        }
+      }
+    });
 
-  const getStatusNome = (codigo) => {
-    const status = statusPedidoCompra.find(s => s.codigo === codigo);
-    return status?.nome || codigo;
-  };
+    return {
+      total: filtrados.length,
+      valorTotal: filtrados.reduce((acc, p) => acc + (p.valor_total || 0), 0),
+      pendentes,
+      atrasados,
+    };
+  }, [filtrados]);
+
+  const grupos = useMemo(() => {
+    const statusOrder = ['Aberto', 'Confirmado', 'Em Separação', 'Enviado', 'Recebido', 'Cancelado'];
+    const map = {};
+    
+    statusOrder.forEach(st => {
+      map[st] = [];
+    });
+
+    filtrados.forEach(p => {
+      const st = p.status || 'Aberto';
+      if (!map[st]) map[st] = [];
+      map[st].push(p);
+    });
+
+    return statusOrder
+      .filter(st => map[st].length > 0)
+      .map(st => ({
+        status: st,
+        label: st,
+        pedidos: map[st].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)),
+      }));
+  }, [filtrados]);
+
+  const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
