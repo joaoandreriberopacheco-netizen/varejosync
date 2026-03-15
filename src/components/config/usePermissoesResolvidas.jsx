@@ -109,8 +109,19 @@ export const ALL_MENU_ITEMS = [
   {
     name: 'Dashboard',
     icon: LayoutDashboard,
-    page: 'Dashboard',
-    permissaoCheck: (p) => p?.dashboard?.acesso
+    permissaoCheck: (p) => p?.dashboard?.acesso,
+    submenu: [
+      {
+        name: 'Dashboard Completo',
+        page: 'Dashboard',
+        permissaoCheck: (p) => p?.dashboard?.acesso
+      },
+      {
+        name: 'Painel Gerencial',
+        page: 'PainelGerente',
+        permissaoCheck: (p) => p?.vendas?.painel_gerencial
+      }
+    ]
   },
   {
     name: 'PDV',
