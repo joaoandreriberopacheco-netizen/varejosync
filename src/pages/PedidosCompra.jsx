@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
-import { Plus, FileText } from 'lucide-react';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
+import ActionMenuCompras from '@/components/compras/ActionMenuCompras';
 
 export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
