@@ -154,14 +154,11 @@ export default function PedidosCompraPage() {
 
       {/* Dialogs */}
       {isFormOpen && (
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <PedidoCompraForm
-            pedido={pedidoSelecionado}
-            isOpen={isFormOpen}
-            onClose={() => { setIsFormOpen(false); setPedidoSelecionado(null); }}
-            onSave={handleSave}
-          />
-        </Dialog>
+        <PedidoCompraForm
+          pedido={pedidoSelecionado}
+          onClose={() => { setIsFormOpen(false); setPedidoSelecionado(null); }}
+          onSave={handleSave}
+        />
       )}
 
       <ImportadorNotaFiscal 
