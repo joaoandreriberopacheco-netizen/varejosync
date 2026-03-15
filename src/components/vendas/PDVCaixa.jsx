@@ -1024,9 +1024,43 @@ export default function PDVCaixa() {
     setFechandoCaixa(true);
     try {
       await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+        data_fechamento: new Date().toISOString(),
+        usuario_fechamento_id: currentUser?.id,
+        usuario_fechamento_nome: currentUser?.full_name,
+        saldo_final: caixaData.saldoAtual,
+        total_vendas: caixaData.totalVendas,
+        total_reforcos: caixaData.reforcos,
+        total_sangrias: caixaData.sangrias,
+        total_despesas: caixaData.despesas,
+        recebimentos_dinheiro: caixaData.recebimentos.dinheiro,
+        recebimentos_pix: caixaData.recebimentos.pix,
+        recebimentos_credito: caixaData.recebimentos.credito || 0,
+        recebimentos_debito: caixaData.recebimentos.debito || 0,
+        recebimentos_vale_troca: caixaData.recebimentos.vale || 0,
+        dinheiro_conferido: dinheiroContado,
+        diferenca,
         status: 'Fechado',
-        data_fechamento: new Date().toISOString()
       });
+
+      // Transferir dinheiro para Caixa Geral
+      const todasContas = await base44.entities.ContasFinanceiras.list();
+      const caixaGeral = todasContas.find((c) => c.is_caixa_geral === true);
+      if (caixaGeral && dinheiroContado > 0) {
+        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: 0 });
+        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
+          saldo_atual: caixaGeral.saldo_atual + dinheiroContado,
+        });
+        await base44.entities.MovimentosCaixa.create({
+          numero: `MCX-${String(Date.now()).slice(-5)}`,
+          tipo: 'Sangria',
+          valor: dinheiroContado,
+          observacao: `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${caixaGeral.nome}`,
+          conta_id: contaCaixaPDV.id,
+          turno_caixa_id: turnoAtivo.id,
+          usuario_responsavel_id: currentUser?.id,
+          usuario_responsavel_nome: currentUser?.full_name,
+        });
+      }
 
       toast({
         title: "✓ Caixa fechado com sucesso!",
