@@ -26,11 +26,11 @@ function TurnoRow({ turno, vendas, movimentos }) {
   const diferenca = turno.diferenca || 0;
 
   return (
-    <div className="border-b border-gray-100 dark:border-gray-700/50 last:border-0">
+    <div className="border-b border-gray-100 dark:border-gray-700 last:border-0">
       {/* Linha principal */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors text-left"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -63,30 +63,30 @@ function TurnoRow({ turno, vendas, movimentos }) {
 
       {/* Detalhes expandidos */}
       {expanded && (
-        <div className="px-4 pb-4 bg-gray-50/50 dark:bg-gray-800/30">
+        <div className="px-4 pb-4 bg-gray-50/50 dark:bg-gray-800/20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 pt-3">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Saldo Inicial</div>
-              <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.saldo_inicial)}</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="text-xs text-gray-400 dark:text-gray-500">Saldo Inicial</div>
+              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.saldo_inicial || 0)}</div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Total Vendas</div>
-              <div className="text-base font-semibold text-emerald-600 dark:text-emerald-400">R$ {fmt(turno.total_vendas)}</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="text-xs text-gray-400 dark:text-gray-500">Total Vendas</div>
+              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.total_vendas || 0)}</div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Reforços</div>
-              <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.total_reforcos)}</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="text-xs text-gray-400 dark:text-gray-500">Reforços</div>
+              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.total_reforcos || 0)}</div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Recolhimentos</div>
-              <div className="text-base font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.total_sangrias)}</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="text-xs text-gray-400 dark:text-gray-500">Recolhimentos</div>
+              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.total_sangrias || 0)}</div>
             </div>
           </div>
 
           {/* Recebimentos por forma */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Recebimentos por Forma</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Recebimentos por Forma</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: 'Dinheiro', val: turno.recebimentos_dinheiro },
                 { label: 'PIX', val: turno.recebimentos_pix },
@@ -94,39 +94,41 @@ function TurnoRow({ turno, vendas, movimentos }) {
                 { label: 'Débito', val: turno.recebimentos_debito },
               ].map(f => (
                 <div key={f.label}>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">{f.label}</div>
-                  <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">R$ {fmt(f.val)}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">{f.label}</div>
+                  <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(f.val || 0)}</div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Conferência */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Dinheiro Contado</div>
-              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.dinheiro_conferido)}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Saldo Final</div>
-              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">R$ {fmt(turno.saldo_final)}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Diferença</div>
-              <div className={`text-sm font-semibold ${Math.abs(diferenca) < 0.01 ? 'text-gray-400' : diferenca > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                {diferenca > 0 ? '+' : ''}R$ {fmt(diferenca)}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Dinheiro Contado</div>
+                <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.dinheiro_conferido || 0)}</div>
               </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Fechado por</div>
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</div>
+              <div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Saldo Final</div>
+                <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.saldo_final || 0)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Diferença</div>
+                <div className={`text-sm font-bold font-glacial ${Math.abs(diferenca) < 0.01 ? 'text-gray-400 dark:text-gray-500' : diferenca > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                  {diferenca > 0 ? '+' : ''}R$ {fmt(diferenca)}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Fechado por</div>
+                <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</div>
+              </div>
             </div>
           </div>
 
           {/* Vendas do turno */}
           {vendasTurno.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3">
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Vendas ({vendasTurno.length})</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Vendas ({vendasTurno.length})</div>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {vendasTurno.map(v => (
                   <div key={v.id} className="flex justify-between items-start text-xs py-1 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
@@ -153,8 +155,8 @@ function TurnoRow({ turno, vendas, movimentos }) {
 
           {/* Movimentos do turno */}
           {(reforcos.length > 0 || sangrias.length > 0) && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Movimentos de Caixa</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Movimentos de Caixa</div>
               <div className="space-y-1">
                 {[...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
                   <div key={m.id} className="flex justify-between items-center text-xs py-1">
@@ -251,18 +253,36 @@ export default function TurnosFechadosPage() {
 
         {/* KPIs rápidos */}
         {!isLoading && turnosFiltrados.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Turnos</div>
-              <div className="text-xl font-semibold text-gray-800 dark:text-gray-200">{turnosFiltrados.length}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
+                <Lock className="w-3.5 h-3.5" />
+                Turnos
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{turnosFiltrados.length}</div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Total Vendas</div>
-              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">R$ {fmt(totalVendasFiltrado)}</div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
+                <TrendingUp className="w-3.5 h-3.5" />
+                Total Vendas
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(totalVendasFiltrado)}</div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Diferença Total</div>
-              <div className={`text-xl font-semibold ${Math.abs(totalDiferencas) < 0.01 ? 'text-gray-400' : totalDiferencas > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
+                <Wallet className="w-3.5 h-3.5" />
+                Saldo Final Total
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                R$ {fmt(turnosFiltrados.reduce((s, t) => s + (t.saldo_final || 0), 0))}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mb-1">
+                {Math.abs(totalDiferencas) < 0.01 ? <DollarSign className="w-3.5 h-3.5" /> : totalDiferencas > 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                Diferença Total
+              </div>
+              <div className={`text-2xl font-bold font-glacial ${Math.abs(totalDiferencas) < 0.01 ? 'text-gray-400 dark:text-gray-500' : totalDiferencas > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                 {totalDiferencas > 0 ? '+' : ''}R$ {fmt(totalDiferencas)}
               </div>
             </div>
@@ -280,7 +300,7 @@ export default function TurnosFechadosPage() {
             <p>Nenhum turno fechado encontrado</p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800/50 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
             {turnosFiltrados.map(t => (
               <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} />
             ))}
