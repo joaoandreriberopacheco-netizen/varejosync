@@ -122,113 +122,76 @@ export default function PedidosCompraPage() {
   const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
-            Pedidos de Compra
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {pedidosFiltrados.length} pedidos · R$ {formatValor(pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0))}
-          </p>
-        </div>
-
-        {/* Filtros */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm space-y-4">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input 
-                placeholder="Buscar por Nº ou fornecedor..." 
-                className="pl-9 bg-gray-50 border-transparent dark:bg-gray-900 rounded-xl" 
-                value={searchTerm} 
-                onChange={e => setSearchTerm(e.target.value)} 
-              />
-            </div>
-            <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-              <SelectTrigger className="w-full md:w-48 bg-gray-50 border-transparent dark:bg-gray-900 rounded-xl">
-                <SelectValue placeholder="Todos os Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os Status</SelectItem>
-                {statusPedidoCompra.filter(s => s.ativo).map(status => (
-                  <SelectItem key={status.codigo} value={status.codigo}>{status.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={() => setShowImportador(true)} variant="outline" className="gap-2 rounded-xl">
-              <FileText className="w-4 h-4" />
-              Importar NF
-            </Button>
-            <Button onClick={() => setIsFormOpen(true)} className="bg-gray-900 dark:bg-white dark:text-gray-900 gap-2 rounded-xl">
-              <PlusCircle className="w-4 h-4" />
-              Novo
-            </Button>
-          </div>
-        </div>
-
-        {/* Lista */}
-        <div className="grid gap-3">
-          {pedidosFiltrados.map(pedido => (
-            <div key={pedido.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-900 dark:text-white">{pedido.numero}</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{getStatusNome(pedido.status)}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{pedido.fornecedor_nome}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-xl font-bold text-gray-900 dark:text-white font-glacial">
-                    R$ {formatValor(pedido.valor_total)}
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega), 'dd/MM/yyyy') : '-'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => { setPedidoSelecionado(pedido); setIsFormOpen(true); }}
-                  className="flex-1 gap-2 rounded-xl"
-                >
-                  <Eye className="w-4 h-4" />
-                  Ver
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => { setPedidoSelecionado(pedido); setIsFormOpen(true); }}
-                  className="flex-1 gap-2 rounded-xl"
-                >
-                  <Edit className="w-4 h-4" />
-                  Editar
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {isFormOpen && (
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <PedidoCompraForm
-              pedido={pedidoSelecionado}
-              isOpen={isFormOpen}
-              onClose={() => { setIsFormOpen(false); setPedidoSelecionado(null); }}
-              onSave={handleSave}
-            />
-          </Dialog>
-        )}
-
-        <ImportadorNotaFiscal 
-          isOpen={showImportador}
-          onClose={() => setShowImportador(false)}
-          onSuccess={loadPedidos}
-        />
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
+      {/* Header */}
+      <div className="pb-3 mb-1">
+        <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Pedidos de Compra</p>
+        <p className="text-xs text-gray-400">Gestão de pedidos com fornecedores</p>
       </div>
+
+      {/* KPIs */}
+      <KpiCompras kpis={kpis} />
+
+      {/* Filtros */}
+      <FiltrosCompras
+        search={search} onSearch={setSearch}
+        statusSel={statusSel} onStatusSel={setStatusSel}
+        fornecedores={fornecedores} fornecedorSel={fornecedorSel} onFornecedorSel={setFornecedorSel}
+        hasActiveFilters={hasActiveFilters}
+        onLimparFiltros={() => {
+          setSearch('');
+          setStatusSel([]);
+          setFornecedorSel([]);
+        }}
+      />
+
+      {/* Ações */}
+      <div className="flex gap-2">
+        <Button 
+          onClick={() => { setPedidoSelecionado(null); setIsFormOpen(true); }}
+          className="flex-1 h-11 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-full font-medium gap-2"
+        >
+          <Plus className="w-5 h-5" />
+          Novo Pedido
+        </Button>
+        <Button 
+          onClick={() => setShowImportador(true)}
+          variant="outline"
+          className="flex-1 h-11 rounded-full font-medium gap-2"
+        >
+          <FileText className="w-5 h-5" />
+          Importar NF
+        </Button>
+      </div>
+
+      {/* Lista */}
+      <ListaPedidosCompra
+        grupos={grupos}
+        loading={loading}
+        statusPedidoCompra={statusPedidoCompra}
+        onEdit={(pedido) => {
+          setPedidoSelecionado(pedido);
+          setIsFormOpen(true);
+        }}
+      />
+
+      {/* Dialogs */}
+      {isFormOpen && (
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <PedidoCompraForm
+            pedido={pedidoSelecionado}
+            isOpen={isFormOpen}
+            onClose={() => { setIsFormOpen(false); setPedidoSelecionado(null); }}
+            onSave={handleSave}
+          />
+        </Dialog>
+      )}
+
+      <ImportadorNotaFiscal 
+        isOpen={showImportador}
+        onClose={() => setShowImportador(false)}
+        onSuccess={loadData}
+      />
     </div>
   );
 }
