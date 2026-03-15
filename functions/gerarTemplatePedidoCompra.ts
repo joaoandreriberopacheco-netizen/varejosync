@@ -9,62 +9,56 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const ExcelJS = await import('npm:exceljs@4.4.0');
-    const workbook = new ExcelJS.default.Workbook();
+    const XLSX = await import('npm:xlsx@0.18.5');
 
-    // ─── PLANILHA 1: CABEÇALHO ───
-    const wsCabecalho = workbook.addWorksheet('Cabeçalho');
-    
-    wsCabecalho.addRow(['PEDIDO DE COMPRA - TEMPLATE']);
-    wsCabecalho.addRow([]);
-    wsCabecalho.addRow(['DADOS DO FORNECEDOR']);
-    wsCabecalho.addRow(['Fornecedor:', '', 'Data do Pedido:', new Date().toISOString().split('T')[0]]);
-    wsCabecalho.addRow(['CNPJ:', '', 'Data Prevista Entrega:', '']);
-    wsCabecalho.addRow([]);
-    wsCabecalho.addRow(['DADOS FINANCEIROS']);
-    wsCabecalho.addRow(['Subtotal:', '', 'Total:', '']);
-
-    wsCabecalho.columns = [
-      { width: 25 },
-      { width: 30 },
-      { width: 25 },
-      { width: 30 }
+    // Criar dados das abas
+    const cabecalhoData = [
+      ['PEDIDO DE COMPRA - TEMPLATE'],
+      [],
+      ['DADOS DO FORNECEDOR'],
+      ['Fornecedor:', '', 'Data do Pedido:', new Date().toISOString().split('T')[0]],
+      ['CNPJ:', '', 'Data Prevista Entrega:', ''],
+      [],
+      ['DADOS FINANCEIROS'],
+      ['Subtotal:', '', 'Total:', '']
     ];
 
-    // ─── PLANILHA 2: ITENS ───
-    const wsItens = workbook.addWorksheet('Itens');
+    const itensData = [
+      ['Produto', 'Código', 'Quantidade', 'Valor Unitário', 'Total']
+    ];
     
-    wsItens.addRow(['Produto', 'Código', 'Quantidade', 'Valor Unitário', 'Total']);
-    
+    // Adicionar 10 linhas vazias para preenchimento
     for (let i = 0; i < 10; i++) {
-      wsItens.addRow(['', '', '', '', '']);
+      itensData.push(['', '', '', '', '']);
     }
 
-    wsItens.columns = [
-      { width: 30 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 },
-      { width: 15 }
-    ];
+    // Criar workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Adicionar planilhas
+    const wsCabecalho = XLSX.utils.aoa_to_sheet(cabecalhoData);
+    wsCabecalho['!cols'] = [{ wch: 25 }, { wch: 30 }, { wch: 25 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, wsCabecalho, 'Cabeçalho');
 
-    // Estilo do cabeçalho
-    wsItens.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFD3D3D3' }
-    };
-    wsItens.getRow(1).font = { bold: true };
+    const wsItens = XLSX.utils.aoa_to_sheet(itensData);
+    wsItens['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, wsItens, 'Itens');
 
-    // Gerar arquivo
-    const buffer = await workbook.xlsx.writeBuffer();
+    // Escrever como buffer
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    const binaryString = atob(excelBuffer);
+    const bytes = new Uint8Array(binaryString.length);
+    
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
 
-    return new Response(buffer, {
+    return new Response(bytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename="template_pedido_compra.xlsx"',
-        'Content-Length': buffer.length.toString()
+        'Content-Length': bytes.length.toString()
       }
     });
   } catch (error) {
