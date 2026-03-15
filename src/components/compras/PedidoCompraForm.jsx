@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Save, Undo, Redo, Printer, ShoppingCart, ChevronDown, MoreVertical, Clock, Send, Plus } from 'lucide-react';
+import { X, PlusCircle, FileText, Truck, DollarSign, AlertCircle, Package, Ship, Box, MapPin, FileDown, FileUp, Download, Trash2, Calendar, Package as PackageIcon, Users, Undo, Redo, Printer, ShoppingCart, ChevronDown, MoreVertical, Clock, Send, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,7 @@ import MobileProductSelector from './MobileProductSelector';
 import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
+import PedidoCompraFAB from './PedidoCompraFAB';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -94,6 +95,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isSolicitarEdicaoOpen, setIsSolicitarEdicaoOpen] = useState(false);
   const [motivoEdicao, setMotivoEdicao] = useState('');
+  const [empresa, setEmpresa] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -116,15 +118,19 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const user = await base44.auth.me();
       setCurrentUser(user);
       
-      const [fornecedorData, produtoData, transportadoraData, contasData] = await Promise.all([
+      const [fornecedorData, produtoData, transportadoraData, contasData, empresaData] = await Promise.all([
         base44.entities.Terceiro.list(),
         base44.entities.Produto.list(),
         base44.entities.Terceiro.list(),
-        base44.entities.ContasFinanceiras.list()
+        base44.entities.ContasFinanceiras.list(),
+        base44.entities.DadosEmpresa.list()
       ]);
       setFornecedores(fornecedorData.filter(t => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
       setProdutos(produtoData);
       setContas(contasData);
+      if (empresaData && empresaData.length > 0) {
+        setEmpresa(empresaData[0]);
+      }
       
       // Transportadoras são também fornecedores
       const transportadoras = transportadoraData.filter(t => (t.tipo === 'Fornecedor' || t.tipo === 'Ambos') && t.ativo);
