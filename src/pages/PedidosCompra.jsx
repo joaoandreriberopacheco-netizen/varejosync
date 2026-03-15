@@ -11,14 +11,15 @@ import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 
 export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFiltro, setStatusFiltro] = useState('todos');
-  const [dataInicio, setDataInicio] = useState('');
-  const [dataFim, setDataFim] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusSel, setStatusSel] = useState([]);
+  const [fornecedorSel, setFornecedorSel] = useState([]);
   const [showImportador, setShowImportador] = useState(false);
   const [statusPedidoCompra, setStatusPedidoCompra] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPedidos();
