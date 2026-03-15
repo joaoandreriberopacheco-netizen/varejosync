@@ -174,6 +174,7 @@ export default function PedidosCompraPage() {
       <ActionMenuCompras
         onNovopedido={() => { setPedidoSelecionado(null); setIsFormOpen(true); }}
         onImportarNF={() => setShowImportador(true)}
+        onDownloadTemplate={handleDownloadTemplate}
       />
     </div>
   );
