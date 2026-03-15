@@ -64,66 +64,25 @@ function TurnoRow({ turno, vendas, movimentos }) {
       {/* Detalhes expandidos */}
       {expanded && (
         <div className="px-4 pb-4 bg-gray-50/50 dark:bg-gray-800/20">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 pt-3">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xs text-gray-400 dark:text-gray-500">Saldo Inicial</div>
-              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.saldo_inicial || 0)}</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xs text-gray-400 dark:text-gray-500">Total Vendas</div>
-              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.total_vendas || 0)}</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xs text-gray-400 dark:text-gray-500">Reforços</div>
-              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.total_reforcos || 0)}</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xs text-gray-400 dark:text-gray-500">Recolhimentos</div>
-              <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.total_sangrias || 0)}</div>
-            </div>
-          </div>
-
-          {/* Recebimentos por forma */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Recebimentos por Forma</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Dinheiro', val: turno.recebimentos_dinheiro },
-                { label: 'PIX', val: turno.recebimentos_pix },
-                { label: 'Crédito', val: turno.recebimentos_credito },
-                { label: 'Débito', val: turno.recebimentos_debito },
-              ].map(f => (
-                <div key={f.label}>
-                  <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">{f.label}</div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(f.val || 0)}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Conferência */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-3 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Dinheiro Contado</div>
-                <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.dinheiro_conferido || 0)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Saldo Final</div>
-                <div className="text-sm font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.saldo_final || 0)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Diferença</div>
-                <div className={`text-sm font-bold font-glacial ${Math.abs(diferenca) < 0.01 ? 'text-gray-400 dark:text-gray-500' : diferenca > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                  {diferenca > 0 ? '+' : ''}R$ {fmt(diferenca)}
-                </div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Fechado por</div>
-                <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</div>
+          {/* Movimentos de Caixa */}
+          {(reforcos.length > 0 || sangrias.length > 0) && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-3 mt-3">
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Movimentos de Caixa</div>
+              <div className="space-y-1">
+                {[...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
+                  <div key={m.id} className="flex justify-between items-center text-xs py-1.5 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {m.numero} · {format(new Date(m.created_date), 'HH:mm')} · {m.tipo}
+                      {m.observacao ? ` · ${m.observacao}` : ''}
+                    </span>
+                    <span className={`font-semibold tabular-nums ${m.tipo === 'Reforço' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                      {m.tipo === 'Reforço' ? '+' : '-'}R$ {fmt(m.valor)}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Vendas do turno */}
           {vendasTurno.length > 0 && (
@@ -131,7 +90,7 @@ function TurnoRow({ turno, vendas, movimentos }) {
               <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Vendas ({vendasTurno.length})</div>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {vendasTurno.map(v => (
-                  <div key={v.id} className="flex justify-between items-start text-xs py-1 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                  <div key={v.id} className="flex justify-between items-start text-xs py-1.5 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
                     <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">{v.numero}</span>
                       <span className="text-gray-400 dark:text-gray-500"> · {v.cliente_nome}</span>
@@ -146,32 +105,43 @@ function TurnoRow({ turno, vendas, movimentos }) {
                         <span className="text-gray-400 dark:text-gray-500"> · {v.pagamentos[0].forma_pagamento}</span>
                       )}
                     </div>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums ml-3">R$ {fmt(v.valor_total)}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white tabular-nums ml-3">R$ {fmt(v.valor_total)}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Movimentos do turno */}
-          {(reforcos.length > 0 || sangrias.length > 0) && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Movimentos de Caixa</div>
-              <div className="space-y-1">
-                {[...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => (
-                  <div key={m.id} className="flex justify-between items-center text-xs py-1">
-                    <span className="text-gray-500 dark:text-gray-400">
-                      {m.numero} · {format(new Date(m.created_date), 'HH:mm')} · {m.tipo}
-                      {m.observacao ? ` · ${m.observacao}` : ''}
-                    </span>
-                    <span className={`font-semibold tabular-nums ${m.tipo === 'Reforço' ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                      {m.tipo === 'Reforço' ? '+' : '-'}R$ {fmt(m.valor)}
-                    </span>
+          {/* Contagem Final de Caixa */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Contagem Final de Caixa</div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Dinheiro Contado</div>
+                  <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.dinheiro_conferido || 0)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">Saldo Final</div>
+                  <div className="text-base font-bold text-gray-900 dark:text-white font-glacial">R$ {fmt(turno.saldo_final || 0)}</div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-gray-400 dark:text-gray-500">Diferença</div>
+                  <div className={`text-lg font-bold font-glacial ${Math.abs(diferenca) < 0.01 ? 'text-gray-400 dark:text-gray-500' : diferenca > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                    {diferenca > 0 ? '+' : ''}R$ {fmt(diferenca)}
                   </div>
-                ))}
+                </div>
+              </div>
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400 dark:text-gray-500">Fechado por</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</span>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
