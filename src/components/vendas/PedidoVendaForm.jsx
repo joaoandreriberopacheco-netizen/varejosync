@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AnaliseEntrega from './AnaliseEntrega';
+import PedidoFAB from './PedidoFAB';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
