@@ -281,7 +281,7 @@ export default function FluxoCaixaTab() {
       {/* ── Busca + Filtros ─────────────────────────────────────────────── */}
       <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: 16, overflow: 'visible' }} className="bg-white dark:bg-gray-800 shadow-sm">
         {/* Busca */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: showFilters ? '1px solid rgba(0,0,0,0.05)' : 'none' }} className="dark:border-white/5">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }} className={showFilters ? 'border-b border-gray-100 dark:border-gray-700' : ''}>
           <Search style={{ width: 15, height: 15, flexShrink: 0 }} className="text-gray-400" />
           <input
             value={search}
@@ -293,10 +293,10 @@ export default function FluxoCaixaTab() {
           {search && <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}><X style={{ width: 14, height: 14 }} className="text-gray-400" /></button>}
           <button 
             onClick={() => setShowFilters(s => !s)} 
-            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', borderRadius: 8 }} 
-            className={`${showFilters ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '6px', borderRadius: 8 }} 
+            className={`transition-colors ${showFilters ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
           >
-            <SlidersHorizontal style={{ width: 15, height: 15 }} />
+            <SlidersHorizontal style={{ width: 16, height: 16 }} />
           </button>
         </div>
 
