@@ -102,18 +102,19 @@ export default function ExtratoContaPage() {
               referencia_numero: c.numero
             }));
         } else {
-          // CAIXA ESPECÍFICO: Apenas transações vinculadas
+          // CAIXA ESPECÍFICO: Apenas transações vinculadas ao turno desta conta
           lancamentosFiltrados = lancamentosData.filter(l => l.conta_financeira_id === contaId);
           
+          // Buscar turnos desta conta para filtrar vendas corretamente
+          const turnosData = await base44.entities.TurnoCaixa.filter({ conta_caixa_pdv_id: contaId });
+          const turnosIds = turnosData.map(t => t.id);
+          
+          // Vendas: filtra APENAS por turno_caixa_id
           vendasFiltradas = vendasData
             .filter(v => 
               v.status !== 'Cancelado' &&
-              v.pagamentos?.some(p => {
-                const forma = p.forma_pagamento?.toLowerCase() || '';
-                const nomeContaLower = contaNome.toLowerCase();
-                return forma.includes(nomeContaLower) || 
-                  (nomeContaLower.includes('caixa') && (forma.includes('dinheiro') || forma.includes('pix')));
-              })
+              v.turno_caixa_id &&
+              turnosIds.includes(v.turno_caixa_id)
             )
             .map(v => ({
               tipo: 'Receita',
