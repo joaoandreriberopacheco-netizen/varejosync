@@ -336,6 +336,10 @@ export default function TurnosFechadosPage() {
         description: `O turno ${turnoParaReabrir.numero} foi reaberto e está pronto para uso.`,
       });
 
+      // Remover o turno da lista local imediatamente
+      setTurnos(prev => prev.filter(t => t.id !== turnoParaReabrir.id));
+      
+      // Recarregar dados do servidor
       loadData();
     } catch (error) {
       console.error('Erro ao reabrir turno:', error);
