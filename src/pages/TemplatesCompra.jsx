@@ -16,14 +16,21 @@ export default function TemplatesCompra() {
     setIsGenerating(true);
     setMessage(null);
     try {
-      const result = await gerarTemplatePedidoCompra();
+      const response = await gerarTemplatePedidoCompra();
       
-      // result.data contém o blob do arquivo
-      const blob = new Blob([result.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      // Decodificar Base64 para Uint8Array
+      const binaryString = atob(response.file_content);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `template_pedido_compra_${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = response.filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
