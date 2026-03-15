@@ -15,7 +15,7 @@ export default function TemplatesCompra() {
     setIsGenerating(true);
     setMessage(null);
     try {
-      const response = await gerarTemplatePedidoCompra();
+      const response = await base44.functions.invoke('gerarTemplatePedidoCompra', {});
       
       // Decodificar Base64 para Uint8Array
       const binaryString = atob(response.file_content);
