@@ -282,25 +282,26 @@ export default function FluxoCaixaTab() {
       {/* ── Busca + Filtros ─────────────────────────────────────────────── */}
       <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: 16 }} className="space-y-3">
         {/* Barra de Busca com Filtro */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar movimentações..."
-              className="w-full pl-10 pr-4 h-11 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 rounded-xl outline-none focus:border-gray-300 dark:focus:border-gray-600"
+              placeholder="Buscar lançamento, categoria, tag..."
+              className="w-full pl-10 pr-4 h-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 rounded-2xl outline-none focus:border-gray-300 dark:focus:border-gray-600 transition-colors"
             />
           </div>
           <button
             onClick={toggleFilters}
-            className={`h-11 w-11 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${
+            className={`h-12 w-12 rounded-full flex items-center justify-center transition-all flex-shrink-0 shadow-sm ${
               showFilters 
-                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' 
-                : 'border border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 shadow-md' 
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
             }`}
+            title="Abrir/fechar filtros"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-5 h-5" />
           </button>
         </div>
 
