@@ -576,8 +576,8 @@ export default function Layout({ children, currentPageName }) {
       </div>
       <Toaster />
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <DialogContent className="p-0 gap-0 max-w-xl bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 top-[20%] translate-y-0">
-          <div className="flex items-center px-4 border-b border-gray-200 dark:border-gray-800">
+        <DialogContent className="p-0 gap-0 max-w-xl bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 top-4 md:top-[20%] translate-y-0">
+          <div className="flex items-center px-4 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
             <Search className="w-5 h-5 mr-3 text-gray-400" />
             <Input 
               className="flex-1 h-14 border-none bg-transparent focus-visible:ring-0 px-0 text-lg text-gray-800 dark:text-gray-200 placeholder:text-gray-400" 
@@ -588,7 +588,7 @@ export default function Layout({ children, currentPageName }) {
             />
             <div className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">ESC</div>
           </div>
-          <div className="max-h-[300px] overflow-y-auto p-2">
+          <div className="max-h-[50vh] md:max-h-[300px] overflow-y-auto p-2">
              {filteredSearchItems.length === 0 && searchQuery && (
                <div className="p-4 text-center text-gray-500">
                  Nenhuma funcionalidade encontrada para "{searchQuery}"
