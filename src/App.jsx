@@ -12,9 +12,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ReimpressaoDocumentos from '@/pages/ReimpressaoDocumentos';
 import Home from '@/pages/Home';
 import Notificacoes from '@/pages/Notificacoes';
-import BalancoCaixa from '@/pages/BalancoCaixa';
-import ProcessarVendas from '@/pages/ProcessarVendas';
-import MovimentosCaixa from '@/pages/MovimentosCaixa';
+import Caixa from '@/pages/Caixa';
 import PDVVendedor from '@/pages/PDVVendedor';
 import PDVCaixa from '@/pages/PDVCaixa';
 import CaixasAtivos from '@/pages/CaixasAtivos';
@@ -89,19 +87,9 @@ const AuthenticatedApp = () => {
           <Notificacoes />
         </LayoutWrapper>
       } />
-      <Route path="/BalancoCaixa" element={
-        <LayoutWrapper currentPageName="BalancoCaixa">
-          <BalancoCaixa />
-        </LayoutWrapper>
-      } />
-      <Route path="/ProcessarVendas" element={
-        <LayoutWrapper currentPageName="ProcessarVendas">
-          <ProcessarVendas />
-        </LayoutWrapper>
-      } />
-      <Route path="/MovimentosCaixa" element={
-        <LayoutWrapper currentPageName="MovimentosCaixa">
-          <MovimentosCaixa />
+      <Route path="/Caixa" element={
+        <LayoutWrapper currentPageName="Caixa">
+          <Caixa />
         </LayoutWrapper>
       } />
       <Route path="/PDVVendedor" element={

@@ -148,29 +148,8 @@ export const ALL_MENU_ITEMS = [
   {
     name: 'Caixa',
     icon: Wallet,
-    permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso,
-    submenu: [
-      {
-        name: 'PDV Caixa',
-        page: 'PDVCaixa',
-        permissaoCheck: (p) => p?.pdv?.acesso_caixa
-      },
-      {
-        name: 'Processar Vendas',
-        page: 'ProcessarVendas',
-        permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
-      },
-      {
-        name: 'Balanço',
-        page: 'BalancoCaixa',
-        permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
-      },
-      {
-        name: 'Movimentos',
-        page: 'MovimentosCaixa',
-        permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
-      }
-    ]
+    page: 'Caixa',
+    permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
   },
   {
     name: 'Vendas',
