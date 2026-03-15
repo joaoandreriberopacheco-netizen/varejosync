@@ -122,25 +122,6 @@ export default function PedidosCompraPage() {
         }}
       />
 
-      {/* Ações */}
-      <div className="flex gap-2">
-        <Button 
-          onClick={() => { setPedidoSelecionado(null); setIsFormOpen(true); }}
-          className="flex-1 h-11 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-full font-medium gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Novo Pedido
-        </Button>
-        <Button 
-          onClick={() => setShowImportador(true)}
-          variant="outline"
-          className="flex-1 h-11 rounded-full font-medium gap-2"
-        >
-          <FileText className="w-5 h-5" />
-          Importar NF
-        </Button>
-      </div>
-
       {/* Lista */}
       <ListaPedidosCompra
         grupos={grupos}
