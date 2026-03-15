@@ -181,6 +181,7 @@ export default function FluxoCaixaTab() {
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [fabOpen, setFabOpen] = useState(false);
   const [detalhe, setDetalhe] = useState(null);
+  const toggleFilters = () => setShowFilters(prev => !prev);
 
   useEffect(() => { loadData(); }, []);
 
