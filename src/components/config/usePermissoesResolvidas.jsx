@@ -126,17 +126,12 @@ export const ALL_MENU_ITEMS = [
   {
     name: 'PDV',
     icon: Monitor,
-    permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_caixa || p?.pdv?.acesso_supermercado,
+    permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_supermercado || p?.pdv?.acesso_auto_atendimento,
     submenu: [
       {
         name: 'Vendedor',
         page: 'PDVVendedor',
         permissaoCheck: (p) => p?.pdv?.acesso_vendedor
-      },
-      {
-        name: 'Caixa',
-        page: 'PDVCaixa',
-        permissaoCheck: (p) => p?.pdv?.acesso_caixa
       },
       {
         name: 'Supermercado',
@@ -151,10 +146,31 @@ export const ALL_MENU_ITEMS = [
     ]
   },
   {
-    name: 'Movimentos Caixa',
+    name: 'Caixa',
     icon: Wallet,
-    page: 'MovimentosCaixa',
-    permissaoCheck: (p) => p?.pdv?.acesso_caixa
+    permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso,
+    submenu: [
+      {
+        name: 'PDV Caixa',
+        page: 'PDVCaixa',
+        permissaoCheck: (p) => p?.pdv?.acesso_caixa
+      },
+      {
+        name: 'Processar Vendas',
+        page: 'ProcessarVendas',
+        permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
+      },
+      {
+        name: 'Balanço',
+        page: 'BalancoCaixa',
+        permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
+      },
+      {
+        name: 'Movimentos',
+        page: 'MovimentosCaixa',
+        permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
+      }
+    ]
   },
   {
     name: 'Vendas',
