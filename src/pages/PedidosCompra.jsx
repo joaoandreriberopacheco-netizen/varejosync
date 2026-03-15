@@ -61,6 +61,25 @@ export default function PedidosCompraPage() {
     setPedidoSelecionado(null);
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch('/api/functions/gerarTemplatePedidoCompra', { method: 'POST' });
+      if (!response.ok) throw new Error('Erro ao gerar template');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `template_pedido_compra_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Erro:', error);
+    }
+  };
+
   const filtrados = useMemo(() => {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
