@@ -2,13 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { RefreshCw, ChevronDown, ChevronRight, Lock, TrendingUp, TrendingDown, Wallet, DollarSign, Search } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronRight, Lock, TrendingUp, TrendingDown, Wallet, DollarSign, Search, RotateCcw, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const fmt = (v) => (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function TurnoRow({ turno, vendas, movimentos }) {
+function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
   const [expanded, setExpanded] = useState(false);
 
   const reforcos = movimentos.filter(m => m.tipo === 'Reforço' && m.turno_caixa_id === turno.id);
@@ -189,6 +200,21 @@ function TurnoRow({ turno, vendas, movimentos }) {
               <span className="text-gray-400 dark:text-gray-500">Fechado por: </span>
               <span className="font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</span>
             </div>
+
+            {/* Botão de Reabertura - Apenas Admin */}
+            {currentUser?.role === 'admin' && (
+              <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <Button
+                  onClick={() => onReabrir(turno)}
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 text-amber-600 hover:text-amber-700 border-amber-200 hover:border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-900/20"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reabrir Turno
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -203,9 +229,13 @@ export default function TurnosFechadosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const [filtroData, setFiltroData] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [turnoParaReabrir, setTurnoParaReabrir] = useState(null);
+  const [reabrindo, setReabrindo] = useState(false);
 
   useEffect(() => {
     loadData();
+    base44.auth.me().then(setCurrentUser).catch(console.error);
   }, []);
 
   const loadData = async () => {
@@ -238,6 +268,85 @@ export default function TurnosFechadosPage() {
 
   const totalVendasFiltrado = turnosFiltrados.reduce((s, t) => s + (t.total_vendas || 0), 0);
   const totalDiferencas = turnosFiltrados.reduce((s, t) => s + (t.diferenca || 0), 0);
+
+  const handleReabrirTurno = async (turno) => {
+    setTurnoParaReabrir(turno);
+  };
+
+  const confirmarReabertura = async () => {
+    if (!turnoParaReabrir) return;
+    
+    setReabrindo(true);
+    try {
+      // Verificar se existe outro turno aberto para o mesmo caixa
+      const turnosAbertos = await base44.entities.TurnoCaixa.filter({ 
+        conta_caixa_pdv_id: turnoParaReabrir.conta_caixa_pdv_id,
+        status: 'Aberto'
+      });
+
+      if (turnosAbertos.length > 0) {
+        toast.error('Reabertura bloqueada', {
+          description: `Existe outro turno aberto (${turnosAbertos[0].numero}) neste caixa. Feche-o antes de reabrir este turno.`,
+          duration: 5000
+        });
+        setReabrindo(false);
+        setTurnoParaReabrir(null);
+        return;
+      }
+
+      // Buscar contas financeiras para reverter transferência
+      const todasContas = await base44.entities.ContasFinanceiras.list();
+      const caixaPDV = todasContas.find(c => c.id === turnoParaReabrir.conta_caixa_pdv_id);
+      const caixaGeral = todasContas.find(c => c.is_caixa_geral === true);
+
+      const dinheiroConferido = turnoParaReabrir.dinheiro_conferido || 0;
+
+      // Reverter transferência do fechamento (se houve)
+      if (caixaPDV && caixaGeral && dinheiroConferido > 0) {
+        // Devolver dinheiro do Caixa Geral para o Caixa PDV
+        await base44.entities.ContasFinanceiras.update(caixaPDV.id, {
+          saldo_atual: caixaPDV.saldo_atual + dinheiroConferido
+        });
+        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
+          saldo_atual: caixaGeral.saldo_atual - dinheiroConferido
+        });
+
+        // Registrar movimento de estorno
+        await base44.entities.MovimentosCaixa.create({
+          numero: `MCX-ESTORNO-${String(Date.now()).slice(-5)}`,
+          tipo: 'Reforço',
+          valor: dinheiroConferido,
+          observacao: `Estorno de fechamento - Reabertura do turno ${turnoParaReabrir.numero}`,
+          conta_id: caixaPDV.id,
+          turno_caixa_id: turnoParaReabrir.id,
+          usuario_responsavel_id: currentUser?.id,
+          usuario_responsavel_nome: currentUser?.full_name
+        });
+      }
+
+      // Reabrir o turno
+      await base44.entities.TurnoCaixa.update(turnoParaReabrir.id, {
+        status: 'Aberto',
+        data_fechamento: null,
+        usuario_fechamento_id: null,
+        usuario_fechamento_nome: null
+      });
+
+      toast.success('Turno reaberto com sucesso!', {
+        description: `O turno ${turnoParaReabrir.numero} foi reaberto e está pronto para uso.`,
+      });
+
+      loadData();
+    } catch (error) {
+      console.error('Erro ao reabrir turno:', error);
+      toast.error('Erro ao reabrir turno', {
+        description: error.message
+      });
+    } finally {
+      setReabrindo(false);
+      setTurnoParaReabrir(null);
+    }
+  };
 
   return (
     <div className="p-4 md:p-6">
@@ -326,11 +435,58 @@ export default function TurnosFechadosPage() {
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
             {turnosFiltrados.map(t => (
-              <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} />
+              <TurnoRow key={t.id} turno={t} vendas={vendas} movimentos={movimentos} onReabrir={handleReabrirTurno} currentUser={currentUser} />
             ))}
           </div>
         )}
       </div>
+
+      {/* Dialog de Confirmação de Reabertura */}
+      <AlertDialog open={!!turnoParaReabrir} onOpenChange={(open) => !open && setTurnoParaReabrir(null)}>
+        <AlertDialogContent className="dark:bg-gray-800 dark:border-gray-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <AlertCircle className="w-5 h-5" />
+              Confirmar Reabertura de Turno
+            </AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-400">
+              Você está prestes a reabrir o turno <strong className="text-gray-900 dark:text-white">{turnoParaReabrir?.numero}</strong>.
+              <br/><br/>
+              Esta operação irá:
+              <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                <li>Alterar o status do turno de "Fechado" para "Aberto"</li>
+                <li>Reverter a transferência de R$ {fmt(turnoParaReabrir?.dinheiro_conferido || 0)} do Caixa Geral de volta para o caixa PDV</li>
+                <li>Limpar os dados de fechamento (data, usuário)</li>
+                <li>Permitir novas vendas e movimentações neste turno</li>
+              </ul>
+              <br/>
+              <strong className="text-amber-600 dark:text-amber-400">Atenção:</strong> Só é possível reabrir um turno se não houver outro turno aberto no mesmo caixa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reabrindo} className="dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarReabertura}
+              disabled={reabrindo}
+              className="bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+            >
+              {reabrindo ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Reabrindo...
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Confirmar Reabertura
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
