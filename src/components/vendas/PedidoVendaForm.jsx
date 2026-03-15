@@ -43,11 +43,12 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
 
   useEffect(() => {
     const loadDependencies = async () => {
-      const [clientesData, produtosData, tabelasPrecoData, userData] = await Promise.all([
+      const [clientesData, produtosData, tabelasPrecoData, userData, empresaData] = await Promise.all([
         base44.entities.Terceiro.filter({ tipo: ['Cliente', 'Ambos'] }),
         base44.entities.Produto.list(),
         base44.entities.TabelaPreco.list(),
-        base44.auth.me()
+        base44.auth.me(),
+        base44.entities.DadosEmpresa.list()
       ]);
       setDependencies({
         clientes: clientesData,
@@ -55,6 +56,9 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
         tabelasPreco: tabelasPrecoData,
         currentUser: userData
       });
+      if (empresaData && empresaData.length > 0) {
+        setEmpresa(empresaData[0]);
+      }
       if (!pedido) {
         setFormData(prev => ({
           ...prev,
