@@ -113,10 +113,9 @@ export default function ListaPedidosCompra({ grupos, loading, statusPedidoCompra
 
   return (
     <div className="space-y-4">
-      {grupos.map(({ status, label, pedidos }) => (
-        <GrupoStatus 
-          key={status} 
-          status={status}
+      {grupos.map(({ key, label, pedidos }) => (
+        <GrupoDia 
+          key={key} 
           label={label} 
           pedidos={pedidos} 
           statusPedidoCompra={statusPedidoCompra}
