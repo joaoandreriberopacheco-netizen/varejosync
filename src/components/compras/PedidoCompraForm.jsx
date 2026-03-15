@@ -25,7 +25,7 @@ import MobileProductSelector from './MobileProductSelector';
 import StatusTimeline from './StatusTimeline';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
-import PedidoCompraFAB from './PedidoCompraFAB';
+import PedidoCompraFAB from './PedidoCompraFAB.jsx';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
