@@ -91,7 +91,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     const pw = window.open('', '_blank', 'width=800,height=900');
     if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
     
-    const linhasVendas = vendasFinalizadas.map(v => {
+    const linhasVendas = (vendasFinalizadas || []).map(v => {
       const pagamentos = (v.pagamentos || []);
       const subLinhas = pagamentos.length > 1
         ? pagamentos.map(p => `<div style="display:flex;justify-content:space-between;padding:2px 0 2px 16px;font-size:10px;color:#6b7280"><span>${p.forma_pagamento}</span><span>R$ ${(p.valor || 0).toFixed(2)}</span></div>`).join('')
@@ -155,7 +155,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       <h2>Despesas do Turno</h2>
       ${linhasDespesas}
       <div class="dashed"></div>
-      <h2>Vendas do Turno (${vendasFinalizadas.length})</h2>
+      <h2>Vendas do Turno (${(vendasFinalizadas || []).length})</h2>
       ${linhasVendas || '<p style="color:#9ca3af;font-size:11px">Nenhuma venda registrada</p>'}
       <div class="dashed"></div>
       <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:14px">Relatório gerado em ${new Date().toLocaleString('pt-BR')} - Não é documento fiscal</p>
@@ -354,10 +354,10 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
               <div className="mb-4">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Finalizadas</div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                  {vendasFinalizadas.length} {vendasFinalizadas.length === 1 ? 'Venda' : 'Vendas'}
+                  {(vendasFinalizadas || []).length} {(vendasFinalizadas || []).length === 1 ? 'Venda' : 'Vendas'}
                 </div>
               </div>
-              {vendasFinalizadas.map(v => (
+              {(vendasFinalizadas || []).map(v => (
                 <div key={v.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm cursor-pointer" onClick={() => setVendaDetalhada(v)}>
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1 min-w-0">
@@ -377,8 +377,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
           <TabsContent value="movimentos" className="flex-1 overflow-auto p-4 mt-0">
             <div className="max-w-4xl mx-auto space-y-2">
               {(() => {
-                const itensMovimentos = movimentos.map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
-                const itensDespesas = (caixaData.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
+                const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
+                const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
                 const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
                 
                 if (todos.length === 0) return (
