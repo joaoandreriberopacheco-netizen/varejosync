@@ -38,6 +38,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     currentUser: null,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [empresa, setEmpresa] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
