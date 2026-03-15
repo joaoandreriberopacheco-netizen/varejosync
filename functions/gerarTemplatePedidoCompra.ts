@@ -48,12 +48,12 @@ Deno.serve(async (req) => {
     // Escrever como buffer
     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
 
-    return new Response(excelBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="template_pedido_compra.xlsx"'
-      }
+    // Codificar para Base64
+    const base64Content = encodeBase64(excelBuffer);
+
+    return Response.json({ 
+      file_content: base64Content,
+      filename: `template_pedido_compra_${new Date().toISOString().split('T')[0]}.xlsx`
     });
   } catch (error) {
     console.error('Erro ao gerar template:', error);
