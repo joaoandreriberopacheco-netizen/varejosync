@@ -107,11 +107,8 @@ export default function PedidosCompraPage() {
       {/* Header */}
       <div className="pb-3 mb-1">
         <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Pedidos de Compra</p>
-        <p className="text-xs text-gray-400">Gestão de pedidos com fornecedores</p>
+        <p className="text-xs text-gray-400">{filtrados.length} pedidos · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
       </div>
-
-      {/* KPIs */}
-      <KpiCompras kpis={kpis} />
 
       {/* Filtros */}
       <FiltrosCompras
