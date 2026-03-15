@@ -184,7 +184,7 @@ export default function TemplatesCompra() {
               <Button
                 onClick={handleDownloadTemplate}
                 disabled={isGenerating}
-                className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
+                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
               >
                 {isGenerating ? 'Gerando...' : 'Baixar Template'}
               </Button>
@@ -242,7 +242,7 @@ export default function TemplatesCompra() {
                 <Button
                   as="span"
                   disabled={isImporting}
-                  className="cursor-pointer bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
+                  className="cursor-pointer bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
                 >
                   {isImporting ? 'Importando...' : 'Selecionar Arquivo'}
                 </Button>
