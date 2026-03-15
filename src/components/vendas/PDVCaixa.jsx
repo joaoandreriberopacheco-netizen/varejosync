@@ -1023,11 +1023,13 @@ export default function PDVCaixa() {
     
     setFechandoCaixa(true);
     try {
+      // Atualizar turno com todos os dados consolidados
       await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
+        status: 'Fechado',
         data_fechamento: new Date().toISOString(),
         usuario_fechamento_id: currentUser?.id,
         usuario_fechamento_nome: currentUser?.full_name,
-        saldo_final: caixaData.saldoAtual,
+        saldo_final: caixaData.liquidez,
         total_vendas: caixaData.totalVendas,
         total_reforcos: caixaData.reforcos,
         total_sangrias: caixaData.sangrias,
@@ -1039,7 +1041,9 @@ export default function PDVCaixa() {
         recebimentos_vale_troca: caixaData.recebimentos.vale || 0,
         dinheiro_conferido: dinheiroContado,
         diferenca,
-        status: 'Fechado',
+        vendas_ids: vendasFinalizadas.map(v => v.id),
+        movimentos_ids: movimentos.map(m => m.id),
+        despesas_ids: (caixaData.despesasLista || []).map(d => d.id)
       });
 
       // Transferir dinheiro para Caixa Geral
