@@ -20,6 +20,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -103,7 +104,7 @@ export default function HomePage() {
         {/* Header com Saudação */}
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {format(new Date(), 'EEEE, d \'de\' MMMM', { locale: require('date-fns/locale/pt-BR') })}
+            {format(new Date(), 'EEEE, d \'de\' MMMM', { locale: ptBR })}
           </p>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial mt-1">
             Olá, {currentUser?.full_name?.split(' ')[0] || 'Usuário'}
