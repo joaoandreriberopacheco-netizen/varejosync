@@ -77,26 +77,27 @@ export default function PedidosCompraPage() {
   }, [filtrados]);
 
   const grupos = useMemo(() => {
-    const statusOrder = ['Aberto', 'Confirmado', 'Em Separação', 'Enviado', 'Recebido', 'Cancelado'];
     const map = {};
-    
-    statusOrder.forEach(st => {
-      map[st] = [];
-    });
-
     filtrados.forEach(p => {
-      const st = p.status || 'Aberto';
-      if (!map[st]) map[st] = [];
-      map[st].push(p);
+      const data = p.data_prevista_entrega || p.created_date;
+      const key = data ? new Date(data).toISOString().split('T')[0] : 'sem-data';
+      if (!map[key]) map[key] = [];
+      map[key].push(p);
     });
 
-    return statusOrder
-      .filter(st => map[st].length > 0)
-      .map(st => ({
-        status: st,
-        label: st,
-        pedidos: map[st].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)),
-      }));
+    return Object.entries(map)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, pedidos]) => {
+        const hoje = new Date().toISOString().split('T')[0];
+        let label = 'Sem data';
+        if (key !== 'sem-data') {
+          const d = new Date(key + 'T12:00:00');
+          if (key === hoje) label = 'Hoje';
+          else if (key > hoje) label = `${d.toLocaleDateString('pt-BR')} (previsto)`;
+          else label = d.toLocaleDateString('pt-BR');
+        }
+        return { key, label, pedidos: pedidos.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)) };
+      });
   }, [filtrados]);
 
   const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0;
