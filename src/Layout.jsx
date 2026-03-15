@@ -551,7 +551,7 @@ export default function Layout({ children, currentPageName }) {
         <div 
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
-              ? 'ml-0 pt-12 pb-36' 
+              ? 'ml-0 pt-12 pb-24' 
               : (isOpen ? 'ml-64' : 'ml-16')
           } ${(!isMobile && currentPageName === 'Produtos') ? 'h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
