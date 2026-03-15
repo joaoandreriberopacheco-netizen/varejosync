@@ -89,23 +89,17 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
       });
       setLiquidezPorCaixa(liquidez);
 
-      // Filtrar por permissão
-      // O campo correto é caixas_pdv_autorizados_ids (salvo pelo ListaUsuariosApp)
+      // Filtrar por permissão — PROTEÇÃO TOTAL
+      // Usuário só vê caixas explicitamente autorizados (mesmo admin)
       const caixasAutorizados = currentUser.caixas_pdv_autorizados_ids || currentUser.caixas_vinculados || [];
+      
       let caixasFiltrados;
-      if (currentUser.role === 'admin') {
-        // Admin vê todos
-        caixasFiltrados = caixasPDV;
-      } else if (caixasAutorizados.length === 0) {
-        // Se nenhum caixa vinculado, vê todos (sem restrição)
-        caixasFiltrados = caixasPDV;
+      if (caixasAutorizados.length === 0) {
+        // Se não tem nenhum caixa autorizado, não pode operar (proteção)
+        caixasFiltrados = [];
       } else {
-        // Vê apenas os vinculados COM turno aberto (não pode abrir turno em caixas que não tem permissão)
-        caixasFiltrados = caixasPDV.filter(c => {
-          const autorizado = caixasAutorizados.includes(c.id);
-          const temTurnoAberto = liquidez[c.id]?.turnoAberto;
-          return autorizado && temTurnoAberto;
-        });
+        // Vê APENAS os caixas autorizados (independente de admin ou não)
+        caixasFiltrados = caixasPDV.filter(c => caixasAutorizados.includes(c.id));
       }
 
       setCaixasDisponiveis(caixasFiltrados);
