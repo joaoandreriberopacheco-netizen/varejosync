@@ -22,26 +22,24 @@ export default function PedidosCompraPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadPedidos();
-    loadStatus();
+    loadData();
   }, []);
 
-  const loadStatus = async () => {
+  const loadData = async () => {
+    setLoading(true);
     try {
-      const statusPC = await base44.entities.StatusPedidoCompra.list('ordem');
+      const [pcs, fns, statusPC] = await Promise.all([
+        base44.entities.PedidoCompra.list('-created_date'),
+        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
+        base44.entities.StatusPedidoCompra.list('ordem'),
+      ]);
+      setPedidos(pcs);
+      setFornecedores(fns);
       setStatusPedidoCompra(statusPC);
     } catch (error) {
-      console.error("Erro ao carregar status:", error);
+      console.error("Erro ao carregar dados:", error);
     }
-  };
-
-  const loadPedidos = async () => {
-    try {
-      const data = await base44.entities.PedidoCompra.list('-created_date');
-      setPedidos(data);
-    } catch (error) {
-      console.error("Erro ao carregar pedidos:", error);
-    }
+    setLoading(false);
   };
 
   const handleSave = async (pedidoData) => {
