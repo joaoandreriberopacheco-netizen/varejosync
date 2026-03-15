@@ -279,26 +279,27 @@ export default function FluxoCaixaTab() {
       )}
 
       {/* ── Busca + Filtros ─────────────────────────────────────────────── */}
-      <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: 16, overflow: 'visible' }} className="bg-white dark:bg-gray-800 shadow-sm">
-        {/* Busca */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }} className={showFilters ? 'border-b border-gray-100 dark:border-gray-700' : ''}>
-          <Search style={{ width: 15, height: 15, flexShrink: 0 }} className="text-gray-400" />
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: 16 }} className="space-y-3">
+        {/* Barra de Busca com Filtro */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar movimentações..."
-              style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', fontSize: '0.85rem' }}
-              className="text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
+              className="w-full pl-10 pr-4 h-11 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 rounded-xl outline-none focus:border-gray-300 dark:focus:border-gray-600"
             />
-            {search && <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px' }}><X style={{ width: 14, height: 14 }} className="text-gray-400" /></button>}
           </div>
-          <button 
-            onClick={() => setShowFilters(s => !s)} 
-            style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '6px', borderRadius: 8 }} 
-            className={`transition-colors ${showFilters ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`h-11 w-11 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${
+              showFilters 
+                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' 
+                : 'border border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
           >
-            <SlidersHorizontal style={{ width: 16, height: 16 }} />
+            <SlidersHorizontal className="w-4 h-4" />
           </button>
         </div>
 
