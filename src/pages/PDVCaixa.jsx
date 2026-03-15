@@ -22,29 +22,51 @@ export default function PDVCaixaPage() {
       const user = await base44.auth.me();
       setCurrentUser(user);
 
-      // Buscar conta Caixa PDV atribuída ao usuário
+      // Buscar contas Caixa PDV disponíveis
       const contas = await base44.entities.ContasFinanceiras.filter({ 
-        is_caixa_pdv: true 
+        is_caixa_pdv: true,
+        ativo: true
       });
       
-      const contaUsuario = contas.find(c => c.usuario_atribuido_id === user.id);
+      // Verificar quais caixas o usuário pode acessar
+      const caixasAutorizados = user.caixas_pdv_autorizados_ids || [];
+      let contasDisponiveis;
       
-      if (!contaUsuario) {
+      if (user.role === 'admin') {
+        // Admin vê todos
+        contasDisponiveis = contas;
+      } else if (caixasAutorizados.length === 0) {
+        // Se nenhum caixa vinculado especificamente, vê todos (sem restrição)
+        contasDisponiveis = contas;
+      } else {
+        // Vê apenas os vinculados
+        contasDisponiveis = contas.filter(c => caixasAutorizados.includes(c.id));
+      }
+      
+      if (contasDisponiveis.length === 0) {
         setLoading(false);
         return;
       }
+      
+      // Se tem apenas um caixa disponível, usa ele automaticamente
+      const contaUsuario = contasDisponiveis.length === 1 ? contasDisponiveis[0] : null;
 
-      setContaCaixaPDV(contaUsuario);
+      if (contaUsuario) {
+        setContaCaixaPDV(contaUsuario);
 
-      // Verificar se existe turno ativo para esta conta
-      const turnos = await base44.entities.TurnoCaixa.filter({ 
-        conta_caixa_pdv_id: contaUsuario.id,
-        status: 'Aberto'
-      });
+        // Verificar se existe turno ativo para esta conta
+        const turnos = await base44.entities.TurnoCaixa.filter({ 
+          conta_caixa_pdv_id: contaUsuario.id,
+          status: 'Aberto'
+        });
 
-      if (turnos.length > 0) {
-        setTurnoAtivo(turnos[0]);
+        if (turnos.length > 0) {
+          setTurnoAtivo(turnos[0]);
+        } else {
+          setShowSeletor(true);
+        }
       } else {
+        // Múltiplos caixas disponíveis - mostrar seletor
         setShowSeletor(true);
       }
 
@@ -69,8 +91,8 @@ export default function PDVCaixaPage() {
     );
   }
 
-  // Usuário não tem conta Caixa PDV atribuída
-  if (!contaCaixaPDV) {
+  // Usuário não tem acesso a nenhum caixa - só mostra se showSeletor = false
+  if (!contaCaixaPDV && !showSeletor && !loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-sm text-center">
@@ -78,10 +100,10 @@ export default function PDVCaixaPage() {
             <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white font-glacial mb-2">
-            Conta Caixa PDV não atribuída
+            Nenhum caixa disponível
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Você precisa ter uma conta Caixa PDV atribuída para acessar esta funcionalidade.
+            Você não tem acesso a nenhum caixa PDV.
             Entre em contato com o administrador do sistema.
           </p>
           <button
@@ -96,13 +118,12 @@ export default function PDVCaixaPage() {
   }
 
   // Mostrar seletor de caixa
-  if (showSeletor) {
+  if (showSeletor && currentUser) {
     return (
       <SeletorCaixaPDV
         open={showSeletor}
         onSelect={handleSelecionarCaixa}
         currentUser={currentUser}
-        contaCaixaUsuario={contaCaixaPDV}
       />
     );
   }
