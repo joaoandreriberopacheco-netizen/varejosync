@@ -148,7 +148,7 @@ export const ALL_MENU_ITEMS = [
   {
     name: 'Caixa',
     icon: Wallet,
-    page: 'Caixa',
+    page: 'PDVCaixa',
     permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
   },
   {

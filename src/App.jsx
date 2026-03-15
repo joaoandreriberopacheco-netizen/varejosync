@@ -12,7 +12,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ReimpressaoDocumentos from '@/pages/ReimpressaoDocumentos';
 import Home from '@/pages/Home';
 import Notificacoes from '@/pages/Notificacoes';
-import Caixa from '@/pages/Caixa';
+import PDVCaixa from '@/pages/PDVCaixa';
 import PDVVendedor from '@/pages/PDVVendedor';
 import PDVCaixa from '@/pages/PDVCaixa';
 import CaixasAtivos from '@/pages/CaixasAtivos';
@@ -87,9 +87,9 @@ const AuthenticatedApp = () => {
           <Notificacoes />
         </LayoutWrapper>
       } />
-      <Route path="/Caixa" element={
-        <LayoutWrapper currentPageName="Caixa">
-          <Caixa />
+      <Route path="/PDVCaixa" element={
+        <LayoutWrapper currentPageName="PDVCaixa">
+          <PDVCaixa />
         </LayoutWrapper>
       } />
       <Route path="/PDVVendedor" element={
