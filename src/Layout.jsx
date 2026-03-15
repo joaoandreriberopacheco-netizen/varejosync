@@ -198,19 +198,17 @@ export default function Layout({ children, currentPageName }) {
     };
   }, []);
 
-  const handleMouseEnter = React.useCallback(() => {
+  const handleMouseEnter = () => {
     if (!isMobile) {
-      setIsHovering(true);
       setIsOpen(true);
     }
-  }, [isMobile]);
+  };
 
-  const handleMouseLeave = React.useCallback(() => {
+  const handleMouseLeave = () => {
     if (!isMobile) {
-      setIsHovering(false);
       setIsOpen(false);
     }
-  }, [isMobile]);
+  };
 
   const handleMobileMenuToggle = () => {
     setIsOpen(!isOpen);
