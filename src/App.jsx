@@ -18,6 +18,11 @@ import MovimentosCaixa from '@/pages/MovimentosCaixa';
 import PDVVendedor from '@/pages/PDVVendedor';
 import PDVCaixa from '@/pages/PDVCaixa';
 import CaixasAtivos from '@/pages/CaixasAtivos';
+import SugestoesCompra from '@/pages/SugestoesCompra';
+import Cotacoes from '@/pages/Cotacoes';
+import PedidosCompra from '@/pages/PedidosCompra';
+import ContasFinanceiras from '@/pages/ContasFinanceiras';
+import AprovacoesFinanceiras from '@/pages/AprovacoesFinanceiras';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -112,6 +117,31 @@ const AuthenticatedApp = () => {
       <Route path="/CaixasAtivos" element={
         <LayoutWrapper currentPageName="CaixasAtivos">
           <CaixasAtivos />
+        </LayoutWrapper>
+      } />
+      <Route path="/SugestoesCompra" element={
+        <LayoutWrapper currentPageName="SugestoesCompra">
+          <SugestoesCompra />
+        </LayoutWrapper>
+      } />
+      <Route path="/Cotacoes" element={
+        <LayoutWrapper currentPageName="Cotacoes">
+          <Cotacoes />
+        </LayoutWrapper>
+      } />
+      <Route path="/PedidosCompra" element={
+        <LayoutWrapper currentPageName="PedidosCompra">
+          <PedidosCompra />
+        </LayoutWrapper>
+      } />
+      <Route path="/ContasFinanceiras" element={
+        <LayoutWrapper currentPageName="ContasFinanceiras">
+          <ContasFinanceiras />
+        </LayoutWrapper>
+      } />
+      <Route path="/AprovacoesFinanceiras" element={
+        <LayoutWrapper currentPageName="AprovacoesFinanceiras">
+          <AprovacoesFinanceiras />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

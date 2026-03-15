@@ -96,7 +96,7 @@ export function buildMenuItems(user, perfilDeAcesso) {
 // Cada item tem uma função permissaoCheck que recebe o objeto de permissões resolvidas
 import {
   LayoutDashboard, Monitor, TrendingUp, Package,
-  DollarSign, BookOpen, Settings, Wallet
+  DollarSign, BookOpen, Settings, Wallet, ShoppingCart, Warehouse, Truck
 } from 'lucide-react';
 
 export const ALL_MENU_ITEMS = [
@@ -184,25 +184,43 @@ export const ALL_MENU_ITEMS = [
     ]
   },
   {
-    name: 'Estoque',
+    name: 'Produtos',
     icon: Package,
-    permissaoCheck: (p) => p?.estoque?.acesso,
+    page: 'Produtos',
+    permissaoCheck: (p) => p?.estoque?.produtos?.ver || p?.estoque?.produtos?.editar || p?.estoque?.visualizar_produtos
+  },
+  {
+    name: 'Compras',
+    icon: ShoppingCart,
+    permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar,
     submenu: [
       {
-        name: 'Produtos',
-        page: 'Produtos',
-        permissaoCheck: (p) => p?.estoque?.produtos?.ver || p?.estoque?.produtos?.editar || p?.estoque?.visualizar_produtos
+        name: 'Sugestões de Compra',
+        page: 'SugestoesCompra',
+        permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar
       },
       {
-        name: 'Compras',
-        page: 'Compras',
+        name: 'Cotações',
+        page: 'Cotacoes',
+        permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar
+      },
+      {
+        name: 'Pedidos de Compra',
+        page: 'PedidosCompra',
         permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar
       },
       {
         name: 'Logística',
         page: 'Logistica',
         permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar
-      },
+      }
+    ]
+  },
+  {
+    name: 'Estoque',
+    icon: Warehouse,
+    permissaoCheck: (p) => p?.estoque?.acesso,
+    submenu: [
       {
         name: 'Conferência',
         page: 'ConferenciaEstoque',
@@ -241,6 +259,16 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso
       },
       {
+        name: 'Contas',
+        page: 'ContasFinanceiras',
+        permissaoCheck: (p) => p?.financeiro?.acesso
+      },
+      {
+        name: 'Aprovações',
+        page: 'AprovacoesFinanceiras',
+        permissaoCheck: (p) => p?.financeiro?.acesso
+      },
+      {
         name: 'Caixas Ativos',
         page: 'CaixasAtivos',
         permissaoCheck: (p) => p?.financeiro?.caixas_ativos || p?.financeiro?.acesso
@@ -249,16 +277,6 @@ export const ALL_MENU_ITEMS = [
         name: 'Turnos Fechados',
         page: 'TurnosFechados',
         permissaoCheck: (p) => p?.financeiro?.acesso
-      },
-      {
-        name: 'Gestão Financeira',
-        page: 'FinanceiroModulo',
-        permissaoCheck: (p) => p?.financeiro?.acesso
-      },
-      {
-        name: 'Formas de Pagamento',
-        page: 'Configuracoes',
-        permissaoCheck: (p) => p?.configuracoes?.gerenciar_formas_pagamento
       }
     ]
   },
