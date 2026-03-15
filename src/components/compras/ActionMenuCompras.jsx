@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, FileText, X, Download } from 'lucide-react';
 
-export default function ActionMenuCompras({ onNovopedido, onImportarNF }) {
+export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownloadTemplate }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -34,6 +34,20 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF }) {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Importar NF</span>
             <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors">
               <FileText className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+            </div>
+          </button>
+
+          {/* Download Template */}
+          <button
+            onClick={() => {
+              onDownloadTemplate();
+              setIsOpen(false);
+            }}
+            className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-shadow group"
+          >
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Template Excel</span>
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors">
+              <Download className="w-5 h-5 text-gray-700 dark:text-gray-200" />
             </div>
           </button>
         </div>
