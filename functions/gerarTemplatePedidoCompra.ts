@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     XLSX.utils.book_append_sheet(wb, wsItens, 'Itens');
 
     // Escrever como buffer
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'arraybuffer' });
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
 
     return new Response(excelBuffer, {
       status: 200,
