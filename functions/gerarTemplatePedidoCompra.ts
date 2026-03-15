@@ -60,10 +60,9 @@ Deno.serve(async (req) => {
     XLSX.utils.book_append_sheet(wb, wsItens, 'Itens');
 
     // Gerar arquivo
-    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const uint8Array = new Uint8Array(buffer);
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
 
-    return new Response(uint8Array, {
+    return new Response(wbout, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
