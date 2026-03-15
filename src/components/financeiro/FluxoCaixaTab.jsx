@@ -281,13 +281,13 @@ export default function FluxoCaixaTab() {
       {/* ── Busca + Filtros ─────────────────────────────────────────────── */}
       <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', borderRadius: 16, overflow: 'visible' }} className="bg-white dark:bg-gray-800 shadow-sm">
         {/* Busca */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }} className={showFilters ? 'border-b border-gray-100 dark:border-gray-700' : ''}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', minWidth: 0 }} className={showFilters ? 'border-b border-gray-100 dark:border-gray-700' : ''}>
           <Search style={{ width: 15, height: 15, flexShrink: 0 }} className="text-gray-400" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar movimentações..."
-            style={{ flex: 1, minWidth: 200, maxWidth: 'calc(100% - 80px)', background: 'transparent', border: 'none', outline: 'none', fontSize: '0.85rem' }}
+            style={{ flex: '1 1 0', minWidth: 100, background: 'transparent', border: 'none', outline: 'none', fontSize: '0.85rem' }}
             className="text-gray-700 dark:text-gray-200 placeholder:text-gray-400"
           />
           {search && <button onClick={() => setSearch('')} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px' }}><X style={{ width: 14, height: 14 }} className="text-gray-400" /></button>}
