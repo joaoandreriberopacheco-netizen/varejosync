@@ -192,21 +192,19 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
               <span className="font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</span>
             </div>
 
-            {/* Botão de Reabertura - Com autenticação */}
-            <div className="mt-4 pt-3 border-t-2 border-amber-200 dark:border-amber-800">
-              <div className="flex items-start gap-2 mb-3 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
+            {/* Botão de Reabertura - Estilo PDV */}
+            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-start gap-2 mb-3 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-lg">
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                 <span>Reabertura requer autenticação do gestor responsável</span>
               </div>
-              <Button
+              <button
                 onClick={() => onReabrir(turno)}
-                variant="outline"
-                size="sm"
-                className="w-full gap-2 text-amber-700 hover:text-amber-800 border-2 border-amber-400 hover:border-amber-500 hover:bg-amber-50 dark:text-amber-300 dark:border-amber-600 dark:hover:bg-amber-900/30 font-semibold"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-semibold text-sm shadow-sm border-2 border-amber-300 dark:border-amber-700 active:scale-[0.98] transition-transform"
               >
                 <RotateCcw className="w-4 h-4" />
                 Solicitar Reabertura
-              </Button>
+              </button>
             </div>
           </div>
         </div>
