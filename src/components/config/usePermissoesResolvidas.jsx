@@ -96,7 +96,7 @@ export function buildMenuItems(user, perfilDeAcesso) {
 // Cada item tem uma função permissaoCheck que recebe o objeto de permissões resolvidas
 import {
   LayoutDashboard, Monitor, TrendingUp, Package,
-  DollarSign, BookOpen, Settings
+  DollarSign, BookOpen, Settings, Wallet
 } from 'lucide-react';
 
 export const ALL_MENU_ITEMS = [
