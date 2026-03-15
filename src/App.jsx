@@ -10,6 +10,11 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ReimpressaoDocumentos from '@/pages/ReimpressaoDocumentos';
+import Home from '@/pages/Home';
+import Notificacoes from '@/pages/Notificacoes';
+import BalancoCaixa from '@/pages/BalancoCaixa';
+import ProcessarVendas from '@/pages/ProcessarVendas';
+import MovimentosCaixa from '@/pages/MovimentosCaixa';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -46,8 +51,8 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
+        <LayoutWrapper currentPageName="Home">
+          <Home />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (
@@ -64,6 +69,31 @@ const AuthenticatedApp = () => {
       <Route path="/ReimpressaoDocumentos" element={
         <LayoutWrapper currentPageName="ReimpressaoDocumentos">
           <ReimpressaoDocumentos />
+        </LayoutWrapper>
+      } />
+      <Route path="/Home" element={
+        <LayoutWrapper currentPageName="Home">
+          <Home />
+        </LayoutWrapper>
+      } />
+      <Route path="/Notificacoes" element={
+        <LayoutWrapper currentPageName="Notificacoes">
+          <Notificacoes />
+        </LayoutWrapper>
+      } />
+      <Route path="/BalancoCaixa" element={
+        <LayoutWrapper currentPageName="BalancoCaixa">
+          <BalancoCaixa />
+        </LayoutWrapper>
+      } />
+      <Route path="/ProcessarVendas" element={
+        <LayoutWrapper currentPageName="ProcessarVendas">
+          <ProcessarVendas />
+        </LayoutWrapper>
+      } />
+      <Route path="/MovimentosCaixa" element={
+        <LayoutWrapper currentPageName="MovimentosCaixa">
+          <MovimentosCaixa />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

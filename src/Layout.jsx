@@ -35,7 +35,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from "@/components/ui/dialog.jsx";
-import MobileBottomNav from '@/components/vendas/MobileBottomNav';
+import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
+import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import { 
   DropdownMenu, 
@@ -73,6 +74,7 @@ export default function Layout({ children, currentPageName }) {
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -250,22 +252,25 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
-
-
-        {isMobile && isOpen && (
-          <div 
-            className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40"
-            onClick={closeMobileMenu}
-          />
-        )}
+        <GlacialSidebar
+          isOpen={isMobile ? showMobileMenu : isOpen}
+          onClose={() => setShowMobileMenu(false)}
+          menuItems={menuItems}
+          currentPageName={currentPageName}
+          isMobile={isMobile}
+        />
 
         <aside
-          className={`fixed left-0 top-0 h-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 transition-[width,transform] duration-200 ease-out z-40 flex flex-col ${
+          className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width,transform] duration-200 ease-out z-40 flex flex-col ${
             isMobile 
-              ? (isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full') 
+              ? 'w-0 -translate-x-full'
               : (isOpen ? 'w-64' : 'w-16')
-          } ${isMobile && !isOpen ? 'overflow-hidden' : ''}`}
-          style={{ willChange: isMobile ? 'transform' : 'width' }}
+          } overflow-hidden`}
+          style={{ 
+            willChange: isMobile ? 'transform' : 'width',
+            boxShadow: '1px 0 0 0 rgba(0,0,0,0.05)',
+            display: 'none'
+          }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
@@ -550,7 +555,12 @@ export default function Layout({ children, currentPageName }) {
             </div>
           )}
         </div>
-        {isMobile && !isFullscreen && <MobileBottomNav currentPageName={currentPageName} />}
+        {isMobile && !isFullscreen && (
+          <GlacialBottomNav 
+            onMenuClick={() => setShowMobileMenu(true)} 
+            currentPageName={currentPageName} 
+          />
+        )}
         {isMobile && !isFullscreen && <MobileUserMenu darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
       </div>
       <Toaster />

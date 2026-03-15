@@ -101,6 +101,18 @@ import {
 
 export const ALL_MENU_ITEMS = [
   {
+    name: 'Início',
+    icon: LayoutDashboard,
+    page: 'Home',
+    permissaoCheck: () => true
+  },
+  {
+    name: 'Dashboard',
+    icon: LayoutDashboard,
+    page: 'Dashboard',
+    permissaoCheck: (p) => p?.dashboard?.acesso
+  },
+  {
     name: 'PDV',
     icon: Monitor,
     permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_caixa || p?.pdv?.acesso_supermercado,
@@ -111,8 +123,18 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.pdv?.acesso_vendedor
       },
       {
-        name: 'Caixa',
-        page: 'PDV?mode=caixa',
+        name: 'Balanço de Caixa',
+        page: 'BalancoCaixa',
+        permissaoCheck: (p) => p?.pdv?.acesso_caixa
+      },
+      {
+        name: 'Processar Vendas',
+        page: 'ProcessarVendas',
+        permissaoCheck: (p) => p?.pdv?.acesso_caixa
+      },
+      {
+        name: 'Movimentos',
+        page: 'MovimentosCaixa',
         permissaoCheck: (p) => p?.pdv?.acesso_caixa
       },
       {
@@ -126,19 +148,6 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.pdv?.acesso_auto_atendimento
       }
     ]
-  },
-  {
-    name: 'Dashboard',
-    icon: LayoutDashboard,
-    page: 'Dashboard',
-    permissaoCheck: (p) => p?.dashboard?.acesso
-  },
-  {
-    name: 'Início',
-    icon: LayoutDashboard,
-    page: 'DashboardCaixa',
-    // Mostrado somente quando tem caixa mas não tem dashboard completo
-    permissaoCheck: (p) => p?.pdv?.acesso_caixa && !p?.dashboard?.acesso
   },
   {
     name: 'Vendas',
