@@ -25,7 +25,8 @@ export default function ContasFinanceirasManager() {
     saldo_atual: 0,
     cor: '#10B981',
     observacoes: '',
-    ativo: true
+    ativo: true,
+    is_caixa_pdv: false
   });
   const { toast } = useToast();
 
@@ -56,7 +57,8 @@ export default function ContasFinanceirasManager() {
       saldo_atual: 0,
       cor: '#10B981',
       observacoes: '',
-      ativo: true
+      ativo: true,
+      is_caixa_pdv: false
     });
     setIsDialogOpen(true);
   };
@@ -141,7 +143,12 @@ export default function ContasFinanceirasManager() {
                 <div key={conta.id} className="flex items-center gap-3 rounded-2xl bg-gray-50 dark:bg-gray-700/40 px-4 py-3">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: conta.cor }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{conta.nome}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{conta.nome}</p>
+                      {conta.is_caixa_pdv && (
+                        <Badge className="text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">PDV</Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-400 dark:text-gray-500">{conta.tipo}</p>
                     {conta.banco && (
                       <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{conta.banco}{conta.agencia ? ` · Ag ${conta.agencia}` : ''}{conta.conta ? ` · Cc ${conta.conta}` : ''}</p>
@@ -174,6 +181,7 @@ export default function ContasFinanceirasManager() {
                     <TableHead>Banco/Agência/Conta</TableHead>
                     <TableHead>Saldo Atual</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>PDV</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -198,6 +206,13 @@ export default function ContasFinanceirasManager() {
                         </Badge>
                       </TableCell>
                       <TableCell>{conta.ativo ? '✓ Ativa' : '✗ Inativa'}</TableCell>
+                      <TableCell>
+                        {conta.is_caixa_pdv ? (
+                          <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">✓ Caixa PDV</Badge>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}>
@@ -309,14 +324,32 @@ export default function ContasFinanceirasManager() {
                 />
               </div>
 
-              <div className="col-span-2 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.ativo}
-                  onChange={e => setFormData({ ...formData, ativo: e.target.checked })}
-                  className="w-4 h-4 accent-emerald-600"
-                />
-                <Label>Conta ativa</Label>
+              <div className="col-span-2 space-y-3 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.ativo}
+                    onChange={e => setFormData({ ...formData, ativo: e.target.checked })}
+                    className="w-4 h-4 accent-emerald-600"
+                  />
+                  <Label>Conta ativa</Label>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_caixa_pdv}
+                    onChange={e => setFormData({ ...formData, is_caixa_pdv: e.target.checked })}
+                    className="w-4 h-4 mt-0.5 accent-indigo-600"
+                  />
+                  <div>
+                    <Label>Usar como Caixa PDV</Label>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Marque esta opção se esta conta será usada como caixa de ponto de venda (terminal/balcão). 
+                      Caixas PDV podem ser atribuídos a usuários específicos.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>
