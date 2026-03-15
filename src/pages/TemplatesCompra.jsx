@@ -15,10 +15,11 @@ export default function TemplatesCompra() {
     setIsGenerating(true);
     setMessage(null);
     try {
-      const response = await base44.functions.invoke('gerarTemplatePedidoCompra', {});
+      const axiosResponse = await base44.functions.invoke('gerarTemplatePedidoCompra', {});
+      const responseData = axiosResponse.data || axiosResponse;
       
       // Decodificar Base64 para Uint8Array
-      const binaryString = atob(response.file_content);
+      const binaryString = atob(responseData.file_content);
       const len = binaryString.length;
       const bytes = new Uint8Array(len);
       for (let i = 0; i < len; i++) {
@@ -29,7 +30,7 @@ export default function TemplatesCompra() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = response.filename;
+      a.download = responseData.filename || 'template_pedido_compra.xlsx';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
