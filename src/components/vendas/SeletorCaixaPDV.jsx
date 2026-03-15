@@ -100,8 +100,12 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
         // Se nenhum caixa vinculado, vê todos (sem restrição)
         caixasFiltrados = caixasPDV;
       } else {
-        // Vê apenas os vinculados
-        caixasFiltrados = caixasPDV.filter(c => caixasAutorizados.includes(c.id));
+        // Vê apenas os vinculados COM turno aberto (não pode abrir turno em caixas que não tem permissão)
+        caixasFiltrados = caixasPDV.filter(c => {
+          const autorizado = caixasAutorizados.includes(c.id);
+          const temTurnoAberto = liquidez[c.id]?.turnoAberto;
+          return autorizado && temTurnoAberto;
+        });
       }
 
       setCaixasDisponiveis(caixasFiltrados);
