@@ -194,7 +194,7 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
 
             {/* Botão de Reabertura - Estilo PDV */}
             <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-start gap-2 mb-3 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-lg">
+              <div className="flex items-start gap-2 mb-3 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-xl">
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                 <span>Reabertura requer autenticação do gestor responsável</span>
               </div>
@@ -203,7 +203,7 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
                   e.stopPropagation();
                   onReabrir(turno);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-semibold text-sm shadow-sm border-2 border-amber-300 dark:border-amber-700 active:scale-[0.98] transition-transform"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm shadow-sm hover:shadow-md transition-shadow active:scale-[0.98]"
                 style={{ minHeight: '48px' }}
               >
                 <RotateCcw className="w-4 h-4" />
