@@ -24,11 +24,22 @@ export default function AprovacoesFinanceirasPage() {
   }, []);
 
   const loadData = async () => {
-    const [pendentes, contasData] = await Promise.all([
-      base44.entities.LancamentoFinanceiro.filter({ status: 'Aguardando Aprovação Financeira' }),
+    const [pedidosPendentes, contasData] = await Promise.all([
+      base44.entities.PedidoCompra.filter({ status: 'Aguardando Liberação' }),
       base44.entities.ContasFinanceiras.filter({ ativo: true })
     ]);
-    setPendingTransactions(pendentes);
+    // Adapta os pedidos ao formato esperado pela UI de transações
+    const adaptados = pedidosPendentes.map(p => ({
+      id: p.id,
+      referencia_id: p.id,
+      referencia_tipo: 'PedidoCompra',
+      referencia_numero: p.numero,
+      descricao: `Compra - ${p.fornecedor_nome}`,
+      valor: p.valor_total,
+      status: 'Aguardando Liberação',
+      _pedido: p,
+    }));
+    setPendingTransactions(adaptados);
     setContas(contasData);
   };
 
