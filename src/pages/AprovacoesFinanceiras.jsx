@@ -64,27 +64,23 @@ export default function AprovacoesFinanceirasPage() {
 
   const handleAuthSuccess = async (authData) => {
     if (actionType === 'approve') {
-      const allTransactions = pendingTransactions.filter(
-        t => t.referencia_id === selectedTransaction.referencia_id
-      );
+      // Atualiza o PedidoCompra para Aprovado
+      await base44.entities.PedidoCompra.update(selectedTransaction.referencia_id, {
+        status: 'Aprovado',
+        status_aprovacao_financeira: 'Aprovado Financeiramente',
+        conta_pagamento_id: contaSelecionada,
+        data_aprovacao_financeira: new Date().toISOString(),
+      });
 
-      for (const trans of allTransactions) {
-        await base44.entities.LancamentoFinanceiro.update(trans.id, {
-          status: 'Em Aberto',
-          observacoes: (trans.observacoes || '') + 
+      // Atualiza lançamentos financeiros vinculados (se existirem)
+      const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
+        referencia_id: selectedTransaction.referencia_id
+      });
+      for (const l of lancamentos) {
+        await base44.entities.LancamentoFinanceiro.update(l.id, {
+          observacoes: (l.observacoes || '') +
             `\n[Aprovado: ${authData.intervenienteName} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
         });
-      }
-
-      if (selectedTransaction.referencia_tipo === 'PedidoCompra') {
-        const pedidos = await base44.entities.PedidoCompra.filter({ id: selectedTransaction.referencia_id });
-        if (pedidos.length > 0) {
-          await base44.entities.PedidoCompra.update(pedidos[0].id, {
-            status: 'Aguardando Recepção',
-            status_aprovacao_financeira: 'Aprovado Financeiramente',
-            conta_pagamento_id: contaSelecionada
-          });
-        }
       }
     }
 
