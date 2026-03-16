@@ -1257,10 +1257,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       );
   }
 
-  // ── Desktop: página inteira ──────────────────────────────────────────────
-
-  // Conteúdo desktop — reutilizável como página ou dentro de Dialog
-  const desktopContent = (
+  return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900 dark:text-gray-200 overflow-hidden">
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && (
