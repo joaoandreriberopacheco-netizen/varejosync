@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { ArrowRight, User, Bot, Users } from 'lucide-react';
+import { formatarDataHora } from '@/components/utils/dateUtils';
 
 const STATUS_CORES = {
   'Rascunho':             'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
