@@ -1038,17 +1038,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             <TabsContent value="pagamento" className="mt-0 px-3 py-6 space-y-6 border-0">
               {/* Botão Enviar para Aprovação Financeira */}
               {pedido && pedido.status === 'Rascunho' && formData.itens.length > 0 && !isLocked && (
-                <Button 
-                  onClick={() => {
-                    handleChange('status', 'Enviado');
-                    setTimeout(() => handleInitiateSave(), 100);
-                  }}
-                  className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-base shadow-lg gap-2"
-                >
-                  <Send className="w-5 h-5" style={{ transform: 'rotate(-45deg)' }} />
-                  Enviar para Aprovação Financeira
-                </Button>
-              )}
+                 <Button 
+                   onClick={() => {
+                     handleChange('status', 'Aguardando Liberação');
+                     setTimeout(() => handleInitiateSave(), 100);
+                   }}
+                   className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-base shadow-lg gap-2"
+                 >
+                   <Send className="w-5 h-5" style={{ transform: 'rotate(-45deg)' }} />
+                   Enviar para Aprovação Financeira
+                 </Button>
+               )}
 
               {pedido && pedido.status === 'Enviado' && pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' && (
                 <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border-0 shadow-sm">
