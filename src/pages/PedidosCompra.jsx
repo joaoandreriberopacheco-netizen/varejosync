@@ -17,6 +17,7 @@ export default function PedidosCompraPage() {
   const [search, setSearch] = useState('');
   const [statusSel, setStatusSel] = useState([]);
   const [fornecedorSel, setFornecedorSel] = useState([]);
+  const [tagsSel, setTagsSel] = useState([]);
   const [showImportador, setShowImportador] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -92,15 +93,22 @@ export default function PedidosCompraPage() {
     }
   };
 
+  const todasTags = useMemo(() => {
+    const set = new Set();
+    pedidos.forEach(p => (p.tags || []).forEach(t => t && set.add(t)));
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [pedidos]);
+
   const filtrados = useMemo(() => {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
       if (statusSel.length > 0 && !statusSel.includes(p.status)) return false;
       if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
+      if (tagsSel.length > 0 && !tagsSel.some(t => (p.tags || []).includes(t))) return false;
       return true;
     });
-  }, [pedidos, search, statusSel, fornecedorSel]);
+  }, [pedidos, search, statusSel, fornecedorSel, tagsSel]);
 
   const valorTotal = useMemo(() => {
     return filtrados.reduce((acc, p) => acc + (p.valor_total || 0), 0);
@@ -130,7 +138,7 @@ export default function PedidosCompraPage() {
       });
   }, [filtrados]);
 
-  const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0;
+  const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0 || tagsSel.length > 0;
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
@@ -145,11 +153,13 @@ export default function PedidosCompraPage() {
         search={search} onSearch={setSearch}
         statusSel={statusSel} onStatusSel={setStatusSel}
         fornecedores={fornecedores} fornecedorSel={fornecedorSel} onFornecedorSel={setFornecedorSel}
+        todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
           setStatusSel([]);
           setFornecedorSel([]);
+          setTagsSel([]);
         }}
       />
 
