@@ -29,6 +29,7 @@ import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
 import PedidoCompraFAB from './PedidoCompraFAB.jsx';
+import BannerStatusPedido from './BannerStatusPedido.jsx';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
