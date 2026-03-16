@@ -594,18 +594,40 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setIsSaving(true);
     
     try {
-      const authNote = `\n[Autenticado: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM HH:mm')}]`;
+      const tsAgora = agora();
+      const authNote = `\n[Autenticado: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${formatarLogTime()}]`;
       
+      const statusAnterior = pedido?.status || 'Rascunho';
+      const statusNovo = formData.status; // já foi setado pelo botão antes de chamar handleInitiateSave
+
       const dataToSave = { 
         ...formData, 
         valor_itens: valorItens,
         valor_total: valorTotal,
         historico: (formData.historico || '') + authNote,
-        // Opcional: Salvar URL da evidência em algum campo específico se existir no futuro
       };
       
       // Salvar pedido primeiro
       const pedidoSalvo = await onSave(dataToSave);
+      const pedidoId = pedidoSalvo?.id || pedido?.id;
+
+      // ── Registrar transição no log sempre que houver mudança de status ──
+      if (pedidoId && statusAnterior !== statusNovo) {
+        await registrarTransicao({
+          pedidoId,
+          pedidoNumero: pedidoSalvo?.numero || pedido?.numero || dataToSave.numero,
+          statusAnterior,
+          statusNovo,
+          responsavel: {
+            id: authData.intervenienteId || currentUser?.id,
+            nome: authData.intervenienteName || currentUser?.full_name,
+            email: currentUser?.email,
+          },
+          codigoOperacao: authData.operationCode || '',
+          observacao: authData.observacao || '',
+          tipoAutenticacao: authData.intervenienteId ? 'Interveniente' : 'Usuario',
+        });
+      }
 
       toast({
         title: "Sucesso",
@@ -613,21 +635,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         className: "bg-green-100 text-green-800 border-green-200"
       });
       
-      // Verificar se mudou para "Enviado" APÓS salvar
-      const mudouParaEnviado = dataToSave.status === 'Enviado' && (
-        !pedido || pedido.status !== 'Enviado'
-      );
+      // Verificar se mudou para "Aguardando Liberação" APÓS salvar
+      const mudouParaAguardando = statusNovo === 'Aguardando Liberação' && statusAnterior !== 'Aguardando Liberação';
 
-      if (mudouParaEnviado) {
-        // Pegar o ID do pedido salvo
-        const pedidoId = pedidoSalvo?.id || pedido?.id;
-
+      if (mudouParaAguardando && pedidoId) {
         // Buscar o pedido atualizado para ter certeza que tem todos os dados
         const pedidosAtualizados = await base44.entities.PedidoCompra.filter({ id: pedidoId });
         const currentPO = pedidosAtualizados[0];
 
         if (currentPO) {
-          // 1. Criar Lançamentos Financeiros (Aguardando Aprovação Financeira)
+          // 1. Criar Lançamentos Financeiros (Em Aberto, bloqueados para aprovação)
           if (formData.forma_pagamento_compra === 'À Vista') {
             await base44.entities.LancamentoFinanceiro.create({
               tipo: 'Despesa',
@@ -635,8 +652,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               terceiro_id: formData.fornecedor_id,
               terceiro_nome: formData.fornecedor_nome,
               valor: valorTotal,
-              data_vencimento: formData.data_primeiro_vencimento || format(new Date(), 'yyyy-MM-dd'),
-              status: 'Aguardando Aprovação Financeira',
+              data_vencimento: formData.data_primeiro_vencimento || dataHojeFormatado(),
+              status: 'Em Aberto',
               categoria: 'Compra de Mercadoria',
               referencia_id: currentPO.id,
               referencia_tipo: 'PedidoCompra',
@@ -644,7 +661,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               observacoes: `Pagamento à vista. Aguardando aprovação do financeiro.`
             });
           } else {
-            // Parcelado
             const numParcelas = formData.num_parcelas || 1;
             const valorParcela = valorTotal / numParcelas;
             const dataBase = formData.data_primeiro_vencimento ? 
@@ -660,7 +676,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 terceiro_nome: formData.fornecedor_nome,
                 valor: valorParcela,
                 data_vencimento: format(dataVencimento, 'yyyy-MM-dd'),
-                status: 'Aguardando Aprovação Financeira',
+                status: 'Em Aberto',
                 categoria: 'Compra de Mercadoria',
                 referencia_id: currentPO.id,
                 referencia_tipo: 'PedidoCompra',
@@ -675,7 +691,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             status_aprovacao_financeira: 'Aguardando Aprovação Financeira'
           });
           
-          // 2. Criar Tarefa para o Comprador
+          // 3. Criar Tarefa para o Comprador
           await base44.entities.Tarefa.create({
             titulo: `Aguardando Manifesto/NF - ${currentPO.numero}`,
             tipo: 'Aguardando Manifesto/NF',
@@ -690,12 +706,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             descricao: `Aguardando recebimento de NF/Manifesto do fornecedor ${formData.fornecedor_nome} para programar a recepção.`,
             data_vencimento: format(new Date(formData.data_prevista_entrega || new Date()), 'yyyy-MM-dd')
           });
-          
-
 
           toast({
-            title: "✓ PO Enviado com Sucesso!",
-            description: `Conta a pagar criada (Bloqueada) e tarefa de following atribuída.`,
+            title: "✓ PO Enviado para Aprovação!",
+            description: `Conta a pagar criada e tarefa de acompanhamento gerada.`,
             className: "bg-emerald-100 text-emerald-800"
           });
         }
@@ -710,6 +724,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     }
     
     setIsSaving(false);
+  };
+
+  // Helper interno — data de hoje no fuso do sistema como yyyy-MM-dd
+  const dataHojeFormatado = () => {
+    return new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'America/Rio_Branco',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
   };
 
   const formatCurrency = (value) => {
