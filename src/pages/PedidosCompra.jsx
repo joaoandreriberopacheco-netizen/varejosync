@@ -53,8 +53,9 @@ export default function PedidosCompraPage() {
     } else {
       const { id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
-        const count = pedidos.length + 1;
-        newPedido.numero = `PC-${new Date().getFullYear()}-${String(count).padStart(4, '0')}`;
+        // Usar gerarNumeroSequencial para garantir sequência única e uniforme (PC-00001)
+        const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
+        newPedido.numero = resp?.data?.numero || `PC-${String(pedidos.length + 1).padStart(5, '0')}`;
       }
       await base44.entities.PedidoCompra.create(newPedido);
     }
