@@ -18,8 +18,14 @@ export default function PedidosCompraPage() {
   const [statusSel, setStatusSel] = useState([]);
   const [fornecedorSel, setFornecedorSel] = useState([]);
   const [showImportador, setShowImportador] = useState(false);
-  const [statusPedidoCompra, setStatusPedidoCompra] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     loadData();
