@@ -862,6 +862,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <AlertCircle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">Pend</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="logs" 
+              className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
+              disabled={!pedido}
+            >
+              <History className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">Logs</span>
+            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto">
