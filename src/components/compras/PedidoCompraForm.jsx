@@ -1373,6 +1373,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <AlertCircle className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
               Pendências
             </TabsTrigger>
+            <TabsTrigger value="logs" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!pedido?.id}>
+              <History className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
+              Logs
+            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-y-auto p-6">
