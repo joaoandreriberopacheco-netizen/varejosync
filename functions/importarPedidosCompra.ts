@@ -1,237 +1,327 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getCellValue(cell) {
+  if (!cell) return null;
+  if (cell.value !== null && typeof cell.value === 'object' && 'result' in cell.value) return cell.value.result ?? null;
+  return cell.value ?? null;
+}
+function str(v) { return v !== null && v !== undefined ? String(v).trim() : ''; }
+function num(v) { const n = parseFloat(str(v).replace(',', '.')); return isNaN(n) ? null : n; }
+function bool(v) { const s = str(v).toUpperCase(); return s === 'SIM' || s === 'TRUE' || s === '1'; }
+function concatNome(...parts) { return parts.map(s => str(s)).filter(Boolean).join(' '); }
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const XLSX = await import('npm:xlsx@0.18.5');
-
+    const ExcelJS = (await import('npm:exceljs@4.4.0')).default;
     const body = await req.json();
-    const { file_content } = body; // Base64
+    const { file_content } = body;
+    if (!file_content) return Response.json({ error: 'Arquivo não enviado.' }, { status: 400 });
 
-    if (!file_content) {
-      return Response.json({ error: 'Arquivo não enviado.' }, { status: 400 });
-    }
-
-    // Decodificar Base64 → Uint8Array
+    // Decodificar Base64
     const binaryStr = atob(file_content);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
 
-    const wb = XLSX.read(bytes, { type: 'array' });
-    const ws = wb.Sheets['Pedido'];
-    if (!ws) return Response.json({ error: 'Aba "Pedido" não encontrada no arquivo.' }, { status: 400 });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(bytes.buffer);
 
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    // Verificar abas obrigatórias
+    const wsProd = wb.getWorksheet('Produtos Cadastrados');
+    const wsForns = wb.getWorksheet('Fornecedores Cadastrados');
+    const wsPedido = wb.getWorksheet('Pedido');
+    if (!wsProd)   return Response.json({ error: 'Aba "Produtos Cadastrados" não encontrada.' }, { status: 400 });
+    if (!wsForns)  return Response.json({ error: 'Aba "Fornecedores Cadastrados" não encontrada.' }, { status: 400 });
+    if (!wsPedido) return Response.json({ error: 'Aba "Pedido" não encontrada.' }, { status: 400 });
 
-    // ─── Ler cabeçalho do pedido (linhas 2–12, coluna B = índice 1) ────────
-    const getVal = (row) => rows[row] ? String(rows[row][1] || '').trim() : '';
+    const log = { produtos_atualizados: [], produtos_criados: [], fornecedores_atualizados: [], fornecedores_criados: [], erros: [] };
 
-    const fornecedorId      = getVal(2);
-    const fornecedorNome    = getVal(3);
-    const fornecedorTipo    = getVal(4) || 'Fornecedor';
-    const fornecedorCnpj    = getVal(5);
-    const fornecedorEmail   = getVal(6);
-    const fornecedorTel     = getVal(7);
-    const fornecedorCidade  = getVal(8);
-    const fornecedorEstado  = getVal(9);
-    const dataPrevEntrega   = getVal(10);
-    const observacoesPedido = getVal(11);
+    // ════════════════════════════════════════════════════════════════════════
+    // FASE 1 — Processar aba "Produtos Cadastrados"
+    // ════════════════════════════════════════════════════════════════════════
+    const prodHeaderRow = wsProd.getRow(1);
+    const prodColMap = {};
+    prodHeaderRow.eachCell((cell, cn) => {
+      const label = str(getCellValue(cell));
+      if (label) prodColMap[label] = cn;
+    });
 
-    // ─── Validar fornecedor ───────────────────────────────────────────────
-    let resolvedFornecedorId = fornecedorId || null;
-    let resolvedFornecedorNome = '';
+    // Mapeamento label → key
+    const PROD_LABEL_KEY = {
+      'ID (não editar)': 'id', 'Cód. Interno': 'codigo_interno', 'Nome Completo': 'nome',
+      'Nível 1 (*)': 'campo_hierarquico_1', 'Nível 2': 'campo_hierarquico_2',
+      'Nível 3': 'campo_hierarquico_3', 'Nível 4': 'campo_hierarquico_4', 'Nível 5': 'campo_hierarquico_5',
+      'Cód. Barras': 'codigo_barras', 'Marca': 'marca', 'Tipo': 'tipo', 'Curva ABCD': 'abcd',
+      'Categoria': 'categoria_nome', 'Área': 'area_codigo',
+      'Valor Compra (R$)': 'valor_compra', 'Frete Padrão (R$)': 'custo_frete_padrao',
+      'Imposto 1': 'custo_imposto1_padrao', 'Imposto 2': 'custo_imposto2_padrao',
+      'Desconto Compra': 'desconto_compra_padrao', 'Custo Total Calculado': '__custo_calc',
+      'Preço Venda (*)': 'preco_venda_padrao', 'Unidade': 'unidade_principal',
+      'Qtd/Pacote': 'unidades_por_pacote', 'Estoque Mínimo': 'estoque_minimo',
+      'Estoque Ideal': 'estoque_ideal', 'Estoque Máximo': 'estoque_maximo',
+      'Tempo Reposição (dias)': 'tempo_reposicao_dias', 'Peso (kg)': 'peso_kg',
+      'Dimensões (cm)': 'dimensoes_cm', 'Ativo (SIM/NÃO)': 'ativo',
+    };
+    const PROD_NUM_KEYS = new Set(['valor_compra','custo_frete_padrao','custo_imposto1_padrao',
+      'custo_imposto2_padrao','desconto_compra_padrao','preco_venda_padrao',
+      'unidades_por_pacote','estoque_minimo','estoque_ideal','estoque_maximo',
+      'tempo_reposicao_dias','peso_kg','__custo_calc']);
+    const PROD_BOOL_KEYS = new Set(['ativo']);
+    const PROD_READONLY  = new Set(['id','codigo_interno','nome','__custo_calc']);
+    const ABCD_VALIDOS   = new Set(['A','B','C','D']);
 
-    if (!resolvedFornecedorId) {
-      if (!fornecedorNome) {
-        return Response.json({
-          error: 'Campo obrigatório ausente: "Fornecedor Nome" ou "Fornecedor ID" deve ser preenchido no cabeçalho.'
-        }, { status: 400 });
+    // Carregar produtos existentes em memória
+    const produtosExistentes = await base44.asServiceRole.entities.Produto.list();
+    const mapaProdsById   = {};
+    const mapaProdsByNome = {};
+    produtosExistentes.forEach(p => {
+      mapaProdsById[p.id]  = p;
+      if (p.nome) mapaProdsByNome[p.nome.trim().toLowerCase()] = p;
+    });
+
+    let rowNum = 0;
+    for (const row of wsProd._rows || []) {
+      rowNum++;
+      if (!row || rowNum === 1) continue;
+
+      // Extrair dados
+      const dados = {};
+      for (const [label, cn] of Object.entries(prodColMap)) {
+        const key = PROD_LABEL_KEY[label];
+        if (!key || PROD_READONLY.has(key)) continue;
+        let val = getCellValue(row.getCell ? row.getCell(cn) : null);
+        if (PROD_NUM_KEYS.has(key))  val = num(val);
+        else if (PROD_BOOL_KEYS.has(key)) val = bool(val);
+        else val = str(val) || null;
+        if (val !== null && val !== '') dados[key] = val;
       }
 
-      // Tentar encontrar pelo nome
-      const existentes = await base44.asServiceRole.entities.Terceiro.filter({ nome: fornecedorNome });
-      if (existentes && existentes.length > 0) {
-        resolvedFornecedorId = existentes[0].id;
-        resolvedFornecedorNome = existentes[0].nome;
-      } else {
-        // Cadastrar novo fornecedor
-        const novoFornecedor = await base44.asServiceRole.entities.Terceiro.create({
-          nome: fornecedorNome,
-          tipo: ['Fornecedor', 'Cliente', 'Ambos'].includes(fornecedorTipo) ? fornecedorTipo : 'Fornecedor',
-          cpf_cnpj: fornecedorCnpj || undefined,
-          email: fornecedorEmail || undefined,
-          telefone: fornecedorTel || undefined,
-          cidade: fornecedorCidade || undefined,
-          estado: fornecedorEstado || undefined,
-          ativo: true,
-        });
-        resolvedFornecedorId = novoFornecedor.id;
-        resolvedFornecedorNome = novoFornecedor.nome;
-      }
-    } else {
-      // Buscar nome do fornecedor existente pelo ID
-      try {
-        const forn = await base44.asServiceRole.entities.Terceiro.get(resolvedFornecedorId);
-        resolvedFornecedorNome = forn?.nome || '';
-      } catch (_) {
-        return Response.json({ error: `Fornecedor ID "${resolvedFornecedorId}" não encontrado.` }, { status: 400 });
-      }
-    }
+      const idCol = prodColMap['ID (não editar)'];
+      const id = idCol ? str(getCellValue(row.getCell ? row.getCell(idCol) : null)) : '';
+      const h1 = dados['campo_hierarquico_1'] || '';
 
-    // ─── Ler itens (a partir da linha 17, índice 16) ──────────────────────
-    // Linha 14 (índice 14) = "=== ITENS DO PEDIDO ==="
-    // Linha 15 (índice 15) = cabeçalho das colunas
-    // Linha 16 (índice 16) = instruções
-    // Linha 17 (índice 17) em diante = dados
+      // Linha vazia — pular
+      if (!id && !h1) continue;
 
-    const ITEM_START = 17;
-    const itensProcessados = [];
-    const erros = [];
-    const novosProdutos = [];
-    const novosForns = 0;
-
-    for (let i = ITEM_START; i < rows.length; i++) {
-      const r = rows[i];
-      if (!r || r.every(c => String(c || '').trim() === '')) continue; // linha vazia
-
-      const produtoId         = String(r[0] || '').trim();
-      const nivel1            = String(r[1] || '').trim();
-      const nivel2            = String(r[2] || '').trim();
-      const nivel3            = String(r[3] || '').trim();
-      const nivel4            = String(r[4] || '').trim();
-      const nivel5            = String(r[5] || '').trim();
-      const marca             = String(r[6] || '').trim();
-      const tipoProduto       = String(r[7] || 'Produto').trim();
-      const unidadePrincipal  = String(r[8] || 'UN').trim();
-      const precoVenda        = parseFloat(String(r[9] || '0').replace(',', '.')) || 0;
-      const estMin            = parseFloat(String(r[10] || '0').replace(',', '.')) || 0;
-      const estIdeal          = parseFloat(String(r[11] || '0').replace(',', '.')) || 0;
-      const estMax            = parseFloat(String(r[12] || '0').replace(',', '.')) || 0;
-      const tempoReposicao    = parseFloat(String(r[13] || '0').replace(',', '.')) || undefined;
-      const unidadesPorPacote = parseFloat(String(r[14] || '1').replace(',', '.')) || 1;
-      const pesoKg            = parseFloat(String(r[15] || '').replace(',', '.')) || undefined;
-      const categoriaNome     = String(r[16] || '').trim();
-      const fornPadraoId      = String(r[17] || '').trim();
-      const quantidade        = parseFloat(String(r[18] || '').replace(',', '.'));
-      const custoUnitario     = parseFloat(String(r[19] || '').replace(',', '.'));
-
-      // Validar campos obrigatórios do item
-      if (isNaN(quantidade) || quantidade <= 0) {
-        erros.push(`Linha ${i + 1}: "Quantidade Pedido" é obrigatória e deve ser maior que zero.`);
-        continue;
-      }
-      if (isNaN(custoUnitario) || custoUnitario < 0) {
-        erros.push(`Linha ${i + 1}: "Custo Unitário" é obrigatório e deve ser >= 0.`);
+      // Validar ABCD
+      if (dados.abcd && !ABCD_VALIDOS.has(dados.abcd)) {
+        log.erros.push(`Produtos linha ${rowNum}: Curva ABCD inválida "${dados.abcd}". Use A, B, C ou D.`);
         continue;
       }
 
-      let resolvedProdutoId = produtoId || null;
-      let resolvedProdutoNome = '';
-
-      if (!resolvedProdutoId) {
-        // Novo produto — validar obrigatórios
-        if (!nivel1) {
-          erros.push(`Linha ${i + 1}: "Nível 1" é obrigatório para cadastrar um novo produto.`);
-          continue;
-        }
-        if (!unidadePrincipal) {
-          erros.push(`Linha ${i + 1}: "Unidade Principal" é obrigatória para cadastrar um novo produto.`);
-          continue;
-        }
-        if (!precoVenda && precoVenda !== 0) {
-          erros.push(`Linha ${i + 1}: "Preço de Venda Padrão" é obrigatório para cadastrar um novo produto.`);
-          continue;
-        }
-
-        // Gerar nome concatenado
-        const nomePartes = [nivel1, nivel2, nivel3, nivel4, nivel5].filter(Boolean);
-        const nomeProduto = nomePartes.join(' ');
-
-        const produtoData = {
-          campo_hierarquico_1: nivel1,
-          campo_hierarquico_2: nivel2 || undefined,
-          campo_hierarquico_3: nivel3 || undefined,
-          campo_hierarquico_4: nivel4 || undefined,
-          campo_hierarquico_5: nivel5 || undefined,
-          nome: nomeProduto,
-          marca: marca || undefined,
-          tipo: ['Produto', 'Serviço'].includes(tipoProduto) ? tipoProduto : 'Produto',
-          unidade_principal: unidadePrincipal || 'UN',
-          preco_venda_padrao: precoVenda,
-          estoque_minimo: estMin || 0,
-          estoque_ideal: estIdeal || 0,
-          estoque_maximo: estMax || 0,
-          tempo_reposicao_dias: tempoReposicao || undefined,
-          unidades_por_pacote: unidadesPorPacote || 1,
-          peso_kg: pesoKg || undefined,
-          categoria_nome: categoriaNome || undefined,
-          fornecedor_padrao_id: fornPadraoId || undefined,
-          ativo: true,
-        };
-
-        const novoProduto = await base44.asServiceRole.entities.Produto.create(produtoData);
-        resolvedProdutoId = novoProduto.id;
-        resolvedProdutoNome = novoProduto.nome;
-        novosProdutos.push(resolvedProdutoNome);
-      } else {
-        // Produto existente — buscar nome
-        try {
-          const prod = await base44.asServiceRole.entities.Produto.get(resolvedProdutoId);
-          resolvedProdutoNome = prod?.nome || resolvedProdutoId;
-        } catch (_) {
-          erros.push(`Linha ${i + 1}: Produto ID "${resolvedProdutoId}" não encontrado.`);
-          continue;
-        }
+      // Recalcular custo e nome
+      const custoCalc = (num(dados.valor_compra) || 0) + (num(dados.custo_frete_padrao) || 0) +
+                        (num(dados.custo_imposto1_padrao) || 0) + (num(dados.custo_imposto2_padrao) || 0) -
+                        (num(dados.desconto_compra_padrao) || 0);
+      const nomeGerado = concatNome(dados.campo_hierarquico_1, dados.campo_hierarquico_2,
+                                     dados.campo_hierarquico_3, dados.campo_hierarquico_4, dados.campo_hierarquico_5);
+      if (nomeGerado) { dados.nome = nomeGerado; mapaProdsById[id]?.nome; }
+      dados.preco_custo_calculado = custoCalc;
+      if (dados.preco_venda_padrao && custoCalc > 0) {
+        dados.preco_venda_percentual = parseFloat((((dados.preco_venda_padrao - custoCalc) / custoCalc) * 100).toFixed(2));
       }
 
-      itensProcessados.push({
-        produto_id: resolvedProdutoId,
-        produto_nome: resolvedProdutoNome,
-        quantidade,
-        custo_unitario: custoUnitario,
-        quantidade_vinculada: 0,
-        total: quantidade * custoUnitario,
-      });
+      if (!id) {
+        // Novo produto
+        if (!h1) { log.erros.push(`Produtos linha ${rowNum}: Nível 1 obrigatório para novo produto.`); continue; }
+        if (!dados.preco_venda_padrao && dados.preco_venda_padrao !== 0) {
+          log.erros.push(`Produtos linha ${rowNum}: Preço de Venda obrigatório para novo produto.`); continue;
+        }
+        dados.tipo = dados.tipo || 'Produto';
+        dados.unidade_principal = dados.unidade_principal || 'UN';
+        const novo = await base44.asServiceRole.entities.Produto.create(dados);
+        mapaProdsById[novo.id] = novo;
+        if (novo.nome) mapaProdsByNome[novo.nome.trim().toLowerCase()] = novo;
+        log.produtos_criados.push(novo.nome || h1);
+      } else {
+        // Atualizar existente
+        const prodAtual = mapaProdsById[id];
+        if (!prodAtual) { log.erros.push(`Produtos linha ${rowNum}: ID "${id}" não encontrado.`); continue; }
+
+        const diff = {};
+        for (const [k, v] of Object.entries(dados)) {
+          if (String(v ?? '') !== String(prodAtual[k] ?? '')) diff[k] = v;
+        }
+        if (Object.keys(diff).length > 0) {
+          await base44.asServiceRole.entities.Produto.update(id, diff);
+          Object.assign(mapaProdsById[id], diff);
+          if (diff.nome) { delete mapaProdsByNome[prodAtual.nome?.trim().toLowerCase()]; mapaProdsByNome[diff.nome.trim().toLowerCase()] = mapaProdsById[id]; }
+          log.produtos_atualizados.push(prodAtual.nome || id);
+        }
+      }
     }
 
-    if (itensProcessados.length === 0) {
+    // ════════════════════════════════════════════════════════════════════════
+    // FASE 2 — Processar aba "Fornecedores Cadastrados"
+    // ════════════════════════════════════════════════════════════════════════
+    const fornHeaderRow = wsForns.getRow(1);
+    const fornColMap = {};
+    fornHeaderRow.eachCell((cell, cn) => { const l = str(getCellValue(cell)); if (l) fornColMap[l] = cn; });
+
+    const FORN_LABEL_KEY = {
+      'ID (não editar)': 'id', 'Cód. Interno': 'codigo_interno',
+      'Nome (*)': 'nome', 'CPF/CNPJ': 'cpf_cnpj', 'E-mail': 'email',
+      'Telefone': 'telefone', 'Endereço': 'endereco', 'Bairro': 'bairro',
+      'Cidade': 'cidade', 'Estado (UF)': 'estado', 'CEP': 'cep',
+      'Tipo': 'tipo', 'Perfil': 'perfil', 'Observações': 'observacoes',
+      'Ativo (SIM/NÃO)': 'ativo',
+    };
+    const FORN_BOOL_KEYS  = new Set(['ativo']);
+    const FORN_READONLY   = new Set(['id','codigo_interno']);
+    const TIPO_FORN_VALID = new Set(['Cliente','Fornecedor','Ambos']);
+
+    const fornsExistentes = await base44.asServiceRole.entities.Terceiro.list();
+    const mapaFornsById   = {};
+    const mapaFornsByNome = {};
+    fornsExistentes.forEach(f => {
+      mapaFornsById[f.id] = f;
+      if (f.nome) mapaFornsByNome[f.nome.trim().toLowerCase()] = f;
+    });
+
+    rowNum = 0;
+    for (const row of wsForns._rows || []) {
+      rowNum++;
+      if (!row || rowNum === 1) continue;
+
+      const dados = {};
+      for (const [label, cn] of Object.entries(fornColMap)) {
+        const key = FORN_LABEL_KEY[label];
+        if (!key || FORN_READONLY.has(key)) continue;
+        let val = getCellValue(row.getCell ? row.getCell(cn) : null);
+        if (FORN_BOOL_KEYS.has(key)) val = bool(val);
+        else val = str(val) || null;
+        if (val !== null && val !== '') dados[key] = val;
+      }
+
+      const idCol = fornColMap['ID (não editar)'];
+      const id    = idCol ? str(getCellValue(row.getCell ? row.getCell(idCol) : null)) : '';
+      const nome  = dados['nome'] || '';
+
+      if (!id && !nome) continue;
+
+      if (dados.tipo && !TIPO_FORN_VALID.has(dados.tipo)) {
+        log.erros.push(`Fornecedores linha ${rowNum}: Tipo inválido "${dados.tipo}".`); continue;
+      }
+
+      if (!id) {
+        if (!nome) { log.erros.push(`Fornecedores linha ${rowNum}: Nome obrigatório para novo fornecedor.`); continue; }
+        dados.tipo = dados.tipo || 'Fornecedor';
+        const novo = await base44.asServiceRole.entities.Terceiro.create(dados);
+        mapaFornsById[novo.id] = novo;
+        if (novo.nome) mapaFornsByNome[novo.nome.trim().toLowerCase()] = novo;
+        log.fornecedores_criados.push(novo.nome);
+      } else {
+        const fornAtual = mapaFornsById[id];
+        if (!fornAtual) { log.erros.push(`Fornecedores linha ${rowNum}: ID "${id}" não encontrado.`); continue; }
+        const diff = {};
+        for (const [k, v] of Object.entries(dados)) {
+          if (String(v ?? '') !== String(fornAtual[k] ?? '')) diff[k] = v;
+        }
+        if (Object.keys(diff).length > 0) {
+          await base44.asServiceRole.entities.Terceiro.update(id, diff);
+          Object.assign(mapaFornsById[id], diff);
+          log.fornecedores_atualizados.push(fornAtual.nome || id);
+        }
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // FASE 3 — Processar aba "Pedido"
+    // ════════════════════════════════════════════════════════════════════════
+    // Cabeçalho (linhas 3-5: Forn ID, Data, Observações)
+    const getFornRow = (rn) => wsPedido.getRow(rn);
+
+    const fornecedorId     = str(getCellValue(getFornRow(3).getCell(2)));
+    const dataPrevEntrega  = str(getCellValue(getFornRow(4).getCell(2)));
+    const observacoesPed   = str(getCellValue(getFornRow(5).getCell(2)));
+
+    if (!fornecedorId) {
       return Response.json({
-        error: 'Nenhum item válido encontrado para criar o pedido.',
-        erros,
+        error: 'Campo obrigatório: "Fornecedor ID" deve ser preenchido na aba Pedido (célula B3). Use o ID da aba "Fornecedores Cadastrados".',
+        log,
       }, { status: 400 });
     }
 
-    // ─── Criar número do pedido ───────────────────────────────────────────
+    const fornecedor = mapaFornsById[fornecedorId];
+    if (!fornecedor) {
+      return Response.json({
+        error: `Fornecedor ID "${fornecedorId}" não encontrado. Verifique a aba "Fornecedores Cadastrados".`,
+        log,
+      }, { status: 400 });
+    }
+
+    // Ler itens (linha 15 em diante)
+    const itens = [];
+    for (let rn = 15; rn <= 514; rn++) {
+      const row = wsPedido.getRow(rn);
+      // Col A = ID produto, Col B = Nome produto (busca incremental), Col D = qtd, Col E = custo
+      const prodIdCell   = str(getCellValue(row.getCell(1)));
+      const prodNomeCell = str(getCellValue(row.getCell(2)));
+      const qtd          = num(getCellValue(row.getCell(4)));
+      const custo        = num(getCellValue(row.getCell(5)));
+
+      if (!prodIdCell && !prodNomeCell) continue;
+      if (qtd === null || qtd <= 0) {
+        log.erros.push(`Pedido linha ${rn}: Quantidade inválida ou ausente.`); continue;
+      }
+      if (custo === null || custo < 0) {
+        log.erros.push(`Pedido linha ${rn}: Custo Unitário inválido ou ausente.`); continue;
+      }
+
+      // Resolver produto: primeiro por ID, depois por nome
+      let produto = prodIdCell ? mapaProdsById[prodIdCell] : null;
+      if (!produto && prodNomeCell) {
+        produto = mapaProdsByNome[prodNomeCell.trim().toLowerCase()];
+      }
+      if (!produto) {
+        log.erros.push(`Pedido linha ${rn}: Produto "${prodIdCell || prodNomeCell}" não encontrado nas abas de cadastro. Linha rejeitada.`);
+        continue;
+      }
+
+      itens.push({
+        produto_id: produto.id,
+        produto_nome: produto.nome || prodNomeCell,
+        quantidade: qtd,
+        custo_unitario: custo,
+        quantidade_vinculada: 0,
+        total: qtd * custo,
+      });
+    }
+
+    if (itens.length === 0) {
+      return Response.json({
+        error: 'Nenhum item válido encontrado na aba "Pedido".',
+        log,
+      }, { status: 400 });
+    }
+
+    // Gerar número do pedido
     let numeroPedido = 'PC-001';
     try {
-      const ultimosPedidos = await base44.asServiceRole.entities.PedidoCompra.list('-created_date', 1);
-      if (ultimosPedidos && ultimosPedidos.length > 0 && ultimosPedidos[0].numero) {
-        const match = ultimosPedidos[0].numero.match(/(\d+)$/);
-        if (match) {
-          const proximo = parseInt(match[1]) + 1;
-          numeroPedido = `PC-${String(proximo).padStart(3, '0')}`;
-        }
+      const ultimos = await base44.asServiceRole.entities.PedidoCompra.list('-created_date', 1);
+      if (ultimos?.length > 0 && ultimos[0].numero) {
+        const m = ultimos[0].numero.match(/(\d+)$/);
+        if (m) numeroPedido = `PC-${String(parseInt(m[1]) + 1).padStart(3, '0')}`;
       }
     } catch (_) { /* usa padrão */ }
 
-    // ─── Calcular valor total ─────────────────────────────────────────────
-    const valorTotal = itensProcessados.reduce((sum, item) => sum + item.total, 0);
+    const valorTotal = itens.reduce((s, i) => s + i.total, 0);
 
-    // ─── Criar pedido de compra ───────────────────────────────────────────
     const pedido = await base44.asServiceRole.entities.PedidoCompra.create({
       numero: numeroPedido,
-      fornecedor_id: resolvedFornecedorId,
-      fornecedor_nome: resolvedFornecedorNome,
+      fornecedor_id: fornecedor.id,
+      fornecedor_nome: fornecedor.nome,
       data_prevista_entrega: dataPrevEntrega || undefined,
       status: 'Rascunho',
       status_aprovacao_financeira: 'Pendente',
       status_conferencia_pedido: 'Não Iniciada',
-      itens: itensProcessados,
+      itens,
       valor_total: valorTotal,
-      observacoes: observacoesPedido || undefined,
+      observacoes: observacoesPed || undefined,
       nfe_emitida: false,
       manifesto_conferido: false,
       tem_divergencias: false,
@@ -242,10 +332,8 @@ Deno.serve(async (req) => {
       success: true,
       pedido_id: pedido.id,
       pedido_numero: pedido.numero,
-      itens_criados: itensProcessados.length,
-      novos_produtos: novosProdutos,
-      novos_fornecedores: resolvedFornecedorId && !fornecedorId ? [resolvedFornecedorNome] : [],
-      erros,
+      itens_criados: itens.length,
+      log,
     });
 
   } catch (error) {
