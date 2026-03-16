@@ -1189,6 +1189,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="logs" className="mt-0 px-3 py-4 border-0">
+              <LogsPedidoCompra pedidoId={pedido?.id} />
+            </TabsContent>
           </div>
           </Tabs>
 
