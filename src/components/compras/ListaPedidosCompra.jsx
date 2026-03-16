@@ -71,26 +71,26 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
               )}
             </div>
           </span>
-          <span className="flex-none flex flex-col items-end gap-1 pl-1">
+          {/* Bloco direito — largura fixa para todos os rows, lixeira sobreposta */}
+          <span className="flex-none flex flex-col items-end gap-1 pl-1 w-20 relative">
             <span className="text-[0.82rem] font-bold text-gray-900 dark:text-white whitespace-nowrap">
               {R(pedido.valor_total)}
             </span>
             <span className="text-[0.68rem] text-gray-500 dark:text-gray-400 whitespace-nowrap">
               {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega + 'T12:00:00'), 'dd MMM', { locale: ptBR }) : '—'}
             </span>
+            {/* Lixeira sobreposta — não altera o layout */}
+            {isRascunho && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
+                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 bg-white/80 dark:bg-gray-800/80 rounded"
+                title="Excluir rascunho"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </span>
         </button>
-
-        {/* Botão lixeira — apenas para Rascunho */}
-        {isRascunho && (
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
-            className="flex-none flex items-center justify-center w-10 opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 pr-2"
-            title="Excluir rascunho"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
