@@ -768,29 +768,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         <Dialog open={true} onOpenChange={onClose}>
           <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none !bg-gray-50 !dark:bg-gray-950 z-[9999] flex flex-col overflow-hidden">
         <div className="flex-shrink-0 bg-white dark:bg-gray-900">
-          {/* Alerta de Bloqueio — mensagem adaptada ao status atual */}
-          {isLocked && (
-            <div className={`px-3 py-2 border-b ${
-              isAprovado
-                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800'
-                : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-100 dark:border-yellow-800'
-            }`}>
-              <div className="flex items-start gap-2">
-                <AlertCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-                  isAprovado ? 'text-emerald-600 dark:text-emerald-400' : 'text-yellow-600 dark:text-yellow-400'
-                }`} />
-                <div className={`text-xs ${
-                  isAprovado ? 'text-emerald-800 dark:text-emerald-200' : 'text-yellow-800 dark:text-yellow-200'
-                }`}>
-                  {isAprovado ? (
-                    <><span className="font-medium">Aprovado Financeiramente.</span> Pedido liberado para logística. Edição bloqueada.</>
-                  ) : (
-                    <><span className="font-medium">Apenas Visualização.</span> Pedido aguardando aprovação financeira. Edição bloqueada.</>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Alerta de Bloqueio */}
+          {isLocked && <BannerStatusPedido pedido={pedido} isMobile={true} />}
           {/* Header compacto com menu */}
           <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
             <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 flex-shrink-0">
