@@ -182,7 +182,7 @@ export default function PedidosCompraPage() {
 
       {/* Menu de ações FAB */}
       <ActionMenuCompras
-        onNovopedido={() => { setPedidoSelecionado(null); setIsFormOpen(true); }}
+        onNovopedido={handleNovoPedido}
         onImportarNF={() => setShowImportador(true)}
         onDownloadTemplate={handleDownloadTemplate}
       />
