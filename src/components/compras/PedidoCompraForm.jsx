@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import React, { useState, useMemo, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
