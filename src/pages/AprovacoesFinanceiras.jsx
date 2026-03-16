@@ -96,11 +96,12 @@ export default function AprovacoesFinanceirasPage() {
       });
 
       if (lancamentos.length > 0) {
-        // Atualiza os existentes: adiciona conta financeira + carimbo CMV + nota de aprovação
+        // Atualiza os existentes: tipo, conta financeira + carimbo CMV + nota de aprovação
         for (const l of lancamentos) {
           await base44.entities.LancamentoFinanceiro.update(l.id, {
+            tipo: tipoLancamento,
             conta_financeira_id: contaSelecionada,
-            is_custo_mercadoria: true,
+            is_custo_mercadoria: tipoLancamento === 'Despesa',
             pedido_compra_vinculado_id: pedido.id,
             pedido_compra_vinculado_numero: pedido.numero,
             observacoes: (l.observacoes || '') + notaAprovacao,
@@ -110,8 +111,8 @@ export default function AprovacoesFinanceirasPage() {
         // Cria agora (pedidos antigos que não tinham lançamento)
         const conta = contas.find(c => c.id === contaSelecionada);
         await base44.entities.LancamentoFinanceiro.create({
-          tipo: 'Despesa',
-          descricao: `Compra de Mercadoria - ${pedido.numero}`,
+          tipo: tipoLancamento,
+          descricao: `${tipoLancamento === 'Despesa' ? 'Compra de Mercadoria' : 'Receita de Compra'} - ${pedido.numero}`,
           terceiro_id: pedido.fornecedor_id,
           terceiro_nome: pedido.fornecedor_nome,
           valor: pedido.valor_total,
@@ -123,7 +124,7 @@ export default function AprovacoesFinanceirasPage() {
           referencia_numero: pedido.numero,
           conta_financeira_id: contaSelecionada,
           conta_financeira_nome: conta?.nome || '',
-          is_custo_mercadoria: true,
+          is_custo_mercadoria: tipoLancamento === 'Despesa',
           pedido_compra_vinculado_id: pedido.id,
           pedido_compra_vinculado_numero: pedido.numero,
           observacoes: `Gerado na aprovação financeira.${notaAprovacao}`,
