@@ -340,7 +340,7 @@ export default function FluxoCaixaTabV2() {
     if (l.status === 'Cancelado') return false;
     const dr = l.data_pagamento ? new Date(l.data_pagamento) : l.data_vencimento ? new Date(l.data_vencimento) : null;
     if (ds && de && dr && !isWithinInterval(dr, { start: ds, end: de })) return false;
-    if (contasSel.length && !contasSel.includes(l.conta_financeira_id)) return false;
+    if (contasSel.length && l.conta_financeira_id && !contasSel.includes(l.conta_financeira_id)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (search) {
       const q = search.toLowerCase();
