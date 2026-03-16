@@ -224,6 +224,38 @@ export default function AprovacoesFinanceirasPage() {
                 <p className="font-semibold text-lg">Aprovar Pagamento</p>
               </DialogHeader>
               <div className="space-y-4 py-4">
+                {/* Seletor de tipo de lançamento */}
+                <div>
+                  <Label className="text-xs text-gray-500 mb-2 block">Tipo de Lançamento</Label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setTipoLancamento('Despesa')}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        tipoLancamento === 'Despesa'
+                          ? 'bg-red-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
+                      }`}
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                      D
+                    </button>
+                    <button
+                      onClick={() => setTipoLancamento('Receita')}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        tipoLancamento === 'Receita'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
+                      }`}
+                    >
+                      <ArrowDownLeft className="w-3.5 h-3.5" />
+                      R
+                    </button>
+                    <span className="self-center text-xs text-gray-400 dark:text-gray-500">
+                      {tipoLancamento === 'Despesa' ? 'Registrar como saída financeira' : 'Registrar como entrada financeira'}
+                    </span>
+                  </div>
+                </div>
+
                 <div>
                   <Label>Conta para Pagamento</Label>
                   <Select value={contaSelecionada} onValueChange={setContaSelecionada}>
