@@ -475,9 +475,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       await base44.entities.PedidoCompra.update(pedido.id, {
         status_aprovacao_financeira: 'Solicitação de Edição Pendente',
         solicitacao_edicao_motivo: motivoEdicao,
-        solicitacao_edicao_data: new Date().toISOString(),
+        solicitacao_edicao_data: agora(),
         solicitacao_edicao_solicitante: currentUser?.full_name || currentUser?.email,
-        historico: (formData.historico || '') + `\n[Solicitação de Edição: ${motivoEdicao} | Por: ${currentUser?.full_name} | ${format(new Date(), 'dd/MM HH:mm')}]`
+        historico: (formData.historico || '') + `\n[Solicitação de Edição: ${motivoEdicao} | Por: ${currentUser?.full_name} | ${formatarLogTime()}]`
       });
 
       toast({
