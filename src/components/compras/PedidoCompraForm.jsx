@@ -645,20 +645,27 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
         if (currentPO) {
           // 1. Criar Lançamentos Financeiros (Em Aberto, bloqueados para aprovação)
+          const baseLancamento = {
+            tipo: 'Despesa',
+            terceiro_id: formData.fornecedor_id,
+            terceiro_nome: formData.fornecedor_nome,
+            status: 'Em Aberto',
+            categoria: 'Compra de Mercadoria',
+            referencia_id: currentPO.id,
+            referencia_tipo: 'PedidoCompra',
+            referencia_numero: currentPO.numero,
+            is_custo_mercadoria: true,
+            pedido_compra_vinculado_id: currentPO.id,
+            pedido_compra_vinculado_numero: currentPO.numero,
+          };
+
           if (formData.forma_pagamento_compra === 'À Vista') {
             await base44.entities.LancamentoFinanceiro.create({
-              tipo: 'Despesa',
+              ...baseLancamento,
               descricao: `Compra de Mercadoria - ${currentPO.numero} (À Vista)`,
-              terceiro_id: formData.fornecedor_id,
-              terceiro_nome: formData.fornecedor_nome,
               valor: valorTotal,
               data_vencimento: formData.data_primeiro_vencimento || dataHojeFormatado(),
-              status: 'Em Aberto',
-              categoria: 'Compra de Mercadoria',
-              referencia_id: currentPO.id,
-              referencia_tipo: 'PedidoCompra',
-              referencia_numero: currentPO.numero,
-              observacoes: `Pagamento à vista. Aguardando aprovação do financeiro.`
+              observacoes: `Pagamento à vista. Aguardando aprovação do financeiro.`,
             });
           } else {
             const numParcelas = formData.num_parcelas || 1;
@@ -670,18 +677,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             for (let i = 0; i < numParcelas; i++) {
               const dataVencimento = addDays(dataBase, i * (formData.intervalo_parcelas_dias || 30));
               await base44.entities.LancamentoFinanceiro.create({
-                tipo: 'Despesa',
+                ...baseLancamento,
                 descricao: `Compra de Mercadoria - ${currentPO.numero} (${i + 1}/${numParcelas})`,
-                terceiro_id: formData.fornecedor_id,
-                terceiro_nome: formData.fornecedor_nome,
                 valor: valorParcela,
                 data_vencimento: format(dataVencimento, 'yyyy-MM-dd'),
-                status: 'Em Aberto',
-                categoria: 'Compra de Mercadoria',
-                referencia_id: currentPO.id,
-                referencia_tipo: 'PedidoCompra',
-                referencia_numero: currentPO.numero,
-                observacoes: `Parcela ${i + 1} de ${numParcelas}. Aguardando aprovação do financeiro.`
+                observacoes: `Parcela ${i + 1} de ${numParcelas}. Aguardando aprovação do financeiro.`,
               });
             }
           }
