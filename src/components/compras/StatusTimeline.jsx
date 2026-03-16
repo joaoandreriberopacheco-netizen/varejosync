@@ -71,6 +71,42 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
     );
   }
 
+  // Retorna as classes de cor para cada bolinha com base no estado
+  const getBubbleClasses = (stage, idx, isCompleted, isActive, isPendencia) => {
+    if (isPendencia) {
+      return 'bg-orange-500 text-white ring-2 ring-offset-1 ring-orange-400';
+    }
+    if (stage.key === 'Aguardando Liberação' && isActive) {
+      return 'bg-amber-500 text-white ring-2 ring-offset-1 ring-amber-400';
+    }
+    if (stage.key === 'Aprovado' && isCompleted) {
+      return isActive
+        ? 'bg-emerald-600 text-white ring-2 ring-offset-1 ring-emerald-400'
+        : 'bg-emerald-600 text-white';
+    }
+    if (stage.key === 'Concluído' && isCompleted) {
+      return isActive
+        ? 'bg-emerald-700 text-white ring-2 ring-offset-1 ring-emerald-500'
+        : 'bg-emerald-700 text-white';
+    }
+    if (isCompleted) {
+      return isActive
+        ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-500'
+        : 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900';
+    }
+    return 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600';
+  };
+
+  // Cor da linha de conexão entre etapas
+  const getLineClass = (idx) => {
+    if (idx < currentIndex) {
+      // Linha até "Aprovado" fica verde
+      if (idx >= 1 && currentIndex >= 2) return 'bg-emerald-500';
+      return 'bg-gray-700 dark:bg-gray-300';
+    }
+    return 'bg-gray-100 dark:bg-gray-800';
+  };
+
   return (
     <div className="flex flex-col gap-1 px-1 py-0.5">
       {/* Cronômetro progressivo */}
@@ -94,19 +130,17 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
               <div className="flex flex-col items-center gap-0.5 min-w-0">
                 {!isMobile && (
                   <div className={`text-[9px] font-medium text-center leading-tight max-w-[54px] truncate ${
-                    isActive ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-600'
+                    isActive
+                      ? stage.key === 'Aguardando Liberação' ? 'text-amber-600 dark:text-amber-400'
+                      : stage.key === 'Aprovado' || stage.key === 'Concluído' ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-gray-700 dark:text-gray-200'
+                      : 'text-gray-400 dark:text-gray-600'
                   }`}>
                     {stage.label}
                   </div>
                 )}
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                    isPendencia
-                      ? 'bg-orange-500 text-white'
-                      : isCompleted
-                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'
-                  } ${isActive ? 'ring-2 ring-offset-1 ring-gray-400 dark:ring-gray-500' : ''}`}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${getBubbleClasses(stage, idx, isCompleted, isActive, isPendencia)}`}
                   title={stage.label}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -124,11 +158,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
               </div>
               {idx < stages.length - 1 && (
                 <div
-                  className={`flex-1 h-0.5 mx-0.5 transition-all ${
-                    idx < currentIndex
-                      ? 'bg-gray-900 dark:bg-gray-100'
-                      : 'bg-gray-100 dark:bg-gray-800'
-                  }`}
+                  className={`flex-1 h-0.5 mx-0.5 transition-all ${getLineClass(idx)}`}
                   style={{ minWidth: '6px' }}
                 />
               )}
