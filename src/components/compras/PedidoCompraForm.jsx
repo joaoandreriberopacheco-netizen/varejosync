@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { addDays, format } from 'date-fns';
+import { agora, formatarLogTime } from '@/components/utils/dateUtils';
+import { registrarTransicao } from './transicaoHelper';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import MobileProductSelector from './MobileProductSelector';
 import StatusTimeline from './StatusTimeline';
