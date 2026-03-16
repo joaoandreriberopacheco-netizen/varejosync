@@ -157,23 +157,22 @@ export default function PedidosCompraPage() {
       <ListaPedidosCompra
         grupos={grupos}
         loading={loading}
-        statusPedidoCompra={statusPedidoCompra}
-        onEdit={(pedido) => {
-          setPedidoSelecionado(pedido);
-          setIsFormOpen(true);
-        }}
+        onEdit={handleOpenPedido}
+        onDelete={loadData}
       />
 
-      {/* Dialogs */}
-      <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) { setIsFormOpen(false); setPedidoSelecionado(null); } }}>
-        {isFormOpen && (
-          <PedidoCompraForm
-            pedido={pedidoSelecionado}
-            onClose={() => { setIsFormOpen(false); setPedidoSelecionado(null); }}
-            onSave={handleSave}
-          />
-        )}
-      </Dialog>
+      {/* Dialog — apenas mobile */}
+      {isMobile && (
+        <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) { setIsFormOpen(false); setPedidoSelecionado(null); } }}>
+          {isFormOpen && (
+            <PedidoCompraForm
+              pedido={pedidoSelecionado}
+              onClose={() => { setIsFormOpen(false); setPedidoSelecionado(null); }}
+              onSave={handleSave}
+            />
+          )}
+        </Dialog>
+      )}
 
       <ImportadorNotaFiscal 
         isOpen={showImportador}
