@@ -19,6 +19,7 @@ export default function AprovacoesFinanceirasPage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [contaSelecionada, setContaSelecionada] = useState('');
+  const [tipoLancamento, setTipoLancamento] = useState('Despesa');
 
   useEffect(() => {
     loadData();
