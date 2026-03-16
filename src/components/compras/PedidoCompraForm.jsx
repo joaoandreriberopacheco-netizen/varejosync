@@ -1257,8 +1257,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       );
       }
 
-  return (
-    <DialogContent className="!fixed !inset-0 !max-w-none !w-screen !h-screen !p-0 !m-0 !rounded-none !border-0 !shadow-none flex flex-col dark:bg-gray-900 dark:text-gray-200 overflow-hidden">
+  // Conteúdo desktop — reutilizável como página ou dentro de Dialog
+  const desktopContent = (
+    <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900 dark:text-gray-200 overflow-hidden">
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && (
         <div className="px-4 py-2.5 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-100 dark:border-yellow-800 flex-shrink-0">
