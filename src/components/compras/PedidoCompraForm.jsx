@@ -1929,6 +1929,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
          isDisabled={!formData.fornecedor_id || formData.itens.length === 0 || isLocked}
          empresa={empresa}
        />
-      </DialogContent>
-      );
+      </div>
+  );
+
+  return desktopContent;
       }
