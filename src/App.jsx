@@ -141,6 +141,21 @@ const AuthenticatedApp = () => {
           <PedidoCompraDetalhe />
         </LayoutWrapper>
       } />
+      <Route path="/GestaoManifestosPage" element={
+        <LayoutWrapper currentPageName="GestaoManifestosPage">
+          <GestaoManifestosPage />
+        </LayoutWrapper>
+      } />
+      <Route path="/GestaoSupermanifestosPage" element={
+        <LayoutWrapper currentPageName="GestaoSupermanifestosPage">
+          <GestaoSupermanifestosPage />
+        </LayoutWrapper>
+      } />
+      <Route path="/ConferenciaEntrada" element={
+        <LayoutWrapper currentPageName="ConferenciaEntrada">
+          <ConferenciaEntrada />
+        </LayoutWrapper>
+      } />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
