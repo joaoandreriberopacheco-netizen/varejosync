@@ -22,6 +22,9 @@ import ContasFinanceiras from '@/pages/ContasFinanceiras';
 import AprovacoesFinanceiras from '@/pages/AprovacoesFinanceiras';
 import TemplatesCompra from '@/pages/TemplatesCompra';
 import PedidoCompraDetalhe from '@/pages/PedidoCompraDetalhe';
+import GestaoManifestosPage from '@/pages/GestaoManifestosPage';
+import GestaoSupermanifestosPage from '@/pages/GestaoSupermanifestosPage';
+import ConferenciaEntrada from '@/pages/ConferenciaEntrada';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
