@@ -218,7 +218,7 @@ export default function AprovacoesFinanceirasPage() {
         )}
 
         {selectedTransaction && !isAuthOpen && (
-          <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+          <Dialog open={!!selectedTransaction} onOpenChange={() => { setSelectedTransaction(null); setTipoLancamento('Despesa'); }}>
             <DialogContent className="dark:bg-gray-800">
               <DialogHeader>
                 <p className="font-semibold text-lg">Aprovar Pagamento</p>
