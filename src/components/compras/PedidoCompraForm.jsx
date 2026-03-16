@@ -1931,6 +1931,4 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
        />
       </div>
   );
-
-  return desktopContent;
-      }
+}
