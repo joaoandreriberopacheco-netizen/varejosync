@@ -1779,18 +1779,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
                 </div>
                 {pedido && pedido.status === 'Rascunho' && formData.itens.length > 0 && !isLocked && (
-                  <Button
-                    onClick={() => {
-                      handleChange('status', 'Enviado');
-                      setTimeout(() => handleInitiateSave(), 100);
-                    }}
-                    className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg flex items-center justify-center"
-                    size="icon"
-                    title="Enviar para Aprovação Financeira"
-                  >
-                    <Send className="w-8 h-8 text-white" style={{ transform: 'rotate(-45deg)' }} />
-                  </Button>
-                )}
+                   <Button
+                     onClick={() => {
+                       handleChange('status', 'Aguardando Liberação');
+                       setTimeout(() => handleInitiateSave(), 100);
+                     }}
+                     className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg flex items-center justify-center"
+                     size="icon"
+                     title="Enviar para Aprovação Financeira"
+                   >
+                     <Send className="w-8 h-8 text-white" style={{ transform: 'rotate(-45deg)' }} />
+                   </Button>
+                 )}
               </div>
             </div>
 
