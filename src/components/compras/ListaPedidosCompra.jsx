@@ -172,9 +172,9 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete }
         <GrupoDia 
           key={key} 
           label={label} 
-          pedidos={pedidos} 
-          statusPedidoCompra={statusPedidoCompra}
+          pedidos={pedidos}
           onEdit={onEdit}
+          onDelete={onDelete}
         />
       ))}
     </div>
