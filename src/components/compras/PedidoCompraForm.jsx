@@ -525,8 +525,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setIsReopenAuthOpen(false);
   };
 
+  const isAprovado = pedido && (
+    pedido.status === 'Aprovado' ||
+    pedido.status === 'Despachado' ||
+    pedido.status === 'Em Recepção' ||
+    pedido.status === 'Concluído'
+  );
+
   const isLocked = pedido && (
     pedido.status === 'Enviado' ||
+    pedido.status === 'Aguardando Liberação' ||
     pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
     pedido.status_aprovacao_financeira === 'Aprovado' || 
     pedido.status_aprovacao_financeira === 'Rejeitado'
