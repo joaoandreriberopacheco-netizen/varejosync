@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
       VC: { entity: 'ValeCompra', field: 'codigo', prefix: 'VC' },
       TC: { entity: 'TurnoCaixa', field: 'numero', prefix: 'TC' },
       MCX: { entity: 'MovimentosCaixa', field: 'numero', prefix: 'MCX' },
+      PC: { entity: 'PedidoCompra', field: 'numero', prefix: 'PC' },
     };
 
     const config = prefixMap[tipo];
