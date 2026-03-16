@@ -89,6 +89,7 @@ export default function AprovacoesFinanceirasPage() {
     setIsAuthOpen(false);
   };
 
+  // Cada item já é um pedido único — agrupa por referencia_numero para manter a mesma estrutura de UI
   const groupedTransactions = pendingTransactions.reduce((acc, t) => {
     const key = t.referencia_numero || t.id;
     if (!acc[key]) acc[key] = [];
