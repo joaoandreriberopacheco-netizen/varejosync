@@ -124,7 +124,7 @@ export default function AprovacoesFinanceirasPage() {
           <div className="space-y-3">
             {Object.entries(groupedTransactions).map(([refNumero, transacoes]) => {
               const primeira = transacoes[0];
-              const total = transacoes.reduce((sum, t) => sum + (t.valor || 0), 0);
+              const total = primeira.valor || 0;
 
               return (
                 <div key={refNumero} className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm">
