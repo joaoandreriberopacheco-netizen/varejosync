@@ -138,7 +138,7 @@ export default function AprovacoesFinanceirasPage() {
                         {formatCurrency(total)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {transacoes.length} parcela{transacoes.length > 1 ? 's' : ''}
+                        {primeira._pedido?.fornecedor_nome || ''}
                       </p>
                     </div>
                   </div>
