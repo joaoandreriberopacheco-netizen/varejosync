@@ -117,13 +117,8 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
   );
 }
 
-function GrupoDia({ label, pedidos, statusPedidoCompra, onEdit }) {
+function GrupoDia({ label, pedidos, onEdit, onDelete }) {
   const [open, setOpen] = useState(true);
-  const getStatusNome = (codigo) => {
-    const s = statusPedidoCompra.find(sp => sp.codigo === codigo);
-    return s?.nome || codigo;
-  };
-  
   const valorTotal = pedidos.reduce((acc, p) => acc + (p.valor_total || 0), 0);
 
   return (
@@ -142,9 +137,9 @@ function GrupoDia({ label, pedidos, statusPedidoCompra, onEdit }) {
           {pedidos.map(p => (
             <PedidoRow 
               key={p.id} 
-              pedido={p} 
-              statusNome={getStatusNome(p.status)}
+              pedido={p}
               onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))}
         </div>
@@ -153,7 +148,7 @@ function GrupoDia({ label, pedidos, statusPedidoCompra, onEdit }) {
   );
 }
 
-export default function ListaPedidosCompra({ grupos, loading, statusPedidoCompra, onEdit }) {
+export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete }) {
   if (loading) {
     return (
       <div className="space-y-2">
