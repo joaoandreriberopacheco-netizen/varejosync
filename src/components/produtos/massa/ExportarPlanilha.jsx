@@ -93,6 +93,16 @@ export default function ExportarPlanilha() {
             showDropDown: false,
             formulae: ['"true,false"'],
           });
+        } else if (col.enum) {
+          ws.dataValidations.add(range, {
+            type: 'list',
+            allowBlank: true,
+            showDropDown: false,
+            showErrorMessage: true,
+            errorTitle: 'Valor inválido',
+            error: `Valores permitidos: ${col.enum.join(', ')}`,
+            formulae: [`"${col.enum.join(',')}"`],
+          });
         }
       });
 
