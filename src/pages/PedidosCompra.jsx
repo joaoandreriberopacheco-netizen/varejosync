@@ -34,14 +34,12 @@ export default function PedidosCompraPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [pcs, fns, statusPC] = await Promise.all([
+      const [pcs, fns] = await Promise.all([
         base44.entities.PedidoCompra.list('-created_date'),
         base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
-        base44.entities.StatusPedidoCompra.list('ordem'),
       ]);
       setPedidos(pcs);
       setFornecedores(fns);
-      setStatusPedidoCompra(statusPC);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     }
