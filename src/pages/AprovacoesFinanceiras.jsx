@@ -77,6 +77,18 @@ export default function AprovacoesFinanceirasPage() {
         data_aprovacao_financeira: agora,
       });
 
+      // 1b. Registra a transição no log
+      await registrarTransicao({
+        pedidoId: pedido.id,
+        pedidoNumero: pedido.numero,
+        statusAnterior: 'Aguardando Liberação',
+        statusNovo: 'Aprovado',
+        responsavel: { id: authData.intervenienteId, nome: authData.intervenienteName, email: authData.intervenienteEmail || '' },
+        tipoAutenticacao: 'Interveniente',
+        codigoOperacao: authData.codigoOperacao || '',
+        observacao: `Aprovação financeira. Conta: ${contas.find(c => c.id === contaSelecionada)?.nome || contaSelecionada}`,
+      });
+
       // 2. Busca lançamentos vinculados
       const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
         referencia_id: pedido.id
