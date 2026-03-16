@@ -506,7 +506,16 @@ export default function Layout({ children, currentPageName }) {
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel className="text-xs text-gray-500">Trocar Perfil (Apenas Admin)</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleProfileSwitch('Admin')} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => { window.location.href = createPageUrl('Home'); }}
+                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
+                    >
+                      <LayoutGrid className="w-4 h-4 mr-2" />
+                      <span>Personalizar Início</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleProfileSwitch('Admin')} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleProfileSwitch('Vendedor')} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleProfileSwitch('Operador de Caixa')} className="dark:hover:bg-gray-700 dark:text-gray-200">Operador de Caixa</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleProfileSwitch('Gerente')} className="dark:hover:bg-gray-700 dark:text-gray-200">Gerente</DropdownMenuItem>
