@@ -72,6 +72,26 @@ export default function PedidosCompraPage() {
     navigate('/TemplatesCompra');
   };
 
+  const handleOpenPedido = (pedido) => {
+    if (isMobile) {
+      // Mobile: abre como dialog (comportamento atual)
+      setPedidoSelecionado(pedido);
+      setIsFormOpen(true);
+    } else {
+      // Desktop: navega para página inteira
+      navigate(`/PedidoCompraDetalhe?id=${pedido.id}`);
+    }
+  };
+
+  const handleNovoPedido = () => {
+    if (isMobile) {
+      setPedidoSelecionado(null);
+      setIsFormOpen(true);
+    } else {
+      navigate('/PedidoCompraDetalhe?id=novo');
+    }
+  };
+
   const filtrados = useMemo(() => {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
