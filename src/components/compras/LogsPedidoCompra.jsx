@@ -62,9 +62,7 @@ export default function LogsPedidoCompra({ pedidoId }) {
     <div className="space-y-2">
       {logs.map((log, idx) => {
         const Icon = TIPO_ICON[log.tipo_autenticacao] || User;
-        const dataFormatada = log.data_transicao
-          ? format(new Date(log.data_transicao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-          : '—';
+        const dataFormatada = formatarDataHora(log.data_transicao);
 
         return (
           <div key={log.id || idx} className="bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 shadow-sm">
