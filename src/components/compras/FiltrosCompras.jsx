@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, X, SlidersHorizontal } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Tag } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 
@@ -19,10 +19,18 @@ export default function FiltrosCompras({
   search, onSearch, 
   statusSel, onStatusSel, 
   fornecedores, fornecedorSel, onFornecedorSel,
+  todasTags, tagsSel, onTagsSel,
   hasActiveFilters, onLimparFiltros 
 }) {
   const [showFilters, setShowFilters] = useState(false);
   const [searchFornecedor, setSearchFornecedor] = useState('');
+  const [searchTag, setSearchTag] = useState('');
+
+  const tagsFiltradas = useMemo(() => {
+    const sorted = [...(todasTags || [])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    if (!searchTag.trim()) return sorted;
+    return sorted.filter(t => t.toLowerCase().includes(searchTag.toLowerCase()));
+  }, [todasTags, searchTag]);
 
   const fornecedoresFiltrados = useMemo(() => {
     const sorted = [...fornecedores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -47,6 +55,14 @@ export default function FiltrosCompras({
     }
   };
 
+  const toggleTag = (tag) => {
+    if (tagsSel.includes(tag)) {
+      onTagsSel(tagsSel.filter(t => t !== tag));
+    } else {
+      onTagsSel([...tagsSel, tag]);
+    }
+  };
+
   const fornecedoresSelecionadosNomes = fornecedorSel.length > 0
     ? fornecedores.filter(f => fornecedorSel.includes(f.id)).map(f => f.nome).join(', ')
     : '';
@@ -64,7 +80,7 @@ export default function FiltrosCompras({
           />
         </div>
         <button
-          onClick={() => setShowFilters(!showFilters)}
+          onClick={() => setShowFilters(v => !v)}
           className={`h-11 w-11 rounded-full flex items-center justify-center transition-all flex-shrink-0 shadow-sm relative ${
             showFilters 
               ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' 
@@ -79,13 +95,22 @@ export default function FiltrosCompras({
         </button>
       </div>
 
-      {/* Chips de fornecedores selecionados */}
-      {fornecedorSel.length > 0 && (
+      {/* Chips de fornecedores e tags selecionadas */}
+      {(fornecedorSel.length > 0 || tagsSel.length > 0) && (
         <div className="flex flex-wrap gap-1.5">
           {fornecedores.filter(f => fornecedorSel.includes(f.id)).map(f => (
             <span key={f.id} className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 rounded-full">
               {f.nome}
               <button onClick={() => toggleFornecedor(f.id)} className="hover:text-red-500 transition-colors">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          {tagsSel.map(tag => (
+            <span key={tag} className="inline-flex items-center gap-1 text-xs bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 px-2 py-1 rounded-full">
+              <Tag className="w-2.5 h-2.5" />
+              {tag}
+              <button onClick={() => toggleTag(tag)} className="hover:opacity-70 transition-opacity">
                 <X className="w-3 h-3" />
               </button>
             </span>
@@ -99,10 +124,11 @@ export default function FiltrosCompras({
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
             {hasActiveFilters && (
               <button 
-                onClick={() => {
-                  onLimparFiltros();
-                  setSearchFornecedor('');
-                }}
+                  onClick={() => {
+                    onLimparFiltros();
+                    setSearchFornecedor('');
+                    setSearchTag('');
+                  }}
                 className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
               >
                 <X className="w-3 h-3" />
@@ -134,6 +160,44 @@ export default function FiltrosCompras({
               })}
             </div>
           </div>
+
+          {/* Tags — busca incremental */}
+          {(todasTags?.length > 0) && (
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Tags</label>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                  <Input
+                    placeholder="Buscar tag..."
+                    className="pl-8 h-9 text-xs bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
+                    value={searchTag}
+                    onChange={e => setSearchTag(e.target.value)}
+                  />
+                  {searchTag && (
+                    <button onClick={() => setSearchTag('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-32 overflow-y-auto space-y-0.5 pr-1">
+                  {tagsFiltradas.map(tag => (
+                    <label key={tag} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                      <Checkbox
+                        checked={tagsSel.includes(tag)}
+                        onCheckedChange={() => toggleTag(tag)}
+                        className="w-3.5 h-3.5"
+                      />
+                      <span className="text-xs text-gray-700 dark:text-gray-200 truncate">{tag}</span>
+                    </label>
+                  ))}
+                  {tagsFiltradas.length === 0 && (
+                    <p className="text-xs text-gray-400 text-center py-2">Nenhuma tag encontrada</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Fornecedores — busca incremental */}
           {fornecedores.length > 0 && (
