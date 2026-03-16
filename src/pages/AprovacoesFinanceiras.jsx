@@ -64,22 +64,55 @@ export default function AprovacoesFinanceirasPage() {
 
   const handleAuthSuccess = async (authData) => {
     if (actionType === 'approve') {
-      // Atualiza o PedidoCompra para Aprovado
-      await base44.entities.PedidoCompra.update(selectedTransaction.referencia_id, {
+      const pedido = selectedTransaction._pedido;
+      const agora = new Date().toISOString();
+      const notaAprovacao = `\n[Aprovado: ${authData.intervenienteName} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+
+      // 1. Atualiza o PedidoCompra para Aprovado
+      await base44.entities.PedidoCompra.update(pedido.id, {
         status: 'Aprovado',
         status_aprovacao_financeira: 'Aprovado Financeiramente',
         conta_pagamento_id: contaSelecionada,
-        data_aprovacao_financeira: new Date().toISOString(),
+        data_aprovacao_financeira: agora,
       });
 
-      // Atualiza lançamentos financeiros vinculados (se existirem)
+      // 2. Busca lançamentos vinculados
       const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
-        referencia_id: selectedTransaction.referencia_id
+        referencia_id: pedido.id
       });
-      for (const l of lancamentos) {
-        await base44.entities.LancamentoFinanceiro.update(l.id, {
-          observacoes: (l.observacoes || '') +
-            `\n[Aprovado: ${authData.intervenienteName} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`
+
+      if (lancamentos.length > 0) {
+        // Atualiza os existentes: adiciona conta financeira + carimbo CMV + nota de aprovação
+        for (const l of lancamentos) {
+          await base44.entities.LancamentoFinanceiro.update(l.id, {
+            conta_financeira_id: contaSelecionada,
+            is_custo_mercadoria: true,
+            pedido_compra_vinculado_id: pedido.id,
+            pedido_compra_vinculado_numero: pedido.numero,
+            observacoes: (l.observacoes || '') + notaAprovacao,
+          });
+        }
+      } else {
+        // Cria agora (pedidos antigos que não tinham lançamento)
+        const conta = contas.find(c => c.id === contaSelecionada);
+        await base44.entities.LancamentoFinanceiro.create({
+          tipo: 'Despesa',
+          descricao: `Compra de Mercadoria - ${pedido.numero}`,
+          terceiro_id: pedido.fornecedor_id,
+          terceiro_nome: pedido.fornecedor_nome,
+          valor: pedido.valor_total,
+          data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
+          status: 'Em Aberto',
+          categoria: 'Compra de Mercadoria',
+          referencia_id: pedido.id,
+          referencia_tipo: 'PedidoCompra',
+          referencia_numero: pedido.numero,
+          conta_financeira_id: contaSelecionada,
+          conta_financeira_nome: conta?.nome || '',
+          is_custo_mercadoria: true,
+          pedido_compra_vinculado_id: pedido.id,
+          pedido_compra_vinculado_numero: pedido.numero,
+          observacoes: `Gerado na aprovação financeira.${notaAprovacao}`,
         });
       }
     }
