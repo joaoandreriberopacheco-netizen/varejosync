@@ -339,13 +339,16 @@ export default function FluxoCaixaTabV2() {
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado') return false;
     const dr = l.data_pagamento ? new Date(l.data_pagamento) : l.data_vencimento ? new Date(l.data_vencimento) : null;
+    // Lançamentos sem data são sempre exibidos; só filtra por período quando há data definida
     if (ds && de && dr && !isWithinInterval(dr, { start: ds, end: de })) return false;
+    // Só filtra por conta se o lançamento já tem conta associada; sem conta sempre aparece
     if (contasSel.length && l.conta_financeira_id && !contasSel.includes(l.conta_financeira_id)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (search) {
       const q = search.toLowerCase();
       return (l.descricao||'').toLowerCase().includes(q) || (l.categoria||'').toLowerCase().includes(q) ||
-             (l.conta_financeira_nome||'').toLowerCase().includes(q) || (l.referencia_numero||'').toLowerCase().includes(q);
+             (l.conta_financeira_nome||'').toLowerCase().includes(q) || (l.referencia_numero||'').toLowerCase().includes(q) ||
+             (l.terceiro_nome||'').toLowerCase().includes(q);
     }
     return true;
   }), [lancs, ds, de, contasSel, pendentes, search]);
