@@ -1255,7 +1255,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         </DialogContent>
       </Dialog>
       );
-      }
+  }
+
+  // ── Desktop: página inteira ──────────────────────────────────────────────
 
   // Conteúdo desktop — reutilizável como página ou dentro de Dialog
   const desktopContent = (
