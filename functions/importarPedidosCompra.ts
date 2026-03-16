@@ -299,14 +299,19 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Gerar número do pedido
-    let numeroPedido = 'PC-001';
+    // Gerar número do pedido — mesmo padrão do formulário (PC-00001)
+    let numeroPedido = 'PC-00001';
     try {
-      const ultimos = await base44.asServiceRole.entities.PedidoCompra.list('-created_date', 1);
-      if (ultimos?.length > 0 && ultimos[0].numero) {
-        const m = ultimos[0].numero.match(/(\d+)$/);
-        if (m) numeroPedido = `PC-${String(parseInt(m[1]) + 1).padStart(3, '0')}`;
+      const todos = await base44.asServiceRole.entities.PedidoCompra.list();
+      let maxNum = 0;
+      for (const p of todos) {
+        const m = (p.numero || '').match(/^PC-(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (n > maxNum) maxNum = n;
+        }
       }
+      numeroPedido = `PC-${String(maxNum + 1).padStart(5, '0')}`;
     } catch (_) { /* usa padrão */ }
 
     const valorTotal = itens.reduce((s, i) => s + i.total, 0);
