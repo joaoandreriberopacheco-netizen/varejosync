@@ -30,7 +30,8 @@ import {
   MoreVertical,
   Trash2,
   HelpCircle,
-  Printer
+  Printer,
+  LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
