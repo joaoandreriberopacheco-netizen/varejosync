@@ -21,6 +21,7 @@ import PedidosCompra from '@/pages/PedidosCompra';
 import ContasFinanceiras from '@/pages/ContasFinanceiras';
 import AprovacoesFinanceiras from '@/pages/AprovacoesFinanceiras';
 import TemplatesCompra from '@/pages/TemplatesCompra';
+import PedidoCompraDetalhe from '@/pages/PedidoCompraDetalhe';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
