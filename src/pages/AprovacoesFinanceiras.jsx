@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AprovacoesFinanceirasPage() {
