@@ -205,6 +205,21 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar
       },
       {
+        name: 'Manifestos',
+        page: 'GestaoManifestosPage',
+        permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar || p?.estoque?.compras?.ver
+      },
+      {
+        name: 'Supermanifestos',
+        page: 'GestaoSupermanifestosPage',
+        permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar || p?.estoque?.compras?.ver
+      },
+      {
+        name: 'Conferência de Entrada',
+        page: 'ConferenciaEntrada',
+        permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar || p?.estoque?.compras?.ver
+      },
+      {
         name: 'Logística',
         page: 'Logistica',
         permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar

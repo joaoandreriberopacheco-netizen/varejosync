@@ -72,7 +72,7 @@ export default function PedidoCompraDetalhe() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900 overflow-hidden z-50">
       <PedidoCompraForm
         pedido={pedido}
         onSave={handleSave}
