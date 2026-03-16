@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { AlertCircle, CheckCircle, XCircle, Eye, DollarSign } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, Eye, DollarSign, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
