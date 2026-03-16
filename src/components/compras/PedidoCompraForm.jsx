@@ -500,7 +500,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   const handleReopenForEdit = async (authData) => {
     try {
-      const authNote = `\n[Reaberto para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${format(new Date(), 'dd/MM HH:mm')}]`;
+      const authNote = `\n[Reaberto para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${formatarLogTime()}]`;
       
       await base44.entities.PedidoCompra.update(pedido.id, {
         status_aprovacao_financeira: 'Pendente',
