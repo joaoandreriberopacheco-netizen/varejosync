@@ -10,7 +10,6 @@ function getCellValue(cell) {
   if (cell.value !== null && typeof cell.value === 'object' && 'result' in cell.value) {
     return cell.value.result ?? null;
   }
-  if (cell.type === ExcelJS.ValueType.Formula) return cell.result ?? null;
   return cell.value ?? null;
 }
 
@@ -19,36 +18,35 @@ function concatHierarquia(h1, h2, h3, h4, h5) {
 }
 
 export default function ImportarPlanilha({ onParsed }) {
-   const [arquivo, setArquivo] = useState(null);
-   const [parsing, setParsing] = useState(false);
-   const inputRef = useRef(null);
+  const [arquivo, setArquivo] = useState(null);
+  const [parsing, setParsing] = useState(false);
+  const inputRef = useRef(null);
 
-   const handleArquivo = React.useCallback(async (file) => {
+  const handleArquivo = useCallback(async (file) => {
     if (!file) return;
     setArquivo(file);
     setParsing(true);
 
     try {
-      // 1. Busca produtos atuais para comparação
+      // 1. Carregar produtos para comparação
       let produtosAtuais = [];
       let skip = 0;
       const pageSize = 1000;
       let hasMore = true;
       while (hasMore) {
         const batch = await base44.entities.Produto.list('-updated_date', pageSize, skip);
-        if (batch.length === 0) { hasMore = false; } 
+        if (batch.length === 0) hasMore = false;
         else { produtosAtuais = produtosAtuais.concat(batch); skip += pageSize; }
       }
       const mapaAtual = {};
       produtosAtuais.forEach(p => { mapaAtual[p.id] = p; });
 
-      // 2. Lê a planilha
+      // 2. Processar Excel
       const buffer = await file.arrayBuffer();
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
 
-      // 3. Mapeia cabeçalhos
       const headerRow = ws.getRow(1);
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
@@ -59,104 +57,70 @@ export default function ImportarPlanilha({ onParsed }) {
 
       const alterados = [];
       const erros = [];
-      const totalRows = ws.rowCount;
 
-      for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
-        const row = ws.getRow(rowNumber);
-        const idColIndex = colIndexMap['id'];
-        const id = idColIndex ? String(getCellValue(row.getCell(idColIndex)) || '').trim() : '';
-        const h1ColIndex = colIndexMap['campo_hierarquico_1'];
-        const h1 = h1ColIndex ? String(getCellValue(row.getCell(h1ColIndex)) || '').trim() : '';
+      for (let i = 2; i <= ws.rowCount; i++) {
+        const row = ws.getRow(i);
+        const id = String(getCellValue(row.getCell(colIndexMap['id'])) || '').trim();
+        const h1 = String(getCellValue(row.getCell(colIndexMap['campo_hierarquico_1'])) || '').trim();
 
         if (!id && !h1) continue;
 
-        // --- CONSTRUÇÃO DO OBJETO LIMPO ---
-        // Aqui definimos apenas o que o Banco de Dados aceita de verdade
-        const dadosFinal = {};
+        const dadosExtraidos = {};
         
-        // Mapeamos apenas campos que sabemos que existem e são aceitos
+        // --- CORREÇÃO DE TIPOS (NUMBER vs STRING) ---
         COLUNAS_CONFIG.forEach(col => {
           if (col.editavel && !col.calculado) {
-            const colIdx = colIndexMap[col.key];
-            if (colIdx) {
-              let valor = getCellValue(row.getCell(colIdx));
-              if (col.tipo === 'numero') {
-                valor = (valor !== '' && valor !== null) ? parseFloat(valor) : 0;
-              } else if (col.tipo === 'boolean') {
-                valor = (valor === true || valor === 'SIM' || valor === 1);
-              } else {
-                valor = valor ? String(valor).trim() : '';
-              }
-              // GARANTIA: Não permite que o campo 'numero' entre aqui
-              if (col.key !== 'numero') {
-                dadosFinal[col.key] = valor;
-              }
+            const cellValue = getCellValue(row.getCell(colIndexMap[col.key]));
+            
+            if (col.tipo === 'numero') {
+              // Converte para número real. Se falhar, usa 0 (evita o erro de validação)
+              const num = parseFloat(cellValue);
+              dadosExtraidos[col.key] = isNaN(num) ? 0 : num;
+            } else {
+              // Converte para texto
+              dadosExtraidos[col.key] = cellValue ? String(cellValue).trim() : '';
             }
           }
         });
 
-        // RESOLUÇÃO DO ERRO: 'tipo: Field required'
-        dadosFinal.tipo = dadosFinal.tipo || 'Produto';
-
-        // Recalcula o Nome
-        const nomeGerado = concatHierarquia(
-          dadosFinal.campo_hierarquico_1,
-          dadosFinal.campo_hierarquico_2,
-          dadosFinal.campo_hierarquico_3,
-          dadosFinal.campo_hierarquico_4,
-          dadosFinal.campo_hierarquico_5
-        );
-        dadosFinal.nome = nomeGerado;
-
-        // 4. Decide se é novo ou edição
-        if (!id) {
-          // NOVO PRODUTO
-          if (h1) {
-            alterados.push({ id: null, dados: dadosFinal, nome: nomeGerado, isNew: true });
-          }
-        } else {
-          // EDIÇÃO DE PRODUTO EXISTENTE
-          const produtoExistente = mapaAtual[id];
-          if (produtoExistente) {
-            // Enviamos o objeto limpo
-            alterados.push({ id, dados: dadosFinal, nome: produtoExistente.nome || nomeGerado, isNew: false });
-          } else {
-            erros.push({ linha: rowNumber, mensagem: `ID ${id} não encontrado no sistema.` });
-          }
+        // Força o campo 'tipo' a ser 'Produto' se estiver vazio
+        if (!dadosExtraidos.tipo || dadosExtraidos.tipo === '') {
+          dadosExtraidos.tipo = 'Produto';
         }
 
-        if (rowNumber % 100 === 0) await new Promise(r => setTimeout(r, 0));
+        // Remove campos fantasmas que causam erro no schema
+        delete dadosExtraidos.numero; 
+
+        const nome = concatHierarquia(
+          dadosExtraidos.campo_hierarquico_1,
+          dadosExtraidos.campo_hierarquico_2,
+          dadosExtraidos.campo_hierarquico_3,
+          dadosExtraidos.campo_hierarquico_4,
+          dadosExtraidos.campo_hierarquico_5
+        );
+        dadosExtraidos.nome = nome;
+
+        if (id && mapaAtual[id]) {
+          alterados.push({ id, dados: dadosExtraidos, nome, isNew: false });
+        } else if (!id && h1) {
+          alterados.push({ id: null, dados: dadosExtraidos, nome, isNew: true });
+        }
       }
 
       onParsed({ alterados, erros });
     } catch (err) {
-      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: `Erro crítico: ${err.message}` }] });
+      toast.error("Erro ao processar: " + err.message);
     } finally {
       setParsing(false);
     }
-   }, [onParsed]);
-
-   const handleRemover = () => {
-    setArquivo(null);
-    onParsed(null);
-    if (inputRef.current) inputRef.current.value = '';
-  };
+  }, [onParsed]);
 
   return (
-    <div>
-      {!arquivo ? (
-        <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400" onClick={() => inputRef.current?.click()}>
-          <Upload className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Clique para selecionar a planilha .xlsx</p>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm">
-          <FileSpreadsheet className="w-5 h-5 text-green-600" />
-          <div className="flex-1 truncate text-sm font-medium">{arquivo.name}</div>
-          {parsing ? <span className="animate-pulse text-xs">Processando...</span> : <button onClick={handleRemover}><X className="w-4 h-4" /></button>}
-        </div>
-      )}
-      <input ref={inputRef} type="file" accept=".xlsx" className="hidden" onChange={(e) => e.target.files[0] && handleArquivo(e.target.files[0])} />
+    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer" onClick={() => inputRef.current.click()}>
+      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+      <p className="mt-2 text-sm text-gray-600">Selecione o arquivo .xlsx atualizado</p>
+      <input ref={inputRef} type="file" accept=".xlsx" className="hidden" onChange={e => handleArquivo(e.target.files[0])} />
+      {arquivo && <p className="mt-2 text-xs font-bold text-green-600">{arquivo.name}</p>}
     </div>
   );
 }
