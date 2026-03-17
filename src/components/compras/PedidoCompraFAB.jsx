@@ -1,79 +1,118 @@
 import React, { useState } from 'react';
-import { Save, Download, FileText } from 'lucide-react';
+import { Save, FileText, Paperclip, Compass, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
+import { useToast } from '@/components/ui/use-toast';
 
-export default function PedidoCompraFAB({ pedido, onSave, isSaving, isDisabled, empresa }) {
+export default function PedidoCompraFAB({ 
+  pedido, 
+  onSave, 
+  isSaving, 
+  isDisabled, 
+  onEnviarFinanceiro,
+  mostrarEnviarFinanceiro,
+  onOpenAnexos
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { toast } = useToast();
 
-  const handlePrint = () => {
-    // Será integrado com função de impressão/PDF no futuro
-    console.log('Imprimir relatório:', pedido);
+  const handlePrintPDF = async () => {
+    if (!pedido?.id) {
+      toast({ title: 'Salve o pedido antes de gerar o PDF', variant: 'destructive' });
+      return;
+    }
+    try {
+      toast({ title: 'Gerando PDF...', description: 'Aguarde...' });
+      const response = await base44.functions.invoke('gerarRelatorioPedido', { pedido_id: pedido.id });
+      if (!response?.data) throw new Error('Resposta inválida');
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Pedido_${pedido.numero || pedido.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast({ title: 'PDF gerado com sucesso!' });
+    } catch (error) {
+      toast({ title: 'Erro ao gerar PDF', description: error.message, variant: 'destructive' });
+    }
+    setIsExpanded(false);
   };
+
+  const actions = [
+    {
+      icon: <Paperclip className="w-4 h-4" />,
+      label: 'Anexos',
+      onClick: () => { onOpenAnexos?.(); setIsExpanded(false); },
+      disabled: !pedido?.id,
+    },
+    {
+      icon: <FileText className="w-4 h-4" />,
+      label: 'PDF',
+      onClick: handlePrintPDF,
+      disabled: !pedido?.id,
+    },
+    {
+      icon: <Save className="w-4 h-4" />,
+      label: 'Salvar',
+      onClick: () => { onSave(); setIsExpanded(false); },
+      disabled: isDisabled || isSaving,
+    },
+  ];
 
   return (
     <div className="fixed bottom-6 right-6 flex flex-col items-end gap-3 z-50">
-      {/* Menu expandido */}
+      {/* Botão Enviar ao Financeiro — aparece separado, acima do FAB principal */}
+      {mostrarEnviarFinanceiro && !isExpanded && (
+        <Button
+          onClick={onEnviarFinanceiro}
+          className="h-12 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg flex items-center gap-2 text-sm font-medium"
+        >
+          <Send className="w-4 h-4" style={{ transform: 'rotate(-45deg)' }} />
+          Financeiro
+        </Button>
+      )}
+
+      {/* Ações expandidas */}
       {isExpanded && (
-        <div className="flex flex-col gap-2">
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={handlePrint}
-            className="h-12 w-12 rounded-full shadow-lg bg-white dark:bg-gray-800 border-0"
-            title="Visualizar/Imprimir"
-          >
-            <FileText className="w-5 h-5" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-12 w-12 rounded-full shadow-lg bg-white dark:bg-gray-800 border-0"
-            title="Exportar"
-          >
-            <Download className="w-5 h-5" />
-          </Button>
+        <div className="flex flex-col items-end gap-2">
+          {actions.map((action, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <span className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 shadow px-2 py-1 rounded-lg">
+                {action.label}
+              </span>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={action.onClick}
+                disabled={action.disabled}
+                className="h-11 w-11 rounded-full shadow-md bg-white dark:bg-gray-800 border-0"
+              >
+                {action.icon}
+              </Button>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Botão principal (salvar) */}
+      {/* FAB principal — Bússola */}
       <Button
-        onClick={() => {
-          onSave();
-          setIsExpanded(false);
-        }}
-        disabled={isDisabled || isSaving}
+        onClick={() => setIsExpanded(prev => !prev)}
         size="icon"
-        className="h-14 w-14 rounded-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg flex items-center justify-center text-white transition-all"
-        title={isSaving ? 'Salvando...' : 'Salvar Pedido'}
+        className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all ${
+          isExpanded 
+            ? 'bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 rotate-45' 
+            : 'bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600'
+        } text-white`}
+        title="Ações do pedido"
       >
-        <Save className="w-6 h-6" />
+        {isExpanded 
+          ? <X className="w-6 h-6" />
+          : <Compass className="w-6 h-6" />
+        }
       </Button>
-
-      {/* Botão para expandir menu */}
-      {!isExpanded && (
-        <Button
-          onClick={() => setIsExpanded(true)}
-          size="icon"
-          variant="outline"
-          className="h-12 w-12 rounded-full shadow-lg bg-white dark:bg-gray-800 border-0 text-gray-600 dark:text-gray-400"
-          title="Mais opções"
-        >
-          <span className="text-lg font-bold">+</span>
-        </Button>
-      )}
-
-      {/* Botão para fechar menu */}
-      {isExpanded && (
-        <Button
-          onClick={() => setIsExpanded(false)}
-          size="icon"
-          variant="outline"
-          className="h-12 w-12 rounded-full shadow-lg bg-white dark:bg-gray-800 border-0 text-gray-600 dark:text-gray-400"
-          title="Fechar menu"
-        >
-          <span className="text-lg font-bold">×</span>
-        </Button>
-      )}
     </div>
   );
 }
