@@ -204,7 +204,7 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
 // ── Expande até nível visual alvo ────────────────────────────────────────────
 export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', visualLevel = 0) {
   const keys = new Set();
-  if (visualLevel >= targetLevel) return keys;
+  if (!treeNode || visualLevel >= targetLevel) return keys;
 
   for (const [key, node] of Object.entries(treeNode)) {
     const rawKey  = parentKey ? `${parentKey}||${key}` : key;
