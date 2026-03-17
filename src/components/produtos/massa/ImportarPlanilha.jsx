@@ -30,7 +30,22 @@ export default function ImportarPlanilha({ onParsed }) {
     setParsing(true);
 
     try {
-      const produtosAtuais = await base44.entities.Produto.list('-updated_date', 2000);
+      // Carregar todos os produtos sem limite
+      let produtosAtuais = [];
+      let skip = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const batch = await base44.entities.Produto.list('-updated_date', pageSize, skip);
+        if (batch.length === 0) {
+          hasMore = false;
+        } else {
+          produtosAtuais = produtosAtuais.concat(batch);
+          skip += pageSize;
+        }
+      }
+      
       const mapaAtual = {};
       produtosAtuais.forEach(p => { mapaAtual[p.id] = p; });
 

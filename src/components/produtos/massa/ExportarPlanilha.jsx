@@ -26,7 +26,21 @@ export default function ExportarPlanilha() {
   const handleExportar = async () => {
     setLoading(true);
     try {
-      const produtos = await base44.entities.Produto.list('-updated_date', 2000);
+      // Carregar todos os produtos sem limite
+      let produtos = [];
+      let skip = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const batch = await base44.entities.Produto.list('-updated_date', pageSize, skip);
+        if (batch.length === 0) {
+          hasMore = false;
+        } else {
+          produtos = produtos.concat(batch);
+          skip += pageSize;
+        }
+      }
 
       const wb = new ExcelJS.Workbook();
       wb.creator = 'VarejoSync';
