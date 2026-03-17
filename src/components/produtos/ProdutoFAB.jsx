@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Upload, RotateCcw, ChevronUp } from 'lucide-react';
+import { Plus, Upload, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { Link } from 'react-router-dom';
 
-export default function ProdutoFAB({ 
-  onNovoClicked, 
-  onImportarClicked, 
-  onAtualizarEstoqueClicked,
-  onDesfazerClicked 
-}) {
+export default function ProdutoFAB({ onNovoClicked }) {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const menuItems = [
     {
@@ -22,29 +18,11 @@ export default function ProdutoFAB({
       }
     },
     {
-      id: 'importar',
-      label: 'Importar Produtos',
+      id: 'editar-massa',
+      label: 'Edição em Massa',
       icon: Upload,
       onClick: () => {
-        onImportarClicked?.();
-        setIsOpen(false);
-      }
-    },
-    {
-      id: 'estoque',
-      label: 'Atualizar Estoque',
-      icon: Upload,
-      onClick: () => {
-        onAtualizarEstoqueClicked?.();
-        setIsOpen(false);
-      }
-    },
-    {
-      id: 'desfazer',
-      label: 'Desfazer Importação',
-      icon: RotateCcw,
-      onClick: () => {
-        onDesfazerClicked?.();
+        navigate(createPageUrl('ImportacaoProdutos'));
         setIsOpen(false);
       }
     }
