@@ -1,11 +1,41 @@
 import React, { useState } from 'react';
-import { Plus, FileText, X, Download } from 'lucide-react';
+import { Plus, FileText, X, Download, FileBarChart2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 // FAB radial — igual ao PedidoCompraFAB: arco acima-esquerda com backdrop blur
 const RADIUS = 72;
 
-export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownloadTemplate }) {
+export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownloadTemplate, grupos = [], kpis = {} }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [gerando, setGerando] = useState(false);
+
+  const handleGerarRelatorio = async () => {
+    setGerando(true);
+    try {
+      const resposta = await base44.functions.invoke('gerarRelatorioPedidosCompra', {
+        grupos,
+        filtros_desc: 'Todos os pedidos',
+        kpis
+      });
+      
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RelatorioCompras_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast.success('Relatório gerado com sucesso');
+      setIsOpen(false);
+    } catch (error) {
+      toast.error('Erro ao gerar relatório');
+      console.error(error);
+    } finally {
+      setGerando(false);
+    }
+  };
 
   const actions = [
     {
@@ -25,6 +55,13 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownlo
       label: 'Template Excel',
       onClick: () => { onDownloadTemplate(); setIsOpen(false); },
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+    },
+    {
+      icon: <FileBarChart2 className="w-5 h-5" />,
+      label: 'Relatório PDF',
+      onClick: handleGerarRelatorio,
+      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+      disabled: gerando,
     },
   ];
 
@@ -70,7 +107,8 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownlo
               </span>
               <button
                 onClick={action.onClick}
-                className={`h-11 w-11 rounded-full shadow-lg flex items-center justify-center transition-all ${action.color}`}
+                disabled={action.disabled}
+                className={`h-11 w-11 rounded-full shadow-lg flex items-center justify-center transition-all ${action.color} ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {action.icon}
               </button>

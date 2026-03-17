@@ -162,6 +162,12 @@ export default function PedidosCompraPage() {
         onNovopedido={handleNovoPedido}
         onImportarNF={() => setShowImportador(true)}
         onDownloadTemplate={handleDownloadTemplate}
+        grupos={grupos}
+        kpis={{
+          totalPedidos: filtrados.length,
+          totalGeral: valorTotal,
+          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0)
+        }}
       />
     </div>
   );
