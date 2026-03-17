@@ -139,12 +139,21 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
 
         // Atualizar pedidos deste fornecedor com o manifesto_entrada_id
         await Promise.all(
-          grupo.pedidos.map(pedido =>
-            base44.entities.PedidoCompra.update(pedido.id, {
+          grupo.pedidos.map(async (pedido) => {
+            await base44.entities.PedidoCompra.update(pedido.id, {
               manifesto_entrada_id: novoManifesto.id,
               status: 'Em Trânsito'
-            })
-          )
+            });
+            await registrarTransicao({
+              pedidoId: pedido.id,
+              pedidoNumero: pedido.numero,
+              statusAnterior: pedido.status,
+              statusNovo: 'Em Trânsito',
+              responsavel: { id: '', nome: 'Sistema', email: '' },
+              observacao: `Vinculado ao Manifesto ${novoManifesto.numero}`,
+              tipoAutenticacao: 'Sistema',
+            });
+          })
         );
 
         contadorManifestos++;
