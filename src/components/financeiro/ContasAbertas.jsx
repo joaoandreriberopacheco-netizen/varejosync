@@ -38,7 +38,7 @@ function periodoRange(p, cs, ce) {
   if (p === 'vencidas') return { s: null, e: startOfDay(h), vencidas: true };
   if (p === 'hoje')     return { s: startOfDay(h), e: endOfDay(h) };
   if (p === 'semana')   return { s: startOfDay(h), e: endOfDay(addDays(h, 7)) };
-  if (p === 'mes')      return { s: startOfDay(h), e: endOfMonth(h) };
+  if (p === 'mes')      return { s: startOfMonth(h), e: endOfMonth(h) };
   if (p === 'futuras')  return { s: addDays(h, 1), e: null };
   if (p === 'personalizado') return {
     s: cs ? startOfDay(new Date(cs)) : null,
