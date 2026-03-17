@@ -14,9 +14,12 @@ export function iqrMean(values) {
 
 // ── Coleta todos os SKUs descendentes de um nó ────────────────────────────────
 export function collectSkus(node) {
-  const skus = [...node.skus];
-  for (const child of Object.values(node.children)) {
-    skus.push(...collectSkus(child));
+  if (!node) return [];
+  const skus = [...(node.skus || [])];
+  if (node.children) {
+    for (const child of Object.values(node.children)) {
+      skus.push(...collectSkus(child));
+    }
   }
   return skus;
 }
