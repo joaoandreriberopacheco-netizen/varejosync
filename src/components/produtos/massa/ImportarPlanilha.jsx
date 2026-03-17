@@ -198,10 +198,9 @@ export default function ImportarPlanilha({ onParsed }) {
       }
 
       if (validacaoFalhou) {
-       onParsed(null);
+       console.log('❌ Validação falhou, rejeitando importação');
+       onParsed({ alterados: [], erros: [{ linha: 0, mensagem: 'Importação cancelada: Existem produtos com preço de venda menor que o custo total.' }] });
        setParsing(false);
-       setArquivo(null);
-       if (inputRef.current) inputRef.current.value = '';
        return;
       }
 
