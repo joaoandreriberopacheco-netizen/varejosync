@@ -1190,13 +1190,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
          </DialogContent>
        </Dialog>
 
-       {/* FAB para Salvar */}
+       {/* FAB multi-role com Bússola */}
        <PedidoCompraFAB 
-         pedido={{ ...formData, valor_itens: valorItens, valor_total: valorTotal }}
+         pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
          onSave={handleInitiateSave}
          isSaving={isSaving}
          isDisabled={!formData.fornecedor_id || formData.itens.length === 0 || isLocked}
-         empresa={empresa}
+         mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
+         onEnviarFinanceiro={() => {
+           handleChange('status', 'Aguardando Liberação');
+           setTimeout(() => handleInitiateSave(), 100);
+         }}
+         onOpenAnexos={() => { /* futuro: abrir modal de anexos */ }}
        />
       </div>
   );
