@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Upload, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/components/utils';
 
 export default function ProdutoFAB({ onNovoClicked }) {
   const [isOpen, setIsOpen] = useState(false);
