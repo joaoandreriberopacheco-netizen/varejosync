@@ -24,6 +24,7 @@ import VendaDetalheDialog from './caixa/VendaDetalheDialog';
 import SaldoValeDialog from './caixa/SaldoValeDialog';
 import ProcessarVendasView from './caixa/ProcessarVendasView';
 import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog';
+import PromissoriaDialog from './caixa/PromissoriaDialog';
 import {
   Receipt,
   DollarSign,
@@ -156,6 +157,8 @@ export default function PDVCaixa() {
   const [clienteVenda, setClienteVenda] = useState(null);
   const [saldoResidualVale, setSaldoResidualVale] = useState(null); // { codigo, saldo }
   const [processandoVenda, setProcessandoVenda] = useState(false); // Trava de duplo clique
+  const [showPromissoria, setShowPromissoria] = useState(false);
+  const [dadosPromissoria, setDadosPromissoria] = useState(null); // { pedido, valorFiado }
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
   const [showVendasDialog, setShowVendasDialog] = useState(false);
@@ -734,7 +737,15 @@ export default function PDVCaixa() {
       });
 
       setIsDialogOpen(false);
-      setShowLiberacaoEntrega(true);
+
+      // Se houver fiado, abre promissória antes da liberação
+      if (pagamentosContaPagar > 0) {
+        setDadosPromissoria({ pedido: { ...pedidoSelecionado, numero: numeroPedido, pagamentos: pagamentosArray }, valorFiado: pagamentosContaPagar });
+        setShowPromissoria(true);
+      } else {
+        setShowLiberacaoEntrega(true);
+      }
+
       loadData();
     } catch (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -1795,6 +1806,13 @@ export default function PDVCaixa() {
         <ComprovanteDespesaDialog open={showComprovanteDespesa} onOpenChange={setShowComprovanteDespesa} despesaCriada={despesaCriada} currentUser={currentUser} formatValor={formatValor} />
         <DespesaDialog open={showDespesaDialog} onOpenChange={setShowDespesaDialog} despesaStep={despesaStep} setDespesaStep={setDespesaStep} descricaoDespesa={descricaoDespesa} setDescricaoDespesa={setDescricaoDespesa} categoriaDespesa={categoriaDespesa} setCategoriaDespesa={setCategoriaDespesa} valorDespesaNum={valorDespesaNum} setValorDespesaNum={setValorDespesaNum} contaCaixaPDV={contaCaixaPDV} onSalvar={handleSalvarDespesaNum} formatarValorExibicao={formatarValorExibicao} />
         <RetornoEdicaoDialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog} motivo={motivoRetorno} onMotivoChange={setMotivoRetorno} onConfirmar={handleRetornarParaEdicao} />
+        <PromissoriaDialog
+          open={showPromissoria}
+          onClose={() => { setShowPromissoria(false); setShowLiberacaoEntrega(true); }}
+          pedido={dadosPromissoria?.pedido}
+          valorFiado={dadosPromissoria?.valorFiado}
+          empresaNome={configVenda?.nome_empresa || 'VAREJOSYNC'}
+        />
       </div>
     </div>);
 
