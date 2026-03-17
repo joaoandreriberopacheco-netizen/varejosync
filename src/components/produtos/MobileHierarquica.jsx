@@ -95,7 +95,7 @@ function RenderNode({ nodeKey, node, depth, expanded, toggle, onEdit, formatarNu
   const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
   const finalKey = buildCollapsedKey(nodeKey, node, finalNode);
 
-  const isLeaf       = Object.keys(finalNode.children).length === 0;
+  const isLeaf       = !finalNode.children || Object.keys(finalNode.children).length === 0;
   const allSkus      = collectSkus(finalNode);
   const estoqueTotal = allSkus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
   const isExpanded   = expanded[finalKey] !== false; // default aberto
