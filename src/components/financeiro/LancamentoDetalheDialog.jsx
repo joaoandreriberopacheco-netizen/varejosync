@@ -120,39 +120,6 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       return;
     }
     await aplicarPagamento('apenas_esta');
-    setSaving(true);
-    const conta = contas.find((c) => c.id === contaId);
-
-    if (isPagoLocal && !isPagoOriginal) {
-      // Marcar como pago
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-        status: 'Pago',
-        data_pagamento: dataPagamento,
-        status_conciliacao: 'Pendente',
-        conta_financeira_id: contaId,
-        conta_financeira_nome: conta?.nome
-      });
-      if (conta) {
-        const delta = isReceita ? lancamento.valor || 0 : -(lancamento.valor || 0);
-        await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
-      }
-      toast({ title: 'Pagamento registrado!', className: 'bg-gray-100 text-gray-800' });
-    } else if (!isPagoLocal && isPagoOriginal) {
-      // Reverter para em aberto
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, { status: 'Em Aberto' });
-      toast({ title: 'Marcado como em aberto', className: 'bg-gray-100 text-gray-800' });
-    } else if (isPagoLocal && isPagoOriginal) {
-      // Atualizar data/conta
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-        data_pagamento: dataPagamento,
-        conta_financeira_id: contaId,
-        conta_financeira_nome: conta?.nome
-      });
-      toast({ title: 'Dados atualizados!', className: 'bg-gray-100 text-gray-800' });
-    }
-
-    onSaved?.();
-    setSaving(false);
   };
 
   const handleConciliar = async () => {
