@@ -1807,6 +1807,18 @@ export default function ProdutosPage() {
         }}
       />
 
+      {/* FAB - Floating Action Button */}
+      <ProdutoFAB 
+        onNovoClicked={handleAddNew}
+        onImportarClicked={() => setIsImportDialogOpen(true)}
+        onAtualizarEstoqueClicked={() => setIsImportCustosDialogOpen(true)}
+        onDesfazerClicked={() => {
+          // Aqui você pode abrir um dialog de desfazer ou redirecionar
+          // Por enquanto, apenas abre um placeholder
+          window.location.href = createPageUrl('EditarProdutosEmMassa');
+        }}
+      />
+
       {/* Dialog de Preview de Custos (Existing) */}
       <Dialog open={isPreviewCustosDialogOpen} onOpenChange={setIsPreviewCustosDialogOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
