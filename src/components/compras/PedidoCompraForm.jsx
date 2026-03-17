@@ -797,22 +797,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           </DropdownMenu>
         )}
 
-        {isLocked && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsSolicitarEdicaoOpen(true)} 
-            className="h-8 text-xs px-2"
-            title="Solicitar liberação para editar"
-          >
-            Solicitar Edição
-          </Button>
-        )}
-        {canReopen && isLocked && (
-          <Button variant="ghost" size="sm" onClick={() => setIsReopenAuthOpen(true)} className="h-8 text-xs px-2">
-            Reabrir (Admin)
-          </Button>
-        )}
+
       </div>
 
       {/* Timeline */}
