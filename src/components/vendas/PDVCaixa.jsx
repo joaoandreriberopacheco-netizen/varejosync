@@ -23,7 +23,7 @@ import VendasTurnoDialog from './caixa/VendasTurnoDialog';
 import VendaDetalheDialog from './caixa/VendaDetalheDialog';
 import SaldoValeDialog from './caixa/SaldoValeDialog';
 import ProcessarVendasView from './caixa/ProcessarVendasView';
-import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog';
+import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog.jsx';
 import PromissoriaDialog from './caixa/PromissoriaDialog';
 import {
   Receipt,
