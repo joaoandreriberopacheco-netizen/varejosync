@@ -1190,11 +1190,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
          onSave={handleInitiateSave}
          isSaving={isSaving}
          isDisabled={!formData.fornecedor_id || formData.itens.length === 0 || isLocked}
-         mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
-         onEnviarFinanceiro={() => {
-           handleChange('status', 'Aguardando Liberação');
-           setTimeout(() => handleInitiateSave(), 100);
-         }}
          onOpenAnexos={() => { /* futuro: abrir modal de anexos */ }}
        />
       </div>
