@@ -100,7 +100,7 @@ export default function PedidoCompraFAB({
       )}
 
       {/* FAB container */}
-      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end gap-2">
+      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col items-end gap-2">
         {/* Botões filhos — lista vertical */}
         {isExpanded && actions.map((action, idx) => (
           <button
