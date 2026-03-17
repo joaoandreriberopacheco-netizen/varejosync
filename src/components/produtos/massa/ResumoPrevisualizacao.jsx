@@ -41,12 +41,23 @@ export default function ResumoPrevisualizacao({ data }) {
         <p className="text-sm text-gray-400 text-center">Nenhuma alteração detectada na planilha.</p>
       )}
 
-      {/* Erros listados */}
+      {/* Erros listados com detalhes */}
       {erros.length > 0 && (
-        <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-3 space-y-1">
-          {erros.map((e, i) => (
-            <p key={i} className="text-xs text-red-600 dark:text-red-400">{e.mensagem}</p>
+        <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-4 space-y-2">
+          <p className="font-semibold text-sm text-red-700 dark:text-red-400 mb-2">
+            🔍 Vistoria de Campos - Erros Encontrados:
+          </p>
+          {erros.slice(0, 10).map((e, i) => (
+            <div key={i} className="flex items-start gap-2 p-2 bg-white dark:bg-red-900/30 rounded-lg">
+              <span className="text-red-500 flex-shrink-0 mt-0.5">✗</span>
+              <p className="text-xs text-red-700 dark:text-red-300 flex-1">{e.mensagem}</p>
+            </div>
           ))}
+          {erros.length > 10 && (
+            <p className="text-xs text-red-600 dark:text-red-400 italic pt-1">
+              ... e mais {erros.length - 10} erro(s)
+            </p>
+          )}
         </div>
       )}
 
