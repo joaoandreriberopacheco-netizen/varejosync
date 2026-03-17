@@ -46,14 +46,20 @@ export default function TabelaPrecosConsulta() {
   };
 
   const produtosFiltrados = useMemo(() => {
-    if (!searchTerm) return produtos;
+    let resultado = produtos;
     
-    const termo = searchTerm.toLowerCase();
-    return produtos.filter(p => 
-      p.nome?.toLowerCase().includes(termo) ||
-      p.codigo_interno?.toLowerCase().includes(termo) ||
-      p.codigo_barras?.toLowerCase().includes(termo)
-    );
+    // Filtrar por busca
+    if (searchTerm) {
+      const termo = searchTerm.toLowerCase();
+      resultado = resultado.filter(p => 
+        p.nome?.toLowerCase().includes(termo) ||
+        p.codigo_interno?.toLowerCase().includes(termo) ||
+        p.codigo_barras?.toLowerCase().includes(termo)
+      );
+    }
+    
+    // Ordenar alfabeticamente por nome
+    return resultado.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   }, [produtos, searchTerm]);
 
   const calcularPrecoVenda = (produto) => {
