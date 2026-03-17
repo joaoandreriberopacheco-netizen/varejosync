@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
+// Dialog still used for isSolicitarEdicao modal
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
@@ -94,20 +95,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [showAtualizarPrecos, setShowAtualizarPrecos] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isReopenAuthOpen, setIsReopenAuthOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isSolicitarEdicaoOpen, setIsSolicitarEdicaoOpen] = useState(false);
   const [motivoEdicao, setMotivoEdicao] = useState('');
   const [empresa, setEmpresa] = useState(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   useEffect(() => {
     if (pedido) {
