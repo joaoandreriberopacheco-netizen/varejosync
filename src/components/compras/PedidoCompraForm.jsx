@@ -823,31 +823,31 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 overflow-x-auto flex w-full">
-            <TabsTrigger value="dados-gerais" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5">
-              <FileText className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
-              <span className="hidden sm:inline">Dados Gerais</span>
-            </TabsTrigger>
-            <TabsTrigger value="itens" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5">
-              <ShoppingCart className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
-              <span className="hidden sm:inline">Itens</span>
-            </TabsTrigger>
-            <TabsTrigger value="pagamento" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5">
-              <DollarSign className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
-              <span className="hidden sm:inline">Pagamento</span>
-            </TabsTrigger>
-            <TabsTrigger value="logistica" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5" disabled={!isLogisticaEnabled && pedido}>
-              <Ship className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
-              <span className="hidden sm:inline">Logística</span>
-            </TabsTrigger>
-            <TabsTrigger value="pendencias" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5" disabled={!pedido?.id}>
-              <AlertCircle className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
-              <span className="hidden sm:inline">Pendências</span>
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5" disabled={!pedido?.id}>
-              <History className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
-              <span className="hidden sm:inline">Logs</span>
-            </TabsTrigger>
+          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex w-full">
+            {[
+              { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'DGE', disabled: false },
+              { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'ITE', disabled: false },
+              { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'PAG', disabled: false },
+              { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'LOG', disabled: !isLogisticaEnabled && !!pedido },
+              { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'PND', disabled: !pedido?.id },
+              { value: 'logs',         icon: <History className="w-4 h-4 flex-shrink-0" />, short: 'HIS', disabled: !pedido?.id },
+            ].map(tab => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                disabled={tab.disabled}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-300 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white rounded-none py-2 px-1 text-gray-400 dark:text-gray-500 disabled:opacity-30 transition-colors min-w-0"
+              >
+                {tab.icon}
+                <span className="text-[9px] font-semibold tracking-wider hidden xs:block" style={{display: 'none'}}>{tab.short}</span>
+                <span
+                  className="text-[9px] font-semibold tracking-wider leading-none"
+                  style={{ fontSize: '9px' }}
+                >
+                  {tab.short}
+                </span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <div className="flex-1 overflow-y-auto p-6">

@@ -89,13 +89,12 @@ export default function PedidoCompraFAB({
       )}
 
       {/* FAB principal — Bússola */}
-      <Button
+      <button
         onClick={() => setIsExpanded(prev => !prev)}
-        size="icon"
-        className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all ${
+        className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
           isExpanded 
-            ? 'bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 rotate-45' 
-            : 'bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600'
+            ? 'bg-gray-700 dark:bg-gray-600' 
+            : 'bg-gray-900 dark:bg-gray-700'
         } text-white`}
         title="Ações do pedido"
       >
@@ -103,7 +102,7 @@ export default function PedidoCompraFAB({
           ? <X className="w-6 h-6" />
           : <Compass className="w-6 h-6" />
         }
-      </Button>
+      </button>
     </div>
   );
 }
