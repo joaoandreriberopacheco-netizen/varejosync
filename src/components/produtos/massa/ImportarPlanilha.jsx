@@ -187,7 +187,10 @@ export default function ImportarPlanilha({ onParsed }) {
 
        // ── Produto existente: calcular diff ─────────────────────────────────
        const produtoAtual = mapaAtual[id];
-       if (!produtoAtual) continue;
+       if (!produtoAtual) {
+         erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Produto ID ${id} não encontrado no sistema.` });
+         continue;
+       }
 
        const diff = {};
        let temAlteracao = false;
@@ -211,16 +214,24 @@ export default function ImportarPlanilha({ onParsed }) {
 
          // Garantir campos obrigatórios estejam presentes
          if (!diff.tipo) diff.tipo = produtoAtual.tipo || 'Produto';
-         if (!diff.preco_venda_padrao) diff.preco_venda_padrao = produtoAtual.preco_venda_padrao;
+         if (diff.preco_venda_padrao === undefined) diff.preco_venda_padrao = produtoAtual.preco_venda_padrao;
          if (!diff.campo_hierarquico_1) diff.campo_hierarquico_1 = produtoAtual.campo_hierarquico_1;
 
-         const nomeAtual = diff.campo_hierarquico_1 ?? produtoAtual.campo_hierarquico_1;
-         if (!nomeAtual) {
-           erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Nível 1 é obrigatório.` });
+         // Validar campos obrigatórios finais
+         const camposObrigatorios = { tipo: diff.tipo, preco_venda_padrao: diff.preco_venda_padrao, campo_hierarquico_1: diff.campo_hierarquico_1 };
+         const camposFaltando = Object.entries(camposObrigatorios)
+           .filter(([_, valor]) => !valor && valor !== 0)
+           .map(([campo]) => campo);
+
+         if (camposFaltando.length > 0) {
+           erros.push({ 
+             linha: rowNumber, 
+             mensagem: `Linha ${rowNumber}: Produto ID ${id} faltando campos obrigatórios: ${camposFaltando.join(', ')}` 
+           });
            continue;
          }
 
-         alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeAtual, isNew: false });
+         alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeGerado, isNew: false });
        }
 
        rowCount++;
