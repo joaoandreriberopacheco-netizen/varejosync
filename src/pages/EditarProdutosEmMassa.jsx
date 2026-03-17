@@ -58,9 +58,22 @@ export default function EditarProdutosEmMassa() {
             campo_hierarquico_1: dados.campo_hierarquico_1,
             ...dados
           };
+          // Remover campos indefinidos ou nulos que possam causar erro
+          Object.keys(novosProduto).forEach(key => {
+            if (novosProduto[key] === null || novosProduto[key] === undefined) {
+              delete novosProduto[key];
+            }
+          });
           await base44.entities.Produto.create(novosProduto);
         } else {
-          await base44.entities.Produto.update(id, dados);
+          // Remover campos nulos/undefined em atualizações também
+          const dadosLimpos = {};
+          Object.keys(dados).forEach(key => {
+            if (dados[key] !== null && dados[key] !== undefined) {
+              dadosLimpos[key] = dados[key];
+            }
+          });
+          await base44.entities.Produto.update(id, dadosLimpos);
         }
       }
       setSalvouOk(true);
