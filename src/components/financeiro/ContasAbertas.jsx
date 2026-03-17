@@ -8,10 +8,11 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, Plus, X, Search,
-  AlertTriangle, Calendar, CheckCircle2
+  AlertTriangle, Calendar, CheckCircle2, FileText
 } from 'lucide-react';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
+import { base44 } from '@/api/base44Client';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -176,10 +177,12 @@ export default function ContasAbertas() {
   const [tipoFiltro, setTipoFiltro] = useState('todos'); // 'todos' | 'Receita' | 'Despesa' | 'compras'
   const [contasSel] = useState([]);
   const [search, setSearch]       = useState('');
-  const [showNovo, setShowNovo]   = useState(false);
-  const [novoTipo, setNovoTipo]   = useState('Despesa');
-  const [fabOpen, setFabOpen]     = useState(false);
-  const [detalhe, setDetalhe]     = useState(null);
+  const [showNovo, setShowNovo]       = useState(false);
+  const [novoTipo, setNovoTipo]       = useState('Despesa');
+  const [fabOpen, setFabOpen]         = useState(false);
+  const [detalhe, setDetalhe]         = useState(null);
+  const [mostrarPagas, setMostrarPagas] = useState(false);
+  const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -192,10 +195,14 @@ export default function ContasAbertas() {
     setLancs(ls); setContas(cts); setLoading(false);
   };
 
-  // Apenas lançamentos NÃO pagos e não cancelados
+  // Lançamentos não cancelados (inclui pagas se mostrarPagas ativo)
   const emAberto = useMemo(() =>
-    lancs.filter(l => l.status !== 'Pago' && l.status !== 'Cancelado' && l.tipo !== 'Transferência'),
-  [lancs]);
+    lancs.filter(l => {
+      if (l.status === 'Cancelado' || l.tipo === 'Transferência') return false;
+      if (!mostrarPagas && l.status === 'Pago') return false;
+      return true;
+    }),
+  [lancs, mostrarPagas]);
 
   const { s: ds, e: de } = useMemo(() => periodoRange(periodo, cs, ce), [periodo, cs, ce]);
 
@@ -233,7 +240,8 @@ export default function ContasAbertas() {
   const kpis = useMemo(() => {
     let aReceber = 0, aPagar = 0, qtdReceber = 0, qtdPagar = 0, vencidas = 0;
     const hStr = hojeStr();
-    filtrados.forEach(l => {
+    // KPIs consideram apenas Em Aberto/Vencido (não as pagas)
+    filtrados.filter(l => l.status !== 'Pago').forEach(l => {
       const vStr = getVencimento(l);
       if (l.tipo === 'Receita') { aReceber += l.valor || 0; qtdReceber++; }
       else { aPagar += l.valor || 0; qtdPagar++; }
@@ -270,9 +278,41 @@ export default function ContasAbertas() {
   // Marcar como pago rapidamente (abre detalhe pre-configurado)
   const handlePagarRapido = (l) => setDetalhe(l);
 
+  const handleGerarRelatorio = async () => {
+    setGerandoRelatorio(true);
+    try {
+      const filtrosDesc = [
+        PERIODOS.find(p => p.v === periodo)?.l || periodo,
+        tipoFiltro !== 'todos' ? tipoFiltro : null,
+        search || null,
+        cs && ce ? `${cs} a ${ce}` : null,
+      ].filter(Boolean).join(' · ');
+
+      const response = await base44.functions.invoke('gerarRelatorioContasAbertas', {
+        lancamentos: filtrados,
+        filtros_desc: filtrosDesc,
+        kpis,
+      });
+      if (!response?.data) throw new Error('Resposta inválida');
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ContasAbertas_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    }
+    setGerandoRelatorio(false);
+  };
+
   const FAB_ITEMS = [
-    { tipo: 'Receita', icon: ArrowDownLeft, label: 'A Receber' },
-    { tipo: 'Despesa', icon: ArrowUpRight,  label: 'A Pagar' },
+    { tipo: 'Receita', icon: ArrowDownLeft, label: 'A Receber', action: () => { setNovoTipo('Receita'); setShowNovo(true); setFabOpen(false); } },
+    { tipo: 'Despesa', icon: ArrowUpRight,  label: 'A Pagar',   action: () => { setNovoTipo('Despesa'); setShowNovo(true); setFabOpen(false); } },
+    { tipo: 'Relatorio', icon: FileText,    label: gerandoRelatorio ? 'Gerando...' : 'Relatório', action: () => { setFabOpen(false); handleGerarRelatorio(); } },
   ];
 
   return (
@@ -317,7 +357,7 @@ export default function ContasAbertas() {
           </div>
         )}
 
-        {/* Chips tipo — linha 2 */}
+        {/* Chips tipo + toggle pagas — linha 2 */}
         <div className="px-3 pt-1.5 pb-2.5">
           <div className="flex flex-wrap gap-1.5">
             {[
@@ -332,11 +372,16 @@ export default function ContasAbertas() {
                 {l}
               </button>
             ))}
+            <button onClick={() => setMostrarPagas(p => !p)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+                ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+              <CheckCircle2 className="w-3 h-3" /> Pagas
+            </button>
           </div>
         </div>
 
         <div className="px-3 pb-2">
-          <p className="text-[0.65rem] text-gray-400 dark:text-gray-500">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''} em aberto</p>
+          <p className="text-[0.65rem] text-gray-400 dark:text-gray-500">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
@@ -365,9 +410,9 @@ export default function ContasAbertas() {
       {/* FAB */}
       {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
       <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
-        {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
+        {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label, action }) => (
           <button key={tipo}
-            onClick={() => { setNovoTipo(tipo); setShowNovo(true); setFabOpen(false); }}
+            onClick={action}
             className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
             <Icon className="w-4 h-4" />{label}
           </button>
