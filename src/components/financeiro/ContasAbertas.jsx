@@ -30,16 +30,20 @@ const PERIODOS = [
   { v: 'mes',         l: 'Mês' },
   { v: 'futuras',     l: 'Futuras' },
   { v: 'todas',       l: 'Todas' },
+  { v: 'personalizado', l: 'Personalizado' },
 ];
 
-function periodoRange(p) {
+function periodoRange(p, cs, ce) {
   const h = new Date();
-  const hStr = hojeStr();
   if (p === 'vencidas') return { s: null, e: startOfDay(h), vencidas: true };
   if (p === 'hoje')     return { s: startOfDay(h), e: endOfDay(h) };
   if (p === 'semana')   return { s: startOfDay(h), e: endOfDay(addDays(h, 7)) };
   if (p === 'mes')      return { s: startOfDay(h), e: endOfMonth(h) };
   if (p === 'futuras')  return { s: addDays(h, 1), e: null };
+  if (p === 'personalizado') return {
+    s: cs ? startOfDay(new Date(cs)) : null,
+    e: ce ? endOfDay(new Date(ce)) : null,
+  };
   return { s: null, e: null }; // todas
 }
 
