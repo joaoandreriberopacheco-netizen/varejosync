@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Package, User, DollarSign, Calendar, PlusCircle, CheckCircle, AlertTriangle, Search, FileText } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
+import { registrarTransicao } from './transicaoHelper';
 
 export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh }) {
   const [selectedPedidos, setSelectedPedidos] = useState([]);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Clock, CheckCircle, Send, Package, AlertCircle, Flag, XCircle, CheckCheck } from 'lucide-react';
+import { FileText, Clock, CheckCircle, Truck, Package, AlertCircle, Flag, XCircle, CheckCheck } from 'lucide-react';
 import { format, differenceInDays, differenceInHours } from 'date-fns';
 
 export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmissao, dataTransicoes, isMobile = false }) {
