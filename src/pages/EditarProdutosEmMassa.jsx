@@ -51,7 +51,14 @@ export default function EditarProdutosEmMassa() {
       // Executar importação
       for (const { id, dados, isNew } of parsedData.alterados) {
         if (isNew) {
-          await base44.entities.Produto.create(dados);
+          // Garantir campos obrigatórios para novo produto
+          const novosProduto = {
+            tipo: dados.tipo || 'Produto',
+            preco_venda_padrao: dados.preco_venda_padrao || 0,
+            campo_hierarquico_1: dados.campo_hierarquico_1,
+            ...dados
+          };
+          await base44.entities.Produto.create(novosProduto);
         } else {
           await base44.entities.Produto.update(id, dados);
         }
