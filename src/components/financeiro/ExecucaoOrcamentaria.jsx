@@ -159,60 +159,62 @@ export default function ExecucaoOrcamentaria() {
       </div>
 
       {aba === 'contas' && <ContasAbertas />}
-      {aba !== 'contas' && <></> /* placeholder para manter estrutura */}
-      {aba === 'fluxo' && <>
 
-      {/* KPIs */}
-      <KpiFluxo kpis={kpis} />
+      {aba === 'fluxo' && (
+        <>
+          {/* KPIs */}
+          <KpiFluxo kpis={kpis} />
 
-      {/* Alerta conciliação pendente */}
-      {totalPend > 0 && !pendentes && (
-        <button onClick={() => setPendentes(true)}
-          className="w-full flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-xs text-left">
-          <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
-          <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
-          <span className="font-semibold flex-none text-gray-500">Ver →</span>
-        </button>
+          {/* Alerta conciliação pendente */}
+          {totalPend > 0 && !pendentes && (
+            <button onClick={() => setPendentes(true)}
+              className="w-full flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-xs text-left">
+              <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
+              <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
+              <span className="font-semibold flex-none text-gray-500">Ver →</span>
+            </button>
+          )}
+
+          {/* Filtros */}
+          <FiltrosFluxoCaixa
+            search={search} onSearch={setSearch}
+            periodo={periodo} onPeriodo={setPeriodo}
+            customStart={cs} customEnd={ce}
+            onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
+            contas={contas} contasSel={contasSel} onContasSel={setContasSel}
+            tiposSel={tiposSel} onTiposSel={setTiposSel}
+            statusSel={statusSel} onStatusSel={setStatusSel}
+            pendentes={pendentes} onPendentes={setPendentes}
+            totalFiltrados={filtrados.length}
+            hasActiveFilters={hasActiveFilters}
+            onLimparFiltros={() => { setTiposSel([]); setContasSel([]); setStatusSel([]); setPendentes(false); setSearch(''); }}
+          />
+
+          {/* Lista */}
+          <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />
+
+          {/* FAB */}
+          {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
+          <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
+            {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
+              <button key={tipo}
+                onClick={() => { setNovoTipo(tipo); setShowNovo(true); setFabOpen(false); }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                <Icon className="w-4 h-4" />{label}
+              </button>
+            ))}
+            <button
+              onClick={() => setFabOpen(o => !o)}
+              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-gray-400 rotate-45' : 'bg-gray-500 dark:bg-gray-200'}`}>
+              <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-gray-900'}`} />
+            </button>
+          </div>
+
+          {/* Dialogs */}
+          <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
+          {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+        </>
       )}
-
-      {/* Filtros */}
-      <FiltrosFluxoCaixa
-        search={search} onSearch={setSearch}
-        periodo={periodo} onPeriodo={setPeriodo}
-        customStart={cs} customEnd={ce}
-        onCustom={(k, v) => k === 'start' ? setCs(v) : setCe(v)}
-        contas={contas} contasSel={contasSel} onContasSel={setContasSel}
-        tiposSel={tiposSel} onTiposSel={setTiposSel}
-        statusSel={statusSel} onStatusSel={setStatusSel}
-        pendentes={pendentes} onPendentes={setPendentes}
-        totalFiltrados={filtrados.length}
-        hasActiveFilters={hasActiveFilters}
-        onLimparFiltros={() => { setTiposSel([]); setContasSel([]); setStatusSel([]); setPendentes(false); setSearch(''); }}
-      />
-
-      {/* Lista */}
-      <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />
-
-      {/* FAB */}
-      {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
-      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
-        {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
-          <button key={tipo}
-            onClick={() => { setNovoTipo(tipo); setShowNovo(true); setFabOpen(false); }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
-            <Icon className="w-4 h-4" />{label}
-          </button>
-        ))}
-        <button
-          onClick={() => setFabOpen(o => !o)}
-          className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-gray-400 rotate-45' : 'bg-gray-500 dark:bg-gray-200'}`}>
-          <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-gray-900'}`} />
-        </button>
-      </div>
-
-      {/* Dialogs */}
-      <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
-      {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
     </div>
   );
 }
