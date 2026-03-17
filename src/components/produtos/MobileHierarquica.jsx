@@ -126,7 +126,7 @@ function RenderNode({ nodeKey, node, depth, expanded, toggle, onEdit, formatarNu
 
       {isExpanded && (
         <div>
-          {Object.entries(finalNode.children).map(([childKey, childNode]) => (
+          {finalNode.children && Object.entries(finalNode.children).map(([childKey, childNode]) => (
             <RenderNode
               key={childKey}
               nodeKey={`${finalKey}::${childKey}`}
