@@ -82,7 +82,7 @@ export default function ImportarPlanilha({ onParsed }) {
        const h1 = h1ColIndex ? String(getCellValue(row.getCell(h1ColIndex)) || '').trim() : '';
 
        // Linha vazia (sem ID e sem h1) — ignorar
-       if (!id && !h1) return;
+       if (!id && !h1) continue;
 
        // ── Extrair todos os campos editáveis ────────────────────────────────
        const dadosExtraidos = {};
@@ -129,7 +129,7 @@ export default function ImportarPlanilha({ onParsed }) {
            { duration: 8000 }
          );
          validacaoFalhou = true;
-         return;
+         break;
        }
 
        // ── Recalcular nome e preco_venda_percentual ─────────────────────────
@@ -151,14 +151,15 @@ export default function ImportarPlanilha({ onParsed }) {
 
        // ── Novo produto (ID vazio, h1 preenchido) ───────────────────────────
        if (!id) {
-         if (!h1) return;
-         alterados.push({ id: null, dados: dadosExtraidos, nome: nomeGerado, isNew: true });
-         return;
+         if (h1) {
+           alterados.push({ id: null, dados: dadosExtraidos, nome: nomeGerado, isNew: true });
+         }
+         continue;
        }
 
        // ── Produto existente: calcular diff ─────────────────────────────────
        const produtoAtual = mapaAtual[id];
-       if (!produtoAtual) return;
+       if (!produtoAtual) continue;
 
        const diff = {};
        let temAlteracao = false;
@@ -183,18 +184,18 @@ export default function ImportarPlanilha({ onParsed }) {
          const nomeAtual = diff.campo_hierarquico_1 ?? produtoAtual.campo_hierarquico_1;
          if (!nomeAtual) {
            erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Nível 1 é obrigatório.` });
-           return;
+           continue;
          }
 
          alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeAtual, isNew: false });
-         }
+       }
 
-         rowCount++;
-         // Liberar memória a cada 100 linhas processadas
-         if (rowCount % 100 === 0) {
+       rowCount++;
+       // Liberar memória a cada 100 linhas processadas
+       if (rowCount % 100 === 0) {
          await new Promise(resolve => setTimeout(resolve, 0));
-         }
-         }
+       }
+      }
 
       if (validacaoFalhou) {
        onParsed(null);
