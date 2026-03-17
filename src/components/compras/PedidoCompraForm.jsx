@@ -31,6 +31,8 @@ import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
 import PedidoCompraFAB from './PedidoCompraFAB.jsx';
 import BannerStatusPedido from './BannerStatusPedido.jsx';
+import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
+import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -99,6 +101,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isSolicitarEdicaoOpen, setIsSolicitarEdicaoOpen] = useState(false);
   const [motivoEdicao, setMotivoEdicao] = useState('');
+  const [isAnexosOpen, setIsAnexosOpen] = useState(false);
   const [empresa, setEmpresa] = useState(null);
   const { toast } = useToast();
 
@@ -1197,7 +1200,25 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
            handleChange('status', 'Aguardando Liberação');
            setTimeout(() => handleInitiateSave(), 100);
          }}
-         onOpenAnexos={() => { /* futuro: abrir modal de anexos */ }}
+         onOpenAnexos={() => setIsAnexosOpen(true)}
+         mostrarSolicitarEdicao={!!pedido?.id && isLocked}
+         onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
+       />
+
+       <AnexosPedidoCompra
+         pedidoId={pedido?.id}
+         pedidoNumero={pedido?.numero}
+         isOpen={isAnexosOpen}
+         onClose={() => setIsAnexosOpen(false)}
+       />
+
+       <SolicitarEdicaoPDV
+         pedido={pedido}
+         currentUser={currentUser}
+         isAdmin={currentUser?.role === 'admin'}
+         isOpen={isSolicitarEdicaoOpen}
+         onClose={() => setIsSolicitarEdicaoOpen(false)}
+         onSuccess={() => onClose()}
        />
       </div>
   );
