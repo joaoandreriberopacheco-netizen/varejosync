@@ -3,23 +3,23 @@ import { jsPDF } from 'npm:jspdf@4.0.0';
 import { format } from 'npm:date-fns';
 import { ptBR } from 'npm:date-fns/locale';
 
-const safe = (text) => {
-  if (!text) return '';
-  return String(text)
-    .replace(/[àáâãä]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u').replace(/[ç]/g, 'c')
-    .replace(/[ÀÁÂÃÄ]/g, 'A').replace(/[ÈÉÊË]/g, 'E').replace(/[ÌÍÎÏ]/g, 'I')
-    .replace(/[ÒÓÔÕÖ]/g, 'O').replace(/[ÙÚÛÜ]/g, 'U').replace(/[Ç]/g, 'C');
+const safe = (t) => {
+  if (!t) return '';
+  return String(t)
+    .replace(/[àáâãä]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
+    .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/[ç]/g,'c')
+    .replace(/[ÀÁÂÃÄ]/g,'A').replace(/[ÈÉÊË]/g,'E').replace(/[ÌÍÎÏ]/g,'I')
+    .replace(/[ÒÓÔÕÖ]/g,'O').replace(/[ÙÚÛÜ]/g,'U').replace(/[Ç]/g,'C');
 };
 
-const fmtDate = (d) => {
-  if (!d) return '-';
-  try { return format(new Date(d), 'dd/MM/yyyy', { locale: ptBR }); } catch { return '-'; }
-};
+const fmtDate = (d) => { if (!d) return '-'; try { return format(new Date(d), 'dd/MM/yyyy', { locale: ptBR }); } catch { return '-'; } };
 
-const SEP = '-----------------------------------------------------------------------';
-const ML = 12;
-const PW = 185;
+const ML = 14;
+const MR = 14;
+const PW = 210 - ML - MR;
+const FS = 10;
+const LH = 5.0;
+const LABEL_W = 44;
 
 Deno.serve(async (req) => {
   try {
@@ -34,33 +34,42 @@ Deno.serve(async (req) => {
     if (!pedidos?.length) return Response.json({ error: 'Pedido nao encontrado' }, { status: 404 });
     const pedido = pedidos[0];
 
-    const divergencias = await base44.asServiceRole.entities.DivergenciaCompra.filter({ pedido_compra_id: pedido_id });
+    const divergencias = await base44.asServiceRole.entities.DivergenciaCompra.filter({ pedido_compra_id: pedido_id }).catch(() => []);
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     doc.setFont('courier', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(FS);
+    let y = 16;
 
-    const LH = 4.8;
-    let y = 12;
-    const W = 210;
-
-    const checkPage = (extra = 0) => { if (y + extra > 280) { doc.addPage(); y = 12; } };
-    const L = (txt) => { checkPage(); doc.text(safe(txt), ML, y); y += LH; };
-    const SEP_LINE = () => L(SEP);
-
-    // Helper: label + valor alinhado à direita
-    const LV = (label, valor = '') => {
-      const labelLines = doc.splitTextToSize(safe(label), PW - 40);
-      checkPage(labelLines.length * LH);
-      const rowY = y;
-      labelLines.forEach((l, i) => doc.text(l, ML, rowY + i * LH));
-      if (valor) doc.text(safe(valor), ML + PW, rowY, { align: 'right' });
-      y = rowY + labelLines.length * LH;
+    const checkPage = (extra = 0) => {
+      if (y + extra > 277) { doc.addPage(); doc.setFont('courier','normal'); doc.setFontSize(FS); y = 16; }
     };
 
-    // Helper: nome com wrap, qtds alinhados à direita na 1ª linha
-    const LRow = (nome, qtds) => {
-      const nomeLines = doc.splitTextToSize(safe(nome), 100);
+    const line = (txt, x = ML) => { checkPage(); doc.text(safe(txt), x, y); y += LH; };
+
+    const hline = () => {
+      checkPage();
+      doc.setDrawColor(180,180,180);
+      doc.line(ML, y - 1, ML + PW, y - 1);
+      y += 1.5;
+    };
+
+    const boldLine = (txt) => { doc.setFont('courier','bold'); checkPage(); doc.text(safe(txt), ML, y); doc.setFont('courier','normal'); y += LH; };
+
+    const labelVal = (lbl, val) => {
+      const valLines = doc.splitTextToSize(safe(val), PW - LABEL_W - 2);
+      checkPage(valLines.length * LH);
+      const rowY = y;
+      doc.setFont('courier','bold');
+      doc.text(safe(lbl), ML, rowY);
+      doc.setFont('courier','normal');
+      valLines.forEach((l, i) => doc.text(l, ML + LABEL_W, rowY + i * LH));
+      y = rowY + valLines.length * LH;
+    };
+
+    // Nome com wrap, qtds alinhados à direita 1a linha
+    const rowDivergencia = (nome, qtds) => {
+      const nomeLines = doc.splitTextToSize(safe(nome), PW - 55);
       checkPage(nomeLines.length * LH);
       const rowY = y;
       nomeLines.forEach((l, i) => doc.text(l, ML, rowY + i * LH));
@@ -68,76 +77,89 @@ Deno.serve(async (req) => {
       y = rowY + nomeLines.length * LH;
     };
 
-    doc.text('RELATORIO DE PENDENCIAS', W / 2, y, { align: 'center' }); y += LH;
-    doc.text(safe(pedido.numero || 'N/A'), W / 2, y, { align: 'center' }); y += LH;
-    SEP_LINE();
-    L(`Fornecedor : ${safe(pedido.fornecedor_nome || '-')}`);
-    L(`Status     : ${safe(pedido.status || '-')}`);
-    L(`Gerado em  : ${fmtDate(new Date())}`);
-    SEP_LINE();
+    // ── Cabeçalho ────────────────────────────────────────────────────────────
+    doc.setFont('courier','bold');
+    doc.setFontSize(12);
+    doc.text('RELATORIO DE PENDENCIAS', ML + PW / 2, y, { align: 'center' }); y += LH + 1;
+    doc.setFontSize(10);
+    doc.text(safe(pedido.numero || 'N/A'), ML + PW / 2, y, { align: 'center' }); y += LH;
+    doc.setFont('courier','normal');
+    doc.setFontSize(FS);
+    hline();
 
+    labelVal('Fornecedor', safe(pedido.fornecedor_nome || '-'));
+    labelVal('Status',     safe(pedido.status || '-'));
+    labelVal('Gerado em',  fmtDate(new Date()));
+    y += 1;
+    hline();
+
+    // ── Solicitação de Edição ─────────────────────────────────────────────────
     if (pedido.solicitacao_edicao_motivo) {
-      L('SOLICITACAO DE EDICAO');
-      SEP_LINE();
-      L(`Data       : ${fmtDate(pedido.solicitacao_edicao_data)}`);
-      L(`Solicitante: ${safe(pedido.solicitacao_edicao_solicitante || '-')}`);
-      L('Motivo     :');
-      const motLines = doc.splitTextToSize(safe(pedido.solicitacao_edicao_motivo), PW - 12);
-      motLines.forEach(l => { checkPage(); doc.text(l, ML + 12, y); y += LH; });
-      SEP_LINE();
+      boldLine('SOLICITACAO DE EDICAO');
+      hline();
+      labelVal('Data',       fmtDate(pedido.solicitacao_edicao_data));
+      labelVal('Solicitante',safe(pedido.solicitacao_edicao_solicitante || '-'));
+      labelVal('Motivo',     safe(pedido.solicitacao_edicao_motivo));
+      y += 1; hline();
     }
 
+    // ── Rejeição Financeira ───────────────────────────────────────────────────
     if (pedido.motivo_rejeicao_financeira) {
-      L('REJEICAO FINANCEIRA');
-      SEP_LINE();
-      L(`Data       : ${fmtDate(pedido.data_rejeicao_financeira)}`);
-      L('Motivo     :');
-      const rejLines = doc.splitTextToSize(safe(pedido.motivo_rejeicao_financeira), PW - 12);
-      rejLines.forEach(l => { checkPage(); doc.text(l, ML + 12, y); y += LH; });
-      SEP_LINE();
+      boldLine('REJEICAO FINANCEIRA');
+      hline();
+      labelVal('Data',  fmtDate(pedido.data_rejeicao_financeira));
+      labelVal('Motivo',safe(pedido.motivo_rejeicao_financeira));
+      y += 1; hline();
     }
 
-    L('DIVERGENCIAS DE CONFERENCIA');
-    SEP_LINE();
+    // ── Divergências de Conferência ───────────────────────────────────────────
+    boldLine('DIVERGENCIAS DE CONFERENCIA');
+    hline();
     if (divergencias?.length) {
-      // Cabeçalho
-      doc.text('PRODUTO', ML, y);
-      doc.text('PED / REC / PEND', ML + PW, y, { align: 'right' });
+      // Cabeçalho colunas
+      doc.setFont('courier','bold');
+      doc.text('PRODUTO',           ML,      y);
+      doc.text('PED / REC / PEND',  ML + PW, y, { align: 'right' });
+      doc.setFont('courier','normal');
       y += LH;
-      SEP_LINE();
+      hline();
+
       divergencias.forEach((div) => {
         const pend = (div.qtd_pedida || 0) - (div.qtd_recebida || 0);
-        LRow(
-          `${safe(div.produto_nome || '-')} (${safe(div.tipo_divergencia || '-')})`,
-          `${div.qtd_pedida || 0} / ${div.qtd_recebida || 0} / ${pend}`
+        rowDivergencia(
+          `${safe(div.produto_nome || '-')}  [${safe(div.tipo_divergencia || '-')}]`,
+          `${div.qtd_pedida||0} / ${div.qtd_recebida||0} / ${pend}`
         );
         if (div.observacao) {
-          const obsLines = doc.splitTextToSize(safe('  Obs: ' + div.observacao), PW - 8);
+          const obsLines = doc.splitTextToSize(safe('Obs: ' + div.observacao), PW - 6);
           obsLines.forEach(l => { checkPage(); doc.text(l, ML + 4, y); y += LH; });
         }
       });
     } else {
-      L('Nenhuma divergencia registrada');
+      line('Nenhuma divergencia registrada');
     }
-    SEP_LINE();
+    y += 1; hline();
 
-    // Itens com pendencia de vinculacao
+    // ── Itens com pendência de vinculação ─────────────────────────────────────
     const itensPendentes = (pedido.itens || []).filter(i => (i.quantidade_vinculada || 0) < (i.quantidade || 0));
     if (itensPendentes.length) {
-      L('ITENS COM PENDENCIA DE VINCULACAO');
-      SEP_LINE();
-      doc.text('PRODUTO', ML, y);
+      boldLine('ITENS COM PENDENCIA DE VINCULACAO');
+      hline();
+      doc.setFont('courier','bold');
+      doc.text('PRODUTO',           ML,      y);
       doc.text('PED / VINC / PEND', ML + PW, y, { align: 'right' });
+      doc.setFont('courier','normal');
       y += LH;
-      SEP_LINE();
+      hline();
+
       itensPendentes.forEach(item => {
         const pendente = (item.quantidade || 0) - (item.quantidade_vinculada || 0);
-        LRow(
+        rowDivergencia(
           safe(item.produto_nome || '-'),
-          `${item.quantidade} / ${item.quantidade_vinculada || 0} / ${pendente}`
+          `${item.quantidade} / ${item.quantidade_vinculada||0} / ${pendente}`
         );
       });
-      SEP_LINE();
+      y += 1; hline();
     }
 
     const pdfBytes = doc.output('arraybuffer');
@@ -145,7 +167,7 @@ Deno.serve(async (req) => {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename=pendencias_${safe(pedido.numero || 'compra')}.pdf`,
+        'Content-Disposition': `attachment; filename=pendencias_${safe(pedido.numero||'compra')}.pdf`,
       },
     });
   } catch (error) {

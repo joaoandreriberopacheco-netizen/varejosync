@@ -1,14 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Tag } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+
+// Cache global de tags já usadas (compartilhadas entre instâncias)
+let _tagsCache = null;
+
+async function carregarTagsUsadas() {
+  if (_tagsCache) return _tagsCache;
+  try {
+    const ls = await base44.entities.LancamentoFinanceiro.list('-updated_date', 200);
+    const set = new Set();
+    ls.forEach(l => (l.tags || []).forEach(t => t && set.add(t.toLowerCase().trim())));
+    _tagsCache = [...set].sort();
+    setTimeout(() => { _tagsCache = null; }, 60000); // expira em 1min
+    return _tagsCache;
+  } catch {
+    return [];
+  }
+}
 
 export default function TagsInput({ tags, onChange }) {
   const [input, setInput] = useState('');
+  const [sugestoes, setSugestoes] = useState([]);
+  const [todasTags, setTodasTags] = useState([]);
+  const [showSugestoes, setShowSugestoes] = useState(false);
+
+  useEffect(() => {
+    carregarTagsUsadas().then(setTodasTags);
+  }, []);
+
+  useEffect(() => {
+    if (!input.trim()) { setSugestoes([]); return; }
+    const q = input.trim().toLowerCase();
+    const filtradas = todasTags.filter(t => t.includes(q) && !tags.includes(t));
+    setSugestoes(filtradas.slice(0, 6));
+  }, [input, todasTags, tags]);
 
   const addTag = (val) => {
     const tag = val.trim().toLowerCase();
     if (!tag || tags.includes(tag)) return;
     onChange([...tags, tag]);
     setInput('');
+    setSugestoes([]);
+    setShowSugestoes(false);
+    // Invalidar cache para incluir nova tag
+    _tagsCache = null;
   };
 
   const removeTag = (t) => onChange(tags.filter(x => x !== t));
@@ -16,7 +52,11 @@ export default function TagsInput({ tags, onChange }) {
   const handleKey = (e) => {
     if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(input); }
     if (e.key === 'Backspace' && !input && tags.length > 0) removeTag(tags[tags.length - 1]);
+    if (e.key === 'Escape') { setSugestoes([]); setShowSugestoes(false); }
   };
+
+  // Tags mais usadas para exibir como atalhos rápidos quando input está vazio
+  const tagsSugeridas = todasTags.filter(t => !tags.includes(t)).slice(0, 8);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
@@ -24,25 +64,62 @@ export default function TagsInput({ tags, onChange }) {
         <Tag className="w-3.5 h-3.5 text-gray-400" />
         <p className="text-[10px] text-gray-400 uppercase tracking-wider">Tags</p>
       </div>
+
+      {/* Tags selecionadas + input */}
       <div className="flex flex-wrap gap-1.5 min-h-[32px]">
         {tags.map(t => (
-          <span key={t} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300">
+          <span key={t} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-800 dark:bg-gray-200 text-xs text-white dark:text-gray-900">
             {t}
-            <button onClick={() => removeTag(t)} className="ml-0.5 hover:text-gray-900 dark:hover:text-white">
+            <button onClick={() => removeTag(t)} className="ml-0.5 hover:opacity-70">
               <X className="w-2.5 h-2.5" />
             </button>
           </span>
         ))}
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={e => { setInput(e.target.value); setShowSugestoes(true); }}
           onKeyDown={handleKey}
-          onBlur={() => addTag(input)}
+          onFocus={() => setShowSugestoes(true)}
+          onBlur={() => setTimeout(() => setShowSugestoes(false), 150)}
           placeholder={tags.length === 0 ? 'Adicionar tag...' : '+'}
           className="flex-1 min-w-[80px] bg-transparent text-xs text-gray-700 dark:text-gray-200 placeholder:text-gray-400 outline-none"
         />
       </div>
-      <p className="text-[0.6rem] text-gray-400 mt-1">Pressione Enter ou vírgula para adicionar</p>
+
+      {/* Dropdown de sugestões filtradas pelo input */}
+      {showSugestoes && sugestoes.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {sugestoes.map(t => (
+            <button
+              key={t}
+              onMouseDown={(e) => { e.preventDefault(); addTag(t); }}
+              className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              + {t}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tags populares quando input vazio */}
+      {!input && !showSugestoes && tagsSugeridas.length > 0 && (
+        <div className="mt-2">
+          <p className="text-[0.58rem] text-gray-400 mb-1 uppercase tracking-wider">Tags recentes</p>
+          <div className="flex flex-wrap gap-1">
+            {tagsSugeridas.map(t => (
+              <button
+                key={t}
+                onClick={() => addTag(t)}
+                className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="text-[0.6rem] text-gray-400 mt-1.5">Enter ou vírgula para adicionar</p>
     </div>
   );
 }

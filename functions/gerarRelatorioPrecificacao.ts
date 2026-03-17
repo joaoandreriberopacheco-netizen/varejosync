@@ -1,23 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
-const safe = (text) => {
-  if (!text) return '';
-  return String(text)
-    .replace(/[àáâãä]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
-    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u').replace(/[ç]/g, 'c')
-    .replace(/[ÀÁÂÃÄ]/g, 'A').replace(/[ÈÉÊË]/g, 'E').replace(/[ÌÍÎÏ]/g, 'I')
-    .replace(/[ÒÓÔÕÖ]/g, 'O').replace(/[ÙÚÛÜ]/g, 'U').replace(/[Ç]/g, 'C');
+const safe = (t) => {
+  if (!t) return '';
+  return String(t)
+    .replace(/[àáâãä]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
+    .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/[ç]/g,'c')
+    .replace(/[ÀÁÂÃÄ]/g,'A').replace(/[ÈÉÊË]/g,'E').replace(/[ÌÍÎÏ]/g,'I')
+    .replace(/[ÒÓÔÕÖ]/g,'O').replace(/[ÙÚÛÜ]/g,'U').replace(/[Ç]/g,'C');
 };
 
-const fmtCur = (v) => {
-  const n = parseFloat(v) || 0;
-  return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
+const fmtCur = (v) => { const n = parseFloat(v)||0; return 'R$'+n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
 
-const SEP = '-----------------------------------------------------------------------';
-const ML = 12;
-const PW = 185;
+const ML = 14;
+const MR = 14;
+const PW = 210 - ML - MR;  // 182mm
+const FS = 10;
+const LH = 5.0;
 
 Deno.serve(async (req) => {
   try {
@@ -32,104 +31,174 @@ Deno.serve(async (req) => {
     if (!pedidos?.length) return Response.json({ error: 'Pedido nao encontrado' }, { status: 404 });
     const pedido = pedidos[0];
 
-    let produtos = [];
     const ids = (pedido.itens || []).map(i => i.produto_id).filter(Boolean);
-    if (ids.length) produtos = await base44.asServiceRole.entities.Produto.filter({ id: { $in: ids } });
+    const produtos = ids.length ? await base44.asServiceRole.entities.Produto.filter({ id: { $in: ids } }) : [];
+
+    // Custo detalhado por produto
+    let custosDet = [];
+    if (ids.length) {
+      custosDet = await base44.asServiceRole.entities.CustoDetalhado.filter({ produto_id: { $in: ids } }).catch(() => []);
+    }
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(9);
+    doc.setFont('courier','normal');
+    doc.setFontSize(FS);
+    let y = 16;
 
-    const LH = 4.8;
-    let y = 12;
-    const W = 210;
+    const checkPage = (extra = 0) => {
+      if (y + extra > 277) { doc.addPage(); doc.setFont('courier','normal'); doc.setFontSize(FS); y = 16; }
+    };
 
-    const checkPage = (extra = 0) => { if (y + extra > 280) { doc.addPage(); y = 12; } };
-    const L = (txt) => { checkPage(); doc.text(safe(txt), ML, y); y += LH; };
-    const SEP_LINE = () => L(SEP);
+    const hline = () => {
+      checkPage();
+      doc.setDrawColor(180,180,180);
+      doc.line(ML, y - 1, ML + PW, y - 1);
+      y += 1.5;
+    };
 
-    // Colunas da tabela de itens
-    // PRODUTO (wrap) | ATUAL | NOVO | DELTA
-    const COL_ATUAL = ML + 105; // início coluna ATUAL
-    const COL_NOVO  = ML + 135;
-    const COL_DELTA = ML + PW;
-    const NOME_MAX_W = 100;
+    const boldLine = (txt) => { doc.setFont('courier','bold'); checkPage(); doc.text(safe(txt), ML, y); doc.setFont('courier','normal'); y += LH; };
 
-    doc.text('ANALISE DE PRECIFICACAO', W / 2, y, { align: 'center' }); y += LH;
-    doc.text(safe(pedido.numero || 'N/A'), W / 2, y, { align: 'center' }); y += LH;
-    SEP_LINE();
-    L(`Fornecedor : ${safe(pedido.fornecedor_nome || '-')}`);
-    SEP_LINE();
-
-    L('COMPARATIVO DE CUSTOS');
-    SEP_LINE();
-
-    // Cabeçalho
-    doc.text('PRODUTO', ML, y);
-    doc.text('ATUAL', COL_ATUAL, y);
-    doc.text('NOVO', COL_NOVO, y);
-    doc.text('DELTA', COL_DELTA, y, { align: 'right' });
+    // ── Cabeçalho ────────────────────────────────────────────────────────────
+    doc.setFont('courier','bold');
+    doc.setFontSize(12);
+    doc.text('ANALISE DE PRECIFICACAO', ML + PW / 2, y, { align: 'center' }); y += LH + 1;
+    doc.setFontSize(10);
+    doc.text(safe(pedido.numero || 'N/A'), ML + PW / 2, y, { align: 'center' }); y += LH;
+    doc.setFont('courier','normal');
+    doc.setFontSize(FS);
+    doc.setFont('courier','bold');
+    doc.text('Fornecedor:', ML, y);
+    doc.setFont('courier','normal');
+    doc.text(safe(pedido.fornecedor_nome || '-'), ML + 30, y);
     y += LH;
-    SEP_LINE();
+    hline();
+
+    // ── Tabela de produtos ────────────────────────────────────────────────────
+    // Colunas:
+    // COD    | NOME DO PRODUTO (wrap)  | CAMPO1..5 | P.VENDA NOVO | P.VENDA ANT
+    // Larguras:
+    // COD:   12mm  ML
+    // NOME:  72mm  ML+14
+    // 5 campos hierarquicos: não aparecem como colunas, mas em linha abaixo do nome
+    // P. CUSTO NOVO: 24mm
+    // P. VENDA NOVO: 24mm
+    // P. VENDA ANT:  24mm  (alinhado à direita)
+
+    const C_COD      = ML;
+    const C_NOME     = ML + 14;
+    const C_CUST_N   = ML + PW - 68;
+    const C_VEND_N   = ML + PW - 42;
+    const C_VEND_A   = ML + PW;
+    const NOME_W     = PW - 14 - 72;   // ~96mm para nome
+
+    boldLine('COMPARATIVO DE CUSTOS E PRECIFICACAO');
+    hline();
+
+    // Cabeçalho colunas
+    doc.setFont('courier','bold');
+    doc.text('COD',      C_COD,    y);
+    doc.text('PRODUTO',  C_NOME,   y);
+    doc.text('CSTO.N',   C_CUST_N, y);
+    doc.text('V.NOVO',   C_VEND_N, y);
+    doc.text('V.ANT',    C_VEND_A, y, { align: 'right' });
+    doc.setFont('courier','normal');
+    y += LH;
+    hline();
+
+    let totalCustoAnterior = 0;
+    let totalCustoNovo     = 0;
+    let totalVendaAnterior = 0;
+    let totalVendaNovo     = 0;
 
     (pedido.itens || []).forEach((item) => {
       const produto = produtos.find(p => p.id === item.produto_id);
-      const atual = produto?.valor_compra || 0;
-      const novo = item.custo_unitario || 0;
-      const delta = novo - atual;
-      const pct = atual > 0 ? ((delta / atual) * 100).toFixed(1) : '0.0';
-      const sinal = delta > 0 ? '+' : '';
 
-      const nomeLines = doc.splitTextToSize(safe(item.produto_nome || '-'), NOME_MAX_W);
-      checkPage((nomeLines.length + 1) * LH);
+      const custoNovo     = item.custo_unitario || item.custo_final_unitario || 0;
+      const custoAnterior = produto?.valor_compra || 0;
+
+      // Preço de venda atual (produto) e novo (calculado: custo + margem)
+      const pVendaAnterior = produto?.preco_venda_padrao || 0;
+      const pctMargem      = produto?.preco_venda_percentual ?? 40;
+      const pVendaNovo     = custoNovo > 0
+        ? (produto?.preco_venda_tipo === 'percentual' || !produto?.preco_venda_tipo
+            ? custoNovo * (1 + pctMargem / 100)
+            : pVendaAnterior)
+        : pVendaAnterior;
+
+      totalCustoAnterior += custoAnterior;
+      totalCustoNovo     += custoNovo;
+      totalVendaAnterior += pVendaAnterior;
+      totalVendaNovo     += pVendaNovo;
+
+      // Campos hierárquicos com valores atualizados
+      const campos = [
+        produto?.campo_hierarquico_1,
+        produto?.campo_hierarquico_2,
+        produto?.campo_hierarquico_3,
+        produto?.campo_hierarquico_4,
+        produto?.campo_hierarquico_5,
+      ].filter(Boolean);
+
+      const nomeCompleto = safe(item.produto_nome || produto?.nome || '-');
+      const nomeLines    = doc.splitTextToSize(nomeCompleto, NOME_W);
+      const hierLines    = campos.length ? doc.splitTextToSize(campos.join(' | '), NOME_W) : [];
+      const totalLines   = nomeLines.length + (hierLines.length > 0 ? hierLines.length + 0.4 : 0);
+
+      checkPage(totalLines * LH + 1);
       const rowY = y;
 
-      // Nome com wrap
-      nomeLines.forEach((l, i) => doc.text(l, ML, rowY + i * LH));
+      // COD
+      doc.text(safe(produto?.codigo_interno || '---'), C_COD, rowY);
 
-      // Valores na primeira linha
-      doc.text(fmtCur(atual), COL_ATUAL, rowY);
-      doc.text(fmtCur(novo), COL_NOVO, rowY);
-      doc.text(sinal + pct + '%', COL_DELTA, rowY, { align: 'right' });
-      y = rowY + nomeLines.length * LH;
+      // Nome (negrito)
+      doc.setFont('courier','bold');
+      nomeLines.forEach((l, i) => doc.text(l, C_NOME, rowY + i * LH));
+      doc.setFont('courier','normal');
 
-      // Linha de detalhe qtd/impacto
-      const qtd = item.quantidade || 0;
-      const totalAtual = atual * qtd;
-      const totalNovo = novo * qtd;
-      const diffTotal = totalNovo - totalAtual;
-      const detLine = `  Qtd: ${qtd}  Total atual: ${fmtCur(totalAtual)}  Total novo: ${fmtCur(totalNovo)}  Impacto: ${fmtCur(diffTotal)}`;
-      const detLines = doc.splitTextToSize(safe(detLine), PW);
-      checkPage(detLines.length * LH);
-      detLines.forEach(l => { doc.text(l, ML, y); y += LH; });
+      // Campos hierárquicos em fonte normal abaixo do nome
+      if (hierLines.length) {
+        const hY = rowY + nomeLines.length * LH;
+        doc.setFontSize(8);
+        hierLines.forEach((l, i) => doc.text(l, C_NOME + 1, hY + i * LH * 0.85));
+        doc.setFontSize(FS);
+      }
+
+      // Valores na 1a linha alinhados
+      doc.text(fmtCur(custoNovo),     C_CUST_N, rowY);
+      doc.text(fmtCur(pVendaNovo),    C_VEND_N, rowY);
+      doc.text(fmtCur(pVendaAnterior),C_VEND_A, rowY, { align: 'right' });
+
+      y = rowY + totalLines * LH + 0.5;
     });
 
-    SEP_LINE();
+    y += 1;
+    hline();
 
-    const totalAtualGeral = (pedido.itens || []).reduce((s, item) => {
-      const prod = produtos.find(p => p.id === item.produto_id);
-      return s + ((prod?.valor_compra || 0) * (item.quantidade || 0));
-    }, 0);
-    const totalNovoPedido = pedido.valor_total || 0;
-
-    // Totais com alinhamento direita
-    const LV = (label, valor) => {
+    // Totalizadores
+    const LABEL_W2 = PW - 72;
+    const rowTotal = (lbl, val, bold = false) => {
+      if (bold) doc.setFont('courier','bold');
       checkPage();
-      doc.text(safe(label), ML, y);
-      doc.text(safe(valor), ML + PW, y, { align: 'right' });
+      doc.text(safe(lbl), ML, y);
+      doc.text(safe(val), ML + PW, y, { align: 'right' });
+      if (bold) doc.setFont('courier','normal');
       y += LH;
     };
-    LV('Total Anterior', fmtCur(totalAtualGeral));
-    LV('Total Novo Pedido', fmtCur(totalNovoPedido));
-    LV('Variacao Total', fmtCur(totalNovoPedido - totalAtualGeral));
-    SEP_LINE();
+
+    rowTotal('Total Custo Anterior',   fmtCur(totalCustoAnterior));
+    rowTotal('Total Custo Novo',       fmtCur(totalCustoNovo));
+    rowTotal('Variacao de Custo',      (totalCustoNovo > totalCustoAnterior ? '+' : '') + fmtCur(totalCustoNovo - totalCustoAnterior));
+    y += LH * 0.5;
+    rowTotal('Total Preco Venda Ant.', fmtCur(totalVendaAnterior));
+    rowTotal('Total Preco Venda Novo', fmtCur(totalVendaNovo), true);
+    hline();
 
     const pdfBytes = doc.output('arraybuffer');
     return new Response(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename=precificacao_${safe(pedido.numero || 'compra')}.pdf`,
+        'Content-Disposition': `attachment; filename=precificacao_${safe(pedido.numero||'compra')}.pdf`,
       },
     });
   } catch (error) {
