@@ -37,6 +37,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   );
   const [isPagoLocal, setIsPagoLocal] = useState(lancamento.status === 'Pago');
   const [saving, setSaving] = useState(false);
+  const [showEscopo, setShowEscopo] = useState(false);
+  const [pendingSave, setPendingSave] = useState(null);
   const { toast } = useToast();
 
   const isReceita = lancamento.tipo === 'Receita';
