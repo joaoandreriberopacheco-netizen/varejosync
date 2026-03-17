@@ -197,7 +197,7 @@ export default function ContasAbertas() {
     lancs.filter(l => l.status !== 'Pago' && l.status !== 'Cancelado' && l.tipo !== 'Transferência'),
   [lancs]);
 
-  const { s: ds, e: de, vencidas: soVencidas } = useMemo(() => periodoRange(periodo), [periodo]);
+  const { s: ds, e: de } = useMemo(() => periodoRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const filtrados = useMemo(() => emAberto.filter(l => {
     const vStr = getVencimento(l);
@@ -212,7 +212,11 @@ export default function ContasAbertas() {
       if (isBefore(vDate, ds)) return false;
     }
 
-    if (tipoFiltro !== 'todos' && l.tipo !== tipoFiltro) return false;
+    // Filtro tipo / compras
+    if (tipoFiltro === 'compras') {
+      if (l.referencia_tipo !== 'PedidoCompra' && !l.is_custo_mercadoria) return false;
+    } else if (tipoFiltro !== 'todos' && l.tipo !== tipoFiltro) return false;
+
     if (contasSel.length && l.conta_financeira_id && !contasSel.includes(l.conta_financeira_id)) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -221,7 +225,7 @@ export default function ContasAbertas() {
              (l.terceiro_nome || '').toLowerCase().includes(q);
     }
     return true;
-  }), [emAberto, periodo, ds, de, tipoFiltro, contasSel, search]);
+  }), [emAberto, periodo, ds, de, tipoFiltro, contasSel, search, cs, ce]);
 
   const kpis = useMemo(() => {
     let aReceber = 0, aPagar = 0, qtdReceber = 0, qtdPagar = 0, vencidas = 0;
