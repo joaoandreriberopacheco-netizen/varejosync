@@ -55,22 +55,24 @@ export default function EditarProdutosEmMassa() {
       // Executar importação
       for (const { id, dados, isNew } of parsedData.alterados) {
         if (isNew) {
-          // Novo produto: construir com campos obrigatórios
-          const novosProduto = {
-            tipo: dados.tipo || 'Produto',
-            preco_venda_padrao: dados.preco_venda_padrao || 0,
-            campo_hierarquico_1: dados.campo_hierarquico_1 || 'Sem categoria'
-          };
+           // Novo produto: construir com campos obrigatórios garantidos
+           const novosProduto = {
+             tipo: dados.tipo && String(dados.tipo).trim() ? dados.tipo : 'Produto',
+             preco_venda_padrao: Number(dados.preco_venda_padrao) || 0,
+             campo_hierarquico_1: dados.campo_hierarquico_1 && String(dados.campo_hierarquico_1).trim() ? dados.campo_hierarquico_1 : 'Sem categoria'
+           };
 
-          // Adicionar apenas campos válidos do schema
-          const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
-          validFields.forEach(field => {
-            if (dados[field] !== null && dados[field] !== undefined && dados[field] !== '') {
-              novosProduto[field] = dados[field];
-            }
-          });
+           // Adicionar apenas campos válidos do schema (excluir 'numero' e outros inválidos)
+           const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
+           validFields.forEach(field => {
+             const valor = dados[field];
+             if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
+               novosProduto[field] = valor;
+             }
+           });
 
-          await base44.entities.Produto.create(novosProduto);
+           console.log('📦 Payload novo:', novosProduto);
+           await base44.entities.Produto.create(novosProduto);
         } else {
           // Produto existente: atualizar apenas campos alterados
           const dadosAtualizacao = {};
