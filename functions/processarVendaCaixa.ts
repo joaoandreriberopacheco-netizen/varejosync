@@ -207,6 +207,37 @@ Deno.serve(async (req) => {
     if (pag.forma_pagamento === 'Vale Troca') continue; // vale troca não gera lançamento financeiro
 
     try {
+      // Usa data local do servidor (UTC-5 para America/Rio_Branco)
+      const agora = new Date();
+      const offsetMs = -5 * 60 * 60 * 1000; // UTC-5
+      const hoje = new Date(agora.getTime() + offsetMs).toISOString().split('T')[0];
+
+      // "Conta a Pagar" = crédito para o cliente (fiado) — lançamento Em Aberto, sem conta destino
+      if (pag.forma_pagamento === 'Conta a Pagar') {
+        await svc.entities.LancamentoFinanceiro.create({
+          tipo: 'Receita',
+          descricao: `Fiado - Venda ${numeroPedido}${rascunho.cliente_nome ? ` - ${rascunho.cliente_nome}` : ''}`,
+          terceiro_id: rascunho.cliente_id || null,
+          terceiro_nome: rascunho.cliente_nome || null,
+          valor: pag.valor,
+          valor_liquido: pag.valor,
+          data_vencimento: hoje,
+          status: 'Em Aberto',
+          status_conciliacao: 'N/A',
+          forma_pagamento: 'Conta a Pagar',
+          forma_pagamento_tipo: 'Boleto',
+          categoria: 'Venda de Produto',
+          tags: ['FIADO'],
+          conta_financeira_id: conta_caixa_id,
+          conta_financeira_nome: 'A Receber',
+          turno_caixa_id: turno_id,
+          referencia_id: pedidoVenda.id,
+          referencia_tipo: 'PedidoVenda',
+          referencia_numero: numeroPedido,
+        });
+        continue;
+      }
+
       // Buscar a forma de pagamento para obter conta destino
       let contaDestinoId = conta_caixa_id;
       let contaDestinoNome = 'Caixa';
@@ -221,11 +252,6 @@ Deno.serve(async (req) => {
           formaPgId = forma.id;
         }
       }
-
-      // Usa data local do servidor (UTC-5 para America/Rio_Branco)
-      const agora = new Date();
-      const offsetMs = -5 * 60 * 60 * 1000; // UTC-5
-      const hoje = new Date(agora.getTime() + offsetMs).toISOString().split('T')[0];
 
       await svc.entities.LancamentoFinanceiro.create({
         tipo: 'Receita',
