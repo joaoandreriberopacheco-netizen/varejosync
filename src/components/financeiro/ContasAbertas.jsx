@@ -291,12 +291,12 @@ export default function ContasAbertas() {
           {search && <button onClick={() => setSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
         </div>
 
-        {/* Chips período */}
-        <div className="px-3 py-2 border-b border-gray-50 dark:border-white/5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <div className="flex gap-1.5">
+        {/* Chips período — linha 1 */}
+        <div className="px-3 pt-2 pb-1.5 border-b border-gray-50 dark:border-white/5">
+          <div className="flex flex-wrap gap-1.5">
             {PERIODOS.map(p => (
               <button key={p.v} onClick={() => setPeriodo(p.v)}
-                className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
                   ${periodo === p.v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
                 {p.l}
               </button>
@@ -314,9 +314,9 @@ export default function ContasAbertas() {
           </div>
         )}
 
-        {/* Tipo */}
-        <div className="px-3 pb-2.5 pt-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <div className="flex gap-1.5">
+        {/* Chips tipo — linha 2 */}
+        <div className="px-3 pt-1.5 pb-2.5">
+          <div className="flex flex-wrap gap-1.5">
             {[
               { v: 'todos',   l: 'Todos' },
               { v: 'Receita', l: 'A Receber' },
@@ -324,7 +324,7 @@ export default function ContasAbertas() {
               { v: 'compras', l: 'Compras' },
             ].map(({ v, l }) => (
               <button key={v} onClick={() => setTipoFiltro(v)}
-                className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
                   ${tipoFiltro === v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
                 {l}
               </button>
