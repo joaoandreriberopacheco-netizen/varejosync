@@ -1,777 +1,356 @@
-import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Upload, CheckCircle, AlertTriangle, Loader2, FileText, X, History } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useToast } from '@/components/ui/use-toast';
-import HistoricoImportacoes from '../components/produtos/HistoricoImportacoes';
-import { createPageUrl } from '@/components/utils';
-import { Link } from 'react-router-dom';
-import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Upload, Download, RotateCcw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha';
+import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque';
+import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualizacao';
+import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao';
+import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
+import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
+import { toast } from 'sonner';
 
-export default function ImportacaoProdutos() {
-  const [step, setStep] = useState(1); // 1: Upload, 2: Validação, 3: Importação
-  const [file, setFile] = useState(null);
-  const [validationResult, setValidationResult] = useState(null);
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationProgress, setValidationProgress] = useState({ step: '', progress: 0 });
-  const [isImporting, setIsImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isHistoricoOpen, setIsHistoricoOpen] = useState(false);
-  const [importacoes, setImportacoes] = useState([]);
-  const [isLoadingHistorico, setIsLoadingHistorico] = useState(false);
-  const fileInputRef = useRef(null);
-  const { toast } = useToast();
-  const cacheRef = useRef({ categorias: null, fornecedores: null, produtos: null });
+export default function ImportacaoProdutosPage() {
+  const [parsedData, setParsedData] = useState(null);
+  const [parsedEstoque, setParsedEstoque] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const [salvouOk, setSalvouOk] = useState(false);
 
-  const loadHistorico = async () => {
-    setIsLoadingHistorico(true);
-    try {
-      const logs = await base44.entities.ImportacaoLog.list('-created_date', 50);
-      setImportacoes(logs);
-    } catch (error) {
-      console.error('Erro ao carregar histórico:', error);
-    } finally {
-      setIsLoadingHistorico(false);
-    }
-  };
+  const handleParsed = useCallback((data) => {
+    setParsedData(data);
+    setSalvouOk(false);
+  }, []);
 
-  const handleDownloadTemplate = async () => {
-    try {
-      const categorias = await base44.entities.Categoria.list();
-      const fornecedores = await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
+  const handleParsedEstoque = useCallback((data) => {
+    setParsedEstoque(data);
+    setSalvouOk(false);
+  }, []);
 
-      let csvContent = "\uFEFF";
-      csvContent += "CODIGO_BARRAS;CAMPO_HIERARQUICO_1;CAMPO_HIERARQUICO_2;CAMPO_HIERARQUICO_3;CAMPO_HIERARQUICO_4;CAMPO_HIERARQUICO_5;NOME;CATEGORIA;MARCA;FORNECEDOR_CODIGO;VALOR_COMPRA;FRETE_PERCENTUAL;IMPOSTO1_PERCENTUAL;IMPOSTO2_PERCENTUAL;DESCONTO_COMERCIAL_PERCENTUAL;OUTROS_CUSTOS_PERCENTUAL;PRECO_VENDA;ESTOQUE_MINIMO;ESTOQUE_IDEAL;ESTOQUE_MAXIMO;ESTOQUE_ATUAL;UNIDADE_PRINCIPAL;TEMPO_REPOSICAO_DIAS;PESO_KG;DIMENSOES_CM;TAGS\n";
-      csvContent += "# CAMPO_HIERARQUICO_1 = nível principal (ex: Torneira). CAMPO_HIERARQUICO_2..5 = subníveis opcionais\n";
-      csvContent += "# NOME pode ficar vazio — será gerado automaticamente pela concatenação dos campos hierárquicos\n";
-      csvContent += "7891234567890;Torneira;Mesa;Cromada;1/2\";Deca;;Hidráulica;Deca;FOR-00001;100.00;5.00;10.00;2.00;1.50;0.50;150.00;10;50;100;25;UN;15;2.5;30X20X15;hidraulica,torneira\n";
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `template_importacao_produtos_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Template baixado",
-        description: "Use este arquivo como base para importação",
-        className: "bg-gray-100 text-gray-800"
-      });
-    } catch (error) {
-      toast({ title: "Erro ao gerar template", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setValidationResult(null);
-    }
-  };
-
-  const handleValidateFile = async () => {
-    if (!file) {
-      toast({
-        title: "Nenhum arquivo selecionado",
-        description: "Por favor, selecione um arquivo CSV primeiro.",
-        variant: "destructive"
-      });
+  const handleConfirmar = async () => {
+    if (!parsedData?.alterados?.length) {
+      toast.error('Sem dados para sincronizar');
       return;
     }
-    
-    setIsValidating(true);
-    setValidationProgress({ step: 'Lendo arquivo...', progress: 10 });
-
+    setSalvando(true);
     try {
-      const text = await file.text();
+      const user = await base44.auth.me();
+      const idsAfetados = parsedData.alterados.map(a => a.id).filter(Boolean);
+      const snapshotDados = [];
       
-      setValidationProgress({ step: 'Carregando dados do sistema...', progress: 20 });
-
-      let categorias = cacheRef.current.categorias;
-      let fornecedores = cacheRef.current.fornecedores;
-      let produtosExistentes = cacheRef.current.produtos;
-
-      if (!categorias) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        categorias = await base44.entities.Categoria.list();
-        cacheRef.current.categorias = categorias;
+      if (idsAfetados.length > 0) {
+        const produtosAntigos = await base44.entities.Produto.filter({ id: idsAfetados });
+        snapshotDados.push(...produtosAntigos);
       }
-
-      setValidationProgress({ step: 'Carregando fornecedores...', progress: 35 });
-
-      if (!fornecedores) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        fornecedores = await base44.entities.Terceiro.filter({ tipo: 'Fornecedor' });
-        cacheRef.current.fornecedores = fornecedores;
-      }
-
-      setValidationProgress({ step: 'Carregando produtos existentes...', progress: 50 });
-
-      if (!produtosExistentes) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        produtosExistentes = await base44.entities.Produto.list();
-        cacheRef.current.produtos = produtosExistentes;
-      }
-
-      setValidationProgress({ step: 'Identificando formato...', progress: 65 });
-
-      const linhas = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
-      if (linhas.length < 2) {
-        throw new Error("Arquivo vazio ou com dados insuficientes");
-      }
-
-      const primeiraLinha = linhas[0];
-      const separador = primeiraLinha.includes(';') ? ';' : (primeiraLinha.includes(',') ? ',' : '\t');
-      
-      const headers = primeiraLinha.split(separador).map(h => h.trim().toUpperCase());
-      
-      console.log('📋 Cabeçalhos detectados:', headers);
-      console.log('🔍 Separador detectado:', separador);
-      
-      const mapearColuna = (nomesOpcoes) => {
-        for (const nome of nomesOpcoes) {
-          const idx = headers.findIndex(h => h === nome.toUpperCase());
-          if (idx >= 0) return idx;
-        }
-        return -1;
-      };
-
-      const mapeamento = {
-        separador,
-        indice_codigo_barras: mapearColuna(['CODIGO_BARRAS', 'COD_BARRAS', 'BARCODE', 'EAN']),
-        indice_h1: mapearColuna(['CAMPO_HIERARQUICO_1', 'HIERARQUICO_1', 'H1']),
-        indice_h2: mapearColuna(['CAMPO_HIERARQUICO_2', 'HIERARQUICO_2', 'H2']),
-        indice_h3: mapearColuna(['CAMPO_HIERARQUICO_3', 'HIERARQUICO_3', 'H3']),
-        indice_h4: mapearColuna(['CAMPO_HIERARQUICO_4', 'HIERARQUICO_4', 'H4']),
-        indice_h5: mapearColuna(['CAMPO_HIERARQUICO_5', 'HIERARQUICO_5', 'H5']),
-        indice_nome: mapearColuna(['NOME', 'PRODUTO', 'DESCRICAO', 'DESCRIPTION']),
-        indice_categoria: mapearColuna(['CATEGORIA', 'CATEGORY']),
-        indice_marca: mapearColuna(['MARCA', 'BRAND']),
-        indice_fornecedor: mapearColuna(['FORNECEDOR_CODIGO', 'FORNECEDOR', 'SUPPLIER']),
-        indice_valor_compra: mapearColuna(['VALOR_COMPRA', 'CUSTO', 'COST']),
-        indice_frete: mapearColuna(['FRETE_PERCENTUAL', 'FRETE', 'FREIGHT', 'FRETE_PERC']),
-        indice_imposto1: mapearColuna(['IMPOSTO1_PERCENTUAL', 'IMPOSTO_1_PERCENTUAL', 'IMPOSTO1', 'IPI', 'IMPOSTO_1']),
-        indice_imposto2: mapearColuna(['IMPOSTO2_PERCENTUAL', 'IMPOSTO_2_PERCENTUAL', 'IMPOSTO2', 'ICMS', 'IMPOSTO_2']),
-        indice_desconto: mapearColuna(['DESCONTO_COMERCIAL_PERCENTUAL', 'DESCONTO_COMERCIAL', 'DESCONTO']),
-        indice_outros: mapearColuna(['OUTROS_CUSTOS_PERCENTUAL', 'OUTROS_CUSTOS', 'OUTROS']),
-        indice_preco_venda: mapearColuna(['PRECO_VENDA', 'PRECO_VENDA_PADRAO', 'PRECO', 'PRICE']),
-        indice_estoque_minimo: mapearColuna(['ESTOQUE_MINIMO', 'ESTOQUE_MIN', 'MIN']),
-        indice_estoque_ideal: mapearColuna(['ESTOQUE_IDEAL', 'IDEAL']),
-        indice_estoque_maximo: mapearColuna(['ESTOQUE_MAXIMO', 'ESTOQUE_MAX', 'MAX']),
-        indice_estoque_atual: mapearColuna(['ESTOQUE_ATUAL', 'ESTOQUE', 'STOCK']),
-        indice_unidade: mapearColuna(['UNIDADE_PRINCIPAL', 'UNIDADE', 'UNIT']),
-        indice_unidades_por_pacote: mapearColuna(['UNIDADES_POR_PACOTE', 'UNID_PACOTE', 'QTD_PACOTE']),
-        indice_tempo_reposicao: mapearColuna(['TEMPO_REPOSICAO_DIAS', 'TEMPO_REPOSICAO', 'LEAD_TIME']),
-        indice_peso: mapearColuna(['PESO_KG', 'PESO', 'WEIGHT']),
-        indice_dimensoes: mapearColuna(['DIMENSOES_CM', 'DIMENSOES', 'DIMENSIONS']),
-        indice_tags: mapearColuna(['TAGS', 'KEYWORDS'])
-      };
-
-      console.log('🗺️ Mapeamento de colunas:', mapeamento);
-      
-      // NOME ou CAMPO_HIERARQUICO_1 deve existir
-      if (mapeamento.indice_nome === -1 && mapeamento.indice_h1 === -1) {
-        throw new Error(`Coluna obrigatória não encontrada. Necessário: NOME ou CAMPO_HIERARQUICO_1. Cabeçalhos: ${headers.join(', ')}`);
-      }
-      if (mapeamento.indice_preco_venda === -1) {
-        throw new Error(`Coluna obrigatória não encontrada. Necessário: PRECO_VENDA. Cabeçalhos: ${headers.join(', ')}`);
-      }
-
-      setValidationProgress({ step: 'Processando todos os produtos...', progress: 75 });
-
-      const linhasDados = linhas.slice(1);
-      const produtosIA = [];
-
-      for (let i = 0; i < linhasDados.length; i++) {
-        const cols = linhasDados[i].split(separador).map(c => c.trim());
-        
-        const getCol = (idx) => {
-          if (idx < 0 || idx >= cols.length) return '';
-          let val = cols[idx];
-          // Remove aspas duplas no início e fim
-          if (val.startsWith('"') && val.endsWith('"')) {
-            val = val.slice(1, -1);
-          }
-          return val;
-        };
-        const getNum = (idx) => {
-          const val = getCol(idx);
-          if (!val) return 0;
-          const num = parseFloat(val.replace(',', '.'));
-          return isNaN(num) ? 0 : num;
-        };
-
-        const h1 = getCol(mapeamento.indice_h1);
-        const nomeRaw = getCol(mapeamento.indice_nome);
-        const nomeGerado = nomeRaw || [
-          h1,
-          getCol(mapeamento.indice_h2),
-          getCol(mapeamento.indice_h3),
-          getCol(mapeamento.indice_h4),
-          getCol(mapeamento.indice_h5)
-        ].filter(Boolean).join(' | ');
-
-        const preco = getNum(mapeamento.indice_preco_venda);
-        if (!nomeGerado || !preco) continue;
-
-        produtosIA.push({
-          nome: nomeGerado,
-          campo_hierarquico_1: h1,
-          campo_hierarquico_2: getCol(mapeamento.indice_h2),
-          campo_hierarquico_3: getCol(mapeamento.indice_h3),
-          campo_hierarquico_4: getCol(mapeamento.indice_h4),
-          campo_hierarquico_5: getCol(mapeamento.indice_h5),
-          preco_venda: preco,
-          codigo_barras: getCol(mapeamento.indice_codigo_barras),
-          categoria_nome: getCol(mapeamento.indice_categoria),
-          fornecedor_codigo: getCol(mapeamento.indice_fornecedor),
-          marca: getCol(mapeamento.indice_marca),
-          valor_compra: getNum(mapeamento.indice_valor_compra),
-          frete_percentual: getNum(mapeamento.indice_frete),
-          imposto1_percentual: getNum(mapeamento.indice_imposto1),
-          imposto2_percentual: getNum(mapeamento.indice_imposto2),
-          desconto_comercial_percentual: getNum(mapeamento.indice_desconto),
-          outros_custos_percentual: getNum(mapeamento.indice_outros),
-          estoque_minimo: getNum(mapeamento.indice_estoque_minimo),
-          estoque_ideal: getNum(mapeamento.indice_estoque_ideal),
-          estoque_maximo: getNum(mapeamento.indice_estoque_maximo),
-          estoque_atual: getNum(mapeamento.indice_estoque_atual),
-          unidade_principal: getCol(mapeamento.indice_unidade),
-          unidades_por_pacote: getNum(mapeamento.indice_unidades_por_pacote) || 1,
-          tempo_reposicao_dias: getNum(mapeamento.indice_tempo_reposicao),
-          peso_kg: getNum(mapeamento.indice_peso),
-          dimensoes_cm: getCol(mapeamento.indice_dimensoes),
-          tags: getCol(mapeamento.indice_tags)
-        });
-
-        if (i % 100 === 0) {
-          setValidationProgress({ 
-            step: `Processando ${i}/${linhasDados.length} produtos...`, 
-            progress: 75 + Math.floor((i / linhasDados.length) * 10)
-          });
-          await new Promise(resolve => setTimeout(resolve, 0));
-        }
-      }
-      
-      setValidationProgress({ step: 'Processando resultados...', progress: 85 });
-      
-      console.log(`✅ ${produtosIA.length} produtos processados`);
-      
-      if (produtosIA.length === 0) {
-        throw new Error("Nenhum produto válido encontrado no arquivo. Verifique se as colunas NOME e PRECO_VENDA estão preenchidas.");
-      }
-
-      let novos = 0;
-      let atualizacoes = 0;
-
-      produtosIA.forEach(prod => {
-        if (prod.codigo_barras) {
-          const existe = produtosExistentes.find(p => 
-            p.codigo_barras?.toUpperCase() === prod.codigo_barras?.toUpperCase()
-          );
-          if (existe) atualizacoes++;
-          else novos++;
-        } else {
-          novos++;
-        }
-      });
-
-      cacheRef.current.produtosIA = produtosIA;
-
-      setValidationProgress({ step: 'Finalizando...', progress: 100 });
-
-      setValidationResult({
-        success: true,
-        totalLinhas: produtosIA.length,
-        novos,
-        atualizacoes,
-        totalCategorias: categorias.length,
-        totalFornecedores: fornecedores.length
-      });
-
-      toast({
-        title: "Validação concluída!",
-        description: `${produtosIA.length} produtos reconhecidos`,
-        className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
-      });
-
-      setTimeout(() => setStep(2), 100);
-    } catch (error) {
-      console.error('Erro detalhado na validação:', error);
-      
-      setValidationResult({
-        success: false,
-        error: error.message,
-        totalLinhas: 0
-      });
-      
-      toast({
-        title: "Erro na análise",
-        description: error.message,
-        variant: "destructive",
-        duration: 5000
-      });
-
-      setTimeout(() => setStep(2), 100);
-    } finally {
-      setIsValidating(false);
-      setValidationProgress({ step: '', progress: 0 });
-    }
-  };
-
-  const handleInitiateImport = () => {
-    console.log('Iniciando autenticação para importação...');
-    setIsAuthOpen(true);
-  };
-
-  const handleAuthSuccess = async () => {
-    console.log('Autenticação bem-sucedida, iniciando importação...');
-    setIsAuthOpen(false);
-    setStep(3);
-    setIsImporting(true);
-
-    try {
-      const produtosIA = cacheRef.current.produtosIA || [];
-      const categorias = cacheRef.current.categorias;
-      const fornecedores = cacheRef.current.fornecedores;
-      const produtosExistentes = cacheRef.current.produtos;
-
-      setImportProgress({ current: 0, total: produtosIA.length });
-
-      const produtosCriadosIds = [];
-      const produtosAtualizadosData = [];
-
-      for (let i = 0; i < produtosIA.length; i++) {
-        const prod = produtosIA[i];
-        
-        if (!prod.nome || !prod.preco_venda) continue;
-
-        const codigoBarras = prod.codigo_barras?.toUpperCase() || null;
-        const existe = codigoBarras ? produtosExistentes.find(p => 
-          p.codigo_barras?.toUpperCase() === codigoBarras
-        ) : null;
-
-        const valorCompra = prod.valor_compra || 0;
-        const fretePerc = prod.frete_percentual || 0;
-        const imp1Perc = prod.imposto1_percentual || 0;
-        const imp2Perc = prod.imposto2_percentual || 0;
-        const descPerc = prod.desconto_comercial_percentual || 0;
-        const outrosPerc = prod.outros_custos_percentual || 0;
-
-        const frete = valorCompra * (fretePerc / 100);
-        const imp1 = valorCompra * (imp1Perc / 100);
-        const imp2 = valorCompra * (imp2Perc / 100);
-        const desc = valorCompra * (descPerc / 100);
-        const outros = valorCompra * (outrosPerc / 100);
-        const custoTotal = valorCompra + frete + imp1 + imp2 + outros - desc;
-
-        let precoVendaTipo = 'numerico';
-        let precoVendaPerc = 0;
-        if (prod.preco_venda > 0 && custoTotal > 0) {
-          precoVendaPerc = ((prod.preco_venda - custoTotal) / custoTotal) * 100;
-          precoVendaTipo = 'percentual';
-        }
-
-        const categoria = categorias.find(c => 
-          c.nome?.toUpperCase() === prod.categoria_nome?.toUpperCase()
-        );
-        
-        const fornecedor = fornecedores.find(f => 
-          f.codigo_interno === prod.fornecedor_codigo
-        );
-
-        const tags = prod.tags ? prod.tags.split(',').map(t => t.trim().toUpperCase()).filter(t => t) : [];
-
-        const toUp = (v) => v?.toString().toUpperCase().trim() || '';
-        const produtoData = {
-          codigo_barras: codigoBarras,
-          campo_hierarquico_1: toUp(prod.campo_hierarquico_1),
-          campo_hierarquico_2: toUp(prod.campo_hierarquico_2) || undefined,
-          campo_hierarquico_3: toUp(prod.campo_hierarquico_3) || undefined,
-          campo_hierarquico_4: toUp(prod.campo_hierarquico_4) || undefined,
-          campo_hierarquico_5: toUp(prod.campo_hierarquico_5) || undefined,
-          nome: prod.nome.toUpperCase(),
-          categoria_id: categoria?.id || null,
-          categoria_nome: categoria?.nome || null,
-          marca: prod.marca?.toUpperCase() || '',
-          fornecedor_padrao_id: fornecedor?.id || null,
-          fornecedor_padrao_codigo: fornecedor?.codigo_interno || null,
-          valor_compra: valorCompra,
-          custo_frete_padrao: fretePerc,
-          custo_imposto1_padrao: imp1Perc,
-          custo_imposto2_padrao: imp2Perc,
-          desconto_compra_padrao: descPerc,
-          custo_outros_padrao: outrosPerc,
-          preco_custo_calculado: custoTotal,
-          preco_venda_padrao: prod.preco_venda,
-          preco_venda_tipo: precoVendaTipo,
-          preco_venda_percentual: precoVendaPerc,
-          estoque_minimo: prod.estoque_minimo || 0,
-          estoque_ideal: prod.estoque_ideal || 0,
-          estoque_maximo: prod.estoque_maximo || 0,
-          estoque_atual: prod.estoque_atual || 0,
-          unidade_principal: prod.unidade_principal?.toUpperCase() || 'UN',
-          unidades_por_pacote: prod.unidades_por_pacote || 1,
-          tempo_reposicao_dias: prod.tempo_reposicao_dias || 0,
-          peso_kg: prod.peso_kg || 0,
-          dimensoes_cm: prod.dimensoes_cm?.toUpperCase() || '',
-          tags,
-          tipo: 'Produto',
-          ativo: true
-        };
-
-        if (existe) {
-          produtosAtualizadosData.push({
-            id: existe.id,
-            dados_anteriores: {
-              nome: existe.nome,
-              preco_venda_padrao: existe.preco_venda_padrao,
-              preco_custo_calculado: existe.preco_custo_calculado,
-              valor_compra: existe.valor_compra,
-              estoque_atual: existe.estoque_atual
-            }
-          });
-          await base44.entities.Produto.update(existe.id, produtoData);
-        } else {
-          const criado = await base44.entities.Produto.create(produtoData);
-          produtosCriadosIds.push(criado.id);
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 150));
-        setImportProgress({ current: i + 1, total: produtosIA.length });
-      }
-
-      const allLogs = await base44.entities.ImportacaoLog.list();
-      const nextNumber = allLogs.length + 1;
 
       await base44.entities.ImportacaoLog.create({
-        numero: `IMP-${String(nextNumber).padStart(5, '0')}`,
-        tipo: 'Produtos',
-        status: 'Concluída',
-        total_novos: validationResult.novos,
-        total_atualizados: validationResult.atualizacoes,
-        produtos_ids: produtosCriadosIds,
-        produtos_atualizados: produtosAtualizadosData,
-        arquivo_nome: file.name
+        usuario_responsavel: user?.full_name || user?.email,
+        quantidade_itens: parsedData.alterados.length,
+        snapshot_dados: snapshotDados,
+        tipo_importacao: 'Detalhes do Produto'
       });
 
-      toast({
-        title: "✓ Importação Concluída!",
-        description: `${validationResult.novos} produtos criados, ${validationResult.atualizacoes} atualizados.`,
-        className: "bg-green-100 text-green-800",
-        duration: 5000
-      });
+      for (const { id, dados, isNew } of parsedData.alterados) {
+        if (isNew) {
+          const novosProduto = {
+            tipo: dados.tipo && String(dados.tipo).trim() ? dados.tipo : 'Produto',
+            preco_venda_padrao: Number(dados.preco_venda_padrao) || 0,
+            campo_hierarquico_1: dados.campo_hierarquico_1 && String(dados.campo_hierarquico_1).trim() ? dados.campo_hierarquico_1 : 'Sem categoria'
+          };
 
-      setTimeout(() => {
-        window.location.href = createPageUrl('Produtos');
-      }, 2000);
+          const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
+          validFields.forEach(field => {
+            const valor = dados[field];
+            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
+              novosProduto[field] = valor;
+            }
+          });
 
+          await base44.entities.Produto.create(novosProduto);
+        } else {
+          const dadosAtualizacao = {};
+          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
+          validFields.forEach(field => {
+            const valor = dados[field];
+            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
+              dadosAtualizacao[field] = valor;
+            }
+          });
+
+          if (Object.keys(dadosAtualizacao).length > 0) {
+            await base44.entities.Produto.update(id, dadosAtualizacao);
+          }
+        }
+      }
+      
+      toast.success(`✓ Sincronização concluída! ${parsedData.alterados.length} produto(s) processado(s).`);
+      setSalvouOk(true);
+      setParsedData(null);
     } catch (error) {
-      toast({ title: "Erro na importação", description: error.message, variant: "destructive" });
-      setStep(2);
+      console.error('❌ Erro na sincronização:', error);
+      toast.error(`Erro ao sincronizar: ${error?.message || 'Erro desconhecido'}`);
     } finally {
-      setIsImporting(false);
+      setSalvando(false);
     }
   };
 
+  const handleConfirmarEstoque = async () => {
+    if (!parsedEstoque?.alterados?.length) {
+      toast.error('Sem dados para atualizar');
+      return;
+    }
+    setSalvando(true);
+    try {
+      const user = await base44.auth.me();
+      
+      for (const { id, estoque_novo, estoque_anterior, produto_nome } of parsedEstoque.alterados) {
+        const diferenca = estoque_novo - estoque_anterior;
+        
+        await base44.entities.Produto.update(id, { estoque_atual: estoque_novo });
+        
+        await base44.entities.MovimentacaoEstoque.create({
+          produto_id: id,
+          produto_nome,
+          tipo: diferenca >= 0 ? 'Entrada' : 'Saída',
+          motivo: 'Ajuste de Inventário',
+          quantidade: Math.abs(diferenca),
+          custo_unitario: 0,
+          referencia_tipo: 'Importação de Inventário',
+          observacoes: `Ajuste em massa: ${estoque_anterior} → ${estoque_novo}`,
+          usuario_responsavel: user?.email || 'Sistema',
+        });
+      }
+      
+      toast.success(`✓ Estoque atualizado! ${parsedEstoque.alterados.length} produto(s) ajustado(s).`);
+      setSalvouOk(true);
+      setParsedEstoque(null);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar estoque:', error);
+      toast.error(`Erro: ${error?.message || 'Erro desconhecido'}`);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const podeConfirmar = parsedData && parsedData.alterados?.length > 0 && parsedData.erros?.length === 0;
+  const podeConfirmarEstoque = parsedEstoque && parsedEstoque.alterados?.length > 0 && parsedEstoque.erros?.length === 0;
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link to={createPageUrl('Produtos')}>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial">
-              Importação de Produtos
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Importe produtos em lote via arquivo CSV
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              loadHistorico();
-              setIsHistoricoOpen(true);
-            }}
-            className="gap-2 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            <History className="w-4 h-4" />
-            Histórico
-          </Button>
+        <div>
+          <h1 className="text-3xl font-semibold text-gray-900 dark:text-white font-glacial mb-2">
+            Importação de Produtos
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Gerencie produtos, estoque e importações em um único lugar.
+          </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-2 mb-12">
-          {[1, 2, 3].map(s => (
-            <div key={s} className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                step >= s 
-                  ? 'bg-gray-800 dark:bg-white text-white dark:text-gray-900 shadow-md' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-              }`}>
-                {step > s ? <CheckCircle className="w-5 h-5" /> : <span className="text-sm font-medium">{s}</span>}
-              </div>
-              {s < 3 && <div className={`w-16 h-0.5 ${step > s ? 'bg-gray-800 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'}`} />}
-            </div>
-          ))}
-        </div>
+        {/* Tabs */}
+        <Tabs defaultValue="produtos" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1">
+            <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+              <Upload className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Produtos</span>
+            </TabsTrigger>
+            <TabsTrigger value="estoque" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+              <Download className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Estoque</span>
+            </TabsTrigger>
+            <TabsTrigger value="desfazer" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-lg">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Desfazer</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Step 1: Upload */}
-        {step === 1 && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                  <Download className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+          {/* TAB: Produtos */}
+          <TabsContent value="produtos" className="space-y-6 mt-8">
+            {/* Step 1: Download */}
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  1
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    1. Baixe o template CSV
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Use nosso modelo com todas as colunas necessárias
-                  </p>
-                  <Button onClick={handleDownloadTemplate} className="gap-2">
-                    <Download className="w-4 h-4" />
-                    Baixar Template
-                  </Button>
-                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  Baixar planilha de produtos
+                </h2>
               </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Gera um <strong>.xlsx</strong> com todos os produtos. Colunas editáveis ficam desbloqueadas; IDs e campos calculados são somente-leitura.
+              </p>
+              <ExportarPlanilha />
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                  <Upload className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            {/* Step 2: Upload */}
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  2
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    2. Selecione o arquivo preenchido
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Formato CSV com separador ponto-e-vírgula (;)
-                  </p>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-
-                  {!file ? (
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Selecionar Arquivo
-                    </Button>
-                  ) : (
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                      <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(file.size / 1024).toFixed(2)} KB
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setFile(null)}
-                        className="rounded-full"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-
-                  {file && !isValidating && (
-                    <Button
-                      onClick={handleValidateFile}
-                      className="gap-2 mt-4 w-full"
-                    >
-                      Validar e Continuar
-                    </Button>
-                  )}
-
-                  {file && isValidating && (
-                    <div className="mt-4 space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">
-                          {validationProgress.step}
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {validationProgress.progress}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-gray-800 dark:bg-white h-full transition-all duration-500 rounded-full"
-                          style={{ width: `${validationProgress.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  Subir planilha editada
+                </h2>
               </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Selecione o arquivo <strong>.xlsx</strong> modificado. Colunas extras ou não reconhecidas serão ignoradas.
+              </p>
+              <ImportarPlanilha onParsed={handleParsed} />
             </div>
-          </div>
-        )}
 
-        {/* Step 2: Validation Result */}
-        {step === 2 && validationResult && (
-          <div className="space-y-6">
-            {validationResult.success ? (
-              <>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm">
-                  <div className="flex items-center gap-3 mb-6">
-                    <CheckCircle className="w-8 h-8 text-green-600" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      Arquivo validado com sucesso!
-                    </h3>
+            {/* Step 3: Preview */}
+            {parsedData && (
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                    3
                   </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Linhas</p>
-                      <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                        {validationResult.totalLinhas}
-                      </p>
-                    </div>
-                    <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
-                      <p className="text-xs text-green-700 dark:text-green-400 mb-1">Novos Produtos</p>
-                      <p className="text-2xl font-semibold text-green-700 dark:text-green-400">
-                        {validationResult.novos}
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                      <p className="text-xs text-blue-700 dark:text-blue-400 mb-1">Atualizações</p>
-                      <p className="text-2xl font-semibold text-blue-700 dark:text-blue-400">
-                        {validationResult.atualizacoes}
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Categorias</p>
-                      <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                        {validationResult.totalCategorias}
-                      </p>
-                    </div>
-                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                    Validar e confirmar
+                  </h2>
                 </div>
-
-                <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => { 
-                      setStep(1); 
-                      setFile(null); 
-                      setValidationResult(null); 
-                    }} 
-                    className="flex-1"
-                    disabled={isImporting}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={handleInitiateImport} 
-                    className="flex-1 gap-2"
-                    disabled={isImporting}
-                  >
-                    {isImporting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processando...
-                      </>
-                    ) : (
-                      'Confirmar Importação'
-                    )}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm">
-                <div className="flex items-start gap-3 mb-6">
-                  <AlertTriangle className="w-8 h-8 text-red-600 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      Erro na validação
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {validationResult.error}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" onClick={() => { setStep(1); setFile(null); setValidationResult(null); }}>
-                  Voltar
+                <ResumoPrevisualizacao data={parsedData} />
+                <Button
+                  onClick={handleConfirmar}
+                  disabled={!podeConfirmar || salvando}
+                  className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                >
+                  {salvando ? 'Sincronizando...' : `Confirmar Sincronização (${parsedData.alterados?.length ?? 0} registros)`}
                 </Button>
               </div>
             )}
-          </div>
-        )}
 
-        {/* Step 3: Importing */}
-        {step === 3 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm">
-            <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-gray-600 dark:text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Importando produtos...
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Por favor, aguarde. Não feche esta página.
-              </p>
-
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Progresso
-                  </span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {importProgress.current} / {importProgress.total}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 overflow-hidden">
-                  <div
-                    className="bg-gray-800 dark:bg-white h-full transition-all duration-300 rounded-full"
-                    style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
-                  />
+            {salvouOk && !parsedEstoque && (
+              <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                    Sincronização concluída com sucesso!
+                  </p>
                 </div>
               </div>
+            )}
+          </TabsContent>
+
+          {/* TAB: Estoque */}
+          <TabsContent value="estoque" className="space-y-6 mt-8">
+            {/* Step 1: Download */}
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  1
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  Baixar template de estoque
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Gera um <strong>.xlsx</strong> com ID, Nome e Estoque Atual de todos os produtos.
+              </p>
+              <ExportarEstoque />
             </div>
-          </div>
-        )}
+
+            {/* Step 2: Upload */}
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                  2
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                  Subir planilha de inventário
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Importe o arquivo <strong>.xlsx</strong> com as quantidades atualizadas. Movimentações de estoque serão geradas automaticamente.
+              </p>
+              <ImportarEstoque onParsed={handleParsedEstoque} />
+            </div>
+
+            {/* Step 3: Preview */}
+            {parsedEstoque && (
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold flex items-center justify-center">
+                    3
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial">
+                    Validar e confirmar ajustes
+                  </h2>
+                </div>
+                
+                <div className="space-y-3">
+                  {parsedEstoque.erros?.length > 0 && (
+                    <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        <p className="font-medium text-red-700 dark:text-red-400">Erros encontrados:</p>
+                      </div>
+                      {parsedEstoque.erros.map((erro, idx) => (
+                        <p key={idx} className="text-xs text-red-600 dark:text-red-400 ml-7">• {erro.mensagem}</p>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {parsedEstoque.alterados?.length > 0 && (
+                    <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4">
+                      <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-2">
+                        {parsedEstoque.alterados.length} produto(s) serão atualizados
+                      </p>
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        {parsedEstoque.alterados.slice(0, 10).map((item, idx) => (
+                          <p key={idx} className="text-xs text-blue-600 dark:text-blue-400">
+                            • {item.produto_nome}: {item.estoque_anterior} → {item.estoque_novo}
+                          </p>
+                        ))}
+                        {parsedEstoque.alterados.length > 10 && (
+                          <p className="text-xs text-blue-500 dark:text-blue-400 italic">
+                            ... e mais {parsedEstoque.alterados.length - 10} itens
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={handleConfirmarEstoque}
+                  disabled={!podeConfirmarEstoque || salvando}
+                  className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
+                >
+                  {salvando ? 'Atualizando estoque...' : `Confirmar Atualização (${parsedEstoque.alterados?.length ?? 0} produtos)`}
+                </Button>
+              </div>
+            )}
+
+            {salvouOk && parsedEstoque === null && (
+              <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                    Estoque atualizado e movimentações registradas com sucesso!
+                  </p>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* TAB: Desfazer */}
+          <TabsContent value="desfazer" className="mt-8">
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 shadow-sm space-y-4">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-2">
+                  Histórico de Importações
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Restaure produtos para o estado anterior a uma importação realizada.
+                </p>
+              </div>
+              <DesfazerImportacao />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <OperacaoAuthenticator
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onSuccess={handleAuthSuccess}
-        operationName="Importação de Produtos"
-      />
-
-      <HistoricoImportacoes
-        isOpen={isHistoricoOpen}
-        onClose={() => setIsHistoricoOpen(false)}
-        importacoes={importacoes}
-        onRefresh={loadHistorico}
-      />
     </div>
   );
 }
