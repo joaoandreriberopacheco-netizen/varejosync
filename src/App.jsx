@@ -163,6 +163,11 @@ const AuthenticatedApp = () => {
           <TabelaPrecosConsulta />
         </LayoutWrapper>
       } />
+      <Route path="/ImportacaoProdutos" element={
+        <LayoutWrapper currentPageName="ImportacaoProdutos">
+          <ImportacaoProdutos />
+        </LayoutWrapper>
+      } />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
