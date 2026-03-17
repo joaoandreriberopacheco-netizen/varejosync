@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
-import { base44 } from '@/api/base44Client';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
