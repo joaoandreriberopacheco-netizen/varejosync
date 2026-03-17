@@ -47,11 +47,79 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const isPendente = lancamento.status_conciliacao === 'Pendente';
   const data = lancamento.data_pagamento || lancamento.data_vencimento;
 
+  // Aplica pagamento com escopo de recorrência
+  const aplicarPagamento = async (escopo = 'apenas_esta') => {
+    setSaving(true);
+    const conta = contas.find((c) => c.id === contaId);
+
+    if (lancamento.is_recorrente && lancamento.grupo_lancamento_id && escopo !== 'apenas_esta') {
+      // Buscar todos do grupo
+      const grupo = await base44.entities.LancamentoFinanceiro.filter({ grupo_lancamento_id: lancamento.grupo_lancamento_id });
+      const hStr = lancamento.data_vencimento || '';
+      const alvos = grupo.filter(l => {
+        if (l.status === 'Pago') return false; // nunca alterar pagos
+        if (escopo === 'todas')    return true;
+        if (escopo === 'futuras')  return (l.data_vencimento || '') >= hStr;
+        if (escopo === 'passadas') return (l.data_vencimento || '') <= hStr;
+        return false;
+      });
+      for (const l of alvos) {
+        await base44.entities.LancamentoFinanceiro.update(l.id, {
+          status: 'Pago',
+          data_pagamento: dataPagamento,
+          status_conciliacao: 'Pendente',
+          conta_financeira_id: contaId,
+          conta_financeira_nome: conta?.nome,
+        });
+      }
+      // Atualizar saldo só pelo valor do lançamento atual (não em massa)
+      if (conta) {
+        const delta = isReceita ? lancamento.valor || 0 : -(lancamento.valor || 0);
+        await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
+      }
+      toast({ title: `${alvos.length} lançamento(s) marcados como pagos!`, className: 'bg-gray-100 text-gray-800' });
+      onSaved?.();
+      setSaving(false);
+      return;
+    }
+
+    // Salvar apenas este
+    if (isPagoLocal && !isPagoOriginal) {
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        status: 'Pago', data_pagamento: dataPagamento,
+        status_conciliacao: 'Pendente',
+        conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
+      });
+      if (conta) {
+        const delta = isReceita ? lancamento.valor || 0 : -(lancamento.valor || 0);
+        await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
+      }
+      toast({ title: 'Pagamento registrado!', className: 'bg-gray-100 text-gray-800' });
+    } else if (!isPagoLocal && isPagoOriginal) {
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, { status: 'Em Aberto' });
+      toast({ title: 'Marcado como em aberto', className: 'bg-gray-100 text-gray-800' });
+    } else if (isPagoLocal && isPagoOriginal) {
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        data_pagamento: dataPagamento, conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
+      });
+      toast({ title: 'Dados atualizados!', className: 'bg-gray-100 text-gray-800' });
+    }
+    onSaved?.();
+    setSaving(false);
+  };
+
   const handleSalvarPagamento = async () => {
     if (isPagoLocal && !contaId) {
       toast({ title: 'Selecione uma conta', variant: 'destructive' });
       return;
     }
+    // Se recorrente e marcando como pago, perguntar escopo
+    if (lancamento.is_recorrente && lancamento.grupo_lancamento_id && isPagoLocal && !isPagoOriginal) {
+      setPendingSave(true);
+      setShowEscopo(true);
+      return;
+    }
+    await aplicarPagamento('apenas_esta');
     setSaving(true);
     const conta = contas.find((c) => c.id === contaId);
 
