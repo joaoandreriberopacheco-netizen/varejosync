@@ -8,11 +8,8 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, Plus, X, Search,
-  SlidersHorizontal, ChevronDown, AlertTriangle, Calendar,
-  ChevronLeft, ChevronRight, CheckCircle2
+  AlertTriangle, Calendar, CheckCircle2
 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 
