@@ -73,7 +73,7 @@ export default function Layout({ children, currentPageName }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
 
-  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta'];
+  const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 

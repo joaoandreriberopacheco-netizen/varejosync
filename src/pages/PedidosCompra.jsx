@@ -74,23 +74,11 @@ export default function PedidosCompraPage() {
   };
 
   const handleOpenPedido = (pedido) => {
-    if (isMobile) {
-      // Mobile: abre como dialog (comportamento atual)
-      setPedidoSelecionado(pedido);
-      setIsFormOpen(true);
-    } else {
-      // Desktop: navega para página inteira
-      navigate(`/PedidoCompraDetalhe?id=${pedido.id}`);
-    }
+    navigate(`/PedidoCompraDetalhe?id=${pedido.id}`);
   };
 
   const handleNovoPedido = () => {
-    if (isMobile) {
-      setPedidoSelecionado(null);
-      setIsFormOpen(true);
-    } else {
-      navigate('/PedidoCompraDetalhe?id=novo');
-    }
+    navigate('/PedidoCompraDetalhe?id=novo');
   };
 
   const todasTags = useMemo(() => {
@@ -171,18 +159,7 @@ export default function PedidosCompraPage() {
         onDelete={loadData}
       />
 
-      {/* Dialog — apenas mobile */}
-      {isMobile && (
-        <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) { setIsFormOpen(false); setPedidoSelecionado(null); } }}>
-          {isFormOpen && (
-            <PedidoCompraForm
-              pedido={pedidoSelecionado}
-              onClose={() => { setIsFormOpen(false); setPedidoSelecionado(null); }}
-              onSave={handleSave}
-            />
-          )}
-        </Dialog>
-      )}
+
 
       <ImportadorNotaFiscal 
         isOpen={showImportador}
