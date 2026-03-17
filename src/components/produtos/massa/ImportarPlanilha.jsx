@@ -66,9 +66,13 @@ export default function ImportarPlanilha({ onParsed }) {
       const alterados = [];  // { id, dados, nome, isNew }
       const erros = [];
       let validacaoFalhou = false;
+      let rowCount = 0;
 
-      ws.eachRow((row, rowNumber) => {
-       if (rowNumber === 1 || validacaoFalhou) return;
+      // ── Usar iteração manual para evitar timeout ──────────────────────────────
+      const totalRows = ws.rowCount;
+      for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
+       if (validacaoFalhou) break;
+       const row = ws.getRow(rowNumber);
 
        const idColIndex = colIndexMap['id'];
        const id = idColIndex ? String(getCellValue(row.getCell(idColIndex)) || '').trim() : '';
@@ -182,8 +186,14 @@ export default function ImportarPlanilha({ onParsed }) {
          }
 
          alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeAtual, isNew: false });
-       }
-      });
+         }
+
+         rowCount++;
+         // Liberar memória a cada 100 linhas processadas
+         if (rowCount % 100 === 0) {
+         await new Promise(resolve => setTimeout(resolve, 0));
+         }
+         }
 
       if (validacaoFalhou) {
        onParsed(null);
