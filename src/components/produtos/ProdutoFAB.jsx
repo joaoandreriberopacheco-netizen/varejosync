@@ -21,7 +21,7 @@ export default function ProdutoFAB({ onNovoClicked }) {
       label: 'Edição em Massa',
       icon: Upload,
       onClick: () => {
-        navigate(createPageUrl('ImportacaoProdutos'));
+        navigate('/ImportacaoProdutos');
         setIsOpen(false);
       }
     }
