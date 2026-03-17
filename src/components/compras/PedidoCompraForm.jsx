@@ -104,6 +104,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [motivoEdicao, setMotivoEdicao] = useState('');
   const [isAnexosOpen, setIsAnexosOpen] = useState(false);
   const [empresa, setEmpresa] = useState(null);
+  const [isNovoFornecedorOpen, setIsNovoFornecedorOpen] = useState(false);
+  const [novoFornecedor, setNovoFornecedor] = useState({ nome: '', email: '', telefone: '', endereco: '' });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -196,10 +198,41 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
   
   const handleFornecedorChange = (id) => {
+    if (id === 'novo') {
+      setIsNovoFornecedorOpen(true);
+      return;
+    }
     const fornecedor = fornecedores.find(f => f.id === id);
     if (fornecedor) {
       handleChange('fornecedor_id', id);
       handleChange('fornecedor_nome', fornecedor.nome);
+    }
+  };
+
+  const handleCreateFornecedor = async () => {
+    if (!novoFornecedor.nome.trim()) {
+      toast({ title: 'Nome obrigatório', variant: 'destructive' });
+      return;
+    }
+    try {
+      const novoF = await base44.entities.Terceiro.create({
+        nome: novoFornecedor.nome,
+        email: novoFornecedor.email || '',
+        telefone: novoFornecedor.telefone || '',
+        endereco: novoFornecedor.endereco || '',
+        tipo: 'Fornecedor',
+        ativo: true
+      });
+
+      setFornecedores(prev => [...prev, novoF]);
+      handleChange('fornecedor_id', novoF.id);
+      handleChange('fornecedor_nome', novoF.nome);
+
+      setIsNovoFornecedorOpen(false);
+      setNovoFornecedor({ nome: '', email: '', telefone: '', endereco: '' });
+      toast({ title: 'Fornecedor criado com sucesso!' });
+    } catch (error) {
+      toast({ title: 'Erro ao criar fornecedor', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -901,6 +934,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                           {f.nome}
                         </SelectItem>
                       ))}
+                      <div className="border-t border-gray-200 dark:border-gray-700 p-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="w-full justify-start text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 h-8"
+                          onClick={() => {
+                            handleFornecedorChange('novo');
+                            setSearchFornecedor('');
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-2" />
+                          Novo Fornecedor
+                        </Button>
+                      </div>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1141,20 +1188,34 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
 
        {/* FAB multi-role com Bússola */}
-       <PedidoCompraFAB 
-         pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
-         onSave={handleInitiateSave}
-         isSaving={isSaving}
-         isDisabled={!formData.fornecedor_id || formData.itens.length === 0 || isLocked}
-         mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
-         onEnviarFinanceiro={() => {
-           handleChange('status', 'Aguardando Liberação');
-           setTimeout(() => handleInitiateSave(), 100);
-         }}
-         onOpenAnexos={() => setIsAnexosOpen(true)}
-         mostrarSolicitarEdicao={!!pedido?.id && isLocked}
-         onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
-       />
+       {!isLocked && (
+         <PedidoCompraFAB 
+           pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
+           onSave={handleInitiateSave}
+           isSaving={isSaving}
+           isDisabled={!formData.fornecedor_id || formData.itens.length === 0}
+           mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
+           onEnviarFinanceiro={() => {
+             handleChange('status', 'Aguardando Liberação');
+             setTimeout(() => handleInitiateSave(), 100);
+           }}
+           onOpenAnexos={() => setIsAnexosOpen(true)}
+           mostrarSolicitarEdicao={false}
+           onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
+         />
+       )}
+       {isLocked && (
+         <PedidoCompraFAB 
+           pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
+           onSave={handleInitiateSave}
+           isSaving={isSaving}
+           isDisabled={true}
+           mostrarEnviarFinanceiro={false}
+           onOpenAnexos={() => setIsAnexosOpen(true)}
+           mostrarSolicitarEdicao={!!pedido?.id && isLocked}
+           onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
+         />
+       )}
 
        <AnexosPedidoCompra
          pedidoId={pedido?.id}
@@ -1171,6 +1232,68 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
          onClose={() => setIsSolicitarEdicaoOpen(false)}
          onSuccess={() => onClose()}
        />
-      </div>
-  );
-}
+
+       {/* Dialog Novo Fornecedor */}
+       <Dialog open={isNovoFornecedorOpen} onOpenChange={setIsNovoFornecedorOpen}>
+         <DialogContent className="max-w-sm bg-white dark:bg-gray-900 border-0 shadow-2xl rounded-2xl">
+           <DialogHeader>
+             <DialogTitle className="text-gray-900 dark:text-white">Novo Fornecedor</DialogTitle>
+           </DialogHeader>
+           <div className="space-y-4">
+             <div>
+               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Nome *</Label>
+               <Input
+                 placeholder="Nome do fornecedor"
+                 value={novoFornecedor.nome}
+                 onChange={e => setNovoFornecedor({...novoFornecedor, nome: e.target.value})}
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
+               />
+             </div>
+             <div>
+               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Email</Label>
+               <Input
+                 placeholder="email@fornecedor.com"
+                 value={novoFornecedor.email}
+                 onChange={e => setNovoFornecedor({...novoFornecedor, email: e.target.value})}
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
+               />
+             </div>
+             <div>
+               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Telefone</Label>
+               <Input
+                 placeholder="(00) 00000-0000"
+                 value={novoFornecedor.telefone}
+                 onChange={e => setNovoFornecedor({...novoFornecedor, telefone: e.target.value})}
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
+               />
+             </div>
+             <div>
+               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Endereço</Label>
+               <Input
+                 placeholder="Endereço completo"
+                 value={novoFornecedor.endereco}
+                 onChange={e => setNovoFornecedor({...novoFornecedor, endereco: e.target.value})}
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
+               />
+             </div>
+           </div>
+           <DialogFooter className="gap-2 flex justify-end">
+             <Button
+               variant="outline"
+               onClick={() => setIsNovoFornecedorOpen(false)}
+               className="border-0 shadow-sm rounded-lg h-9"
+             >
+               Cancelar
+             </Button>
+             <Button
+               onClick={handleCreateFornecedor}
+               className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 rounded-lg h-9"
+             >
+               Criar
+             </Button>
+           </DialogFooter>
+         </DialogContent>
+       </Dialog>
+       </div>
+       );
+       }
