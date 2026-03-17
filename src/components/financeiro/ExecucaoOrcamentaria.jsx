@@ -8,6 +8,7 @@ import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import FiltrosFluxoCaixa from './fluxo/FiltrosFluxoCaixa';
 import KpiFluxo from './fluxo/KpiFluxo';
 import ListaLancamentos from './fluxo/ListaLancamentos';
+import ContasAbertas from './ContasAbertas';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function dateRange(periodo, cs, ce) {
@@ -138,13 +139,28 @@ export default function ExecucaoOrcamentaria() {
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || !!search;
 
+  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'contas'
+
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
-      {/* Header */}
-      <div className="pb-3 mb-1">
-        <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Fluxo de Caixa</p>
-        <p className="text-xs text-gray-400">Movimentações, receitas e despesas</p>
+      {/* Header + tabs */}
+      <div className="pb-1">
+        <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial mb-3">Financeiro</p>
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1">
+          <button onClick={() => setAba('fluxo')}
+            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
+            Fluxo de Caixa
+          </button>
+          <button onClick={() => setAba('contas')}
+            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${aba === 'contas' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
+            Contas Abertas
+          </button>
+        </div>
       </div>
+
+      {aba === 'contas' && <ContasAbertas />}
+      {aba !== 'contas' && <></> /* placeholder para manter estrutura */}
+      {aba === 'fluxo' && <>
 
       {/* KPIs */}
       <KpiFluxo kpis={kpis} />
