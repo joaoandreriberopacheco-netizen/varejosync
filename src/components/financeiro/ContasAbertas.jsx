@@ -171,7 +171,9 @@ export default function ContasAbertas() {
   const [contas, setContas]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [periodo, setPeriodo]     = useState('mes');
-  const [tipoFiltro, setTipoFiltro] = useState('todos'); // 'todos' | 'Receita' | 'Despesa'
+  const [cs, setCs]               = useState(''); // custom start
+  const [ce, setCe]               = useState(''); // custom end
+  const [tipoFiltro, setTipoFiltro] = useState('todos'); // 'todos' | 'Receita' | 'Despesa' | 'compras'
   const [contasSel] = useState([]);
   const [search, setSearch]       = useState('');
   const [showNovo, setShowNovo]   = useState(false);
