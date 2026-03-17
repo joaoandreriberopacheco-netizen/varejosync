@@ -139,8 +139,13 @@ export default function ImportarPlanilha({ onParsed }) {
         // Pular linha se houver erros de validação
         if (erroNaLinha) continue;
 
-        // 7. Remover campos inválidos/não mapeados
-        delete dadosExtraidos.numero;
+        // 7. Remover campos não mapeados (que não existem na entidade Produto)
+        const camposValidos = ['campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'tipo', 'preco_venda_padrao', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'custo_outros_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'marca', 'categoria_nome', 'area_codigo'];
+        Object.keys(dadosExtraidos).forEach(key => {
+          if (!camposValidos.includes(key)) {
+            delete dadosExtraidos[key];
+          }
+        });
 
         // 8. Construir nome completo
         const nome = concatHierarquia(
