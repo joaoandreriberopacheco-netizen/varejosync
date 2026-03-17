@@ -20,11 +20,11 @@ function concatHierarquia(h1, h2, h3, h4, h5) {
 }
 
 export default function ImportarPlanilha({ onParsed }) {
-  const [arquivo, setArquivo] = useState(null);
-  const [parsing, setParsing] = useState(false);
-  const inputRef = useRef(null);
+   const [arquivo, setArquivo] = useState(null);
+   const [parsing, setParsing] = useState(false);
+   const inputRef = useRef(null);
 
-  const handleArquivo = async (file) => {
+   const handleArquivo = React.useCallback(async (file) => {
     if (!file) return;
     console.log('📁 Importando arquivo:', file.name, 'Tamanho:', file.size);
     setArquivo(file);
@@ -212,9 +212,9 @@ export default function ImportarPlanilha({ onParsed }) {
       } finally {
       setParsing(false);
       }
-      };
+      }, []);
 
-  const handleRemover = () => {
+      const handleRemover = () => {
     setArquivo(null);
     onParsed(null);
     if (inputRef.current) inputRef.current.value = '';
