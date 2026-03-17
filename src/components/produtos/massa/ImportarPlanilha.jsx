@@ -161,6 +161,25 @@ export default function ImportarPlanilha({ onParsed }) {
        // ── Novo produto (ID vazio, h1 preenchido) ───────────────────────────
        if (!id) {
          if (h1) {
+           // Validar campos obrigatórios para novo produto
+           const camposObrigatorios = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1'];
+           const camposFaltando = [];
+
+           camposObrigatorios.forEach(campo => {
+             const valor = dadosExtraidos[campo];
+             if (!valor && valor !== 0) {
+               camposFaltando.push(campo);
+             }
+           });
+
+           if (camposFaltando.length > 0) {
+             erros.push({ 
+               linha: rowNumber, 
+               mensagem: `Linha ${rowNumber}: Novo produto faltando campos obrigatórios: ${camposFaltando.join(', ')}` 
+             });
+             continue;
+           }
+
            alterados.push({ id: null, dados: dadosExtraidos, nome: nomeGerado, isNew: true });
          }
          continue;
