@@ -84,7 +84,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const handleSave = async () => {
     if (!valorNumerico || valorNumerico <= 0) { toast({ title: 'Informe o valor', variant: 'destructive' }); return; }
     if (tipo !== 'Transferência' && !descricao.trim()) { toast({ title: 'Informe a descrição', variant: 'destructive' }); return; }
-    if (!contaId) { toast({ title: 'Selecione a conta', variant: 'destructive' }); return; }
+    if (tipo === 'Transferência' && !contaId) { toast({ title: 'Selecione a conta', variant: 'destructive' }); return; }
+    if (status === 'Pago' && !contaId) { toast({ title: 'Selecione a conta para registrar o pagamento', variant: 'destructive' }); return; }
 
     const conta = contas.find(c => c.id === contaId);
     const pedidoCompra = pedidoCompraId ? pedidosCompra.find(p => p.id === pedidoCompraId) : null;
