@@ -837,9 +837,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           </div>
 
           {/* MOBILE: Timeline + Tabs */}
-          <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-gray-950">
+          <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-950">
             {/* Timeline sobre as Tabs */}
-            <div className="px-3 py-0.5 border-b border-gray-50 dark:border-gray-900 flex-shrink-0 bg-white dark:bg-gray-950">
+            <div className="px-3 py-0.5 border-b border-gray-100 dark:border-gray-900 flex-shrink-0 bg-gray-50 dark:bg-gray-950">
               <StatusTimeline 
                 currentStatus={formData.status} 
                 aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
