@@ -842,7 +842,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             <div className="px-3 py-0.5 border-b border-gray-100 dark:border-gray-900 flex-shrink-0 bg-gray-50 dark:bg-gray-950">
               <StatusTimeline 
                 currentStatus={formData.status} 
-                aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
+                dataAprovacao={pedido?.data_aprovacao_financeira}
                 dataEmissao={formData.data_emissao}
                 isMobile={true}
               />
