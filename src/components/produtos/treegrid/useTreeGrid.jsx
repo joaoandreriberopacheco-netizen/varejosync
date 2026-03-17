@@ -69,12 +69,19 @@ export function buildTree(produtos) {
     };
 
     const n1 = ensure(root, h1, 1);
-    if (!h2) { n1.skus.push(p); continue; }
-    const n2 = ensure(n1.children, h2, 2);
+    
+    // Cria nós intermediários mesmo que vazios, para garantir agrupamento
+    // h2 pode ser vazio, mas cria um nó folha para o grupo h1
+    const h2Key = h2 || '(sem grupo)';
+    const n2 = ensure(n1.children, h2Key, 2);
     if (!h3) { n2.skus.push(p); continue; }
-    const n3 = ensure(n2.children, h3, 3);
+    
+    const h3Key = h3 || '(sem grupo)';
+    const n3 = ensure(n2.children, h3Key, 3);
     if (!h4) { n3.skus.push(p); continue; }
-    const n4 = ensure(n3.children, h4, 4);
+    
+    const h4Key = h4 || '(sem grupo)';
+    const n4 = ensure(n3.children, h4Key, 4);
     n4.skus.push(p); // h4 é o nível folha; SKU vai aqui
   }
 
