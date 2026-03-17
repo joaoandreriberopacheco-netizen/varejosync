@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Upload, FileSpreadsheet, X } from 'lucide-react';
+import { Upload, FileSpreadsheet, X, AlertTriangle } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
 import { toast } from 'sonner';
@@ -41,7 +41,6 @@ export default function ImportarPlanilha({ onParsed }) {
       const mapaAtual = {};
       produtosAtuais.forEach(p => { mapaAtual[p.id] = p; });
 
-      // 2. Processar Excel
       const buffer = await file.arrayBuffer();
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(buffer);
@@ -60,36 +59,53 @@ export default function ImportarPlanilha({ onParsed }) {
 
       for (let i = 2; i <= ws.rowCount; i++) {
         const row = ws.getRow(i);
-        const id = String(getCellValue(row.getCell(colIndexMap['id'])) || '').trim();
-        const h1 = String(getCellValue(row.getCell(colIndexMap['campo_hierarquico_1'])) || '').trim();
+        const idCell = row.getCell(colIndexMap['id']);
+        const h1Cell = row.getCell(colIndexMap['campo_hierarquico_1']);
+        
+        const id = String(getCellValue(idCell) || '').trim();
+        const h1 = String(getCellValue(h1Cell) || '').trim();
 
         if (!id && !h1) continue;
 
         const dadosExtraidos = {};
+        let erroNaLinha = false;
         
-        // --- CORREÇÃO DE TIPOS (NUMBER vs STRING) ---
-        COLUNAS_CONFIG.forEach(col => {
+        // --- DETECTOR DE ERROS POR COLUNA ---
+        for (const col of COLUNAS_CONFIG) {
           if (col.editavel && !col.calculado) {
-            const cellValue = getCellValue(row.getCell(colIndexMap[col.key]));
+            const cell = row.getCell(colIndexMap[col.key]);
+            const valorBruto = getCellValue(cell);
             
             if (col.tipo === 'numero') {
-              // Converte para número real. Se falhar, usa 0 (evita o erro de validação)
-              const num = parseFloat(cellValue);
+              const num = parseFloat(valorBruto);
+              if (isNaN(num)) {
+                // Se for um campo que não pode ser vazio, avisa a linha e a coluna
+                erros.push({ 
+                  linha: i, 
+                  mensagem: `Linha ${i}: Coluna "${col.label}" deve ser um NÚMERO e está vazia ou inválida.` 
+                });
+                erroNaLinha = true;
+              }
               dadosExtraidos[col.key] = isNaN(num) ? 0 : num;
             } else {
-              // Converte para texto
-              dadosExtraidos[col.key] = cellValue ? String(cellValue).trim() : '';
+              dadosExtraidos[col.key] = valorBruto ? String(valorBruto).trim() : '';
             }
           }
-        });
-
-        // Força o campo 'tipo' a ser 'Produto' se estiver vazio
-        if (!dadosExtraidos.tipo || dadosExtraidos.tipo === '') {
-          dadosExtraidos.tipo = 'Produto';
         }
 
-        // Remove campos fantasmas que causam erro no schema
-        delete dadosExtraidos.numero; 
+        // Validação específica do campo 'tipo'
+        if (!dadosExtraidos.tipo || dadosExtraidos.tipo === '') {
+           erros.push({ 
+             linha: i, 
+             mensagem: `Linha ${i}: O campo "Tipo" é obrigatório e não foi encontrado.` 
+           });
+           erroNaLinha = true;
+        }
+
+        if (erroNaLinha) continue; // Pula esta linha se tiver erro e vai para a próxima
+
+        // Limpeza de segurança (remove o campo 'numero' se ele tentar entrar)
+        delete dadosExtraidos.numero;
 
         const nome = concatHierarquia(
           dadosExtraidos.campo_hierarquico_1,
@@ -107,20 +123,6 @@ export default function ImportarPlanilha({ onParsed }) {
         }
       }
 
-      onParsed({ alterados, erros });
-    } catch (err) {
-      toast.error("Erro ao processar: " + err.message);
-    } finally {
-      setParsing(false);
-    }
-  }, [onParsed]);
-
-  return (
-    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer" onClick={() => inputRef.current.click()}>
-      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-      <p className="mt-2 text-sm text-gray-600">Selecione o arquivo .xlsx atualizado</p>
-      <input ref={inputRef} type="file" accept=".xlsx" className="hidden" onChange={e => handleArquivo(e.target.files[0])} />
-      {arquivo && <p className="mt-2 text-xs font-bold text-green-600">{arquivo.name}</p>}
-    </div>
-  );
-}
+      // Se houver erros, avisamos o usuário com um Toast
+      if (erros.length > 0) {
+        toast.error(`Encontrados ${erros.length} erros na planilha. Verifique a lista.`);
