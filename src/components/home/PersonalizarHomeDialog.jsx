@@ -22,13 +22,13 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm mx-auto dark:bg-gray-900 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-gray-900 dark:text-white">
-            Personalizar Tela Inicial
-          </DialogTitle>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Escolha até 6 atalhos para exibir
-          </p>
-        </DialogHeader>
+           <DialogTitle className="text-base font-semibold text-gray-900 dark:text-white">
+             Personalizar Tela Inicial
+           </DialogTitle>
+           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+             Escolha os atalhos que deseja exibir
+           </p>
+         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-2 py-2">
           {ALL_QUICK_ACTIONS.map(action => {
@@ -61,7 +61,7 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
             disabled={localSelected.length === 0}
             className="flex-1 rounded-xl bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
           >
-            Salvar ({localSelected.length}/6)
+            Salvar ({localSelected.length})
           </Button>
         </div>
       </DialogContent>

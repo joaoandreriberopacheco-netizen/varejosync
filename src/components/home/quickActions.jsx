@@ -1,7 +1,7 @@
 import {
   Monitor, TrendingUp, Package, DollarSign, ShoppingCart, Wallet,
   Truck, BarChart3, Users, ClipboardList, Receipt, Warehouse,
-  FileText, QrCode, LayoutDashboard
+  FileText, QrCode, LayoutDashboard, Tag
 } from 'lucide-react';
 
 export const ALL_QUICK_ACTIONS = [
@@ -14,6 +14,7 @@ export const ALL_QUICK_ACTIONS = [
   { id: 'logistica', icon: Truck, label: 'Logística', page: 'Logistica' },
   { id: 'dashboard', icon: BarChart3, label: 'Dashboard', page: 'Dashboard' },
   { id: 'estoque', icon: Warehouse, label: 'Estoque', page: 'Estoque' },
+  { id: 'tabelaprecos', icon: Tag, label: 'Tabela Preços', page: 'TabelaPrecosConsulta' },
   { id: 'manifestos', icon: FileText, label: 'Manifestos', page: 'GestaoManifestosPage' },
   { id: 'supermanifestos', icon: ClipboardList, label: 'Supermanifestos', page: 'GestaoSupermanifestosPage' },
   { id: 'conferencia', icon: QrCode, label: 'Conferência', page: 'ConferenciaEntrada' },
