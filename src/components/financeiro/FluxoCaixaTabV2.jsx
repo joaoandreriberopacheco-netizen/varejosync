@@ -372,16 +372,38 @@ export default function FluxoCaixaTabV2() {
       const k = dr ? format(new Date(dr), 'yyyy-MM-dd') : 'sem-data';
       (map[k] = map[k] || []).push(l);
     });
-    return Object.entries(map).sort(([a], [b]) => b.localeCompare(a)).map(([k, items]) => {
+
+    // Ordena datas para calcular saldo acumulado cronologicamente
+    const sorted = Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
+
+    // Calcula saldo acumulado de todos os lançamentos PAGOS até cada data (inclusive)
+    // Usando todos os lançamentos (não só filtrados) para saldo real acumulado
+    const allPagos = lancs.filter(l => l.status === 'Pago' && (l.tipo === 'Receita' || l.tipo === 'Despesa'));
+
+    return sorted.reverse().map(([k, items]) => {
       let label = 'Sem data';
       if (k !== 'sem-data') {
         const d = new Date(k + 'T12:00:00');
         label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' : format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
         if (k > hStr) label += ' (previsto)';
       }
-      return { k, label, items };
+
+      // Entradas e saídas do dia
+      const entradaDia = items.filter(l => l.tipo === 'Receita' && l.status === 'Pago').reduce((s, l) => s + (l.valor || 0), 0);
+      const saidaDia   = items.filter(l => l.tipo === 'Despesa' && l.status === 'Pago').reduce((s, l) => s + (l.valor || 0), 0);
+
+      // Saldo acumulado: soma todos pagos até esta data inclusive
+      const saldoAcumulado = k === 'sem-data' ? null : allPagos.reduce((s, l) => {
+        const dr = l.data_pagamento || l.data_vencimento;
+        if (!dr) return s;
+        const lk = format(new Date(dr), 'yyyy-MM-dd');
+        if (lk <= k) return s + (l.tipo === 'Receita' ? (l.valor || 0) : -(l.valor || 0));
+        return s;
+      }, 0);
+
+      return { k, label, items, entradaDia, saidaDia, saldoAcumulado };
     });
-  }, [filtrados]);
+  }, [filtrados, lancs]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
 

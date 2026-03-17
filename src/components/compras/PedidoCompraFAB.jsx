@@ -99,34 +99,41 @@ export default function PedidoCompraFAB({
         />
       )}
 
-      {/* Wrapper posicionado no canto inferior direito */}
+      {/* Wrapper — grande o suficiente para conter o arco radial */}
       <div
         className="fixed z-50"
-        style={{ bottom: 24, right: 24, width: 56, height: 56 }}
+        style={{
+          bottom: 24,
+          right: 24,
+          // O FAB fica no canto inferior direito do wrapper (offset RADIUS+btn/2)
+          width:  RADIUS + 56 + 48,  // espaço à esquerda para botões
+          height: RADIUS + 56 + 24,  // espaço acima para botões
+          pointerEvents: 'none',
+        }}
       >
-        {/* Botões radiais */}
+        {/* Botões radiais — posicionados em torno do FAB no canto inferior direito */}
         {isExpanded && actions.map((action, idx) => {
           const angleDeg = arcStart + idx * step;
           const rad = (angleDeg * Math.PI) / 180;
-          // X: positivo = direita, Y: positivo = baixo na tela
-          // Queremos que o arco fique acima/esquerda do FAB
-          const dx = -Math.round(Math.cos(rad) * RADIUS); // negado: arco vai para esquerda
-          const dy = -Math.round(Math.sin(rad) * RADIUS); // negado: arco vai para cima
+          // FAB está no canto inferior direito do wrapper
+          const fabX = RADIUS + 56 + 48 - 28; // centro FAB X relativo ao wrapper
+          const fabY = RADIUS + 56 + 24 - 28; // centro FAB Y relativo ao wrapper
+          const dx = -Math.round(Math.cos(rad) * RADIUS);
+          const dy = -Math.round(Math.sin(rad) * RADIUS);
 
           return (
             <div
               key={idx}
-              className="absolute flex flex-col items-center gap-1"
+              className="absolute flex flex-col items-center gap-0.5"
               style={{
-                // Centro do FAB = 28px do left/top do wrapper
-                left: 28 + dx - 22, // 22 = metade do botão (44px)
-                top: 28 + dy - 22,
+                left: fabX + dx - 22,
+                top:  fabY + dy - 22,
                 transition: `all 0.22s cubic-bezier(0.34,1.56,0.64,1)`,
                 transitionDelay: `${idx * 35}ms`,
                 whiteSpace: 'nowrap',
+                pointerEvents: 'auto',
               }}
             >
-              {/* Label acima do botão */}
               <span className="text-[10px] font-semibold text-white drop-shadow-sm mb-0.5">
                 {action.label}
               </span>
@@ -142,7 +149,7 @@ export default function PedidoCompraFAB({
           );
         })}
 
-        {/* FAB principal */}
+        {/* FAB principal — fixado no canto inferior direito do wrapper */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}
           className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
@@ -151,7 +158,12 @@ export default function PedidoCompraFAB({
               : 'bg-gray-900 dark:bg-gray-700'
           } text-white`}
           title="Ações do pedido"
-          style={{ position: 'absolute', left: 0, top: 0 }}
+          style={{
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            pointerEvents: 'auto',
+          }}
         >
           {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
         </button>

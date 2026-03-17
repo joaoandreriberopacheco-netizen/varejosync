@@ -31,7 +31,7 @@ export default function KpiFluxo({ kpis }) {
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[9px] uppercase tracking-wider text-gray-400 mb-0.5">Saldo de Execução</p>
-            <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{R(kpis.saldo)}</p>
+            <p className={`text-lg font-bold ${kpis.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{R(kpis.saldo)}</p>
           </div>
           <div className="text-right">
             <p className="text-[9px] text-gray-400 mb-0.5">Taxa de Gasto</p>
