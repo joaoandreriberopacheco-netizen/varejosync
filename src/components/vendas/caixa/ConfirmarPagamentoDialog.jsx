@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Banknote, Smartphone, CreditCard, Receipt, Edit, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Banknote, Smartphone, CreditCard, Receipt, Edit, CheckCircle2, RefreshCw, FileText } from 'lucide-react';
 
 export default function ConfirmarPagamentoDialog({
   open,
@@ -40,6 +40,10 @@ export default function ConfirmarPagamentoDialog({
   setValeEncontrado,
   buscandoVale,
   setBuscandoVale,
+  pagamentosContaPagar,
+  setPagamentosContaPagar,
+  inputContaPagar,
+  setInputContaPagar,
   troco,
   valorRestante,
   pagamentoValido,
@@ -246,6 +250,34 @@ export default function ConfirmarPagamentoDialog({
                       </Select>
                   }
                   </div>
+                </div>
+
+                {/* Conta a Pagar (Fiado) */}
+                <div
+                className={`flex items-center justify-between py-4 cursor-pointer rounded-lg transition-colors ${formaPagamentoAtiva === 5 ? 'bg-gray-50 dark:bg-gray-800 -mx-2 px-2' : ''}`}
+                onClick={() => {
+                  setFormaPagamentoAtiva(5);
+                  inputRefs.contaPagar?.current?.focus();
+                }}>
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <span className="text-base text-gray-700 dark:text-gray-300">Conta a Pagar</span>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Gera lançamento a receber</p>
+                    </div>
+                  </div>
+                  <input
+                  ref={inputRefs.contaPagar}
+                  type="text"
+                  inputMode="numeric"
+                  value={inputContaPagar}
+                  onChange={() => {}}
+                  onKeyDown={(e) => handleInputMascara(e, setInputContaPagar, setPagamentosContaPagar)}
+                  onFocus={(e) => {
+                    e.target.select();
+                    setFormaPagamentoAtiva(5);
+                  }}
+                  className={`w-32 h-12 text-right text-xl font-semibold bg-transparent border-0 focus:outline-none ${formaPagamentoAtiva === 5 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'}`} />
                 </div>
 
                 {/* Vale Compra */}
