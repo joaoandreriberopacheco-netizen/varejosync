@@ -85,35 +85,7 @@ function KpiAbertas({ kpis }) {
   );
 }
 
-// ─── Filtro contas ─────────────────────────────────────────────────────────────
-function ContasFiltro({ contas, sel, onSel }) {
-  const todasSel = sel.length === 0;
-  const toggle = (id) => sel.includes(id) ? onSel(sel.filter(c => c !== id)) : onSel([...sel, id]);
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${!todasSel ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-          <SlidersHorizontal className="w-3 h-3" />
-          {todasSel ? 'Contas' : `${sel.length}×`}
-          <ChevronDown className="w-3 h-3" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-52 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
-        <button onClick={() => onSel([])} className={`w-full text-left px-2 py-1.5 rounded text-xs mb-1 ${todasSel ? 'bg-gray-100 dark:bg-gray-700 font-medium' : 'hover:bg-gray-50 dark:hover:bg-gray-700'} text-gray-700 dark:text-gray-200`}>
-          Todas as contas
-        </button>
-        {contas.map(c => (
-          <label key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-            <Checkbox checked={sel.includes(c.id)} onCheckedChange={() => toggle(c.id)} className="w-3.5 h-3.5" />
-            <span className="w-2 h-2 rounded-full flex-none" style={{ background: c.cor || '#10B981' }} />
-            <span className="text-xs truncate text-gray-700 dark:text-gray-200">{c.nome}</span>
-          </label>
-        ))}
-      </PopoverContent>
-    </Popover>
-  );
-}
+// (ContasFiltro removido — seleção de conta apenas na efetivação)
 
 // ─── Linha de lançamento em aberto ────────────────────────────────────────────
 function ContaRow({ l, onPagar, onClick }) {
