@@ -848,7 +848,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               />
             </div>
 
-            <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900/50 border-0 border-b border-gray-100 dark:border-gray-800 rounded-none h-auto p-0 grid grid-cols-6">
+            <TabsList className="flex-shrink-0 bg-white dark:bg-gray-900 border-0 border-b border-gray-100 dark:border-gray-800 rounded-none h-auto p-0 grid grid-cols-6">
             <TabsTrigger 
               value="dados-gerais" 
               className="flex flex-col items-center gap-1.5 py-3 border-0 rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400"
