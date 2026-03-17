@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Upload, FileSpreadsheet, X, AlertTriangle } from 'lucide-react';
+import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { COLUNAS_CONFIG } from './colunasConfig';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ export default function ImportarPlanilha({ onParsed }) {
     setParsing(true);
 
     try {
-      // 1. Carregar produtos para comparação
+      // 1. Carregar produtos existentes para comparação
       let produtosAtuais = [];
       let skip = 0;
       const pageSize = 1000;
@@ -36,16 +36,21 @@ export default function ImportarPlanilha({ onParsed }) {
       while (hasMore) {
         const batch = await base44.entities.Produto.list('-updated_date', pageSize, skip);
         if (batch.length === 0) hasMore = false;
-        else { produtosAtuais = produtosAtuais.concat(batch); skip += pageSize; }
+        else { 
+          produtosAtuais = produtosAtuais.concat(batch); 
+          skip += pageSize; 
+        }
       }
       const mapaAtual = {};
       produtosAtuais.forEach(p => { mapaAtual[p.id] = p; });
 
+      // 2. Carregar e processar arquivo Excel
       const buffer = await file.arrayBuffer();
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
 
+      // 3. Mapear colunas do Excel com a configuração
       const headerRow = ws.getRow(1);
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
@@ -57,6 +62,7 @@ export default function ImportarPlanilha({ onParsed }) {
       const alterados = [];
       const erros = [];
 
+      // 4. Processar cada linha
       for (let i = 2; i <= ws.rowCount; i++) {
         const row = ws.getRow(i);
         const idCell = row.getCell(colIndexMap['id']);
@@ -65,12 +71,13 @@ export default function ImportarPlanilha({ onParsed }) {
         const id = String(getCellValue(idCell) || '').trim();
         const h1 = String(getCellValue(h1Cell) || '').trim();
 
+        // Ignorar linhas vazias
         if (!id && !h1) continue;
 
         const dadosExtraidos = {};
         let erroNaLinha = false;
         
-        // --- DETECTOR DE ERROS POR COLUNA ---
+        // 5. Extrair valores e validar tipos
         for (const col of COLUNAS_CONFIG) {
           if (col.editavel && !col.calculado) {
             const cell = row.getCell(colIndexMap[col.key]);
@@ -78,35 +85,64 @@ export default function ImportarPlanilha({ onParsed }) {
             
             if (col.tipo === 'numero') {
               const num = parseFloat(valorBruto);
-              if (isNaN(num)) {
-                // Se for um campo que não pode ser vazio, avisa a linha e a coluna
+              if (!isNaN(num)) {
+                dadosExtraidos[col.key] = num;
+              } else if (valorBruto !== null && valorBruto !== undefined && String(valorBruto).trim() !== '') {
                 erros.push({ 
                   linha: i, 
-                  mensagem: `Linha ${i}: Coluna "${col.label}" deve ser um NÚMERO e está vazia ou inválida.` 
+                  mensagem: `Linha ${i}: Campo "${col.label}" deve ser numérico. Valor: "${valorBruto}"` 
                 });
                 erroNaLinha = true;
               }
-              dadosExtraidos[col.key] = isNaN(num) ? 0 : num;
+            } else if (col.tipo === 'boolean') {
+              if (valorBruto !== null && valorBruto !== undefined) {
+                const str = String(valorBruto).trim().toLowerCase();
+                if (['sim', 'true', '1', 's'].includes(str)) {
+                  dadosExtraidos[col.key] = true;
+                } else if (['não', 'false', '0', 'n'].includes(str)) {
+                  dadosExtraidos[col.key] = false;
+                }
+              }
             } else {
-              dadosExtraidos[col.key] = valorBruto ? String(valorBruto).trim() : '';
+              if (valorBruto !== null && valorBruto !== undefined) {
+                dadosExtraidos[col.key] = String(valorBruto).trim();
+              }
             }
           }
         }
 
-        // Validação específica do campo 'tipo'
-        if (!dadosExtraidos.tipo || dadosExtraidos.tipo === '') {
-           erros.push({ 
-             linha: i, 
-             mensagem: `Linha ${i}: O campo "Tipo" é obrigatório e não foi encontrado.` 
-           });
-           erroNaLinha = true;
+        // 6. Validações específicas de campos obrigatórios
+        if (!dadosExtraidos.campo_hierarquico_1 || dadosExtraidos.campo_hierarquico_1 === '') {
+          erros.push({ 
+            linha: i, 
+            mensagem: `Linha ${i}: Campo "Nível 1 (*)" é obrigatório.` 
+          });
+          erroNaLinha = true;
         }
 
-        if (erroNaLinha) continue; // Pula esta linha se tiver erro e vai para a próxima
+        if (!dadosExtraidos.tipo || dadosExtraidos.tipo === '') {
+          erros.push({ 
+            linha: i, 
+            mensagem: `Linha ${i}: Campo "Tipo" é obrigatório.` 
+          });
+          erroNaLinha = true;
+        }
 
-        // Limpeza de segurança (remove o campo 'numero' se ele tentar entrar)
+        if (dadosExtraidos.preco_venda_padrao === undefined || dadosExtraidos.preco_venda_padrao === null || dadosExtraidos.preco_venda_padrao === '') {
+          erros.push({ 
+            linha: i, 
+            mensagem: `Linha ${i}: Campo "Preço Venda (*)" é obrigatório e deve ser numérico.` 
+          });
+          erroNaLinha = true;
+        }
+
+        // Pular linha se houver erros de validação
+        if (erroNaLinha) continue;
+
+        // 7. Remover campos inválidos/não mapeados
         delete dadosExtraidos.numero;
 
+        // 8. Construir nome completo
         const nome = concatHierarquia(
           dadosExtraidos.campo_hierarquico_1,
           dadosExtraidos.campo_hierarquico_2,
@@ -116,6 +152,7 @@ export default function ImportarPlanilha({ onParsed }) {
         );
         dadosExtraidos.nome = nome;
 
+        // 9. Classificar como novo ou existente
         if (id && mapaAtual[id]) {
           alterados.push({ id, dados: dadosExtraidos, nome, isNew: false });
         } else if (!id && h1) {
@@ -123,6 +160,112 @@ export default function ImportarPlanilha({ onParsed }) {
         }
       }
 
-      // Se houver erros, avisamos o usuário com um Toast
+      // 10. Feedback ao usuário
       if (erros.length > 0) {
-        toast.error(`Encontrados ${erros.length} erros na planilha. Verifique a lista.`);
+        toast.error(`Encontrados ${erros.length} erro(s) de validação. Verifique a lista abaixo.`);
+      }
+
+      if (alterados.length > 0) {
+        toast.success(`Processados ${alterados.length} produto(s) com sucesso!`);
+      }
+
+      // Callback com dados processados
+      onParsed({ alterados, erros });
+
+    } catch (error) {
+      console.error('Erro ao processar arquivo:', error);
+      toast.error(`Erro ao processar arquivo: ${error.message}`);
+      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: error.message }] });
+    } finally {
+      setParsing(false);
+    }
+  }, [onParsed]);
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleArquivo(file);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.name.endsWith('.xlsx')) {
+      handleArquivo(file);
+    } else {
+      toast.error('Por favor, selecione um arquivo .xlsx válido');
+    }
+  };
+
+  const handleRemover = () => {
+    setArquivo(null);
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
+  return (
+    <div className="space-y-4">
+      {!arquivo || parsing ? (
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          className="relative rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-8 transition-colors hover:border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFile}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            disabled={parsing}
+          />
+          
+          <div className="flex flex-col items-center justify-center text-center pointer-events-none">
+            {parsing ? (
+              <>
+                <div className="w-12 h-12 rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-gray-900 dark:border-t-white animate-spin mb-3" />
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Processando arquivo...</p>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-3">
+                  <Upload className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                </div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                  Arraste o arquivo ou clique para selecionar
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Arquivos .xlsx apenas. Máximo 10 MB.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+              <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                {arquivo.name}
+              </p>
+              <p className="text-xs text-green-700 dark:text-green-400">
+                {(arquivo.size / 1024).toFixed(1)} KB
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleRemover}
+            className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+            title="Remover arquivo"
+          >
+            <X className="w-4 h-4 text-green-600 dark:text-green-400" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
