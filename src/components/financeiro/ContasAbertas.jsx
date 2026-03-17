@@ -273,7 +273,7 @@ export default function ContasAbertas() {
   ];
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-3 pb-28">
+    <div className="w-full min-w-0 max-w-full overflow-hidden space-y-3 pb-28">
 
       {/* KPIs */}
       <KpiAbertas kpis={kpis} />
