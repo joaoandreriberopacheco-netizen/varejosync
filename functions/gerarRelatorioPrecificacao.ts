@@ -16,6 +16,8 @@ const fmtCur = (v) => {
 };
 
 const SEP = '-----------------------------------------------------------------------';
+const ML = 12;
+const PW = 185;
 
 Deno.serve(async (req) => {
   try {
@@ -32,38 +34,43 @@ Deno.serve(async (req) => {
 
     let produtos = [];
     const ids = (pedido.itens || []).map(i => i.produto_id).filter(Boolean);
-    if (ids.length) {
-      produtos = await base44.asServiceRole.entities.Produto.filter({ id: { $in: ids } });
-    }
+    if (ids.length) produtos = await base44.asServiceRole.entities.Produto.filter({ id: { $in: ids } });
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     doc.setFont('courier', 'normal');
     doc.setFontSize(9);
 
+    const LH = 4.8;
+    let y = 12;
     const W = 210;
-    const ML = 14;
-    const MR = 196;
-    let y = 14;
 
-    const line = (txt, indent = 0) => {
-      const lines = doc.splitTextToSize(safe(txt), MR - ML - indent);
-      lines.forEach(l => {
-        if (y > 278) { doc.addPage(); y = 14; }
-        doc.text(l, ML + indent, y);
-        y += 5;
-      });
-    };
-    const sep = () => line(SEP);
+    const checkPage = (extra = 0) => { if (y + extra > 280) { doc.addPage(); y = 12; } };
+    const L = (txt) => { checkPage(); doc.text(safe(txt), ML, y); y += LH; };
+    const SEP_LINE = () => L(SEP);
 
-    doc.text('ANALISE DE PRECIFICACAO', W / 2, y, { align: 'center' }); y += 5;
-    doc.text(safe(pedido.numero || 'N/A'), W / 2, y, { align: 'center' }); y += 5;
-    sep();
-    line(`Fornecedor : ${safe(pedido.fornecedor_nome || '-')}`);
-    sep();
-    line('COMPARATIVO DE CUSTOS');
-    sep();
-    line(`${'PRODUTO'.padEnd(35)} ${'ATUAL'.padStart(12)} ${'NOVO'.padStart(12)} ${'DELTA'.padStart(10)}`);
-    sep();
+    // Colunas da tabela de itens
+    // PRODUTO (wrap) | ATUAL | NOVO | DELTA
+    const COL_ATUAL = ML + 105; // início coluna ATUAL
+    const COL_NOVO  = ML + 135;
+    const COL_DELTA = ML + PW;
+    const NOME_MAX_W = 100;
+
+    doc.text('ANALISE DE PRECIFICACAO', W / 2, y, { align: 'center' }); y += LH;
+    doc.text(safe(pedido.numero || 'N/A'), W / 2, y, { align: 'center' }); y += LH;
+    SEP_LINE();
+    L(`Fornecedor : ${safe(pedido.fornecedor_nome || '-')}`);
+    SEP_LINE();
+
+    L('COMPARATIVO DE CUSTOS');
+    SEP_LINE();
+
+    // Cabeçalho
+    doc.text('PRODUTO', ML, y);
+    doc.text('ATUAL', COL_ATUAL, y);
+    doc.text('NOVO', COL_NOVO, y);
+    doc.text('DELTA', COL_DELTA, y, { align: 'right' });
+    y += LH;
+    SEP_LINE();
 
     (pedido.itens || []).forEach((item) => {
       const produto = produtos.find(p => p.id === item.produto_id);
@@ -72,27 +79,50 @@ Deno.serve(async (req) => {
       const delta = novo - atual;
       const pct = atual > 0 ? ((delta / atual) * 100).toFixed(1) : '0.0';
       const sinal = delta > 0 ? '+' : '';
-      const nome = safe(item.produto_nome || '-').substring(0, 34).padEnd(35);
-      line(`${nome} ${fmtCur(atual).padStart(12)} ${fmtCur(novo).padStart(12)} ${(sinal + pct + '%').padStart(10)}`);
 
+      const nomeLines = doc.splitTextToSize(safe(item.produto_nome || '-'), NOME_MAX_W);
+      checkPage((nomeLines.length + 1) * LH);
+      const rowY = y;
+
+      // Nome com wrap
+      nomeLines.forEach((l, i) => doc.text(l, ML, rowY + i * LH));
+
+      // Valores na primeira linha
+      doc.text(fmtCur(atual), COL_ATUAL, rowY);
+      doc.text(fmtCur(novo), COL_NOVO, rowY);
+      doc.text(sinal + pct + '%', COL_DELTA, rowY, { align: 'right' });
+      y = rowY + nomeLines.length * LH;
+
+      // Linha de detalhe qtd/impacto
       const qtd = item.quantidade || 0;
       const totalAtual = atual * qtd;
       const totalNovo = novo * qtd;
       const diffTotal = totalNovo - totalAtual;
-      line(`  Qtd: ${qtd}  Total atual: ${fmtCur(totalAtual)}  Total novo: ${fmtCur(totalNovo)}  Impacto: ${fmtCur(diffTotal)}`, 4);
+      const detLine = `  Qtd: ${qtd}  Total atual: ${fmtCur(totalAtual)}  Total novo: ${fmtCur(totalNovo)}  Impacto: ${fmtCur(diffTotal)}`;
+      const detLines = doc.splitTextToSize(safe(detLine), PW);
+      checkPage(detLines.length * LH);
+      detLines.forEach(l => { doc.text(l, ML, y); y += LH; });
     });
 
-    sep();
+    SEP_LINE();
 
     const totalAtualGeral = (pedido.itens || []).reduce((s, item) => {
       const prod = produtos.find(p => p.id === item.produto_id);
       return s + ((prod?.valor_compra || 0) * (item.quantidade || 0));
     }, 0);
     const totalNovoPedido = pedido.valor_total || 0;
-    line(`${'Total Anterior'.padEnd(38)} ${fmtCur(totalAtualGeral).padStart(25)}`);
-    line(`${'Total Novo Pedido'.padEnd(38)} ${fmtCur(totalNovoPedido).padStart(25)}`);
-    line(`${'Variacao Total'.padEnd(38)} ${fmtCur(totalNovoPedido - totalAtualGeral).padStart(25)}`);
-    sep();
+
+    // Totais com alinhamento direita
+    const LV = (label, valor) => {
+      checkPage();
+      doc.text(safe(label), ML, y);
+      doc.text(safe(valor), ML + PW, y, { align: 'right' });
+      y += LH;
+    };
+    LV('Total Anterior', fmtCur(totalAtualGeral));
+    LV('Total Novo Pedido', fmtCur(totalNovoPedido));
+    LV('Variacao Total', fmtCur(totalNovoPedido - totalAtualGeral));
+    SEP_LINE();
 
     const pdfBytes = doc.output('arraybuffer');
     return new Response(pdfBytes, {

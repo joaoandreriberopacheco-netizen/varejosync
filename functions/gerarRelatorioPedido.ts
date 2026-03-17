@@ -22,7 +22,10 @@ const fmtCur = (v) => {
   return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
+// Largura da página em unidades de texto (Courier 9pt ~2.1mm/char @ 72dpi)
 const SEP = '-----------------------------------------------------------------------';
+const ML = 12;   // margem esquerda mm
+const PW = 185;  // largura útil mm (210 - 12 - 13)
 
 Deno.serve(async (req) => {
   try {
@@ -45,128 +48,155 @@ Deno.serve(async (req) => {
     doc.setFont('courier', 'normal');
     doc.setFontSize(9);
 
-    const W = 210;
-    const ML = 14;
-    const MR = 196;
-    let y = 14;
+    const LH = 4.8;  // line height mm
+    let y = 12;
 
-    const line = (txt, indent = 0) => {
-      const maxW = MR - ML - indent;
-      const lines = doc.splitTextToSize(safe(txt), maxW);
-      lines.forEach(l => {
-        if (y > 278) { doc.addPage(); y = 14; }
-        doc.text(l, ML + indent, y);
-        y += 5;
-      });
+    const checkPage = (extra = 0) => {
+      if (y + extra > 280) { doc.addPage(); y = 12; }
     };
 
-    const sep = () => { line(SEP); };
+    // Linha simples
+    const L = (txt) => {
+      checkPage();
+      doc.text(safe(txt), ML, y);
+      y += LH;
+    };
 
-    // Titulo
-    const titulo = safe('PEDIDO DE COMPRA');
-    const num = safe(pedido.numero || 'N/A');
-    doc.text(titulo, W / 2, y, { align: 'center' }); y += 5;
-    doc.text(num, W / 2, y, { align: 'center' }); y += 5;
-    sep();
+    const SEP_LINE = () => L(SEP);
+
+    // Linha com wrap na coluna esquerda e valor fixo direita, top-aligned
+    // labelW: largura da coluna de label em mm
+    const LV = (label, valor, labelW = 130) => {
+      const wrappedLabel = doc.splitTextToSize(safe(label), labelW);
+      checkPage(wrappedLabel.length * LH);
+      const startY = y;
+      // Escreve label com wrap
+      wrappedLabel.forEach((l, i) => {
+        doc.text(l, ML, startY + i * LH);
+      });
+      // Valor alinhado à direita, na primeira linha
+      doc.text(safe(valor), ML + PW, startY, { align: 'right' });
+      y = startY + wrappedLabel.length * LH;
+    };
+
+    const W = 210;
+
+    // Título centralizado
+    doc.text('PEDIDO DE COMPRA', W / 2, y, { align: 'center' }); y += LH;
+    doc.text(safe(pedido.numero || 'N/A'), W / 2, y, { align: 'center' }); y += LH;
+    SEP_LINE();
 
     // Dados gerais
-    line('DADOS GERAIS');
-    sep();
-    line(`Fornecedor      : ${safe(fornecedor?.nome || pedido.fornecedor_nome || '-')}`);
-    line(`Status          : ${safe(pedido.status || '-')}`);
-    line(`Status Financ.  : ${safe(pedido.status_aprovacao_financeira || 'Pendente')}`);
-    line(`Criado em       : ${fmtDate(pedido.created_date)}`);
-    line(`Criado por      : ${safe(pedido.created_by || user.email)}`);
-    line(`Prev. Entrega   : ${fmtDate(pedido.data_prevista_entrega)}`);
-    if (pedido.tags?.length) line(`Tags            : ${safe(pedido.tags.join(', '))}`);
-    sep();
+    L('DADOS GERAIS');
+    SEP_LINE();
+    LV(`Fornecedor      : ${safe(fornecedor?.nome || pedido.fornecedor_nome || '-')}`, '');
+    LV(`Status          : ${safe(pedido.status || '-')}`, '');
+    LV(`Status Financ.  : ${safe(pedido.status_aprovacao_financeira || 'Pendente')}`, '');
+    LV(`Criado em       : ${fmtDate(pedido.created_date)}`, '');
+    LV(`Criado por      : ${safe(pedido.created_by || user.email)}`, '');
+    LV(`Prev. Entrega   : ${fmtDate(pedido.data_prevista_entrega)}`, '');
+    if (pedido.tags?.length) LV(`Tags            : ${safe(pedido.tags.join(', '))}`, '');
+    SEP_LINE();
 
     // Itens
-    line('ITENS DO PEDIDO');
-    sep();
-    line(`${'PRODUTO'.padEnd(38)} ${'QTD'.padStart(6)} ${'UNIT'.padStart(12)} ${'TOTAL'.padStart(12)}`);
-    sep();
+    L('ITENS DO PEDIDO');
+    SEP_LINE();
 
-    (pedido.itens || []).forEach((item, i) => {
-      const nome = safe(item.produto_nome || '-').substring(0, 37);
-      const qty = String(item.quantidade || 0).padStart(6);
-      const unit = fmtCur(item.custo_unitario || item.custo_final_unitario).padStart(12);
-      const tot = fmtCur(item.total).padStart(12);
-      line(`${nome.padEnd(38)} ${qty} ${unit} ${tot}`);
+    // Cabeçalho da tabela
+    const COL_QTD = ML + 110;
+    const COL_UNIT = ML + 135;
+    const COL_TOT = ML + PW;
+    doc.text('PRODUTO', ML, y);
+    doc.text('QTD', COL_QTD, y);
+    doc.text('UNIT', COL_UNIT, y);
+    doc.text('TOTAL', COL_TOT, y, { align: 'right' });
+    y += LH;
+    SEP_LINE();
+
+    const NOME_MAX_W = 105; // mm para nome do produto
+
+    (pedido.itens || []).forEach((item) => {
+      const nomeLines = doc.splitTextToSize(safe(item.produto_nome || '-'), NOME_MAX_W);
+      checkPage(nomeLines.length * LH);
+      const rowY = y;
+      nomeLines.forEach((l, i) => doc.text(l, ML, rowY + i * LH));
+      // Valores na primeira linha, alinhados
+      doc.text(String(item.quantidade || 0), COL_QTD, rowY);
+      doc.text(fmtCur(item.custo_unitario || item.custo_final_unitario || 0), COL_UNIT, rowY);
+      doc.text(fmtCur(item.total || 0), COL_TOT, rowY, { align: 'right' });
+      y = rowY + nomeLines.length * LH;
     });
-    sep();
 
+    SEP_LINE();
+
+    // Totais
     const totalItens = (pedido.itens || []).reduce((s, i) => s + (i.total || 0), 0);
     const frete = parseFloat(pedido.valor_frete) || 0;
     const desconto = parseFloat(pedido.valor_desconto) || 0;
-    line(`${'Subtotal Itens'.padEnd(38)} ${fmtCur(totalItens).padStart(31)}`);
-    if (frete) line(`${'Frete'.padEnd(38)} ${fmtCur(frete).padStart(31)}`);
-    if (desconto) line(`${'Desconto'.padEnd(38)} ${('-' + fmtCur(desconto)).padStart(31)}`);
-    line(`${'TOTAL DO PEDIDO'.padEnd(38)} ${fmtCur(pedido.valor_total || totalItens + frete - desconto).padStart(31)}`);
-    sep();
+    LV('Subtotal Itens', fmtCur(totalItens));
+    if (frete) LV('Frete', fmtCur(frete));
+    if (desconto) LV('Desconto', '-' + fmtCur(desconto));
+    LV('TOTAL DO PEDIDO', fmtCur(pedido.valor_total || totalItens + frete - desconto));
+    SEP_LINE();
 
     // Financeiro
-    line('FINANCEIRO');
-    sep();
-    line(`Forma Pgto      : ${safe(pedido.forma_pagamento_compra || pedido.forma_pagamento || '-')}`);
-    line(`1o Vencimento   : ${fmtDate(pedido.data_primeiro_vencimento || pedido.primeiro_vencimento)}`);
-    if (pedido.num_parcelas > 1) {
-      line(`Parcelas        : ${pedido.num_parcelas}x a cada ${pedido.intervalo_parcelas_dias || 30} dias`);
-    }
-    if (pedido.data_aprovacao_financeira) line(`Aprovado em     : ${fmtDate(pedido.data_aprovacao_financeira)}`);
+    L('FINANCEIRO');
+    SEP_LINE();
+    LV(`Forma Pgto      : ${safe(pedido.forma_pagamento_compra || pedido.forma_pagamento || '-')}`, '');
+    LV(`1o Vencimento   : ${fmtDate(pedido.data_primeiro_vencimento || pedido.primeiro_vencimento)}`, '');
+    if ((pedido.num_parcelas || 0) > 1) LV(`Parcelas        : ${pedido.num_parcelas}x a cada ${pedido.intervalo_parcelas_dias || 30} dias`, '');
+    if (pedido.data_aprovacao_financeira) LV(`Aprovado em     : ${fmtDate(pedido.data_aprovacao_financeira)}`, '');
     if (pedido.motivo_rejeicao_financeira) {
-      line(`Rejeitado em    : ${fmtDate(pedido.data_rejeicao_financeira)}`);
-      line(`Motivo Rejeicao : ${safe(pedido.motivo_rejeicao_financeira)}`, 4);
+      LV(`Rejeitado em    : ${fmtDate(pedido.data_rejeicao_financeira)}`, '');
+      LV(`Motivo          : ${safe(pedido.motivo_rejeicao_financeira)}`, '');
     }
-    sep();
+    SEP_LINE();
 
     // Logistica
-    line('LOGISTICA');
-    sep();
-    line(`NF Emitida      : ${pedido.nfe_emitida ? 'Sim' : 'Pendente'}`);
-    line(`Manifesto Conf. : ${pedido.manifesto_conferido ? 'Sim' : 'Pendente'}`);
-    line(`Conferencia     : ${pedido.conferencia_id ? 'Realizada' : 'Pendente'}`);
-    if (pedido.data_despacho) line(`Despachado em   : ${fmtDate(pedido.data_despacho)}`);
-    if (pedido.data_chegada) line(`Chegada em      : ${fmtDate(pedido.data_chegada)}`);
-    if (pedido.tem_divergencias) line('ATENCAO: Divergencias na conferencia');
-    sep();
+    L('LOGISTICA');
+    SEP_LINE();
+    LV(`NF Emitida      : ${pedido.nfe_emitida ? 'Sim' : 'Pendente'}`, '');
+    LV(`Manifesto Conf. : ${pedido.manifesto_conferido ? 'Sim' : 'Pendente'}`, '');
+    LV(`Conferencia     : ${pedido.conferencia_id ? 'Realizada' : 'Pendente'}`, '');
+    if (pedido.data_despacho) LV(`Despachado em   : ${fmtDate(pedido.data_despacho)}`, '');
+    if (pedido.data_chegada) LV(`Chegada em      : ${fmtDate(pedido.data_chegada)}`, '');
+    if (pedido.tem_divergencias) LV('ATENCAO: Divergencias na conferencia', '');
+    SEP_LINE();
 
     // Observacoes
     if (pedido.observacoes) {
-      line('OBSERVACOES');
-      sep();
-      line(pedido.observacoes);
-      sep();
+      L('OBSERVACOES');
+      SEP_LINE();
+      const obsLines = doc.splitTextToSize(safe(pedido.observacoes), PW);
+      obsLines.forEach(l => L(l));
+      SEP_LINE();
     }
 
     // Pendencias
-    if (pedido.solicitacao_edicao_motivo || pedido.motivo_rejeicao_financeira) {
-      line('PENDENCIAS');
-      sep();
-      if (pedido.solicitacao_edicao_motivo) {
-        line(`Solic. Edicao   : ${fmtDate(pedido.solicitacao_edicao_data)} por ${safe(pedido.solicitacao_edicao_solicitante)}`);
-        line(`Motivo          : ${safe(pedido.solicitacao_edicao_motivo)}`, 4);
-      }
-      sep();
+    if (pedido.solicitacao_edicao_motivo) {
+      L('PENDENCIAS');
+      SEP_LINE();
+      LV(`Solic. Edicao   : ${fmtDate(pedido.solicitacao_edicao_data)} por ${safe(pedido.solicitacao_edicao_solicitante)}`, '');
+      LV(`Motivo          : ${safe(pedido.solicitacao_edicao_motivo)}`, '');
+      SEP_LINE();
     }
 
-    // Conclusao
     if (pedido.data_conclusao) {
-      line('CONCLUSAO');
-      sep();
-      line(`Concluido em    : ${fmtDate(pedido.data_conclusao)}`);
-      sep();
+      L('CONCLUSAO');
+      SEP_LINE();
+      LV(`Concluido em    : ${fmtDate(pedido.data_conclusao)}`, '');
+      SEP_LINE();
     }
 
     // Assinaturas
+    checkPage(20);
     y += 8;
-    if (y > 255) { doc.addPage(); y = 14; }
     doc.text('____________________________', ML, y);
     doc.text('____________________________', 110, y);
-    y += 5;
+    y += LH;
     doc.text('Responsavel pela Compra', ML, y);
     doc.text('Gestor de Compras', 110, y);
-    y += 5;
+    y += LH;
     doc.text('Data: ___/___/______', ML, y);
     doc.text('Data: ___/___/______', 110, y);
 
