@@ -10,7 +10,7 @@ import { ptBR } from 'date-fns/locale';
 import {
   Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
   Scale, Search, AlertCircle, ChevronDown, SlidersHorizontal,
-  Clock, ChevronLeft, ChevronRight
+  Clock, ChevronLeft, ChevronRight, FileText
 } from 'lucide-react';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -311,12 +311,7 @@ function Grupo({ label, items, onRow, entradaDia, saidaDia, saldoAcumulado }) {
   );
 }
 
-// ─── FAB ──────────────────────────────────────────────────────────────────────
-const FAB_ITEMS = [
-  { tipo: 'Receita',       icon: ArrowDownLeft,  label: 'Receita' },
-  { tipo: 'Despesa',       icon: ArrowUpRight,   label: 'Despesa' },
-  { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transferência' },
-];
+// ─── FAB ─ (definido dentro do componente para acessar estado) ────────────────
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function FluxoCaixaTabV2() {
@@ -329,10 +324,11 @@ export default function FluxoCaixaTabV2() {
   const [ce, setCe]               = useState('');   // customEnd
   const [contasSel, setContasSel] = useState([]);
   const [pendentes, setPendentes] = useState(false);
-  const [fabOpen, setFabOpen]     = useState(false);
-  const [novoTipo, setNovoTipo]   = useState('Despesa');
-  const [showNovo, setShowNovo]   = useState(false);
-  const [detalhe, setDetalhe]     = useState(null);
+  const [fabOpen, setFabOpen]         = useState(false);
+  const [novoTipo, setNovoTipo]       = useState('Despesa');
+  const [showNovo, setShowNovo]       = useState(false);
+  const [detalhe, setDetalhe]         = useState(null);
+  const [gerandoExtrato, setGerandoExtrato] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -417,6 +413,45 @@ export default function FluxoCaixaTabV2() {
   }, [filtrados, lancs]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
+
+  const handleGerarExtrato = async () => {
+    setGerandoExtrato(true);
+    try {
+      const filtrosDesc = [
+        CHIPS.find(c => c.v === periodo)?.l || (periodo === 'periodo' && cs && ce ? `${cs} a ${ce}` : periodo),
+        contasSel.length ? `${contasSel.length} conta(s)` : null,
+        pendentes ? 'Não conciliados' : null,
+        search || null,
+      ].filter(Boolean).join(' · ');
+
+      const response = await base44.functions.invoke('gerarExtratoFluxoCaixa', {
+        lancamentos: filtrados,
+        filtros_desc: filtrosDesc,
+        kpis,
+        grupos: grupos.map(g => ({ label: g.label, entradaDia: g.entradaDia, saidaDia: g.saidaDia, saldoAcumulado: g.saldoAcumulado, items: g.items })),
+      });
+      if (!response?.data) throw new Error('Resposta inválida');
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Extrato_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    }
+    setGerandoExtrato(false);
+  };
+
+  const FAB_ITEMS = [
+    { tipo: 'Receita',       icon: ArrowDownLeft,  label: 'Receita',       action: () => { setNovoTipo('Receita'); setShowNovo(true); setFabOpen(false); } },
+    { tipo: 'Despesa',       icon: ArrowUpRight,   label: 'Despesa',       action: () => { setNovoTipo('Despesa'); setShowNovo(true); setFabOpen(false); } },
+    { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transferência', action: () => { setNovoTipo('Transferência'); setShowNovo(true); setFabOpen(false); } },
+    { tipo: 'Extrato',       icon: FileText,       label: gerandoExtrato ? 'Gerando...' : 'Extrato', action: () => { setFabOpen(false); handleGerarExtrato(); } },
+  ];
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-3 pb-28">
@@ -509,9 +544,9 @@ export default function FluxoCaixaTabV2() {
       {/* FAB */}
       {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
       <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
-        {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
+        {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label, action }) => (
           <button key={tipo}
-            onClick={() => { setNovoTipo(tipo); setShowNovo(true); setFabOpen(false); }}
+            onClick={action}
             className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
             <Icon className="w-4 h-4" />{label}
           </button>

@@ -99,10 +99,12 @@ function ContaRow({ l, onPagar, onClick }) {
   const val = Math.abs(l.valor || 0);
   const frequencia = l.frequencia_recorrencia;
 
+  const isPago = l.status === 'Pago';
+
   return (
     <button
       onClick={() => onClick(l)}
-      className="w-full flex items-center gap-2.5 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left"
+      className={`w-full flex items-center gap-2.5 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left ${isPago ? 'opacity-60' : ''}`}
     >
       {/* Ícone tipo */}
       <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-8 h-8 flex items-center justify-center">
@@ -130,17 +132,23 @@ function ContaRow({ l, onPagar, onClick }) {
         </span>
       </span>
 
-      {/* Valor + botão pagar rápido */}
+      {/* Valor + badge status */}
       <span className="flex-none flex flex-col items-end gap-0.5 pl-1">
         <span className={`text-[0.82rem] font-bold whitespace-nowrap ${isVencida ? 'text-red-400 dark:text-red-500' : 'text-gray-700 dark:text-gray-200'}`}>
           {isR ? '+' : '−'}{R(val)}
         </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); onPagar(l); }}
-          className="flex items-center gap-0.5 text-[0.6rem] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-md bg-gray-100 dark:bg-gray-700 px-2 py-0.5 font-medium"
-        >
-          <CheckCircle2 className="w-2.5 h-2.5" /> Pagar
-        </button>
+        {isPago ? (
+          <span className="flex items-center gap-0.5 text-[0.6rem] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md px-2 py-0.5 font-medium">
+            <CheckCircle2 className="w-2.5 h-2.5" /> Pago
+          </span>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPagar(l); }}
+            className="flex items-center gap-0.5 text-[0.6rem] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-md bg-gray-100 dark:bg-gray-700 px-2 py-0.5 font-medium"
+          >
+            <CheckCircle2 className="w-2.5 h-2.5" /> Pagar
+          </button>
+        )}
       </span>
     </button>
   );
