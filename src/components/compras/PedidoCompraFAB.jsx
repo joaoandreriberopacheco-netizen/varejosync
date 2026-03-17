@@ -99,75 +99,44 @@ export default function PedidoCompraFAB({
         />
       )}
 
-      {/* Wrapper — grande o suficiente para conter o arco radial */}
-      <div
-        className="fixed z-50"
-        style={{
-          bottom: 24,
-          right: 24,
-          // O FAB fica no canto inferior direito do wrapper (offset RADIUS+btn/2)
-          width:  RADIUS + 56 + 48,  // espaço à esquerda para botões
-          height: RADIUS + 56 + 24,  // espaço acima para botões
-          pointerEvents: 'none',
-        }}
-      >
-        {/* Botões radiais — posicionados em torno do FAB no canto inferior direito */}
-        {isExpanded && actions.map((action, idx) => {
-          const angleDeg = arcStart + idx * step;
-          const rad = (angleDeg * Math.PI) / 180;
-          // FAB está no canto inferior direito do wrapper
-          const fabX = RADIUS + 56 + 48 - 28; // centro FAB X relativo ao wrapper
-          const fabY = RADIUS + 56 + 24 - 28; // centro FAB Y relativo ao wrapper
-          const dx = -Math.round(Math.cos(rad) * RADIUS);
-          const dy = -Math.round(Math.sin(rad) * RADIUS);
+      {/* FAB container */}
+      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end gap-2">
+        {/* Botões filhos — lista vertical */}
+        {isExpanded && actions.map((action, idx) => (
+          <button
+            key={idx}
+            onClick={action.onClick}
+            disabled={action.disabled}
+            title={action.label}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 ${action.color}`}
+            style={{
+              animation: `fadeSlideUp 0.18s ease both`,
+              animationDelay: `${idx * 30}ms`,
+            }}
+          >
+            {action.icon}
+            {action.label}
+          </button>
+        ))}
 
-          return (
-            <div
-              key={idx}
-              className="absolute flex flex-col items-center gap-0.5"
-              style={{
-                left: fabX + dx - 22,
-                top:  fabY + dy - 22,
-                transition: `all 0.22s cubic-bezier(0.34,1.56,0.64,1)`,
-                transitionDelay: `${idx * 35}ms`,
-                whiteSpace: 'nowrap',
-                pointerEvents: 'auto',
-              }}
-            >
-              <span className="text-[10px] font-semibold text-white drop-shadow-sm mb-0.5">
-                {action.label}
-              </span>
-              <button
-                onClick={action.onClick}
-                disabled={action.disabled}
-                title={action.label}
-                className={`h-11 w-11 rounded-full shadow-lg flex items-center justify-center transition-all disabled:opacity-40 ${action.color}`}
-              >
-                {action.icon}
-              </button>
-            </div>
-          );
-        })}
-
-        {/* FAB principal — fixado no canto inferior direito do wrapper */}
+        {/* FAB principal */}
         <button
           onClick={() => setIsExpanded(prev => !prev)}
-          className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
-            isExpanded
-              ? 'bg-gray-600 dark:bg-gray-500 rotate-45'
-              : 'bg-gray-900 dark:bg-gray-700'
+          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
+            isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
           } text-white`}
           title="Ações do pedido"
-          style={{
-            position: 'absolute',
-            right: 0,
-            bottom: 0,
-            pointerEvents: 'auto',
-          }}
         >
           {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
         </button>
       </div>
+
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   );
 }
