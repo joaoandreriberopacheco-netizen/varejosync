@@ -86,12 +86,16 @@ export default function EditarProdutosEmMassa() {
           }
         }
       }
+      console.log('✅ Sincronização concluída com sucesso');
       setSalvouOk(true);
       setParsedData(null);
-    } finally {
+      } catch (error) {
+      console.error('❌ Erro na sincronização:', error);
+      alert(`Erro ao sincronizar: ${error?.message || 'Erro desconhecido'}`);
+      } finally {
       setSalvando(false);
-    }
-  };
+      }
+      };
 
   const handleConfirmarEstoque = async () => {
     if (!parsedEstoque?.alterados?.length) return;
