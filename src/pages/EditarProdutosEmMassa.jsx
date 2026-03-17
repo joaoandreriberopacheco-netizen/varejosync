@@ -26,9 +26,13 @@ export default function EditarProdutosEmMassa() {
   }, []);
 
   const handleConfirmar = async () => {
-    if (!parsedData?.alterados?.length) return;
+    if (!parsedData?.alterados?.length) {
+      console.log('❌ Sem dados para sincronizar');
+      return;
+    }
     setSalvando(true);
     try {
+      console.log('🔄 Iniciando sincronização de', parsedData.alterados.length, 'produtos');
       const user = await base44.auth.me();
       
       // Criar snapshot antes de importar (para desfazer depois)
