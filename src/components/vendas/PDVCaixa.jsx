@@ -452,9 +452,7 @@ export default function PDVCaixa() {
       );
       setMovimentos(movimentosTurno);
 
-      const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
-
-      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
+      let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0, totalFiado = 0;
       vendasTurno.forEach((venda) => {
         if (venda.pagamentos && Array.isArray(venda.pagamentos)) {
           venda.pagamentos.forEach((pag) => {
@@ -464,9 +462,14 @@ export default function PDVCaixa() {
             else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += pag.valor || 0;
             else if (fp.includes('débito') || fp.includes('debito')) totalDebito += pag.valor || 0;
             else if (fp.includes('vale')) totalVale += pag.valor || 0;
+            else if (fp.includes('conta a pagar') || fp.includes('fiado')) totalFiado += pag.valor || 0;
           });
         }
       });
+
+      // Fiado NÃO entra na liquidez do caixa (é a receber, não está na gaveta)
+      const totalVendasMonetarias = totalDinheiro + totalPix + totalCredito + totalDebito + totalVale;
+      const totalVendas = vendasTurno.reduce((sum, v) => sum + (v.valor_total || 0), 0);
 
       const totalReforcos = movimentosTurno.filter((m) => m.tipo === 'Reforço').reduce((sum, m) => sum + (m.valor || 0), 0);
       const totalSangrias = movimentosTurno.filter((m) => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((sum, m) => sum + (m.valor || 0), 0);
@@ -475,8 +478,8 @@ export default function PDVCaixa() {
       const saldoInicial = turno.saldo_inicial || 0;
       // Saldo em caixa (dinheiro na gaveta) = saldo inicial + dinheiro recebido + reforços - recolhimentos - despesas
       const saldoCaixaCalculado = saldoInicial + totalDinheiro + totalReforcos - totalSangrias - totalDespesas;
-      // Liquidez total do turno = saldo inicial + TODAS as vendas + reforços - recolhimentos - despesas
-      const liquidezTurno = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
+      // Liquidez total do turno = apenas vendas MONETÁRIAS (excluindo fiado que não entrou no caixa)
+      const liquidezTurno = saldoInicial + totalVendasMonetarias + totalReforcos - totalSangrias - totalDespesas;
 
       setCaixaData({
         saldoInicial: saldoInicial,
@@ -489,6 +492,7 @@ export default function PDVCaixa() {
           credito: totalCredito,
           debito: totalDebito,
           vale: totalVale,
+          fiado: totalFiado,
         },
         reforcos: totalReforcos,
         sangrias: totalSangrias,
