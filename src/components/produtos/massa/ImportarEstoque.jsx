@@ -24,7 +24,22 @@ export default function ImportarEstoque({ onParsed }) {
     setParsing(true);
 
     try {
-      const produtosAtuais = await base44.entities.Produto.list('-updated_date', 2000);
+      // ── Carregar todos os produtos com paginação ──────────────────────────────
+      let produtosAtuais = [];
+      let skip = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const batch = await base44.entities.Produto.list('-updated_date', pageSize, skip);
+        if (batch.length === 0) {
+          hasMore = false;
+        } else {
+          produtosAtuais = produtosAtuais.concat(batch);
+          skip += pageSize;
+        }
+      }
+
       const mapaAtual = {};
       produtosAtuais.forEach(p => { mapaAtual[p.id] = p; });
 
@@ -44,23 +59,26 @@ export default function ImportarEstoque({ onParsed }) {
 
       const alterados = [];
       const erros = [];
+      let rowCount = 0;
 
-      ws.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) return;
+      // ── Usar iteração manual para evitar timeout do eachRow ──────────────────
+      const totalRows = ws.rowCount;
+      for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
+        const row = ws.getRow(rowNumber);
 
         const id = colIndexMap.id ? String(getCellValue(row.getCell(colIndexMap.id)) || '').trim() : '';
-        if (!id) return;
+        if (!id) continue;
 
         const estoqueNovo = colIndexMap.estoque_atual ? parseFloat(getCellValue(row.getCell(colIndexMap.estoque_atual))) : null;
         if (estoqueNovo === null || isNaN(estoqueNovo)) {
           erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Estoque inválido.` });
-          return;
+          continue;
         }
 
         const produtoAtual = mapaAtual[id];
         if (!produtoAtual) {
           erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Produto não encontrado (ID: ${id}).` });
-          return;
+          continue;
         }
 
         const estoqueAtual = produtoAtual.estoque_atual || 0;
@@ -72,7 +90,13 @@ export default function ImportarEstoque({ onParsed }) {
             estoque_novo: estoqueNovo,
           });
         }
-      });
+
+        rowCount++;
+        // Liberar memória a cada 100 linhas processadas
+        if (rowCount % 100 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      }
 
       onParsed({ alterados, erros });
     } catch (err) {
