@@ -69,19 +69,18 @@ export function buildTree(produtos) {
     };
 
     const n1 = ensure(root, h1, 1);
-    
-    // Cria nós intermediários mesmo que vazios, para garantir agrupamento
-    // h2 pode ser vazio, mas cria um nó folha para o grupo h1
-    const h2Key = h2 || '(sem grupo)';
-    const n2 = ensure(n1.children, h2Key, 2);
+    // Se não há h2, adiciona SKU direto ao root (sem agrupamento)
+    if (!h2) { 
+      // Marca como SKU de raiz (sem grupo visual)
+      if (!root._rootSkus) root._rootSkus = [];
+      root._rootSkus.push(p);
+      continue;
+    }
+    const n2 = ensure(n1.children, h2, 2);
     if (!h3) { n2.skus.push(p); continue; }
-    
-    const h3Key = h3 || '(sem grupo)';
-    const n3 = ensure(n2.children, h3Key, 3);
+    const n3 = ensure(n2.children, h3, 3);
     if (!h4) { n3.skus.push(p); continue; }
-    
-    const h4Key = h4 || '(sem grupo)';
-    const n4 = ensure(n3.children, h4Key, 4);
+    const n4 = ensure(n3.children, h4, 4);
     n4.skus.push(p); // h4 é o nível folha; SKU vai aqui
   }
 
@@ -118,7 +117,25 @@ function resolveCollapsedKey(baseKey, startNode, targetNode) {
 export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0) {
   const rows = [];
 
+  // Se estamos na raiz e há SKUs diretos (sem grupo), adiciona-os primeiro
+  if (visualLevel === 0 && treeNode._rootSkus) {
+    for (const sku of treeNode._rootSkus) {
+      rows.push({
+        type:    'sku',
+        key:     sku.id,
+        produto: sku,
+        level:   1,
+        lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
+        margem:  sku.preco_venda_padrao > 0
+          ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
+          : 0,
+      });
+    }
+  }
+
   for (const [key, node] of Object.entries(treeNode)) {
+    // Pula a propriedade _rootSkus
+    if (key === '_rootSkus') continue;
     const rawKey   = parentKey ? `${parentKey}||${key}` : key;
     const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
     const nodeKey  = resolveCollapsedKey(rawKey, node, finalNode);
