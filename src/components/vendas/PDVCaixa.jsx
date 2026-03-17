@@ -130,6 +130,9 @@ export default function PDVCaixa() {
   const [pagamentosContaPagar, setPagamentosContaPagar] = useState(0);
   const [parcelasCredito, setParcelasCredito] = useState(1);
   const [formaPagamentoAtiva, setFormaPagamentoAtiva] = useState(0);
+  // Maquininhas selecionadas para débito e crédito
+  const [maquininhaDebito, setMaquininhaDebito] = useState(null);   // { maquininha, bandeira, taxa, prazo_dias }
+  const [maquininhaCredito, setMaquininhaCredito] = useState(null);
   const [codigoVale, setCodigoVale] = useState('');
   const [valeEncontrado, setValeEncontrado] = useState(null);
   const [buscandoVale, setBuscandoVale] = useState(false);
@@ -287,6 +290,8 @@ export default function PDVCaixa() {
       setValeEncontrado(null);
       setParcelasCredito(1);
       setFormaPagamentoAtiva(0);
+      setMaquininhaDebito(null);
+      setMaquininhaCredito(null);
 
       // Auto-focus no primeiro input
       setTimeout(() => inputRefs.dinheiro.current?.focus(), 100);
@@ -587,8 +592,30 @@ export default function PDVCaixa() {
        // Dinheiro: registra o valor líquido (pago menos troco)
        if (pagamentosDinheiro > 0) pagamentosArray.push({ forma_pagamento: 'Dinheiro', valor: pagamentosDinheiro - troco, parcelas: 1 });
        if (pagamentosPix > 0) pagamentosArray.push({ forma_pagamento: 'PIX', valor: pagamentosPix, parcelas: 1 });
-       if (pagamentosDebito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Débito', valor: pagamentosDebito, parcelas: 1 });
-       if (pagamentosCredito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
+       if (pagamentosDebito > 0) pagamentosArray.push({
+         forma_pagamento: 'Cartão de Débito',
+         valor: pagamentosDebito,
+         parcelas: 1,
+         maquininha_id: maquininhaDebito?.maquininha?.id,
+         maquininha_nome: maquininhaDebito?.maquininha?.nome,
+         maquininha_conta_id: maquininhaDebito?.maquininha?.conta_destino_id,
+         maquininha_conta_nome: maquininhaDebito?.maquininha?.conta_destino_nome,
+         bandeira: maquininhaDebito?.bandeira,
+         taxa_maquininha: maquininhaDebito?.taxa || 0,
+         prazo_maquininha_dias: maquininhaDebito?.prazo_dias ?? 1,
+       });
+       if (pagamentosCredito > 0) pagamentosArray.push({
+         forma_pagamento: 'Cartão de Crédito',
+         valor: pagamentosCredito,
+         parcelas: parcelasCredito,
+         maquininha_id: maquininhaCredito?.maquininha?.id,
+         maquininha_nome: maquininhaCredito?.maquininha?.nome,
+         maquininha_conta_id: maquininhaCredito?.maquininha?.conta_destino_id,
+         maquininha_conta_nome: maquininhaCredito?.maquininha?.conta_destino_nome,
+         bandeira: maquininhaCredito?.bandeira,
+         taxa_maquininha: maquininhaCredito?.taxa || 0,
+         prazo_maquininha_dias: maquininhaCredito?.prazo_dias ?? 30,
+       });
        if (pagamentosVale > 0 && valeEncontrado) {
          pagamentosArray.push({ forma_pagamento: 'Vale Troca', valor: pagamentosVale, parcelas: 1, vale_codigo: valeEncontrado.codigo, vale_id: valeEncontrado.id });
        }
@@ -1752,6 +1779,10 @@ export default function PDVCaixa() {
           setValeEncontrado={setValeEncontrado}
           buscandoVale={buscandoVale}
           setBuscandoVale={setBuscandoVale}
+          maquininhaDebito={maquininhaDebito}
+          setMaquininhaDebito={setMaquininhaDebito}
+          maquininhaCredito={maquininhaCredito}
+          setMaquininhaCredito={setMaquininhaCredito}
           troco={troco}
           valorRestante={valorRestante}
           pagamentoValido={pagamentoValido}
