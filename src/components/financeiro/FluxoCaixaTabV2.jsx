@@ -345,6 +345,8 @@ export default function FluxoCaixaTabV2() {
 
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado') return false;
+    // Lançamentos de fiado (Conta a Pagar) ficam exclusivamente nas Contas Abertas — não entram no fluxo de caixa
+    if (l.forma_pagamento === 'Conta a Pagar' || (l.tags && l.tags.includes('FIADO'))) return false;
 
     // Lançamentos PAGOS: usa data_pagamento como âncora temporal (movimentação real de caixa)
     // Lançamentos EM ABERTO/VENCIDO: usa data_vencimento como âncora (previsão — aparecem mas marcados)
