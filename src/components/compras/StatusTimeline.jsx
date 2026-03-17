@@ -129,17 +129,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
           return (
             <React.Fragment key={stage.key}>
               <div className="flex flex-col items-center gap-0.5 min-w-0">
-                {!isMobile && (
-                  <div className={`text-[9px] font-medium text-center leading-tight max-w-[54px] truncate ${
-                    isActive
-                      ? stage.key === 'Aguardando Liberação' ? 'text-amber-600 dark:text-amber-400'
-                      : stage.key === 'Aprovado' || stage.key === 'Concluído' ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-gray-700 dark:text-gray-200'
-                      : 'text-gray-400 dark:text-gray-600'
-                  }`}>
-                    {stage.label}
-                  </div>
-                )}
+
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${getBubbleClasses(stage, idx, isCompleted, isActive, isPendencia)}`}
                   title={stage.label}

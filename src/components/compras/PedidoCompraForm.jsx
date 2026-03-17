@@ -773,12 +773,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
           </span>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex <= 0 || isLocked} className="h-8 w-8" title="Desfazer">
-          <Undo className="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1 || isLocked} className="h-8 w-8" title="Refazer">
-          <Redo className="w-4 h-4" />
-        </Button>
         {pedido?.id && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -829,30 +823,30 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-6">
-            <TabsTrigger value="dados-gerais" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-              <FileText className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Dados Gerais
+          <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 px-2 overflow-x-auto flex w-full">
+            <TabsTrigger value="dados-gerais" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5">
+              <FileText className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
+              <span className="hidden sm:inline">Dados Gerais</span>
             </TabsTrigger>
-            <TabsTrigger value="itens" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-              <ShoppingCart className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Itens
+            <TabsTrigger value="itens" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5">
+              <ShoppingCart className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
+              <span className="hidden sm:inline">Itens</span>
             </TabsTrigger>
-            <TabsTrigger value="pagamento" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm">
-              <DollarSign className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Pagamento
+            <TabsTrigger value="pagamento" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5">
+              <DollarSign className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
+              <span className="hidden sm:inline">Pagamento</span>
             </TabsTrigger>
-            <TabsTrigger value="logistica" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!isLogisticaEnabled && pedido}>
-              <Ship className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Logística
+            <TabsTrigger value="logistica" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5" disabled={!isLogisticaEnabled && pedido}>
+              <Ship className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
+              <span className="hidden sm:inline">Logística</span>
             </TabsTrigger>
-            <TabsTrigger value="pendencias" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!pedido?.id}>
-              <AlertCircle className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Pendências
+            <TabsTrigger value="pendencias" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5" disabled={!pedido?.id}>
+              <AlertCircle className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
+              <span className="hidden sm:inline">Pendências</span>
             </TabsTrigger>
-            <TabsTrigger value="logs" className="border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 text-sm" disabled={!pedido?.id}>
-              <History className="w-4 h-4 mr-2 text-gray-700 dark:text-gray-400" />
-              Logs
+            <TabsTrigger value="logs" className="flex-shrink-0 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-400 rounded-none py-2 px-2 sm:px-3 text-xs sm:text-sm gap-1.5" disabled={!pedido?.id}>
+              <History className="w-4 h-4 text-gray-700 dark:text-gray-400 flex-shrink-0" />
+              <span className="hidden sm:inline">Logs</span>
             </TabsTrigger>
           </TabsList>
 

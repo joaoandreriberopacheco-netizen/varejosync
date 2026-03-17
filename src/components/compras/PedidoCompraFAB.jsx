@@ -64,16 +64,7 @@ export default function PedidoCompraFAB({
 
   return (
     <div className="fixed bottom-6 right-6 flex flex-col items-end gap-3 z-50">
-      {/* Botão Enviar ao Financeiro — aparece separado, acima do FAB principal */}
-      {mostrarEnviarFinanceiro && !isExpanded && (
-        <Button
-          onClick={onEnviarFinanceiro}
-          className="h-12 px-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg flex items-center gap-2 text-sm font-medium"
-        >
-          <Send className="w-4 h-4" style={{ transform: 'rotate(-45deg)' }} />
-          Financeiro
-        </Button>
-      )}
+
 
       {/* Ações expandidas */}
       {isExpanded && (
