@@ -168,7 +168,7 @@ export default function ContasAbertas() {
   const [loading, setLoading]     = useState(true);
   const [periodo, setPeriodo]     = useState('mes');
   const [tipoFiltro, setTipoFiltro] = useState('todos'); // 'todos' | 'Receita' | 'Despesa'
-  const [contasSel, setContasSel] = useState([]);
+  const [contasSel] = useState([]);
   const [search, setSearch]       = useState('');
   const [showNovo, setShowNovo]   = useState(false);
   const [novoTipo, setNovoTipo]   = useState('Despesa');
