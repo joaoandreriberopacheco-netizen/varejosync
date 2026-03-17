@@ -15,7 +15,7 @@ function dateRange(periodo, cs, ce) {
   const h = new Date();
   if (periodo === 'hoje') return { s: new Date(h.getFullYear(), h.getMonth(), h.getDate()), e: new Date(h.getFullYear(), h.getMonth(), h.getDate(), 23, 59, 59) };
   if (periodo === 'ontem') { const d = subDays(h, 1); return { s: new Date(d.getFullYear(), d.getMonth(), d.getDate()), e: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59) }; }
-  if (periodo === 'semana') { const { startOfWeek, endOfWeek } = require('date-fns'); return { s: startOfWeek(h, { locale: ptBR }), e: endOfWeek(h, { locale: ptBR }) }; }
+  if (periodo === 'semana') return { s: startOfWeek(h, { locale: ptBR }), e: endOfWeek(h, { locale: ptBR }) };
   if (periodo === 'mes') return { s: startOfMonth(h), e: endOfMonth(h) };
   if (periodo === 'tudo') return { s: null, e: null };
   if (periodo === 'periodo') return { s: cs ? new Date(cs) : null, e: ce ? new Date(ce + 'T23:59:59') : null };
