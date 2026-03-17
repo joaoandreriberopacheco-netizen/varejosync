@@ -26,6 +26,7 @@ export default function ImportarPlanilha({ onParsed }) {
 
   const handleArquivo = async (file) => {
     if (!file) return;
+    console.log('📁 Importando arquivo:', file.name, 'Tamanho:', file.size);
     setArquivo(file);
     setParsing(true);
 
@@ -203,13 +204,15 @@ export default function ImportarPlanilha({ onParsed }) {
        return;
       }
 
+      console.log('✅ Parse completo:', alterados.length, 'alterados,', erros.length, 'erros');
       onParsed({ alterados, erros });
-    } catch (err) {
+      } catch (err) {
+      console.error('❌ Erro ao processar arquivo:', err);
       onParsed({ alterados: [], erros: [{ linha: 0, mensagem: `Erro ao ler arquivo: ${err.message}` }] });
-    } finally {
+      } finally {
       setParsing(false);
-    }
-  };
+      }
+      };
 
   const handleRemover = () => {
     setArquivo(null);
