@@ -253,17 +253,19 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
               className="w-full bg-transparent px-4 pb-3 text-sm text-gray-800 dark:text-gray-200 outline-none" />
           </div>
 
-          {/* Conta */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
-            <Select value={contaId} onValueChange={setContaId}>
-              <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-gray-200 text-sm px-4">
-                <SelectValue placeholder={tipo === 'Transferência' ? 'Conta Origem *' : 'Conta *'} />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Conta — obrigatória só para Transferência ou quando Pago */}
+          {(tipo === 'Transferência' || status === 'Pago') && (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+              <Select value={contaId} onValueChange={setContaId}>
+                <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-gray-200 text-sm px-4">
+                  <SelectValue placeholder={tipo === 'Transferência' ? 'Conta Origem *' : 'Conta *'} />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {tipo === 'Transferência' && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
