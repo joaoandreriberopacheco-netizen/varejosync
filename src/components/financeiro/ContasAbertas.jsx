@@ -206,6 +206,9 @@ export default function ContasAbertas() {
     // Período
     if (periodo === 'vencidas') {
       if (!vStr || vStr >= hojeStr()) return false;
+    } else if (periodo === 'mes') {
+      // mês corrente: inclui vencidas do mês + a vencer no mês
+      if (!vStr || !isWithinInterval(new Date(vStr + 'T12:00:00'), { start: ds, end: de })) return false;
     } else if (ds && de && vDate) {
       if (!isWithinInterval(vDate, { start: ds, end: de })) return false;
     } else if (ds && !de && vDate) {
