@@ -57,6 +57,7 @@ import MassImageUploader from '../components/produtos/MassImageUploader';
 import TabelaDinamica from '../components/produtos/TabelaDinamica';
 import TreeGrid, { LevelControl } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica from '../components/produtos/MobileHierarquica';
+import ProdutoFAB from '../components/produtos/ProdutoFAB';
 
 
 const isCadastroIncompleto = (produto) => {
