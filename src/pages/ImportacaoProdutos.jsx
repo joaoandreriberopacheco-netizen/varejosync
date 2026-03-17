@@ -34,54 +34,10 @@ export default function ImportacaoProdutosPage() {
     }
     setSalvando(true);
     try {
-      const user = await base44.auth.me();
-      const idsAfetados = parsedData.alterados.map(a => a.id).filter(Boolean);
-      const snapshotDados = [];
-      
-      if (idsAfetados.length > 0) {
-        const produtosAntigos = await base44.entities.Produto.filter({ id: idsAfetados });
-        snapshotDados.push(...produtosAntigos);
-      }
-
-      await base44.entities.ImportacaoLog.create({
-        usuario_responsavel: user?.full_name || user?.email,
-        quantidade_itens: parsedData.alterados.length,
-        snapshot_dados: snapshotDados,
+      const response = await base44.functions.invoke('importarProdutos', {
+        alterados: parsedData.alterados,
         tipo_importacao: 'Detalhes do Produto'
       });
-
-      for (const { id, dados, isNew } of parsedData.alterados) {
-        if (isNew) {
-          const novosProduto = {
-            tipo: dados.tipo && String(dados.tipo).trim() ? dados.tipo : 'Produto',
-            preco_venda_padrao: Number(dados.preco_venda_padrao) || 0,
-            campo_hierarquico_1: dados.campo_hierarquico_1 && String(dados.campo_hierarquico_1).trim() ? dados.campo_hierarquico_1 : 'Sem categoria'
-          };
-
-          const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
-          validFields.forEach(field => {
-            const valor = dados[field];
-            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
-              novosProduto[field] = valor;
-            }
-          });
-
-          await base44.entities.Produto.create(novosProduto);
-        } else {
-          const dadosAtualizacao = {};
-          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
-          validFields.forEach(field => {
-            const valor = dados[field];
-            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
-              dadosAtualizacao[field] = valor;
-            }
-          });
-
-          if (Object.keys(dadosAtualizacao).length > 0) {
-            await base44.entities.Produto.update(id, dadosAtualizacao);
-          }
-        }
-      }
       
       toast.success(`✓ Sincronização concluída! ${parsedData.alterados.length} produto(s) processado(s).`);
       setSalvouOk(true);
