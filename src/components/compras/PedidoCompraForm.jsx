@@ -813,24 +813,26 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       </div>
 
       {/* Timeline */}
-      <StatusTimeline 
-        currentStatus={formData.status} 
-        aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
-        dataEmissao={formData.data_emissao}
-        isMobile={false}
-      />
+      <div className="px-2 pt-2 pb-1">
+        <StatusTimeline 
+          currentStatus={formData.status} 
+          aprovacaoFinanceira={pedido?.status_aprovacao_financeira}
+          dataEmissao={formData.data_emissao}
+          isMobile={false}
+        />
+      </div>
 
       {/* DESKTOP: Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="dados-gerais" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="flex-shrink-0 bg-transparent border-b border-gray-200 dark:border-gray-700 rounded-none h-auto p-0 flex w-full">
             {[
-              { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'DGE', disabled: false },
-              { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'ITE', disabled: false },
-              { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'PAG', disabled: false },
-              { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'LOG', disabled: !isLogisticaEnabled && !!pedido },
-              { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'PND', disabled: !pedido?.id },
-              { value: 'logs',         icon: <History className="w-4 h-4 flex-shrink-0" />, short: 'HIS', disabled: !pedido?.id },
+              { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
+              { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
+              { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'Pgto', disabled: false },
+              { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'Log', disabled: !isLogisticaEnabled && !!pedido },
+              { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'Pend', disabled: !pedido?.id },
+              { value: 'logs',         icon: <History className="w-4 h-4 flex-shrink-0" />, short: 'Logs', disabled: !pedido?.id },
             ].map(tab => (
               <TabsTrigger
                 key={tab.value}
@@ -1190,6 +1192,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
          onSave={handleInitiateSave}
          isSaving={isSaving}
          isDisabled={!formData.fornecedor_id || formData.itens.length === 0 || isLocked}
+         mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
+         onEnviarFinanceiro={() => {
+           handleChange('status', 'Aguardando Liberação');
+           setTimeout(() => handleInitiateSave(), 100);
+         }}
          onOpenAnexos={() => { /* futuro: abrir modal de anexos */ }}
        />
       </div>

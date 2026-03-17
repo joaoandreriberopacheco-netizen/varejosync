@@ -1,17 +1,29 @@
 import React, { useState } from 'react';
 import { Save, FileText, Paperclip, Compass, X, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 
-export default function PedidoCompraFAB({ 
-  pedido, 
-  onSave, 
-  isSaving, 
-  isDisabled, 
+// Posições radiais para 4 botões ao redor do FAB principal
+// Ângulos: 180° (esq), 135° (sup-esq), 90° (cima), 45° (sup-dir)
+const RADIUS = 80; // px
+const ACTIONS_ANGLES = [180, 135, 90, 45]; // graus, no sentido horário desde o centro
+
+function polarToXY(angleDeg, r) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return {
+    x: Math.round(Math.cos(rad) * r),
+    y: Math.round(-Math.sin(rad) * r), // negativo pois Y cresce pra baixo na tela
+  };
+}
+
+export default function PedidoCompraFAB({
+  pedido,
+  onSave,
+  isSaving,
+  isDisabled,
   onEnviarFinanceiro,
   mostrarEnviarFinanceiro,
-  onOpenAnexos
+  onOpenAnexos,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
@@ -41,68 +53,100 @@ export default function PedidoCompraFAB({
     setIsExpanded(false);
   };
 
+  // Constrói lista de ações — Financeiro só aparece quando habilitado
   const actions = [
+    mostrarEnviarFinanceiro && {
+      icon: <Send className="w-5 h-5" style={{ transform: 'rotate(-45deg)' }} />,
+      label: 'Financeiro',
+      onClick: () => { onEnviarFinanceiro?.(); setIsExpanded(false); },
+      disabled: false,
+      color: 'bg-emerald-600 text-white',
+    },
     {
-      icon: <Paperclip className="w-4 h-4" />,
+      icon: <Paperclip className="w-5 h-5" />,
       label: 'Anexos',
       onClick: () => { onOpenAnexos?.(); setIsExpanded(false); },
       disabled: !pedido?.id,
+      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
     },
     {
-      icon: <FileText className="w-4 h-4" />,
+      icon: <FileText className="w-5 h-5" />,
       label: 'PDF',
       onClick: handlePrintPDF,
       disabled: !pedido?.id,
+      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
     },
     {
-      icon: <Save className="w-4 h-4" />,
+      icon: <Save className="w-5 h-5" />,
       label: 'Salvar',
       onClick: () => { onSave(); setIsExpanded(false); },
       disabled: isDisabled || isSaving,
+      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
     },
-  ];
+  ].filter(Boolean);
+
+  // Distribui os ângulos igualmente entre os botões disponíveis
+  const totalActions = actions.length;
+  const startAngle = 90;  // começa em cima
+  const sweep = Math.min(180, (totalActions - 1) * 55); // arco máximo 180°
+  const step = totalActions > 1 ? sweep / (totalActions - 1) : 0;
 
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col items-end gap-3 z-50">
-
-
-      {/* Ações expandidas */}
+    <>
+      {/* Backdrop blur quando expandido */}
       {isExpanded && (
-        <div className="flex flex-col items-end gap-2">
-          {actions.map((action, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <span className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 shadow px-2 py-1 rounded-lg">
-                {action.label}
-              </span>
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={action.onClick}
-                disabled={action.disabled}
-                className="h-11 w-11 rounded-full shadow-md bg-white dark:bg-gray-800 border-0"
-              >
-                {action.icon}
-              </Button>
-            </div>
-          ))}
-        </div>
+        <div
+          className="fixed inset-0 z-40 backdrop-blur-[2px] bg-black/20"
+          onClick={() => setIsExpanded(false)}
+        />
       )}
 
-      {/* FAB principal — Bússola */}
-      <button
-        onClick={() => setIsExpanded(prev => !prev)}
-        className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
-          isExpanded 
-            ? 'bg-gray-700 dark:bg-gray-600' 
-            : 'bg-gray-900 dark:bg-gray-700'
-        } text-white`}
-        title="Ações do pedido"
-      >
-        {isExpanded 
-          ? <X className="w-6 h-6" />
-          : <Compass className="w-6 h-6" />
-        }
-      </button>
-    </div>
+      {/* Container do FAB */}
+      <div className="fixed bottom-6 right-6 z-50" style={{ width: 56, height: 56 }}>
+
+        {/* Botões radiais */}
+        {isExpanded && actions.map((action, idx) => {
+          const angle = startAngle + idx * step;
+          const { x, y } = polarToXY(angle, RADIUS);
+          return (
+            <div
+              key={idx}
+              className="absolute flex flex-col items-center gap-1"
+              style={{
+                bottom: `calc(50% + ${y}px - 22px)`,
+                right: `calc(50% + ${-x}px - 22px)`,
+                transition: `all 0.25s cubic-bezier(0.34,1.56,0.64,1)`,
+                transitionDelay: `${idx * 40}ms`,
+              }}
+            >
+              <button
+                onClick={action.onClick}
+                disabled={action.disabled}
+                title={action.label}
+                className={`h-11 w-11 rounded-full shadow-lg flex items-center justify-center transition-all disabled:opacity-40 ${action.color}`}
+              >
+                {action.icon}
+              </button>
+              <span className="text-[10px] font-semibold text-white drop-shadow whitespace-nowrap">
+                {action.label}
+              </span>
+            </div>
+          );
+        })}
+
+        {/* FAB principal — Bússola */}
+        <button
+          onClick={() => setIsExpanded(prev => !prev)}
+          className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
+            isExpanded
+              ? 'bg-gray-700 dark:bg-gray-500 rotate-45'
+              : 'bg-gray-900 dark:bg-gray-700'
+          } text-white`}
+          title="Ações do pedido"
+        >
+          {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
+        </button>
+      </div>
+    </>
   );
 }
