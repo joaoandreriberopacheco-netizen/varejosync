@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
