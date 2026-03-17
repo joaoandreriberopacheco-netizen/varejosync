@@ -269,8 +269,16 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </>
         )}
 
-        {/* Footer: só o clipe, alinhado à direita */}
-        <div className="px-5 pb-5 pt-2 flex items-center justify-end">
+        {/* Footer: clipe do lançamento + clipe do pedido de compra vinculado */}
+        <div className="px-5 pb-5 pt-2 flex items-center justify-end gap-3">
+          {lancamento.pedido_compra_vinculado_id && (
+            <AnexosPanel
+              referenciaId={lancamento.pedido_compra_vinculado_id}
+              referenciaTipo="PedidoCompra"
+              referenciaNumero={lancamento.pedido_compra_vinculado_numero}
+              inline
+            />
+          )}
           <AnexosPanel
             referenciaId={lancamento.id}
             referenciaTipo="LancamentoFinanceiro"
@@ -280,5 +288,11 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         </div>
       </DialogContent>
     </Dialog>
+
+    <RecorrenciaEscopoDialog
+      open={showEscopo}
+      onClose={() => { setShowEscopo(false); setPendingSave(null); setSaving(false); }}
+      onConfirm={(escopo) => aplicarPagamento(escopo)}
+    />
   );
 }
