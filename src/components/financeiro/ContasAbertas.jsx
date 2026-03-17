@@ -97,45 +97,42 @@ function ContaRow({ l, onPagar, onClick }) {
   return (
     <button
       onClick={() => onClick(l)}
-      className="w-full flex items-center gap-2.5 px-3.5 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left overflow-hidden"
+      className="w-full flex items-center gap-2.5 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left"
     >
       {/* Ícone tipo */}
-      <span className={`flex-none w-8 h-8 rounded-xl flex items-center justify-center shrink-0
-        ${isR ? 'bg-green-50 dark:bg-green-900/20' : isVencida ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-700'}`}>
+      <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-8 h-8 flex items-center justify-center">
         {isR
-          ? <ArrowDownLeft className="w-3.5 h-3.5 text-green-500" />
-          : <ArrowUpRight  className={`w-3.5 h-3.5 ${isVencida ? 'text-red-400' : 'text-gray-400'}`} />
+          ? <ArrowDownLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+          : <ArrowUpRight  className={`w-3.5 h-3.5 ${isVencida ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />
         }
       </span>
 
       {/* Descrição */}
-      <span className="flex-1 min-w-0 overflow-hidden">
-        <span className="block text-[0.8rem] font-medium leading-snug text-gray-800 dark:text-gray-100 break-words">
+      <span className="flex-1 min-w-0">
+        <span className="block text-[0.82rem] font-medium leading-snug text-gray-800 dark:text-gray-100 break-words">
           {l.descricao}
           {frequencia && (
-            <span className="ml-1.5 text-[0.6rem] bg-gray-100 dark:bg-gray-700 text-gray-400 rounded px-1.5 py-0.5 font-normal">{frequencia}</span>
+            <span className="ml-1.5 text-[0.6rem] bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded px-1.5 py-0.5 font-normal">{frequencia}</span>
           )}
         </span>
-        <span className="block text-[0.68rem] text-gray-400 mt-0.5 truncate">
+        <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
           {vStr
-            ? isVencida ? <span className="text-red-400">Venceu {format(new Date(vStr + 'T12:00:00'), 'dd MMM', { locale: ptBR })}</span>
-            : isHoje    ? <span className="text-amber-500">Vence hoje</span>
+            ? isVencida ? <span className="text-red-400 dark:text-red-500">Venceu {format(new Date(vStr + 'T12:00:00'), 'dd MMM', { locale: ptBR })}</span>
+            : isHoje    ? <span className="text-gray-500 dark:text-gray-400">Vence hoje</span>
             : format(new Date(vStr + 'T12:00:00'), 'dd MMM yyyy', { locale: ptBR })
             : '—'}
-          {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
           {l.categoria ? ` · ${l.categoria}` : ''}
         </span>
       </span>
 
       {/* Valor + botão pagar rápido */}
-      <span className="shrink-0 flex flex-col items-end gap-1 pl-2">
-        <span className={`text-[0.82rem] font-bold whitespace-nowrap
-          ${isR ? 'text-green-600 dark:text-green-400' : isVencida ? 'text-red-500 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'}`}>
+      <span className="flex-none flex flex-col items-end gap-0.5 pl-1">
+        <span className={`text-[0.82rem] font-bold whitespace-nowrap ${isVencida ? 'text-red-400 dark:text-red-500' : 'text-gray-700 dark:text-gray-200'}`}>
           {isR ? '+' : '−'}{R(val)}
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); onPagar(l); }}
-          className="flex items-center gap-0.5 text-[0.6rem] text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 font-medium"
+          className="flex items-center gap-0.5 text-[0.6rem] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-md bg-gray-100 dark:bg-gray-700 px-2 py-0.5 font-medium"
         >
           <CheckCircle2 className="w-2.5 h-2.5" /> Pagar
         </button>
