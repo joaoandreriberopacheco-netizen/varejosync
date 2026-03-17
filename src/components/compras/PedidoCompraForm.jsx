@@ -621,7 +621,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const pedidoId = pedidoSalvo?.id || pedido?.id;
 
       // ── Registrar transição no log sempre que houver mudança de status ──
-      if (pedidoId && statusAnterior !== statusNovo) {
+      if (pedidoId && (!pedido?.id || statusAnterior !== statusNovo)) {
         await registrarTransicao({
           pedidoId,
           pedidoNumero: pedidoSalvo?.numero || pedido?.numero || dataToSave.numero,
