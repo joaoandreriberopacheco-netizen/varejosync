@@ -49,31 +49,28 @@ export default function EditarProdutosEmMassa() {
       });
 
       // Executar importação
+      const schemaKeys = new Set(['id', 'codigo_interno', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'tipo', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'custo_total_calculado', 'preco_venda_padrao', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'preco_venda_percentual', 'preco_custo_calculado']);
+
       for (const { id, dados, isNew } of parsedData.alterados) {
+        // Filtrar apenas campos válidos do schema
+        const dadosFiltrados = {};
+        Object.entries(dados).forEach(([key, value]) => {
+          if (schemaKeys.has(key) && value !== null && value !== undefined && value !== '') {
+            dadosFiltrados[key] = value;
+          }
+        });
+
         if (isNew) {
           // Garantir campos obrigatórios para novo produto
           const novosProduto = {
-            tipo: dados.tipo || 'Produto',
-            preco_venda_padrao: dados.preco_venda_padrao || 0,
-            campo_hierarquico_1: dados.campo_hierarquico_1,
-            ...dados
+            tipo: dadosFiltrados.tipo || 'Produto',
+            preco_venda_padrao: dadosFiltrados.preco_venda_padrao || 0,
+            campo_hierarquico_1: dadosFiltrados.campo_hierarquico_1,
+            ...dadosFiltrados
           };
-          // Remover campos indefinidos ou nulos que possam causar erro
-          Object.keys(novosProduto).forEach(key => {
-            if (novosProduto[key] === null || novosProduto[key] === undefined) {
-              delete novosProduto[key];
-            }
-          });
           await base44.entities.Produto.create(novosProduto);
         } else {
-          // Remover campos nulos/undefined em atualizações também
-          const dadosLimpos = {};
-          Object.keys(dados).forEach(key => {
-            if (dados[key] !== null && dados[key] !== undefined) {
-              dadosLimpos[key] = dados[key];
-            }
-          });
-          await base44.entities.Produto.update(id, dadosLimpos);
+          await base44.entities.Produto.update(id, dadosFiltrados);
         }
       }
       setSalvouOk(true);
