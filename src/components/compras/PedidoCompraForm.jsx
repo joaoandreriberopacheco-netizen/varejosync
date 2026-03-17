@@ -33,6 +33,7 @@ import PedidoCompraFAB from './PedidoCompraFAB.jsx';
 import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
+import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
