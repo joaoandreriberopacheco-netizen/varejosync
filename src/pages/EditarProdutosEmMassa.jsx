@@ -49,28 +49,37 @@ export default function EditarProdutosEmMassa() {
       });
 
       // Executar importação
-      const schemaKeys = new Set(['id', 'codigo_interno', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'tipo', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'custo_total_calculado', 'preco_venda_padrao', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'preco_venda_percentual', 'preco_custo_calculado']);
-
       for (const { id, dados, isNew } of parsedData.alterados) {
-        // Filtrar apenas campos válidos do schema
-        const dadosFiltrados = {};
-        Object.entries(dados).forEach(([key, value]) => {
-          if (schemaKeys.has(key) && value !== null && value !== undefined && value !== '') {
-            dadosFiltrados[key] = value;
-          }
-        });
-
         if (isNew) {
-          // Garantir campos obrigatórios para novo produto
+          // Novo produto: construir com campos obrigatórios
           const novosProduto = {
-            tipo: dadosFiltrados.tipo || 'Produto',
-            preco_venda_padrao: dadosFiltrados.preco_venda_padrao || 0,
-            campo_hierarquico_1: dadosFiltrados.campo_hierarquico_1,
-            ...dadosFiltrados
+            tipo: dados.tipo || 'Produto',
+            preco_venda_padrao: dados.preco_venda_padrao || 0,
+            campo_hierarquico_1: dados.campo_hierarquico_1 || 'Sem categoria'
           };
+
+          // Adicionar apenas campos válidos do schema
+          const validFields = ['codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5'];
+          validFields.forEach(field => {
+            if (dados[field] !== null && dados[field] !== undefined && dados[field] !== '') {
+              novosProduto[field] = dados[field];
+            }
+          });
+
           await base44.entities.Produto.create(novosProduto);
         } else {
-          await base44.entities.Produto.update(id, dadosFiltrados);
+          // Produto existente: atualizar apenas campos alterados
+          const dadosAtualizacao = {};
+          const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
+          validFields.forEach(field => {
+            if (dados[field] !== null && dados[field] !== undefined && dados[field] !== '') {
+              dadosAtualizacao[field] = dados[field];
+            }
+          });
+
+          if (Object.keys(dadosAtualizacao).length > 0) {
+            await base44.entities.Produto.update(id, dadosAtualizacao);
+          }
         }
       }
       setSalvouOk(true);
