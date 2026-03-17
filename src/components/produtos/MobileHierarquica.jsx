@@ -138,7 +138,7 @@ function RenderNode({ nodeKey, node, depth, expanded, toggle, onEdit, formatarNu
               formatarNumero={formatarNumero}
             />
           ))}
-          {finalNode.skus.map(p => (
+          {finalNode.skus && finalNode.skus.map(p => (
             <ProdutoCard key={p.id} produto={p} onEdit={onEdit} formatarNumero={formatarNumero} />
           ))}
         </div>
