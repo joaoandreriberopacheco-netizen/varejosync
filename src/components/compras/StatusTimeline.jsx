@@ -30,7 +30,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
     { key: 'Rascunho',            label: 'Rascunho',       icon: FileText    },
     { key: 'Aguardando Liberação', label: 'Ag. Liberação', icon: Clock       },
     { key: 'Aprovado',            label: 'Aprovado',       icon: CheckCircle },
-    { key: 'Despachado',          label: 'Despachado',     icon: Send        },
+    { key: 'Em Trânsito',         label: 'Em Trânsito',    icon: Truck       },
     { key: 'Em Recepção',         label: 'Em Recepção',    icon: Package     },
     { key: 'Pendência',           label: 'Pendência',      icon: AlertCircle },
     { key: 'Concluído',           label: 'Concluído',      icon: Flag        },
@@ -42,7 +42,8 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
       'Devolvido':           0, // volta ao início visualmente
       'Aguardando Liberação':1,
       'Aprovado':            2,
-      'Despachado':          3,
+      'Despachado':          3, // legado — mesmo índice de Em Trânsito
+      'Em Trânsito':         3,
       'Em Recepção':         4,
       'Pendência':           5,
       'Concluído':           6,
