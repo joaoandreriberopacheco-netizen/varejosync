@@ -78,12 +78,14 @@ export default function EditarProdutosEmMassa() {
           const dadosAtualizacao = {};
           const validFields = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'codigo_barras', 'marca', 'categoria_nome', 'area_codigo', 'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual', 'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias', 'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome'];
           validFields.forEach(field => {
-            if (dados[field] !== null && dados[field] !== undefined && dados[field] !== '') {
-              dadosAtualizacao[field] = dados[field];
+            const valor = dados[field];
+            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
+              dadosAtualizacao[field] = valor;
             }
           });
 
           if (Object.keys(dadosAtualizacao).length > 0) {
+            console.log('📦 Payload atualização:', dadosAtualizacao);
             await base44.entities.Produto.update(id, dadosAtualizacao);
           }
         }
