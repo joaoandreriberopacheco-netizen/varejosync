@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, Package, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Search, Package, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
@@ -11,7 +11,6 @@ export default function TabelaPrecosConsulta() {
   const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
   const [tabelas, setTabelas] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' ou 'table'
 
   useEffect(() => {
     loadInitialData();
