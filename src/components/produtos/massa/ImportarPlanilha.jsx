@@ -85,24 +85,33 @@ export default function ImportarPlanilha({ onParsed }) {
        if (!id && !h1) continue;
 
        // ── Extrair todos os campos editáveis ────────────────────────────────
-       const dadosExtraidos = {};
-       COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
-         const colIdx = colIndexMap[col.key];
-         if (!colIdx) return;
+        const dadosExtraidos = {};
+        COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
+          const colIdx = colIndexMap[col.key];
+          if (!colIdx) return;
 
-         let novoValor = getCellValue(row.getCell(colIdx));
+          let novoValor = getCellValue(row.getCell(colIdx));
 
-         if (col.tipo === 'numero') {
-           novoValor = novoValor !== '' && novoValor !== null ? parseFloat(novoValor) : null;
-           if (isNaN(novoValor)) novoValor = null;
-         } else if (col.tipo === 'boolean') {
-           novoValor = novoValor === true || novoValor === 'true' || novoValor === 1 || novoValor === 'SIM';
-         } else {
-           novoValor = novoValor !== null && novoValor !== undefined ? String(novoValor).trim() : '';
-         }
+          if (col.tipo === 'numero') {
+            novoValor = novoValor !== '' && novoValor !== null ? parseFloat(novoValor) : null;
+            if (isNaN(novoValor)) novoValor = null;
+          } else if (col.tipo === 'boolean') {
+            novoValor = novoValor === true || novoValor === 'true' || novoValor === 1 || novoValor === 'SIM';
+          } else {
+            novoValor = novoValor !== null && novoValor !== undefined ? String(novoValor).trim() : '';
+          }
 
-         dadosExtraidos[col.key] = novoValor;
-       });
+          // Só adicionar se o campo é válido (existe em COLUNAS_CONFIG)
+          dadosExtraidos[col.key] = novoValor;
+        });
+
+        // Filtrar: remover campos que não existem no schema
+        const validKeys = new Set(COLUNAS_CONFIG.map(c => c.key));
+        Object.keys(dadosExtraidos).forEach(key => {
+          if (!validKeys.has(key)) {
+            delete dadosExtraidos[key];
+          }
+        });
 
        // ── Custo calculado (lido da coluna calculada ou recalculado) ────────
        const custoCalcColIdx = colIndexMap['custo_total_calculado'];
