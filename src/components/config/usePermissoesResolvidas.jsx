@@ -252,6 +252,11 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.estoque?.separacao_pedidos
       },
       {
+        name: 'Tabela de Preços',
+        page: 'TabelaPrecosConsulta',
+        permissaoCheck: (p) => p?.estoque?.visualizar_produtos
+      },
+      {
         name: 'Editar em Massa',
         page: 'EditarProdutosEmMassa',
         permissaoCheck: (p) => p?.estoque?.produtos?.editar

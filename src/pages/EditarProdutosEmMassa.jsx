@@ -7,6 +7,7 @@ import ImportarPlanilha from '@/components/produtos/massa/ImportarPlanilha.jsx';
 import ResumoPrevisualizacao from '@/components/produtos/massa/ResumoPrevisualizacao.jsx';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque.jsx';
 import ImportarEstoque from '@/components/produtos/massa/ImportarEstoque.jsx';
+import DesfazerImportacao from '@/components/produtos/massa/DesfazerImportacao.jsx';
 
 export default function EditarProdutosEmMassa() {
   const [parsedData, setParsedData] = useState(null);
@@ -28,6 +29,26 @@ export default function EditarProdutosEmMassa() {
     if (!parsedData?.alterados?.length) return;
     setSalvando(true);
     try {
+      const user = await base44.auth.me();
+      
+      // Criar snapshot antes de importar (para desfazer depois)
+      const idsAfetados = parsedData.alterados.map(a => a.id).filter(Boolean);
+      const snapshotDados = [];
+      
+      if (idsAfetados.length > 0) {
+        const produtosAntigos = await base44.entities.Produto.filter({ id: idsAfetados });
+        snapshotDados.push(...produtosAntigos);
+      }
+
+      // Registrar snapshot
+      await base44.entities.ImportacaoLog.create({
+        usuario_responsavel: user?.full_name || user?.email,
+        quantidade_itens: parsedData.alterados.length,
+        snapshot_dados: snapshotDados,
+        tipo_importacao: 'Detalhes do Produto'
+      });
+
+      // Executar importação
       for (const { id, dados, isNew } of parsedData.alterados) {
         if (isNew) {
           await base44.entities.Produto.create(dados);
@@ -88,12 +109,15 @@ export default function EditarProdutosEmMassa() {
       </div>
 
       <Tabs defaultValue="produtos" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           <TabsTrigger value="produtos" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
             Detalhes do Produto
           </TabsTrigger>
           <TabsTrigger value="estoque" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
             Estoque em Massa
+          </TabsTrigger>
+          <TabsTrigger value="desfazer" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700">
+            Desfazer
           </TabsTrigger>
         </TabsList>
 
@@ -207,13 +231,27 @@ export default function EditarProdutosEmMassa() {
               </p>
             </div>
           )}
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+          </TabsContent>
 
-function StepLabel({ number, label }) {
+          <TabsContent value="desfazer" className="space-y-6 mt-6">
+          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-6 shadow-sm">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-2">
+                Histórico de Importações
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Restaure produtos para o estado anterior a uma importação realizada.
+              </p>
+            </div>
+            <DesfazerImportacao />
+          </div>
+          </TabsContent>
+          </Tabs>
+          </div>
+          );
+          }
+
+          function StepLabel({ number, label }) {
   return (
     <div className="flex items-center gap-2 mb-3">
       <span className="w-6 h-6 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-bold flex items-center justify-center">
