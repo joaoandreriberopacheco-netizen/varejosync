@@ -100,7 +100,18 @@ export default function PedidoCompraFAB({
       )}
 
       {/* FAB container */}
-      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col items-end gap-2">
+      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex flex-col-reverse items-end gap-2 max-h-[70vh] overflow-y-auto">
+        {/* FAB principal */}
+        <button
+          onClick={() => setIsExpanded(prev => !prev)}
+          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+            isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
+          } text-white`}
+          title="Ações do pedido"
+        >
+          {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
+        </button>
+
         {/* Botões filhos — lista vertical */}
         {isExpanded && actions.map((action, idx) => (
           <button
@@ -108,7 +119,7 @@ export default function PedidoCompraFAB({
             onClick={action.onClick}
             disabled={action.disabled}
             title={action.label}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 ${action.color}`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
             style={{
               animation: `fadeSlideUp 0.18s ease both`,
               animationDelay: `${idx * 30}ms`,
@@ -118,17 +129,6 @@ export default function PedidoCompraFAB({
             {action.label}
           </button>
         ))}
-
-        {/* FAB principal */}
-        <button
-          onClick={() => setIsExpanded(prev => !prev)}
-          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
-            isExpanded ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
-          } text-white`}
-          title="Ações do pedido"
-        >
-          {isExpanded ? <X className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
-        </button>
       </div>
 
       <style>{`
