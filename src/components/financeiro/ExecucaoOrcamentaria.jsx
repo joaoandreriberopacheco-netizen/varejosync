@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { format, isWithinInterval, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, isWithinInterval, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale } from 'lucide-react';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
