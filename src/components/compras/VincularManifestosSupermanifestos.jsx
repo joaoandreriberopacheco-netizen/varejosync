@@ -116,6 +116,12 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
         });
       }
 
+      // Registrar gatilho de transição de status e logs
+      await base44.functions.invoke('registrarGatilhoSupermanifesto', {
+        supermanifesto_id: novoSupermanifesto.id,
+        manifesto_ids: selectedManifestos
+      });
+
       toast.success(`Supermanifesto ${numero} criado com ${selectedManifestos.length} manifesto(s)`);
       setSelectedManifestos([]);
       setShowVincularDialog(false);
