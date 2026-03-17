@@ -1018,11 +1018,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </div>
 
             {/* Total */}
-            <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <div className="text-right">
+            <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-right mb-8">
                 <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total do Pedido</span>
                 <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
               </div>
+
+              {/* Contas a pagar geradas para este pedido */}
+              {pedido?.id && (
+                <div className="space-y-2">
+                  <LancamentosCompraPanel pedidoId={pedido.id} />
+                </div>
+              )}
             </div>
 
             </TabsContent>
