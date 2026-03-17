@@ -126,6 +126,7 @@ export default function PDVCaixa() {
   const [pagamentosDebito, setPagamentosDebito] = useState(0);
   const [pagamentosCredito, setPagamentosCredito] = useState(0);
   const [pagamentosVale, setPagamentosVale] = useState(0);
+  const [pagamentosContaPagar, setPagamentosContaPagar] = useState(0);
   const [parcelasCredito, setParcelasCredito] = useState(1);
   const [formaPagamentoAtiva, setFormaPagamentoAtiva] = useState(0);
   const [codigoVale, setCodigoVale] = useState('');
@@ -138,6 +139,7 @@ export default function PDVCaixa() {
   const [inputDebito, setInputDebito] = useState('');
   const [inputCredito, setInputCredito] = useState('');
   const [inputVale, setInputVale] = useState('');
+  const [inputContaPagar, setInputContaPagar] = useState('');
 
   // Refs para os inputs
   const inputRefs = {
@@ -146,6 +148,7 @@ export default function PDVCaixa() {
     debito: React.useRef(null),
     credito: React.useRef(null),
     vale: React.useRef(null),
+    contaPagar: React.useRef(null),
   };
 
   const [showLiberacaoEntrega, setShowLiberacaoEntrega] = useState(false);
@@ -193,7 +196,7 @@ export default function PDVCaixa() {
   const [showComprovanteDespesa, setShowComprovanteDespesa] = useState(false);
   const { toast } = useToast();
 
-  const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito + pagamentosVale;
+  const totalPago = pagamentosDinheiro + pagamentosPix + pagamentosDebito + pagamentosCredito + pagamentosVale + pagamentosContaPagar;
   const valorRestante = pedidoSelecionado ? pedidoSelecionado.valor_total - totalPago : 0;
   const troco = valorRestante < 0 ? Math.abs(valorRestante) : 0;
   const pagamentoValido = pedidoSelecionado ? totalPago >= pedidoSelecionado.valor_total : false;
@@ -275,6 +278,8 @@ export default function PDVCaixa() {
       setInputCredito('0,00');
       setPagamentosVale(0);
       setInputVale('0,00');
+      setPagamentosContaPagar(0);
+      setInputContaPagar('0,00');
       setCodigoVale('');
       setValeEncontrado(null);
       setParcelasCredito(1);
@@ -300,10 +305,10 @@ export default function PDVCaixa() {
   const handleNavegacaoPagamento = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setFormaPagamentoAtiva((prev) => (prev + 1) % 5);
+      setFormaPagamentoAtiva((prev) => (prev + 1) % 6);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setFormaPagamentoAtiva((prev) => (prev - 1 + 5) % 5);
+      setFormaPagamentoAtiva((prev) => (prev - 1 + 6) % 6);
     }
   };
 
@@ -579,6 +584,9 @@ export default function PDVCaixa() {
        if (pagamentosCredito > 0) pagamentosArray.push({ forma_pagamento: 'Cartão de Crédito', valor: pagamentosCredito, parcelas: parcelasCredito });
        if (pagamentosVale > 0 && valeEncontrado) {
          pagamentosArray.push({ forma_pagamento: 'Vale Troca', valor: pagamentosVale, parcelas: 1, vale_codigo: valeEncontrado.codigo, vale_id: valeEncontrado.id });
+       }
+       if (pagamentosContaPagar > 0) {
+         pagamentosArray.push({ forma_pagamento: 'Conta a Pagar', valor: pagamentosContaPagar, parcelas: 1 });
        }
 
       // ── CHAMADA AO BACKEND (atômico + selo frio + número único) ──
