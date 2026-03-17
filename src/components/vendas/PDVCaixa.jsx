@@ -1330,25 +1330,35 @@ export default function PDVCaixa() {
                       </span>
                     </div>
                     {(caixaData.recebimentos.vale || 0) > 0 && (
-                      <div className="flex items-center justify-between py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Vale Troca</span>
-                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
-                        </div>
-                        <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">
-                          {formatValor(caixaData.recebimentos.vale || 0)}
-                        </span>
-                      </div>
+                     <div className="flex items-center justify-between py-2 px-3">
+                       <div className="flex items-center gap-2">
+                         <span className="text-sm text-gray-600 dark:text-gray-400">Vale Troca</span>
+                         <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">não monetário</span>
+                       </div>
+                       <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">
+                         {formatValor(caixaData.recebimentos.vale || 0)}
+                       </span>
+                     </div>
+                    )}
+                    {(caixaData.recebimentos.fiado || 0) > 0 && (
+                     <div className="flex items-center justify-between py-2 px-3">
+                       <div className="flex items-center gap-2">
+                         <span className="text-sm text-gray-600 dark:text-gray-400">Conta a Pagar</span>
+                         <span className="text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">a receber</span>
+                       </div>
+                       <span className="text-base font-medium text-amber-700 dark:text-amber-300">
+                         {formatValor(caixaData.recebimentos.fiado || 0)}
+                       </span>
+                     </div>
                     )}
 
                     {/* Total e Diferença */}
                     <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
                       {(() => {
                         const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
-                        // Total conferido = dinheiro(conferido) + pix + crédito + débito
+                        // Total conferido = dinheiro(conferido) + pix + crédito + débito (fiado não entra — é a receber)
                         const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                        // Esperado = saldo inicial + total de vendas (todas as formas) + reforços − recolhimentos − despesas
-                        // (= liquidez, que já inclui todas as vendas)
+                        // Esperado = liquidez (já exclui fiado e vale)
                         const esperado = caixaData.liquidez;
                         const diferenca = totalConferido - esperado;
                         const temDiferenca = Math.abs(diferenca) > 0.01;
