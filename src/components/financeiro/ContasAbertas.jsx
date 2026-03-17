@@ -144,17 +144,17 @@ function ContaRow({ l, onPagar, onClick }) {
 // ─── Grupo por data de vencimento ─────────────────────────────────────────────
 function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isVencido }) {
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full">
       <div className="flex items-center justify-between px-1 py-1.5">
-        <p className={`text-[0.62rem] font-semibold uppercase tracking-widest ${isVencido ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'}`}>
+        <p className={`text-[0.62rem] font-semibold uppercase tracking-widest ${isVencido ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
           {label}
         </p>
         <div className="flex items-center gap-2">
-          {aReceberDia > 0 && <span className="text-[0.62rem] text-green-600 dark:text-green-400">+{R(aReceberDia)}</span>}
-          {aPagarDia   > 0 && <span className="text-[0.62rem] text-red-400">−{R(aPagarDia)}</span>}
+          {aReceberDia > 0 && <span className="text-[0.62rem] text-gray-500 dark:text-gray-400 font-medium">+{R(aReceberDia)}</span>}
+          {aPagarDia   > 0 && <span className="text-[0.62rem] text-gray-400 dark:text-gray-500 font-medium">−{R(aPagarDia)}</span>}
         </div>
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-white/5">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/5">
         {items.map(l => <ContaRow key={l.id} l={l} onPagar={onPagar} onClick={onRow} />)}
       </div>
     </div>
