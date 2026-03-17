@@ -181,6 +181,11 @@ export default function ImportarPlanilha({ onParsed }) {
          }
          diff.preco_custo_calculado = custoFinal;
 
+         // Garantir campos obrigatórios estejam presentes
+         if (!diff.tipo) diff.tipo = produtoAtual.tipo || 'Produto';
+         if (!diff.preco_venda_padrao) diff.preco_venda_padrao = produtoAtual.preco_venda_padrao;
+         if (!diff.campo_hierarquico_1) diff.campo_hierarquico_1 = produtoAtual.campo_hierarquico_1;
+
          const nomeAtual = diff.campo_hierarquico_1 ?? produtoAtual.campo_hierarquico_1;
          if (!nomeAtual) {
            erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Nível 1 é obrigatório.` });
