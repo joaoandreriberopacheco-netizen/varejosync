@@ -122,7 +122,7 @@ export default function ActionMenuCompras({ onNovopedido, onImportarNF, onDownlo
           className={`h-14 w-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 ${
             isOpen ? 'bg-gray-600 dark:bg-gray-500 rotate-45' : 'bg-gray-900 dark:bg-gray-700'
           } text-white`}
-          style={{ position: 'absolute', left: 0, top: 0 }}
+          style={{ position: 'absolute', left: 3, top: 3 }}
         >
           {isOpen ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
         </button>
