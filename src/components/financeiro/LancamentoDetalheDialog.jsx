@@ -294,5 +294,6 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       onClose={() => { setShowEscopo(false); setPendingSave(null); setSaving(false); }}
       onConfirm={(escopo) => aplicarPagamento(escopo)}
     />
+    </>
   );
 }
