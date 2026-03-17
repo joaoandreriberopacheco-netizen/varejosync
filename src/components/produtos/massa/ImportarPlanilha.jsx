@@ -256,7 +256,12 @@ export default function ImportarPlanilha({ onParsed }) {
         type="file"
         accept=".xlsx"
         className="hidden"
-        onChange={e => handleArquivo(e.target.files[0])}
+        onChange={(e) => {
+          console.log('Input change event:', e.target.files);
+          if (e.target.files && e.target.files[0]) {
+            handleArquivo(e.target.files[0]);
+          }
+        }}
       />
     </div>
   );
