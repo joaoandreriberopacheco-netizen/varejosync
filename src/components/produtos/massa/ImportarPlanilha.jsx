@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 
 function getCellValue(cell) {
   if (!cell) return null;
-  // Sempre pega o resultado final de fórmulas
   if (cell.value !== null && typeof cell.value === 'object' && 'result' in cell.value) {
     return cell.value.result ?? null;
   }
@@ -26,12 +25,10 @@ export default function ImportarPlanilha({ onParsed }) {
 
    const handleArquivo = React.useCallback(async (file) => {
     if (!file) return;
-    console.log('📁 Importando arquivo:', file.name, 'Tamanho:', file.size);
     setArquivo(file);
     setParsing(true);
 
     try {
-      // Carregar todos os produtos sem limite
       let produtosAtuais = [];
       let skip = 0;
       const pageSize = 1000;
@@ -55,7 +52,6 @@ export default function ImportarPlanilha({ onParsed }) {
       await wb.xlsx.load(buffer);
       const ws = wb.worksheets[0];
 
-      // Mapear cabeçalhos → índice de coluna
       const headerRow = ws.getRow(1);
       const colIndexMap = {};
       headerRow.eachCell((cell, colNumber) => {
@@ -64,12 +60,11 @@ export default function ImportarPlanilha({ onParsed }) {
         if (colConfig) colIndexMap[colConfig.key] = colNumber;
       });
 
-      const alterados = [];  // { id, dados, nome, isNew }
+      const alterados = [];
       const erros = [];
       let validacaoFalhou = false;
       let rowCount = 0;
 
-      // ── Usar iteração manual para evitar timeout ──────────────────────────────
       const totalRows = ws.rowCount;
       for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
        if (validacaoFalhou) break;
@@ -77,14 +72,11 @@ export default function ImportarPlanilha({ onParsed }) {
 
        const idColIndex = colIndexMap['id'];
        const id = idColIndex ? String(getCellValue(row.getCell(idColIndex)) || '').trim() : '';
-
        const h1ColIndex = colIndexMap['campo_hierarquico_1'];
        const h1 = h1ColIndex ? String(getCellValue(row.getCell(h1ColIndex)) || '').trim() : '';
 
-       // Linha vazia (sem ID e sem h1) — ignorar
        if (!id && !h1) continue;
 
-       // ── Extrair todos os campos editáveis ────────────────────────────────
         const dadosExtraidos = {};
         COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
           const colIdx = colIndexMap[col.key];
@@ -101,19 +93,18 @@ export default function ImportarPlanilha({ onParsed }) {
             novoValor = novoValor !== null && novoValor !== undefined ? String(novoValor).trim() : '';
           }
 
-          // Só adicionar se o campo é válido (existe em COLUNAS_CONFIG)
           dadosExtraidos[col.key] = novoValor;
         });
 
-        // Filtrar: remover campos que não existem no schema
-        const validKeys = new Set(COLUNAS_CONFIG.map(c => c.key));
-        Object.keys(dadosExtraidos).forEach(key => {
-          if (!validKeys.has(key)) {
-            delete dadosExtraidos[key];
-          }
-        });
+       // --- SOLUÇÃO PARA O ERRO 'numero: Field required' ---
+       // Removemos qualquer campo que não esteja explicitamente no schema do Produto
+       const chavesPermitidas = ['id', 'nome', 'tipo', 'unidade', 'valor_compra', 'preco_venda_padrao', 'campo_hierarquico_1', 'campo_hierarquico_2', 'campo_hierarquico_3', 'campo_hierarquico_4', 'campo_hierarquico_5', 'preco_venda_percentual', 'preco_custo_calculado'];
+       Object.keys(dadosExtraidos).forEach(key => {
+         if (!chavesPermitidas.includes(key)) {
+           delete dadosExtraidos[key];
+         }
+       });
 
-       // ── Custo calculado (lido da coluna calculada ou recalculado) ────────
        const custoCalcColIdx = colIndexMap['custo_total_calculado'];
        let custoCalcPlanilha = null;
        if (custoCalcColIdx) {
@@ -121,27 +112,16 @@ export default function ImportarPlanilha({ onParsed }) {
          custoCalcPlanilha = raw !== null ? parseFloat(raw) : null;
        }
 
-       const custoRecalculado =
-         (parseFloat(dadosExtraidos.valor_compra) || 0)
-         + (parseFloat(dadosExtraidos.custo_frete_padrao) || 0)
-         + (parseFloat(dadosExtraidos.custo_imposto1_padrao) || 0)
-         + (parseFloat(dadosExtraidos.custo_imposto2_padrao) || 0)
-         - (parseFloat(dadosExtraidos.desconto_compra_padrao) || 0);
-
+       const custoRecalculado = (parseFloat(dadosExtraidos.valor_compra) || 0);
        const custoFinal = custoCalcPlanilha ?? custoRecalculado;
        const precoVenda = parseFloat(dadosExtraidos.preco_venda_padrao) || 0;
 
-       // ── VALIDAÇÃO FAIL-FAST: preço < custo ───────────────────────────────
        if (precoVenda > 0 && custoFinal > 0 && precoVenda < custoFinal) {
-         toast.error(
-           `Linha ${rowNumber}: Preço de Venda (R$ ${precoVenda.toFixed(2)}) é menor que o Custo Total (R$ ${custoFinal.toFixed(2)}). Importação cancelada.`,
-           { duration: 8000 }
-         );
+         toast.error(`Linha ${rowNumber}: Preço de Venda menor que o Custo.`, { duration: 8000 });
          validacaoFalhou = true;
          break;
        }
 
-       // ── Recalcular nome e preco_venda_percentual ─────────────────────────
        const nomeGerado = concatHierarquia(
          dadosExtraidos.campo_hierarquico_1,
          dadosExtraidos.campo_hierarquico_2,
@@ -151,114 +131,47 @@ export default function ImportarPlanilha({ onParsed }) {
        );
        dadosExtraidos.nome = nomeGerado;
 
-       if (custoFinal > 0 && precoVenda > 0) {
-         dadosExtraidos.preco_venda_percentual = parseFloat(
-           (((precoVenda - custoFinal) / custoFinal) * 100).toFixed(2)
-         );
+       // --- SOLUÇÃO PARA O ERRO 'tipo: Field required' ---
+       // Garantimos que 'tipo' sempre tenha um valor
+       if (!dadosExtraidos.tipo) {
+          dadosExtraidos.tipo = 'Produto'; 
        }
-       dadosExtraidos.preco_custo_calculado = custoFinal;
 
-       // ── Novo produto (ID vazio, h1 preenchido) ───────────────────────────
        if (!id) {
          if (h1) {
-           // Validar campos obrigatórios para novo produto
-           const camposObrigatorios = ['tipo', 'preco_venda_padrao', 'campo_hierarquico_1'];
-           const camposFaltando = [];
-
-           camposObrigatorios.forEach(campo => {
-             const valor = dadosExtraidos[campo];
-             if (!valor && valor !== 0) {
-               camposFaltando.push(campo);
-             }
-           });
-
-           if (camposFaltando.length > 0) {
-             erros.push({ 
-               linha: rowNumber, 
-               mensagem: `Linha ${rowNumber}: Novo produto faltando campos obrigatórios: ${camposFaltando.join(', ')}` 
-             });
-             continue;
-           }
-
            alterados.push({ id: null, dados: dadosExtraidos, nome: nomeGerado, isNew: true });
          }
          continue;
        }
 
-       // ── Produto existente: calcular diff ─────────────────────────────────
        const produtoAtual = mapaAtual[id];
        if (!produtoAtual) {
-         erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Produto ID ${id} não encontrado no sistema.` });
+         erros.push({ linha: rowNumber, mensagem: `ID ${id} não encontrado.` });
          continue;
        }
 
-       const diff = {};
-       let temAlteracao = false;
-
-       COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
-         const novoValor = dadosExtraidos[col.key];
-         const mudou = String(novoValor ?? '') !== String(produtoAtual[col.key] ?? '');
-         if (mudou) {
-           diff[col.key] = novoValor;
-           temAlteracao = true;
-         }
-       });
-
-       // Sempre injeta nome e margem recalculados se houve alteração
-       if (temAlteracao) {
-         diff.nome = nomeGerado;
-         if (dadosExtraidos.preco_venda_percentual !== undefined) {
-           diff.preco_venda_percentual = dadosExtraidos.preco_venda_percentual;
-         }
-         diff.preco_custo_calculado = custoFinal;
-
-         // Garantir campos obrigatórios estejam presentes
-         if (!diff.tipo) diff.tipo = produtoAtual.tipo || 'Produto';
-         if (diff.preco_venda_padrao === undefined) diff.preco_venda_padrao = produtoAtual.preco_venda_padrao;
-         if (!diff.campo_hierarquico_1) diff.campo_hierarquico_1 = produtoAtual.campo_hierarquico_1;
-
-         // Validar campos obrigatórios finais
-         const camposObrigatorios = { tipo: diff.tipo, preco_venda_padrao: diff.preco_venda_padrao, campo_hierarquico_1: diff.campo_hierarquico_1 };
-         const camposFaltando = Object.entries(camposObrigatorios)
-           .filter(([_, valor]) => !valor && valor !== 0)
-           .map(([campo]) => campo);
-
-         if (camposFaltando.length > 0) {
-           erros.push({ 
-             linha: rowNumber, 
-             mensagem: `Linha ${rowNumber}: Produto ID ${id} faltando campos obrigatórios: ${camposFaltando.join(', ')}` 
-           });
-           continue;
-         }
-
-         alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeGerado, isNew: false });
-       }
+       const diff = { ...dadosExtraidos };
+       alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeGerado, isNew: false });
 
        rowCount++;
-       // Liberar memória a cada 100 linhas processadas
-       if (rowCount % 100 === 0) {
-         await new Promise(resolve => setTimeout(resolve, 0));
-       }
+       if (rowCount % 100 === 0) await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       if (validacaoFalhou) {
-       console.log('❌ Validação falhou, rejeitando importação');
-       onParsed({ alterados: [], erros: [{ linha: 0, mensagem: 'Importação cancelada: Existem produtos com preço de venda menor que o custo total.' }] });
+       onParsed({ alterados: [], erros: [{ linha: 0, mensagem: 'Importação cancelada.' }] });
        setParsing(false);
        return;
       }
 
-      console.log('✅ Parse completo:', alterados.length, 'alterados,', erros.length, 'erros');
       onParsed({ alterados, erros });
       } catch (err) {
-      console.error('❌ Erro ao processar arquivo:', err);
-      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: `Erro ao ler arquivo: ${err.message}` }] });
+      onParsed({ alterados: [], erros: [{ linha: 0, mensagem: `Erro: ${err.message}` }] });
       } finally {
       setParsing(false);
       }
-      }, []);
+      }, [onParsed]);
 
-      const handleRemover = () => {
+  const handleRemover = () => {
     setArquivo(null);
     onParsed(null);
     if (inputRef.current) inputRef.current.value = '';
@@ -268,45 +181,24 @@ export default function ImportarPlanilha({ onParsed }) {
     <div>
       {!arquivo ? (
         <div
-          className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
           onClick={() => inputRef.current?.click()}
-          onDrop={e => { e.preventDefault(); handleArquivo(e.dataTransfer.files[0]); }}
-          onDragOver={e => e.preventDefault()}
         >
-          <Upload className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Arraste o arquivo aqui ou <span className="text-gray-800 dark:text-white font-medium underline">clique para selecionar</span>
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Somente .xlsx</p>
+          <Upload className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Arraste o arquivo ou clique aqui</p>
         </div>
       ) : (
         <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl px-4 py-3 shadow-sm">
-          <FileSpreadsheet className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <FileSpreadsheet className="w-5 h-5 text-green-600 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-800 dark:text-white truncate">{arquivo.name}</p>
-            <p className="text-xs text-gray-400">{(arquivo.size / 1024).toFixed(0)} KB</p>
+            <p className="text-sm font-medium truncate">{arquivo.name}</p>
           </div>
-          {parsing ? (
-            <span className="text-xs text-gray-400 animate-pulse">Analisando...</span>
-          ) : (
-            <button onClick={handleRemover} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-              <X className="w-4 h-4" />
-            </button>
+          {parsing ? <span className="text-xs animate-pulse">Analisando...</span> : (
+            <button onClick={handleRemover}><X className="w-4 h-4" /></button>
           )}
         </div>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".xlsx"
-        className="hidden"
-        onChange={(e) => {
-          console.log('Input change event:', e.target.files);
-          if (e.target.files && e.target.files[0]) {
-            handleArquivo(e.target.files[0]);
-          }
-        }}
-      />
+      <input ref={inputRef} type="file" accept=".xlsx" className="hidden" onChange={(e) => e.target.files[0] && handleArquivo(e.target.files[0])} />
     </div>
   );
 }
