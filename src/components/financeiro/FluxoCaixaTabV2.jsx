@@ -289,10 +289,21 @@ function LancRow({ l, onClick }) {
 }
 
 // ─── Grupo data ───────────────────────────────────────────────────────────────
-function Grupo({ label, items, onRow }) {
+function Grupo({ label, items, onRow, entradaDia, saidaDia, saldoAcumulado }) {
   return (
     <div className="w-full overflow-hidden">
-      <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 px-1 py-1.5">{label}</p>
+      <div className="flex items-center justify-between px-1 py-1.5">
+        <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{label}</p>
+        <div className="flex items-center gap-2">
+          {entradaDia > 0 && <span className="text-[0.62rem] text-gray-500 dark:text-gray-400">+{R(entradaDia)}</span>}
+          {saidaDia   > 0 && <span className="text-[0.62rem] text-gray-400 dark:text-gray-500">−{R(saidaDia)}</span>}
+          {saldoAcumulado !== null && (
+            <span className={`text-[0.62rem] font-bold ${saldoAcumulado >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+              {saldoAcumulado >= 0 ? '+' : '−'}{R(Math.abs(saldoAcumulado))}
+            </span>
+          )}
+        </div>
+      </div>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-white/5">
         {items.map(l => <LancRow key={l.id} l={l} onClick={onRow} />)}
       </div>
@@ -489,7 +500,9 @@ export default function FluxoCaixaTabV2() {
         </div>
       ) : (
         <div className="space-y-3">
-          {grupos.map(({ k, label, items }) => <Grupo key={k} label={label} items={items} onRow={setDetalhe} />)}
+          {grupos.map(({ k, label, items, entradaDia, saidaDia, saldoAcumulado }) => (
+            <Grupo key={k} label={label} items={items} onRow={setDetalhe} entradaDia={entradaDia} saidaDia={saidaDia} saldoAcumulado={saldoAcumulado} />
+          ))}
         </div>
       )}
 
