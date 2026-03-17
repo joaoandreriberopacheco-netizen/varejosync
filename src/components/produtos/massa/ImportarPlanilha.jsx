@@ -112,26 +112,24 @@ export default function ImportarPlanilha({ onParsed }) {
         }
 
         // 6. Validações específicas de campos obrigatórios
+        const camposFaltantes = [];
+        
         if (!dadosExtraidos.campo_hierarquico_1 || dadosExtraidos.campo_hierarquico_1 === '') {
-          erros.push({ 
-            linha: i, 
-            mensagem: `Linha ${i}: Campo "Nível 1 (*)" é obrigatório.` 
-          });
-          erroNaLinha = true;
+          camposFaltantes.push('"Nível 1"');
         }
 
         if (!dadosExtraidos.tipo || dadosExtraidos.tipo === '') {
-          erros.push({ 
-            linha: i, 
-            mensagem: `Linha ${i}: Campo "Tipo" é obrigatório.` 
-          });
-          erroNaLinha = true;
+          camposFaltantes.push('"Tipo"');
         }
 
         if (dadosExtraidos.preco_venda_padrao === undefined || dadosExtraidos.preco_venda_padrao === null || dadosExtraidos.preco_venda_padrao === '') {
+          camposFaltantes.push('"Preço Venda"');
+        }
+        
+        if (camposFaltantes.length > 0) {
           erros.push({ 
             linha: i, 
-            mensagem: `Linha ${i}: Campo "Preço Venda (*)" é obrigatório e deve ser numérico.` 
+            mensagem: `Linha ${i}: Campos obrigatórios faltando: ${camposFaltantes.join(', ')}.` 
           });
           erroNaLinha = true;
         }
