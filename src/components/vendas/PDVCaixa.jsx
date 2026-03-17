@@ -1717,6 +1717,10 @@ export default function PDVCaixa() {
           setPagamentosVale={setPagamentosVale}
           inputVale={inputVale}
           setInputVale={setInputVale}
+          pagamentosContaPagar={pagamentosContaPagar}
+          setPagamentosContaPagar={setPagamentosContaPagar}
+          inputContaPagar={inputContaPagar}
+          setInputContaPagar={setInputContaPagar}
           codigoVale={codigoVale}
           setCodigoVale={setCodigoVale}
           valeEncontrado={valeEncontrado}
