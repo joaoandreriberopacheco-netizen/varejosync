@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
-import ActionMenuCompras from '@/components/compras/ActionMenuCompras';
+import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 
 export default function PedidosCompraPage() {
   const navigate = useNavigate();
@@ -158,7 +158,7 @@ export default function PedidosCompraPage() {
       />
 
       {/* Menu de ações FAB */}
-      <ActionMenuCompras
+      <ActionMenuComprasV2
         onNovopedido={handleNovoPedido}
         onImportarNF={() => setShowImportador(true)}
         onDownloadTemplate={handleDownloadTemplate}
