@@ -52,17 +52,17 @@ export default function ProdutoFAB({ onNovoClicked }) {
 
       {/* Overlay para fechar menu */}
       {isOpen && (
-        <button
-          className="fixed inset-0 z-30"
+        <div
+          className="fixed inset-0 z-30 bg-transparent cursor-pointer"
           onClick={() => setIsOpen(false)}
-          aria-label="Fechar menu"
+          role="presentation"
         />
       )}
 
       {/* Botão principal FAB */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 ${
+        className={`relative z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-200 ${
           isOpen
             ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
             : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:shadow-xl'
