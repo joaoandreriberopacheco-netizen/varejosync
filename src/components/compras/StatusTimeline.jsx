@@ -118,7 +118,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
         </div>
       )}
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between w-full">
         {stages.map((stage, idx) => {
           const isCompleted = idx <= currentIndex;
           const isActive = idx === currentIndex;
