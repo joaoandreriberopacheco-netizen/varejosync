@@ -1281,6 +1281,9 @@ export default function PDVCaixa() {
                         <ValorRow label="Reforços" valor={caixaData.reforcos} onEye={() => setShowReforcosDialog(true)} />
                         <ValorRow label="Recolhimentos" valor={caixaData.sangrias} color="text-blue-600 dark:text-blue-400" onEye={() => setShowSangriasDialog(true)} eyeColor="hover:bg-blue-50 dark:hover:bg-blue-900/20" eyeIconColor="text-blue-500 dark:text-blue-400" />
                         <ValorRow label="Despesas" valor={caixaData.despesas} color="text-red-600 dark:text-red-400" onEye={() => setShowDespesasDialog(true)} eyeColor="hover:bg-red-50 dark:hover:bg-red-900/20" eyeIconColor="text-red-400 dark:text-red-500" />
+                        {(caixaData.recebimentos?.fiado || 0) > 0 && (
+                          <ValorRow label="Conta a Receber" valor={caixaData.recebimentos.fiado} color="text-amber-600 dark:text-amber-400" eyeColor="hover:bg-amber-50 dark:hover:bg-amber-900/20" eyeIconColor="text-amber-500 dark:text-amber-400" />
+                        )}
                         <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Liquidez do Turno</span>
