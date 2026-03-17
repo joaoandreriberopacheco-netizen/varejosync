@@ -157,12 +157,7 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
                   </div>
                 )}
               </div>
-              {idx < stages.length - 1 && (
-                <div
-                  className={`flex-1 h-0.5 mx-0.5 transition-all ${getLineClass(idx)}`}
-                  style={{ minWidth: '6px' }}
-                />
-              )}
+
             </React.Fragment>
           );
         })}
