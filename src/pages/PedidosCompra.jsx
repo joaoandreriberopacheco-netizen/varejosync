@@ -11,21 +11,12 @@ export default function PedidosCompraPage() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [search, setSearch] = useState('');
   const [statusSel, setStatusSel] = useState([]);
   const [fornecedorSel, setFornecedorSel] = useState([]);
   const [tagsSel, setTagsSel] = useState([]);
   const [showImportador, setShowImportador] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   useEffect(() => {
     loadData();
