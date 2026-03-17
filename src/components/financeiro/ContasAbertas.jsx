@@ -294,8 +294,8 @@ export default function ContasAbertas() {
           </div>
         </div>
 
-        {/* Tipo + Contas */}
-        <div className="px-3 pb-2.5 pt-2 flex gap-2 flex-wrap">
+        {/* Tipo */}
+        <div className="px-3 pb-2.5 pt-2 flex gap-2">
           {['todos', 'Receita', 'Despesa'].map(t => (
             <button key={t} onClick={() => setTipoFiltro(t)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
@@ -303,11 +303,10 @@ export default function ContasAbertas() {
               {t === 'todos' ? 'Todos' : t === 'Receita' ? 'A Receber' : 'A Pagar'}
             </button>
           ))}
-          <ContasFiltro contas={contas} sel={contasSel} onSel={setContasSel} />
         </div>
 
         <div className="px-3 pb-2">
-          <p className="text-[0.65rem] text-gray-400">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''} em aberto</p>
+          <p className="text-[0.65rem] text-gray-400 dark:text-gray-500">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''} em aberto</p>
         </div>
       </div>
 
