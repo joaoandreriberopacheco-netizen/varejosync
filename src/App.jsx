@@ -25,6 +25,7 @@ import PedidoCompraDetalhe from '@/pages/PedidoCompraDetalhe';
 import GestaoManifestosPage from '@/pages/GestaoManifestosPage';
 import GestaoSupermanifestosPage from '@/pages/GestaoSupermanifestosPage';
 import ConferenciaEntrada from '@/pages/ConferenciaEntrada';
+import TabelaPrecosConsulta from '@/pages/TabelaPrecosConsulta';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -154,6 +155,11 @@ const AuthenticatedApp = () => {
       <Route path="/ConferenciaEntrada" element={
         <LayoutWrapper currentPageName="ConferenciaEntrada">
           <ConferenciaEntrada />
+        </LayoutWrapper>
+      } />
+      <Route path="/TabelaPrecosConsulta" element={
+        <LayoutWrapper currentPageName="TabelaPrecosConsulta">
+          <TabelaPrecosConsulta />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
