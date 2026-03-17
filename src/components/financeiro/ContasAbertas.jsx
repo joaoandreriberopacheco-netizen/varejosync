@@ -304,15 +304,32 @@ export default function ContasAbertas() {
           </div>
         </div>
 
+        {/* Datas personalizadas */}
+        {periodo === 'personalizado' && (
+          <div className="px-3 py-2 border-b border-gray-50 dark:border-white/5 flex gap-2">
+            <input type="date" value={cs} onChange={e => setCs(e.target.value)}
+              className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 rounded-xl px-3 py-2 outline-none border-0" />
+            <input type="date" value={ce} onChange={e => setCe(e.target.value)}
+              className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 rounded-xl px-3 py-2 outline-none border-0" />
+          </div>
+        )}
+
         {/* Tipo */}
-        <div className="px-3 pb-2.5 pt-2 flex gap-2">
-          {['todos', 'Receita', 'Despesa'].map(t => (
-            <button key={t} onClick={() => setTipoFiltro(t)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-                ${tipoFiltro === t ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-              {t === 'todos' ? 'Todos' : t === 'Receita' ? 'A Receber' : 'A Pagar'}
-            </button>
-          ))}
+        <div className="px-3 pb-2.5 pt-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-1.5">
+            {[
+              { v: 'todos',   l: 'Todos' },
+              { v: 'Receita', l: 'A Receber' },
+              { v: 'Despesa', l: 'A Pagar' },
+              { v: 'compras', l: 'Compras' },
+            ].map(({ v, l }) => (
+              <button key={v} onClick={() => setTipoFiltro(v)}
+                className={`flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+                  ${tipoFiltro === v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="px-3 pb-2">
