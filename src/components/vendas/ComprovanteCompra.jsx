@@ -220,7 +220,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             <LinhaHifens />
 
             <div className="t-center uppercase" style={{ fontSize: '12px', margin: '4px 0' }}>
-              RECIBO Nº {pedido.numero?.replace(/\D/g, '').slice(-5) || 'S/N'}
+              PEDIDO DE VENDA Nº {pedido.numero || 'S/N'}
             </div>
 
             <div style={{ fontSize: '9px', marginTop: '4px' }}>
