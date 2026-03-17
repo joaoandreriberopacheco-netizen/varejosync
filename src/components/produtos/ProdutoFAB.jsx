@@ -28,7 +28,7 @@ export default function ProdutoFAB({ onNovoClicked }) {
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-40">
+    <div className="fixed bottom-32 right-6 z-50">
       {/* Menu expandido */}
       {isOpen && (
         <div className="absolute bottom-20 right-0 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
