@@ -51,32 +51,32 @@ function KpiAbertas({ kpis }) {
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3">
-          <p className="text-[9px] uppercase tracking-wider text-gray-400 mb-1">A Receber</p>
-          <p className="text-sm font-bold text-green-600 dark:text-green-400 truncate">{R(kpis.aReceber)}</p>
-          {kpis.qtdReceber > 0 && <p className="text-[9px] text-gray-400">{kpis.qtdReceber} lançamento{kpis.qtdReceber !== 1 ? 's' : ''}</p>}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3">
+          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">A Receber</p>
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{R(kpis.aReceber)}</p>
+          {kpis.qtdReceber > 0 && <p className="text-[9px] text-gray-400 dark:text-gray-500">{kpis.qtdReceber} lançamento{kpis.qtdReceber !== 1 ? 's' : ''}</p>}
         </div>
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3">
-          <p className="text-[9px] uppercase tracking-wider text-gray-400 mb-1">A Pagar</p>
-          <p className="text-sm font-bold text-red-500 dark:text-red-400 truncate">{R(kpis.aPagar)}</p>
-          {kpis.qtdPagar > 0 && <p className="text-[9px] text-gray-400">{kpis.qtdPagar} lançamento{kpis.qtdPagar !== 1 ? 's' : ''}</p>}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3">
+          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">A Pagar</p>
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">{R(kpis.aPagar)}</p>
+          {kpis.qtdPagar > 0 && <p className="text-[9px] text-gray-400 dark:text-gray-500">{kpis.qtdPagar} lançamento{kpis.qtdPagar !== 1 ? 's' : ''}</p>}
         </div>
       </div>
 
       {/* Saldo projetado */}
-      <div className="bg-gray-900 dark:bg-gray-100 rounded-2xl p-3 flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex items-center justify-between">
         <div>
-          <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Saldo Projetado</p>
-          <p className={`text-base font-bold ${kpis.saldoProjetado >= 0 ? 'text-white dark:text-gray-900' : 'text-red-400 dark:text-red-500'}`}>
+          <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Saldo Projetado</p>
+          <p className={`text-base font-bold ${kpis.saldoProjetado >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-red-500 dark:text-red-400'}`}>
             {R(kpis.saldoProjetado)}
           </p>
         </div>
         {kpis.vencidas > 0 && (
           <div className="flex items-center gap-1.5 text-right">
-            <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-none" />
+            <AlertTriangle className="w-3.5 h-3.5 text-gray-400 flex-none" />
             <div>
-              <p className="text-[9px] text-gray-400">Vencidas</p>
-              <p className="text-xs font-bold text-red-400">{R(kpis.vencidas)}</p>
+              <p className="text-[9px] text-gray-400 dark:text-gray-500">Vencidas</p>
+              <p className="text-xs font-semibold text-red-500 dark:text-red-400">{R(kpis.vencidas)}</p>
             </div>
           </div>
         )}
