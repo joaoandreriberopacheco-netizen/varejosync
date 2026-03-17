@@ -1032,26 +1032,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               />
             </div>
 
-            {/* Total + Botão Circular - dentro do scroll */}
+            {/* Total */}
             <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total</span>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
-                </div>
-                {pedido && pedido.status === 'Rascunho' && formData.itens.length > 0 && !isLocked && (
-                   <Button
-                     onClick={() => {
-                       handleChange('status', 'Aguardando Liberação');
-                       setTimeout(() => handleInitiateSave(), 100);
-                     }}
-                     className="flex-shrink-0 w-16 h-16 rounded-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 shadow-lg flex items-center justify-center"
-                     size="icon"
-                     title="Enviar para Aprovação Financeira"
-                   >
-                     <Send className="w-8 h-8 text-white" style={{ transform: 'rotate(-45deg)' }} />
-                   </Button>
-                 )}
+              <div className="text-right">
+                <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Total do Pedido</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(valorTotal)}</span>
               </div>
             </div>
 
