@@ -65,127 +65,133 @@ export default function ImportarPlanilha({ onParsed }) {
 
       const alterados = [];  // { id, dados, nome, isNew }
       const erros = [];
+      let validacaoFalhou = false;
 
       ws.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) return;
+       if (rowNumber === 1 || validacaoFalhou) return;
 
-        const idColIndex = colIndexMap['id'];
-        const id = idColIndex ? String(getCellValue(row.getCell(idColIndex)) || '').trim() : '';
+       const idColIndex = colIndexMap['id'];
+       const id = idColIndex ? String(getCellValue(row.getCell(idColIndex)) || '').trim() : '';
 
-        const h1ColIndex = colIndexMap['campo_hierarquico_1'];
-        const h1 = h1ColIndex ? String(getCellValue(row.getCell(h1ColIndex)) || '').trim() : '';
+       const h1ColIndex = colIndexMap['campo_hierarquico_1'];
+       const h1 = h1ColIndex ? String(getCellValue(row.getCell(h1ColIndex)) || '').trim() : '';
 
-        // Linha vazia (sem ID e sem h1) — ignorar
-        if (!id && !h1) return;
+       // Linha vazia (sem ID e sem h1) — ignorar
+       if (!id && !h1) return;
 
-        // ── Extrair todos os campos editáveis ────────────────────────────────
-        const dadosExtraidos = {};
-        COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
-          const colIdx = colIndexMap[col.key];
-          if (!colIdx) return;
+       // ── Extrair todos os campos editáveis ────────────────────────────────
+       const dadosExtraidos = {};
+       COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
+         const colIdx = colIndexMap[col.key];
+         if (!colIdx) return;
 
-          let novoValor = getCellValue(row.getCell(colIdx));
+         let novoValor = getCellValue(row.getCell(colIdx));
 
-          if (col.tipo === 'numero') {
-            novoValor = novoValor !== '' && novoValor !== null ? parseFloat(novoValor) : null;
-            if (isNaN(novoValor)) novoValor = null;
-          } else if (col.tipo === 'boolean') {
-            novoValor = novoValor === true || novoValor === 'true' || novoValor === 1 || novoValor === 'SIM';
-          } else {
-            novoValor = novoValor !== null && novoValor !== undefined ? String(novoValor).trim() : '';
-          }
+         if (col.tipo === 'numero') {
+           novoValor = novoValor !== '' && novoValor !== null ? parseFloat(novoValor) : null;
+           if (isNaN(novoValor)) novoValor = null;
+         } else if (col.tipo === 'boolean') {
+           novoValor = novoValor === true || novoValor === 'true' || novoValor === 1 || novoValor === 'SIM';
+         } else {
+           novoValor = novoValor !== null && novoValor !== undefined ? String(novoValor).trim() : '';
+         }
 
-          dadosExtraidos[col.key] = novoValor;
-        });
+         dadosExtraidos[col.key] = novoValor;
+       });
 
-        // ── Custo calculado (lido da coluna calculada ou recalculado) ────────
-        const custoCalcColIdx = colIndexMap['custo_total_calculado'];
-        let custoCalcPlanilha = null;
-        if (custoCalcColIdx) {
-          const raw = getCellValue(row.getCell(custoCalcColIdx));
-          custoCalcPlanilha = raw !== null ? parseFloat(raw) : null;
-        }
+       // ── Custo calculado (lido da coluna calculada ou recalculado) ────────
+       const custoCalcColIdx = colIndexMap['custo_total_calculado'];
+       let custoCalcPlanilha = null;
+       if (custoCalcColIdx) {
+         const raw = getCellValue(row.getCell(custoCalcColIdx));
+         custoCalcPlanilha = raw !== null ? parseFloat(raw) : null;
+       }
 
-        const custoRecalculado =
-          (parseFloat(dadosExtraidos.valor_compra) || 0)
-          + (parseFloat(dadosExtraidos.custo_frete_padrao) || 0)
-          + (parseFloat(dadosExtraidos.custo_imposto1_padrao) || 0)
-          + (parseFloat(dadosExtraidos.custo_imposto2_padrao) || 0)
-          - (parseFloat(dadosExtraidos.desconto_compra_padrao) || 0);
+       const custoRecalculado =
+         (parseFloat(dadosExtraidos.valor_compra) || 0)
+         + (parseFloat(dadosExtraidos.custo_frete_padrao) || 0)
+         + (parseFloat(dadosExtraidos.custo_imposto1_padrao) || 0)
+         + (parseFloat(dadosExtraidos.custo_imposto2_padrao) || 0)
+         - (parseFloat(dadosExtraidos.desconto_compra_padrao) || 0);
 
-        const custoFinal = custoCalcPlanilha ?? custoRecalculado;
-        const precoVenda = parseFloat(dadosExtraidos.preco_venda_padrao) || 0;
+       const custoFinal = custoCalcPlanilha ?? custoRecalculado;
+       const precoVenda = parseFloat(dadosExtraidos.preco_venda_padrao) || 0;
 
-        // ── VALIDAÇÃO FAIL-FAST: preço < custo ───────────────────────────────
-        if (precoVenda > 0 && custoFinal > 0 && precoVenda < custoFinal) {
-          toast.error(
-            `Linha ${rowNumber}: Preço de Venda (R$ ${precoVenda.toFixed(2)}) é menor que o Custo Total (R$ ${custoFinal.toFixed(2)}). Importação cancelada.`,
-            { duration: 8000 }
-          );
-          onParsed(null);
-          setParsing(false);
-          setArquivo(null);
-          if (inputRef.current) inputRef.current.value = '';
-          return false; // sinaliza abort — ws.eachRow não tem break nativo
-        }
+       // ── VALIDAÇÃO FAIL-FAST: preço < custo ───────────────────────────────
+       if (precoVenda > 0 && custoFinal > 0 && precoVenda < custoFinal) {
+         toast.error(
+           `Linha ${rowNumber}: Preço de Venda (R$ ${precoVenda.toFixed(2)}) é menor que o Custo Total (R$ ${custoFinal.toFixed(2)}). Importação cancelada.`,
+           { duration: 8000 }
+         );
+         validacaoFalhou = true;
+         return;
+       }
 
-        // ── Recalcular nome e preco_venda_percentual ─────────────────────────
-        const nomeGerado = concatHierarquia(
-          dadosExtraidos.campo_hierarquico_1,
-          dadosExtraidos.campo_hierarquico_2,
-          dadosExtraidos.campo_hierarquico_3,
-          dadosExtraidos.campo_hierarquico_4,
-          dadosExtraidos.campo_hierarquico_5,
-        );
-        dadosExtraidos.nome = nomeGerado;
+       // ── Recalcular nome e preco_venda_percentual ─────────────────────────
+       const nomeGerado = concatHierarquia(
+         dadosExtraidos.campo_hierarquico_1,
+         dadosExtraidos.campo_hierarquico_2,
+         dadosExtraidos.campo_hierarquico_3,
+         dadosExtraidos.campo_hierarquico_4,
+         dadosExtraidos.campo_hierarquico_5,
+       );
+       dadosExtraidos.nome = nomeGerado;
 
-        if (custoFinal > 0 && precoVenda > 0) {
-          dadosExtraidos.preco_venda_percentual = parseFloat(
-            (((precoVenda - custoFinal) / custoFinal) * 100).toFixed(2)
-          );
-        }
-        dadosExtraidos.preco_custo_calculado = custoFinal;
+       if (custoFinal > 0 && precoVenda > 0) {
+         dadosExtraidos.preco_venda_percentual = parseFloat(
+           (((precoVenda - custoFinal) / custoFinal) * 100).toFixed(2)
+         );
+       }
+       dadosExtraidos.preco_custo_calculado = custoFinal;
 
-        // ── Novo produto (ID vazio, h1 preenchido) ───────────────────────────
-        if (!id) {
-          if (!h1) return;
-          alterados.push({ id: null, dados: dadosExtraidos, nome: nomeGerado, isNew: true });
-          return;
-        }
+       // ── Novo produto (ID vazio, h1 preenchido) ───────────────────────────
+       if (!id) {
+         if (!h1) return;
+         alterados.push({ id: null, dados: dadosExtraidos, nome: nomeGerado, isNew: true });
+         return;
+       }
 
-        // ── Produto existente: calcular diff ─────────────────────────────────
-        const produtoAtual = mapaAtual[id];
-        if (!produtoAtual) return;
+       // ── Produto existente: calcular diff ─────────────────────────────────
+       const produtoAtual = mapaAtual[id];
+       if (!produtoAtual) return;
 
-        const diff = {};
-        let temAlteracao = false;
+       const diff = {};
+       let temAlteracao = false;
 
-        COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
-          const novoValor = dadosExtraidos[col.key];
-          const mudou = String(novoValor ?? '') !== String(produtoAtual[col.key] ?? '');
-          if (mudou) {
-            diff[col.key] = novoValor;
-            temAlteracao = true;
-          }
-        });
+       COLUNAS_CONFIG.filter(c => c.editavel && !c.calculado).forEach(col => {
+         const novoValor = dadosExtraidos[col.key];
+         const mudou = String(novoValor ?? '') !== String(produtoAtual[col.key] ?? '');
+         if (mudou) {
+           diff[col.key] = novoValor;
+           temAlteracao = true;
+         }
+       });
 
-        // Sempre injeta nome e margem recalculados se houve alteração
-        if (temAlteracao) {
-          diff.nome = nomeGerado;
-          if (dadosExtraidos.preco_venda_percentual !== undefined) {
-            diff.preco_venda_percentual = dadosExtraidos.preco_venda_percentual;
-          }
-          diff.preco_custo_calculado = custoFinal;
+       // Sempre injeta nome e margem recalculados se houve alteração
+       if (temAlteracao) {
+         diff.nome = nomeGerado;
+         if (dadosExtraidos.preco_venda_percentual !== undefined) {
+           diff.preco_venda_percentual = dadosExtraidos.preco_venda_percentual;
+         }
+         diff.preco_custo_calculado = custoFinal;
 
-          const nomeAtual = diff.campo_hierarquico_1 ?? produtoAtual.campo_hierarquico_1;
-          if (!nomeAtual) {
-            erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Nível 1 é obrigatório.` });
-            return;
-          }
+         const nomeAtual = diff.campo_hierarquico_1 ?? produtoAtual.campo_hierarquico_1;
+         if (!nomeAtual) {
+           erros.push({ linha: rowNumber, mensagem: `Linha ${rowNumber}: Nível 1 é obrigatório.` });
+           return;
+         }
 
-          alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeAtual, isNew: false });
-        }
+         alterados.push({ id, dados: diff, nome: produtoAtual.nome || nomeAtual, isNew: false });
+       }
       });
+
+      if (validacaoFalhou) {
+       onParsed(null);
+       setParsing(false);
+       setArquivo(null);
+       if (inputRef.current) inputRef.current.value = '';
+       return;
+      }
 
       onParsed({ alterados, erros });
     } catch (err) {
