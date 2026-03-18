@@ -4,7 +4,7 @@ import { Search, Package, Loader2, ChevronRight, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from '@/components/produtos/treegrid/useTreeGrid';
-import OrcamentoSheet from '@/components/tabela/OrcamentoSheet';
+import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -134,6 +134,7 @@ export default function TabelaPrecosConsulta() {
   const [tabelas, setTabelas] = useState([]);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [showOrcamento, setShowOrcamento] = useState(false);
+  const [empresa, setEmpresa] = useState(null);
 
   useEffect(() => {
     loadInitialData();
@@ -142,15 +143,17 @@ export default function TabelaPrecosConsulta() {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [user, tabelasData, produtosData] = await Promise.all([
+      const [user, tabelasData, produtosData, empresaData] = await Promise.all([
         base44.auth.me(),
         base44.entities.TabelaPreco.filter({ ativo: true }),
         base44.entities.Produto.filter({ ativo: true }, '-created_date'),
+        base44.entities.DadosEmpresa.list().catch(() => []),
       ]);
       setTabelas(tabelasData);
       const tabelaPadrao = tabelasData.find(t => t.is_default) || tabelasData[0];
       if (tabelaPadrao) setTabelaSelecionada(tabelaPadrao);
       setProdutos(produtosData);
+      if (empresaData?.length > 0) setEmpresa(empresaData[0]);
     } catch (error) {
       toast.error('Erro ao carregar tabela de preços');
     } finally {
