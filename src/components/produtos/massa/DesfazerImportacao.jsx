@@ -4,53 +4,78 @@ import { Button } from '@/components/ui/button';
 import { RotateCcw, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Agrupa logs por grupo_importacao_id (ou pelo id do log para logs antigos sem grupo)
+function agruparLogs(logs) {
+  const grupos = {};
+  for (const log of logs) {
+    const chave = log.grupo_importacao_id || log.id;
+    if (!grupos[chave]) {
+      grupos[chave] = { logs: [], totalItens: 0, data: log.created_date, grupoId: chave };
+    }
+    grupos[chave].logs.push(log);
+    grupos[chave].totalItens += (log.produtos_atualizados?.length || 0) + (log.total_novos || 0);
+    // Pegar a data mais recente do grupo
+    if (new Date(log.created_date) > new Date(grupos[chave].data)) {
+      grupos[chave].data = log.created_date;
+    }
+  }
+  // Ordenar por data decrescente
+  return Object.values(grupos).sort((a, b) => new Date(b.data) - new Date(a.data));
+}
+
 export default function DesfazerImportacao() {
-  const [snapshots, setSnapshots] = useState([]);
+  const [grupos, setGrupos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [desfazendo, setDesfazendo] = useState(false);
+  const [desfazendoId, setDesfazendoId] = useState(null);
 
   useEffect(() => {
-    carregarSnapshots();
+    carregarLogs();
   }, []);
 
-  const carregarSnapshots = async () => {
+  const carregarLogs = async () => {
     try {
       setLoading(true);
-      const dados = await base44.entities.ImportacaoLog.filter({}, '-created_date', 100);
-      setSnapshots(dados || []);
+      const dados = await base44.entities.ImportacaoLog.filter({}, '-created_date', 200);
+      setGrupos(agruparLogs(dados || []));
     } catch (error) {
-      console.error('Erro ao carregar snapshots:', error);
+      console.error('Erro ao carregar logs:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDesfazer = async (snapshot) => {
-    const itens = snapshot.produtos_atualizados || [];
-    if (itens.length === 0) {
+  const handleDesfazer = async (grupo) => {
+    const totalItens = grupo.logs.reduce((acc, l) => acc + (l.produtos_atualizados?.length || 0), 0);
+
+    if (totalItens === 0) {
       toast.error('Este log não possui snapshot de dados para restaurar');
       return;
     }
 
-    if (!window.confirm(`Restaurar ${itens.length} produto(s) ao estado anterior? Esta ação não pode ser desfeita.`)) {
+    if (!window.confirm(`Restaurar ${totalItens} produto(s) ao estado anterior? Esta ação não pode ser desfeita.`)) {
       return;
     }
 
-    setDesfazendo(true);
+    setDesfazendoId(grupo.grupoId);
+    let restaurados = 0;
     try {
-      for (const item of itens) {
-        if (item.id && item.dados_anteriores) {
-          await base44.entities.Produto.update(item.id, item.dados_anteriores);
+      for (const log of grupo.logs) {
+        const itens = log.produtos_atualizados || [];
+        for (const item of itens) {
+          if (item.id && item.dados_anteriores) {
+            await base44.entities.Produto.update(item.id, item.dados_anteriores);
+            restaurados++;
+          }
         }
       }
 
-      toast.success(`${itens.length} produto(s) restaurado(s) com sucesso`);
-      carregarSnapshots();
+      toast.success(`${restaurados} produto(s) restaurado(s) com sucesso`);
+      carregarLogs();
     } catch (error) {
       console.error('Erro ao restaurar:', error);
-      toast.error('Erro ao restaurar importação');
+      toast.error(`Erro ao restaurar: ${error?.message || 'Erro desconhecido'}`);
     } finally {
-      setDesfazendo(false);
+      setDesfazendoId(null);
     }
   };
 
@@ -62,7 +87,7 @@ export default function DesfazerImportacao() {
     );
   }
 
-  if (snapshots.length === 0) {
+  if (grupos.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
         <p className="text-sm">Nenhuma importação registrada para desfazer</p>
@@ -80,35 +105,44 @@ export default function DesfazerImportacao() {
       </div>
 
       <div className="space-y-2 max-h-64 overflow-y-auto">
-        {snapshots.map((snapshot) => (
-          <div
-            key={snapshot.id}
-            className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center justify-between gap-4"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {snapshot.usuario_responsavel || 'Importação'}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {(snapshot.produtos_atualizados?.length || 0) + (snapshot.total_novos || 0)} itens · {new Date(snapshot.created_date).toLocaleString('pt-BR')}
-              </p>
-            </div>
-            <Button
-              onClick={() => handleDesfazer(snapshot)}
-              disabled={desfazendo}
-              size="sm"
-              variant="outline"
-              className="gap-2 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+        {grupos.map((grupo) => {
+          const isDesfazendo = desfazendoId === grupo.grupoId;
+          const temSnapshot = grupo.logs.some(l => l.produtos_atualizados?.length > 0);
+          const numLotes = grupo.logs.length;
+
+          return (
+            <div
+              key={grupo.grupoId}
+              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm flex items-center justify-between gap-4"
             >
-              {desfazendo ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <RotateCcw className="w-3 h-3" />
-              )}
-              <span className="hidden sm:inline">Desfazer</span>
-            </Button>
-          </div>
-        ))}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  Importação {numLotes > 1 ? `(${numLotes} lotes)` : ''}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {grupo.totalItens} itens · {new Date(grupo.data).toLocaleString('pt-BR')}
+                  {!temSnapshot && (
+                    <span className="ml-2 text-red-400">· sem snapshot</span>
+                  )}
+                </p>
+              </div>
+              <Button
+                onClick={() => handleDesfazer(grupo)}
+                disabled={isDesfazendo || !temSnapshot}
+                size="sm"
+                variant="outline"
+                className="gap-2 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-40"
+              >
+                {isDesfazendo ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-3 h-3" />
+                )}
+                <span className="hidden sm:inline">Desfazer</span>
+              </Button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
