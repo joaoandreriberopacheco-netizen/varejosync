@@ -4,7 +4,7 @@ import { Search, Package, Loader2, ChevronRight, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from '@/components/produtos/treegrid/useTreeGrid';
-import OrcamentoSheet from '@/components/tabela/OrcamentoSheet';
+import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
