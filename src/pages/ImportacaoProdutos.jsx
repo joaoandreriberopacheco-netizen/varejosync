@@ -76,36 +76,47 @@ export default function ImportacaoProdutosPage() {
       toast.error('Sem dados para atualizar');
       return;
     }
+
+    const total = parsedEstoque.alterados.length;
+    const totalLotes = Math.ceil(total / TAMANHO_LOTE);
     setSalvando(true);
+    setProgresso({ atual: 0, total, lote: 0, totalLotes });
+
     try {
       const user = await base44.auth.me();
-      
-      for (const { id, estoque_novo, estoque_anterior, produto_nome } of parsedEstoque.alterados) {
-        const diferenca = estoque_novo - estoque_anterior;
-        
-        await base44.entities.Produto.update(id, { estoque_atual: estoque_novo });
-        
-        await base44.entities.MovimentacaoEstoque.create({
-          produto_id: id,
-          produto_nome,
-          tipo: diferenca >= 0 ? 'Entrada' : 'Saída',
-          motivo: 'Ajuste de Inventário',
-          quantidade: Math.abs(diferenca),
-          custo_unitario: 0,
-          referencia_tipo: 'Importação de Inventário',
-          observacoes: `Ajuste em massa: ${estoque_anterior} → ${estoque_novo}`,
-          usuario_responsavel: user?.email || 'Sistema',
-        });
+
+      for (let i = 0; i < totalLotes; i++) {
+        const inicio = i * TAMANHO_LOTE;
+        const lote = parsedEstoque.alterados.slice(inicio, inicio + TAMANHO_LOTE);
+
+        for (const { id, estoque_novo, estoque_anterior, produto_nome } of lote) {
+          const diferenca = estoque_novo - estoque_anterior;
+          await base44.entities.Produto.update(id, { estoque_atual: estoque_novo });
+          await base44.entities.MovimentacaoEstoque.create({
+            produto_id: id,
+            produto_nome,
+            tipo: diferenca >= 0 ? 'Entrada' : 'Saída',
+            motivo: 'Ajuste de Inventário',
+            quantidade: Math.abs(diferenca),
+            custo_unitario: 0,
+            referencia_tipo: 'Importação de Inventário',
+            observacoes: `Ajuste em massa: ${estoque_anterior} → ${estoque_novo}`,
+            usuario_responsavel: user?.email || 'Sistema',
+          });
+        }
+
+        setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
       }
-      
-      toast.success(`✓ Estoque atualizado! ${parsedEstoque.alterados.length} produto(s) ajustado(s).`);
+
+      toast.success(`✓ Estoque atualizado! ${total} produto(s) em ${totalLotes} lote(s).`);
       setSalvouOk(true);
       setParsedEstoque(null);
     } catch (error) {
       console.error('❌ Erro ao atualizar estoque:', error);
-      toast.error(`Erro: ${error?.message || 'Erro desconhecido'}`);
+      toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setSalvando(false);
+      setProgresso({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
     }
   };
 
