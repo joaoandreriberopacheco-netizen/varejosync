@@ -257,8 +257,8 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.estoque?.visualizar_produtos
       },
       {
-        name: 'Editar em Massa',
-        page: 'EditarProdutosEmMassa',
+        name: 'Importação em Massa',
+        page: 'ImportacaoProdutos',
         permissaoCheck: (p) => p?.estoque?.produtos?.editar
       }
     ]
