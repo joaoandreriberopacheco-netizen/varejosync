@@ -4,8 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Check, GripVertical } from 'lucide-react';
 import { ALL_QUICK_ACTIONS } from './quickActions';
 
-export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSave }) {
+export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSave, allowedActions }) {
   const [localSelected, setLocalSelected] = useState(selected || []);
+
+  // Filtra para mostrar apenas ações permitidas pelo perfil
+  const availableActions = allowedActions
+    ? ALL_QUICK_ACTIONS.filter(a => allowedActions.includes(a.id))
+    : ALL_QUICK_ACTIONS;
 
   const toggle = (id) => {
     setLocalSelected(prev => 
@@ -26,12 +31,12 @@ export default function PersonalizarHomeDialog({ isOpen, onClose, selected, onSa
              Personalizar Tela Inicial
            </DialogTitle>
            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-             Escolha os atalhos que deseja exibir
+             Escolha os atalhos que deseja exibir (máx. 6)
            </p>
          </DialogHeader>
 
         <div className="grid grid-cols-2 gap-2 py-2">
-          {ALL_QUICK_ACTIONS.map(action => {
+          {availableActions.map(action => {
             const Icon = action.icon;
             const isSelected = localSelected.includes(action.id);
             return (
