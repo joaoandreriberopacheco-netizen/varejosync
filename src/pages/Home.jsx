@@ -129,8 +129,8 @@ export default function HomePage() {
           </h1>
         </div>
 
-        {/* Saldo Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm">
+        {/* Saldo Card — visível apenas com permissão de dashboard ou vendas */}
+        {podeVerResumoVendas && <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Resumo de Vendas</p>
