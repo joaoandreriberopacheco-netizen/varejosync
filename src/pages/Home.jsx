@@ -136,38 +136,38 @@ export default function HomePage() {
         {/* Saldo Card — visível apenas com permissão de dashboard ou vendas */}
         {podeVerResumoVendas && (
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Resumo de Vendas</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Hoje</p>
-            </div>
-            <button onClick={() => setShowBalance(!showBalance)} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors">
-              {showBalance ? <Eye className="w-5 h-5 text-gray-400" /> : <EyeOff className="w-5 h-5 text-gray-400" />}
-            </button>
-          </div>
-          {showBalance ? (
-            <>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial mb-1">
-                R$ {formatValor(kpis.valorVendasHoje)}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Resumo de Vendas</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Hoje</p>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
-              </p>
-            </>
-          ) : (
-            <div className="text-3xl font-bold text-gray-400 dark:text-gray-600 font-glacial mb-1">••••••</div>
-          )}
-          <Link
-            to={createPageUrl('Dashboard')}
-            className="mt-4 flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ver Dashboard Completo</span>
+              <button onClick={() => setShowBalance(!showBalance)} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors">
+                {showBalance ? <Eye className="w-5 h-5 text-gray-400" /> : <EyeOff className="w-5 h-5 text-gray-400" />}
+              </button>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          </Link>
-        </div>
+            {showBalance ? (
+              <>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial mb-1">
+                  R$ {formatValor(kpis.valorVendasHoje)}
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
+                </p>
+              </>
+            ) : (
+              <div className="text-3xl font-bold text-gray-400 dark:text-gray-600 font-glacial mb-1">••••••</div>
+            )}
+            <Link
+              to={createPageUrl('Dashboard')}
+              className="mt-4 flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ver Dashboard Completo</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </Link>
+          </div>
         )}
 
         {/* Quick Actions */}
