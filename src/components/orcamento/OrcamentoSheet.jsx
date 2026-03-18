@@ -306,6 +306,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const [showCupom, setShowCupom] = useState(false);
   const [formatoCupom, setFormatoCupom] = useState('80mm');
   const [clienteNome, setClienteNome] = useState('');
+  const [showLostSales, setShowLostSales] = useState(false);
 
   const total = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
 

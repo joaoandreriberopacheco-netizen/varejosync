@@ -255,29 +255,13 @@ export default function TabelaPrecosConsulta() {
         </div>
       </div>
 
-      {/* FAB Orçamento — redondo com ícone customizado */}
+      {/* FAB Orçamento */}
       <button
         onClick={() => setShowOrcamento(true)}
         className="fixed bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-gray-900 dark:bg-gray-100 shadow-xl flex items-center justify-center active:scale-95 transition-all hover:bg-gray-700 dark:hover:bg-gray-200"
         title="Novo Orçamento"
       >
-        <svg viewBox="0 0 48 48" fill="none" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
-          {/* Documento */}
-          <rect x="10" y="10" width="26" height="33" rx="3" stroke="white" strokeWidth="2.2" className="dark:stroke-gray-900" />
-          {/* Linhas do documento */}
-          <line x1="16" y1="21" x2="30" y2="21" stroke="white" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-gray-900" />
-          <line x1="16" y1="27" x2="30" y2="27" stroke="white" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-gray-900" />
-          <line x1="16" y1="33" x2="24" y2="33" stroke="white" strokeWidth="1.8" strokeLinecap="round" className="dark:stroke-gray-900" />
-          {/* Círculo cifrão */}
-          <circle cx="14" cy="13" r="6" fill="gray-900" stroke="white" strokeWidth="2" className="dark:stroke-gray-900" style={{fill:'#1f2937'}} />
-          <text x="14" y="17" textAnchor="middle" fontSize="7" fill="white" fontWeight="bold" className="dark:fill-gray-900">$</text>
-          {/* Lápis */}
-          <g transform="translate(26,30) rotate(-40)">
-            <rect x="-2.5" y="-7" width="5" height="11" rx="1" fill="white" className="dark:fill-gray-900" />
-            <polygon points="-2.5,4 2.5,4 0,8" fill="white" className="dark:fill-gray-900" />
-            <line x1="-2.5" y1="-4" x2="2.5" y2="-4" stroke="#1f2937" strokeWidth="1" className="dark:stroke-gray-100" />
-          </g>
-        </svg>
+        <Calculator className="w-6 h-6 text-white dark:text-gray-900" />
       </button>
 
       {/* Orçamento Sheet */}
