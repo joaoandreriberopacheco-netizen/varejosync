@@ -24,18 +24,42 @@ export function collectSkus(node) {
   return skus;
 }
 
+// ── Calcula o custo real de um produto (usa preco_custo_calculado se válido,
+//    senão reconstrói a partir dos componentes) ────────────────────────────────
+export function calcCusto(p) {
+  const salvo = p.preco_custo_calculado || 0;
+  if (salvo > 0) return salvo;
+  // Reconstrói a partir dos componentes de custo
+  const vc = p.valor_compra || 0;
+  return vc
+    + (p.custo_frete_padrao || 0)
+    + (p.custo_imposto1_padrao || 0)
+    + (p.custo_imposto2_padrao || 0)
+    + (p.custo_outros_padrao || 0)
+    - (p.desconto_compra_padrao || 0);
+}
+
+// ── Calcula markup real (preço venda / custo - 1) × 100 ──────────────────────
+export function calcMarkup(p) {
+  if (p.preco_venda_percentual > 0) return p.preco_venda_percentual;
+  const custo = calcCusto(p);
+  const pv = p.preco_venda_padrao || 0;
+  if (custo > 0 && pv > custo) return ((pv - custo) / custo) * 100;
+  return 0;
+}
+
 // ── Agrega métricas IQR para um conjunto de SKUs ─────────────────────────────
 export function aggregateSkus(skus) {
   const precos        = skus.map(p => p.preco_venda_padrao || 0).filter(v => v > 0);
-  const custos        = skus.map(p => p.preco_custo_calculado || 0).filter(v => v > 0);
+  const custos        = skus.map(p => calcCusto(p)).filter(v => v > 0);
   const valorCompras  = skus.map(p => p.valor_compra || 0).filter(v => v > 0);
-  const markups       = skus.map(p => p.preco_venda_percentual || 0).filter(v => v > 0);
+  const markups       = skus.map(p => calcMarkup(p)).filter(v => v > 0);
   const margens       = skus.map(p => {
     const pv = p.preco_venda_padrao || 0;
-    const pc = p.preco_custo_calculado || 0;
-    return pv > 0 ? ((pv - pc) / pv) * 100 : 0;
+    const pc = calcCusto(p);
+    return pv > 0 && pc > 0 ? ((pv - pc) / pv) * 100 : 0;
   }).filter(v => v > 0);
-  const lastros = skus.map(p => (p.preco_custo_calculado || 0) * (p.estoque_atual || 0));
+  const lastros = skus.map(p => calcCusto(p) * (p.estoque_atual || 0));
 
   return {
     precoMedio:      iqrMean(precos),
