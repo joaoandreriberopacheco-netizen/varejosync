@@ -322,12 +322,32 @@ export default function ImportacaoProdutosPage() {
                   )}
                 </div>
 
+                {salvando && progresso.total > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>Lote {progresso.lote} de {progresso.totalLotes}</span>
+                      <span>{progresso.atual} / {progresso.total} produtos</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-gray-900 dark:bg-white h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-center text-gray-400 dark:text-gray-500">
+                      {Math.round((progresso.atual / progresso.total) * 100)}% concluído — não feche esta página
+                    </p>
+                  </div>
+                )}
+
                 <Button
                   onClick={handleConfirmarEstoque}
                   disabled={!podeConfirmarEstoque || salvando}
                   className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-100 h-11 text-sm font-medium rounded-xl"
                 >
-                  {salvando ? 'Atualizando estoque...' : `Confirmar Atualização (${parsedEstoque.alterados?.length ?? 0} produtos)`}
+                  {salvando
+                    ? `Atualizando lote ${progresso.lote}/${progresso.totalLotes}...`
+                    : `Confirmar Atualização (${parsedEstoque.alterados?.length ?? 0} produtos)`}
                 </Button>
               </div>
             )}
