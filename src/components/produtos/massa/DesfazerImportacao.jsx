@@ -26,21 +26,25 @@ export default function DesfazerImportacao() {
   };
 
   const handleDesfazer = async (snapshot) => {
-    if (!window.confirm(`Restaurar importação de ${snapshot.quantidade_itens} itens? Esta ação não pode ser desfeita.`)) {
+    const itens = snapshot.produtos_atualizados || [];
+    if (itens.length === 0) {
+      toast.error('Este log não possui snapshot de dados para restaurar');
+      return;
+    }
+
+    if (!window.confirm(`Restaurar ${itens.length} produto(s) ao estado anterior? Esta ação não pode ser desfeita.`)) {
       return;
     }
 
     setDesfazendo(true);
     try {
-      const produtosRestaurados = snapshot.snapshot_dados || [];
-      
-      for (const produto of produtosRestaurados) {
-        if (produto.id) {
-          await base44.entities.Produto.update(produto.id, produto);
+      for (const item of itens) {
+        if (item.id && item.dados_anteriores) {
+          await base44.entities.Produto.update(item.id, item.dados_anteriores);
         }
       }
 
-      toast.success(`${produtosRestaurados.length} produtos restaurados com sucesso`);
+      toast.success(`${itens.length} produto(s) restaurado(s) com sucesso`);
       carregarSnapshots();
     } catch (error) {
       console.error('Erro ao restaurar:', error);
