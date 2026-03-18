@@ -80,6 +80,8 @@ export const MODULOS = [
       },
       { key: 'logistica', label: 'Módulo de Logística' },
       { key: 'armazenagem', label: 'Armazenagem' },
+      { key: 'tabela_precos', label: 'Tabela de Preços (Consulta)' },
+      { key: 'gerar_orcamento', label: 'Gerar Orçamento na Tabela de Preços' },
     ]
   },
   {
