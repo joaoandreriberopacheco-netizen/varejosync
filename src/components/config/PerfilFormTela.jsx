@@ -3,21 +3,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Shield, Eye, Pencil, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Shield, Eye, Pencil, ChevronDown, ChevronRight, Home } from 'lucide-react';
 
-// ─── Ícones por módulo ───────────────────────────────────────────
 import {
   Monitor, LayoutDashboard, TrendingUp, Package,
   DollarSign, BookOpen, Settings
 } from 'lucide-react';
 
 const MODULO_ICONS = {
-  pdv: Monitor, dashboard: LayoutDashboard, vendas: TrendingUp,
-  estoque: Package, financeiro: DollarSign, relatorios: BookOpen,
+  homepage: Home,
+  pdv: Monitor,
+  dashboard: LayoutDashboard,
+  vendas: TrendingUp,
+  estoque: Package,
+  financeiro: DollarSign,
+  relatorios: BookOpen,
   configuracoes: Settings,
 };
 
 export const MODULOS = [
+  {
+    key: 'homepage', label: 'Página Inicial',
+    submodulos: [
+      { key: 'resumo_vendas_home', label: 'Resumo de Vendas' },
+      { key: 'kpis_home', label: 'KPIs Rápidos' },
+      { key: 'avisos_home', label: 'Avisos e Alertas' },
+      { key: 'atalhos_personalizados', label: 'Atalhos Personalizados' },
+      { key: 'acoes_rapidas', label: 'Ações Rápidas (PDV, Caixa...)' },
+    ]
+  },
   {
     key: 'pdv', label: 'PDV',
     submodulos: [
@@ -34,7 +48,6 @@ export const MODULOS = [
     key: 'dashboard', label: 'Dashboard',
     submodulos: [
       { key: 'acesso', label: 'Acesso ao Dashboard' },
-      { key: 'resumo_vendas_home', label: 'Resumo de Vendas (Tela Inicial)' },
       { key: 'ver_kpis_vendas', label: 'KPIs de Vendas' },
       { key: 'ver_kpis_financeiro', label: 'KPIs Financeiros' },
       { key: 'ver_kpis_estoque', label: 'KPIs de Estoque' },
@@ -120,71 +133,67 @@ export const MODULOS = [
 ];
 
 // ─── Contar permissões recursivamente ────────────────────────────
-export function contarPermissoes(permissoes, moduloKey, item = null) {
+export function contarPermissoes(permissoes, moduloKey) {
   let ativas = 0, total = 0;
-  const modulo = item || MODULOS.find(m => m.key === moduloKey);
+  const modulo = MODULOS.find(m => m.key === moduloKey);
   if (!modulo) return { ativas: 0, total: 0 };
 
-  if (modulo.submodulos) {
-    modulo.submodulos.forEach(sub => {
+  function contarRecursivo(submodulos, contexto) {
+    submodulos.forEach(sub => {
       total += 1;
-      const valor = permissoes?.[moduloKey]?.[sub.key];
-      if (valor === true) ativas++;
-      
-      // Contar sub-itens recursivamente
+      const val = contexto?.[sub.key];
+      if (val === true) ativas++;
       if (sub.submodulos) {
-        sub.submodulos.forEach(subsub => {
-          total += 1;
-          const subValor = permissoes?.[moduloKey]?.[sub.key]?.[subsub.key];
-          if (subValor === true) ativas++;
-          
-          if (subsub.submodulos) {
-            subsub.submodulos.forEach(() => {
-              total += 1;
-              const subsubValor = permissoes?.[moduloKey]?.[sub.key]?.[subsub.key]?.[subsub.key];
-              if (subsubValor === true) ativas++;
-            });
-          }
-        });
+        contarRecursivo(sub.submodulos, typeof val === 'object' ? val : {});
       }
     });
   }
+
+  contarRecursivo(modulo.submodulos || [], permissoes?.[moduloKey] || {});
   return { ativas, total };
 }
 
+// ─── Utilitário: atualiza valor em caminho aninhado ──────────────
+function setDeepValue(obj, path, value) {
+  const [head, ...rest] = path;
+  if (rest.length === 0) {
+    return { ...obj, [head]: value };
+  }
+  return {
+    ...obj,
+    [head]: setDeepValue(typeof obj[head] === 'object' && obj[head] !== null ? obj[head] : {}, rest, value),
+  };
+}
 
-
-
-
-function RenderizarHierarquia({ item, moduloKey, parentKey = null, permissoes, onChange, nivel = 0 }) {
+// ─── Renderização hierárquica corrigida ──────────────────────────
+function RenderizarHierarquia({ item, moduloKey, caminho = [], permissoes, onChange, nivel = 0 }) {
   const temSubitens = item.submodulos && item.submodulos.length > 0;
-  
-  // Usar chave composta para submodulos
-  const chaveItem = parentKey ? `${parentKey}.${item.key}` : `${moduloKey}.${item.key}`;
-  const valor = parentKey 
-    ? permissoes?.[moduloKey]?.[parentKey]?.[item.key] === true
-    : permissoes?.[moduloKey]?.[item.key] === true;
+  const caminhoCompleto = [...caminho, item.key]; // caminho dentro do módulo
 
-  // Indentação: 0.75rem por nível, começando do nível 1
-  const paddingLeft = `${nivel > 0 ? nivel * 0.75 : 0}rem`;
+  // Ler valor atual: permissoes[moduloKey][key1][key2]...
+  let valor = permissoes?.[moduloKey];
+  for (const k of caminhoCompleto) {
+    valor = valor?.[k];
+  }
+  const checked = valor === true;
+
+  const paddingLeft = `${nivel * 1}rem`;
 
   return (
-    <div key={item.key} className="space-y-0">
-      {/* Item atual — sempre com toggle */}
-      <div style={{ paddingLeft }} className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors rounded-lg group">
+    <div className="space-y-0">
+      <div
+        style={{ paddingLeft }}
+        className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors rounded-lg group"
+      >
         <Switch
-          checked={valor}
+          checked={checked}
           onCheckedChange={v => {
-            let novo = { ...permissoes };
-            if (parentKey) {
-              if (!novo[moduloKey]) novo[moduloKey] = {};
-              if (!novo[moduloKey][parentKey]) novo[moduloKey][parentKey] = {};
-              novo[moduloKey][parentKey] = { ...novo[moduloKey][parentKey], [item.key]: v };
-            } else {
-              if (!novo[moduloKey]) novo[moduloKey] = {};
-              novo[moduloKey] = { ...novo[moduloKey], [item.key]: v };
-            }
-            onChange(novo);
+            const novoModulo = setDeepValue(
+              permissoes?.[moduloKey] || {},
+              caminhoCompleto,
+              v
+            );
+            onChange({ ...permissoes, [moduloKey]: novoModulo });
           }}
           className="scale-100 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200 flex-shrink-0"
         />
@@ -193,13 +202,12 @@ function RenderizarHierarquia({ item, moduloKey, parentKey = null, permissoes, o
         </span>
       </div>
 
-      {/* Sub-itens recursivos — sempre visíveis com indentação aumentada */}
       {temSubitens && item.submodulos.map(sub => (
         <RenderizarHierarquia
           key={sub.key}
           item={sub}
           moduloKey={moduloKey}
-          parentKey={item.key}
+          caminho={caminhoCompleto}
           permissoes={permissoes}
           onChange={onChange}
           nivel={nivel + 1}
@@ -240,6 +248,7 @@ function ModuloCard({ modulo, permissoes, onChange }) {
               key={item.key}
               item={item}
               moduloKey={modulo.key}
+              caminho={[]}
               permissoes={permissoes}
               onChange={onChange}
               nivel={0}
@@ -251,45 +260,15 @@ function ModuloCard({ modulo, permissoes, onChange }) {
   );
 }
 
-// ─── Sanitiza permissões — simplificado para booleanos apenas ──
-function sanitizarPermissoes(permissoes) {
-  if (!permissoes) return {};
-  
-  // Apenas garante que tudo seja booleano true/false
-  const limpar = (obj) => {
-    const res = {};
-    for (const [key, val] of Object.entries(obj || {})) {
-      if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
-        res[key] = limpar(val);
-      } else {
-        res[key] = val === true;
-      }
-    }
-    return res;
-  };
-  
-  return limpar(permissoes);
-}
-
 // ─── Tela completa de edição de perfil ──────────────────────────
 export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
   const VAZIO = { nome: '', descricao: '', menu_compacto: false, ativo: true, permissoes: {} };
   const base = perfil ? { ...VAZIO, ...perfil } : VAZIO;
-  const [form, setForm] = useState({ ...base, permissoes: sanitizarPermissoes(base.permissoes) });
+  const [form, setForm] = useState({ ...base, permissoes: base.permissoes || {} });
 
   const handleSalvar = () => {
     if (!form.nome.trim()) return;
-    // Garante que permissões aninhadas (objetos) sejam preservadas
-    // e que nenhum campo de módulo fique como objeto plano no nível raiz
-    const permissoesFinal = {};
-    for (const [modKey, modVal] of Object.entries(form.permissoes || {})) {
-      if (typeof modVal === 'object' && modVal !== null) {
-        permissoesFinal[modKey] = modVal;
-      } else {
-        permissoesFinal[modKey] = modVal === true;
-      }
-    }
-    onSalvar({ ...form, permissoes: permissoesFinal });
+    onSalvar({ ...form });
   };
 
   const totalAtivas = MODULOS.reduce((acc, m) => acc + contarPermissoes(form.permissoes, m.key).ativas, 0);
@@ -375,7 +354,6 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
             />
           </div>
 
-          {/* Legenda */}
           <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 space-y-1.5 shadow-sm">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Legenda de permissões</p>
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
