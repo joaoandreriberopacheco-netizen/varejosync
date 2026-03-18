@@ -11,11 +11,14 @@ import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
 import { toast } from 'sonner';
 
+const TAMANHO_LOTE = 100;
+
 export default function ImportacaoProdutosPage() {
   const [parsedData, setParsedData] = useState(null);
   const [parsedEstoque, setParsedEstoque] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [salvouOk, setSalvouOk] = useState(false);
+  const [progresso, setProgresso] = useState({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
 
   const handleParsed = useCallback((data) => {
     setParsedData(data);
