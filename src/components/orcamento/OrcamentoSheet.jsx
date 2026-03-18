@@ -223,7 +223,7 @@ function ItemCarrinho({ item, onQtd, onRemove }) {
 }
 
 // ── Tela do carrinho ─────────────────────────────────────────────────────────
-function TelaCarrinho({ itens, onQtd, onRemove, onVoltar, onGerar, formatoCupom, setFormatoCupom, clienteNome, setClienteNome }) {
+function TelaCarrinho({ itens, onQtd, onRemove, onVoltar, onGerar, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida }) {
   const total = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
 
   return (
