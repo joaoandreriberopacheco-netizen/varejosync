@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Search, Package, X, Plus, Minus, Trash2, ShoppingCart, Printer, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Search, Package, X, Plus, Minus, Trash2, ShoppingCart, Printer, ChevronRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from '@/components/produtos/treegrid/useTreeGrid';
 import OrcamentoCupom from './OrcamentoCupom';
+import LostSalesForm from '@/components/vendas/LostSalesForm';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
