@@ -1410,8 +1410,16 @@ export default function ProdutosPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredProdutos.map(produto => {
-                      const margem = produto.preco_venda_padrao && produto.preco_venda_padrao > 0 ?
-                        ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100 : 0;
+                      const custoReal = produto.preco_custo_calculado > 0
+                        ? produto.preco_custo_calculado
+                        : (produto.valor_compra || 0)
+                          + (produto.custo_frete_padrao || 0)
+                          + (produto.custo_imposto1_padrao || 0)
+                          + (produto.custo_imposto2_padrao || 0)
+                          + (produto.custo_outros_padrao || 0)
+                          - (produto.desconto_compra_padrao || 0);
+                      const margem = produto.preco_venda_padrao > 0 && custoReal > 0 ?
+                        ((produto.preco_venda_padrao - custoReal) / produto.preco_venda_padrao) * 100 : 0;
                       const cadastroStatus = isCadastroIncompleto(produto);
                       return (
                         <TableRow key={produto.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
