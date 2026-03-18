@@ -162,7 +162,7 @@ export default function HomePage() {
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </Link>
-        </div>
+        </div>}
 
         {/* Quick Actions */}
         <div>
