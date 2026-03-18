@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { alterados, tipo_importacao = 'Detalhes do Produto' } = await req.json();
+    const { alterados, tipo_importacao = 'Detalhes do Produto', is_ultimo_lote = true, lote_numero = 1, total_lotes = 1 } = await req.json();
 
     if (!alterados || !Array.isArray(alterados) || alterados.length === 0) {
       return Response.json({ error: 'Nenhum produto para importar' }, { status: 400 });
