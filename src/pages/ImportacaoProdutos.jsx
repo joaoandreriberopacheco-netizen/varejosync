@@ -35,21 +35,37 @@ export default function ImportacaoProdutosPage() {
       toast.error('Sem dados para sincronizar');
       return;
     }
+
+    const total = parsedData.alterados.length;
+    const totalLotes = Math.ceil(total / TAMANHO_LOTE);
     setSalvando(true);
+    setProgresso({ atual: 0, total, lote: 0, totalLotes });
+
     try {
-      const response = await base44.functions.invoke('importarProdutos', {
-        alterados: parsedData.alterados,
-        tipo_importacao: 'Detalhes do Produto'
-      });
-      
-      toast.success(`✓ Sincronização concluída! ${parsedData.alterados.length} produto(s) processado(s).`);
+      for (let i = 0; i < totalLotes; i++) {
+        const inicio = i * TAMANHO_LOTE;
+        const lote = parsedData.alterados.slice(inicio, inicio + TAMANHO_LOTE);
+
+        await base44.functions.invoke('importarProdutos', {
+          alterados: lote,
+          tipo_importacao: 'Detalhes do Produto',
+          is_ultimo_lote: i === totalLotes - 1,
+          lote_numero: i + 1,
+          total_lotes: totalLotes,
+        });
+
+        setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
+      }
+
+      toast.success(`✓ Sincronização concluída! ${total} produto(s) em ${totalLotes} lote(s).`);
       setSalvouOk(true);
       setParsedData(null);
     } catch (error) {
       console.error('❌ Erro na sincronização:', error);
-      toast.error(`Erro ao sincronizar: ${error?.message || 'Erro desconhecido'}`);
+      toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
     } finally {
       setSalvando(false);
+      setProgresso({ atual: 0, total: 0, lote: 0, totalLotes: 0 });
     }
   };
 
