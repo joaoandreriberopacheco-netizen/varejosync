@@ -279,7 +279,17 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
 
   const handleSalvar = () => {
     if (!form.nome.trim()) return;
-    onSalvar(form);
+    // Garante que permissões aninhadas (objetos) sejam preservadas
+    // e que nenhum campo de módulo fique como objeto plano no nível raiz
+    const permissoesFinal = {};
+    for (const [modKey, modVal] of Object.entries(form.permissoes || {})) {
+      if (typeof modVal === 'object' && modVal !== null) {
+        permissoesFinal[modKey] = modVal;
+      } else {
+        permissoesFinal[modKey] = modVal === true;
+      }
+    }
+    onSalvar({ ...form, permissoes: permissoesFinal });
   };
 
   const totalAtivas = MODULOS.reduce((acc, m) => acc + contarPermissoes(form.permissoes, m.key).ativas, 0);
