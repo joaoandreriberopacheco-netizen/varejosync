@@ -1,72 +1,48 @@
-import React, { useState, useMemo } from 'react';
-import { ChevronRight, ChevronDown, Package, Edit2, AlertTriangle } from 'lucide-react';
-import { buildTree, collectSkus, deepCollapse } from './treegrid/useTreeGrid';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { ChevronRight, Package, Edit } from 'lucide-react';
+import { useTreeGrid, flattenTree, buildExpandedForLevel, calcCusto, calcMarkup } from './treegrid/useTreeGrid';
 
-// ── Indicador de status de estoque ────────────────────────────────────────────
-const getStockInfo = (produto) => {
-  if (!produto.ativo) return { dot: 'bg-gray-400', label: 'Inativo', color: 'text-gray-400' };
-  const e = produto.estoque_atual || 0;
-  const m = produto.estoque_minimo || 0;
-  if (e <= 0) return { dot: 'bg-red-500 animate-pulse', label: 'Sem estoque', color: 'text-red-500' };
-  if (e <= m / 2) return { dot: 'bg-red-500', label: 'Crítico', color: 'text-red-500' };
-  if (e <= m) return { dot: 'bg-orange-400', label: 'Baixo', color: 'text-orange-400' };
-  return { dot: 'bg-green-500', label: 'OK', color: 'text-green-500' };
-};
+const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtN   = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
-// ── Custo real com fallback ────────────────────────────────────────────────────
-const getCustoReal = (produto) =>
-  produto.preco_custo_calculado > 0
-    ? produto.preco_custo_calculado
-    : (produto.valor_compra || 0)
-      + (produto.custo_frete_padrao || 0)
-      + (produto.custo_imposto1_padrao || 0)
-      + (produto.custo_imposto2_padrao || 0)
-      + (produto.custo_outros_padrao || 0)
-      - (produto.desconto_compra_padrao || 0);
-
-// ── Card do SKU ────────────────────────────────────────────────────────────────
-function ProdutoCard({ produto, onEdit, formatarNumero }) {
-  const custo = getCustoReal(produto);
-  const margem = produto.preco_venda_padrao > 0 && custo > 0
-    ? ((produto.preco_venda_padrao - custo) / produto.preco_venda_padrao) * 100
-    : 0;
-  const stock = getStockInfo(produto);
-  const temAlerta = (produto.estoque_atual || 0) <= (produto.estoque_minimo || 0) && produto.ativo;
+// ── Card de SKU ────────────────────────────────────────────────────────────────
+function SkuCard({ row, onEdit }) {
+  const p      = row.produto;
+  const margem = row.margem;
+  const e = p.estoque_atual  || 0;
+  const m = p.estoque_minimo || 0;
+  const dotCls = !p.ativo        ? 'bg-gray-400'
+    : e <= 0                     ? 'bg-red-500 animate-pulse'
+    : e <= m                     ? 'bg-orange-400'
+    : 'bg-green-500';
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3 active:bg-gray-50 dark:active:bg-gray-800/60 transition-colors cursor-pointer"
-      onClick={() => onEdit(produto)}
+      className="flex items-center gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 active:bg-gray-50 dark:active:bg-gray-800/60 cursor-pointer"
+      onClick={() => onEdit(p)}
     >
       {/* Thumbnail */}
-      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
-        {produto.imagem_url
-          ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-5 h-5 text-gray-300 dark:text-gray-600" />}
+      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+        {p.imagem_url
+          ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
+          : <Package className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
       </div>
 
-      {/* Info principal */}
+      {/* Nome + info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-1.5">
-          <p className="text-[12px] font-medium text-gray-700 dark:text-gray-200 leading-snug line-clamp-2 flex-1">
-            {produto.nome}
-          </p>
-          {temAlerta && (
-            <AlertTriangle className="w-3 h-3 text-orange-400 flex-shrink-0 mt-0.5" />
-          )}
-        </div>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          {/* Status dot + label */}
+        <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug line-clamp-2 uppercase">
+          {p.nome}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5">
           <div className="flex items-center gap-1">
-            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${stock.dot}`} />
-            <span className={`text-[10px] ${stock.color}`}>
-              {formatarNumero(produto.estoque_atual || 0)} {produto.unidade_principal || 'UN'}
+            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+              {fmtN(e)} {p.unidade_principal || 'UN'}
             </span>
           </div>
-          {/* Código interno */}
-          {produto.codigo_interno && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">
-              #{produto.codigo_interno}
+          {p.codigo_interno && (
+            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono">
+              #{p.codigo_interno}
             </span>
           )}
         </div>
@@ -74,58 +50,57 @@ function ProdutoCard({ produto, onEdit, formatarNumero }) {
 
       {/* Preço + margem */}
       <div className="flex-shrink-0 text-right">
-        <div className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap">
-          R$ {formatarNumero(produto.preco_venda_padrao || 0)}
-        </div>
+        {p.preco_venda_padrao > 0 && (
+          <div className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap tabular-nums">
+            R$ {fmtR(p.preco_venda_padrao)}
+          </div>
+        )}
         {margem > 0 && (
-          <div className={`text-[11px] font-medium whitespace-nowrap ${
+          <div className={`text-[11px] font-medium whitespace-nowrap tabular-nums ${
             margem < 15 ? 'text-red-500' : margem < 25 ? 'text-orange-400' : 'text-green-500'
           }`}>
-            {formatarNumero(margem)}%
+            {margem.toFixed(1)}%
           </div>
         )}
       </div>
 
-      {/* Seta de edição */}
-      <Edit2 className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+      <Edit className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" />
     </div>
   );
 }
 
-// ── Cabeçalho do Grupo ─────────────────────────────────────────────────────────
-function GrupoHeader({ label, count, estoqueTotal, valorTotal, expanded, onToggle, depth, formatarNumero }) {
-  const isRoot = depth === 0;
+// ── Cabeçalho de grupo ─────────────────────────────────────────────────────────
+function GroupHeader({ row, isExpanded, onToggle }) {
+  const isRoot = row.level === 1;
 
   return (
     <button
       onClick={onToggle}
-      className={`w-full flex items-center gap-2.5 py-2.5 pr-3 text-left transition-colors active:bg-gray-100 dark:active:bg-gray-700/50 ${
+      className={`w-full flex items-center gap-2 py-2.5 pr-3 text-left transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 ${
         isRoot
-          ? 'pl-4 bg-white dark:bg-gray-900'
-          : 'pl-8 bg-gray-50/80 dark:bg-gray-800/40'
+          ? 'px-4 bg-white dark:bg-gray-900'
+          : 'pl-8 pr-4 bg-gray-50/70 dark:bg-gray-800/40'
       }`}
     >
-      {/* Chevron */}
-      <span className="flex-shrink-0 text-gray-400 dark:text-gray-500">
-        {expanded
-          ? <ChevronDown className="w-4 h-4" />
-          : <ChevronRight className="w-4 h-4" />}
-      </span>
-
-      {/* Label */}
-      <span className={`flex-1 min-w-0 truncate leading-tight ${
+      <ChevronRight
+        className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+      />
+      <span className={`flex-1 min-w-0 truncate ${
         isRoot
-          ? 'text-[13px] font-semibold text-gray-800 dark:text-gray-100'
-          : 'text-[12px] font-medium text-gray-600 dark:text-gray-300'
+          ? 'text-[12px] font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide'
+          : 'text-[11px] font-medium text-gray-500 dark:text-gray-300 uppercase'
       }`}>
-        {label}
+        {row.label}
       </span>
-
-      {/* Pills */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {estoqueTotal > 0 && (
-          <span className="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
-            ∑{formatarNumero(estoqueTotal)}
+        {row.estoqueTotal > 0 && (
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">
+            ∑{fmtN(row.estoqueTotal)}
+          </span>
+        )}
+        {row.criticalCount > 0 && (
+          <span className="text-[10px] text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full">
+            {row.criticalCount}⚠
           </span>
         )}
         <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
@@ -133,97 +108,33 @@ function GrupoHeader({ label, count, estoqueTotal, valorTotal, expanded, onToggl
             ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
             : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
         }`}>
-          {count}
+          {row.count}
         </span>
       </div>
     </button>
   );
 }
 
-// ── Reconstrói chave após deep collapse ────────────────────────────────────────
-function buildCollapsedKey(startKey, startNode, targetNode) {
-  if (startNode === targetNode) return startKey;
-  const childKey = Object.keys(startNode.children)[0];
-  return buildCollapsedKey(
-    `${startKey}::${childKey}`,
-    startNode.children[childKey],
-    targetNode
-  );
-}
+// ── Componente principal ───────────────────────────────────────────────────────
+export default function MobileHierarquica({ produtos, onEdit }) {
+  const [expandedKeys, setExpandedKeys] = useState(new Set());
 
-// ── Separador sutil entre grupos raiz ─────────────────────────────────────────
-function Divider({ depth }) {
-  if (depth > 0) return null;
-  return <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4" />;
-}
+  const tree = useTreeGrid(produtos);
 
-// ── Renderização recursiva de um nó ───────────────────────────────────────────
-function RenderNode({ nodeKey, node, depth, expanded, toggle, onEdit, formatarNumero, isLast }) {
-  const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
-  const finalKey = buildCollapsedKey(nodeKey, node, finalNode);
+  // Começa com nível 1 expandido (igual ao desktop padrão)
+  useEffect(() => {
+    setExpandedKeys(buildExpandedForLevel(tree, 1));
+  }, [tree]);
 
-  const isLeaf       = !finalNode.children || Object.keys(finalNode.children).length === 0;
-  const allSkus      = collectSkus(finalNode);
-  const estoqueTotal = allSkus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
-  const isExpanded   = expanded[finalKey] !== false;
+  const rows = useMemo(() => flattenTree(tree, expandedKeys), [tree, expandedKeys]);
 
-  // Leaf sub-grupos a partir de depth 1: sem cabeçalho, só SKUs inline
-  if (depth > 0 && isLeaf) {
-    return (
-      <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
-        {finalNode.skus.map(p => (
-          <ProdutoCard key={p.id} produto={p} onEdit={onEdit} formatarNumero={formatarNumero} />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <GrupoHeader
-        label={collapsedLabel}
-        count={allSkus.length}
-        estoqueTotal={estoqueTotal}
-        expanded={isExpanded}
-        onToggle={() => toggle(finalKey)}
-        depth={depth}
-        formatarNumero={formatarNumero}
-      />
-
-      {isExpanded && (
-        <div className={depth === 0 ? 'border-b border-gray-100 dark:border-gray-800' : ''}>
-          {finalNode.children && Object.entries(finalNode.children).map(([childKey, childNode], idx, arr) => (
-            <RenderNode
-              key={childKey}
-              nodeKey={`${finalKey}::${childKey}`}
-              node={childNode}
-              depth={depth + 1}
-              expanded={expanded}
-              toggle={toggle}
-              onEdit={onEdit}
-              formatarNumero={formatarNumero}
-              isLast={idx === arr.length - 1}
-            />
-          ))}
-          {finalNode.skus && (
-            <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
-              {finalNode.skus.map(p => (
-                <ProdutoCard key={p.id} produto={p} onEdit={onEdit} formatarNumero={formatarNumero} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Componente Principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, formatarNumero }) {
-  const [expanded, setExpanded] = useState({});
-  const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
-
-  const tree = useMemo(() => buildTree(produtos), [produtos]);
+  const handleToggle = useCallback((key) => {
+    setExpandedKeys(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
 
   if (produtos.length === 0) {
     return (
@@ -237,25 +148,24 @@ export default function MobileHierarquica({ produtos, onEdit, formatarNumero }) 
     );
   }
 
-  const entries = Object.entries(tree);
-
   return (
-    <div className="md:hidden w-full overflow-x-hidden">
-      {entries.map(([key, node], idx) => (
-        <React.Fragment key={key}>
-          <RenderNode
-            nodeKey={key}
-            node={node}
-            depth={0}
-            expanded={expanded}
-            toggle={toggle}
-            onEdit={onEdit}
-            formatarNumero={formatarNumero}
-            isLast={idx === entries.length - 1}
+    <div className="md:hidden w-full overflow-x-hidden divide-y divide-gray-100 dark:divide-gray-800">
+      {rows.map(row =>
+        row.type === 'group' ? (
+          <GroupHeader
+            key={row.key}
+            row={row}
+            isExpanded={expandedKeys.has(row.key)}
+            onToggle={() => handleToggle(row.key)}
           />
-          {idx < entries.length - 1 && <Divider depth={0} />}
-        </React.Fragment>
-      ))}
+        ) : (
+          <SkuCard
+            key={row.key}
+            row={row}
+            onEdit={onEdit}
+          />
+        )
+      )}
     </div>
   );
 }
