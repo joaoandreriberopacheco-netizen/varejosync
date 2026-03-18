@@ -3,19 +3,18 @@ import { base44 } from '@/api/base44Client';
 import { TrendingUp, TrendingDown, Package, Loader2 } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 
+const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const VariacaoIndicador = ({ valor }) => {
+  if (valor === 0 || valor === null || valor === undefined) return null;
   const isPositivo = valor > 0;
   return (
-    <div className={`flex items-center gap-1 text-xs font-medium ${
-      isPositivo ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+    <span className={`text-[10px] font-medium flex items-center gap-0.5 whitespace-nowrap ${
+      isPositivo ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'
     }`}>
-      {isPositivo ? (
-        <TrendingUp className="w-3 h-3" />
-      ) : (
-        <TrendingDown className="w-3 h-3" />
-      )}
-      <span>{Math.abs(valor).toFixed(1)}%</span>
-    </div>
+      {isPositivo ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+      {Math.abs(valor).toFixed(1)}%
+    </span>
   );
 };
 
@@ -26,177 +25,123 @@ export default function RelatorioConsolidadoCompra({ pedidoId }) {
 
   useEffect(() => {
     if (!pedidoId) return;
-    
     const gerarRelatorio = async () => {
-      try {
-        setLoading(true);
-        const resultado = await base44.functions.invoke('gerarRelatorioConsolidadoCompra', {
-          pedido_id: pedidoId
-        });
-        setDados(resultado);
-        setError(null);
-      } catch (err) {
-        console.error('Erro ao gerar relatório:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+      const resultado = await base44.functions.invoke('gerarRelatorioConsolidadoCompra', { pedido_id: pedidoId });
+      setDados(resultado);
+      setError(null);
+      setLoading(false);
     };
-
-    gerarRelatorio();
+    gerarRelatorio().catch(err => { setError(err.message); setLoading(false); });
   }, [pedidoId]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-2xl">
-        Erro ao gerar relatório: {error}
-      </div>
-    );
-  }
-
-  if (!dados) {
-    return null;
-  }
+  if (loading) return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-gray-300" /></div>;
+  if (error)   return <div className="px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-sm text-red-600 dark:text-red-400">Erro: {error}</div>;
+  if (!dados)  return null;
 
   const { pedido, itens_consolidados } = dados;
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho do Relatório */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-4 mb-4">
+    <div className="space-y-4">
+      {/* Cabeçalho */}
+      <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-1">
-              {pedido.numero}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {pedido.fornecedor_nome} · {formatarDataHora(pedido.created_date)}
-            </p>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white font-glacial">{pedido.numero}</h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{pedido.fornecedor_nome} · {formatarDataHora(pedido.created_date)}</p>
           </div>
-          <div className="text-right">
-            <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium">
-              {pedido.status}
-            </span>
-          </div>
+          <span className="text-[10px] px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full font-medium whitespace-nowrap">
+            {pedido.status}
+          </span>
         </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Data Prevista</p>
-            <p className="font-medium text-gray-900 dark:text-white">
-              {new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR')}
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Data Prevista</p>
+            <p className="text-xs font-medium text-gray-800 dark:text-gray-100">
+              {pedido.data_prevista_entrega ? new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR') : '—'}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total do Pedido</p>
-            <p className="font-bold text-gray-900 dark:text-white text-lg">
-              R$ {pedido.valor_total.toFixed(2)}
-            </p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Total do Pedido</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white tabular-nums">R$ {fmtR(pedido.valor_total)}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Itens</p>
-            <p className="font-medium text-gray-900 dark:text-white">
-              {itens_consolidados.length} produto(s)
-            </p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Itens</p>
+            <p className="text-xs font-medium text-gray-800 dark:text-gray-100">{itens_consolidados.length} produto(s)</p>
           </div>
         </div>
       </div>
 
-      {/* Tabela de Itens Consolidados */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-gray-700">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Produto</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Qtd</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">V. Unit.</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Desc.</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Custo Calc.</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">P. Venda</th>
-              </tr>
-            </thead>
-            <tbody>
-              {itens_consolidados.map((item, idx) => (
-                <tr key={idx} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{item.nome_produto}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.id_produto}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right text-gray-900 dark:text-white">{item.quantidade}</td>
-                  <td className="px-6 py-4 text-right text-gray-900 dark:text-white font-medium">
-                    R$ {item.valor_unitario_compra.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-right text-gray-900 dark:text-white">
-                    R$ {item.desconto_compra.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-right text-gray-900 dark:text-white font-bold">
-                    R$ {item.valor_total_item.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-end justify-end gap-2">
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          R$ {item.custo_calculado.toFixed(2)}
-                        </p>
-                      </div>
-                      <VariacaoIndicador valor={item.variacao_custo_pct} />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-end justify-end gap-2">
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          R$ {item.preco_venda_atual.toFixed(2)}
-                        </p>
-                      </div>
-                      <VariacaoIndicador valor={item.variacao_preco_venda_pct} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Detalhes de Custos */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* Itens — cards mobile-first, sem tabela horizontal */}
+      <div className="space-y-2">
         {itens_consolidados.map((item, idx) => (
-          <div key={idx} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Package className="w-4 h-4 text-gray-400" />
-              {item.nome_produto}
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{item.nome_custo1}</span>
-                <span className="font-medium text-gray-900 dark:text-white">R$ {item.custo_imposto1.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{item.nome_custo2}</span>
-                <span className="font-medium text-gray-900 dark:text-white">R$ {item.custo_imposto2.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{item.nome_custo3}</span>
-                <span className="font-medium text-gray-900 dark:text-white">R$ {item.custo_outros.toFixed(2)}</span>
-              </div>
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between">
-                <span className="font-semibold text-gray-900 dark:text-white">Custo Total</span>
-                <span className="font-bold text-gray-900 dark:text-white">R$ {item.custo_calculado.toFixed(2)}</span>
+          <div key={idx} className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+            {/* Nome do produto */}
+            <div className="px-4 pt-3 pb-2 border-b border-gray-50 dark:border-gray-700/50">
+              <div className="flex items-center gap-2">
+                <Package className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 uppercase">{item.nome_produto}</p>
               </div>
             </div>
+
+            {/* Linha de valores principais */}
+            <div className="grid grid-cols-3 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 px-0">
+              <div className="px-4 py-2.5">
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Qtd</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">{item.quantidade}</p>
+              </div>
+              <div className="px-4 py-2.5">
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">V. Unit.</p>
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(item.valor_unitario_compra)}</p>
+              </div>
+              <div className="px-4 py-2.5">
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Total</p>
+                <p className="text-xs font-bold text-gray-800 dark:text-gray-100 tabular-nums">R$ {fmtR(item.valor_total_item)}</p>
+              </div>
+            </div>
+
+            {/* Custo e Preço de Venda */}
+            <div className="grid grid-cols-2 gap-0 divide-x divide-gray-50 dark:divide-gray-700/50 border-t border-gray-50 dark:border-gray-700/50">
+              <div className="px-4 py-2.5">
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Custo Calculado</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(item.custo_calculado)}</p>
+                  <VariacaoIndicador valor={item.variacao_custo_pct} />
+                </div>
+              </div>
+              <div className="px-4 py-2.5">
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">Preço de Venda</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(item.preco_venda_atual)}</p>
+                  <VariacaoIndicador valor={item.variacao_preco_venda_pct} />
+                </div>
+              </div>
+            </div>
+
+            {/* Detalhes de custos (expansível) */}
+            <details className="group">
+              <summary className="px-4 py-2 text-[10px] text-gray-400 dark:text-gray-500 cursor-pointer select-none border-t border-gray-50 dark:border-gray-700/50 list-none flex items-center gap-1 hover:text-gray-600 dark:hover:text-gray-300">
+                <span className="group-open:hidden">▸</span>
+                <span className="hidden group-open:inline">▾</span>
+                Ver composição de custos
+              </summary>
+              <div className="px-4 pb-3 space-y-1.5">
+                {[
+                  { label: item.nome_custo1, val: item.custo_imposto1 },
+                  { label: item.nome_custo2, val: item.custo_imposto2 },
+                  { label: item.nome_custo3, val: item.custo_outros },
+                ].filter(r => r.val > 0).map((r, i) => (
+                  <div key={i} className="flex justify-between text-xs">
+                    <span className="text-gray-500 dark:text-gray-400">{r.label}</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-200 tabular-nums">R$ {fmtR(r.val)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between pt-2 border-t border-gray-100 dark:border-gray-700 text-xs">
+                  <span className="font-semibold text-gray-700 dark:text-gray-200">Custo Total</span>
+                  <span className="font-bold text-gray-900 dark:text-white tabular-nums">R$ {fmtR(item.custo_calculado)}</span>
+                </div>
+              </div>
+            </details>
           </div>
         ))}
       </div>

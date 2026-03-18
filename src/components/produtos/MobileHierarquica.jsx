@@ -8,7 +8,7 @@ const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 
 // ── Card de SKU ────────────────────────────────────────────────────────────────
 function SkuCard({ row, onEdit }) {
   const p      = row.produto;
-  const margem = row.margem;
+  const markup = row.markup;
   const e = p.estoque_atual  || 0;
   const m = p.estoque_minimo || 0;
   const dotCls = !p.ativo    ? 'bg-gray-400'
@@ -51,11 +51,11 @@ function SkuCard({ row, onEdit }) {
               R$ {fmtR(p.preco_venda_padrao)}
             </span>
           )}
-          {margem > 0 && (
+          {markup > 0 && (
             <span className={`text-[11px] font-medium tabular-nums whitespace-nowrap ${
-              margem < 15 ? 'text-red-500' : margem < 25 ? 'text-orange-400' : 'text-green-500'
+              markup < 20 ? 'text-red-500' : markup < 40 ? 'text-orange-400' : 'text-green-500'
             }`}>
-              {margem.toFixed(1)}%
+              {markup.toFixed(1)}%↑
             </span>
           )}
         </div>

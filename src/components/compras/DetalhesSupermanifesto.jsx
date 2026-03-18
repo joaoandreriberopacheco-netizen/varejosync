@@ -76,17 +76,17 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-800">
         <DialogHeader className="pb-3 border-b border-gray-100 dark:border-gray-700">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Truck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            {manifesto.numero} - Detalhes
+          <DialogTitle className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
+            <Truck className="w-4 h-4 text-gray-400" />
+            {manifesto.numero} — Detalhes
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 py-3">
           {/* Cabeçalho: Info Principal */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+          <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl">
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Transportadora</p>
               <p className="font-semibold text-gray-900 dark:text-white">{manifesto.transportadora_nome}</p>

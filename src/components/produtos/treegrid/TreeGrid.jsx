@@ -35,7 +35,7 @@ const COL_DEFS = [
 ];
 
 export const ALL_COLS     = COL_DEFS;
-export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'margem', 'inventario_valorizado'];
+export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'markup', 'inventario_valorizado'];
 
 const INDENT_GROUP = 14;
 const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — alinhamento uniforme
