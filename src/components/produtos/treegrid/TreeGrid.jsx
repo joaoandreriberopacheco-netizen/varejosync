@@ -59,7 +59,7 @@ function StatusDot({ produto }) {
 }
 
 // ── Valor de célula SKU ───────────────────────────────────────────────────────
-function skuCellValue(colId, produto, margem, lastro) {
+function skuCellValue(colId, produto, margem, lastro, markup) {
   switch (colId) {
     case 'status':               return <StatusDot produto={produto} />;
     case 'codigo_interno':       return <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400">{produto.codigo_interno || '—'}</span>;
@@ -196,7 +196,7 @@ function SkuRow({ row, onEdit, activeCols }) {
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
           style={{ width: col.w, minWidth: col.w }}>
-          {skuCellValue(col.id, p, row.margem, row.lastro)}
+          {skuCellValue(col.id, p, row.margem, row.lastro, row.markup)}
         </td>
       ))}
     </tr>
