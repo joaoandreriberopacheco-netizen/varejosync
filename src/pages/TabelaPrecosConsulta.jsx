@@ -4,7 +4,7 @@ import { Search, Package, Loader2, ChevronRight, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from '@/components/produtos/treegrid/useTreeGrid';
-import OrcamentoSheet from '@/components/tabela/OrcamentoSheet';
+import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -134,6 +134,7 @@ export default function TabelaPrecosConsulta() {
   const [tabelas, setTabelas] = useState([]);
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [showOrcamento, setShowOrcamento] = useState(false);
+  const [empresa, setEmpresa] = useState(null);
 
   useEffect(() => {
     loadInitialData();
@@ -142,15 +143,17 @@ export default function TabelaPrecosConsulta() {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [user, tabelasData, produtosData] = await Promise.all([
+      const [user, tabelasData, produtosData, empresaData] = await Promise.all([
         base44.auth.me(),
         base44.entities.TabelaPreco.filter({ ativo: true }),
         base44.entities.Produto.filter({ ativo: true }, '-created_date'),
+        base44.entities.DadosEmpresa.list().catch(() => []),
       ]);
       setTabelas(tabelasData);
       const tabelaPadrao = tabelasData.find(t => t.is_default) || tabelasData[0];
       if (tabelaPadrao) setTabelaSelecionada(tabelaPadrao);
       setProdutos(produtosData);
+      if (empresaData?.length > 0) setEmpresa(empresaData[0]);
     } catch (error) {
       toast.error('Erro ao carregar tabela de preços');
     } finally {
@@ -202,7 +205,7 @@ export default function TabelaPrecosConsulta() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full bg-white dark:bg-gray-900">
+    <div className="flex flex-col h-full overflow-hidden w-full bg-white dark:bg-gray-900 relative">
 
       {/* Header fixo */}
       <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-3 py-2 space-y-2">
@@ -252,15 +255,25 @@ export default function TabelaPrecosConsulta() {
         </div>
       </div>
 
-      {/* FAB — Orçamento */}
+      {/* FAB Orçamento */}
       <button
         onClick={() => setShowOrcamento(true)}
-        className="fixed bottom-20 right-4 z-40 w-13 h-13 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-2xl shadow-lg flex items-center gap-2 px-4 py-3 hover:bg-gray-900 dark:hover:bg-gray-100 active:scale-95 transition-all"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+        className="absolute bottom-6 right-4 z-10 flex items-center gap-2 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 pl-4 pr-5 py-3 rounded-full shadow-lg hover:bg-gray-700 dark:hover:bg-gray-300 active:scale-95 transition-all"
       >
-        <FileText className="w-5 h-5 flex-shrink-0" />
-        <span className="text-xs font-semibold whitespace-nowrap">Orçamento</span>
+        <FileText className="w-4 h-4" />
+        <span className="text-sm font-medium">Orçamento</span>
       </button>
+
+      {/* Orçamento Sheet */}
+      <OrcamentoSheet
+        isOpen={showOrcamento}
+        onClose={() => setShowOrcamento(false)}
+        produtos={produtos}
+        tabelaSelecionada={tabelaSelecionada}
+        calcularPreco={calcularPreco}
+        nomeTabela={tabelaSelecionada?.nome_tabela}
+        empresa={empresa}
+      />
 
       {/* Lista hierárquica com scroll independente */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -294,15 +307,6 @@ export default function TabelaPrecosConsulta() {
           </div>
         )}
       </div>
-
-      {showOrcamento && (
-        <OrcamentoSheet
-          produtos={produtos}
-          calcularPreco={calcularPreco}
-          tabelaSelecionada={tabelaSelecionada}
-          onClose={() => setShowOrcamento(false)}
-        />
-      )}
     </div>
   );
 }
