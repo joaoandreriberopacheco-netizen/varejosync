@@ -108,7 +108,9 @@ export default function HomePage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
   };
 
+  // Atalhos selecionados pelo usuário, filtrados pelas permissões dele
   const quickActions = quickActionIds
+    .filter(id => allowedActionIds.includes(id))
     .map(id => ALL_QUICK_ACTIONS.find(a => a.id === id))
     .filter(Boolean);
 
