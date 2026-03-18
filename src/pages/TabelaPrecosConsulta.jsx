@@ -258,7 +258,7 @@ export default function TabelaPrecosConsulta() {
       {/* FAB Orçamento — redondo com ícone customizado */}
       <button
         onClick={() => setShowOrcamento(true)}
-        className="absolute bottom-6 right-4 z-10 w-14 h-14 rounded-full bg-gray-900 dark:bg-gray-100 shadow-xl flex items-center justify-center active:scale-95 transition-all hover:bg-gray-700 dark:hover:bg-gray-200"
+        className="fixed bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-gray-900 dark:bg-gray-100 shadow-xl flex items-center justify-center active:scale-95 transition-all hover:bg-gray-700 dark:hover:bg-gray-200"
         title="Novo Orçamento"
       >
         <svg viewBox="0 0 48 48" fill="none" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
