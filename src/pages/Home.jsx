@@ -275,6 +275,7 @@ export default function HomePage() {
         onClose={() => setShowPersonalizar(false)}
         selected={quickActionIds}
         onSave={handleSaveActions}
+        allowedActions={allowedActionIds}
       />
     </div>
   );
