@@ -416,6 +416,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
             setFormatoCupom={setFormatoCupom}
             clienteNome={clienteNome}
             setClienteNome={setClienteNome}
+            onVendaPerdida={() => setShowLostSales(true)}
           />
         )}
       </div>
