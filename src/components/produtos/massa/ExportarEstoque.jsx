@@ -45,7 +45,7 @@ export default function ExportarEstoque() {
         row.getCell(3).numFmt = '#,##0';
       });
 
-      ws.dataValidations.add('C2:C' + (produtos.length + 1001), {
+      ws.dataValidations.add('C2:C' + (produtos.length + 1501), {
         type: 'decimal',
         operator: 'greaterThanOrEqual',
         showErrorMessage: true,
@@ -55,7 +55,7 @@ export default function ExportarEstoque() {
       });
 
       await ws.protect('', {
-        deleteRows: true,
+        deleteRows: false, // permite deletar linhas sem senha
         formatCells: true,
         selectLockedCells: true,
         selectUnlockedCells: true,
