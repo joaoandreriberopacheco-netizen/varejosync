@@ -11,7 +11,7 @@ import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
 import { toast } from 'sonner';
 
-const TAMANHO_LOTE = 100;
+const TAMANHO_LOTE = 50;
 
 export default function ImportacaoProdutosPage() {
   const [parsedData, setParsedData] = useState(null);
@@ -38,6 +38,7 @@ export default function ImportacaoProdutosPage() {
 
     const total = parsedData.alterados.length;
     const totalLotes = Math.ceil(total / TAMANHO_LOTE);
+    const grupoId = `GRP-${Date.now()}`;
     setSalvando(true);
     setProgresso({ atual: 0, total, lote: 0, totalLotes });
 
@@ -52,6 +53,7 @@ export default function ImportacaoProdutosPage() {
           is_ultimo_lote: i === totalLotes - 1,
           lote_numero: i + 1,
           total_lotes: totalLotes,
+          grupo_importacao_id: grupoId,
         });
 
         setProgresso({ atual: Math.min(inicio + TAMANHO_LOTE, total), total, lote: i + 1, totalLotes });
