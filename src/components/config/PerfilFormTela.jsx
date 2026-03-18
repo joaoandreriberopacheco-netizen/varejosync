@@ -34,6 +34,7 @@ export const MODULOS = [
     key: 'dashboard', label: 'Dashboard',
     submodulos: [
       { key: 'acesso', label: 'Acesso ao Dashboard' },
+      { key: 'resumo_vendas_home', label: 'Resumo de Vendas (Tela Inicial)' },
       { key: 'ver_kpis_vendas', label: 'KPIs de Vendas' },
       { key: 'ver_kpis_financeiro', label: 'KPIs Financeiros' },
       { key: 'ver_kpis_estoque', label: 'KPIs de Estoque' },
