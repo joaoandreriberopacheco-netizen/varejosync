@@ -30,22 +30,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Gerar número sequencial do log
-    const logsExistentes = await base44.asServiceRole.entities.ImportacaoLog.list('-created_date', 1);
-    const ultimoNumero = logsExistentes.length > 0
-      ? parseInt((logsExistentes[0].numero || 'IMP-00000').replace('IMP-', '')) + 1
-      : 1;
-    const numeroLog = `IMP-${String(ultimoNumero).padStart(5, '0')}`;
+    // Criar log apenas no último lote
+    if (is_ultimo_lote) {
+      const logsExistentes = await base44.asServiceRole.entities.ImportacaoLog.list('-created_date', 1);
+      const ultimoNumero = logsExistentes.length > 0
+        ? parseInt((logsExistentes[0].numero || 'IMP-00000').replace('IMP-', '')) + 1
+        : 1;
+      const numeroLog = `IMP-${String(ultimoNumero).padStart(5, '0')}`;
 
-    // Log de importação com schema correto
-    await base44.asServiceRole.entities.ImportacaoLog.create({
-      numero: numeroLog,
-      tipo: 'Produtos',
-      status: 'Concluída',
-      total_novos: novos.length,
-      total_atualizados: atualizados.length,
-      produtos_atualizados: produtosAtualizadosSnapshot,
-    });
+      await base44.asServiceRole.entities.ImportacaoLog.create({
+        numero: numeroLog,
+        tipo: 'Produtos',
+        status: 'Concluída',
+        total_novos: novos.length,
+        total_atualizados: atualizados.length,
+        produtos_atualizados: produtosAtualizadosSnapshot,
+      });
+    }
 
     // Processar cada produto
     for (const { id, dados, isNew } of alterados) {
