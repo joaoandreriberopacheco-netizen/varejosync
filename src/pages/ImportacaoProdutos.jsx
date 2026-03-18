@@ -11,7 +11,7 @@ import ExportarPlanilha from '@/components/produtos/massa/ExportarPlanilha';
 import ExportarEstoque from '@/components/produtos/massa/ExportarEstoque';
 import { toast } from 'sonner';
 
-const TAMANHO_LOTE = 50;
+const TAMANHO_LOTE = 25;
 
 export default function ImportacaoProdutosPage() {
   const [parsedData, setParsedData] = useState(null);
