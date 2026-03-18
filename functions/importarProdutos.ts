@@ -15,21 +15,36 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Nenhum produto para importar' }, { status: 400 });
     }
 
+    // Separar novos e atualizados
+    const novos = alterados.filter(a => a.isNew);
+    const atualizados = alterados.filter(a => !a.isNew);
+
     // Snapshot dos produtos antigos (para rollback)
-    const idsAfetados = alterados.map(a => a.id).filter(Boolean);
-    const snapshotDados = [];
+    const idsAfetados = atualizados.map(a => a.id).filter(Boolean);
+    const produtosAtualizadosSnapshot = [];
     
     if (idsAfetados.length > 0) {
       const produtosAntigos = await base44.asServiceRole.entities.Produto.filter({ id: idsAfetados });
-      snapshotDados.push(...produtosAntigos);
+      produtosAntigos.forEach(p => {
+        produtosAtualizadosSnapshot.push({ id: p.id, dados_anteriores: p });
+      });
     }
 
-    // Log de importação
+    // Gerar número sequencial do log
+    const logsExistentes = await base44.asServiceRole.entities.ImportacaoLog.list('-created_date', 1);
+    const ultimoNumero = logsExistentes.length > 0
+      ? parseInt((logsExistentes[0].numero || 'IMP-00000').replace('IMP-', '')) + 1
+      : 1;
+    const numeroLog = `IMP-${String(ultimoNumero).padStart(5, '0')}`;
+
+    // Log de importação com schema correto
     await base44.asServiceRole.entities.ImportacaoLog.create({
-      usuario_responsavel: user?.full_name || user?.email,
-      quantidade_itens: alterados.length,
-      snapshot_dados: snapshotDados,
-      tipo_importacao
+      numero: numeroLog,
+      tipo: 'Produtos',
+      status: 'Concluída',
+      total_novos: novos.length,
+      total_atualizados: atualizados.length,
+      produtos_atualizados: produtosAtualizadosSnapshot,
     });
 
     // Processar cada produto
