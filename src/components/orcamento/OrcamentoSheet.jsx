@@ -395,6 +395,13 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         )}
       </div>
 
+      {/* Venda Perdida Dialog */}
+      <LostSalesForm
+        open={showLostSales}
+        onClose={() => setShowLostSales(false)}
+        currentUser={null}
+      />
+
       {/* Corpo */}
       <div className="flex-1 overflow-hidden">
         {tela === 'produtos' ? (
