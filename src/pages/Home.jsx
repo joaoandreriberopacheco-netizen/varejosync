@@ -49,12 +49,16 @@ export default function HomePage() {
       .map(a => a.id);
   }, [currentUser, permissoes]);
 
-  // Pode ver resumo de vendas: admin ou quem tem dashboard.acesso ou vendas.acesso
+  // Pode ver resumo de vendas: admin, ou quem tem dashboard.acesso, resumo_vendas_home, ou vendas.acesso
   const podeVerResumoVendas = useMemo(() => {
     if (!currentUser) return false;
     if (currentUser.role === 'admin') return true;
     if (!permissoes) return true;
-    return !!(permissoes?.dashboard?.acesso || permissoes?.vendas?.acesso);
+    return !!(
+      permissoes?.dashboard?.acesso ||
+      permissoes?.dashboard?.resumo_vendas_home ||
+      permissoes?.vendas?.acesso
+    );
   }, [currentUser, permissoes]);
 
   useEffect(() => {
