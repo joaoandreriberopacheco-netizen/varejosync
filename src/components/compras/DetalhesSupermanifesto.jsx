@@ -113,117 +113,88 @@ export default function DetalhesSupermanifesto({ manifesto, isOpen, onClose }) {
             </div>
           </div>
 
-          {/* Total de Volumes - PDV Style */}
-          <div className="flex items-center justify-between p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
-                 <PackageIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              </div>
-              <span className="text-base font-medium text-gray-600 dark:text-gray-300">Total de Volumes</span>
+          {/* Total de Volumes */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl">
+            <div className="flex items-center gap-2">
+              <PackageIcon className="w-4 h-4 text-gray-400" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Total de Volumes</span>
             </div>
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">{totalVolumes}</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{totalVolumes}</span>
           </div>
 
           {/* Manifestos Vinculados */}
-          <div className="space-y-6">
-            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center gap-2 px-1">
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-1">
               Manifestos Vinculados
-            </h4>
-            
+            </p>
             {loading ? (
-              <div className="text-center py-12 text-gray-400">Carregando manifestos...</div>
+              <div className="text-center py-8 text-xs text-gray-400">Carregando...</div>
             ) : manifestosVinculados.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-dashed border-gray-100 dark:border-gray-700">
+              <div className="text-center py-8 text-xs text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                 Nenhum manifesto vinculado
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div className="space-y-2">
                 {manifestosVinculados.map((m, idx) => (
-                  <div key={idx} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm ring-1 ring-gray-100 dark:ring-gray-700">
-                    <div className="flex flex-col gap-4">
-                      {/* Cabeçalho Manifesto */}
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h5 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                            {m.numero}
-                          </h5>
-                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                            <User className="w-4 h-4" />
-                            <span className="text-sm font-medium">{m.fornecedor_nome}</span>
-                          </div>
-                        </div>
-                        <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border-0 px-3 py-1">
-                          {m.pedido_numero || 'S/ Pedido'}
-                        </Badge>
+                  <div key={idx} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50 dark:border-gray-700/50">
+                      <div className="flex items-center gap-2">
+                        <User className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="text-xs font-semibold text-gray-800 dark:text-gray-100">{m.numero}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{m.fornecedor_nome}</span>
                       </div>
-
-                      {/* Lista de Volumes */}
-                      {m.volumes && m.volumes.length > 0 ? (
-                        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 space-y-3">
-                          <p className="text-xs uppercase text-gray-400 font-semibold tracking-wider mb-2">Volumes Discriminados</p>
-                          {m.volumes.map((vol, vIdx) => (
-                            <div key={vIdx} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                              <span className="text-gray-700 dark:text-gray-200 font-medium">
-                                {vol.descricao}
-                              </span>
-                              <div className="flex gap-4 text-sm">
-                                <span className="text-gray-500">
-                                  Qtd: <strong className="text-gray-900 dark:text-white">{vol.quantidade}</strong>
-                                </span>
-                                <span className="text-gray-500">
-                                  Peso: <strong className="text-gray-900 dark:text-white">{vol.peso_kg}kg</strong>
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-400 italic px-2">
-                          Nenhum volume discriminado.
-                        </div>
-                      )}
+                      <span className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full">
+                        {m.pedido_numero || 'S/ Pedido'}
+                      </span>
                     </div>
+                    {m.volumes && m.volumes.length > 0 ? (
+                      <div className="px-4 py-2 space-y-1">
+                        {m.volumes.map((vol, vIdx) => (
+                          <div key={vIdx} className="flex items-center justify-between py-1 border-b border-gray-50 dark:border-gray-700/30 last:border-0">
+                            <span className="text-xs text-gray-600 dark:text-gray-300">{vol.descricao}</span>
+                            <div className="flex gap-3 text-[11px] text-gray-400 dark:text-gray-500">
+                              <span>Qtd <strong className="text-gray-700 dark:text-gray-200">{vol.quantidade}</strong></span>
+                              <span>{vol.peso_kg}kg</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="px-4 py-2 text-xs text-gray-400 italic">Nenhum volume discriminado.</p>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Descritivo Consolidado (Rodapé) */}
+          {/* Descritivo Consolidado */}
           {manifesto.observacoes_consolidadas && (
-            <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-              <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                Descritivo Consolidado de Volumes
-              </h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl">
+              <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">
+                Descritivo Consolidado
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
                 {manifesto.observacoes_consolidadas}
               </p>
             </div>
           )}
         </div>
 
-        <DialogFooter className="border-t border-gray-100 dark:border-gray-700 pt-4 flex flex-col sm:flex-row gap-3 sm:justify-between w-full">
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-             <Button 
-              variant="outline" 
-              onClick={() => handlePrint('volumes')} 
-              disabled={printing}
-              className="gap-2 w-full sm:w-auto justify-center rounded-lg border-gray-200 dark:border-gray-700"
-            >
-              {printing ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <PackageIcon className="w-4 h-4" />}
-              Relatório de Volumes
+        <DialogFooter className="border-t border-gray-100 dark:border-gray-700 pt-3 flex flex-col sm:flex-row gap-2 sm:justify-between w-full">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="ghost" size="sm" onClick={() => handlePrint('volumes')} disabled={printing}
+              className="gap-1.5 flex-1 sm:flex-none h-8 text-xs bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              {printing ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <PackageIcon className="w-3.5 h-3.5" />}
+              Volumes
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => handlePrint('carga')} 
-              disabled={printing}
-              className="gap-2 w-full sm:w-auto justify-center rounded-lg border-gray-200 dark:border-gray-700"
-            >
-              {printing ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Printer className="w-4 h-4" />}
-              Relatório de Carga
+            <Button variant="ghost" size="sm" onClick={() => handlePrint('carga')} disabled={printing}
+              className="gap-1.5 flex-1 sm:flex-none h-8 text-xs bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+              {printing ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+              Carga
             </Button>
           </div>
-          <Button variant="ghost" onClick={onClose} className="rounded-lg w-full sm:w-auto">
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 text-xs text-gray-500 dark:text-gray-400 w-full sm:w-auto">
             Fechar
           </Button>
         </DialogFooter>
