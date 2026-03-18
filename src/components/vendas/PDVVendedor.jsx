@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import ComprovantePreVenda from './ComprovantePreVenda';
 import LostSalesForm from './LostSalesForm';
+import OrcamentosRecentesSheet from './OrcamentosRecentesSheet';
 import BarcodeScanner from './BarcodeScanner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createPageUrl } from '@/utils';
