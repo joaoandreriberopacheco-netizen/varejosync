@@ -90,7 +90,7 @@ export default function DesfazerImportacao() {
                 {snapshot.usuario_responsavel || 'Importação'}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {snapshot.quantidade_itens} itens · {new Date(snapshot.created_date).toLocaleString('pt-BR')}
+                {(snapshot.produtos_atualizados?.length || 0) + (snapshot.total_novos || 0)} itens · {new Date(snapshot.created_date).toLocaleString('pt-BR')}
               </p>
             </div>
             <Button
