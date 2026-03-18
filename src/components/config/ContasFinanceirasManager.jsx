@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Wallet, Edit, Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
@@ -16,352 +13,208 @@ export default function ContasFinanceirasManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedConta, setSelectedConta] = useState(null);
   const [formData, setFormData] = useState({
-    nome: '',
-    tipo: 'Conta Bancária',
-    banco: '',
-    agencia: '',
-    conta: '',
-    saldo_inicial: 0,
-    saldo_atual: 0,
-    cor: '#10B981',
-    observacoes: '',
-    ativo: true,
-    is_caixa_pdv: false
+    nome: '', tipo: 'Conta Bancária', banco: '', agencia: '', conta: '',
+    saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadContas();
-  }, []);
+  useEffect(() => { loadContas(); }, []);
 
   const loadContas = async () => {
     const data = await base44.entities.ContasFinanceiras.list();
     setContas(data);
   };
 
-  const handleEdit = (conta) => {
-    setSelectedConta(conta);
-    setFormData(conta);
-    setIsDialogOpen(true);
-  };
+  const handleEdit = (conta) => { setSelectedConta(conta); setFormData(conta); setIsDialogOpen(true); };
 
   const handleAddNew = () => {
     setSelectedConta(null);
-    setFormData({
-      nome: '',
-      tipo: 'Conta Bancária',
-      banco: '',
-      agencia: '',
-      conta: '',
-      saldo_inicial: 0,
-      saldo_atual: 0,
-      cor: '#10B981',
-      observacoes: '',
-      ativo: true,
-      is_caixa_pdv: false
-    });
+    setFormData({ nome: '', tipo: 'Conta Bancária', banco: '', agencia: '', conta: '',
+      saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false });
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (conta) => {
     if (!confirm(`Excluir conta "${conta.nome}"?`)) return;
-    
-    try {
-      await base44.entities.ContasFinanceiras.delete(conta.id);
-      toast({
-        title: "Conta excluída!",
-        className: "bg-red-100 text-red-800"
-      });
-      loadContas();
-    } catch (error) {
-      toast({
-        title: "Erro ao excluir",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+    await base44.entities.ContasFinanceiras.delete(conta.id);
+    toast({ title: "Conta excluída!", className: "bg-white dark:bg-gray-800" });
+    loadContas();
   };
 
   const handleSave = async () => {
-    try {
-      const dataToSave = { ...formData };
-      if (!selectedConta) {
-        dataToSave.saldo_atual = dataToSave.saldo_inicial;
-      }
-
-      if (selectedConta) {
-        await base44.entities.ContasFinanceiras.update(selectedConta.id, dataToSave);
-      } else {
-        await base44.entities.ContasFinanceiras.create(dataToSave);
-      }
-
-      toast({
-        title: "Conta salva!",
-        className: "bg-emerald-100 text-emerald-800"
-      });
-
-      loadContas();
-      setIsDialogOpen(false);
-    } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive"
-      });
+    const dataToSave = { ...formData };
+    if (!selectedConta) dataToSave.saldo_atual = dataToSave.saldo_inicial;
+    if (selectedConta) {
+      await base44.entities.ContasFinanceiras.update(selectedConta.id, dataToSave);
+    } else {
+      await base44.entities.ContasFinanceiras.create(dataToSave);
     }
+    toast({ title: "Conta salva!", className: "bg-white dark:bg-gray-800" });
+    loadContas(); setIsDialogOpen(false);
   };
 
+  const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   return (
-    <Card className="font-glacial border-0 shadow-sm bg-white dark:bg-gray-800">
-      <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 mt-4">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
         <div>
-          <CardTitle className="text-base md:text-lg font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-yellow-600" />
-            Contas Financeiras (Cofres)
-          </CardTitle>
-          <p className="text-xs md:text-sm text-gray-500 mt-1">Caixas físicos, Contas bancárias, Carteiras digitais</p>
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-gray-400" /> Contas Financeiras
+          </h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Caixas físicos, contas bancárias e carteiras digitais</p>
         </div>
-        <Button onClick={handleAddNew} className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto">
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Nova Conta
+        <Button onClick={handleAddNew} size="sm"
+          className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-1.5 h-8 px-3 text-xs">
+          <PlusCircle className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Nova Conta</span>
         </Button>
-      </CardHeader>
-      <CardContent>
-        {contas.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
-            <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400 mb-4">Nenhuma conta cadastrada</p>
-            <Button onClick={handleAddNew} className="bg-emerald-600 hover:bg-emerald-700">
-              Criar Primeira Conta
-            </Button>
-          </div>
-        ) : (
-          <>
-            {/* Mobile: cards */}
-            <div className="flex flex-col gap-3 md:hidden">
-              {contas.map(conta => (
-                <div key={conta.id} className="flex items-center gap-3 rounded-2xl bg-gray-50 dark:bg-gray-700/40 px-4 py-3">
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: conta.cor }} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{conta.nome}</p>
-                      {conta.is_caixa_pdv && (
-                        <Badge className="text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">PDV</Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">{conta.tipo}</p>
-                    {conta.banco && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{conta.banco}{conta.agencia ? ` · Ag ${conta.agencia}` : ''}{conta.conta ? ` · Cc ${conta.conta}` : ''}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                      R$ {conta.saldo_atual?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                    <div className="flex gap-0.5">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(conta)}>
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDelete(conta)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+      </div>
+
+      {contas.length === 0 ? (
+        <div className="text-center py-12 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+          <Wallet className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+          <p className="text-sm text-gray-400 mb-4">Nenhuma conta cadastrada</p>
+          <Button onClick={handleAddNew} size="sm" className="bg-gray-800 text-white gap-1.5">
+            <PlusCircle className="w-3.5 h-3.5" /> Criar Primeira Conta
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {contas.map(conta => (
+            <div key={conta.id}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-sm ${conta.ativo ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}`}>
+              {/* Dot de cor */}
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: conta.cor }} />
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{conta.nome}</span>
+                  {conta.is_caixa_pdv && (
+                    <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded-full">PDV</span>
+                  )}
+                  {!conta.ativo && (
+                    <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-1.5 py-0.5 rounded-full">inativa</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex flex-wrap gap-2">
+                  <span>{conta.tipo}</span>
+                  {conta.banco && <span>· {conta.banco}{conta.agencia ? ` ag.${conta.agencia}` : ''}</span>}
+                </div>
+              </div>
+              {/* Saldo */}
+              <div className="flex-shrink-0 text-right">
+                <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 tabular-nums">
+                  R$ {fmtR(conta.saldo_atual)}
+                </div>
+              </div>
+              {/* Ações */}
+              <div className="flex gap-1 flex-shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}
+                  className="h-7 w-7 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(conta)}
+                  className="h-7 w-7 text-gray-400 hover:text-red-500">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-gray-400" />
+              {selectedConta ? 'Editar Conta' : 'Nova Conta Financeira'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Nome *</Label>
+              <Input placeholder="Ex: Caixa Loja 1, Banco Itaú" value={formData.nome}
+                onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Tipo *</Label>
+                <Select value={formData.tipo} onValueChange={v => setFormData({ ...formData, tipo: v })}>
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-800">
+                    {['Caixa Físico','Conta Bancária','Carteira Digital','Poupança','Investimento'].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Cor</Label>
+                <Input type="color" value={formData.cor}
+                  onChange={e => setFormData({ ...formData, cor: e.target.value })}
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 px-2" />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Banco</Label>
+                <Input value={formData.banco} onChange={e => setFormData({ ...formData, banco: e.target.value })}
+                  placeholder="Itaú" className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Agência</Label>
+                <Input value={formData.agencia} onChange={e => setFormData({ ...formData, agencia: e.target.value })}
+                  placeholder="0000" className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Conta</Label>
+                <Input value={formData.conta} onChange={e => setFormData({ ...formData, conta: e.target.value })}
+                  placeholder="00000-0" className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Saldo Inicial</Label>
+              <Input type="number" step="0.01" value={formData.saldo_inicial} disabled={!!selectedConta}
+                onChange={e => setFormData({ ...formData, saldo_inicial: parseFloat(e.target.value) || 0 })}
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+              {!!selectedConta && <p className="text-[11px] text-gray-400">Saldo inicial não pode ser editado</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Observações</Label>
+              <Input value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
+                placeholder="Informações adicionais..." className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+            </div>
+            <div className="space-y-2 pt-1">
+              {[
+                { key: 'ativo', label: 'Conta ativa' },
+                { key: 'is_caixa_pdv', label: 'Usar como Caixa PDV', desc: 'Pode ser atribuída a um usuário de ponto de venda' },
+              ].map(({ key, label, desc }) => (
+                <div key={key} className="flex items-start gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800">
+                  <input type="checkbox" checked={formData[key]}
+                    onChange={e => setFormData({ ...formData, [key]: e.target.checked })}
+                    className="w-4 h-4 mt-0.5 accent-gray-700" />
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-200">{label}</p>
+                    {desc && <p className="text-[11px] text-gray-400 mt-0.5">{desc}</p>}
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* Desktop: tabela */}
-            <div className="hidden md:block overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Banco/Agência/Conta</TableHead>
-                    <TableHead>Saldo Atual</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>PDV</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {contas.map(conta => (
-                    <TableRow key={conta.id}>
-                      <TableCell className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: conta.cor }} />
-                        <span className="font-medium">{conta.nome}</span>
-                      </TableCell>
-                      <TableCell>{conta.tipo}</TableCell>
-                      <TableCell>
-                        {conta.banco && (
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {conta.banco}{conta.agencia && ` | Ag: ${conta.agencia}`}{conta.conta && ` | Cc: ${conta.conta}`}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 font-semibold">
-                          R$ {conta.saldo_atual?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{conta.ativo ? '✓ Ativa' : '✗ Inativa'}</TableCell>
-                      <TableCell>
-                        {conta.is_caixa_pdv ? (
-                          <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">✓ Caixa PDV</Badge>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(conta)} className="text-red-600">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </>
-        )}
-      </CardContent>
-      
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl font-glacial max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedConta ? 'Editar Conta' : 'Nova Conta Financeira'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-              <div className="col-span-2">
-                <Label>Nome da Conta *</Label>
-                <Input
-                  placeholder="Ex: Caixa Loja 1, Banco Itaú"
-                  value={formData.nome}
-                  onChange={e => setFormData({ ...formData, nome: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label>Tipo *</Label>
-                <Select value={formData.tipo} onValueChange={v => setFormData({ ...formData, tipo: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Caixa Físico">Caixa Físico</SelectItem>
-                    <SelectItem value="Conta Bancária">Conta Bancária</SelectItem>
-                    <SelectItem value="Carteira Digital">Carteira Digital</SelectItem>
-                    <SelectItem value="Poupança">Poupança</SelectItem>
-                    <SelectItem value="Investimento">Investimento</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Cor</Label>
-                <Input
-                  type="color"
-                  value={formData.cor}
-                  onChange={e => setFormData({ ...formData, cor: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label>Banco</Label>
-                <Input
-                  value={formData.banco}
-                  onChange={e => setFormData({ ...formData, banco: e.target.value })}
-                  placeholder="Nome do banco"
-                />
-              </div>
-
-              <div>
-                <Label>Agência</Label>
-                <Input
-                  value={formData.agencia}
-                  onChange={e => setFormData({ ...formData, agencia: e.target.value })}
-                  placeholder="0000"
-                />
-              </div>
-
-              <div>
-                <Label>Conta</Label>
-                <Input
-                  value={formData.conta}
-                  onChange={e => setFormData({ ...formData, conta: e.target.value })}
-                  placeholder="00000-0"
-                />
-              </div>
-
-              <div>
-                <Label>Saldo Inicial</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.saldo_inicial}
-                  onChange={e => setFormData({ ...formData, saldo_inicial: parseFloat(e.target.value) || 0 })}
-                  disabled={!!selectedConta}
-                />
-                {!!selectedConta && (
-                  <p className="text-xs text-gray-500 mt-1">Saldo inicial não pode ser editado</p>
-                )}
-              </div>
-
-              <div className="col-span-2">
-                <Label>Observações</Label>
-                <Input
-                  value={formData.observacoes}
-                  onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Informações adicionais..."
-                />
-              </div>
-
-              <div className="col-span-2 space-y-3 border-t pt-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.ativo}
-                    onChange={e => setFormData({ ...formData, ativo: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-600"
-                  />
-                  <Label>Conta ativa</Label>
-                </div>
-                
-                <div className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_caixa_pdv}
-                    onChange={e => setFormData({ ...formData, is_caixa_pdv: e.target.checked })}
-                    className="w-4 h-4 mt-0.5 accent-indigo-600"
-                  />
-                  <div>
-                    <Label>Usar como Caixa PDV</Label>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Marque esta opção se esta conta será usada como caixa de ponto de venda (terminal/balcão). 
-                      Caixas PDV podem ser atribuídos a usuários específicos.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700">
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-    </Card>
+          </div>
+          <DialogFooter className="gap-2 pt-1">
+            <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">Cancelar</Button>
+            <Button size="sm" onClick={handleSave}
+              className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white h-8 text-xs">
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

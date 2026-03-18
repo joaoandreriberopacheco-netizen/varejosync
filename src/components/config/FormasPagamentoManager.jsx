@@ -5,9 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlusCircle, Edit, Trash2, CreditCard } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+
+const TIPO_ICONS = {
+  'Dinheiro': '💵', 'PIX': '⚡', 'Cartão Débito': '💳',
+  'Cartão Crédito': '💳', 'Boleto': '📄', 'Transferência': '🔁',
+};
 
 export default function FormasPagamentoManager() {
   const [formasPagamento, setFormasPagamento] = useState([]);
@@ -15,22 +19,13 @@ export default function FormasPagamentoManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedForma, setSelectedForma] = useState(null);
   const [formData, setFormData] = useState({
-    nome: '',
-    tipo: 'Dinheiro',
-    conta_destino_id: '',
-    conta_destino_nome: '',
-    prazo_recebimento_dias: 0,
-    tipo_taxa: 'Percentual',
-    valor_taxa: 0,
-    parcelas_max: 1,
-    adquirente: '',
-    ativo: true
+    nome: '', tipo: 'Dinheiro', conta_destino_id: '', conta_destino_nome: '',
+    prazo_recebimento_dias: 0, tipo_taxa: 'Percentual', valor_taxa: 0, parcelas_max: 1,
+    adquirente: '', ativo: true
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     const [formasData, contasData] = await Promise.all([
@@ -43,279 +38,186 @@ export default function FormasPagamentoManager() {
 
   const handleSave = async () => {
     const conta = contas.find(c => c.id === formData.conta_destino_id);
-    const dataToSave = {
-      ...formData,
-      conta_destino_nome: conta?.nome || ''
-    };
-
+    const dataToSave = { ...formData, conta_destino_nome: conta?.nome || '' };
     if (selectedForma) {
       await base44.entities.FormasDePagamento.update(selectedForma.id, dataToSave);
-      toast({ 
-        title: "✓ Forma de pagamento atualizada", 
-        className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200",
-        duration: 2000
-      });
+      toast({ title: "✓ Forma de pagamento atualizada", className: "bg-white dark:bg-gray-800", duration: 2000 });
     } else {
       await base44.entities.FormasDePagamento.create(dataToSave);
-      toast({ 
-        title: "✓ Forma de pagamento criada", 
-        className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200",
-        duration: 2000
-      });
+      toast({ title: "✓ Forma de pagamento criada", className: "bg-white dark:bg-gray-800", duration: 2000 });
     }
-    
-    loadData();
-    setIsDialogOpen(false);
-    resetForm();
+    loadData(); setIsDialogOpen(false); resetForm();
   };
 
   const handleEdit = (forma) => {
     setSelectedForma(forma);
-    setFormData({
-      nome: forma.nome,
-      tipo: forma.tipo,
-      conta_destino_id: forma.conta_destino_id,
-      conta_destino_nome: forma.conta_destino_nome,
-      prazo_recebimento_dias: forma.prazo_recebimento_dias,
-      tipo_taxa: forma.tipo_taxa,
-      valor_taxa: forma.valor_taxa,
-      parcelas_max: forma.parcelas_max,
-      adquirente: forma.adquirente || '',
-      ativo: forma.ativo
-    });
+    setFormData({ nome: forma.nome, tipo: forma.tipo, conta_destino_id: forma.conta_destino_id,
+      conta_destino_nome: forma.conta_destino_nome, prazo_recebimento_dias: forma.prazo_recebimento_dias,
+      tipo_taxa: forma.tipo_taxa, valor_taxa: forma.valor_taxa, parcelas_max: forma.parcelas_max,
+      adquirente: forma.adquirente || '', ativo: forma.ativo });
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (id) => {
     if (confirm('Deseja realmente excluir esta forma de pagamento?')) {
       await base44.entities.FormasDePagamento.delete(id);
-      toast({ 
-        title: "✓ Forma de pagamento excluída", 
-        className: "bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200",
-        duration: 2000
-      });
+      toast({ title: "✓ Excluída", className: "bg-white dark:bg-gray-800", duration: 2000 });
       loadData();
     }
   };
 
-  const handleAddNew = () => {
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
   const resetForm = () => {
     setSelectedForma(null);
-    setFormData({
-      nome: '',
-      tipo: 'Dinheiro',
-      conta_destino_id: '',
-      conta_destino_nome: '',
-      prazo_recebimento_dias: 0,
-      tipo_taxa: 'Percentual',
-      valor_taxa: 0,
-      parcelas_max: 1,
-      adquirente: '',
-      ativo: true
-    });
+    setFormData({ nome: '', tipo: 'Dinheiro', conta_destino_id: '', conta_destino_nome: '',
+      prazo_recebimento_dias: 0, tipo_taxa: 'Percentual', valor_taxa: 0, parcelas_max: 1, adquirente: '', ativo: true });
   };
 
   return (
-    <div className="space-y-4 font-glacial">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="space-y-4 mt-4">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
         <div>
-          <h3 className="text-base md:text-lg font-medium text-gray-800 dark:text-gray-200">Formas de Pagamento</h3>
-          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Maquininhas, PIX, Dinheiro e outras formas</p>
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-gray-400" /> Formas de Pagamento
+          </h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">PIX, dinheiro, cartões e outras formas</p>
         </div>
-        <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 w-full md:w-auto">
-          <PlusCircle className="w-4 h-4" /> Nova Forma
+        <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} size="sm"
+          className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-1.5 h-8 px-3 text-xs">
+          <PlusCircle className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Nova Forma</span>
         </Button>
       </div>
 
-      {/* Lista */}
       {formasPagamento.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
-          <CreditCard className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Nenhuma forma de pagamento cadastrada</p>
-          <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600">
-            <PlusCircle className="w-4 h-4" /> Criar Primeira Forma
+        <div className="text-center py-12 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+          <CreditCard className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+          <p className="text-sm text-gray-400 mb-4">Nenhuma forma cadastrada</p>
+          <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} size="sm"
+            className="bg-gray-800 text-white gap-1.5">
+            <PlusCircle className="w-3.5 h-3.5" /> Criar Primeira
           </Button>
         </div>
       ) : (
-        <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden bg-white dark:bg-gray-800 overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-gray-50 dark:bg-gray-700">
-              <TableRow className="border-b border-gray-200 dark:border-gray-700">
-                <TableHead className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Nome</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Tipo</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Adquirente</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Conta Destino</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Taxa</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Prazo</TableHead>
-                <TableHead className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Status</TableHead>
-                <TableHead className="text-right text-gray-700 dark:text-gray-300 whitespace-nowrap">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {formasPagamento.map(forma => (
-                <TableRow key={forma.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <TableCell className="font-medium text-gray-800 dark:text-gray-200">{forma.nome}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{forma.tipo}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{forma.adquirente || '-'}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{forma.conta_destino_nome}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">
-                    {forma.tipo_taxa === 'Percentual' ? `${forma.valor_taxa}%` : `R$ ${forma.valor_taxa.toFixed(2)}`}
-                  </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{forma.prazo_recebimento_dias}d</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      forma.ativo 
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' 
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-500'
-                    }`}>
-                      {forma.ativo ? 'Ativa' : 'Inativa'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleEdit(forma)}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-600"
-                      >
-                        <Edit className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDelete(forma.id)}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-600"
-                      >
-                        <Trash2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="space-y-2">
+          {formasPagamento.map(forma => (
+            <div key={forma.id}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-800 shadow-sm">
+              <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-base flex-shrink-0">
+                {TIPO_ICONS[forma.tipo] || '💳'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{forma.nome}</span>
+                  {!forma.ativo && (
+                    <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-400 px-1.5 py-0.5 rounded-full">inativa</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex flex-wrap gap-2">
+                  <span>{forma.tipo}</span>
+                  {forma.adquirente && <span>· {forma.adquirente}</span>}
+                  <span>· {forma.tipo_taxa === 'Percentual' ? `${forma.valor_taxa}%` : `R$ ${forma.valor_taxa?.toFixed(2)}`}</span>
+                  <span>· D+{forma.prazo_recebimento_dias}d</span>
+                  {forma.conta_destino_nome && <span>· {forma.conta_destino_nome}</span>}
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(forma)}
+                  className="h-7 w-7 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(forma.id)}
+                  className="h-7 w-7 text-gray-400 hover:text-red-500">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="dark:bg-gray-800 dark:border-gray-700 font-glacial max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-gray-800 dark:text-gray-200">
+            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-gray-400" />
               {selectedForma ? 'Editar Forma de Pagamento' : 'Nova Forma de Pagamento'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="text-gray-700 dark:text-gray-300">Nome *</Label>
-              <Input 
-                value={formData.nome}
-                onChange={e => setFormData({...formData, nome: e.target.value})}
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Nome *</Label>
+              <Input value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})}
                 placeholder="Ex: Cielo Crédito 3x"
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-              />
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Tipo *</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Tipo *</Label>
                 <Select value={formData.tipo} onValueChange={v => setFormData({...formData, tipo: v})}>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                    <SelectItem value="Cartão Débito">Cartão Débito</SelectItem>
-                    <SelectItem value="Cartão Crédito">Cartão Crédito</SelectItem>
-                    <SelectItem value="Boleto">Boleto</SelectItem>
-                    <SelectItem value="Transferência">Transferência</SelectItem>
+                  <SelectContent className="dark:bg-gray-800">
+                    {['Dinheiro','PIX','Cartão Débito','Cartão Crédito','Boleto','Transferência'].map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Adquirente</Label>
-                <Input 
-                  value={formData.adquirente}
-                  onChange={e => setFormData({...formData, adquirente: e.target.value})}
-                  placeholder="Ex: Cielo, Stone"
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Adquirente</Label>
+                <Input value={formData.adquirente} onChange={e => setFormData({...formData, adquirente: e.target.value})}
+                  placeholder="Cielo, Stone..." className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
               </div>
             </div>
-
-            <div>
-              <Label className="text-gray-700 dark:text-gray-300">Conta Destino *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Conta Destino *</Label>
               <Select value={formData.conta_destino_id} onValueChange={v => setFormData({...formData, conta_destino_id: v})}>
-                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
                   <SelectValue placeholder="Selecione a conta..." />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                  {contas.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                  ))}
+                <SelectContent className="dark:bg-gray-800">
+                  {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Tipo Taxa</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Tipo Taxa</Label>
                 <Select value={formData.tipo_taxa} onValueChange={v => setFormData({...formData, tipo_taxa: v})}>
-                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="Percentual">Percentual</SelectItem>
-                    <SelectItem value="Fixo">Fixo</SelectItem>
+                  <SelectContent className="dark:bg-gray-800">
+                    <SelectItem value="Percentual">%</SelectItem>
+                    <SelectItem value="Fixo">R$</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Valor Taxa</Label>
-                <Input 
-                  type="number"
-                  step="0.01"
-                  value={formData.valor_taxa}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Taxa</Label>
+                <Input type="number" step="0.01" value={formData.valor_taxa}
                   onChange={e => setFormData({...formData, valor_taxa: parseFloat(e.target.value) || 0})}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
               </div>
-
-              <div>
-                <Label className="text-gray-700 dark:text-gray-300">Parcelas Máx</Label>
-                <Input 
-                  type="number"
-                  value={formData.parcelas_max}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Parcelas Máx</Label>
+                <Input type="number" value={formData.parcelas_max}
                   onChange={e => setFormData({...formData, parcelas_max: parseInt(e.target.value) || 1})}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
               </div>
             </div>
-
-            <div>
-              <Label className="text-gray-700 dark:text-gray-300">Prazo Recebimento (dias)</Label>
-              <Input 
-                type="number"
-                value={formData.prazo_recebimento_dias}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Prazo Recebimento (dias)</Label>
+              <Input type="number" value={formData.prazo_recebimento_dias}
                 onChange={e => setFormData({...formData, prazo_recebimento_dias: parseInt(e.target.value) || 0})}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-              />
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="dark:bg-gray-700 dark:border-gray-600">
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} className="bg-gray-700 hover:bg-gray-600 dark:bg-gray-600">
+          <DialogFooter className="gap-2 pt-1">
+            <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">Cancelar</Button>
+            <Button size="sm" onClick={handleSave}
+              className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>
