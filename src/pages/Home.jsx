@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
@@ -10,11 +10,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS } from '@/components/home/quickActions';
 import PersonalizarHomeDialog from '@/components/home/PersonalizarHomeDialog';
+import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
 
 const STORAGE_KEY = 'home_quick_actions';
 
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
   const [quickActionIds, setQuickActionIds] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -30,11 +32,46 @@ export default function HomePage() {
     pedidosPendentes: 0
   });
 
+  // Resolve permissões do usuário atual
+  const permissoes = useMemo(() => {
+    if (!currentUser) return null;
+    if (currentUser.role === 'admin') return null; // admin tem tudo
+    return resolverPermissoes(perfilDeAcesso, currentUser?.override_permissoes);
+  }, [currentUser, perfilDeAcesso]);
+
+  // IDs dos atalhos que o usuário tem permissão de ver
+  const allowedActionIds = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === 'admin') return ALL_QUICK_ACTIONS.map(a => a.id);
+    if (!permissoes) return ALL_QUICK_ACTIONS.map(a => a.id);
+    return ALL_QUICK_ACTIONS
+      .filter(a => !a.permissaoCheck || a.permissaoCheck(permissoes))
+      .map(a => a.id);
+  }, [currentUser, permissoes]);
+
+  // Pode ver resumo de vendas: admin ou quem tem dashboard.acesso ou vendas.acesso
+  const podeVerResumoVendas = useMemo(() => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin') return true;
+    if (!permissoes) return true;
+    return !!(permissoes?.dashboard?.acesso || permissoes?.vendas?.acesso);
+  }, [currentUser, permissoes]);
+
   useEffect(() => {
     const loadUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+        // Carregar perfil de acesso vinculado
+        if (user?.perfil_acesso_id) {
+          try {
+            const perfis = await base44.entities.PerfilDeAcesso.list();
+            const encontrado = perfis.find(p => p.id === user.perfil_acesso_id);
+            if (encontrado) setPerfilDeAcesso(encontrado);
+          } catch (e) {
+            console.warn("Perfil de acesso não encontrado:", e);
+          }
+        }
         await loadKPIs();
       } catch (error) {
         console.error("Erro ao carregar usuário:", error);
