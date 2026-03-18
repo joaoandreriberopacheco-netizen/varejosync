@@ -1,14 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Percent, Edit, Trash2, PlusCircle, AlertCircle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
@@ -17,250 +13,163 @@ export default function PoliticasDescontoManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPolitica, setSelectedPolitica] = useState(null);
   const [formData, setFormData] = useState({
-    perfil: 'Vendedor Junior',
-    desconto_maximo_percentual: 0,
-    requer_aprovacao_acima: 0,
-    pode_aprovar_descontos: false,
-    observacoes: '',
-    ativo: true
+    perfil: 'Vendedor Junior', desconto_maximo_percentual: 0,
+    requer_aprovacao_acima: 0, pode_aprovar_descontos: false,
+    observacoes: '', ativo: true
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadPoliticas();
-  }, []);
+  useEffect(() => { loadPoliticas(); }, []);
+  const loadPoliticas = async () => { setPoliticas(await base44.entities.PoliticasDesconto.list()); };
 
-  const loadPoliticas = async () => {
-    const data = await base44.entities.PoliticasDesconto.list();
-    setPoliticas(data);
-  };
-
-  const handleEdit = (politica) => {
-    setSelectedPolitica(politica);
-    setFormData(politica);
-    setIsDialogOpen(true);
-  };
-
+  const handleEdit = (p) => { setSelectedPolitica(p); setFormData(p); setIsDialogOpen(true); };
   const handleAddNew = () => {
     setSelectedPolitica(null);
-    setFormData({
-      perfil: 'Vendedor Junior',
-      desconto_maximo_percentual: 0,
-      requer_aprovacao_acima: 0,
-      pode_aprovar_descontos: false,
-      observacoes: '',
-      ativo: true
-    });
+    setFormData({ perfil: 'Vendedor Junior', desconto_maximo_percentual: 0, requer_aprovacao_acima: 0, pode_aprovar_descontos: false, observacoes: '', ativo: true });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (politica) => {
-    if (!confirm(`Excluir política de "${politica.perfil}"?`)) return;
-    
-    try {
-      await base44.entities.PoliticasDesconto.delete(politica.id);
-      toast({
-        title: "Política excluída!",
-        className: "bg-red-100 text-red-800"
-      });
-      loadPoliticas();
-    } catch (error) {
-      toast({
-        title: "Erro ao excluir",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+  const handleDelete = async (p) => {
+    if (!confirm(`Excluir política de "${p.perfil}"?`)) return;
+    await base44.entities.PoliticasDesconto.delete(p.id);
+    toast({ title: "Política excluída!", className: "bg-white dark:bg-gray-800" });
+    loadPoliticas();
   };
 
   const handleSave = async () => {
-    try {
-      if (selectedPolitica) {
-        await base44.entities.PoliticasDesconto.update(selectedPolitica.id, formData);
-      } else {
-        await base44.entities.PoliticasDesconto.create(formData);
-      }
-
-      toast({
-        title: "Política salva!",
-        className: "bg-emerald-100 text-emerald-800"
-      });
-
-      loadPoliticas();
-      setIsDialogOpen(false);
-    } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive"
-      });
+    if (selectedPolitica) {
+      await base44.entities.PoliticasDesconto.update(selectedPolitica.id, formData);
+    } else {
+      await base44.entities.PoliticasDesconto.create(formData);
     }
+    toast({ title: "Política salva!", className: "bg-white dark:bg-gray-800" });
+    loadPoliticas(); setIsDialogOpen(false);
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
         <div>
-          <h3 className="text-base font-normal text-gray-800 dark:text-gray-200">Políticas de Desconto</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Configure limites de desconto por perfil de usuário</p>
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            <Percent className="w-4 h-4 text-gray-400" /> Políticas de Desconto
+          </h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Configure limites de desconto por perfil de usuário</p>
         </div>
-        <Button onClick={handleAddNew} className="gap-2 bg-gray-700 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 text-white">
-          <PlusCircle className="w-4 h-4" /> Adicionar
+        <Button onClick={handleAddNew} size="sm"
+          className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-1.5 h-8 px-3 text-xs">
+          <PlusCircle className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Adicionar</span>
         </Button>
       </div>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-        <div className="flex gap-3">
-          <AlertCircle className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-1">Controle de descontos por perfil</h4>
-            <p className="text-sm text-gray-700">
-              Descontos acima do limite definido exigirão aprovação de gerente/admin.
-            </p>
-          </div>
-        </div>
+      {/* Info */}
+      <div className="flex gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800/60">
+        <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          Descontos acima do limite definido exigirão aprovação de gerente/admin.
+        </p>
       </div>
 
       {politicas.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <Percent className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-          <p className="text-gray-500 mb-4">Nenhuma política cadastrada</p>
-          <Button onClick={handleAddNew} className="bg-gray-600 hover:bg-gray-700">
-            Criar Primeira Política
+        <div className="text-center py-12 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+          <Percent className="w-10 h-10 mx-auto mb-3 text-gray-200 dark:text-gray-700" />
+          <p className="text-sm text-gray-400 mb-4">Nenhuma política cadastrada</p>
+          <Button onClick={handleAddNew} size="sm" className="bg-gray-800 text-white gap-1.5">
+            <PlusCircle className="w-3.5 h-3.5" /> Criar Primeira Política
           </Button>
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Perfil</TableHead>
-              <TableHead>Desconto Máximo</TableHead>
-              <TableHead>Requer Aprovação Acima</TableHead>
-              <TableHead>Pode Aprovar</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {politicas.map(politica => (
-              <TableRow key={politica.id}>
-                <TableCell className="font-medium">{politica.perfil}</TableCell>
-                <TableCell>
-                  <Badge className="bg-gray-100 text-gray-800">
-                    {politica.desconto_maximo_percentual}%
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className="bg-gray-100 text-gray-800">
-                    {politica.requer_aprovacao_acima}%
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {politica.pode_aprovar_descontos ? '✓ Sim' : '✗ Não'}
-                </TableCell>
-                <TableCell>
-                  {politica.ativo ? '✓ Ativa' : '✗ Inativa'}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex gap-1 justify-end">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(politica)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(politica)} className="text-gray-600 hover:text-gray-800">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="space-y-2">
+          {politicas.map(p => (
+            <div key={p.id} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-800 shadow-sm">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{p.perfil}</span>
+                  {!p.ativo && <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">inativa</span>}
+                  {p.pode_aprovar_descontos && <span className="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">pode aprovar</span>}
+                </div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 flex flex-wrap gap-3">
+                  <span>Máx. {p.desconto_maximo_percentual}%</span>
+                  <span>· Aprova acima de {p.requer_aprovacao_acima}%</span>
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => handleEdit(p)}
+                  className="h-7 w-7 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(p)}
+                  className="h-7 w-7 text-gray-400 hover:text-red-500">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <Percent className="w-4 h-4 text-gray-400" />
               {selectedPolitica ? 'Editar Política' : 'Nova Política de Desconto'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>Perfil *</Label>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Perfil *</Label>
               <Select value={formData.perfil} onValueChange={v => setFormData({ ...formData, perfil: v })}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Gerente">Gerente</SelectItem>
-                  <SelectItem value="Vendedor Junior">Vendedor Junior</SelectItem>
-                  <SelectItem value="Estoquista">Estoquista</SelectItem>
-                  <SelectItem value="Financeiro">Financeiro</SelectItem>
+                <SelectContent className="dark:bg-gray-800">
+                  {['Admin','Gerente','Vendedor Junior','Estoquista','Financeiro'].map(v => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-
-            <div>
-              <Label>Desconto Máximo Permitido (%)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={formData.desconto_maximo_percentual}
-                onChange={e => setFormData({ ...formData, desconto_maximo_percentual: parseFloat(e.target.value) || 0 })}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Desconto Máximo (%)</Label>
+                <Input type="number" step="0.1" value={formData.desconto_maximo_percentual}
+                  onChange={e => setFormData({ ...formData, desconto_maximo_percentual: parseFloat(e.target.value) || 0 })}
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Aprovação Acima (%)</Label>
+                <Input type="number" step="0.1" value={formData.requer_aprovacao_acima}
+                  onChange={e => setFormData({ ...formData, requer_aprovacao_acima: parseFloat(e.target.value) || 0 })}
+                  className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+              </div>
             </div>
-
-            <div>
-              <Label>Requer Aprovação Acima de (%)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={formData.requer_aprovacao_acima}
-                onChange={e => setFormData({ ...formData, requer_aprovacao_acima: parseFloat(e.target.value) || 0 })}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Descontos entre este valor e o máximo exigem aprovação
-              </p>
-            </div>
-
-            <div>
-              <Label>Observações</Label>
-              <Input
-                value={formData.observacoes}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Observações</Label>
+              <Input value={formData.observacoes}
                 onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
                 placeholder="Ex: Política padrão para vendedores..."
-              />
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
             </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.pode_aprovar_descontos}
-                  onChange={e => setFormData({ ...formData, pode_aprovar_descontos: e.target.checked })}
-                  className="w-4 h-4 accent-gray-600"
-                />
-                <Label>Pode aprovar descontos</Label>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.ativo}
-                  onChange={e => setFormData({ ...formData, ativo: e.target.checked })}
-                  className="w-4 h-4 accent-gray-600"
-                />
-                <Label>Política ativa</Label>
-              </div>
+            <div className="space-y-2 pt-1">
+              {[
+                { key: 'pode_aprovar_descontos', label: 'Pode aprovar descontos de outros' },
+                { key: 'ativo', label: 'Política ativa' },
+              ].map(({ key, label }) => (
+                <div key={key} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800">
+                  <input type="checkbox" checked={formData[key]}
+                    onChange={e => setFormData({ ...formData, [key]: e.target.checked })}
+                    className="w-4 h-4 accent-gray-700" />
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-200">{label}</p>
+                </div>
+              ))}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} className="bg-gray-600 hover:bg-gray-700">
+          <DialogFooter className="gap-2 pt-1">
+            <Button variant="ghost" size="sm" onClick={() => setIsDialogOpen(false)} className="h-8 text-xs">Cancelar</Button>
+            <Button size="sm" onClick={handleSave}
+              className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white h-8 text-xs">
               Salvar
             </Button>
           </DialogFooter>

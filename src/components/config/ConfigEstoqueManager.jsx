@@ -1,165 +1,105 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Package } from 'lucide-react';
+import { Package, Save } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+
+const CheckRow = ({ label, desc, checked, onChange }) => (
+  <div className="flex items-center justify-between gap-4 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/60">
+    <div>
+      <p className="text-xs font-medium text-gray-700 dark:text-gray-200">{label}</p>
+      {desc && <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{desc}</p>}
+    </div>
+    <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
+      className="w-4 h-4 accent-gray-700 flex-shrink-0" />
+  </div>
+);
 
 export default function ConfigEstoqueManager() {
   const [config, setConfig] = useState({
-    alerta_estoque_minimo: true,
-    alerta_validade_proxima: true,
-    permitir_venda_estoque_negativo: false,
-    contagem_cega_recepcao: true,
-    dias_alerta_validade: 30,
-    dias_reposicao_automatica: 7
+    alerta_estoque_minimo: true, alerta_validade_proxima: true,
+    permitir_venda_estoque_negativo: false, contagem_cega_recepcao: true,
+    dias_alerta_validade: 30, dias_reposicao_automatica: 7
   });
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    loadConfig();
+    base44.entities.ConfiguracoesEstoque.list().then(data => {
+      if (data?.length > 0) setConfig(data[0]);
+    });
   }, []);
-
-  const loadConfig = async () => {
-    try {
-      const data = await base44.entities.ConfiguracoesEstoque.list();
-      if (data.length > 0) {
-        setConfig(data[0]);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar configurações:", error);
-    }
-  };
 
   const handleSave = async () => {
     setIsSaving(true);
-    try {
-      const allConfigs = await base44.entities.ConfiguracoesEstoque.list();
-      
-      if (allConfigs.length > 0) {
-        await base44.entities.ConfiguracoesEstoque.update(allConfigs[0].id, config);
-      } else {
-        await base44.entities.ConfiguracoesEstoque.create(config);
-      }
-
-      toast({
-        title: "✓ Configurações salvas!",
-        className: "bg-emerald-100 text-emerald-800"
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive"
-      });
+    const all = await base44.entities.ConfiguracoesEstoque.list();
+    if (all?.length > 0) {
+      await base44.entities.ConfiguracoesEstoque.update(all[0].id, config);
+    } else {
+      await base44.entities.ConfiguracoesEstoque.create(config);
     }
+    toast({ title: "✓ Configurações salvas!", className: "bg-white dark:bg-gray-800" });
     setIsSaving(false);
   };
 
+  const set = (key, val) => setConfig(c => ({ ...c, [key]: val }));
+
   return (
-    <Card className="font-glacial border-0 shadow-sm bg-white dark:bg-gray-800">
-      <CardHeader className="pb-2 border-b border-emerald-50 bg-emerald-50/30">
-        <CardTitle className="text-base md:text-lg font-medium text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
-          <Package className="w-5 h-5 text-emerald-600" />
-          Configurações de Estoque
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="space-y-6">
-          <div className="border-b pb-4">
-            <h3 className="font-semibold text-gray-700 mb-3">Alertas de Estoque</h3>
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Label className="text-sm md:text-base text-gray-700 dark:text-gray-200">Alerta de estoque mínimo</Label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">Notificar quando produtos atingirem estoque mínimo</p>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={config.alerta_estoque_minimo}
-                  onChange={e => setConfig({...config, alerta_estoque_minimo: e.target.checked})}
-                  className="w-5 h-5 text-emerald-600 accent-emerald-600 cursor-pointer mt-1" 
-                />
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Label className="text-sm md:text-base text-gray-700 dark:text-gray-200">Alerta de validade próxima</Label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">Notificar quando produtos estiverem próximos do vencimento</p>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={config.alerta_validade_proxima}
-                  onChange={e => setConfig({...config, alerta_validade_proxima: e.target.checked})}
-                  className="w-5 h-5 text-emerald-600 accent-emerald-600 cursor-pointer mt-1" 
-                />
-              </div>
-            </div>
-          </div>
+    <div className="space-y-4 mt-4">
+      {/* Header */}
+      <div className="pb-3 border-b border-gray-100 dark:border-gray-700">
+        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+          <Package className="w-4 h-4 text-gray-400" /> Configurações de Estoque
+        </h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Alertas, controles e reposição</p>
+      </div>
 
-          <div className="border-b pb-4">
-            <h3 className="font-semibold text-gray-700 mb-3">Controles</h3>
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Label className="text-sm md:text-base text-gray-700 dark:text-gray-200">Permitir venda com estoque negativo</Label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">Sistema permitirá vendas mesmo sem estoque disponível</p>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={config.permitir_venda_estoque_negativo}
-                  onChange={e => setConfig({...config, permitir_venda_estoque_negativo: e.target.checked})}
-                  className="w-5 h-5 text-emerald-600 accent-emerald-600 cursor-pointer mt-1" 
-                />
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Label className="text-sm md:text-base text-gray-700 dark:text-gray-200">Contagem cega na recepção</Label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">Gateway de recepção não mostra quantidade esperada</p>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={config.contagem_cega_recepcao}
-                  onChange={e => setConfig({...config, contagem_cega_recepcao: e.target.checked})}
-                  className="w-5 h-5 text-emerald-600 accent-emerald-600 cursor-pointer mt-1" 
-                />
-              </div>
-            </div>
-          </div>
+      {/* Alertas */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide px-1">Alertas</p>
+        <CheckRow label="Alerta de estoque mínimo" desc="Notificar quando produtos atingirem estoque mínimo"
+          checked={config.alerta_estoque_minimo} onChange={v => set('alerta_estoque_minimo', v)} />
+        <CheckRow label="Alerta de validade próxima" desc="Notificar quando produtos estiverem perto do vencimento"
+          checked={config.alerta_validade_proxima} onChange={v => set('alerta_validade_proxima', v)} />
+      </div>
 
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-3">Dias de antecedência para alertas</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Alerta de validade (dias)</Label>
-                <Input 
-                  type="number" 
-                  value={config.dias_alerta_validade}
-                  onChange={e => setConfig({...config, dias_alerta_validade: parseInt(e.target.value) || 30})}
-                />
-              </div>
-              <div>
-                <Label>Reposição automática (dias)</Label>
-                <Input 
-                  type="number" 
-                  value={config.dias_reposicao_automatica}
-                  onChange={e => setConfig({...config, dias_reposicao_automatica: parseInt(e.target.value) || 7})}
-                />
-              </div>
-            </div>
-          </div>
+      {/* Controles */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide px-1">Controles</p>
+        <CheckRow label="Permitir venda com estoque negativo" desc="Sistema permitirá vendas mesmo sem estoque disponível"
+          checked={config.permitir_venda_estoque_negativo} onChange={v => set('permitir_venda_estoque_negativo', v)} />
+        <CheckRow label="Contagem cega na recepção" desc="Não mostra quantidade esperada durante conferência"
+          checked={config.contagem_cega_recepcao} onChange={v => set('contagem_cega_recepcao', v)} />
+      </div>
 
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="bg-emerald-600 hover:bg-emerald-700 w-full"
-          >
-            {isSaving ? 'Salvando...' : 'Salvar Configurações'}
-          </Button>
+      {/* Dias */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide px-1">Antecedência para Alertas</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Alerta de validade (dias)</Label>
+            <Input type="number" value={config.dias_alerta_validade}
+              onChange={e => set('dias_alerta_validade', parseInt(e.target.value) || 30)}
+              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Reposição automática (dias)</Label>
+            <Input type="number" value={config.dias_reposicao_automatica}
+              onChange={e => set('dias_reposicao_automatica', parseInt(e.target.value) || 7)}
+              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm" />
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="flex justify-end pt-2">
+        <Button onClick={handleSave} disabled={isSaving}
+          className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-2 h-9 text-sm">
+          <Save className="w-4 h-4" />
+          {isSaving ? 'Salvando...' : 'Salvar'}
+        </Button>
+      </div>
+    </div>
   );
 }
