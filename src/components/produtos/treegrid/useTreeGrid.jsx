@@ -212,15 +212,17 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
         rows.push(...flattenTree(finalNode.children, expandedKeys, nodeKey, rowLevel));
       }
       for (const sku of finalNode.skus) {
+        const custo = calcCusto(sku);
         rows.push({
           type:    'sku',
           key:     sku.id,
           produto: sku,
           level:   rowLevel + 1,
-          lastro:  (sku.preco_custo_calculado || 0) * (sku.estoque_atual || 0),
-          margem:  sku.preco_venda_padrao > 0
-            ? ((sku.preco_venda_padrao - (sku.preco_custo_calculado || 0)) / sku.preco_venda_padrao) * 100
+          lastro:  custo * (sku.estoque_atual || 0),
+          margem:  sku.preco_venda_padrao > 0 && custo > 0
+            ? ((sku.preco_venda_padrao - custo) / sku.preco_venda_padrao) * 100
             : 0,
+          markup:  calcMarkup(sku),
         });
       }
     }
