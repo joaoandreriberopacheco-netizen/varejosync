@@ -77,7 +77,7 @@ function skuCellValue(colId, produto, margem, lastro) {
     case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'text-green-600 dark:text-green-400' : margem > 0 ? 'text-gray-500 dark:text-gray-400' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
     case 'preco_custo':          return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.preco_custo_calculado ? `R$ ${fmtR(produto.preco_custo_calculado)}` : '—'}</span>;
     case 'valor_compra':         return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.valor_compra ? `R$ ${fmtR(produto.valor_compra)}` : '—'}</span>;
-    case 'markup':               return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{produto.preco_venda_percentual ? `${fmtN(produto.preco_venda_percentual)}%` : '—'}</span>;
+    case 'markup':               return <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{lastro >= 0 && markup > 0 ? `${fmtN(markup)}%` : '—'}</span>;
     case 'inventario_valorizado':return <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{lastro > 0 ? fmtR(lastro) : '—'}</span>;
     case 'estoque_atual':        return <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">{fmtN(produto.estoque_atual)} {produto.unidade_principal || ''}</span>;
     case 'estoque_minimo':       return <span className="text-xs text-gray-400 tabular-nums">{fmtN(produto.estoque_minimo)}</span>;
