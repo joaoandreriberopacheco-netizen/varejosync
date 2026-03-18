@@ -264,6 +264,14 @@ function TelaCarrinho({ itens, onQtd, onRemove, onVoltar, onGerar, formatoCupom,
       {/* Rodapé com total e ações */}
       {itens.length > 0 && (
         <div className="flex-shrink-0 px-4 pb-6 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
+          {/* Venda Perdida */}
+          <button
+            onClick={onVendaPerdida}
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-xl transition-colors"
+          >
+            <AlertCircle className="w-3.5 h-3.5" />
+            Registrar Venda Perdida
+          </button>
           {/* Total */}
           <div className="flex items-baseline justify-between">
             <span className="text-sm text-gray-500 dark:text-gray-400">Total do orçamento</span>
