@@ -30,7 +30,7 @@ function SkuCard({ row, onEdit }) {
 
       {/* Nome + info */}
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug line-clamp-2 uppercase">
+        <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words whitespace-normal">
           {p.nome}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
