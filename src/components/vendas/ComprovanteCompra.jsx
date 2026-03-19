@@ -47,11 +47,11 @@ function CupomTermico({ pedido, dadosEmpresa }) {
             />
           </div>
         )}
-        <h2 style={{ fontSize: '14px', margin: '2px 0', fontWeight: '400', textTransform: 'uppercase', fontFamily: 'inherit' }}>
-          {dadosEmpresa?.razao_social || 'VAREJOSYNC'}
-        </h2>
-        {dadosEmpresa && (
-          <div style={{ fontSize: '9px', lineHeight: '1.4' }}>
+        <h2 style={{ fontSize: `${14 * SCALE_FACTOR}px`, margin: '2px 0', fontWeight: '400', textTransform: 'uppercase', fontFamily: 'inherit' }}>
+           {dadosEmpresa?.razao_social || 'VAREJOSYNC'}
+         </h2>
+         {dadosEmpresa && (
+           <div style={{ fontSize: `${9 * SCALE_FACTOR}px`, lineHeight: '1.4' }}>
             {dadosEmpresa.endereco && (
               <p style={{ margin: 0 }}>{dadosEmpresa.endereco}{dadosEmpresa.numero ? ', ' + dadosEmpresa.numero : ''}</p>
             )}
