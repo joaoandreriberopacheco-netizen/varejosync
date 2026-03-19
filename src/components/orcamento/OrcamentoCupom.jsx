@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { ArrowLeft, Printer, Share2 } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -18,9 +18,9 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
         padding: '6mm 4mm',
         background: '#fff',
         lineHeight: '1.5',
+        boxSizing: 'border-box',
       }}
     >
-      {/* Cabeçalho */}
       {empresa?.nome && (
         <div style={{ textAlign: 'center', marginBottom: '4mm', borderBottom: '1px dashed #999', paddingBottom: '4mm' }}>
           <div style={{ fontWeight: 'bold', fontSize: '13px', letterSpacing: '0.5px' }}>{empresa.nome}</div>
@@ -38,7 +38,6 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
       {clienteNome && <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
 
       <div style={{ borderTop: '1px dashed #999', borderBottom: '1px dashed #999', paddingTop: '3mm', paddingBottom: '3mm', marginBottom: '3mm' }}>
-        {/* Cabeçalho tabela */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#555', marginBottom: '1.5mm' }}>
           <span style={{ flex: 3 }}>ITEM</span>
           <span style={{ flex: 1, textAlign: 'center' }}>QTD</span>
@@ -84,9 +83,9 @@ function CupomA4({ itens, total, nomeTabela, clienteNome, empresa }) {
         padding: '20mm 18mm',
         background: '#fff',
         lineHeight: '1.6',
+        boxSizing: 'border-box',
       }}
     >
-      {/* Cabeçalho */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10mm', borderBottom: '2px solid #111', paddingBottom: '6mm' }}>
         <div>
           {empresa?.nome && <div style={{ fontSize: '20px', fontWeight: '700', letterSpacing: '-0.5px' }}>{empresa.nome}</div>}
@@ -108,7 +107,6 @@ function CupomA4({ itens, total, nomeTabela, clienteNome, empresa }) {
         </div>
       )}
 
-      {/* Tabela de itens */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8mm' }}>
         <thead>
           <tr style={{ borderBottom: '1.5px solid #ddd' }}>
@@ -132,7 +130,6 @@ function CupomA4({ itens, total, nomeTabela, clienteNome, empresa }) {
         </tbody>
       </table>
 
-      {/* Total */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12mm' }}>
         <div style={{ borderTop: '2px solid #111', paddingTop: '4mm', minWidth: '80mm', textAlign: 'right' }}>
           <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Geral</div>
@@ -150,50 +147,128 @@ function CupomA4({ itens, total, nomeTabela, clienteNome, empresa }) {
 
 // ── Componente principal ────────────────────────────────────────────────────
 export default function OrcamentoCupom({ itens, total, formato, nomeTabela, clienteNome, empresa, onVoltar, onClose }) {
+  const previewRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  // Calcula scale para caber na tela
+  useEffect(() => {
+    const calcScale = () => {
+      if (!previewRef.current) return;
+      const container = previewRef.current.parentElement;
+      if (!container) return;
+      const containerW = container.clientWidth - 32; // padding lateral
+      // largura do documento em px (96dpi): 80mm≈302px, 210mm≈794px
+      const docPx = formato === '80mm' ? 302 : 794;
+      const s = Math.min(1, containerW / docPx);
+      setScale(s);
+    };
+    calcScale();
+    window.addEventListener('resize', calcScale);
+    return () => window.removeEventListener('resize', calcScale);
+  }, [formato]);
+
   const handlePrint = () => {
     const el = document.getElementById('cupom-print');
     if (!el) return;
-    const win = window.open('', '_blank', 'width=800,height=600');
-    win.document.write(`
-      <html><head>
-        <title>Orçamento</title>
-        <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>
-          @media print { body { margin:0; } }
-          body { margin:0; background:#f5f5f5; display:flex; justify-content:center; padding: 20px; }
-        </style>
-      </head><body>
-        ${el.outerHTML}
-        <script>window.onload=()=>{window.print();}<\/script>
-      </body></html>
-    `);
-    win.document.close();
+
+    const pageSize = formato === '80mm'
+      ? '@page { size: 80mm auto; margin: 0; }'
+      : '@page { size: A4; margin: 10mm 15mm; }';
+
+    const fonts = `<link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">`;
+
+    const html = `<!DOCTYPE html><html><head>
+      <meta charset="UTF-8">
+      ${fonts}
+      <style>
+        ${pageSize}
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #fff; }
+        @media print {
+          html, body { width: 100%; height: auto; }
+        }
+      </style>
+    </head><body>${el.outerHTML}</body></html>`;
+
+    // Tenta abrir popup; se bloqueado, usa iframe oculto
+    const popup = window.open('', '_blank');
+    if (popup && !popup.closed) {
+      popup.document.open();
+      popup.document.write(html);
+      popup.document.close();
+      popup.addEventListener('load', () => {
+        popup.focus();
+        popup.print();
+      });
+    } else {
+      // Fallback: iframe oculto para não bloquear
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;';
+      document.body.appendChild(iframe);
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(html);
+      iframe.contentDocument.close();
+      iframe.contentWindow.addEventListener('load', () => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 2000);
+      });
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-100 dark:bg-gray-950">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-        <button onClick={onVoltar} className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
-          <ArrowLeft className="w-4 h-4" />
-          Voltar
-        </button>
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 font-glacial">Prévia do Orçamento</span>
-        <Button onClick={handlePrint} size="sm" className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-gray-300 dark:text-gray-900 text-white h-8 text-xs gap-1.5 rounded-lg px-3">
-          <Printer className="w-3.5 h-3.5" />
-          Imprimir
-        </Button>
-      </div>
+    <>
+      {/* Estilos de impressão injetados na página atual */}
+      <style>{`
+        @media print {
+          body > *:not(#orcamento-print-root) { display: none !important; }
+          #orcamento-print-root { position: fixed; inset: 0; display: block !important; }
+        }
+      `}</style>
 
-      {/* Preview */}
-      <div className="flex-1 overflow-auto flex justify-center py-6 px-4">
-        <div className="shadow-xl rounded-sm overflow-hidden">
-          {formato === '80mm'
-            ? <Cupom80mm itens={itens} total={total} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
-            : <CupomA4 itens={itens} total={total} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
-          }
+      <div id="orcamento-print-root" className="fixed inset-0 z-[60] flex flex-col bg-gray-100 dark:bg-gray-950">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+          <button
+            onClick={onVoltar}
+            className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 active:text-gray-800"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </button>
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 font-glacial">Prévia</span>
+          <Button
+            onClick={handlePrint}
+            size="sm"
+            className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-sm gap-1.5 rounded-2xl px-4"
+          >
+            <Printer className="w-4 h-4" />
+            Imprimir
+          </Button>
+        </div>
+
+        {/* Preview escalado */}
+        <div className="flex-1 overflow-auto flex justify-center py-6 px-4">
+          <div
+            style={{
+              transformOrigin: 'top center',
+              transform: `scale(${scale})`,
+              // Para não ocupar mais espaço que o escalado
+              marginBottom: `calc((${scale} - 1) * 100%)`,
+            }}
+          >
+            <div
+              ref={previewRef}
+              className="shadow-2xl rounded-sm overflow-hidden"
+            >
+              {formato === '80mm'
+                ? <Cupom80mm itens={itens} total={total} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
+                : <CupomA4 itens={itens} total={total} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
+              }
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
