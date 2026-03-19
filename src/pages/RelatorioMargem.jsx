@@ -442,10 +442,10 @@ export default function RelatorioMargemVendas() {
                     <ArrowUpDown className="w-3.5 md:w-4 h-3.5 md:h-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700 text-xs md:text-sm">
                   {[
                     { label: 'Produto', field: 'nome' },
-                    { label: 'Quantidade', field: 'quantidade_vendida' },
+                    { label: 'Qnt', field: 'quantidade_vendida' },
                     { label: 'Receita', field: 'total_recebido' },
                     { label: 'Lucro', field: 'lucro_total' },
                   ].map(opt => (
