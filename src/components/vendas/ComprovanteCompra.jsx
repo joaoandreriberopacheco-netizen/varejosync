@@ -80,33 +80,32 @@ CLIENTE: {(pedido.cliente_nome || 'AVULSO').substring(0, 30).toUpperCase()}
 
       <LinhaHifens />
 
-      <pre style={{ fontSize: '8px', margin: '1px 0', fontFamily: 'inherit' }}>
-NO | DESCRIÇÃO        | QTD | UN | PREÇO | TOTAL
-      </pre>
-      <LinhaHifens />
+      <pre style={{ fontSize: '7px', margin: '2px 0', fontFamily: 'inherit', lineHeight: '1.2' }}>
+      NO DESC         QTD UN PREÇO TOTAL
+       </pre>
+       <LinhaHifens />
 
-      {itensOrdenados.map((item, idx) => {
-        const nomeCompleto = (item.produto_nome || '').toUpperCase();
-        const qtd = parseFloat(item.quantidade).toFixed(0);
-        const preco = fmtV(item.preco_unitario_praticado);
-        const total = fmtV(item.total);
-        const maxDesc = 16;
-        let linhas = [];
-        let resto = nomeCompleto;
-        while (resto.length > 0) {
-          if (resto.length <= maxDesc) { linhas.push(resto); break; }
-          let bp = resto.lastIndexOf(' ', maxDesc);
-          if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
-          else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
-        }
-        return (
-          <pre key={idx} style={{ marginBottom: '3px', fontSize: '8px', fontFamily: 'inherit' }}>
-{String(idx + 1).padStart(2, ' ')} | {linhas[0].padEnd(maxDesc, ' ')}
-{linhas.slice(1).map(l => `   | ${l.padEnd(maxDesc, ' ')}`).join('\n')}
-{`   | ${' '.repeat(maxDesc)} | ${qtd.padStart(3, ' ')} | UN | ${preco.padStart(5, ' ')} | ${total.padStart(5, ' ')}`}
-          </pre>
-        );
-      })}
+       {itensOrdenados.map((item, idx) => {
+         const nomeCompleto = (item.produto_nome || '').toUpperCase();
+         const qtd = parseFloat(item.quantidade).toFixed(0);
+         const preco = fmtV(item.preco_unitario_praticado);
+         const total = fmtV(item.total);
+         const maxDesc = 18;
+         let linhas = [];
+         let resto = nomeCompleto;
+         while (resto.length > 0) {
+           if (resto.length <= maxDesc) { linhas.push(resto); break; }
+           let bp = resto.lastIndexOf(' ', maxDesc);
+           if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
+           else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
+         }
+         return (
+           <pre key={idx} style={{ marginBottom: '2px', fontSize: '7px', fontFamily: 'inherit', lineHeight: '1.2' }}>
+      {String(idx + 1).padStart(2, ' ')} {linhas[0].padEnd(maxDesc, ' ')} {qtd.padStart(3, ' ')} UN {preco.padStart(5, ' ')} {total.padStart(5, ' ')}
+      {linhas.slice(1).map(l => `    ${l.padEnd(maxDesc, ' ')}`).join('\n')}
+           </pre>
+         );
+       })}
 
       <LinhaHifens />
 
