@@ -98,9 +98,26 @@ export default function RecomecarDoZero() {
     setIsAuthOpen(true);
   };
 
-  const deleteAllRecords = async (entityId) => {
-    const response = await zerarEntidade({ entityId });
-    return response.data?.deleted || 0;
+  const deleteAllRecords = async (entityId, onProgressUpdate) => {
+    try {
+      const response = await zerarEntidade({ entityId });
+      const deleted = response.data?.deleted || 0;
+      
+      // Simula progresso de exclusão em lotes de 25
+      if (onProgressUpdate) {
+        const batchSize = 25;
+        for (let i = 0; i < deleted; i += batchSize) {
+          const deleted_so_far = Math.min(i + batchSize, deleted);
+          onProgressUpdate(deleted_so_far, deleted);
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      return deleted;
+    } catch (error) {
+      console.error('Erro na exclusão:', error);
+      throw error;
+    }
   };
 
   const handleAuthSuccess = async () => {
