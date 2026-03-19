@@ -1564,7 +1564,6 @@ export default function ProdutosPage() {
           </div>
         </div>
       </div>
-      </div>
 
       {/* Tela completa para o formulário */}
       {isFormOpen && (
