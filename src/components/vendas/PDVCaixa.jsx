@@ -302,10 +302,11 @@ export default function PDVCaixa() {
   useEffect(() => {
     if (isDialogOpen) {
       const refMap = [inputRefs.dinheiro, inputRefs.pix, inputRefs.debito, inputRefs.credito];
+      // Aguarda 1.5s após a transição para focar no input
       setTimeout(() => {
         refMap[formaPagamentoAtiva]?.current?.focus();
         refMap[formaPagamentoAtiva]?.current?.select();
-      }, 50);
+      }, 1500);
     }
   }, [formaPagamentoAtiva, isDialogOpen]);
 
