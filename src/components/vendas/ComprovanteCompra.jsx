@@ -94,9 +94,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
        <LinhaHifens />
 
-      <pre style={{ fontSize: '8px', margin: '2px 0', fontFamily: 'inherit', lineHeight: '1.2', fontWeight: 'bold' }}>
+      <pre style={{ fontSize: '8px', margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre' }}>
       NO | DESCRIÇÃO        | QTD | UN | PREÇO  | TOTAL
-       </pre>
+      </pre>
        <LinhaHifens />
 
        {itensOrdenados.map((item, idx) => {
@@ -114,23 +114,10 @@ function CupomTermico({ pedido, dadosEmpresa }) {
            else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
          }
          return (
-           <div key={idx} style={{ marginBottom: '1px', fontSize: '8px', fontFamily: 'inherit', lineHeight: '1.2', display: 'flex', gap: '2px' }}>
-             <span style={{ width: '20px', textAlign: 'right', flexShrink: 0 }}>{String(idx + 1).padStart(2, ' ')}</span>
-             <span style={{ width: '2px', flexShrink: 0 }}>|</span>
-             <div style={{ flex: 1, minWidth: 0 }}>
-               {linhas.map((l, li) => (
-                 <div key={li}>{l}</div>
-               ))}
-             </div>
-             <span style={{ width: '2px', flexShrink: 0 }}>|</span>
-             <span style={{ width: '24px', textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
-             <span style={{ width: '2px', flexShrink: 0 }}>|</span>
-             <span style={{ width: '18px', textAlign: 'center', flexShrink: 0 }}>UN</span>
-             <span style={{ width: '2px', flexShrink: 0 }}>|</span>
-             <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{preco}</span>
-             <span style={{ width: '2px', flexShrink: 0 }}>|</span>
-             <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{total}</span>
-           </div>
+           <pre key={idx} style={{ fontSize: '8px', margin: '1px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
+      {String(idx + 1).padStart(2, ' ')} | {linhas[0].padEnd(maxDesc, ' ')} | {qtd} | UN | {preco} | {total}
+      {linhas.slice(1).map((l, li) => `   | ${l.padEnd(maxDesc, ' ')}`).join('\n')}
+           </pre>
          );
        })}
 
