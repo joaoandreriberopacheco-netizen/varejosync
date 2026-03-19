@@ -94,15 +94,15 @@ function CupomTermico({ pedido, dadosEmpresa }) {
        <LinhaHifens />
 
       <pre style={{ fontSize: '8px', margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre' }}>
-      NO  DESCRIÇÃO          QTD  UN  PREÇO       TOTAL
+NO DESC              QTD UN PREÇO      TOTAL
       </pre>
        <LinhaHifens />
 
        {itensOrdenados.map((item, idx) => {
           const nomeCompleto = (item.produto_nome || '').toUpperCase();
-          const qtd = String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ');
-          const preco = `R$ ${fmtV(item.preco_unitario_praticado).padStart(6, ' ')}`;
-          const total = `R$ ${fmtV(item.total).padStart(6, ' ')}`;
+          const qtd = String(parseFloat(item.quantidade).toFixed(0)).padStart(2, ' ');
+          const preco = fmtV(item.preco_unitario_praticado).padStart(7, ' ');
+          const total = fmtV(item.total).padStart(7, ' ');
           const maxDesc = 20;
           let linhas = [];
           let resto = nomeCompleto;
@@ -113,9 +113,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
             else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
           }
           return (
-            <pre key={idx} style={{ fontSize: '8px', margin: '4px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
-       {String(idx + 1).padStart(2, ' ')}  {linhas[0].padEnd(maxDesc, ' ')} {qtd}  UN {preco}  {total}
-       {linhas.slice(1).map((l, li) => `       ${l.padEnd(maxDesc, ' ')}`).join('\n')}
+            <pre key={idx} style={{ fontSize: '8px', margin: '3px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
+{String(idx + 1).padStart(2, ' ')} {linhas[0].padEnd(20, ' ')} {qtd.padStart(3, ' ')} UN R$ {preco}  R$ {total}
+{linhas.slice(1).map((l) => `   ${l.padEnd(20, ' ')}`).join('\n')}
             </pre>
           );
         })}
