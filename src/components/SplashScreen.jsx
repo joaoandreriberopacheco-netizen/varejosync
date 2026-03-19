@@ -9,12 +9,27 @@ import P38Logo from '@/components/brand/P38Logo';
  */
 export default function SplashScreen({ onFinish, darkMode }) {
   const [phase, setPhase] = useState('in'); // 'in' | 'visible' | 'out'
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('visible'), 80);
-    const t2 = setTimeout(() => setPhase('out'), 5500);
-    const t3 = setTimeout(() => onFinish?.(), 6200);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t2 = setTimeout(() => setPhase('out'), 2000);
+    const t3 = setTimeout(() => onFinish?.(), 2800);
+    
+    // Anima a barra de progresso de 0 a 100% em 2 segundos
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + (100 / 40); // 40 frames em 2s
+        return next >= 100 ? 100 : next;
+      });
+    }, 50);
+    
+    return () => { 
+      clearTimeout(t1); 
+      clearTimeout(t2); 
+      clearTimeout(t3);
+      clearInterval(progressInterval);
+    };
   }, [onFinish]);
 
   const bg = darkMode ? '#000000' : '#ffffff';
