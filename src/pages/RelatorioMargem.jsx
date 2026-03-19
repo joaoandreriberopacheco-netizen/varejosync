@@ -683,11 +683,11 @@ export default function RelatorioMargemVendas() {
                     <div key={row.codigo_interno} className="p-3 bg-gray-50 dark:bg-gray-800/50">
                       <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 font-medium">{row.codigo_interno} • {row.nome}</p>
                       <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
-                        <div><p className="text-gray-500 dark:text-gray-400">Receita</p><p className="font-semibold text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</p></div>
-                        <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Margem: {formatPercent(row.margem_percentual)}</p>
+                         <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
+                         <div><p className="text-gray-500 dark:text-gray-400">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
+                         <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
+                       </div>
+                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Margem: {formatPercent(row.margem_percentual)}</p>
                     </div>
                   ))
                 )}
