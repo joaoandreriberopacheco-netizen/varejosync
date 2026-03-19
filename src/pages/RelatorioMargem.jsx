@@ -575,19 +575,32 @@ export default function RelatorioMargemVendas() {
                         LUCRO {sortField === 'lucro_total' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
                       <th 
-                        onClick={() => {
-                          if (sortField === 'margem_percentual') {
-                            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                          } else {
-                            setSortField('margem_percentual');
-                            setSortOrder('desc');
-                          }
-                        }}
-                        className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                       onClick={() => {
+                         if (sortField === 'markup_percentual') {
+                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                         } else {
+                           setSortField('markup_percentual');
+                           setSortOrder('desc');
+                         }
+                       }}
+                       className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
                       >
-                        MARGEM {sortField === 'margem_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
+                       MARKUP {sortField === 'markup_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                    </tr>
+                      <th 
+                       onClick={() => {
+                         if (sortField === 'margem_percentual') {
+                           setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                         } else {
+                           setSortField('margem_percentual');
+                           setSortOrder('desc');
+                         }
+                       }}
+                       className="text-center py-3 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-300"
+                      >
+                       MARGEM {sortField === 'margem_percentual' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      </tr>
                   </thead>
                   <tbody>
                     {groupByCategory ? (
