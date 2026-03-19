@@ -94,6 +94,28 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
 
         {!loading && maquininhas.length > 0 && (
           <>
+            {/* Parcelas — só para crédito */}
+            {modalidade === 'credito' && (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Parcelas</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setParcelas(p)}
+                      className={`w-10 h-9 rounded-xl text-sm font-semibold transition-colors ${
+                        parcelas === p
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {p}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Maquininhas */}
             <div className="space-y-1">
               <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Maquininha</p>
