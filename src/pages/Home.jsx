@@ -85,29 +85,7 @@ export default function HomePage() {
       }
     };
     loadUser();
-  }, []);
-
-  const loadKPIs = async () => {
-    try {
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      const [vendas, produtos, pedidos] = await Promise.all([
-        base44.entities.PedidoVenda.list(),
-        base44.entities.Produto.list(),
-        base44.entities.PedidoVenda.filter({ status: 'Aguardando Caixa' })
-      ]);
-      const vendasHoje = vendas.filter(v => new Date(v.created_date) >= hoje);
-      const produtosAlerta = produtos.filter(p => (p.estoque_atual || 0) <= (p.estoque_minimo || 0));
-      setKpis({
-        vendasHoje: vendasHoje.length,
-        valorVendasHoje: vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0),
-        estoqueAlerta: produtosAlerta.length,
-        pedidosPendentes: pedidos.length
-      });
-    } catch (error) {
-      console.error('Erro ao carregar KPIs:', error);
-    }
-  };
+  }, [loadKPIs]);
 
   const handleSaveActions = (ids) => {
     const limited = ids.slice(0, 6);
