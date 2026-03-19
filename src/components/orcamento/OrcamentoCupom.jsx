@@ -15,7 +15,7 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
         fontFamily: "'Ubuntu Sans Mono', 'Courier New', monospace",
         fontSize: '11px',
         color: '#111',
-        padding: '6mm 4mm',
+        padding: '6mm 2mm',
         background: '#fff',
         lineHeight: '1.5',
       }}
