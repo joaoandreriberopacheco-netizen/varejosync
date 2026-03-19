@@ -179,6 +179,11 @@ const AuthenticatedApp = () => {
           <ImportacaoProdutos />
         </LayoutWrapper>
       } />
+      <Route path="/EditorLayoutsTres" element={
+        <LayoutWrapper currentPageName="EditorLayoutsTres">
+          <EditorLayoutsTres />
+        </LayoutWrapper>
+      } />
 
       <Route path="*" element={<PageNotFound />} />
       </Routes>
