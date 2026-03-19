@@ -220,8 +220,12 @@ export default function ConfirmarPagamentoDialog({
         modalidade={seletorMaquininha || 'debito'}
         parcelas={seletorMaquininha === 'credito' ? parcelasCredito : 1}
         onSelect={(dados) => {
-          if (seletorMaquininha === 'debito') setMaquininhaDebito(dados);
-          else setMaquininhaCredito(dados);
+          if (seletorMaquininha === 'debito') {
+            setMaquininhaDebito(dados);
+          } else {
+            setMaquininhaCredito(dados);
+            if (dados.parcelas) setParcelasCredito(dados.parcelas);
+          }
           setSeletorMaquininha(null);
         }}
         onCancel={() => setSeletorMaquininha(null)}
