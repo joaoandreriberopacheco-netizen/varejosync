@@ -8,8 +8,8 @@ import LostSalesForm from '@/components/vendas/LostSalesForm';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// ── Card de produto estilo PDV (botão grande) ────────────────────────────────
-function ProdutoCard({ produto, preco, onAdd }) {
+// ── Linha de produto estilo "itens do pedido" ────────────────────────────────
+function ProdutoLinha({ produto, preco, qtdNoCarrinho, onAdd, onQtd }) {
   const estoque = produto.estoque_atual || 0;
   const minimo = produto.estoque_minimo || 0;
   const dotCls = !produto.ativo ? 'bg-gray-300'
@@ -17,37 +17,52 @@ function ProdutoCard({ produto, preco, onAdd }) {
     : estoque <= minimo ? 'bg-orange-400'
     : 'bg-green-500';
 
+  const handleClick = () => {
+    if (qtdNoCarrinho === 0) onAdd(produto, preco);
+  };
+
   return (
-    <button
-      onClick={() => onAdd(produto, preco)}
-      className="w-full flex items-center gap-3 px-4 py-3.5 bg-white dark:bg-gray-900 active:bg-gray-50 dark:active:bg-gray-800 transition-colors text-left"
+    <div
+      className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+        qtdNoCarrinho > 0 ? 'bg-gray-50 dark:bg-gray-800/40' : 'bg-white dark:bg-gray-900 active:bg-gray-50 dark:active:bg-gray-800/30'
+      }`}
+      onClick={qtdNoCarrinho === 0 ? handleClick : undefined}
+      style={{ cursor: qtdNoCarrinho === 0 ? 'pointer' : 'default' }}
     >
-      {/* Thumbnail */}
-      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-        {produto.imagem_url
-          ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-5 h-5 text-gray-300 dark:text-gray-600" />}
-      </div>
+      {/* Dot status */}
+      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
 
-      {/* Info */}
+      {/* Nome + estoque */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{produto.nome}</p>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            {(produto.estoque_atual || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'}
-          </span>
-        </div>
+        <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{produto.nome}</p>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+          {fmtR(preco)} · {(estoque).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'} em estoque
+        </p>
       </div>
 
-      {/* Preço + botão add */}
-      <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
-        <span className="text-base font-bold text-gray-900 dark:text-white tabular-nums">R$ {fmtR(preco)}</span>
-        <div className="w-7 h-7 rounded-full bg-gray-900 dark:bg-gray-100 flex items-center justify-center">
-          <Plus className="w-3.5 h-3.5 text-white dark:text-gray-900" />
+      {/* Controle de quantidade */}
+      {qtdNoCarrinho > 0 ? (
+        <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => onQtd(produto.id, qtdNoCarrinho - 1)}
+            className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center active:bg-gray-300"
+          >
+            <Minus className="w-3 h-3 text-gray-700 dark:text-gray-300" />
+          </button>
+          <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-white tabular-nums">{qtdNoCarrinho}</span>
+          <button
+            onClick={() => onQtd(produto.id, qtdNoCarrinho + 1)}
+            className="w-7 h-7 rounded-full bg-gray-800 dark:bg-gray-200 flex items-center justify-center active:opacity-70"
+          >
+            <Plus className="w-3 h-3 text-white dark:text-gray-900" />
+          </button>
         </div>
-      </div>
-    </button>
+      ) : (
+        <div className="w-7 h-7 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+          <Plus className="w-3.5 h-3.5 text-gray-400" />
+        </div>
+      )}
+    </div>
   );
 }
 
