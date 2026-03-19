@@ -32,7 +32,7 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
       <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '4mm' }}>{fmtData()}</div>
       {clienteNome && <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
       <div style={{ borderTop: '1px solid #999', borderBottom: '1px solid #999', paddingTop: '2mm', paddingBottom: '2mm', marginBottom: '3mm' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.6fr 0.8fr 0.9fr', gap: '1mm', fontSize: '9px', color: '#555', marginBottom: '2mm', fontWeight: 'bold', textTransform: 'uppercase' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '10px', color: '#555', marginBottom: '2mm', fontWeight: 'bold', textTransform: 'uppercase' }}>
           <span>DESCRIÇÃO</span>
           <span style={{ textAlign: 'center' }}>QTD</span>
           <span style={{ textAlign: 'right' }}>PREÇO</span>
