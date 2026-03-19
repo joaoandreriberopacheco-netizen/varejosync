@@ -64,12 +64,31 @@ function CupomSenha({ preVenda }) {
         </div>
       </div>
 
+      {/* Itens com colunas */}
+      <div style={{ fontSize: '9px', borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '4px 0', margin: '4px 0' }}>
+        {/* Header das colunas */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 50px 50px 50px', gap: '4px', paddingBottom: '2px', borderBottom: '1px solid #000', marginBottom: '2px', fontSize: '8px', fontWeight: 'bold' }}>
+          <div>DESCRIÇÃO</div>
+          <div style={{ textAlign: 'right' }}>QTD</div>
+          <div style={{ textAlign: 'right' }}>PREÇO</div>
+          <div style={{ textAlign: 'right' }}>TOTAL</div>
+        </div>
+        
+        {/* Linhas de produtos */}
+        {preVenda.itens?.map((item, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 50px 50px 50px', gap: '4px', marginBottom: '2px', alignItems: 'start' }}>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {(item.produto_nome || '').substring(0, 30)}
+            </div>
+            <div style={{ textAlign: 'right' }}>{item.quantidade}</div>
+            <div style={{ textAlign: 'right' }}>R$ {fmtV(item.preco_unitario_praticado || 0)}</div>
+            <div style={{ textAlign: 'right', fontWeight: 'bold' }}>R$ {fmtV(item.total || 0)}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Resumo */}
       <div style={{ fontSize: '10px', padding: '3px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>ITENS:</span>
-          <span style={{ fontWeight: 'bold' }}>{totalItens} un / {totalProdutos} prod.</span>
-        </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
           <span>SUBTOTAL:</span>
           <span style={{ fontWeight: 'bold' }}>R$ {fmtV(preVenda.subtotal)}</span>
