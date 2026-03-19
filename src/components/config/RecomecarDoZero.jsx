@@ -241,19 +241,38 @@ export default function RecomecarDoZero() {
 
             {/* Progress */}
             {isProcessing && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Processando...</span>
-                  <span className="text-sm text-gray-500">{progress.current}/{progress.total}</span>
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl space-y-3">
+                {/* Progress geral de entidades */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Entidades: {progress.current}/{progress.total}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                    <div
+                      className="bg-gray-800 dark:bg-white h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                  <div
-                    className="bg-gray-800 dark:bg-white h-1.5 rounded-full transition-all duration-300"
-                    style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
-                  />
-                </div>
+                
+                {/* Progress de registros da entidade atual */}
                 {progress.entity && (
-                  <p className="text-xs text-gray-400 mt-1.5">Zerando: {progress.entity}</p>
+                  <div>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mb-2">
+                      {progress.entity}
+                    </p>
+                    {progress.currentRecords > 0 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        Excluindo registros: {progress.recordsDeleted} de {progress.currentRecords}
+                      </p>
+                    )}
+                    <div className="w-full bg-green-200 dark:bg-green-900/30 rounded-full h-1">
+                      <div
+                        className="bg-green-600 dark:bg-green-500 h-1 rounded-full transition-all duration-200"
+                        style={{ width: progress.currentRecords > 0 ? `${(progress.recordsDeleted / progress.currentRecords) * 100}%` : '0%' }}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             )}
