@@ -497,7 +497,7 @@ export default function RelatorioMargemVendas() {
         </div>
 
         {/* Table - Desktop Table / Mobile Cards */}
-        <div className="p-4 md:p-6" id="relatorio-table">
+        <div className="p-3 md:p-6" id="relatorio-table">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
