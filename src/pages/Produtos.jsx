@@ -1567,6 +1567,7 @@ export default function ProdutosPage() {
 
       {/* Tela completa para o formulário */}
       {isFormOpen && (
+
         <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
           <ProdutoFormCompleto
             produto={selectedProduto}
