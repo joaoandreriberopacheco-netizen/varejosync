@@ -73,12 +73,26 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         PEDIDO DE VENDA Nº {pedido.numero || 'S/N'}
       </div>
 
-      <pre style={{ fontFamily: 'inherit', fontSize: '9px', margin: '4px 0' }}>
-DATA/HORA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yy HH:mm')}
-CLIENTE: {(pedido.cliente_nome || 'AVULSO').substring(0, 30).toUpperCase()}
-      </pre>
+      <pre style={{ fontFamily: 'inherit', fontSize: '9px', margin: '3px 0' }}>
+      DATA/HORA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yy HH:mm')}
+       </pre>
 
-      <LinhaHifens />
+      {/* Cliente em linha própria com dados */}
+      <div style={{ fontSize: '8px', margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
+        <div style={{ fontWeight: 'bold' }}>
+          {(pedido.cliente_nome || 'AVULSO').toUpperCase()}
+        </div>
+        {pedido.cliente_nome && (
+          <div style={{ fontSize: '7px', color: '#555' }}>
+            {[
+              pedido.cliente_endereco || '',
+              pedido.cliente_telefone || ''
+            ].filter(Boolean).join(' | ')}
+          </div>
+        )}
+      </div>
+
+       <LinhaHifens />
 
       <pre style={{ fontSize: '7px', margin: '2px 0', fontFamily: 'inherit', lineHeight: '1.2' }}>
       NO DESC         QTD UN PREÇO TOTAL
