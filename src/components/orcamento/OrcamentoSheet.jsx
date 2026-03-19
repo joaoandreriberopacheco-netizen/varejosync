@@ -106,7 +106,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
             )}
             <button
               onClick={onClose}
-              className="flex-1 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium active:bg-gray-200"
+              className="flex-1 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium active:bg-gray-200"
             >
               Cancelar
             </button>
