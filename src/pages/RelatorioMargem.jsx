@@ -657,45 +657,45 @@ export default function RelatorioMargemVendas() {
               </div>
 
               {/* Mobile Cards View */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-1.5">
                 {groupByCategory ? (
                   processedData.map((group) => (
                     <div key={group.category}>
-                      <div className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-sm font-semibold text-gray-900 dark:text-white">
+                      <div className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-xs font-semibold text-gray-900 dark:text-white">
                         {group.category}
                       </div>
                       {group.items.map((row) => (
-                        <div key={row.codigo_interno} className="p-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                          <p className="text-xs text-gray-600 dark:text-gray-300 mb-1 font-medium">{row.codigo_interno} • {row.nome}</p>
-                          <div className="grid grid-cols-3 gap-2 text-xs">
-                            <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
-                            <div><p className="text-gray-500 dark:text-gray-400">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
-                            <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
+                        <div key={row.codigo_interno} className="p-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                          <p className="text-[10px] text-gray-600 dark:text-gray-300 mb-1 font-medium truncate">{row.codigo_interno} • {row.nome}</p>
+                          <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                            <div><p className="text-gray-500 dark:text-gray-400 text-[9px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
+                            <div><p className="text-gray-500 dark:text-gray-400 text-[9px]">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
+                            <div><p className="text-gray-500 dark:text-gray-400 text-[9px]">Lucro</p><p className="font-bold text-green-600 dark:text-green-400 truncate">{formatMoney(row.lucro_total)}</p></div>
                           </div>
                           </div>
                           ))}
-                          <div className="p-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold">
-                          <p className="text-gray-900 dark:text-white">Markup: {formatPercent((group.totals.lucro_total / group.totals.custo_total) * 100)} | Lucro: {formatMoney(group.totals.lucro_total)}</p>
+                          <div className="p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 text-[10px] font-semibold">
+                          <p className="text-gray-900 dark:text-white truncate">Markup: {formatPercent((group.totals.lucro_total / group.totals.custo_total) * 100)} | Lucro: {formatMoney(group.totals.lucro_total)}</p>
                           </div>
                     </div>
                   ))
                 ) : (
                   processedData.map((row) => (
-                    <div key={row.codigo_interno} className="p-3 bg-gray-50 dark:bg-gray-800/50">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 font-medium">{row.codigo_interno} • {row.nome}</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                         <div><p className="text-gray-500 dark:text-gray-400">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
-                         <div><p className="text-gray-500 dark:text-gray-400">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
-                         <div><p className="text-gray-500 dark:text-gray-400">Lucro</p><p className="font-bold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</p></div>
+                    <div key={row.codigo_interno} className="p-2 bg-gray-50 dark:bg-gray-800/50">
+                      <p className="text-[10px] text-gray-600 dark:text-gray-300 mb-1.5 font-medium truncate">{row.codigo_interno} • {row.nome}</p>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                         <div><p className="text-gray-500 dark:text-gray-400 text-[9px]">Qtd</p><p className="font-bold text-gray-900 dark:text-white">{row.quantidade_vendida}</p></div>
+                         <div><p className="text-gray-500 dark:text-gray-400 text-[9px]">Markup</p><p className="font-bold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</p></div>
+                         <div><p className="text-gray-500 dark:text-gray-400 text-[9px]">Lucro</p><p className="font-bold text-green-600 dark:text-green-400 truncate">{formatMoney(row.lucro_total)}</p></div>
                        </div>
-                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Margem: {formatPercent(row.margem_percentual)}</p>
+                       <p className="text-[9px] text-gray-600 dark:text-gray-400 mt-1">Margem: {formatPercent(row.margem_percentual)}</p>
                     </div>
                   ))
                 )}
               </div>
 
-              <div className="mt-6 p-4 text-xs text-gray-600 dark:text-gray-400">
-                Total de produtos: {processedData.length}
+              <div className="mt-4 md:mt-6 p-3 md:p-4 text-xs text-gray-600 dark:text-gray-400">
+                {processedData.length} produtos
               </div>
             </>
           ) : (
