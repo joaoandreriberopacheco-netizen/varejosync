@@ -92,7 +92,7 @@ const getStockStatusIndicator = (produto) => {
   return <div className="flex items-center gap-1.5 text-green-500 dark:text-green-300 text-xs"><div className="w-2 h-2 bg-green-500 rounded-full" /> OK</div>;
 };
 
-export default function ProdutosPage() {
+function ProdutosPageContent() {
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
