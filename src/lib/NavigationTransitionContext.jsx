@@ -51,10 +51,10 @@ export function NavigationTransitionDetector() {
     if (lastLocation && lastLocation.pathname !== location.pathname) {
       setShowTransition(true);
       
-      // Aguarda a animação de saída completar
+      // 2 segundos de transição suave
       const timeout = setTimeout(() => {
         setShowTransition(false);
-      }, 800);
+      }, 2000);
       
       return () => clearTimeout(timeout);
     }
