@@ -40,8 +40,8 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
         </div>
         {itens.map((item, i) => (
           <div key={i} style={{ marginBottom: '2.5mm', paddingBottom: '1.5mm', borderBottom: '0.5px solid #e0e0e0' }}>
-            <div style={{ fontWeight: '500', fontSize: '10px', wordBreak: 'break-word', marginBottom: '0.5mm' }}>{item.nome}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.6fr 0.8fr 0.9fr', gap: '1mm', fontSize: '10px' }}>
+            <div style={{ fontWeight: '500', fontSize: '11px', wordBreak: 'break-word', marginBottom: '0.5mm' }}>{item.nome}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '11px' }}>
               <span style={{ color: '#666' }}>{item.unidade}</span>
               <span style={{ textAlign: 'center', fontWeight: '500' }}>{item.qtd}</span>
               <span style={{ textAlign: 'right' }}>{fmtR(item.preco_unit)}</span>
