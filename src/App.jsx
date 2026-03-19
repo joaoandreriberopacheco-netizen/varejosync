@@ -179,11 +179,7 @@ const AuthenticatedApp = () => {
           <ImportacaoProdutos />
         </LayoutWrapper>
       } />
-      <Route path="/EditorLayoutTemplates" element={
-        <LayoutWrapper currentPageName="EditorLayoutTemplates">
-          <EditorLayoutTemplates />
-        </LayoutWrapper>
-      } />
+
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>

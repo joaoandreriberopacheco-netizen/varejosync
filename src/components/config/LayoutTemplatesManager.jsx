@@ -3,24 +3,35 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TemplateBlockEditor from '@/components/comprovantes/TemplateBlockEditor';
-import { Plus, Trash2, Edit2, Copy } from 'lucide-react';
+import { Plus, Trash2, Edit2, Copy, ThumbsUp, MessageSquare } from 'lucide-react';
 
 const CATEGORIAS = {
-  comprovante: '🧾 Comprovante',
-  relatorio: '📊 Relatório',
-  nota_fiscal: '📄 Nota Fiscal',
-  orcamento: '💬 Orçamento',
-  manifesto: '📦 Manifesto',
-  outro: '📋 Outro'
+  comprovante: '🧾',
+  relatorio: '📊',
+  nota_fiscal: '📄',
+  orcamento: '💬',
+  manifesto: '📦',
+  outro: '📋'
 };
 
-export default function EditorLayoutTemplates() {
+const CATEGORIAS_NOMES = {
+  comprovante: 'Comprovante',
+  relatorio: 'Relatório',
+  nota_fiscal: 'Nota Fiscal',
+  orcamento: 'Orçamento',
+  manifesto: 'Manifesto',
+  outro: 'Outro'
+};
+
+export default function LayoutTemplatesManager() {
   const [templates, setTemplates] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [filterCategoria, setFilterCategoria] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
   
   // Dados de edição
   const [nome, setNome] = useState('');
@@ -132,6 +143,15 @@ export default function EditorLayoutTemplates() {
     setBlocks([]);
   };
 
+  const handleSubmitFeedback = async () => {
+    if (!feedbackText.trim()) return;
+    // Aqui você pode enviar o feedback para logging/análise
+    console.log('Feedback:', { template: editingId, text: feedbackText });
+    setFeedbackText('');
+    setShowFeedback(false);
+    alert('Obrigado pelo feedback! Isso nos ajuda a melhorar.');
+  };
+
   const filteredTemplates = templates.filter(t =>
     (t.nome.toLowerCase().includes(filter.toLowerCase()) || 
      t.tipo?.toLowerCase().includes(filter.toLowerCase())) &&
@@ -140,20 +160,46 @@ export default function EditorLayoutTemplates() {
 
   if (isCreating) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
         {/* Header */}
-        <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 z-10">
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{CATEGORIAS[categoria]}</h1>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{CATEGORIAS[categoria]} {CATEGORIAS_NOMES[categoria]}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">{nome || 'Novo Template'}</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleCancel} variant="outline" size="sm">Cancelar</Button>
+            <Button 
+              onClick={() => setShowFeedback(!showFeedback)}
+              variant="ghost"
+              size="sm"
+              className="text-xs"
+            >
+              <MessageSquare className="w-4 h-4 mr-1" /> Feedback
+            </Button>
             <Button onClick={handleSave} disabled={saving} size="sm">
               {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </div>
+
+        {/* Feedback Section */}
+        {showFeedback && (
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+            <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">Deixe seu feedback para ajudar na melhoria:</p>
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="O que poderia melhorar? Alguma dificuldade?"
+              className="w-full p-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 mb-2"
+              rows="3"
+            />
+            <div className="flex gap-2">
+              <Button onClick={handleSubmitFeedback} size="sm" className="text-xs">Enviar</Button>
+              <Button onClick={() => setShowFeedback(false)} variant="outline" size="sm" className="text-xs">Cancelar</Button>
+            </div>
+          </div>
+        )}
 
         {/* Meta info */}
         <div className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 space-y-3">
@@ -175,7 +221,7 @@ export default function EditorLayoutTemplates() {
                   onChange={(e) => setCategoria(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
                 >
-                  {Object.entries(CATEGORIAS).map(([key, label]) => (
+                  {Object.entries(CATEGORIAS_NOMES).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
                   ))}
                 </select>
@@ -211,11 +257,11 @@ export default function EditorLayoutTemplates() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-quicksand text-gray-900 dark:text-white">Editor de Layouts</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Customize o visual de todos os outputs do sistema</p>
+          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Editor de Layouts</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Customize comprovantes, relatórios e documentos</p>
         </div>
         <Button
           onClick={() => {
@@ -227,27 +273,28 @@ export default function EditorLayoutTemplates() {
             setDescricao('');
             setBlocks([]);
           }}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-2 whitespace-nowrap"
         >
           <Plus className="w-4 h-4" /> Novo
         </Button>
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3">
         <Input
-          placeholder="Buscar por nome ou tipo..."
+          placeholder="Buscar..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="flex-1"
+          className="flex-1 text-xs"
         />
         <select
           value={filterCategoria}
           onChange={(e) => setFilterCategoria(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm"
+          className="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs"
         >
-          <option value="">Todas as categorias</option>
-          {Object.entries(CATEGORIAS).map(([key, label]) => (
+          <option value="">Todas</option>
+          {Object.entries(CATEGORIAS_NOMES).map(([key, label]) => (
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
@@ -255,9 +302,9 @@ export default function EditorLayoutTemplates() {
 
       {/* Lista de Templates */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Carregando...</div>
+        <div className="text-center py-12 text-gray-500 text-xs">Carregando...</div>
       ) : filteredTemplates.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-500 text-xs">
           {templates.length === 0 ? 'Nenhum template criado' : 'Nenhum template encontrado'}
         </div>
       ) : (
@@ -265,19 +312,16 @@ export default function EditorLayoutTemplates() {
           {filteredTemplates.map(template => (
             <div
               key={template.id}
-              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded shadow-sm hover:shadow-md transition-shadow"
+              className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{CATEGORIAS[template.categoria].split(' ')[0]}</span>
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white truncate">{template.nome}</h3>
+                  <span className="text-lg">{CATEGORIAS[template.categoria]}</span>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">{template.nome}</h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {CATEGORIAS[template.categoria]} {template.tipo && `· ${template.tipo}`} · {template.blocks_config ? JSON.parse(template.blocks_config || '[]').length : 0} blocos
+                      {CATEGORIAS_NOMES[template.categoria]} {template.tipo && `· ${template.tipo}`} · {template.blocks_config ? JSON.parse(template.blocks_config || '[]').length : 0} blocos
                     </p>
-                    {template.descricao && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{template.descricao}</p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -286,7 +330,7 @@ export default function EditorLayoutTemplates() {
                   onClick={() => handleEdit(template)}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2"
                   title="Editar"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -295,9 +339,9 @@ export default function EditorLayoutTemplates() {
                   onClick={() => handleDuplicate(template)}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  title="Duplicar"
+                  className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2"
                   disabled={saving}
+                  title="Duplicar"
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
@@ -305,7 +349,7 @@ export default function EditorLayoutTemplates() {
                   onClick={() => handleDelete(template.id)}
                   variant="ghost"
                   size="sm"
-                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-2"
                   title="Deletar"
                 >
                   <Trash2 className="w-4 h-4" />
