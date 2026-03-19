@@ -140,7 +140,7 @@ export default function HomePage() {
             </h1>
           </div>
           <div className="hidden md:block">
-            <P38Logo variant="horizontal" size="lg" className="flex-shrink-0" />
+            <P38Logo variant="horizontal" size="xxl" className="flex-shrink-0" />
           </div>
         </div>
 

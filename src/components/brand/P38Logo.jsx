@@ -72,6 +72,7 @@ export default function P38Logo({
     md: 'h-8',
     lg: 'h-10',
     xl: 'h-12',
+    xxl: 'h-16',
   };
   const h = sizes[size] || sizes.md;
 
