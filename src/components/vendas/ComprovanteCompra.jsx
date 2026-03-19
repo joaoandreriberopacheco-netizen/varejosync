@@ -168,7 +168,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <div>VENDEDOR: {pedido.vendedor_nome.toUpperCase()}</div>
         )}
         {pedido.created_by && (
-          <div>CAIXA: {pedido.created_by.toUpperCase()}</div>
+          <div>CAIXA: {pedido.created_by.split('@')[0].toUpperCase()}</div>
         )}
       </div>
 
