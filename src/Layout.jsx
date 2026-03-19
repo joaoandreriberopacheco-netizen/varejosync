@@ -292,18 +292,7 @@ export default function Layout({ children, currentPageName }) {
             {(isOpen || isMobile) ? (
               <>
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-white border border-gray-200 dark:border-gray-700 flex items-center justify-center shadow-sm relative overflow-hidden">
-                    <img
-                      src="https://media.base44.com/images/public/68a91b1a009497f8d44af37e/fa1ae6e0d_Gemini_Generated_Image_u0vtb1u0vtb1u0vt.png"
-                      alt="P38"
-                      className="w-7 h-7 object-contain dark:invert"
-                    />
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-tl-lg"></div>
-                  </div>
-                  <div>
-                    <h1 className="text-base font-semibold text-gray-900 dark:text-white font-glacial">P38 | ERP</h1>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Sistema ERP</p>
-                  </div>
+                  <P38Logo variant="horizontal" size="sm" />
                 </div>
                 {isMobile && (
                   <button onClick={closeMobileMenu} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded">
@@ -312,13 +301,8 @@ export default function Layout({ children, currentPageName }) {
                 )}
               </>
             ) : (
-              <div className="h-10 w-10 rounded-xl bg-white border border-gray-200 dark:border-gray-700 flex items-center justify-center mx-auto shadow-sm relative overflow-hidden">
-                <img
-                  src="https://media.base44.com/images/public/68a91b1a009497f8d44af37e/fa1ae6e0d_Gemini_Generated_Image_u0vtb1u0vtb1u0vt.png"
-                  alt="P38"
-                  className="w-6 h-6 object-contain dark:invert"
-                />
-                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-tl-lg"></div>
+              <div className="flex items-center justify-center h-10 w-10 mx-auto">
+                <P38Logo variant="horizontal" size="sm" className="scale-75" />
               </div>
             )}
           </div>
