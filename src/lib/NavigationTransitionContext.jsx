@@ -6,25 +6,6 @@ const NavigationTransitionContext = createContext();
 export const NavigationTransitionProvider = ({ children }) => {
   const [showTransition, setShowTransition] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [lastLocation, setLastLocation] = useState(null);
-  const location = useLocation();
-
-  // Detecta mudanças de rota e ativa transição automaticamente
-  React.useEffect(() => {
-    if (lastLocation && lastLocation.pathname !== location.pathname) {
-      setShowTransition(true);
-      setIsNavigating(true);
-      
-      // Aguarda a animação de saída completar
-      const timeout = setTimeout(() => {
-        setShowTransition(false);
-        setIsNavigating(false);
-      }, 800);
-      
-      return () => clearTimeout(timeout);
-    }
-    setLastLocation(location);
-  }, [location]);
 
   const triggerTransition = useCallback(async (callback) => {
     setShowTransition(true);
@@ -59,3 +40,26 @@ export const useNavigationTransition = () => {
   }
   return context;
 };
+
+// Componente que detecta mudanças de rota - deve estar DENTRO do Router
+export function NavigationTransitionDetector() {
+  const { showTransition, setShowTransition } = useNavigationTransition();
+  const [lastLocation, setLastLocation] = useState(null);
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (lastLocation && lastLocation.pathname !== location.pathname) {
+      setShowTransition(true);
+      
+      // Aguarda a animação de saída completar
+      const timeout = setTimeout(() => {
+        setShowTransition(false);
+      }, 800);
+      
+      return () => clearTimeout(timeout);
+    }
+    setLastLocation(location);
+  }, [location, setShowTransition]);
+
+  return null;
+}
