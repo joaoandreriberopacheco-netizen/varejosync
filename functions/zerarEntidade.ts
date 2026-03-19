@@ -15,8 +15,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'entityId é obrigatório' }, { status: 400 });
     }
 
-    // Processa em lotes maiores com retry e melhor controle
-    const BATCH_SIZE = 500; // Aumenta batch size
+    // Processa em lotes pequenos com retry e melhor controle
+    const BATCH_SIZE = 50; // Lotes pequenos para melhor controle
     const MAX_RETRY = 3;
     const MAX_ITERATIONS = 1000; // Limite de segurança
     let totalDeleted = 0;
