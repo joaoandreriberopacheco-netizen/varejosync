@@ -80,14 +80,14 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {/* Cliente em linha própria com dados */}
       <div style={{ fontSize: '8px', margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
         <div style={{ fontWeight: 'bold' }}>
-          {(pedido.cliente_nome || 'AVULSO').toUpperCase()}
+          Cliente: {(pedido.cliente_nome || 'AVULSO').toUpperCase()}
         </div>
         {pedido.cliente_nome && (
           <div style={{ fontSize: '7px', color: '#555' }}>
             {[
               pedido.cliente_endereco || '',
               pedido.cliente_telefone || ''
-            ].filter(Boolean).join(' | ')}
+            ].filter(Boolean).join(', ')}
           </div>
         )}
       </div>
