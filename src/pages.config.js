@@ -155,7 +155,7 @@ export const PAGES = {
     "PDV": PDV,
     "PDVAuditoria": PDVAuditoria,
     "PainelGerente": PainelGerente,
-    "Produtos": Produtos,
+    "Produtos": ProdutosPage,
     "ReimpressaoDocumentos": ReimpressaoDocumentos,
     "RelatorioMargem": RelatorioMargem,
     "RelatorioPerformance": RelatorioPerformance,
