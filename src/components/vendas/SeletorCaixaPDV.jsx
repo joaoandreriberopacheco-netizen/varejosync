@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Monitor, Lock, X, ChevronRight } from 'lucide-react';
+import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 
-export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
+export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
+  const navigate = useNavigate();
   const [caixasDisponiveis, setCaixasDisponiveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saldoInicial, setSaldoInicial] = useState('');
@@ -176,7 +178,13 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
     <>
       <Dialog open={open && !showSaldoDialog} onOpenChange={() => {}}>
         <DialogContent className="max-w-2xl dark:bg-gray-900" hideClose>
-          <DialogHeader>
+          <DialogHeader className="relative">
+            <button
+              onClick={() => onClose ? onClose() : navigate(-1)}
+              className="absolute left-0 top-0 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </button>
             <DialogTitle className="text-xl text-center font-glacial">Selecione o Caixa</DialogTitle>
           </DialogHeader>
           
@@ -191,6 +199,12 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser }) {
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
                 Entre em contato com o administrador.
               </p>
+              <button
+                onClick={() => onClose ? onClose() : navigate(-1)}
+                className="mt-6 px-6 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Voltar
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
