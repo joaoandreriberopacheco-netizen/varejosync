@@ -16,12 +16,22 @@ Deno.serve(async (req) => {
     }
 
     // Processa em lotes pequenos com retry e melhor controle
-    const BATCH_SIZE = 50; // Lotes pequenos para melhor controle
+    const BATCH_SIZE = 25; // Lotes de 25 para melhor controle
     const MAX_RETRY = 3;
     const MAX_ITERATIONS = 1000; // Limite de segurança
     let totalDeleted = 0;
     let iteration = 0;
     let consecutiveEmptyBatches = 0;
+    
+    // Primeiro, conta o total de registros
+    let totalRecords = 0;
+    try {
+      const firstList = await base44.asServiceRole.entities[entityId].list('', 1);
+      // A API retorna metadados com o total
+      totalRecords = firstList.length || 0;
+    } catch (e) {
+      console.warn('Erro ao contar registros:', e.message);
+    }
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
@@ -38,7 +48,11 @@ Deno.serve(async (req) => {
             consecutiveEmptyBatches++;
             if (consecutiveEmptyBatches >= 3) {
               // Se 3 lotes consecutivos vazios, acabou
-              return Response.json({ success: true, deleted: totalDeleted });
+              return Response.json({ 
+                success: true, 
+                deleted: totalDeleted,
+                message: `Exclusão concluída: ${totalDeleted} registros removidos`
+              });
             }
             hasError = false;
             break;
@@ -57,6 +71,11 @@ Deno.serve(async (req) => {
           }
 
           totalDeleted += batchSize;
+          const percentual = totalRecords > 0 ? Math.round((totalDeleted / totalRecords) * 100) : 0;
+          
+          // Retorna progresso a cada lote
+          console.log(`[${entityId}] Progresso: ${totalDeleted}/${totalRecords || '?'} (${percentual}%) - Lote ${iteration}`);
+          
           hasError = false;
           break; // Sucesso, sai do retry
         } catch (e) {
@@ -81,7 +100,12 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    return Response.json({ success: true, deleted: totalDeleted, completed: true });
+    return Response.json({ 
+      success: true, 
+      deleted: totalDeleted, 
+      completed: true,
+      message: `Exclusão concluída: ${totalDeleted} registros removidos`
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
