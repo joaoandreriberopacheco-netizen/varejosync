@@ -11,16 +11,16 @@ export const NavigationTransitionProvider = ({ children }) => {
     setShowTransition(true);
     setIsNavigating(true);
     
-    // Aguarda a logo se animar (300ms - mais rápido e fluido)
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Aguarda a logo se animar (400ms)
+    await new Promise(resolve => setTimeout(resolve, 400));
     
     // Executa a navegação
     if (callback) {
       callback();
     }
     
-    // Aguarda a animação de saída (flame) completar (500ms - mais leve)
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Aguarda a animação de saída (flame) completar (1000ms)
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     setShowTransition(false);
     setIsNavigating(false);
@@ -51,10 +51,10 @@ export function NavigationTransitionDetector() {
     if (lastLocation && lastLocation.pathname !== location.pathname) {
       setShowTransition(true);
       
-      // 2 segundos de transição suave
+      // 3.2 segundos de transição suave
       const timeout = setTimeout(() => {
         setShowTransition(false);
-      }, 2000);
+      }, 3200);
       
       return () => clearTimeout(timeout);
     }
