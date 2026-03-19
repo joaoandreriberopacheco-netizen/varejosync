@@ -1,132 +1,293 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, BarChart3 } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
 import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
-import DecomposicaoIEP from '@/components/relatorios/DecomposicaoIEP';
 
 export default function RelatoriosPage() {
   const [showSeletor, setShowSeletor] = useState(false);
   const [showRPP, setShowRPP] = useState(false);
   const [dadosProdutoSelecionado, setDadosProdutoSelecionado] = useState(null);
+
   const relatoriosGerenciais = [
-    { nome: "Relatório de Ponto de Equilíbrio", descricao: "Análise mensal do ponto de equilíbrio operacional" },
-    { nome: "Índice de Eficiência Operacional", descricao: "Lucro bruto vs. investimento em compras" },
-    { nome: "Dashboard Executivo", descricao: "Visão consolidada de todos os KPIs do negócio" },
+    { 
+      id: 'ponto-equilibrio',
+      nome: "Ponto de Equilíbrio", 
+      descricao: "Análise mensal do ponto de equilíbrio operacional",
+      icon: BarChart3
+    },
+    { 
+      id: 'eficiencia-operacional',
+      nome: "Eficiência Operacional", 
+      descricao: "Lucro bruto vs. investimento em compras",
+      icon: TrendingUp
+    },
+    { 
+      id: 'dashboard-executivo',
+      nome: "Dashboard Executivo", 
+      descricao: "Consolidação de todos os KPIs do negócio",
+      icon: BarChart3
+    },
   ];
 
   const relatoriosVendas = [
-    { nome: "Vendas por Período", descricao: "Faturamento detalhado por dia/semana/mês" },
-    { nome: "Ranking de Vendedores", descricao: "Performance individual da equipe de vendas" },
-    { nome: "Análise de Ticket Médio", descricao: "Evolução do ticket médio ao longo do tempo" },
-    { nome: "Taxa de Conversão", descricao: "Orçamentos vs. Pedidos finalizados" },
-    { nome: "Produtos Mais Vendidos", descricao: "Top produtos por quantidade e faturamento" },
+    { 
+      id: 'vendas-periodo',
+      nome: "Vendas por Período", 
+      descricao: "Faturamento detalhado por período",
+      icon: TrendingUp
+    },
+    { 
+      id: 'ranking-vendedores',
+      nome: "Ranking de Vendedores", 
+      descricao: "Performance individual da equipe",
+      icon: TrendingUp
+    },
+    { 
+      id: 'ticket-medio',
+      nome: "Ticket Médio", 
+      descricao: "Evolução do ticket ao longo do tempo",
+      icon: DollarSign
+    },
+    { 
+      id: 'taxa-conversao',
+      nome: "Taxa de Conversão", 
+      descricao: "Orçamentos vs. Pedidos finalizados",
+      icon: TrendingUp
+    },
+    { 
+      id: 'produtos-vendidos',
+      nome: "Produtos Top", 
+      descricao: "Top produtos por quantidade e faturamento",
+      icon: ShoppingCart
+    },
+    { 
+      id: 'markup-margem',
+      nome: "Markup & Margem", 
+      descricao: "Análise de markup e margem de contribuição",
+      icon: TrendingUp,
+      highlight: true
+    },
   ];
 
   const relatoriosCompras = [
-    { nome: "Curva ABC de Fornecedores", descricao: "Classificação de fornecedores por volume de compra" },
-    { nome: "Análise de Lead Time", descricao: "Tempo médio de entrega por fornecedor" },
-    { nome: "Histórico de Preços de Compra", descricao: "Evolução dos custos de aquisição" },
-    { nome: "Pedidos de Compra Pendentes", descricao: "Listagem de POs aguardando recebimento" },
+    { 
+      id: 'curva-abc-fornecedores',
+      nome: "Curva ABC Fornecedores", 
+      descricao: "Classificação por volume de compra",
+      icon: ShoppingCart
+    },
+    { 
+      id: 'lead-time',
+      nome: "Lead Time", 
+      descricao: "Tempo médio de entrega por fornecedor",
+      icon: TrendingUp
+    },
+    { 
+      id: 'historico-precos',
+      nome: "Histórico de Preços", 
+      descricao: "Evolução dos custos de aquisição",
+      icon: DollarSign
+    },
+    { 
+      id: 'pedidos-pendentes',
+      nome: "Pedidos Pendentes", 
+      descricao: "Listagem de POs aguardando recebimento",
+      icon: ShoppingCart
+    },
   ];
 
   const relatoriosEstoque = [
-    { nome: "Inventário Valorizado", descricao: "Estoque atual com valor total investido" },
-    { nome: "Giro de Estoque", descricao: "Análise de rotatividade por produto/categoria" },
-    { nome: "Produtos com Estoque Crítico", descricao: "Itens abaixo do estoque mínimo" },
-    { nome: "Produtos Sem Giro", descricao: "Itens parados há mais de X dias" },
-    { nome: "Histórico de Movimentações", descricao: "Rastreabilidade completa de entradas/saídas" },
-    { nome: "Relatório de Performance de Produto", descricao: "Dossiê tático com análise IEP, pilares operacionais e insights IA" },
+    { 
+      id: 'inventario-valorizado',
+      nome: "Inventário Valorizado", 
+      descricao: "Estoque atual com valor investido",
+      icon: Warehouse
+    },
+    { 
+      id: 'giro-estoque',
+      nome: "Giro de Estoque", 
+      descricao: "Análise de rotatividade por produto",
+      icon: TrendingUp
+    },
+    { 
+      id: 'estoque-critico',
+      nome: "Estoque Crítico", 
+      descricao: "Itens abaixo do estoque mínimo",
+      icon: Warehouse
+    },
+    { 
+      id: 'produtos-sem-giro',
+      nome: "Sem Giro", 
+      descricao: "Itens parados há mais de X dias",
+      icon: Warehouse
+    },
+    { 
+      id: 'historico-movimentacoes',
+      nome: "Movimentações", 
+      descricao: "Rastreabilidade de entradas/saídas",
+      icon: TrendingUp
+    },
+    { 
+      id: 'performance-produto',
+      nome: "Performance Produto", 
+      descricao: "Análise IEP e pilares operacionais",
+      icon: BarChart3
+    },
   ];
 
   const relatoriosFinanceiros = [
-    { nome: "Fluxo de Caixa Projetado", descricao: "Previsão de entradas e saídas" },
-    { nome: "Contas a Pagar", descricao: "Obrigações financeiras pendentes" },
-    { nome: "Contas a Receber", descricao: "Valores a receber de clientes" },
-    { nome: "DRE (Demonstrativo de Resultados)", descricao: "Receitas, custos e despesas do período" },
-    { nome: "Análise de Margem", descricao: "Margem bruta e líquida por produto/categoria" },
+    { 
+      id: 'fluxo-caixa',
+      nome: "Fluxo de Caixa", 
+      descricao: "Previsão de entradas e saídas",
+      icon: DollarSign
+    },
+    { 
+      id: 'contas-pagar',
+      nome: "Contas a Pagar", 
+      descricao: "Obrigações financeiras pendentes",
+      icon: DollarSign
+    },
+    { 
+      id: 'contas-receber',
+      nome: "Contas a Receber", 
+      descricao: "Valores a receber de clientes",
+      icon: DollarSign
+    },
+    { 
+      id: 'dre',
+      nome: "DRE", 
+      descricao: "Receitas, custos e despesas",
+      icon: FileText
+    },
   ];
 
-  const RelatorioCard = ({ relatorio, onClickAbrir }) => (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onClickAbrir?.(relatorio.nome)}>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">{relatorio.nome}</h3>
-            <p className="text-sm text-gray-600 mt-1">{relatorio.descricao}</p>
+  const RelatorioCard = ({ relatorio, onClickAbrir }) => {
+    const Icon = relatorio.icon;
+    return (
+      <Card 
+        onClick={() => onClickAbrir?.(relatorio.id)}
+        className={`cursor-pointer transition-all hover:shadow-sm ${
+          relatorio.highlight ? 'ring-2 ring-green-500/30 bg-green-50/30 dark:bg-green-900/10' : ''
+        }`}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className={`p-2 rounded-lg ${
+              relatorio.highlight 
+                ? 'bg-green-100 dark:bg-green-900/30' 
+                : 'bg-gray-100 dark:bg-gray-800'
+            }`}>
+              <Icon className={`w-5 h-5 ${
+                relatorio.highlight 
+                  ? 'text-green-600 dark:text-green-400' 
+                  : 'text-gray-600 dark:text-gray-400'
+              }`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-sm md:text-base text-gray-900 dark:text-white">
+                {relatorio.nome}
+              </h3>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                {relatorio.descricao}
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0 mt-1" />
           </div>
-          <Button variant="ghost" size="icon" className="text-green-600">
-            <Download className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Central de Relatórios</h1>
-          <p className="text-gray-600">Acesse relatórios estratégicos e operacionais do seu negócio.</p>
-          <div className="flex gap-4 mt-4">
-            <Link to="/RelatorioMargem">
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Novo Relatório de Margem & Lucratividade
-              </Button>
-            </Link>
+    <div className="w-full pb-6">
+      {/* Header */}
+      <div className="px-4 md:px-6 py-6 md:py-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+          Relatórios
+        </h1>
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+          Acesse análises estratégicas e operacionais do seu negócio.
+        </p>
+      </div>
+
+      {/* Tabs Navigation */}
+      <Tabs defaultValue="vendas" className="w-full">
+        <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+          <div className="px-4 md:px-6">
+            <TabsList className="w-full h-auto justify-start gap-2 md:gap-4 bg-transparent p-0 border-b border-gray-200 dark:border-gray-800">
+              <TabsTrigger 
+                value="vendas" 
+                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
+              >
+                Vendas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="gerenciais" 
+                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
+              >
+                Gerenciais
+              </TabsTrigger>
+              <TabsTrigger 
+                value="estoque" 
+                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
+              >
+                Estoque
+              </TabsTrigger>
+              <TabsTrigger 
+                value="compras" 
+                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
+              >
+                Compras
+              </TabsTrigger>
+              <TabsTrigger 
+                value="financeiro" 
+                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
+              >
+                Financeiro
+              </TabsTrigger>
+            </TabsList>
           </div>
         </div>
 
-        <Tabs defaultValue="gerenciais" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="gerenciais" className="gap-2">
-              <FileText className="w-4 h-4" /> Gerenciais
-            </TabsTrigger>
-            <TabsTrigger value="vendas" className="gap-2">
-              <TrendingUp className="w-4 h-4" /> Vendas
-            </TabsTrigger>
-            <TabsTrigger value="compras" className="gap-2">
-              <ShoppingCart className="w-4 h-4" /> Compras
-            </TabsTrigger>
-            <TabsTrigger value="estoque" className="gap-2">
-              <Warehouse className="w-4 h-4" /> Estoque
-            </TabsTrigger>
-            <TabsTrigger value="financeiro" className="gap-2">
-              <DollarSign className="w-4 h-4" /> Financeiro
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="gerenciais">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatoriosGerenciais.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="vendas">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatoriosVendas.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="compras">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatoriosCompras.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="estoque">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatoriosEstoque.map((rel, i) => (
+        {/* Tab Contents */}
+        <div className="px-4 md:px-6 py-6 md:py-8">
+          <TabsContent value="vendas" className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              {relatoriosVendas.map((rel) => (
                 <RelatorioCard 
-                  key={i} 
+                  key={rel.id} 
                   relatorio={rel}
-                  onClickAbrir={(nome) => {
-                    if (nome === "Relatório de Performance de Produto") {
+                  onClickAbrir={(id) => {
+                    if (id === 'markup-margem') {
+                      window.location.href = '/RelatorioMargem';
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="gerenciais" className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              {relatoriosGerenciais.map((rel) => (
+                <RelatorioCard key={rel.id} relatorio={rel} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="estoque" className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              {relatoriosEstoque.map((rel) => (
+                <RelatorioCard 
+                  key={rel.id} 
+                  relatorio={rel}
+                  onClickAbrir={(id) => {
+                    if (id === 'performance-produto') {
                       setShowSeletor(true);
                     }
                   }}
@@ -135,13 +296,23 @@ export default function RelatoriosPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="financeiro">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatoriosFinanceiros.map((rel, i) => <RelatorioCard key={i} relatorio={rel} />)}
+          <TabsContent value="compras" className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              {relatoriosCompras.map((rel) => (
+                <RelatorioCard key={rel.id} relatorio={rel} />
+              ))}
             </div>
           </TabsContent>
-        </Tabs>
-      </div>
+
+          <TabsContent value="financeiro" className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              {relatoriosFinanceiros.map((rel) => (
+                <RelatorioCard key={rel.id} relatorio={rel} />
+              ))}
+            </div>
+          </TabsContent>
+        </div>
+      </Tabs>
 
       {showSeletor && (
         <SeletorProdutoRPP
