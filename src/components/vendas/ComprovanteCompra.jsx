@@ -123,13 +123,27 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       <LinhaHifens />
 
-      <div style={{ fontSize: '9px', margin: '6px 0 2px', fontFamily: 'inherit', textAlign: 'right' }}>
-        <div>SUBTOTAL: R$ {fmtV(pedido.subtotal || 0)}</div>
-        {pedido.valor_desconto > 0 && <div>DESCONTO: R$ {fmtV(pedido.valor_desconto)}</div>}
-        {pedido.valor_frete > 0 && <div>FRETE: R$ {fmtV(pedido.valor_frete)}</div>}
+      <div style={{ fontSize: '9px', margin: '6px 0 2px', fontFamily: 'inherit' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>SUBTOTAL:</span>
+          <span>R$ {fmtV(pedido.subtotal || 0)}</span>
+        </div>
+        {pedido.valor_desconto > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>DESCONTO:</span>
+            <span>R$ {fmtV(pedido.valor_desconto)}</span>
+          </div>
+        )}
+        {pedido.valor_frete > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>FRETE:</span>
+            <span>R$ {fmtV(pedido.valor_frete)}</span>
+          </div>
+        )}
       </div>
-      <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '3px 0', fontFamily: 'inherit', textAlign: 'right', borderTop: '1px solid #000', paddingTop: '3px' }}>
-        TOTAL: R$ {fmtV(pedido.valor_total || 0)}
+      <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '3px 0', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', paddingTop: '3px' }}>
+        <span>TOTAL:</span>
+        <span>R$ {fmtV(pedido.valor_total || 0)}</span>
       </div>
 
       <LinhaHifens />
