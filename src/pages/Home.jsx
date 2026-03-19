@@ -28,12 +28,8 @@ export default function HomePage() {
     pedidosPendentes: 0
   });
 
-  // Resolve permissões do usuário atual
-  const permissoes = useMemo(() => {
-    if (!currentUser) return null;
-    if (currentUser.role === 'admin') return null; // admin tem tudo
-    return resolverPermissoes(perfilDeAcesso, currentUser?.override_permissoes);
-  }, [currentUser, perfilDeAcesso]);
+  // Resolve permissões do usuário atual (com cache otimizado)
+  const { permissoes } = usePermissoesResolvidas(currentUser, perfilDeAcesso);
 
   // IDs dos atalhos que o usuário tem permissão de ver
   const allowedActionIds = useMemo(() => {
