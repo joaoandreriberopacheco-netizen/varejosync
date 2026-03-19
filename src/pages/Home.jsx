@@ -6,6 +6,7 @@ import {
   Eye, EyeOff, BarChart3, AlertCircle, ChevronRight,
   Package, Receipt, ShoppingCart, Wallet, Settings2
 } from 'lucide-react';
+import P38Logo from '@/components/brand/P38Logo';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS } from '@/components/home/quickActions';
@@ -123,29 +124,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Logo P38 — visível só no mobile */}
-        <div className="flex justify-center pt-2 md:hidden">
-          <div className="flex flex-col items-center gap-1 select-none">
-            <img
-              src="https://media.base44.com/images/public/68a91b1a009497f8d44af37e/fa1ae6e0d_Gemini_Generated_Image_u0vtb1u0vtb1u0vt.png"
-              alt="P38 ERP"
-              className="w-10 h-10 object-contain dark:invert"
-            />
-            <div className="text-center leading-none">
-              <span className="block text-lg font-bold text-gray-900 dark:text-white font-glacial tracking-tight">P38</span>
-              <span className="block text-[9px] font-light text-gray-400 dark:text-gray-500 tracking-[0.2em] uppercase">ERP</span>
-            </div>
+        {/* Header com logo inline */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {format(new Date(), 'EEEE, d \'de\' MMMM', { locale: ptBR })}
+            </p>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial mt-1">
+              Olá, {currentUser?.full_name?.split(' ')[0] || 'Usuário'}
+            </h1>
           </div>
-        </div>
-
-        {/* Header */}
-        <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {format(new Date(), 'EEEE, d \'de\' MMMM', { locale: ptBR })}
-          </p>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white font-glacial mt-1">
-            Olá, {currentUser?.full_name?.split(' ')[0] || 'Usuário'}
-          </h1>
+          <P38Logo variant="horizontal" size="sm" className="flex-shrink-0" />
         </div>
 
         {/* Saldo Card — visível apenas com permissão de dashboard ou vendas */}
