@@ -69,7 +69,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       <LinhaHifens />
 
-      <div style={{ textAlign: 'center', textTransform: 'uppercase', fontSize: '12px', margin: '4px 0' }}>
+      <div style={{ textAlign: 'center', textTransform: 'uppercase', fontSize: '13px', margin: '4px 0', fontWeight: 'bold' }}>
         PEDIDO DE VENDA Nº {pedido.numero || 'S/N'}
       </div>
 
