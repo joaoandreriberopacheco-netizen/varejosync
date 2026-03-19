@@ -336,40 +336,40 @@ export default function RelatorioMargemVendas() {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="max-w-full mx-auto">
         {/* Header */}
-        <div className="p-4 md:p-6 sticky top-0 z-10 bg-white dark:bg-gray-900">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1">
+        <div className="p-3 md:p-6 sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
               <Link to="/Relatorios">
-                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
-                  <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                <button className="p-1.5 md:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0">
+                  <ArrowLeft className="w-4 md:w-5 h-4 md:h-5 text-gray-700 dark:text-gray-200" />
                 </button>
               </Link>
-              <div>
-                <h1 className="text-xl md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white">Relatório de Margem</h1>
-                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Análise de rentabilidade por produto</p>
+              <div className="min-w-0">
+                <h1 className="text-base md:text-2xl font-glacial font-semibold text-gray-900 dark:text-white truncate">Relatório de Margem</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Rentabilidade por produto</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200" title="Opções de impressão">
-                    <Printer className="w-5 h-5" />
+                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-700 dark:text-gray-200 flex-shrink-0" title="Opções de impressão">
+                    <Printer className="w-4 md:w-5 h-4 md:h-5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700 text-sm">
                   <DropdownMenuItem onClick={exportToPDF} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    Exportar PDF
+                    PDF
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={exportToCSV} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    Exportar CSV
+                    CSV
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
 
-          {/* Search Bar + Filters all in one row */}
-          <div className="mt-4 flex items-center gap-2 overflow-visible">
+          {/* Search Bar + Filters - compactado no mobile */}
+          <div className="mt-3 md:mt-4 flex items-center gap-1.5 overflow-x-auto pb-1">
             {/* Date Picker */}
             <div className="relative z-50 flex-shrink-0">
               <button
