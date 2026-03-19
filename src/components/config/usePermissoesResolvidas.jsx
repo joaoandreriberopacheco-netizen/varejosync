@@ -95,7 +95,7 @@ export function buildMenuItems(user, perfilDeAcesso) {
 // ─── Definição completa da estrutura de menu ─────────────────────────────────
 // Cada item tem uma função permissaoCheck que recebe o objeto de permissões resolvidas
 import {
-  LayoutDashboard, Banknote, TrendingUp, Package,
+  LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck
 } from 'lucide-react';
 

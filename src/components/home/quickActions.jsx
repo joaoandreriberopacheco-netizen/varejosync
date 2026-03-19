@@ -1,5 +1,5 @@
 import {
-  Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
+  Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
   Truck, BarChart3, Users, ClipboardList, Receipt, Warehouse,
   FileText, QrCode, LayoutDashboard, Tag, Settings, Upload
 } from 'lucide-react';
