@@ -1535,6 +1535,14 @@ export default function PDVVendedor() {
         onClose={() => setShowLostSalesForm(false)}
         currentUser={currentUser} />
 
+      <OrcamentosRecentesSheet
+        isOpen={showOrcamentosRecentes}
+        onClose={() => setShowOrcamentosRecentes(false)}
+        currentUser={currentUser}
+        tabelaPreco={tabelaPreco}
+        onCarregarOrcamento={handleCarregarOrcamento}
+      />
+
 
       <BarcodeScanner
         open={showBarcodeScanner}
