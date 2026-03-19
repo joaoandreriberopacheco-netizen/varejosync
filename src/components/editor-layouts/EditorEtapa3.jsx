@@ -7,7 +7,8 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) {
-  const [nome, setNome] = useState(`Layout ${tipoDocumento.nome}`);
+  const isNovo = !tipoDocumento.id || tipoDocumento.isNovo;
+  const [nome, setNome] = useState(tipoDocumento.nome || `Layout ${tipoDocumento.nome}`);
   const [observacoes, setObservacoes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
