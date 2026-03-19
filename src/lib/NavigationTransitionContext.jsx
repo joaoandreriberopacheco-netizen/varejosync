@@ -27,7 +27,7 @@ export const NavigationTransitionProvider = ({ children }) => {
   }, []);
 
   return (
-    <NavigationTransitionContext.Provider value={{ triggerTransition, showTransition, isNavigating }}>
+    <NavigationTransitionContext.Provider value={{ triggerTransition, showTransition, setShowTransition, isNavigating }}>
       {children}
     </NavigationTransitionContext.Provider>
   );
