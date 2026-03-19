@@ -29,7 +29,6 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
         </div>
       )}
       <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12px', letterSpacing: '1px', marginBottom: '2mm' }}>ORÇAMENTO</div>
-      {nomeTabela && <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '1mm' }}>Tabela: {nomeTabela}</div>}
       <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '2mm' }}>{fmtData()}</div>
       {clienteNome && <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
       <div style={{ borderTop: '1px dashed #999', borderBottom: '1px dashed #999', paddingTop: '3mm', paddingBottom: '3mm', marginBottom: '3mm' }}>
