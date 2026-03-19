@@ -112,10 +112,12 @@ NO DESC            QTD UN PREÇO     TOTAL
             if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
             else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
           }
+          const linha1 = `${String(idx + 1).padStart(2, ' ')} ${linhas[0].padEnd(16, ' ')} ${qtd.padStart(2, ' ')} UN R$ ${preco}  R$ ${total}`;
+          const linhasResto = linhas.slice(1).map((l) => `    ${l.padEnd(16, ' ')}`).join('\n');
+          const conteudo = linhasResto ? `${linha1}\n${linhasResto}` : linha1;
           return (
             <pre key={idx} style={{ fontSize: '8px', margin: '3px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
-{String(idx + 1).padStart(2, ' ')} {linhas[0].padEnd(16, ' ')} {qtd.padStart(2, ' ')} UN R$ {preco}  R$ {total}
-{linhas.slice(1).map((l) => `    ${l.padEnd(16, ' ')}`).join('\n')}
+{conteudo}
             </pre>
           );
         })}
