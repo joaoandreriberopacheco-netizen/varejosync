@@ -180,7 +180,9 @@ export default function TabelaPrecosConsulta() {
   const tree = useTreeGrid(produtosFiltrados);
 
   useEffect(() => {
-    setExpandedKeys(buildExpandedForLevel(tree, 1));
+    if (tree && tree.length > 0) {
+      setExpandedKeys(buildExpandedForLevel(tree, 1));
+    }
   }, [tree]);
 
   const rows = useMemo(() => {
