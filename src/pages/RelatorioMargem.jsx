@@ -412,24 +412,25 @@ export default function RelatorioMargemVendas() {
             {/* Group Toggle */}
             <button
               onClick={() => setGroupByCategory(!groupByCategory)}
-              className={`flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition ${
+              className={`flex-shrink-0 px-1.5 md:px-3 py-1.5 md:py-2 rounded text-xs md:text-sm font-medium transition ${
                 groupByCategory
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
+              title="Agrupar"
             >
-              Agrupar
+              ⊕
             </button>
 
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            {/* Search - oculto no mobile extra pequeno */}
+            <div className="relative flex-1 hidden sm:block">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="Procurar produto..."
+                placeholder="Procurar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                className="w-full pl-8 pr-3 py-1.5 md:py-2 bg-gray-50 dark:bg-gray-800 rounded text-xs md:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
               />
             </div>
 
@@ -437,8 +438,8 @@ export default function RelatorioMargemVendas() {
             <div className="md:hidden flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Ordenar">
-                    <ArrowUpDown className="w-4 h-4" />
+                  <button className="p-1.5 md:p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Ordenar">
+                    <ArrowUpDown className="w-3.5 md:w-4 h-3.5 md:h-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
