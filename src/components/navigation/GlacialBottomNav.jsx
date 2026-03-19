@@ -9,7 +9,7 @@ import {
   Menu as MenuIcon 
 } from 'lucide-react';
 
-export default function GlacialBottomNav({ onMenuClick, currentPageName }) {
+export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentPageName }) {
   const location = useLocation();
 
   const navItems = [
@@ -17,7 +17,7 @@ export default function GlacialBottomNav({ onMenuClick, currentPageName }) {
     { id: 'home', icon: Home, label: 'Início', page: 'Home' },
     { id: 'search', icon: Search, label: 'Busca', action: 'search' },
     { id: 'notifications', icon: Bell, label: 'Avisos', page: 'Notificacoes' },
-    { id: 'profile', icon: User, label: 'Perfil', page: 'Configuracoes' },
+    { id: 'profile', icon: User, label: 'Perfil', action: 'profile' },
   ];
 
   const isActive = (item) => {
@@ -31,8 +31,10 @@ export default function GlacialBottomNav({ onMenuClick, currentPageName }) {
       onMenuClick?.();
     } else if (item.action === 'search') {
       e.preventDefault();
-      // Dispatch global search event
       window.dispatchEvent(new CustomEvent('open-global-search'));
+    } else if (item.action === 'profile') {
+      e.preventDefault();
+      onProfileClick?.();
     }
   };
 
