@@ -31,21 +31,21 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
       <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '16px', letterSpacing: '1px', marginBottom: '3mm' }}>ORÇAMENTO</div>
       <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '4mm' }}>{fmtData()}</div>
       {clienteNome && <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
-      <div style={{ paddingTop: '3mm', paddingBottom: '3mm', marginBottom: '3mm' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#555', marginBottom: '1.5mm' }}>
-          <span style={{ flex: 3 }}>ITEM</span>
-          <span style={{ flex: 1, textAlign: 'center' }}>QTD</span>
-          <span style={{ flex: 1, textAlign: 'right' }}>UNIT</span>
-          <span style={{ flex: 1.5, textAlign: 'right' }}>TOTAL</span>
+      <div style={{ borderTop: '1px solid #999', borderBottom: '1px solid #999', paddingTop: '2mm', paddingBottom: '2mm', marginBottom: '3mm' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.6fr 0.8fr 0.9fr', gap: '1mm', fontSize: '9px', color: '#555', marginBottom: '2mm', fontWeight: 'bold', textTransform: 'uppercase' }}>
+          <span>DESCRIÇÃO</span>
+          <span style={{ textAlign: 'center' }}>QTD</span>
+          <span style={{ textAlign: 'right' }}>PREÇO</span>
+          <span style={{ textAlign: 'right' }}>TOTAL</span>
         </div>
         {itens.map((item, i) => (
-          <div key={i} style={{ marginBottom: '2mm' }}>
-            <div style={{ fontWeight: '500', fontSize: '11px', wordBreak: 'break-word' }}>{item.nome}</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-              <span style={{ flex: 3 }}>{item.unidade}</span>
-              <span style={{ flex: 1, textAlign: 'center' }}>{item.qtd}</span>
-              <span style={{ flex: 1, textAlign: 'right' }}>{fmtR(item.preco_unit)}</span>
-              <span style={{ flex: 1.5, textAlign: 'right', fontWeight: 'bold' }}>{fmtR(item.preco_unit * item.qtd)}</span>
+          <div key={i} style={{ marginBottom: '2.5mm', paddingBottom: '1.5mm', borderBottom: '0.5px solid #e0e0e0' }}>
+            <div style={{ fontWeight: '500', fontSize: '10px', wordBreak: 'break-word', marginBottom: '0.5mm' }}>{item.nome}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.6fr 0.8fr 0.9fr', gap: '1mm', fontSize: '10px' }}>
+              <span style={{ color: '#666' }}>{item.unidade}</span>
+              <span style={{ textAlign: 'center', fontWeight: '500' }}>{item.qtd}</span>
+              <span style={{ textAlign: 'right' }}>{fmtR(item.preco_unit)}</span>
+              <span style={{ textAlign: 'right', fontWeight: 'bold' }}>{fmtR(item.preco_unit * item.qtd)}</span>
             </div>
           </div>
         ))}
