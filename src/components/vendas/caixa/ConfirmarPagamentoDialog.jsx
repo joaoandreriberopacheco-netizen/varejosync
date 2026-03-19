@@ -171,10 +171,12 @@ export default function ConfirmarPagamentoDialog({
               icon={Receipt}
               index={5}
               active={formaPagamentoAtiva === 5}
-              onFocus={() => setFormaPagamentoAtiva(5)}
+              onFocus={() => { setFormaPagamentoAtiva(5); setShowSeletorFiado(true); }}
               inputRef={inputRefs.contaPagar}
               value={inputContaPagar}
               onKeyDown={(e) => handleInputMascara(e, setInputContaPagar, setPagamentosContaPagar)}
+              badge={fiadoConfig ? `Vence em ${fiadoConfig.prazo_dias} dias` : null}
+              onBadgeClick={() => setShowSeletorFiado(true)}
             />
 
             {/* Resumo troco / falta */}
