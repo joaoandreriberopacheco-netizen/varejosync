@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
+import { useNavigationTransition } from '@/lib/NavigationTransitionContext';
 
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/sonner";
@@ -59,6 +60,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Layout({ children, currentPageName }) {
+  const { triggerTransition } = useNavigationTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -222,6 +224,19 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
+  const handleNavigation = (page) => {
+    triggerTransition(() => {
+      window.location.href = createPageUrl(page);
+    });
+  };
+
+  const handleNavigationLink = (e, to) => {
+    e.preventDefault();
+    triggerTransition(() => {
+      window.location.href = to;
+    });
+  };
+
   const isPageActive = (item) => {
     if (item.page) {
       return currentPageName === item.page;
@@ -359,7 +374,6 @@ export default function Layout({ children, currentPageName }) {
                     <>
                       <button
                         onClick={() => {
-                          // Close all other menus
                           const newExpanded = {};
                           if (!isExpanded) {
                             newExpanded[item.name] = true;
@@ -389,17 +403,20 @@ export default function Layout({ children, currentPageName }) {
                             const isSubActive = currentPageName === subItem.page;
                             return (
                               <Link
-                                key={subItem.page}
-                                to={createPageUrl(subItem.page)}
-                                className={`flex items-center gap-2 px-2 py-1.5 rounded transition-colors text-sm ${
-                                  isSubActive
-                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
-                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                }`}
-                                onClick={closeMobileMenu}
-                              >
-                                {subItem.name}
-                              </Link>
+                                 key={subItem.page}
+                                 to={createPageUrl(subItem.page)}
+                                 onClick={(e) => {
+                                   handleNavigationLink(e, createPageUrl(subItem.page));
+                                   closeMobileMenu();
+                                 }}
+                                 className={`flex items-center gap-2 px-2 py-1.5 rounded transition-colors text-sm ${
+                                   isSubActive
+                                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
+                                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                 }`}
+                               >
+                                 {subItem.name}
+                               </Link>
                             );
                           })}
                         </div>
@@ -407,19 +424,22 @@ export default function Layout({ children, currentPageName }) {
                     </>
                   ) : (
                     <Link
-                      to={createPageUrl(item.page)}
-                      className={`flex items-center gap-2 px-2 py-2 rounded transition-colors ${
-                        isActive
-                          ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
-                      }`}
-                      onClick={closeMobileMenu}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {(isOpen || isMobile) && (
-                        <span className="text-sm">{item.name}</span>
-                      )}
-                    </Link>
+                       to={createPageUrl(item.page)}
+                       onClick={(e) => {
+                         handleNavigationLink(e, createPageUrl(item.page));
+                         closeMobileMenu();
+                       }}
+                       className={`flex items-center gap-2 px-2 py-2 rounded transition-colors ${
+                         isActive
+                           ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+                       }`}
+                     >
+                       <Icon className="w-4 h-4" />
+                       {(isOpen || isMobile) && (
+                         <span className="text-sm">{item.name}</span>
+                       )}
+                     </Link>
                   )}
                 </div>
               );
@@ -616,7 +636,8 @@ export default function Layout({ children, currentPageName }) {
                  <Link 
                    key={idx} 
                    to={createPageUrl(item.page)}
-                   onClick={() => {
+                   onClick={(e) => {
+                     handleNavigationLink(e, createPageUrl(item.page));
                      setIsSearchOpen(false);
                      setSearchQuery("");
                      if(isMobile) setIsOpen(false);
