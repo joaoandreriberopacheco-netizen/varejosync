@@ -132,4 +132,4 @@ export const ALL_QUICK_ACTIONS = [
   },
 ];
 
-export const DEFAULT_QUICK_ACTIONS = ['pdv', 'caixa', 'vendas', 'produtos', 'financeiro', 'compras'];
+export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'tabelaprecos', 'terceiros'];
