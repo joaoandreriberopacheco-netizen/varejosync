@@ -101,8 +101,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
        <LinhaHifens />
 
-      <pre style={{ fontSize: `${9 * SCALE_FACTOR}px`, margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre', textAlign: 'right' }}>
-          QTD   UN   PREÇO    TOTAL
+      <pre style={{ fontSize: `${9 * SCALE_FACTOR}px`, margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre' }}>
+      DESCRIÇÃO         QTD UN PREÇO    TOTAL
       </pre>
        <LinhaHifens />
 
