@@ -222,18 +222,18 @@ export default function TabelaPrecosConsulta() {
         </div>
 
         {/* Seletor de tabela */}
-        {tabelas.length > 1 && (
-          <div className="flex gap-1.5 flex-wrap">
-            {tabelas.map(tabela => (
-              <button
-                key={tabela.id}
-                onClick={() => setTabelaSelecionada(tabela)}
-                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                  tabelaSelecionada?.id === tabela.id
-                    ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                }`}
-              >
+         {tabelas.length > 0 && (
+           <div className="flex gap-1.5 flex-wrap">
+             {tabelas.map(tabela => (
+               <button
+                 key={tabela.id}
+                 onClick={() => setTabelaSelecionada(tabela)}
+                 className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition-all cursor-pointer active:scale-95 ${
+                   tabelaSelecionada?.id === tabela.id
+                     ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 shadow-sm'
+                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                 }`}
+               >
                 {tabela.nome_tabela}
                 {tabela.fator_ajuste !== 1 && (
                   <span className="ml-1 opacity-70">
