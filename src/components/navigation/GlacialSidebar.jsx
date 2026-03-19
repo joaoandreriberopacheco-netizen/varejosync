@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronRight, ShoppingCart } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import P38Logo from '@/components/brand/P38Logo';
 
 export default function GlacialSidebar({ 
   isOpen, 
@@ -64,21 +65,15 @@ export default function GlacialSidebar({
         {/* Header */}
         <div className="p-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           {(isOpen || isMobile) ? (
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center shadow-sm relative overflow-hidden">
-                <ShoppingCart className="w-5 h-5 text-gray-900 dark:text-white" strokeWidth={2.5} />
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-tl-lg"></div>
-              </div>
+            <div className="flex items-center gap-2">
+              <P38Logo variant="icon-only" size="md" />
               <div>
-                <h1 className="text-base font-semibold text-gray-900 dark:text-white font-glacial">VarejoSync</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Sistema ERP</p>
+                <h1 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial">P38 ERP</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Sistema</p>
               </div>
             </div>
           ) : (
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center mx-auto shadow-sm relative overflow-hidden">
-              <ShoppingCart className="w-4 h-4 text-gray-900 dark:text-white" strokeWidth={2.5} />
-              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-tl-lg"></div>
-            </div>
+            <P38Logo variant="icon-only" size="sm" />
           )}
         </div>
 
