@@ -33,7 +33,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
+            onClick={handleClose}
           />
 
           {/* Sheet */}
@@ -51,10 +51,10 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.full_name}</p>
-                  <p className="text-xs text-gray-400 truncate">{user.perfil || 'Admin'}</p>
+                  <p className="text-xs text-gray-400 truncate">{user.email || user.perfil || 'Admin'}</p>
                 </div>
                 <button
-                  onClick={() => setOpen(false)}
+                  onClick={handleClose}
                   className="ml-auto w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0"
                 >
                   <X className="w-4 h-4 text-gray-400" />
