@@ -47,6 +47,10 @@ const AuthenticatedApp = () => {
     setShowSplash(false);
   };
 
+  if (showSplash) {
+    return <SplashScreen onFinish={handleSplashFinish} darkMode={darkMode} />;
+  }
+
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
