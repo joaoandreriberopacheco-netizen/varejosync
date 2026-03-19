@@ -4,6 +4,7 @@ import {
   Banknote, Smartphone, CreditCard, Ticket, Receipt, ArrowLeft, ChevronRight, RefreshCw
 } from 'lucide-react';
 import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
+import SeletorFiadoSheet from './SeletorFiadoSheet';
 
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
