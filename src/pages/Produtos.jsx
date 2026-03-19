@@ -1561,6 +1561,7 @@ export default function ProdutosPage() {
                   </TableBody>
                 </Table>
               </div>
+              </div>
             </div>
           </div>
         </div>
