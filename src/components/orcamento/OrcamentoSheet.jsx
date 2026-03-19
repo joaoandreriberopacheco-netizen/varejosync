@@ -36,7 +36,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
 
       {/* Sheet */}
       <div
-        className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl"
+      className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Handle */}
