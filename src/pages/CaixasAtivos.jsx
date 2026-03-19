@@ -111,7 +111,7 @@ export default function CaixasAtivosPage() {
                 >
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                      <SquareTerminal className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                      <Banknote className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">

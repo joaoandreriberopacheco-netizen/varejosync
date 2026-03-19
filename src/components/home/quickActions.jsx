@@ -13,14 +13,14 @@ import {
 export const ALL_QUICK_ACTIONS = [
   {
     id: 'pdv',
-    icon: SquareTerminal,
+    icon: Banknote,
     label: 'PDV',
     page: 'PDVVendedor',
     permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_supermercado,
   },
   {
     id: 'caixa',
-    icon: SquareTerminal,
+    icon: Banknote,
     label: 'Caixa',
     page: 'PDVCaixa',
     permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso,

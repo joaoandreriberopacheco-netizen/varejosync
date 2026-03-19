@@ -125,7 +125,7 @@ export const ALL_MENU_ITEMS = [
   },
   {
     name: 'PDV',
-    icon: SquareTerminal,
+    icon: Banknote,
     permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_supermercado || p?.pdv?.acesso_auto_atendimento,
     submenu: [
       {
@@ -147,7 +147,7 @@ export const ALL_MENU_ITEMS = [
   },
   {
     name: 'Caixa',
-    icon: SquareTerminal,
+    icon: Banknote,
     page: 'PDVCaixa',
     permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso
   },
