@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { LayoutDashboard, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
+import P38Logo from '@/components/brand/P38Logo';
 import GeralTab from '../components/dashboard/tabs/GeralTab';
 import VendasTab from '../components/dashboard/tabs/VendasTab';
 import ComprasTab from '../components/dashboard/tabs/ComprasTab';
@@ -33,9 +34,15 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Dashboard</h1>
-        <p className="text-xs text-gray-400 dark:text-gray-500">Visão geral do negócio</p>
+      {/* Logo no canto superior direito (desktop) + Header */}
+      <div className="relative">
+        <div className="hidden md:block absolute top-0 right-0">
+          <P38Logo variant="vertical" size="sm" />
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Dashboard</h1>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Visão geral do negócio</p>
+        </div>
       </div>
 
       <GlacialTabsList scrollable>
