@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { User, LogOut, Settings, Sun, Moon, X, Printer, Trash2, HelpCircle, MoreVertical } from 'lucide-react';
 
-export default function MobileUserMenu({ darkMode, toggleDarkMode }) {
+export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
 
@@ -11,27 +11,22 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode }) {
     base44.auth.me().then(u => u && setUser(u)).catch(() => {});
   }, []);
 
+  // Suporte a abertura externa (pelo BottomNav)
+  useEffect(() => {
+    if (externalOpen) setOpen(true);
+  }, [externalOpen]);
+
+  const handleClose = () => {
+    setOpen(false);
+    onExternalClose?.();
+  };
+
   const initials = user?.full_name
     ? user.full_name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
     : '?';
 
   return (
     <>
-      {/* Trigger — bolinha no canto superior direito */}
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed top-3 right-4 z-40 w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center border border-gray-100 dark:border-gray-700"
-        style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }}
-      >
-        {user?.full_name ? (
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 font-glacial">
-            {initials}
-          </span>
-        ) : (
-          <User className="w-4 h-4 text-gray-500" />
-        )}
-      </button>
-
       {/* Drawer */}
       {open && (
         <>
