@@ -29,8 +29,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         background: '#fff',
         color: '#000',
         fontFamily: "'Iosevka Charon Mono', 'Cousine', monospace",
-        fontSize: '10px',
-        padding: '8px',
+        fontSize: '11px',
+        padding: '8px 4px',
         margin: '0 auto',
         lineHeight: '1.3',
       }}
