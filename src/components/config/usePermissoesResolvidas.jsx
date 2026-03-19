@@ -254,7 +254,7 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Tabela de Preços',
         page: 'TabelaPrecosConsulta',
-        permissaoCheck: (p) => p?.estoque?.visualizar_produtos
+        permissaoCheck: (p) => p?.estoque?.tabela_precos
       },
       {
         name: 'Importação em Massa',
