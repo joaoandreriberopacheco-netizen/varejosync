@@ -7,7 +7,14 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 
-const fmtV = (v) => (parseFloat(v) || 0).toFixed(2);
+// Formato brasileiro: virgula para decimais, ponto para milhares
+const fmtV = (v) => {
+  const num = parseFloat(v) || 0;
+  const formatted = num.toFixed(2).replace('.', ','); // converte a virgula
+  const parts = formatted.split(',');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // adiciona pontos nos milhares
+  return parts.join(',');
+};
 const SCALE_FACTOR = 1.2; // 20% de aumento nas fontes
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
