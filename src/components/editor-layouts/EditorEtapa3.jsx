@@ -149,7 +149,7 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
           className="flex-1 flex items-center justify-center gap-2"
         >
           <Save className="w-4 h-4" />
-          {isSaving ? 'Salvando...' : 'Salvar Layout'}
+          {isSaving ? 'Salvando...' : isNovo ? 'Criar Layout' : 'Atualizar Layout'}
         </Button>
       </div>
     </div>
