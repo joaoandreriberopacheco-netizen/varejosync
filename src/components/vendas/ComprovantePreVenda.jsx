@@ -67,7 +67,7 @@ function CupomSenha({ preVenda }) {
       {/* Itens com colunas */}
       <div style={{ fontSize: '9px', borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '4px 0', margin: '4px 0' }}>
         {/* Header das colunas */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 50px 50px 50px', gap: '4px', paddingBottom: '2px', borderBottom: '1px solid #000', marginBottom: '2px', fontSize: '8px', fontWeight: 'bold' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 35px 40px 40px', paddingBottom: '2px', borderBottom: '1px solid #000', marginBottom: '3px', fontSize: '8px', fontWeight: 'bold' }}>
           <div>DESCRIÇÃO</div>
           <div style={{ textAlign: 'right' }}>QTD</div>
           <div style={{ textAlign: 'right' }}>PREÇO</div>
@@ -76,9 +76,9 @@ function CupomSenha({ preVenda }) {
         
         {/* Linhas de produtos */}
         {preVenda.itens?.map((item, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 50px 50px 50px', gap: '4px', marginBottom: '2px', alignItems: 'start' }}>
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {(item.produto_nome || '').substring(0, 30)}
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 35px 40px 40px', marginBottom: '1px', alignItems: 'start', fontSize: '9px' }}>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '2px' }}>
+              {(item.produto_nome || '').substring(0, 28)}
             </div>
             <div style={{ textAlign: 'right' }}>{item.quantidade}</div>
             <div style={{ textAlign: 'right' }}>R$ {fmtV(item.preco_unitario_praticado || 0)}</div>
@@ -88,25 +88,47 @@ function CupomSenha({ preVenda }) {
       </div>
 
       {/* Resumo */}
-      <div style={{ fontSize: '10px', padding: '3px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+      <div style={{ fontSize: '10px', padding: '5px 0', marginTop: '2px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px', fontSize: '18px', fontWeight: 'bold' }}>
           <span>SUBTOTAL:</span>
-          <span style={{ fontWeight: 'bold' }}>R$ {fmtV(preVenda.subtotal)}</span>
+          <span>R$ {fmtV(preVenda.subtotal)}</span>
         </div>
         {preVenda.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px', fontSize: '18px', fontWeight: 'bold' }}>
             <span>DESCONTO:</span>
-            <span style={{ fontWeight: 'bold' }}>- R$ {fmtV(preVenda.valor_desconto)}</span>
+            <span>- R$ {fmtV(preVenda.valor_desconto)}</span>
           </div>
         )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '13px' }}>
-          <span style={{ fontWeight: 'bold' }}>TOTAL:</span>
-          <span style={{ fontWeight: 'bold' }}>R$ {fmtV(preVenda.valor_total)}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '20px', fontWeight: 'bold' }}>
+          <span>TOTAL:</span>
+          <span>R$ {fmtV(preVenda.valor_total)}</span>
+        </div>
+      </div>
+
+      {/* Formas de Pagamento */}
+      <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '4px 0', margin: '6px 0', fontSize: '9px' }}>
+        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>FORMAS DE PAGAMENTO:</div>
+        {preVenda.pagamentos?.map((pag, i) => (
+          <div key={i} style={{ fontSize: '9px', marginBottom: '1px' }}>
+            {pag.forma_pagamento} {pag.parcelas > 1 ? `(${pag.parcelas}x)` : ''}: R$ {fmtV(pag.valor)}
+          </div>
+        ))}
+      </div>
+
+      {/* Usuários */}
+      <div style={{ fontSize: '9px', padding: '3px 0', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1px' }}>
+          <span>VENDEDOR:</span>
+          <span style={{ fontWeight: 'bold' }}>{(preVenda.vendedor_nome || '').toUpperCase()}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>PROCESSADO POR:</span>
+          <span style={{ fontWeight: 'bold' }}>{(preVenda.created_by || '').toUpperCase()}</span>
         </div>
       </div>
 
       {/* Aviso */}
-      <div style={{ textAlign: 'center', border: '1px solid #000', padding: '5px 4px', margin: '6px 0', fontSize: '9px', fontWeight: 'bold' }}>
+      <div style={{ textAlign: 'center', border: '1px solid #000', padding: '5px 4px', margin: '4px 0', fontSize: '9px', fontWeight: 'bold' }}>
         AGUARDANDO ATENDIMENTO NO CAIXA
         <div style={{ fontWeight: 'normal', marginTop: '2px' }}>
           Apresente esta senha para pagamento
