@@ -24,6 +24,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
     if (visible) {
       setSelecionada(null);
       setBandeiraSelecionada('');
+      setParcelas(parcelasIniciais);
       loadMaquininhas();
     }
   }, [visible]);
