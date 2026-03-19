@@ -374,10 +374,10 @@ export default function RelatorioMargemVendas() {
             <div className="relative z-50 flex-shrink-0">
               <button
                 onClick={() => { setShowDatePicker(!showDatePicker); setShowTagPopup(false); }}
-                className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                title="Selecionar período"
+                className="p-1.5 md:p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                title="Período"
               >
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-3.5 md:w-4 h-3.5 md:h-4" />
               </button>
               {showDatePicker && (
                 <CalendarPopup
