@@ -142,7 +142,7 @@ NO DESCRIÇÃO        QTD UN  PREÇO    TOTAL
           </div>
         )}
       </div>
-      <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '3px 0', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', paddingTop: '3px' }}>
+      <div style={{ fontSize: '15px', fontWeight: 'bold', margin: '3px 0', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', paddingTop: '3px' }}>
         <span>TOTAL:</span>
         <span>R$ {fmtV(pedido.valor_total || 0)}</span>
       </div>
