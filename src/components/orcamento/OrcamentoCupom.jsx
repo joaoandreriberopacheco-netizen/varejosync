@@ -28,9 +28,9 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
           {empresa.cidade && <div style={{ fontSize: '10px', color: '#555' }}>{empresa.cidade} - {empresa.estado}</div>}
         </div>
       )}
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '16px', letterSpacing: '1px', marginBottom: '3mm' }}>ORÇAMENTO</div>
-      <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '4mm' }}>{fmtData()}</div>
-      {clienteNome && <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '18px', letterSpacing: '1px', marginBottom: '3mm' }}>ORÇAMENTO</div>
+      <div style={{ textAlign: 'center', fontSize: '11px', color: '#555', marginBottom: '4mm' }}>{fmtData()}</div>
+      {clienteNome && <div style={{ textAlign: 'center', fontSize: '11px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
       <div style={{ borderTop: '1px solid #999', borderBottom: '1px solid #999', paddingTop: '2mm', paddingBottom: '2mm', marginBottom: '3mm' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '10px', color: '#555', marginBottom: '2mm', fontWeight: 'bold', textTransform: 'uppercase' }}>
           <span>DESCRIÇÃO</span>
