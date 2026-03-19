@@ -79,7 +79,7 @@ export const ALL_QUICK_ACTIONS = [
     icon: Tag,
     label: 'Tabela Preços',
     page: 'TabelaPrecosConsulta',
-    permissaoCheck: (p) => p?.estoque?.visualizar_produtos,
+    permissaoCheck: (p) => p?.estoque?.tabela_precos || p?.estoque?.visualizar_produtos,
   },
   {
     id: 'manifestos',
