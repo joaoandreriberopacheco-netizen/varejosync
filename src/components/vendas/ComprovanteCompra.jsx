@@ -124,7 +124,7 @@ NO DESCRIÇÃO        QTD UN  PREÇO    TOTAL
 
       <LinhaHifens />
 
-      <div style={{ fontSize: '9px', margin: '6px 0 2px', fontFamily: 'inherit' }}>
+      <div style={{ fontSize: '10px', margin: '6px 0 2px', fontFamily: 'inherit' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>SUBTOTAL:</span>
           <span>R$ {fmtV(pedido.subtotal || 0)}</span>
