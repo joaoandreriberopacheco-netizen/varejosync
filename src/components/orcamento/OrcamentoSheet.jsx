@@ -307,7 +307,7 @@ function ItemCarrinho({ item, onSelect, onRemove }) {
       </span>
       <button
         onClick={e => { e.stopPropagation(); onRemove(item.id); }}
-        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+        className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
       >
         <Trash2 className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors" />
       </button>
@@ -370,7 +370,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           {/* Venda Perdida */}
           <button
             onClick={onVendaPerdida}
-            className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-2xl transition-colors"
           >
             <AlertCircle className="w-3.5 h-3.5" />
             Registrar Venda Perdida
@@ -388,7 +388,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
               <button
                 key={fmt}
                 onClick={() => setFormatoCupom(fmt)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                className={`flex-1 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                   formatoCupom === fmt
                     ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
@@ -480,7 +480,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
         <button
           onClick={tela === 'carrinho' ? () => setTela('busca') : handleClose}
-          className="p-2 -ml-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+          className="p-2 -ml-1 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
         >
           <ArrowLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </button>
@@ -496,7 +496,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         {tela === 'busca' && itens.length > 0 && (
           <button
             onClick={() => setTela('carrinho')}
-            className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="relative p-2 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-green-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
@@ -506,7 +506,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         )}
 
         {tela === 'busca' && (
-          <button onClick={handleClose} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <button onClick={handleClose} className="p-2 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <X className="w-5 h-5 text-gray-400" />
           </button>
         )}
