@@ -1,21 +1,82 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import EditorBlocks from './EditorBlocks';
 import PreviewBlocks from './PreviewBlocks';
 
+const BLOCKS_PADRAO = {
+  comprovante: [
+    { id: 1, tipo: 'header', conteudo: 'COMPROVANTE DE VENDA' },
+    { id: 2, tipo: 'texto', conteudo: 'Data: __/__/____  |  Nº: _____' },
+    { id: 3, tipo: 'texto', conteudo: 'Cliente: ________________________' },
+    { id: 4, tipo: 'texto', conteudo: 'Produtos vendidos' },
+    { id: 5, tipo: 'texto', conteudo: 'Total: R$ ____,__' },
+    { id: 6, tipo: 'footer', conteudo: 'Obrigado pela preferência!' },
+  ],
+  relatorio: [
+    { id: 1, tipo: 'header', conteudo: 'RELATÓRIO' },
+    { id: 2, tipo: 'texto', conteudo: 'Período: __/__/____ a __/__/____' },
+    { id: 3, tipo: 'texto', conteudo: 'Resumo executivo' },
+    { id: 4, tipo: 'texto', conteudo: 'Dados e análises' },
+    { id: 5, tipo: 'footer', conteudo: 'Gerado em: ____' },
+  ],
+  manifesto: [
+    { id: 1, tipo: 'header', conteudo: 'MANIFESTO DE CARGA' },
+    { id: 2, tipo: 'texto', conteudo: 'Transportador: ________________________' },
+    { id: 3, tipo: 'texto', conteudo: 'Itens transportados' },
+    { id: 4, tipo: 'texto', conteudo: 'Data de saída: __/__/____' },
+    { id: 5, tipo: 'footer', conteudo: 'Assinado em: __/__/____' },
+  ],
+};
+
 export default function EditorEtapa2({ tipoDocumento, onBlocksChange, onProximo, onVoltar }) {
-  const [blocksConfig, setBlocksConfig] = useState([
-    { id: 1, tipo: 'header', conteudo: 'Cabeçalho do Documento' },
-    { id: 2, tipo: 'texto', conteudo: 'Conteúdo principal' },
-    { id: 3, tipo: 'footer', conteudo: 'Rodapé' },
-  ]);
+  const [blocksConfig, setBlocksConfig] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    carregarOuCriarBlocks();
+  }, [tipoDocumento]);
+
+  const carregarOuCriarBlocks = async () => {
+    setIsLoading(true);
+    try {
+      // Se é documento existente
+      if (tipoDocumento.id && !tipoDocumento.isNovo) {
+        const config = tipoDocumento.blocks_config 
+          ? JSON.parse(tipoDocumento.blocks_config)
+          : BLOCKS_PADRAO[tipoDocumento.categoria] || BLOCKS_PADRAO.comprovante;
+        setBlocksConfig(config);
+      } else {
+        // Se é novo documento, usar template padrão
+        const config = BLOCKS_PADRAO[tipoDocumento.id] || BLOCKS_PADRAO.comprovante;
+        setBlocksConfig(config);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar blocos:', error);
+      setBlocksConfig(BLOCKS_PADRAO.comprovante);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSalvarEtapa = () => {
-    onBlocksChange(blocksConfig);
-    onProximo();
+    if (blocksConfig) {
+      onBlocksChange(blocksConfig);
+      onProximo();
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900">
+        <div className="text-center">
+          <Loader className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
+          <p className="text-gray-500">Carregando editor...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (showPreview) {
     return (
@@ -54,7 +115,7 @@ export default function EditorEtapa2({ tipoDocumento, onBlocksChange, onProximo,
             Editar: {tipoDocumento.nome}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Arraste, adicione e customizse os blocos
+            Arraste, adicione e customize os blocos
           </p>
         </div>
         <button
@@ -68,7 +129,7 @@ export default function EditorEtapa2({ tipoDocumento, onBlocksChange, onProximo,
 
       {/* Editor */}
       <div className="flex-1 overflow-auto">
-        <EditorBlocks blocks={blocksConfig} onBlocksChange={setBlocksConfig} />
+        {blocksConfig && <EditorBlocks blocks={blocksConfig} onBlocksChange={setBlocksConfig} />}
       </div>
 
       {/* Footer com Botões */}
