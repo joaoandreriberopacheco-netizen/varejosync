@@ -101,8 +101,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
        <LinhaHifens />
 
-      <pre style={{ fontSize: `${9 * SCALE_FACTOR}px`, margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre' }}>
-      DESCRIÇÃO         QTD UN PREÇO    TOTAL
+      <pre style={{ fontSize: `${9 * SCALE_FACTOR}px`, margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre', textAlign: 'right' }}>
+          QTD   UN   PREÇO    TOTAL
       </pre>
        <LinhaHifens />
 
@@ -120,8 +120,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
               if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
               else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
             }
-            // Alinha valores com DESCRIÇÃO à esquerda e colunas à direita
-            const linha1 = `${linhas[0].padEnd(18, ' ')}${qtd.padStart(2, ' ')} UN ${preco.padStart(8, ' ')} ${total.padStart(8, ' ')}`;
+            // Alinha cabeçalho e valores à direita com maior espaçamento
+            const linha1 = `${linhas[0].padEnd(18, ' ')}${qtd.padStart(3, ' ')} UN ${preco.padStart(8, ' ')} ${total.padStart(8, ' ')}`;
             const linhasResto = linhas.slice(1).map((l) => `${l.padEnd(18, ' ')}${' '.padEnd(24, ' ')}`).join('\n');
             const conteudo = linhasResto ? `${linha1}\n${linhasResto}` : linha1;
             return (
