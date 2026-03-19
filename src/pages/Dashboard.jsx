@@ -34,14 +34,14 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4">
-      {/* Logo no canto superior direito (desktop) + Header */}
-      <div className="relative">
-        <div className="hidden md:block absolute top-0 right-0">
-          <P38Logo variant="vertical" size="sm" />
-        </div>
+      {/* Header com logo alinhada à direita */}
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Dashboard</h1>
           <p className="text-xs text-gray-400 dark:text-gray-500">Visão geral do negócio</p>
+        </div>
+        <div className="hidden md:block">
+          <P38Logo variant="vertical" size="sm" />
         </div>
       </div>
 
