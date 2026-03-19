@@ -47,17 +47,13 @@ Deno.serve(async (req) => {
           consecutiveEmptyBatches = 0;
           batchSize = records.length;
 
-          // Deleta em paralelo para melhor performance (até 10 paralelo)
-          const deletePromises = records.map(record =>
-            base44.asServiceRole.entities[entityId].delete(record.id)
-              .catch(e => {
-                console.warn(`Falha ao deletar ${entityId} ${record.id}:`, e.message);
-              })
-          );
-
-          // Executa em chunks de 10 para não sobrecarregar
-          for (let i = 0; i < deletePromises.length; i += 10) {
-            await Promise.all(deletePromises.slice(i, i + 10));
+          // Deleta sequencialmente para garantir sucesso total
+          for (const record of records) {
+            try {
+              await base44.asServiceRole.entities[entityId].delete(record.id);
+            } catch (e) {
+              console.warn(`Falha ao deletar ${entityId} ${record.id}:`, e.message);
+            }
           }
 
           totalDeleted += batchSize;
