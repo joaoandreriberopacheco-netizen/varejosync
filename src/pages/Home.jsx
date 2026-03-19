@@ -18,12 +18,7 @@ const STORAGE_KEY = 'home_quick_actions';
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
-  const [quickActionIds, setQuickActionIds] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : DEFAULT_QUICK_ACTIONS;
-    } catch { return DEFAULT_QUICK_ACTIONS; }
-  });
+  const [quickActionIds, setQuickActionIds] = useState([]);
   const [showBalance, setShowBalance] = useState(true);
   const [showPersonalizar, setShowPersonalizar] = useState(false);
   const [kpis, setKpis] = useState({
