@@ -143,9 +143,20 @@ function CupomTermico({ pedido, dadosEmpresa }) {
               {pag.forma_pagamento}{pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}: R$ {fmtV(pag.valor)}
             </div>
           ))}
-          <LinhaHifens />
         </>
       )}
+
+      <LinhaHifens />
+
+      {/* Usuários - Vendedor e Caixa */}
+      <div style={{ fontSize: '8px', margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
+        {pedido.vendedor_nome && (
+          <div>VENDEDOR: {pedido.vendedor_nome.toUpperCase()}</div>
+        )}
+        {pedido.created_by && (
+          <div>CAIXA: {pedido.created_by.toUpperCase()}</div>
+        )}
+      </div>
 
       <div style={{ textAlign: 'center', fontSize: '8px', marginTop: '6px', lineHeight: '1.4' }}>
         {dadosEmpresa?.mensagem_rodape || 'OBRIGADO PELA PREFERÊNCIA!'}
