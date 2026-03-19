@@ -16,10 +16,10 @@ const ICON_ONLY_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d4
  * - Claro: cinza escuro/preto
  * - Escuro: cinza claro/branco
  */
-export default function P38Logo({ 
-  variant = 'horizontal', 
-  size = 'md', 
-  className = '' 
+export default function P38Logo({
+  variant = 'horizontal',
+  size = 'md',
+  className = ''
 }) {
   // Icon-only (raio sozinho)
   if (variant === 'icon-only') {
@@ -28,7 +28,7 @@ export default function P38Logo({
       sm: 'h-8',
       md: 'h-10',
       lg: 'h-12',
-      xl: 'h-16',
+      xl: 'h-16'
     };
     const h = sizes[size] || sizes.md;
 
@@ -39,9 +39,9 @@ export default function P38Logo({
         className={`${h} w-auto object-contain select-none
           mix-blend-multiply dark:mix-blend-normal dark:invert
           ${className}`}
-        draggable={false}
-      />
-    );
+        draggable={false} />);
+
+
   }
 
   // Vertical (empilhado)
@@ -49,20 +49,20 @@ export default function P38Logo({
     const sizes = {
       sm: 'h-20',
       md: 'h-28',
-      lg: 'h-36',
+      lg: 'h-36'
     };
     const h = sizes[size] || sizes.md;
 
-    return (
-      <img
-        src={LOGO_VERTICAL_URL}
-        alt="P38 ERP"
-        className={`${h} w-auto object-contain select-none
-          dark:invert
-          ${className}`}
-        draggable={false}
-      />
-    );
+    return null;
+
+
+
+
+
+
+
+
+
   }
 
   // Horizontal (padrão)
@@ -72,7 +72,7 @@ export default function P38Logo({
     md: 'h-16',
     lg: 'h-20',
     xl: 'h-24',
-    xxl: 'h-32',
+    xxl: 'h-32'
   };
   const h = sizes[size] || sizes.md;
 
@@ -83,7 +83,7 @@ export default function P38Logo({
       className={`${h} w-auto object-contain select-none
         mix-blend-multiply dark:mix-blend-normal dark:invert
         ${className}`}
-      draggable={false}
-    />
-  );
+      draggable={false} />);
+
+
 }
