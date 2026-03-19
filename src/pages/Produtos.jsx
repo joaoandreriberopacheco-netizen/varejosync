@@ -1311,7 +1311,8 @@ export default function ProdutosPage() {
               )}
 
               {/* DESKTOP: Tabela Plana (original) */}
-              <div className={`${viewMode === 'plana' ? 'hidden md:block' : 'hidden'} w-full border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900`}>
+              <div className={`${viewMode === 'plana' ? 'hidden md:flex md:flex-col' : 'hidden'} w-full h-full overflow-hidden border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900`}>
+              <div className="flex-1 overflow-auto">
                 <Table>
                   <TableHeader className="bg-gray-50 sticky top-0 z-20 dark:bg-gray-800">
                     <TableRow>
