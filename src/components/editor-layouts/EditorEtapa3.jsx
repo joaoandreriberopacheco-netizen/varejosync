@@ -19,26 +19,46 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
 
     setIsSaving(true);
     try {
-      // Salvar na entidade LayoutTemplate
-      await base44.entities.LayoutTemplate.create({
-        nome: nome.trim(),
-        categoria: tipoDocumento.id,
-        tipo: tipoDocumento.id,
-        blocks_config: JSON.stringify(blocksConfig),
-        descricao: observacoes || `Layout customizado para ${tipoDocumento.nome}`,
-      });
+      const isNovo = !tipoDocumento.id || tipoDocumento.isNovo;
 
-      // Registrar evento de aprendizado
-      await base44.entities.EventoEditorLayout.create({
-        tipo_evento: 'template_salvo',
-        descricao_acao: `Template "${nome}" criado para ${tipoDocumento.nome}`,
-        dados_evento: JSON.stringify({ tipoDocumento, blocksCount: blocksConfig.length }),
-        sequencia_blocos: JSON.stringify(blocksConfig),
-        template_layout_id: tipoDocumento.id,
-      });
+      if (isNovo) {
+        // Criar novo documento
+        await base44.entities.LayoutTemplate.create({
+          nome: nome.trim(),
+          categoria: tipoDocumento.id || tipoDocumento.categoria,
+          tipo: tipoDocumento.id || tipoDocumento.categoria,
+          blocks_config: JSON.stringify(blocksConfig),
+          descricao: observacoes || `Layout customizado para ${tipoDocumento.nome}`,
+        });
 
-      toast.success('Layout salvo com sucesso!');
-      
+        // Registrar evento de aprendizado - novo template
+        await base44.entities.EventoEditorLayout.create({
+          tipo_evento: 'template_salvo',
+          descricao_acao: `Template "${nome}" criado para ${tipoDocumento.nome}`,
+          dados_evento: JSON.stringify({ tipoDocumento, blocksCount: blocksConfig.length }),
+          sequencia_blocos: JSON.stringify(blocksConfig),
+        });
+
+        toast.success('Novo layout criado com sucesso!');
+      } else {
+        // Atualizar documento existente
+        await base44.entities.LayoutTemplate.update(tipoDocumento.id, {
+          blocks_config: JSON.stringify(blocksConfig),
+          descricao: observacoes || tipoDocumento.descricao,
+        });
+
+        // Registrar evento de aprendizado - edição
+        await base44.entities.EventoEditorLayout.create({
+          tipo_evento: 'bloco_modificado',
+          descricao_acao: `Template "${tipoDocumento.nome}" foi atualizado`,
+          dados_evento: JSON.stringify({ blocksCount: blocksConfig.length }),
+          sequencia_blocos: JSON.stringify(blocksConfig),
+          template_layout_id: tipoDocumento.id,
+        });
+
+        toast.success('Layout atualizado com sucesso!');
+      }
+
       // Volta para página de gerenciamento
       setTimeout(() => {
         window.location.href = '/LayoutTemplates';
