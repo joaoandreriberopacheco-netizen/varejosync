@@ -100,28 +100,28 @@ function CupomTermico({ pedido, dadosEmpresa }) {
        <LinhaHifens />
 
        {itensOrdenados.map((item, idx) => {
-          const nomeCompleto = (item.produto_nome || '').toUpperCase();
-          const qtd = String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ');
-          const preco = `R$ ${fmtV(item.preco_unitario_praticado)}`.padStart(8, ' ');
-          const total = `R$ ${fmtV(item.total)}`.padStart(8, ' ');
-          const maxDesc = 20;
-          let linhas = [];
-          let resto = nomeCompleto;
-          while (resto.length > 0) {
-            if (resto.length <= maxDesc) { linhas.push(resto); break; }
-            let bp = resto.lastIndexOf(' ', maxDesc);
-            if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
-            else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
-          }
-          const linha1 = `${String(idx + 1).padStart(2, ' ')} ${linhas[0].padEnd(20, ' ')}${qtd} UN${preco}${total}`;
-          const linhasResto = linhas.slice(1).map((l) => `   ${l.padEnd(20, ' ')}${' '.padEnd(13, ' ')}`).join('\n');
-          const conteudo = linhasResto ? `${linha1}\n${linhasResto}` : linha1;
-          return (
-            <pre key={idx} style={{ fontSize: '9px', margin: '3px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
-       {conteudo}
-            </pre>
-          );
-        })}
+           const nomeCompleto = (item.produto_nome || '').toUpperCase();
+           const qtd = String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ');
+           const preco = fmtV(item.preco_unitario_praticado).padStart(6, ' ');
+           const total = fmtV(item.total).padStart(7, ' ');
+           const maxDesc = 20;
+           let linhas = [];
+           let resto = nomeCompleto;
+           while (resto.length > 0) {
+             if (resto.length <= maxDesc) { linhas.push(resto); break; }
+             let bp = resto.lastIndexOf(' ', maxDesc);
+             if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
+             else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
+           }
+           const linha1 = `${String(idx + 1).padStart(2, ' ')} ${linhas[0].padEnd(20, ' ')}${qtd} UN${preco}${total}`;
+           const linhasResto = linhas.slice(1).map((l) => `   ${l.padEnd(20, ' ')}${' '.padEnd(13, ' ')}`).join('\n');
+           const conteudo = linhasResto ? `${linha1}\n${linhasResto}` : linha1;
+           return (
+             <pre key={idx} style={{ fontSize: `${9 * SCALE_FACTOR}px`, margin: `${6 * SCALE_FACTOR}px 0`, fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
+        {conteudo}
+             </pre>
+           );
+         })}
 
       <LinhaHifens />
 
