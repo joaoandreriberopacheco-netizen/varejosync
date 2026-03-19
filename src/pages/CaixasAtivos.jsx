@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { SquareTerminal, Lock } from 'lucide-react';
+import { Banknote, Lock } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 
 export default function CaixasAtivosPage() {
