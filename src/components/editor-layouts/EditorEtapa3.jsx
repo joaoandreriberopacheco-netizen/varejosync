@@ -77,10 +77,10 @@ export default function EditorEtapa3({ tipoDocumento, blocksConfig, onVoltar }) 
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Finalizar Layout
+          {isNovo ? 'Salvar Novo Layout' : 'Atualizar Layout'}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          Nomeie e adicione observações ao seu layout
+          {isNovo ? 'Nomeie e adicione observações ao seu novo layout' : 'Atualize as informações do layout'}
         </p>
       </div>
 
