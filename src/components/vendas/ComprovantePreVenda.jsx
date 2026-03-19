@@ -1,147 +1,202 @@
-import React, { useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import React, { useRef, useState, useEffect } from 'react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Printer, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function ComprovantePreVenda({ preVenda, open, onClose }) {
+const fmtV = (v) => (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// ── Cupom Senha de Atendimento (Generic Text Only) ────────────────────────────
+function CupomSenha({ preVenda }) {
+  const senha4 = (preVenda.senha_atendimento || '').slice(-4);
+  const totalItens = preVenda.itens?.reduce((acc, i) => acc + i.quantidade, 0) || 0;
+  const totalProdutos = preVenda.itens?.length || 0;
+
+  return (
+    <div
+      id="cupom-print"
+      style={{
+        width: '275px',
+        background: '#fff',
+        color: '#000',
+        fontFamily: "'Courier New', Courier, monospace",
+        fontSize: '11px',
+        padding: '8px',
+        margin: '0 auto',
+        lineHeight: '1.4',
+      }}
+    >
+      {/* Cabeçalho */}
+      <div style={{ textAlign: 'center', borderBottom: '1px dashed #000', paddingBottom: '6px', marginBottom: '6px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 'bold', letterSpacing: '1px' }}>SENHA DE ATENDIMENTO</div>
+        <div style={{ fontSize: '9px', marginTop: '2px' }}>
+          {format(new Date(preVenda.created_date || new Date()), 'dd/MM/yyyy HH:mm')}
+        </div>
+      </div>
+
+      {/* Senha em destaque — ASCII box */}
+      <div style={{ textAlign: 'center', margin: '6px 0', border: '1px solid #000', padding: '8px 4px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 'bold', letterSpacing: '4px', marginBottom: '4px' }}>SENHA</div>
+        <div style={{ fontSize: '48px', fontWeight: 'bold', fontFamily: 'monospace', lineHeight: '1', letterSpacing: '4px' }}>
+          {senha4}
+        </div>
+        {preVenda.senha_atendimento && (
+          <div style={{ fontSize: '8px', color: '#555', marginTop: '4px' }}>
+            {preVenda.senha_atendimento}
+          </div>
+        )}
+      </div>
+
+      {/* Dados */}
+      <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '5px 0', margin: '5px 0', fontSize: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>CLIENTE:</span>
+          <span style={{ fontWeight: 'bold', maxWidth: '160px', textAlign: 'right', wordBreak: 'break-word' }}>
+            {(preVenda.cliente_nome || '').toUpperCase()}
+          </span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+          <span>VENDEDOR:</span>
+          <span style={{ fontWeight: 'bold' }}>{(preVenda.vendedor_nome || '').toUpperCase()}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+          <span>ENTREGA:</span>
+          <span style={{ fontWeight: 'bold' }}>{(preVenda.metodo_entrega || 'RETIRADA').toUpperCase()}</span>
+        </div>
+      </div>
+
+      {/* Resumo */}
+      <div style={{ fontSize: '10px', padding: '3px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>ITENS:</span>
+          <span style={{ fontWeight: 'bold' }}>{totalItens} un / {totalProdutos} prod.</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+          <span>SUBTOTAL:</span>
+          <span style={{ fontWeight: 'bold' }}>R$ {fmtV(preVenda.subtotal)}</span>
+        </div>
+        {preVenda.valor_desconto > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+            <span>DESCONTO:</span>
+            <span style={{ fontWeight: 'bold' }}>- R$ {fmtV(preVenda.valor_desconto)}</span>
+          </div>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', borderTop: '1px solid #000', paddingTop: '4px', fontSize: '13px' }}>
+          <span style={{ fontWeight: 'bold' }}>TOTAL:</span>
+          <span style={{ fontWeight: 'bold' }}>R$ {fmtV(preVenda.valor_total)}</span>
+        </div>
+      </div>
+
+      {/* Aviso */}
+      <div style={{ textAlign: 'center', border: '1px solid #000', padding: '5px 4px', margin: '6px 0', fontSize: '9px', fontWeight: 'bold' }}>
+        AGUARDANDO ATENDIMENTO NO CAIXA
+        <div style={{ fontWeight: 'normal', marginTop: '2px' }}>
+          Apresente esta senha para pagamento
+        </div>
+      </div>
+
+      {/* Rodapé */}
+      <div style={{ textAlign: 'center', borderTop: '1px dashed #000', paddingTop: '5px', fontSize: '8px', color: '#555' }}>
+        Este documento nao possui validade fiscal
+      </div>
+    </div>
+  );
+}
+
+// ── Preview com scale automático ──────────────────────────────────────────────
+function PreviewScaled({ children }) {
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const docWidthPx = 275;
+
   useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        window.print();
-      }, 500);
-    }
-  }, [open]);
+    const calc = () => {
+      if (!containerRef.current) return;
+      const available = containerRef.current.offsetWidth - 32;
+      setScale(Math.min(1, available / docWidthPx));
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, []);
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Pré-Venda ${preVenda.senha_atendimento || 'Nº'}`,
-          text: `Comprovante de pré-venda - ${preVenda.cliente_nome}`,
-        });
-      } catch (err) {
-        console.log('Compartilhamento cancelado ou não suportado');
-      }
-    } else {
-      window.print();
-    }
-  };
+  return (
+    <div ref={containerRef} className="w-full flex justify-center py-4 px-4">
+      <div
+        style={{
+          width: docWidthPx,
+          transformOrigin: 'top center',
+          transform: `scale(${scale})`,
+        }}
+      >
+        <div className="shadow-2xl rounded-sm overflow-hidden">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  if (!preVenda) return null;
+// ── Componente principal ──────────────────────────────────────────────────────
+export default function ComprovantePreVenda({ preVenda, open, onClose }) {
+  if (!open || !preVenda) return null;
 
-  const formatValor = (valor) => {
-    const num = parseFloat(valor) || 0;
-    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const handlePrint = () => {
+    const el = document.getElementById('cupom-print');
+    if (!el) return;
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head>
+      <title>Senha ${(preVenda.senha_atendimento || '').slice(-4)}</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #fff; }
+        @media print {
+          body { margin: 0; }
+          @page { size: 80mm auto; margin: 0; }
+        }
+      </style>
+    </head><body>${el.outerHTML}</body></html>`);
+    doc.close();
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 2000);
+    }, 400);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0">
-        <div className="bg-white p-6 text-black" style={{ fontFamily: 'Courier New, monospace', fontSize: '13px', fontWeight: 500 }}>
-          {/* Cabeçalho */}
-          <div className="text-center border-b-2 border-dashed border-black pb-4 mb-4">
-            <h1 className="text-2xl font-black tracking-tight">MANAH ERP</h1>
-            <p className="text-xs font-semibold">Sistema de Gestão Integrada</p>
-            <p className="text-sm font-bold mt-2">SENHA DE ATENDIMENTO</p>
-          </div>
+    <div className="fixed inset-0 z-[60] flex flex-col bg-gray-100 dark:bg-gray-950">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+        <button
+          onClick={onClose}
+          className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 py-1"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 font-glacial">
+          Senha {(preVenda.senha_atendimento || '').slice(-4)}
+        </span>
+        <Button
+          onClick={handlePrint}
+          size="sm"
+          className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          Imprimir
+        </Button>
+      </div>
 
-          {/* Senha de Atendimento em Destaque */}
-          {preVenda.senha_atendimento && (
-            <div className="text-center bg-gray-200 border-2 border-black rounded-lg py-6 mb-4">
-              <p className="text-xs font-black uppercase tracking-widest mb-2">SENHA</p>
-              <p className="text-6xl font-black font-mono tracking-tight">{preVenda.senha_atendimento.slice(-4)}</p>
-              <p className="text-xs font-semibold mt-2 text-gray-600">{preVenda.senha_atendimento}</p>
-            </div>
-          )}
-
-          {/* Informações Resumidas */}
-          <div className="space-y-1.5 text-sm mb-4">
-            <div className="flex justify-between">
-              <span className="font-semibold">Data:</span>
-              <span className="font-bold">{format(new Date(preVenda.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold">Cliente:</span>
-              <span className="font-bold">{preVenda.cliente_nome}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold">Vendedor:</span>
-              <span className="font-bold">{preVenda.vendedor_nome}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold">Método:</span>
-              <span className="font-bold">{preVenda.metodo_entrega}</span>
-            </div>
-          </div>
-
-          {/* Resumo de Itens */}
-          <div className="border-t-2 border-b-2 border-dashed border-black py-3 mb-3">
-            <div className="text-sm font-black mb-2">RESUMO DO PEDIDO</div>
-            <div className="text-xs space-y-1">
-              <div className="flex justify-between">
-                <span className="font-semibold">Total de itens:</span>
-                <span className="font-bold">{preVenda.itens?.reduce((acc, item) => acc + item.quantidade, 0) || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Produtos diferentes:</span>
-                <span className="font-bold">{preVenda.itens?.length || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Totais */}
-          <div className="space-y-1.5 text-sm mb-4">
-            <div className="flex justify-between">
-              <span className="font-semibold">Subtotal:</span>
-              <span className="font-bold">R$ {formatValor(preVenda.subtotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold">Desconto:</span>
-              <span className="font-bold">- R$ {formatValor(preVenda.valor_desconto || 0)}</span>
-            </div>
-            {preVenda.valor_acrescimo > 0 && (
-              <div className="flex justify-between">
-                <span className="font-semibold">Acréscimo:</span>
-                <span className="font-bold">+ R$ {formatValor(preVenda.valor_acrescimo)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-xl pt-2 border-t-2 border-black">
-              <span className="font-black">TOTAL:</span>
-              <span className="font-black">R$ {formatValor(preVenda.valor_total)}</span>
-            </div>
-          </div>
-
-          {/* Status */}
-          <div className="bg-gray-100 border-2 border-black rounded p-3 mb-4 text-center">
-            <p className="font-black text-sm">
-              ⏳ AGUARDANDO ATENDIMENTO NO CAIXA
-            </p>
-            <p className="text-xs font-semibold mt-1">Apresente esta senha no caixa para pagamento</p>
-          </div>
-
-          {/* Rodapé */}
-          <div className="text-center text-sm border-t-2 border-dashed border-black pt-4">
-            <p className="font-semibold">Este não é um comprovante fiscal</p>
-            <p className="mt-2 font-bold">{format(new Date(), 'dd/MM/yyyy HH:mm:ss')}</p>
-          </div>
-
-          {/* Botões (não aparecem na impressão) */}
-          <div className="mt-6 flex justify-center gap-3 print:hidden">
-            <Button variant="outline" onClick={handleShare} className="gap-2 border-gray-800 text-gray-800">
-              <Share2 className="w-4 h-4" />
-              Compartilhar
-            </Button>
-            <Button onClick={() => window.print()} className="gap-2 bg-gray-800 hover:bg-gray-700">
-              <Printer className="w-4 h-4" />
-              Imprimir
-            </Button>
-            <Button variant="outline" onClick={onClose} className="border-gray-800 text-gray-800">
-              Fechar
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Preview com scale */}
+      <div className="flex-1 overflow-y-auto">
+        <PreviewScaled>
+          <CupomSenha preVenda={preVenda} />
+        </PreviewScaled>
+      </div>
+    </div>
   );
 }
