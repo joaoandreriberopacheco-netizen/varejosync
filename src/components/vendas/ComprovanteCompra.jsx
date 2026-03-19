@@ -153,7 +153,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <>
           <LinhaHifens />
-          <div style={{ fontSize: '9px', margin: '3px 0 2px', fontWeight: 'bold' }}>FORMAS DE PAGAMENTO:</div>
+              <div style={{ fontSize: `${9 * SCALE_FACTOR}px`, margin: `${3 * SCALE_FACTOR}px 0 2px`, fontWeight: 'bold' }}>FORMAS DE PAGAMENTO:</div>
           {pedido.pagamentos.map((pag, idx) => (
             <div key={idx} style={{ fontSize: `${8 * SCALE_FACTOR}px`, margin: `${1 * SCALE_FACTOR}px 0` }}>
                 {pag.forma_pagamento}{pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}: {fmtV(pag.valor)}
