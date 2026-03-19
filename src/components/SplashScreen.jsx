@@ -62,6 +62,31 @@ export default function SplashScreen({ onFinish, darkMode }) {
         <P38Logo variant="horizontal" size="xxl" />
       </div>
 
+      {/* Barra de progresso */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '80px',
+          width: '120px',
+          height: '2px',
+          background: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+          borderRadius: '1px',
+          overflow: 'hidden',
+          opacity: phase === 'visible' ? 1 : 0,
+          transition: 'opacity 0.3s ease-out',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            background: darkMode ? '#ffffff' : '#111827',
+            width: `${progress}%`,
+            transition: 'width 0.05s linear',
+            borderRadius: '1px',
+          }}
+        />
+      </div>
+
       {/* Efeito de chamas/fogo com múltiplas camadas */}
       <div
         style={{
