@@ -393,10 +393,10 @@ export default function RelatorioMargemVendas() {
               <div className="relative flex-shrink-0">
                 <button
                   onClick={() => { setShowTagPopup(!showTagPopup); setShowDatePicker(false); }}
-                  className={`px-2 py-2 rounded-lg text-sm font-medium transition ${selectedTags.length > 0 ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                  title="Filtrar por tags"
+                  className={`px-1.5 md:px-2 py-1.5 md:py-2 rounded text-xs md:text-sm font-medium transition flex-shrink-0 ${selectedTags.length > 0 ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                  title="Tags"
                 >
-                  #{selectedTags.length > 0 ? selectedTags.length : ''}
+                  {selectedTags.length > 0 ? selectedTags.length : '🏷'}
                 </button>
                 {showTagPopup && (
                   <TagSearchPopup
