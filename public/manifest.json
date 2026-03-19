@@ -9,10 +9,16 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/logo-vrs.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "https://media.base44.com/images/public/68a91b1a009497f8d44af37e/fa1ae6e0d_Gemini_Generated_Image_u0vtb1u0vtb1u0vt.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://media.base44.com/images/public/68a91b1a009497f8d44af37e/fa1ae6e0d_Gemini_Generated_Image_u0vtb1u0vtb1u0vt.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
