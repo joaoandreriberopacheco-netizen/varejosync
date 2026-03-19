@@ -13,7 +13,7 @@ import {
 export const ALL_QUICK_ACTIONS = [
   {
     id: 'pdv',
-    icon: Banknote,
+    icon: Monitor,
     label: 'PDV',
     page: 'PDVVendedor',
     permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_supermercado,

@@ -125,7 +125,7 @@ export const ALL_MENU_ITEMS = [
   },
   {
     name: 'PDV',
-    icon: Banknote,
+    icon: Monitor,
     permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_supermercado || p?.pdv?.acesso_auto_atendimento,
     submenu: [
       {
