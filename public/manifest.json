@@ -1,49 +1,18 @@
 {
-  "name": "VarejoSync",
-  "short_name": "VarejoSync",
-  "description": "Sistema ERP para gestão de varejo",
+  "name": "P38 | ERP",
+  "short_name": "P38 ERP",
+  "description": "Sistema ERP P38",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#111827",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://images.unsplash.com/photo-1600762145887-219e27c196a6?q=80&w=192&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://images.unsplash.com/photo-1600762145887-219e27c196a6?q=80&w=512&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/logo-vrs.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
-  ],
-  "share_target": {
-    "action": "/AnexoCompartilhado",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "name",
-      "text": "description",
-      "url": "link",
-      "files": [
-        {
-          "name": "files",
-          "accept": [
-            "image/*",
-            "application/pdf",
-            "video/*",
-            "audio/*",
-            ".doc",
-            ".docx",
-            ".xls",
-            ".xlsx",
-            ".ppt",
-            ".pptx",
-            ".txt"
-          ]
-        }
-      ]
-    }
-  }
+  ]
 }

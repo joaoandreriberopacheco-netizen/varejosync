@@ -1,59 +1,57 @@
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
+const CACHE_NAME = 'p38-erp-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json'
+];
 
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // Intercepta a partilha
-  if (event.request.method === 'POST' && url.pathname === '/AnexoCompartilhado') {
-    
-    event.respondWith((async () => {
-      try {
-        // 1. LER OS DADOS PRIMEIRO (Isto previne que o ficheiro se perca!)
-        const formData = await event.request.formData();
-        const files = formData.getAll('files');
-        const text = formData.get('description') || formData.get('text'); 
-        const title = formData.get('name') || formData.get('title');     
-
-        const cache = await caches.open('VarejoSync-shared-files');
-        const fileEntries = [];
-
-        // 2. GUARDAR NO CACHE
-        for (const file of files) {
-          if (file instanceof File) {
-            const fileUrl = `/shared-file-${Date.now()}-${file.name}`;
-            await cache.put(fileUrl, new Response(file, { headers: { 'Content-Type': file.type } }));
-            fileEntries.push({ name: file.name, type: file.type, size: file.size, url: fileUrl });
-          }
-        }
-
-        if (text) {
-          fileEntries.push({ name: title || 'Texto', type: 'text/plain', textContent: text });
-        }
-
-        // 3. AVISAR A PÁGINA COM UM PEQUENO ATRASO
-        setTimeout(() => enviarMensagemParaPagina(fileEntries), 1000);
-
-        // 4. SÓ AGORA REDIRECIONAR
-        return Response.redirect('/AnexoCompartilhado?share-target=true', 303);
-      } catch (err) {
-        console.error('SW Erro:', err);
-        return Response.redirect('/AnexoCompartilhado?error=true', 303);
-      }
-    })());
-    return;
-  }
-
-  event.respondWith(caches.match(event.request).then(res => res || fetch(event.request)));
+// Install: pré-cache dos assets estáticos
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
+  self.skipWaiting();
 });
 
-async function enviarMensagemParaPagina(fileEntries, retries = 15) {
-  const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  const targetClient = allClients.find(c => c.url.includes('/AnexoCompartilhado'));
+// Activate: limpa caches antigos
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      );
+    })
+  );
+  self.clients.claim();
+});
 
-  if (targetClient) {
-    targetClient.postMessage({ type: 'SHARED_FILES', files: fileEntries });
-  } else if (retries > 0) {
-    setTimeout(() => enviarMensagemParaPagina(fileEntries, retries - 1), 500);
-  }
-}
+// Fetch: network-first com fallback para cache
+self.addEventListener('fetch', (event) => {
+  // Ignora requisições não-GET e de outras origens
+  if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Armazena cópia no cache se for resposta válida
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // Fallback para cache offline
+        return caches.match(event.request).then((cached) => {
+          return cached || caches.match('/index.html');
+        });
+      })
+  );
+});
