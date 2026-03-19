@@ -27,6 +27,8 @@ export default function ConfirmarPagamentoDialog({
   toast, base44,
 }) {
   const [seletorMaquininha, setSeletorMaquininha] = useState(null);
+  const [showSeletorFiado, setShowSeletorFiado] = useState(false);
+  const [fiadoConfig, setFiadoConfig] = useState(null);
 
   if (!pedidoSelecionado) return null;
 
