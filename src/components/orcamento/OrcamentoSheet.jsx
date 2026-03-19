@@ -221,7 +221,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
       </div>
 
       {/* Resultados */}
-      <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/60">
+      <div className="flex-1 overflow-y-auto">
         {search.trim() === '' ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-600 gap-2">
             <Search className="w-10 h-10 opacity-30" />
@@ -293,7 +293,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
 function ItemCarrinho({ item, onSelect, onRemove }) {
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-900 active:bg-gray-50 dark:active:bg-gray-800/40 cursor-pointer"
+      className="flex items-center gap-3 mx-3 my-1.5 px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl active:bg-gray-100 dark:active:bg-gray-700/60 cursor-pointer shadow-sm"
       onClick={() => onSelect(item)}
     >
       <div className="flex-1 min-w-0">
@@ -346,7 +346,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
       </div>
 
       {/* Lista de itens */}
-      <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/60">
+      <div className="flex-1 overflow-y-auto">
         {itens.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-600 gap-2">
             <ShoppingCart className="w-10 h-10 opacity-30" />
