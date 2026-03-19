@@ -1,21 +1,79 @@
 import React from 'react';
 
 const LOGO_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/a972c4ea7_Semttulo2.png';
+const LOGO_VERTICAL_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/db585090f_AdobeExpress-file.png';
+const ICON_ONLY_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/46a482fd7_image.png';
 
 /**
- * Logo P38 ERP usando a imagem original.
- * - Modo claro: mix-blend-mode multiply elimina o fundo branco
- * - Modo escuro: invert torna a logo branca
+ * P38 Logo com suporte a múltiplas variantes
  * 
- * size: 'sm' | 'md' | 'lg'
+ * Variantes:
+ * - 'horizontal': Logo completa (raio + P38 + ERP) em uma linha
+ * - 'vertical': Logo empilhada (raio, P38, ERP) centralizado
+ * - 'icon-only': Apenas o raio/ícone
+ * 
+ * Cores:
+ * - Claro: cinza escuro/preto
+ * - Escuro: cinza claro/branco
  */
-export default function P38Logo({ size = 'md', className = '', variant }) {
-  const heights = {
+export default function P38Logo({ 
+  variant = 'horizontal', 
+  size = 'md', 
+  className = '' 
+}) {
+  // Icon-only (raio sozinho)
+  if (variant === 'icon-only') {
+    const sizes = {
+      xs: 'h-3',
+      sm: 'h-4',
+      md: 'h-5',
+      lg: 'h-6',
+      xl: 'h-8',
+    };
+    const h = sizes[size] || sizes.md;
+
+    return (
+      <img
+        src={ICON_ONLY_URL}
+        alt="P38"
+        className={`${h} w-auto object-contain select-none
+          mix-blend-multiply dark:mix-blend-normal dark:invert
+          ${className}`}
+        draggable={false}
+      />
+    );
+  }
+
+  // Vertical (empilhado)
+  if (variant === 'vertical') {
+    const sizes = {
+      sm: 'h-20',
+      md: 'h-28',
+      lg: 'h-36',
+    };
+    const h = sizes[size] || sizes.md;
+
+    return (
+      <img
+        src={LOGO_VERTICAL_URL}
+        alt="P38 ERP"
+        className={`${h} w-auto object-contain select-none mx-auto
+          mix-blend-multiply dark:mix-blend-normal dark:invert
+          ${className}`}
+        draggable={false}
+      />
+    );
+  }
+
+  // Horizontal (padrão)
+  const sizes = {
+    xs: 'h-4',
     sm: 'h-6',
-    md: 'h-9',
-    lg: 'h-14',
+    md: 'h-8',
+    lg: 'h-10',
+    xl: 'h-12',
   };
-  const h = heights[size] || heights.md;
+  const h = sizes[size] || sizes.md;
 
   return (
     <img
