@@ -235,6 +235,18 @@ export default function ConfirmarPagamentoDialog({
         }}
         onCancel={() => setSeletorMaquininha(null)}
       />
+
+      <SeletorFiadoSheet
+        visible={showSeletorFiado}
+        clienteNome={pedidoSelecionado?.cliente_nome}
+        valorTotal={pedidoSelecionado?.valor_total}
+        formatValor={formatValor}
+        onConfirm={(config) => {
+          setFiadoConfig(config);
+          setShowSeletorFiado(false);
+        }}
+        onCancel={() => setShowSeletorFiado(false)}
+      />
     </>
   );
 }
