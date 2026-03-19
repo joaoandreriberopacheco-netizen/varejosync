@@ -24,11 +24,11 @@ export default function P38Logo({
   // Icon-only (raio sozinho)
   if (variant === 'icon-only') {
     const sizes = {
-      xs: 'h-3',
-      sm: 'h-4',
-      md: 'h-5',
-      lg: 'h-6',
-      xl: 'h-8',
+      xs: 'h-6',
+      sm: 'h-8',
+      md: 'h-10',
+      lg: 'h-12',
+      xl: 'h-16',
     };
     const h = sizes[size] || sizes.md;
 
@@ -67,12 +67,12 @@ export default function P38Logo({
 
   // Horizontal (padrão)
   const sizes = {
-    xs: 'h-4',
-    sm: 'h-6',
-    md: 'h-8',
-    lg: 'h-10',
-    xl: 'h-12',
-    xxl: 'h-16',
+    xs: 'h-8',
+    sm: 'h-12',
+    md: 'h-16',
+    lg: 'h-20',
+    xl: 'h-24',
+    xxl: 'h-32',
   };
   const h = sizes[size] || sizes.md;
 
