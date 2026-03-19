@@ -104,57 +104,29 @@ export default function ConfirmarPagamentoDialog({
                 icon={CreditCard}
                 index={2}
                 active={formaPagamentoAtiva === 2}
-                onFocus={() => { setFormaPagamentoAtiva(2); handleDebitoFocus(); }}
+                onFocus={() => { setFormaPagamentoAtiva(2); setSeletorMaquininha('debito'); }}
                 inputRef={inputRefs.debito}
                 value={inputDebito}
                 onKeyDown={(e) => handleInputMascara(e, setInputDebito, setPagamentosDebito)}
+                badge={maquininhaDebito ? `${maquininhaDebito.maquininha?.nome} · ${maquininhaDebito.bandeira} · ${maquininhaDebito.taxa}%` : null}
+                onBadgeClick={() => setSeletorMaquininha('debito')}
               />
-              {maquininhaDebito && (
-                <div className="flex items-center justify-between px-3 py-1 mt-0.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg text-xs text-gray-500 dark:text-gray-400">
-                  <span>{maquininhaDebito.maquininha?.nome} · {maquininhaDebito.bandeira} · {maquininhaDebito.taxa}% · D+{maquininhaDebito.prazo_dias}</span>
-                  <button onClick={() => setSeletorMaquininha('debito')} className="text-gray-400 underline ml-2 hover:text-gray-600">trocar</button>
-                </div>
-              )}
             </div>
 
             {/* Crédito */}
             <div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <InputPagamento
-                    label="Cartão Crédito"
-                    icon={CreditCard}
-                    index={3}
-                    active={formaPagamentoAtiva === 3}
-                    onFocus={() => { setFormaPagamentoAtiva(3); handleCreditoFocus(); }}
-                    inputRef={inputRefs.credito}
-                    value={inputCredito}
-                    onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}
-                  />
-                </div>
-              </div>
-              {/* Parcelas */}
-              <div className="flex gap-1 mt-1.5 flex-wrap">
-                {[1,2,3,4,5,6,7,8,9,10,11,12].map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setParcelasCredito(p)}
-                    className={`w-8 h-7 rounded-lg text-xs font-medium transition-colors ${
-                      parcelasCredito === p
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {p}x
-                  </button>
-                ))}
-              </div>
-              {maquininhaCredito && (
-                <div className="flex items-center justify-between px-3 py-1 mt-0.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg text-xs text-gray-500 dark:text-gray-400">
-                  <span>{maquininhaCredito.maquininha?.nome} · {maquininhaCredito.bandeira} · {maquininhaCredito.taxa}% · D+{maquininhaCredito.prazo_dias}</span>
-                  <button onClick={() => setSeletorMaquininha('credito')} className="text-gray-400 underline ml-2 hover:text-gray-600">trocar</button>
-                </div>
-              )}
+              <InputPagamento
+                label="Cartão Crédito"
+                icon={CreditCard}
+                index={3}
+                active={formaPagamentoAtiva === 3}
+                onFocus={() => { setFormaPagamentoAtiva(3); setSeletorMaquininha('credito'); }}
+                inputRef={inputRefs.credito}
+                value={inputCredito}
+                onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}
+                badge={maquininhaCredito ? `${maquininhaCredito.maquininha?.nome} · ${maquininhaCredito.bandeira} · ${parcelasCredito}x · ${maquininhaCredito.taxa}%` : null}
+                onBadgeClick={() => setSeletorMaquininha('credito')}
+              />
             </div>
 
             {/* Vale Troca */}
