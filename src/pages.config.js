@@ -93,7 +93,7 @@ import OtimizacaoEstoqueIA from './pages/OtimizacaoEstoqueIA';
 import PDV from './pages/PDV';
 import PDVAuditoria from './pages/PDVAuditoria';
 import PainelGerente from './pages/PainelGerente';
-import Produtos from './pages/Produtos';
+import ProdutosPage from './pages/Produtos';
 import ReimpressaoDocumentos from './pages/ReimpressaoDocumentos';
 import RelatorioMargem from './pages/RelatorioMargem';
 import RelatorioPerformance from './pages/RelatorioPerformance';
