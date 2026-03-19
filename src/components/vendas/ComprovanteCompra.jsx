@@ -165,21 +165,21 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <LinhaHifens />
 
       {/* Usuários - Vendedor e Caixa */}
-      <div style={{ fontSize: '8px', margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
-        {pedido.vendedor_nome && (
-          <div>VENDEDOR: {pedido.vendedor_nome.toUpperCase()}</div>
-        )}
-        {pedido.created_by && (
-          <div>CAIXA: {pedido.created_by.split('@')[0].toUpperCase()}</div>
-        )}
-      </div>
+       <div style={{ fontSize: `${8 * SCALE_FACTOR}px`, margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
+         {pedido.vendedor_nome && (
+           <div>VENDEDOR: {pedido.vendedor_nome.toUpperCase()}</div>
+         )}
+         {pedido.created_by && (
+           <div>CAIXA: {pedido.created_by.split('@')[0].toUpperCase()}</div>
+         )}
+       </div>
 
-      <div style={{ textAlign: 'center', fontSize: '8px', marginTop: '6px', lineHeight: '1.4' }}>
-        {dadosEmpresa?.mensagem_rodape || 'OBRIGADO PELA PREFERÊNCIA!'}
-      </div>
-      <div style={{ textAlign: 'center', fontSize: '7px', marginTop: '4px', color: '#666' }}>
-        Este documento não possui validade fiscal
-      </div>
+       <div style={{ textAlign: 'center', fontSize: `${8 * SCALE_FACTOR}px`, marginTop: `${6 * SCALE_FACTOR}px`, lineHeight: '1.4' }}>
+         {dadosEmpresa?.mensagem_rodape || 'OBRIGADO PELA PREFERÊNCIA!'}
+       </div>
+       <div style={{ textAlign: 'center', fontSize: `${7 * SCALE_FACTOR}px`, marginTop: `${4 * SCALE_FACTOR}px`, color: '#666' }}>
+         Este documento não possui validade fiscal
+       </div>
     </div>
   );
 }
