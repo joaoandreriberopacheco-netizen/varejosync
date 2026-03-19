@@ -122,20 +122,21 @@ CLIENTE: {(pedido.cliente_nome || 'AVULSO').substring(0, 30).toUpperCase()}
 
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <>
-          <div style={{ textTransform: 'uppercase', fontSize: '10px', margin: '4px 0' }}>FORMAS DE PAGAMENTO:</div>
+          <LinhaHifens />
+          <div style={{ fontSize: '9px', margin: '3px 0 2px', fontWeight: 'bold' }}>FORMAS DE PAGAMENTO:</div>
           {pedido.pagamentos.map((pag, idx) => (
-            <pre key={idx} style={{ fontFamily: 'inherit', fontSize: '9px', margin: 0 }}>
-{pag.forma_pagamento}: R$ {fmtV(pag.valor)}
-            </pre>
+            <div key={idx} style={{ fontSize: '8px', margin: '1px 0' }}>
+              {pag.forma_pagamento}{pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}: R$ {fmtV(pag.valor)}
+            </div>
           ))}
           <LinhaHifens />
         </>
       )}
 
-      <div style={{ textAlign: 'center', fontSize: '9px', marginTop: '8px', lineHeight: '1.4' }}>
+      <div style={{ textAlign: 'center', fontSize: '8px', marginTop: '6px', lineHeight: '1.4' }}>
         {dadosEmpresa?.mensagem_rodape || 'OBRIGADO PELA PREFERÊNCIA!'}
       </div>
-      <div style={{ textAlign: 'center', fontSize: '8px', marginTop: '6px', color: '#666' }}>
+      <div style={{ textAlign: 'center', fontSize: '7px', marginTop: '4px', color: '#666' }}>
         Este documento não possui validade fiscal
       </div>
     </div>
