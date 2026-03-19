@@ -125,28 +125,28 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       <LinhaHifens />
 
-      <div style={{ fontSize: '10px', margin: '6px 0 2px', fontFamily: 'inherit' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>SUBTOTAL:</span>
-          <span>R$ {fmtV(pedido.subtotal || 0)}</span>
-        </div>
-        {pedido.valor_desconto > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>DESCONTO:</span>
-            <span>R$ {fmtV(pedido.valor_desconto)}</span>
-          </div>
-        )}
-        {pedido.valor_frete > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>FRETE:</span>
-            <span>R$ {fmtV(pedido.valor_frete)}</span>
-          </div>
-        )}
-      </div>
-      <div style={{ fontSize: '15px', fontWeight: 'bold', margin: '3px 0', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', paddingTop: '3px' }}>
-        <span>TOTAL:</span>
-        <span>R$ {fmtV(pedido.valor_total || 0)}</span>
-      </div>
+      <div style={{ fontSize: `${10 * SCALE_FACTOR}px`, margin: `${6 * SCALE_FACTOR}px 0 2px`, fontFamily: 'inherit' }}>
+         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+           <span>SUBTOTAL:</span>
+           <span>{fmtV(pedido.subtotal || 0)}</span>
+         </div>
+         {pedido.valor_desconto > 0 && (
+           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+             <span>DESCONTO:</span>
+             <span>{fmtV(pedido.valor_desconto)}</span>
+           </div>
+         )}
+         {pedido.valor_frete > 0 && (
+           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+             <span>FRETE:</span>
+             <span>{fmtV(pedido.valor_frete)}</span>
+           </div>
+         )}
+       </div>
+       <div style={{ fontSize: `${15 * SCALE_FACTOR}px`, fontWeight: 'bold', margin: `${3 * SCALE_FACTOR}px 0`, fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', paddingTop: `${3 * SCALE_FACTOR}px` }}>
+         <span>TOTAL:</span>
+         <span>{fmtV(pedido.valor_total || 0)}</span>
+       </div>
 
       <LinhaHifens />
 
