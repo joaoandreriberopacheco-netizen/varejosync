@@ -94,7 +94,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
        <LinhaHifens />
 
       <pre style={{ fontSize: '8px', margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre' }}>
-NO DESC            QTD UN PREÇO     TOTAL
+NO DESC         QTD UN  PREÇO    TOTAL
       </pre>
        <LinhaHifens />
 
