@@ -11,7 +11,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import { NavigationTransitionProvider } from '@/lib/NavigationTransitionContext';
+import { NavigationTransitionProvider, NavigationTransitionDetector } from '@/lib/NavigationTransitionContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ReimpressaoDocumentos from '@/pages/ReimpressaoDocumentos';
 import Home from '@/pages/Home';
@@ -76,8 +76,10 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
-    <Routes>
-      <Route path="/" element={
+    <>
+      <NavigationTransitionDetector />
+      <Routes>
+        <Route path="/" element={
         <LayoutWrapper currentPageName="Home">
           <Home />
         </LayoutWrapper>
@@ -184,7 +186,8 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
-    </Routes>
+      </Routes>
+    </>
   );
 };
 
