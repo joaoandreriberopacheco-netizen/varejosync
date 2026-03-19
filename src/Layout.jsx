@@ -457,8 +457,10 @@ export default function Layout({ children, currentPageName }) {
               </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
                   <DropdownMenuItem 
-                    onClick={() => { 
-                      window.location.href = createPageUrl('ReimpressaoDocumentos'); 
+                    onClick={() => {
+                      triggerTransition(() => {
+                        window.location.href = createPageUrl('ReimpressaoDocumentos');
+                      });
                       setShowMoreMenu(false);
                       if (isMobile) setIsOpen(false);
                     }}
@@ -467,8 +469,10 @@ export default function Layout({ children, currentPageName }) {
                     <span>Reimpressão</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => { 
-                      window.location.href = createPageUrl('ExclusaoDocumentos'); 
+                    onClick={() => {
+                      triggerTransition(() => {
+                        window.location.href = createPageUrl('ExclusaoDocumentos');
+                      });
                       setShowMoreMenu(false);
                       if (isMobile) setIsOpen(false);
                     }}
@@ -483,7 +487,9 @@ export default function Layout({ children, currentPageName }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => {
-                      window.location.href = createPageUrl('Configuracoes');
+                      triggerTransition(() => {
+                        window.location.href = createPageUrl('Configuracoes');
+                      });
                       setShowMoreMenu(false);
                       if (isMobile) setIsOpen(false);
                     }}
@@ -521,7 +527,11 @@ export default function Layout({ children, currentPageName }) {
                         <DropdownMenuLabel className="text-xs text-gray-500">Trocar Perfil (Apenas Admin)</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => { window.location.href = createPageUrl('Home'); }}
+                      onClick={() => {
+                        triggerTransition(() => {
+                          window.location.href = createPageUrl('Home');
+                        });
+                      }}
                       className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
                     >
                       <LayoutGrid className="w-4 h-4 mr-2" />
