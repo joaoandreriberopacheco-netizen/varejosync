@@ -13,11 +13,12 @@ const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
  *   onSelect: ({ maquininha, bandeira, taxa, prazo_dias }) => void
  *   onCancel: () => void
  */
-export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas = 1, onSelect, onCancel }) {
+export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: parcelasIniciais = 1, onSelect, onCancel }) {
   const [maquininhas, setMaquininhas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selecionada, setSelecionada] = useState(null);
   const [bandeiraSelecionada, setBandeiraSelecionada] = useState('');
+  const [parcelas, setParcelas] = useState(parcelasIniciais);
 
   useEffect(() => {
     if (visible) {
