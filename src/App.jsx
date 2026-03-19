@@ -39,6 +39,13 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+  const [showSplash, setShowSplash] = React.useState(() => !sessionStorage.getItem('p38_splash_shown'));
+  const darkMode = typeof window !== 'undefined' && document.documentElement.classList.contains('dark');
+
+  const handleSplashFinish = () => {
+    sessionStorage.setItem('p38_splash_shown', '1');
+    setShowSplash(false);
+  };
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
