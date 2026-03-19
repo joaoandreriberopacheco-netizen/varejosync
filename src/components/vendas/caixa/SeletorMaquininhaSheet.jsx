@@ -75,7 +75,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             <h3 className="text-base font-semibold text-gray-900 dark:text-white font-glacial">
               {modalidade === 'debito' ? 'Cartão Débito' : `Cartão Crédito${parcelas > 1 ? ` ${parcelas}x` : ''}`}
             </h3>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Selecione a maquininha e bandeira</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Maquininha e bandeira</p>
           </div>
         </div>
 
