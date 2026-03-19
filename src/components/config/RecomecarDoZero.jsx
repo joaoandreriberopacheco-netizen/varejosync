@@ -67,7 +67,7 @@ export default function RecomecarDoZero() {
   const [selectedEntities, setSelectedEntities] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState({ current: 0, total: 0, entity: '' });
+  const [progress, setProgress] = useState({ current: 0, total: 0, entity: '', recordsDeleted: 0, currentRecords: 0 });
   const [result, setResult] = useState(null);
 
   const handleToggleEntity = (entityId) => {
