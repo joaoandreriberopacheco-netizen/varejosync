@@ -247,39 +247,40 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Atalhos rápidos de lista */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial mb-3">Outros Atalhos</h3>
-          <div className="space-y-2">
-            <Link to={createPageUrl('VendasGestao')} className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                  <Receipt className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Consultar Vendas</span>
+        {/* Atalhos de lista adicionais — filtra por permissões */}
+        {(() => {
+          const outrosAtalhos = ALL_QUICK_ACTIONS
+            .filter(a => allowedActionIds.includes(a.id) && !quickActionIds.includes(a.id))
+            .slice(0, 3);
+          
+          if (outrosAtalhos.length === 0) return null;
+          
+          return (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white font-glacial mb-3">Outros Atalhos</h3>
+              <div className="space-y-2">
+                {outrosAtalhos.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Link 
+                      key={action.id}
+                      to={createPageUrl(action.page)} 
+                      className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        </div>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{action.label}</span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    </Link>
+                  );
+                })}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </Link>
-            <Link to={createPageUrl('PedidosCompra')} className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Pedidos de Compra</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </Link>
-            <Link to={createPageUrl('FluxoCaixa')} className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                  <Wallet className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">Fluxo de Caixa</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </Link>
-          </div>
-        </div>
+            </div>
+          );
+        })()}
       </div>
 
       <PersonalizarHomeDialog
