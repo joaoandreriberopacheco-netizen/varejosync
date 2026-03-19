@@ -743,6 +743,11 @@ export default function PDVVendedor() {
     }
   };
 
+  const handleCarregarOrcamento = (itensOrcamento, orcamento) => {
+    setCarrinho(itensOrcamento);
+    showFeedback('success', `Orçamento de ${orcamento.cliente_nome || 'cliente'} carregado`, 2000);
+  };
+
   const handleSair = () => {
     const confirmExit = confirm('Deseja sair do PDV e voltar ao Dashboard?');
     if (confirmExit) {
