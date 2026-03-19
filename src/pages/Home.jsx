@@ -192,6 +192,7 @@ export default function HomePage() {
             <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
               Acesso Rápido
             </h2>
+            {perfilDeAcesso?.permissoes?.homepage?.atalhos_personalizados && (
             <button
               onClick={() => setShowPersonalizar(true)}
               className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
@@ -199,6 +200,7 @@ export default function HomePage() {
               <Settings2 className="w-3.5 h-3.5" />
               <span>Personalizar</span>
             </button>
+           )}
           </div>
           <div className="grid grid-cols-3 gap-3">
             {quickActions.map((action) => {
