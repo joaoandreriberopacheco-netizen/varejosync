@@ -235,28 +235,38 @@ export default function ConfirmarPagamentoDialog({
 }
 
 // ── Input de pagamento glacial ────────────────────────────────────────────────
-function InputPagamento({ label, icon: Icon, active, onFocus, inputRef, value, onKeyDown }) {
+function InputPagamento({ label, icon: Icon, active, onFocus, inputRef, value, onKeyDown, badge, onBadgeClick }) {
   return (
-    <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-text ${
-        active
-          ? 'bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-600'
-          : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800'
-      }`}
-      onClick={() => inputRef?.current?.focus()}
-    >
-      <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
-      <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 select-none">{label}</span>
-      <input
-        ref={inputRef}
-        type="text"
-        inputMode="numeric"
-        value={value}
-        onFocus={onFocus}
-        onKeyDown={onKeyDown}
-        readOnly
-        className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text tabular-nums"
-      />
+    <div className="space-y-0.5">
+      <div
+        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-text ${
+          active
+            ? 'bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-600'
+            : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800'
+        }`}
+        onClick={() => onFocus?.()}
+      >
+        <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+        <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 select-none">{label}</span>
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="numeric"
+          value={value}
+          onFocus={onFocus}
+          onKeyDown={onKeyDown}
+          readOnly
+          className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text tabular-nums"
+        />
+      </div>
+      {badge && (
+        <button
+          onClick={onBadgeClick}
+          className="w-full text-left px-3 py-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          {badge} · <span className="underline">trocar</span>
+        </button>
+      )}
     </div>
   );
 }
