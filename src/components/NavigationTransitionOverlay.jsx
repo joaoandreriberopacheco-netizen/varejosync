@@ -10,8 +10,8 @@ export default function NavigationTransitionOverlay() {
   useEffect(() => {
     if (showTransition) {
       setPhase('in');
-      const t1 = setTimeout(() => setPhase('visible'), 30);
-      const t2 = setTimeout(() => setPhase('out'), 300);
+      const t1 = setTimeout(() => setPhase('visible'), 80);
+      const t2 = setTimeout(() => setPhase('out'), 1600);
       
       return () => {
         clearTimeout(t1);
@@ -38,7 +38,7 @@ export default function NavigationTransitionOverlay() {
         alignItems: 'center',
         justifyContent: 'center',
         background: bg,
-        transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         opacity: phase === 'visible' || phase === 'in' ? 1 : 0,
         pointerEvents: phase === 'out' ? 'none' : 'auto',
       }}
@@ -46,7 +46,7 @@ export default function NavigationTransitionOverlay() {
       {/* Logo com animação de entrada suave */}
       <div
         style={{
-          transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease-out',
+          transition: 'transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.7s ease-out',
           transform: phase === 'visible' ? 'scale(1)' : 'scale(0.8)',
           opacity: phase === 'visible' ? 1 : 0,
         }}
@@ -61,7 +61,7 @@ export default function NavigationTransitionOverlay() {
           inset: 0,
           pointerEvents: 'none',
           opacity: phase === 'out' ? 1 : 0,
-          transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         <div
@@ -74,7 +74,7 @@ export default function NavigationTransitionOverlay() {
             borderRadius: '50%',
             background: `radial-gradient(circle at 30% 30%, ${fillColor}20 0%, transparent 70%)`,
             filter: 'blur(40px)',
-            animation: 'flame-dance-1 0.8s ease-in-out forwards',
+            animation: 'flame-dance-1 2s ease-in-out forwards',
           }}
         />
         <div
@@ -87,7 +87,7 @@ export default function NavigationTransitionOverlay() {
             borderRadius: '50%',
             background: `radial-gradient(circle at 70% 30%, ${fillColor}20 0%, transparent 70%)`,
             filter: 'blur(40px)',
-            animation: 'flame-dance-2 0.8s ease-in-out forwards',
+            animation: 'flame-dance-2 2s ease-in-out forwards',
           }}
         />
         <div
@@ -101,7 +101,7 @@ export default function NavigationTransitionOverlay() {
             borderRadius: '50%',
             background: `radial-gradient(circle, ${fillColor}30 0%, transparent 70%)`,
             filter: 'blur(50px)',
-            animation: 'flame-expand 0.6s ease-out forwards',
+            animation: 'flame-expand 1.5s ease-out forwards',
           }}
         />
         <div
@@ -110,7 +110,7 @@ export default function NavigationTransitionOverlay() {
             inset: 0,
             background: `linear-gradient(to bottom, ${fillColor}0 0%, ${fillColor}40 50%, ${fillColor}0 100%)`,
             filter: 'blur(60px)',
-            animation: 'fade-in 0.5s ease-out forwards',
+            animation: 'fade-in 1.2s ease-out forwards',
           }}
         />
       </div>
