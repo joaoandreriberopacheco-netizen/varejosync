@@ -5,15 +5,6 @@ import {
 } from 'lucide-react';
 import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 
-const FORMAS = [
-  { key: 'dinheiro', label: 'Dinheiro',   icon: Banknote,    color: 'emerald' },
-  { key: 'pix',      label: 'PIX',        icon: Smartphone,  color: 'sky' },
-  { key: 'debito',   label: 'Débito',     icon: CreditCard,  color: 'violet' },
-  { key: 'credito',  label: 'Crédito',    icon: CreditCard,  color: 'orange' },
-  { key: 'vale',     label: 'Vale Troca', icon: Ticket,      color: 'pink' },
-  { key: 'fiado',    label: 'Fiado',      icon: Receipt,     color: 'amber' },
-];
-
 export default function ConfirmarPagamentoDialog({
   open, onOpenChange,
   pedidoSelecionado,
@@ -34,7 +25,7 @@ export default function ConfirmarPagamentoDialog({
   handleFinalizarVenda, setShowRetornoDialog,
   toast, base44,
 }) {
-  const [seletorMaquininha, setSeletorMaquininha] = useState(null); // 'debito' | 'credito' | null
+  const [seletorMaquininha, setSeletorMaquininha] = useState(null);
 
   if (!pedidoSelecionado) return null;
 
@@ -60,47 +51,45 @@ export default function ConfirmarPagamentoDialog({
     }
   };
 
-  const handleDebitoFocus = () => {
-    if (!maquininhaDebito) setSeletorMaquininha('debito');
-  };
-  const handleCreditoFocus = () => {
-    if (!maquininhaCredito) setSeletorMaquininha('credito');
-  };
+  const handleDebitoFocus = () => { if (!maquininhaDebito) setSeletorMaquininha('debito'); };
+  const handleCreditoFocus = () => { if (!maquininhaCredito) setSeletorMaquininha('credito'); };
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg p-0 gap-0 rounded-2xl overflow-hidden">
-          <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+        <DialogContent className="max-w-lg p-0 gap-0 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 border-0 shadow-2xl">
+          {/* Header */}
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800">
             <DialogTitle className="flex items-center justify-between">
               <span className="text-base font-semibold text-gray-900 dark:text-white font-glacial">
-                {pedidoSelecionado.cliente_nome || 'Confirmação de Pagamento'}
+                {pedidoSelecionado.cliente_nome || 'Avulso'}
               </span>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums">
                 {formatValor(pedidoSelecionado.valor_total)}
               </span>
             </DialogTitle>
           </DialogHeader>
 
-          <div className="overflow-y-auto max-h-[70vh] px-5 py-4 space-y-3">
+          {/* Formas de pagamento */}
+          <div className="overflow-y-auto max-h-[60vh] px-4 py-3 space-y-1.5">
+
             {/* Dinheiro */}
             <InputPagamento
               label="Dinheiro"
               icon={Banknote}
-              colorClass="text-emerald-600"
+              index={0}
               active={formaPagamentoAtiva === 0}
               onFocus={() => setFormaPagamentoAtiva(0)}
               inputRef={inputRefs.dinheiro}
               value={inputDinheiro}
               onKeyDown={(e) => handleInputMascara(e, setInputDinheiro, setPagamentosDinheiro)}
-              readOnly={false}
             />
 
             {/* PIX */}
             <InputPagamento
               label="PIX"
               icon={Smartphone}
-              colorClass="text-sky-600"
+              index={1}
               active={formaPagamentoAtiva === 1}
               onFocus={() => setFormaPagamentoAtiva(1)}
               inputRef={inputRefs.pix}
@@ -109,11 +98,11 @@ export default function ConfirmarPagamentoDialog({
             />
 
             {/* Débito */}
-            <div className="space-y-1">
+            <div>
               <InputPagamento
                 label="Cartão Débito"
                 icon={CreditCard}
-                colorClass="text-violet-600"
+                index={2}
                 active={formaPagamentoAtiva === 2}
                 onFocus={() => { setFormaPagamentoAtiva(2); handleDebitoFocus(); }}
                 inputRef={inputRefs.debito}
@@ -121,21 +110,21 @@ export default function ConfirmarPagamentoDialog({
                 onKeyDown={(e) => handleInputMascara(e, setInputDebito, setPagamentosDebito)}
               />
               {maquininhaDebito && (
-                <div className="flex items-center justify-between px-3 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between px-3 py-1 mt-0.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg text-xs text-gray-500 dark:text-gray-400">
                   <span>{maquininhaDebito.maquininha?.nome} · {maquininhaDebito.bandeira} · {maquininhaDebito.taxa}% · D+{maquininhaDebito.prazo_dias}</span>
-                  <button onClick={() => setSeletorMaquininha('debito')} className="text-blue-500 underline ml-2">trocar</button>
+                  <button onClick={() => setSeletorMaquininha('debito')} className="text-gray-400 underline ml-2 hover:text-gray-600">trocar</button>
                 </div>
               )}
             </div>
 
             {/* Crédito */}
-            <div className="space-y-1">
+            <div>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <InputPagamento
                     label="Cartão Crédito"
                     icon={CreditCard}
-                    colorClass="text-orange-600"
+                    index={3}
                     active={formaPagamentoAtiva === 3}
                     onFocus={() => { setFormaPagamentoAtiva(3); handleCreditoFocus(); }}
                     inputRef={inputRefs.credito}
@@ -143,23 +132,27 @@ export default function ConfirmarPagamentoDialog({
                     onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}
                   />
                 </div>
-                {/* Parcelas */}
-                <div className="flex gap-1 mt-4 flex-shrink-0">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(p => (
-                    <button
-                      key={p}
-                      onClick={() => setParcelasCredito(p)}
-                      className={`w-7 h-7 rounded text-xs font-medium transition-colors ${parcelasCredito === p ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
-                    >
-                      {p}x
-                    </button>
-                  ))}
-                </div>
+              </div>
+              {/* Parcelas */}
+              <div className="flex gap-1 mt-1.5 flex-wrap">
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setParcelasCredito(p)}
+                    className={`w-8 h-7 rounded-lg text-xs font-medium transition-colors ${
+                      parcelasCredito === p
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {p}x
+                  </button>
+                ))}
               </div>
               {maquininhaCredito && (
-                <div className="flex items-center justify-between px-3 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between px-3 py-1 mt-0.5 bg-gray-50 dark:bg-gray-800/60 rounded-lg text-xs text-gray-500 dark:text-gray-400">
                   <span>{maquininhaCredito.maquininha?.nome} · {maquininhaCredito.bandeira} · {maquininhaCredito.taxa}% · D+{maquininhaCredito.prazo_dias}</span>
-                  <button onClick={() => setSeletorMaquininha('credito')} className="text-blue-500 underline ml-2">trocar</button>
+                  <button onClick={() => setSeletorMaquininha('credito')} className="text-gray-400 underline ml-2 hover:text-gray-600">trocar</button>
                 </div>
               )}
             </div>
@@ -173,7 +166,7 @@ export default function ConfirmarPagamentoDialog({
                   value={codigoVale}
                   onChange={(e) => setCodigoVale(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleBuscarVale(); }}
-                  className="flex-1 h-11 px-3 bg-gray-50 dark:bg-gray-800 rounded-xl border-0 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  className="flex-1 h-11 px-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0"
                 />
                 <button
                   onClick={handleBuscarVale}
@@ -187,7 +180,7 @@ export default function ConfirmarPagamentoDialog({
                 <InputPagamento
                   label={`Vale (saldo: ${formatValor(valeEncontrado.saldo)})`}
                   icon={Ticket}
-                  colorClass="text-pink-600"
+                  index={4}
                   active={formaPagamentoAtiva === 4}
                   onFocus={() => setFormaPagamentoAtiva(4)}
                   inputRef={inputRefs.vale}
@@ -197,11 +190,11 @@ export default function ConfirmarPagamentoDialog({
               )}
             </div>
 
-            {/* Fiado / Conta a Pagar */}
+            {/* Fiado */}
             <InputPagamento
               label="Fiado (Conta a Pagar)"
               icon={Receipt}
-              colorClass="text-amber-600"
+              index={5}
               active={formaPagamentoAtiva === 5}
               onFocus={() => setFormaPagamentoAtiva(5)}
               inputRef={inputRefs.contaPagar}
@@ -209,28 +202,30 @@ export default function ConfirmarPagamentoDialog({
               onKeyDown={(e) => handleInputMascara(e, setInputContaPagar, setPagamentosContaPagar)}
             />
 
-            {/* Resumo */}
-            <div className="mt-2 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-              {troco > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Troco</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatValor(troco)}</span>
-                </div>
-              )}
-              {valorRestante > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Falta</span>
-                  <span className="font-semibold text-red-600 dark:text-red-400">{formatValor(valorRestante)}</span>
-                </div>
-              )}
-            </div>
+            {/* Resumo troco / falta */}
+            {(troco > 0 || valorRestante > 0) && (
+              <div className="mt-1 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-1.5">
+                {troco > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500 dark:text-gray-400">Troco</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{formatValor(troco)}</span>
+                  </div>
+                )}
+                {valorRestante > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500 dark:text-gray-400">Falta</span>
+                    <span className="font-semibold text-red-500 dark:text-red-400">{formatValor(valorRestante)}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Botões de ação */}
-          <div className="px-5 pb-5 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+          {/* Botões */}
+          <div className="px-4 pb-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex gap-2.5">
             <button
               onClick={() => setShowRetornoDialog(true)}
-              className="h-12 px-4 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-medium flex items-center gap-2"
+              className="h-12 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium flex items-center gap-2 flex-shrink-0"
             >
               <ArrowLeft className="w-4 h-4" /> Devolver
             </button>
@@ -248,7 +243,6 @@ export default function ConfirmarPagamentoDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Seletor de Maquininha */}
       <SeletorMaquininhaSheet
         visible={!!seletorMaquininha}
         modalidade={seletorMaquininha || 'debito'}
@@ -264,18 +258,19 @@ export default function ConfirmarPagamentoDialog({
   );
 }
 
-function InputPagamento({ label, icon: Icon, colorClass, active, onFocus, inputRef, value, onKeyDown }) {
+// ── Input de pagamento glacial ────────────────────────────────────────────────
+function InputPagamento({ label, icon: Icon, active, onFocus, inputRef, value, onKeyDown }) {
   return (
     <div
       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-text ${
         active
-          ? 'bg-gray-100 dark:bg-gray-700 ring-2 ring-gray-300 dark:ring-gray-500'
-          : 'bg-gray-50 dark:bg-gray-800'
+          ? 'bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-600'
+          : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800'
       }`}
       onClick={() => inputRef?.current?.focus()}
     >
-      <Icon className={`w-4 h-4 flex-shrink-0 ${colorClass}`} />
-      <span className="text-sm text-gray-600 dark:text-gray-400 w-32 flex-shrink-0">{label}</span>
+      <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+      <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 select-none">{label}</span>
       <input
         ref={inputRef}
         type="text"
@@ -284,7 +279,7 @@ function InputPagamento({ label, icon: Icon, colorClass, active, onFocus, inputR
         onFocus={onFocus}
         onKeyDown={onKeyDown}
         readOnly
-        className="flex-1 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text"
+        className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text tabular-nums"
       />
     </div>
   );
