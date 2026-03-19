@@ -28,10 +28,10 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
           {empresa.cidade && <div style={{ fontSize: '10px', color: '#555' }}>{empresa.cidade} - {empresa.estado}</div>}
         </div>
       )}
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12px', letterSpacing: '1px', marginBottom: '2mm' }}>ORÇAMENTO</div>
-      <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '2mm' }}>{fmtData()}</div>
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '16px', letterSpacing: '1px', marginBottom: '3mm' }}>ORÇAMENTO</div>
+      <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '4mm' }}>{fmtData()}</div>
       {clienteNome && <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
-      <div style={{ borderTop: '1px dashed #999', borderBottom: '1px dashed #999', paddingTop: '3mm', paddingBottom: '3mm', marginBottom: '3mm' }}>
+      <div style={{ paddingTop: '3mm', paddingBottom: '3mm', marginBottom: '3mm' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#555', marginBottom: '1.5mm' }}>
           <span style={{ flex: 3 }}>ITEM</span>
           <span style={{ flex: 1, textAlign: 'center' }}>QTD</span>
