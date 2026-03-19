@@ -66,7 +66,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
             <div className="space-y-1">
               {/* Modo escuro */}
               <button
-                onClick={() => { toggleDarkMode(); setOpen(false); }}
+                onClick={() => { toggleDarkMode(); handleClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 {darkMode
@@ -80,7 +80,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
 
               {/* Reimpressão */}
               <button
-                onClick={() => { window.location.href = createPageUrl('ReimpressaoDocumentos'); setOpen(false); }}
+                onClick={() => { window.location.href = createPageUrl('ReimpressaoDocumentos'); handleClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Printer className="w-5 h-5 text-gray-500" />
@@ -89,7 +89,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
 
               {/* Excluir Documentos */}
               <button
-                onClick={() => { window.location.href = createPageUrl('ExclusaoDocumentos'); setOpen(false); }}
+                onClick={() => { window.location.href = createPageUrl('ExclusaoDocumentos'); handleClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Trash2 className="w-5 h-5 text-gray-500" />
@@ -109,7 +109,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
 
               {/* Configurações */}
               <button
-                onClick={() => { window.location.href = createPageUrl('Configuracoes'); setOpen(false); }}
+                onClick={() => { window.location.href = createPageUrl('Configuracoes'); handleClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Settings className="w-5 h-5 text-gray-500" />
