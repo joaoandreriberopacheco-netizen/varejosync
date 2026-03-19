@@ -318,11 +318,13 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         </Button>
       </div>
 
-      {/* Preview com scale */}
-      <div className="flex-1 overflow-y-auto">
-        <PreviewScaled>
-          <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
-        </PreviewScaled>
+      {/* Preview com scale - ocupa toda a tela */}
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className="w-full h-full flex justify-center py-4 px-4">
+          <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
+            <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
+          </div>
+        </div>
       </div>
     </div>
   );
