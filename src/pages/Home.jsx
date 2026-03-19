@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS } from '@/components/home/quickActions';
 import PersonalizarHomeDialog from '@/components/home/PersonalizarHomeDialog';
-import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
+import { usePermissoesResolvidas } from '@/hooks/usePermissoesResolvidas';
 
 const STORAGE_KEY = 'home_quick_actions';
 
