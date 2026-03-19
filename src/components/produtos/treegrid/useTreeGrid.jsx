@@ -96,7 +96,6 @@ export function buildTree(produtos) {
       return parent[key];
     };
 
-    const n1 = ensure(root, h1, 1);
     // Se não há h2, adiciona SKU direto ao root (sem agrupamento)
     if (!h2) { 
       // Marca como SKU de raiz (sem grupo visual)
@@ -104,6 +103,7 @@ export function buildTree(produtos) {
       root._rootSkus.push(p);
       continue;
     }
+    const n1 = ensure(root, h1, 1);
     const n2 = ensure(n1.children, h2, 2);
     if (!h3) { n2.skus.push(p); continue; }
     const n3 = ensure(n2.children, h3, 3);
