@@ -22,12 +22,7 @@ export default function HomePage() {
   const [quickActionIds, setQuickActionIds] = useState([]);
   const [showBalance, setShowBalance] = useState(true);
   const [showPersonalizar, setShowPersonalizar] = useState(false);
-  const [kpis, setKpis] = useState({
-    vendasHoje: 0,
-    valorVendasHoje: 0,
-    estoqueAlerta: 0,
-    pedidosPendentes: 0
-  });
+  const { kpis, loadKPIs } = useKPIsCache();
 
   // Resolve permissões do usuário atual (com cache otimizado)
   const { permissoes } = usePermissoesResolvidas(currentUser, perfilDeAcesso);
