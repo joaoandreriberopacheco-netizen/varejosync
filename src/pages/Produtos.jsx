@@ -1576,15 +1576,6 @@ export default function ProdutosPage() {
         </div>
       )}
 
-        <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
-          <ProdutoFormCompleto
-            produto={selectedProduto}
-            onSave={handleSave}
-            onClose={() => setIsFormOpen(false)}
-          />
-        </div>
-      )}
-
       {/* Dialog de Upload Unificado (Produtos + Custos) */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="sm:max-w-md dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700">
