@@ -1976,3 +1976,11 @@ function ProdutosPageContent() {
     </div>
   );
 }
+
+export default function ProdutosPage() {
+  return (
+    <ProdutosAccessGuard>
+      <ProdutosPageContent />
+    </ProdutosAccessGuard>
+  );
+}
