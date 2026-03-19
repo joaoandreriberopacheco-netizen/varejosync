@@ -70,16 +70,16 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       <LinhaHifens />
 
-      <div style={{ textAlign: 'center', textTransform: 'uppercase', fontSize: '13px', margin: '4px 0', fontWeight: 'bold' }}>
-        PEDIDO DE VENDA Nº {pedido.numero || 'S/N'}
-      </div>
+      <div style={{ textAlign: 'center', textTransform: 'uppercase', fontSize: `${13 * SCALE_FACTOR}px`, margin: '4px 0', fontWeight: 'bold' }}>
+         PEDIDO DE VENDA Nº {pedido.numero || 'S/N'}
+       </div>
 
-      <pre style={{ fontFamily: 'inherit', fontSize: '9px', margin: '3px 0' }}>
-      DATA/HORA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}
-       </pre>
+       <pre style={{ fontFamily: 'inherit', fontSize: `${9 * SCALE_FACTOR}px`, margin: '3px 0' }}>
+       DATA/HORA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}
+        </pre>
 
-      {/* Cliente em linha própria com dados */}
-      <div style={{ fontSize: '8px', margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
+       {/* Cliente em linha própria com dados */}
+       <div style={{ fontSize: `${8 * SCALE_FACTOR}px`, margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
         <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
           {(() => {
             const parts = [];
