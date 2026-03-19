@@ -137,7 +137,7 @@ function ProdutoLinha({ produto, preco, qtdNoCarrinho, onSelect }) {
   return (
     <div
       onClick={() => onSelect(produto, preco)}
-      className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-900 active:bg-gray-50 dark:active:bg-gray-800/40 cursor-pointer"
+      className="flex items-center gap-3 mx-3 my-1.5 px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl active:bg-gray-100 dark:active:bg-gray-700/60 cursor-pointer shadow-sm"
     >
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
 
