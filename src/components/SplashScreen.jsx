@@ -11,8 +11,8 @@ export default function SplashScreen({ onFinish, darkMode }) {
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('visible'), 80);
-    const t2 = setTimeout(() => setPhase('out'), 3500);
-    const t3 = setTimeout(() => onFinish?.(), 4100);
+    const t2 = setTimeout(() => setPhase('out'), 6500);
+    const t3 = setTimeout(() => onFinish?.(), 7100);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
