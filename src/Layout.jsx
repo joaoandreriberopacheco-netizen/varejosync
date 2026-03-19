@@ -22,7 +22,6 @@ import {
   Sun,
   Moon,
   ChevronRight,
-  ShoppingCart,
   Truck,
   Warehouse,
   BookOpen,
