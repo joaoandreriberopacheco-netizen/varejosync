@@ -136,7 +136,7 @@ export default function RecomecarDoZero() {
     for (let i = 0; i < orderedSelected.length; i++) {
       const entityId = orderedSelected[i];
       const entityLabel = ENTITIES.find(e => e.id === entityId)?.label || entityId;
-      setProgress({ current: i + 1, total: orderedSelected.length, entity: entityLabel });
+      setProgress({ current: i + 1, total: orderedSelected.length, entity: entityLabel, recordsDeleted: 0, currentRecords: 0 });
 
       try {
         // Verificar se entidade existe no SDK antes de tentar deletar
@@ -144,7 +144,15 @@ export default function RecomecarDoZero() {
           console.warn(`Entidade ${entityId} não encontrada no SDK, pulando...`);
           continue;
         }
-        const deleted = await deleteAllRecords(entityId);
+        
+        const deleted = await deleteAllRecords(entityId, (deletedSoFar, totalCount) => {
+          setProgress(prev => ({
+            ...prev,
+            recordsDeleted: deletedSoFar,
+            currentRecords: totalCount
+          }));
+        });
+        
         totalDeleted += deleted;
         successCount++;
       } catch (error) {
