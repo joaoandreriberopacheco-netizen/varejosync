@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 // entities imported via base44 client
 import { Button } from '@/components/ui/button';
+import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
