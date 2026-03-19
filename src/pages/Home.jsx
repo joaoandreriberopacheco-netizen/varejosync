@@ -67,7 +67,22 @@ export default function HomePage() {
           try {
             const perfis = await base44.entities.PerfilDeAcesso.list();
             const encontrado = perfis.find(p => p.id === user.perfil_acesso_id);
-            if (encontrado) setPerfilDeAcesso(encontrado);
+            if (encontrado) {
+              setPerfilDeAcesso(encontrado);
+              // Carregar atalhos: personalizado (localStorage) ou padrão do perfil
+              const podePersonalizar = encontrado.permissoes?.homepage?.atalhos_personalizados;
+              if (podePersonalizar) {
+                try {
+                  const saved = localStorage.getItem(STORAGE_KEY);
+                  setQuickActionIds(saved ? JSON.parse(saved) : (encontrado.atalhos_padrao || DEFAULT_QUICK_ACTIONS));
+                } catch {
+                  setQuickActionIds(encontrado.atalhos_padrao || DEFAULT_QUICK_ACTIONS);
+                }
+              } else {
+                // Usa apenas atalhos padrão do perfil (sem permitir personalização)
+                setQuickActionIds(encontrado.atalhos_padrao || []);
+              }
+            }
           } catch (e) {
             console.warn("Perfil de acesso não encontrado:", e);
           }
