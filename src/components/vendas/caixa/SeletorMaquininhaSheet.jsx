@@ -54,7 +54,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
     if (!selecionada || !bandeiraSelecionada) return;
     const taxa = getTaxaParaMaquininha(selecionada, bandeiraSelecionada);
     const prazo = getPrazoDias(selecionada);
-    onSelect({ maquininha: selecionada, bandeira: bandeiraSelecionada, taxa, prazo_dias: prazo });
+    onSelect({ maquininha: selecionada, bandeira: bandeiraSelecionada, taxa, prazo_dias: prazo, parcelas });
   };
 
   const bandeirasDisponiveis = selecionada
