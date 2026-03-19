@@ -124,7 +124,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
       {/* Header com ícone no canto superior (mobile) */}
-      <div className="md:hidden fixed top-3 right-4 z-40">
+      <div className="md:hidden fixed top-1 right-4 z-40">
         <P38Logo variant="icon-only" size="lg" />
       </div>
 

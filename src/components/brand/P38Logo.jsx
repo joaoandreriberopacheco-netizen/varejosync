@@ -1,7 +1,7 @@
 import React from 'react';
 
 const LOGO_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/a972c4ea7_Semttulo2.png';
-const LOGO_VERTICAL_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/db585090f_AdobeExpress-file.png';
+const LOGO_VERTICAL_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/b901a6773_AdobeExpress-file1.png';
 const ICON_ONLY_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/46a482fd7_image.png';
 
 /**
@@ -57,8 +57,8 @@ export default function P38Logo({
       <img
         src={LOGO_VERTICAL_URL}
         alt="P38 ERP"
-        className={`${h} w-auto object-contain select-none mx-auto
-          mix-blend-multiply dark:mix-blend-normal dark:invert
+        className={`${h} w-auto object-contain select-none
+          dark:invert
           ${className}`}
         draggable={false}
       />
