@@ -1158,6 +1158,7 @@ export default function PDVCaixa() {
           open={showSeletorCaixa} 
           onSelect={handleSelecionarCaixa}
           currentUser={currentUser}
+          onClose={() => navigate(createPageUrl('Home'))}
         />
       )}
 
