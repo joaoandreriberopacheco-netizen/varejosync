@@ -1,77 +1,158 @@
-import React, { useState } from 'react';
-import { ChevronRight, FileText, Receipt, Package, Layers, BarChart3, ClipboardList } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, Plus, Loader } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
 
-const TIPOS_DOCUMENTO = [
-  { id: 'comprovante', nome: 'Comprovante', icon: Receipt, cor: 'bg-blue-50 dark:bg-blue-900/20' },
-  { id: 'protocolo', nome: 'Protocolo', icon: FileText, cor: 'bg-green-50 dark:bg-green-900/20' },
-  { id: 'nota_fiscal', nome: 'Nota Fiscal', icon: Package, cor: 'bg-purple-50 dark:bg-purple-900/20' },
-  { id: 'manifesto', nome: 'Manifesto', icon: Layers, cor: 'bg-orange-50 dark:bg-orange-900/20' },
-  { id: 'relatorio', nome: 'Relatório', icon: BarChart3, cor: 'bg-red-50 dark:bg-red-900/20' },
-  { id: 'formulario', nome: 'Formulário', icon: ClipboardList, cor: 'bg-gray-50 dark:bg-gray-800' },
-];
+const ICON_CATEGORIA = {
+  comprovante: '📄',
+  protocolo: '✓',
+  nota_fiscal: '📋',
+  manifesto: '📦',
+  relatorio: '📊',
+  outro: '🔧',
+};
 
 export default function EditorEtapa1({ onSelecionado }) {
+  const [documentos, setDocumentos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [busca, setBusca] = useState('');
+  const [showNovo, setShowNovo] = useState(false);
 
-  const filtrados = TIPOS_DOCUMENTO.filter(tipo =>
-    tipo.nome.toLowerCase().includes(busca.toLowerCase())
+  useEffect(() => {
+    carregarDocumentos();
+  }, []);
+
+  const carregarDocumentos = async () => {
+    try {
+      setIsLoading(true);
+      const docs = await base44.entities.LayoutTemplate.list('-updated_date', 100);
+      setDocumentos(docs);
+    } catch (error) {
+      console.error('Erro ao carregar documentos:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filtrados = documentos.filter(doc =>
+    doc.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    doc.categoria.toLowerCase().includes(busca.toLowerCase())
   );
+
+  const handleNovoDocumento = () => {
+    setShowNovo(true);
+  };
+
+  // Tela de novo documento (seleção de tipo base)
+  if (showNovo) {
+    const TIPOS_BASE = [
+      { id: 'comprovante', nome: 'Comprovante', descricao: 'Comprovante de venda/compra' },
+      { id: 'protocolo', nome: 'Protocolo', descricao: 'Protocolo de entrega' },
+      { id: 'nota_fiscal', nome: 'Nota Fiscal', descricao: 'Nota fiscal eletrônica' },
+      { id: 'manifesto', nome: 'Manifesto', descricao: 'Manifesto de carga' },
+      { id: 'relatorio', nome: 'Relatório', descricao: 'Relatório gerencial' },
+      { id: 'outro', nome: 'Outro', descricao: 'Documento customizado' },
+    ];
+
+    return (
+      <div className="flex-1 flex flex-col p-4 md:p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+              Novo Documento
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              Escolha o tipo base
+            </p>
+          </div>
+          <Button variant="ghost" onClick={() => setShowNovo(false)}>
+            ← Voltar
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {TIPOS_BASE.map(tipo => (
+            <button
+              key={tipo.id}
+              onClick={() => onSelecionado({ ...tipo, isNovo: true })}
+              className="p-4 text-left rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition"
+            >
+              <div className="text-2xl mb-2">{ICON_CATEGORIA[tipo.id]}</div>
+              <h3 className="font-medium text-gray-900 dark:text-white">{tipo.nome}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{tipo.descricao}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col p-4 md:p-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-          Novo Layout
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          Selecione o tipo de documento a customizar
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            Editor de Layouts
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Selecione um documento para editar
+          </p>
+        </div>
+        <Button onClick={handleNovoDocumento} className="flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Novo
+        </Button>
       </div>
 
       {/* Buscador */}
       <div className="mb-6">
         <Input
-          placeholder="Buscar tipo de documento..."
+          placeholder="Buscar documento..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           className="w-full"
         />
       </div>
 
-      {/* Grid de Tipos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1">
-        {filtrados.map((tipo) => {
-          const Icon = tipo.icon;
-          return (
+      {/* Lista de Documentos */}
+      <div className="flex-1 space-y-2 overflow-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32 text-gray-400">
+            <Loader className="w-5 h-5 animate-spin mr-2" />
+            Carregando...
+          </div>
+        ) : filtrados.length === 0 ? (
+          <div className="text-center text-gray-400 py-8">
+            <p className="mb-2">Nenhum documento encontrado</p>
+            <Button variant="outline" size="sm" onClick={handleNovoDocumento}>
+              Criar primeiro documento
+            </Button>
+          </div>
+        ) : (
+          filtrados.map(doc => (
             <button
-              key={tipo.id}
-              onClick={() => onSelecionado(tipo)}
-              className={`
-                relative p-4 rounded-xl transition-all duration-200
-                ${tipo.cor}
-                hover:shadow-md active:scale-95
-                flex flex-col items-center justify-center gap-3
-                border border-transparent hover:border-gray-300 dark:hover:border-gray-600
-              `}
+              key={doc.id}
+              onClick={() => onSelecionado(doc)}
+              className="w-full text-left p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition flex items-center justify-between group"
             >
-              <Icon className="w-8 h-8 text-gray-700 dark:text-gray-300" />
-              <span className="font-medium text-gray-900 dark:text-white text-sm">
-                {tipo.nome}
-              </span>
-              <ChevronRight className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">{ICON_CATEGORIA[doc.categoria] || '📄'}</span>
+                  <h3 className="font-medium text-gray-900 dark:text-white">
+                    {doc.nome}
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {doc.descricao}
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
             </button>
-          );
-        })}
+          ))
+        )}
       </div>
-
-      {filtrados.length === 0 && (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400">Nenhum tipo encontrado</p>
-        </div>
-      )}
     </div>
   );
 }
