@@ -71,7 +71,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
               onChange={e => setQtd(e.target.value)}
               onFocus={e => e.target.select()}
               onKeyDown={e => { if (e.key === 'Enter') handleConfirm(); }}
-              className="flex-1 text-center text-2xl font-bold h-12 bg-gray-50 dark:bg-gray-800 border-0 shadow-none focus-visible:ring-0 text-gray-900 dark:text-white rounded-xl"
+              className="flex-1 text-center text-2xl font-bold h-12 bg-gray-50 dark:bg-gray-800 border-0 shadow-none focus-visible:ring-0 text-gray-900 dark:text-white rounded-2xl"
               placeholder="0"
             />
 
