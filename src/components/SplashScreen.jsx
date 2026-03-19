@@ -51,26 +51,6 @@ export default function SplashScreen({ onFinish, darkMode }) {
         pointerEvents: phase === 'out' ? 'none' : 'auto',
       }}
     >
-      {/* Banner com imagem P38 */}
-      <div
-        style={{
-          marginBottom: '32px',
-          transition: 'transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.7s ease-out',
-          transform: phase === 'visible' ? 'scale(1)' : 'scale(0.8)',
-          opacity: phase === 'visible' ? 1 : 0,
-        }}
-      >
-        <img
-          src="https://media.base44.com/images/public/68a91b1a009497f8d44af37e/78583ae91_Gemini_Generated_Image_ieeqs1ieeqs1ieeq.png"
-          alt="P38 ERP"
-          style={{
-            maxWidth: '280px',
-            height: 'auto',
-            filter: darkMode ? 'invert(1) brightness(0.95)' : 'none',
-          }}
-        />
-      </div>
-
       {/* Logo com animação de entrada suave */}
       <div
         style={{
