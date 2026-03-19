@@ -39,12 +39,13 @@ export function calcCusto(p) {
     - (p.desconto_compra_padrao || 0);
 }
 
-// ── Calcula markup real (preço venda / custo - 1) × 100 ──────────────────────
+// ── Calcula markup real: sempre a partir de custo e preço de venda ────────────
 export function calcMarkup(p) {
-  if (p.preco_venda_percentual > 0) return p.preco_venda_percentual;
   const custo = calcCusto(p);
   const pv = p.preco_venda_padrao || 0;
-  if (custo > 0 && pv > custo) return ((pv - custo) / custo) * 100;
+  if (custo > 0 && pv > 0) return ((pv - custo) / custo) * 100;
+  // Fallback: usa o percentual configurado se não há dados de custo/venda
+  if (p.preco_venda_percentual > 0) return p.preco_venda_percentual;
   return 0;
 }
 

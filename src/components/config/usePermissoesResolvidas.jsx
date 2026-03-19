@@ -95,8 +95,8 @@ export function buildMenuItems(user, perfilDeAcesso) {
 // ─── Definição completa da estrutura de menu ─────────────────────────────────
 // Cada item tem uma função permissaoCheck que recebe o objeto de permissões resolvidas
 import {
-  LayoutDashboard, Monitor, TrendingUp, Package,
-  DollarSign, BookOpen, Settings, Wallet, ShoppingCart, Warehouse, Truck
+  LayoutDashboard, ShoppingBag, TrendingUp, Package,
+  DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck
 } from 'lucide-react';
 
 export const ALL_MENU_ITEMS = [

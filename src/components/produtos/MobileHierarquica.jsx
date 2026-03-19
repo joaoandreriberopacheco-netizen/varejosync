@@ -51,13 +51,23 @@ function SkuCard({ row, onEdit }) {
               R$ {fmtR(p.preco_venda_padrao)}
             </span>
           )}
-          {markup > 0 && (
-            <span className={`text-[11px] font-medium tabular-nums whitespace-nowrap ${
-              markup < 20 ? 'text-red-500' : markup < 40 ? 'text-orange-400' : 'text-green-500'
-            }`}>
-              {markup.toFixed(1)}%↑
-            </span>
-          )}
+          {markup > 0 && (() => {
+            const custo = row.produto.preco_custo_calculado || 0;
+            const pv = row.produto.preco_venda_padrao || 0;
+            const label = (custo > 0 && pv > 0)
+              ? `Custo R$${fmtR(custo)} → Venda R$${fmtR(pv)} = ${markup.toFixed(1)}% mk`
+              : `${markup.toFixed(1)}% markup`;
+            return (
+              <span
+                title={label}
+                className={`text-[11px] font-medium tabular-nums whitespace-nowrap ${
+                  markup < 20 ? 'text-red-500' : markup < 40 ? 'text-orange-400' : 'text-green-500'
+                }`}
+              >
+                {markup.toFixed(1)}%↑
+              </span>
+            );
+          })()}
         </div>
       </div>
     </div>
