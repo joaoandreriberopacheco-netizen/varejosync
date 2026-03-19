@@ -113,7 +113,7 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
             <button
               onClick={handleConfirm}
               disabled={qtdNum <= 0}
-              className="flex-1 h-12 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
+              className="flex-1 h-12 rounded-2xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
             >
               <Check className="w-4 h-4" />
               Confirmar
