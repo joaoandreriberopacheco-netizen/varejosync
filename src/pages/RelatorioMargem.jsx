@@ -631,8 +631,9 @@ export default function RelatorioMargemVendas() {
                             <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(group.totals.total_recebido)}</td>
                             <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(group.totals.custo_total)}</td>
                             <td className="py-3 px-4 text-sm text-right text-green-600 dark:text-green-400">{formatMoney(group.totals.lucro_total)}</td>
+                            <td className="py-3 px-4 text-sm text-center text-green-600 dark:text-green-400 font-semibold">{formatPercent((group.totals.lucro_total / group.totals.custo_total) * 100)}</td>
                             <td className="py-3 px-4 text-sm text-center text-gray-900 dark:text-white">{formatPercent((group.totals.lucro_total / group.totals.total_recebido) * 100)}</td>
-                          </tr>
+                            </tr>
                         </React.Fragment>
                       ))
                     ) : (
