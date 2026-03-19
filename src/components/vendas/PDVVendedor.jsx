@@ -868,6 +868,10 @@ export default function PDVVendedor() {
               <span key={k} className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">{k}</span>
             ))}
           </div>
+          <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
+            className="h-9 w-9 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800" title="Orçamentos recentes">
+            <FileText className="w-4 h-4" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
             className="h-9 w-9 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800" title="Reeditar rascunho">
             <Edit className="w-4 h-4" />
