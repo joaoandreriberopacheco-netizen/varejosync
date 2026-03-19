@@ -4,6 +4,7 @@ import { createPageUrl } from '@/components/utils';
 
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/sonner";
+import P38Logo from '@/components/brand/P38Logo';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
 import { 
   LayoutDashboard, 
