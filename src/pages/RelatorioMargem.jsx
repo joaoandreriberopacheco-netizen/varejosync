@@ -644,12 +644,13 @@ export default function RelatorioMargemVendas() {
                           <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
                           <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
                           <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
+                          <td className="py-3 px-4 text-sm text-center font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
                           <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                          </tr>
+                          ))
+                          )}
+                          </tbody>
+                          </table>
               </div>
 
               {/* Mobile Cards View */}
