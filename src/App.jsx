@@ -31,7 +31,7 @@ import GestaoSupermanifestosPage from '@/pages/GestaoSupermanifestosPage';
 import ConferenciaEntrada from '@/pages/ConferenciaEntrada';
 import TabelaPrecosConsulta from '@/pages/TabelaPrecosConsulta';
 import ImportacaoProdutos from '@/pages/ImportacaoProdutos';
-import EditorTemplates from '@/pages/EditorTemplates';
+import EditorComprovanteVisual from '@/pages/EditorComprovanteVisual';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -179,9 +179,9 @@ const AuthenticatedApp = () => {
           <ImportacaoProdutos />
         </LayoutWrapper>
       } />
-      <Route path="/EditorTemplates" element={
-        <LayoutWrapper currentPageName="EditorTemplates">
-          <EditorTemplates />
+      <Route path="/EditorComprovanteVisual" element={
+        <LayoutWrapper currentPageName="EditorComprovanteVisual">
+          <EditorComprovanteVisual />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
