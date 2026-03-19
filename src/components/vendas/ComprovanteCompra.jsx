@@ -103,7 +103,7 @@ NO DESCRIÇÃO        QTD UN  PREÇO    TOTAL
           const qtd = String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ');
           const preco = `R$ ${fmtV(item.preco_unitario_praticado)}`.padStart(8, ' ');
           const total = `R$ ${fmtV(item.total)}`.padStart(8, ' ');
-          const maxDesc = 15;
+          const maxDesc = 20;
           let linhas = [];
           let resto = nomeCompleto;
           while (resto.length > 0) {
@@ -112,12 +112,12 @@ NO DESCRIÇÃO        QTD UN  PREÇO    TOTAL
             if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
             else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
           }
-          const linha1 = `${String(idx + 1).padStart(2, ' ')} ${linhas[0].padEnd(15, ' ')}${qtd} UN${preco}${total}`;
-          const linhasResto = linhas.slice(1).map((l) => `   ${l.padEnd(15, ' ')}${' '.padEnd(13, ' ')}`).join('\n');
+          const linha1 = `${String(idx + 1).padStart(2, ' ')} ${linhas[0].padEnd(20, ' ')}${qtd} UN${preco}${total}`;
+          const linhasResto = linhas.slice(1).map((l) => `   ${l.padEnd(20, ' ')}${' '.padEnd(13, ' ')}`).join('\n');
           const conteudo = linhasResto ? `${linha1}\n${linhasResto}` : linha1;
           return (
-            <pre key={idx} style={{ fontSize: '8px', margin: '3px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
-{conteudo}
+            <pre key={idx} style={{ fontSize: '9px', margin: '3px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
+       {conteudo}
             </pre>
           );
         })}
