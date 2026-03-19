@@ -72,6 +72,7 @@ export default function Layout({ children, currentPageName }) {
   const [isHovering, setIsHovering] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
+  const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
@@ -585,12 +586,20 @@ export default function Layout({ children, currentPageName }) {
           )}
         </div>
         {isMobile && !isFullscreen && (
-          <GlacialBottomNav 
-            onMenuClick={() => setShowMobileMenu(true)} 
-            currentPageName={currentPageName} 
+          <GlacialBottomNav
+            onMenuClick={() => setShowMobileMenu(true)}
+            onProfileClick={() => setShowMobileUserMenu(true)}
+            currentPageName={currentPageName}
           />
         )}
-        {isMobile && !isFullscreen && <MobileUserMenu darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
+        {isMobile && !isFullscreen && (
+          <MobileUserMenu
+            darkMode={darkMode}
+            toggleDarkMode={toggleDarkMode}
+            externalOpen={showMobileUserMenu}
+            onExternalClose={() => setShowMobileUserMenu(false)}
+          />
+        )}
       </div>
       <Toaster />
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
