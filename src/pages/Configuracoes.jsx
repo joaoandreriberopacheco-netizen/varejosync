@@ -15,7 +15,7 @@ import DadosEmpresaManager from '@/components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '@/components/config/PerfisDeAcessoManager';
 import RecomecarDoZero from '@/components/config/RecomecarDoZero';
 import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
-import LayoutTemplatesManager from '@/components/config/LayoutTemplatesManager';
+import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
 
 export default function ConfiguracoesPage() {
   const [tab, setTab] = useState('vendas');
@@ -95,7 +95,7 @@ export default function ConfiguracoesPage() {
         {/* RELATÓRIOS */}
         {tab === 'relatorios' && (
           <div className="space-y-4">
-            <LayoutTemplatesManager />
+            <EditorLayoutsTres />
           </div>
         )}
 
