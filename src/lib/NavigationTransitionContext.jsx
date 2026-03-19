@@ -10,16 +10,16 @@ export const NavigationTransitionProvider = ({ children }) => {
     setShowTransition(true);
     setIsNavigating(true);
     
-    // Aguarda a splash screen aparecer e o logo se animar
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Aguarda a logo se animar (300ms - mais rápido e fluido)
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // Executa a navegação
     if (callback) {
       callback();
     }
     
-    // Aguarda a animação de saída (flame) completar
-    await new Promise(resolve => setTimeout(resolve, 1800));
+    // Aguarda a animação de saída (flame) completar (500ms - mais leve)
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     setShowTransition(false);
     setIsNavigating(false);
