@@ -74,52 +74,51 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       </div>
 
       <pre style={{ fontFamily: 'inherit', fontSize: '9px', margin: '3px 0' }}>
-      DATA/HORA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yy HH:mm')}
+      DATA/HORA: {format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}
        </pre>
 
       {/* Cliente em linha própria com dados */}
       <div style={{ fontSize: '8px', margin: '2px 0', lineHeight: '1.3', fontFamily: 'inherit' }}>
-        <div style={{ fontWeight: 'bold' }}>
-          Cliente: {(pedido.cliente_nome || 'AVULSO').toUpperCase()}
+        <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+          {(() => {
+            const parts = [];
+            if (pedido.cliente_nome) parts.push(pedido.cliente_nome);
+            if (pedido.cliente_cpf_cnpj) parts.push(pedido.cliente_cpf_cnpj);
+            if (pedido.cliente_telefone) parts.push(pedido.cliente_telefone);
+            if (pedido.cliente_endereco) parts.push(pedido.cliente_endereco);
+            return parts.filter(Boolean).join(', ') || 'AVULSO';
+          })()}
         </div>
-        {pedido.cliente_nome && (
-          <div style={{ fontSize: '7px', color: '#555' }}>
-            {[
-              pedido.cliente_endereco || '',
-              pedido.cliente_telefone || ''
-            ].filter(Boolean).join(', ')}
-          </div>
-        )}
       </div>
 
        <LinhaHifens />
 
       <pre style={{ fontSize: '8px', margin: '2px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', fontWeight: 'bold', whiteSpace: 'pre' }}>
-      NO | DESCRIÇÃO        | QTD | UN | PREÇO  | TOTAL
+      NO  DESCRIÇÃO          QTD  UN  PREÇO       TOTAL
       </pre>
        <LinhaHifens />
 
        {itensOrdenados.map((item, idx) => {
-         const nomeCompleto = (item.produto_nome || '').toUpperCase();
-         const qtd = String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ');
-         const preco = fmtV(item.preco_unitario_praticado).padStart(6, ' ');
-         const total = fmtV(item.total).padStart(6, ' ');
-         const maxDesc = 16;
-         let linhas = [];
-         let resto = nomeCompleto;
-         while (resto.length > 0) {
-           if (resto.length <= maxDesc) { linhas.push(resto); break; }
-           let bp = resto.lastIndexOf(' ', maxDesc);
-           if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
-           else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
-         }
-         return (
-           <pre key={idx} style={{ fontSize: '8px', margin: '1px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
-      {String(idx + 1).padStart(2, ' ')} | {linhas[0].padEnd(maxDesc, ' ')} | {qtd} | UN | {preco} | {total}
-      {linhas.slice(1).map((l, li) => `   | ${l.padEnd(maxDesc, ' ')}`).join('\n')}
-           </pre>
-         );
-       })}
+          const nomeCompleto = (item.produto_nome || '').toUpperCase();
+          const qtd = String(parseFloat(item.quantidade).toFixed(0)).padStart(3, ' ');
+          const preco = `R$ ${fmtV(item.preco_unitario_praticado).padStart(6, ' ')}`;
+          const total = `R$ ${fmtV(item.total).padStart(6, ' ')}`;
+          const maxDesc = 20;
+          let linhas = [];
+          let resto = nomeCompleto;
+          while (resto.length > 0) {
+            if (resto.length <= maxDesc) { linhas.push(resto); break; }
+            let bp = resto.lastIndexOf(' ', maxDesc);
+            if (bp <= 0) { linhas.push(resto.substring(0, maxDesc)); resto = resto.substring(maxDesc); }
+            else { linhas.push(resto.substring(0, bp)); resto = resto.substring(bp + 1); }
+          }
+          return (
+            <pre key={idx} style={{ fontSize: '8px', margin: '4px 0', fontFamily: "'Cousine', monospace", lineHeight: '1.2', whiteSpace: 'pre' }}>
+       {String(idx + 1).padStart(2, ' ')}  {linhas[0].padEnd(maxDesc, ' ')} {qtd}  UN {preco}  {total}
+       {linhas.slice(1).map((l, li) => `       ${l.padEnd(maxDesc, ' ')}`).join('\n')}
+            </pre>
+          );
+        })}
 
       <LinhaHifens />
 
