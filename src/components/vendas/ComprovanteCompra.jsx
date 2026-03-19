@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 
 const fmtV = (v) => (parseFloat(v) || 0).toFixed(2);
+const SCALE_FACTOR = 1.2; // 20% de aumento nas fontes
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
