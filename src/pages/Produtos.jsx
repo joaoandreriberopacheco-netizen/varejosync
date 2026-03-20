@@ -32,6 +32,7 @@ import {
   DollarSign,
   MoreHorizontal,
   Archive,
+  Trash2,
   Copy,
   TrendingUp,
   CheckCircle,
