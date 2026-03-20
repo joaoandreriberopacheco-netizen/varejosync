@@ -772,6 +772,13 @@ export default function PDVCaixa() {
 
       setIsDialogOpen(false);
 
+      // Prepara promissória se houver fiado (será aberta após fechar o comprovante)
+      if (pagamentosContaPagar > 0) {
+        setDadosPromissoria({ pedido: { ...pedidoVenda, pagamentos: pagamentosArray }, valorFiado: pagamentosContaPagar });
+      } else {
+        setDadosPromissoria(null);
+      }
+
       // Sempre mostra o comprovante primeiro; ao fechar, segue o fluxo normal
       setShowComprovanteCaixa(true);
 
