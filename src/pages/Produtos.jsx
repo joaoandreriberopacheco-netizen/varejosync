@@ -161,17 +161,19 @@ function ProdutosPageContent() {
 
     // Calcular estatísticas e categorias
     let valorTotal = 0;
+    let valorEstoqueAtivo = 0;
     let abaixoMin = 0;
     const catSet = new Set();
     safeProdutos.forEach(p => {
       valorTotal += (p.estoque_atual || 0) * (p.preco_custo_calculado || 0);
+      if ((p.estoque_atual || 0) > 0) valorEstoqueAtivo += (p.estoque_atual || 0) * (p.preco_custo_calculado || 0);
       if (p.estoque_atual <= p.estoque_minimo && p.ativo) {
         abaixoMin++;
       }
       if(p.categoria_nome) catSet.add(p.categoria_nome);
     });
 
-    setStats({ total: safeProdutos.length, valorEstoque: valorTotal, abaixoMinimo: abaixoMin });
+    setStats({ total: safeProdutos.length, valorEstoque: valorTotal, valorEstoqueAtivo, abaixoMinimo: abaixoMin });
     setCategorias(Array.from(catSet));
   };
 
@@ -1033,7 +1035,7 @@ function ProdutosPageContent() {
               <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate font-glacial">Catálogo</h1>
               <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">
                 <span>{stats.total} produtos</span>
-                <span>R$ {formatarNumero(stats.valorEstoque)}</span>
+                <span>R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}</span>
                 {stats.abaixoMinimo > 0 && <span className="text-red-500">{stats.abaixoMinimo} abaixo mín.</span>}
               </div>
             </div>
