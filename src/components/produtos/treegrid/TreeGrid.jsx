@@ -39,7 +39,7 @@ export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'markup', 'inventario
 
 const INDENT_GROUP = 14;
 const INDENT_SKU   = 8;  // indentação fixa de todos os SKUs — alinhamento uniforme
-const W_EDIT = 32;       // coluna de edição sticky à esquerda
+const W_EDIT = 60;       // coluna de edição sticky à esquerda (edit + delete)
 
 // ── Dot de status ─────────────────────────────────────────────────────────────
 function StatusDot({ produto }) {
