@@ -146,6 +146,8 @@ export default function MobileHierarquica({ produtos, onEdit, onDelete }) {
     });
   }, []);
 
+  const noopDelete = useCallback(() => {}, []);
+
   if (produtos.length === 0) {
     return (
       <div className="py-16 text-center px-8">
