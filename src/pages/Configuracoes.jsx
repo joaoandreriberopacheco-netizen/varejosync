@@ -46,14 +46,12 @@ export default function ConfiguracoesPage() {
           <div className="space-y-4">
             <GlacialSubTabsList>
               <GlacialSubTabsTrigger value="fluxo"       activeValue={vendaTab} onSelect={setVendaTab} icon={Sliders}  label="Fluxo & Parâmetros" />
-              <GlacialSubTabsTrigger value="tabelas"     activeValue={vendaTab} onSelect={setVendaTab} icon={Tags}     label="Tabelas de Preço" />
-              <GlacialSubTabsTrigger value="desconto"    activeValue={vendaTab} onSelect={setVendaTab} icon={Percent}  label="Políticas de Desconto" />
+              <GlacialSubTabsTrigger value="tabelas"     activeValue={vendaTab} onSelect={setVendaTab} icon={Tags}     label="Tabelas & Políticas" />
               <GlacialSubTabsTrigger value="comprovante" activeValue={vendaTab} onSelect={setVendaTab} icon={Receipt}  label="Comprovante" />
             </GlacialSubTabsList>
             <div>
               {vendaTab === 'fluxo'       && <ConfiguracoesVendaManager />}
               {vendaTab === 'tabelas'     && <TabelasPrecoManager />}
-              {vendaTab === 'desconto'    && <PoliticasDescontoManager />}
               {vendaTab === 'comprovante' && <PersonalizacaoComprovanteManager />}
             </div>
           </div>
