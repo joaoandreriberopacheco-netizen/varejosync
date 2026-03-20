@@ -135,6 +135,7 @@ export default function TabelaPrecosConsulta() {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [showOrcamento, setShowOrcamento] = useState(false);
   const [empresa, setEmpresa] = useState(null);
+  const [ordenarAlfabetico, setOrdenarAlfabetico] = useState(false);
 
   useEffect(() => {
     loadInitialData();
