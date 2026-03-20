@@ -105,24 +105,33 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const loadUser = async () => {
+    // Aplica cache imediatamente para renderizar sidebar sem esperar rede
+    const cached = getCachedUserSession();
+    if (cached?.user) {
+      setCurrentUser(cached.user);
+      if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
+    }
+
     try {
       const user = await base44.auth.me();
       if (user) {
-        setCurrentUser(user);
-        // Carregar PerfilDeAcesso vinculado (Quarter Master Logic)
+        let perfil = null;
         if (user.perfil_acesso_id) {
           try {
             const perfis = await base44.entities.PerfilDeAcesso.list();
-            const encontrado = perfis.find(p => p.id === user.perfil_acesso_id);
-            if (encontrado) setPerfilDeAcesso(encontrado);
+            perfil = perfis.find(p => p.id === user.perfil_acesso_id) || null;
           } catch (e) {
             console.warn("Perfil de acesso não encontrado:", e);
           }
         }
+        // Atualiza estado e salva no cache
+        setCurrentUser(user);
+        setPerfilDeAcesso(perfil);
+        setCachedUserSession(user, perfil);
       }
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
-      setLoadError(error);
+      if (!cached?.user) setLoadError(error);
     }
   };
 
