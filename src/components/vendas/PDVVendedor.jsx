@@ -134,6 +134,7 @@ export default function PDVVendedor() {
   const quantidadeInputRef = useRef(null);
   const suggestionsRef = useRef(null);
   const clienteNomeRef = useRef(null);
+  const precoLivreInputRef = useRef(null);
   const { toast } = useToast();
 
   // Feedback inline ao invés de toast
@@ -530,7 +531,13 @@ export default function PDVVendedor() {
   const handleQuantidadeKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleConfirmarAdicao();
+      // Se preço livre está ativado, focar no campo de preço em vez de confirmar
+      if (produtoSelecionado?.preco_livre) {
+        setTimeout(() => precoLivreInputRef.current?.focus(), 100);
+        setTimeout(() => precoLivreInputRef.current?.select(), 100);
+      } else {
+        handleConfirmarAdicao();
+      }
     }
   };
 
@@ -976,34 +983,62 @@ export default function PDVVendedor() {
                 </div>
             }
                 {produtoSelecionado &&
-            <div className="mt-2 p-3 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                <div className="mt-2 p-3 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-2">
                 <div className="flex items-center gap-3">
-                  {produtoSelecionado.imagem_url
-                    ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-                    : <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                        <Package className="w-4 h-4 text-gray-500" />
+                {produtoSelecionado.imagem_url
+                  ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                  : <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-4 h-4 text-gray-500" />
+                    </div>
+                }
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
+                  {produtoSelecionado.preco_livre ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
+                      <div className="relative flex-1 max-w-[100px]">
+                        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[9px] text-gray-400">R$</span>
+                        <input
+                          ref={precoLivreInputRef}
+                          type="number" step="0.01" inputMode="decimal" min={produtoSelecionado.preco_custo_calculado || 0}
+                          value={produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) || ''}
+                          onChange={(e) => {
+                            const precoAjustado = parseFloat(e.target.value) || 0;
+                            const minimo = produtoSelecionado.preco_custo_calculado || 0;
+                            const precoFinal = Math.max(precoAjustado, minimo);
+                            // Manter o preço no estado do produto temporário
+                            setProdutoSelecionado({...produtoSelecionado, preco_venda_padrao: precoFinal});
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleConfirmarAdicao();
+                            }
+                          }}
+                          className="w-full pl-6 h-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-right border-0 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-gray-800 dark:text-gray-200 font-semibold"
+                        />
                       </div>
-                  }
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
+                    </div>
+                  ) : (
                     <p className="text-xs text-gray-400">
                       R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} × {parseInt(quantidadeAtual) || 1}
                       {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}</span>
                     </p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); inputProdutoRef.current?.focus(); }}
-                      variant="ghost" size="sm" className="h-8 text-gray-400 hover:text-gray-600 text-xs">
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button onClick={handleConfirmarAdicao}
-                      className="h-8 px-4 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-xs font-semibold rounded-xl shadow-none">
-                      + Adicionar
-                    </Button>
-                  </div>
+                  )}
                 </div>
-              </div>
-            }
+                <div className="flex items-center gap-1.5">
+                  <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); inputProdutoRef.current?.focus(); }}
+                    variant="ghost" size="sm" className="h-8 text-gray-400 hover:text-gray-600 text-xs">
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button onClick={handleConfirmarAdicao}
+                    className="h-8 px-4 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-xs font-semibold rounded-xl shadow-none">
+                    + Adicionar
+                  </Button>
+                </div>
+                </div>
+                </div>
+                }
             </div>
 
         </div>
