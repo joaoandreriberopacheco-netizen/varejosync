@@ -192,41 +192,67 @@ export default function OrcamentoCupom({ itens, total, formato, nomeTabela, clie
     const el = document.getElementById('cupom-print');
     if (!el) return;
 
-    // Cria iframe oculto — funciona em mobile sem precisar de popup
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.top = '-9999px';
-    iframe.style.left = '-9999px';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    document.body.appendChild(iframe);
+    const isMobile = /iPhone|iPad|Android|mobile/i.test(navigator.userAgent);
 
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    doc.write(`<!DOCTYPE html><html><head>
-      <title>Orçamento</title>
-      <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-      <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #fff; }
-        @media print {
-          body { margin: 0; }
-          @page {
-            size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'};
-            margin: 0;
+    if (isMobile) {
+      // Mobile: abre em window.open para disparar print nativo direto
+      const printWindow = window.open('', '', 'width=800,height=600');
+      printWindow.document.write(`<!DOCTYPE html><html><head>
+        <title>Orçamento</title>
+        <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; padding: 0; background: #fff; }
+          @media print {
+            body { margin: 0; }
+            @page {
+              size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'};
+              margin: 0;
+            }
           }
-        }
-      </style>
-    </head><body>${el.outerHTML}</body></html>`);
-    doc.close();
+        </style>
+      </head><body>${el.outerHTML}</body></html>`);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    } else {
+      // Desktop: usa iframe oculto
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.top = '-9999px';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      document.body.appendChild(iframe);
 
-    // Aguarda fontes carregarem e dispara impressão
-    setTimeout(() => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      // Remove iframe após impressão
-      setTimeout(() => document.body.removeChild(iframe), 2000);
-    }, 600);
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(`<!DOCTYPE html><html><head>
+        <title>Orçamento</title>
+        <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; padding: 0; background: #fff; }
+          @media print {
+            body { margin: 0; }
+            @page {
+              size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'};
+              margin: 0;
+            }
+          }
+        </style>
+      </head><body>${el.outerHTML}</body></html>`);
+      doc.close();
+
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 2000);
+      }, 600);
+    }
   };
 
   return (

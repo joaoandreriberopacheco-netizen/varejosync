@@ -366,29 +366,58 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const handlePrint = () => {
     const el = document.getElementById('cupom-print');
     if (!el) return;
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0';
-    document.body.appendChild(iframe);
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    doc.write(`<!DOCTYPE html><html><head>
-      <title>Pedido ${pedido?.numero || ''}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:wght@400;700&family=Cousine:wght@400;700&display=swap" rel="stylesheet">
-      <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #fff; }
-        @media print {
-          body { margin: 0; }
-          @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
-        }
-      </style>
-    </head><body>${el.outerHTML}</body></html>`);
-    doc.close();
-    setTimeout(() => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      setTimeout(() => document.body.removeChild(iframe), 2000);
-    }, 600);
+    
+    const originalDisplay = el.style.display;
+    const originalPosition = el.style.position;
+    const isMobile = /iPhone|iPad|Android|mobile/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Mobile: cria uma página impressível visível e dispara print nativo
+      const printWindow = window.open('', '', 'width=800,height=600');
+      printWindow.document.write(`<!DOCTYPE html><html><head>
+        <title>Pedido ${pedido?.numero || ''}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:wght@400;700&family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; padding: 0; background: #fff; }
+          @media print {
+            body { margin: 0; }
+            @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
+          }
+        </style>
+      </head><body>${el.outerHTML}</body></html>`);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    } else {
+      // Desktop: usa iframe oculto
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0';
+      document.body.appendChild(iframe);
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(`<!DOCTYPE html><html><head>
+        <title>Pedido ${pedido?.numero || ''}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:wght@400;700&family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; padding: 0; background: #fff; }
+          @media print {
+            body { margin: 0; }
+            @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
+          }
+        </style>
+      </head><body>${el.outerHTML}</body></html>`);
+      doc.close();
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 2000);
+      }, 600);
+    }
   };
 
   const handleImprimirTermica = async () => {
