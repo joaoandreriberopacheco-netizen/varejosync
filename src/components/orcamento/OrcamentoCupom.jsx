@@ -5,6 +5,12 @@ import { Button } from '@/components/ui/button';
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtData = () => new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+const LinhaHifens = () => (
+  <pre style={{ margin: '2px 0', fontSize: '8px', fontFamily: 'inherit', whiteSpace: 'pre' }}>
+------------------------------------------------
+  </pre>
+);
+
 // ── Cupom 80mm ──────────────────────────────────────────────────────────────
 function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
   return (
