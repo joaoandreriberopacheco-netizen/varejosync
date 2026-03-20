@@ -51,8 +51,8 @@ export default function GlacialSidebar({
             opacity: isOpen ? 1 : 0,
             pointerEvents: isOpen ? 'auto' : 'none',
             transition: isOpen
-              ? 'opacity 80ms ease-out'       // aparece rápido
-              : 'opacity 350ms ease-in-out',  // some devagar
+              ? 'none'
+              : 'opacity 300ms ease-in-out',
           }}
           onClick={closeMobileMenu}
         />
