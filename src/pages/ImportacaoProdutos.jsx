@@ -62,6 +62,8 @@ export default function ImportacaoProdutosPage() {
       toast.success(`✓ Sincronização concluída! ${total} produto(s) em ${totalLotes} lote(s).`);
       setSalvouOk(true);
       setParsedData(null);
+      // Invalidar cache global para que Produtos recarregue ao retornar
+      window.dispatchEvent(new Event('produtos:refresh'));
     } catch (error) {
       console.error('❌ Erro na sincronização:', error);
       toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
@@ -111,6 +113,8 @@ export default function ImportacaoProdutosPage() {
       toast.success(`✓ Estoque atualizado! ${total} produto(s) em ${totalLotes} lote(s).`);
       setSalvouOk(true);
       setParsedEstoque(null);
+      // Invalidar cache global para que Produtos recarregue ao retornar
+      window.dispatchEvent(new Event('produtos:refresh'));
     } catch (error) {
       console.error('❌ Erro ao atualizar estoque:', error);
       toast.error(`Erro no lote ${progresso.lote + 1}: ${error?.message || 'Erro desconhecido'}`);
