@@ -18,9 +18,8 @@ function SkuCard({ row, onEdit, onDelete }) {
 
   return (
     <div
-      className="flex items-start gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 active:bg-gray-50 dark:active:bg-gray-800/60 cursor-pointer w-full"
+      className="flex items-start gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 w-full"
       style={{ boxSizing: 'border-box' }}
-      onClick={() => onEdit(p)}
     >
       {/* Thumbnail fixo */}
       <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
