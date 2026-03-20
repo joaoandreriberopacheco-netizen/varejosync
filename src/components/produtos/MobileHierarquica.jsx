@@ -78,10 +78,10 @@ const SkuCard = React.memo(function SkuCard({ row, onEdit, onDelete }) {
       </button>
     </div>
   );
-}
+});
 
 // ── Cabeçalho de grupo ─────────────────────────────────────────────────────────
-function GroupHeader({ row, isExpanded, onToggle }) {
+const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle }) {
   const isRoot = row.level === 1;
 
   return (
