@@ -301,12 +301,11 @@ export default function Layout({ children, currentPageName }) {
         {/* Sidebar Desktop */}
         {!isMobile && (
           <aside
-            className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width] duration-200 ease-out z-40 flex flex-col ${
+            className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 z-40 flex flex-col ${
               isOpen ? 'w-64' : 'w-16'
             }`}
             style={{ 
               boxShadow: '1px 0 0 0 rgba(0,0,0,0.05)',
-              willChange: 'width'
             }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
