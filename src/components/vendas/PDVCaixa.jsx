@@ -1824,6 +1824,21 @@ export default function PDVCaixa() {
           }}
         />
 
+        {/* Comprovante de Caixa - aparece imediatamente após confirmar pagamento */}
+        <ComprovanteCompra
+          pedido={vendaFinalizada}
+          open={showComprovanteCaixa}
+          onClose={() => {
+            setShowComprovanteCaixa(false);
+            // Após fechar o comprovante, segue o fluxo normal
+            if (dadosPromissoria) {
+              setShowPromissoria(true);
+            } else {
+              setShowLiberacaoEntrega(true);
+            }
+          }}
+        />
+
         {/* Documento de Liberação para Entrega */}
         <LiberacaoEntrega
           open={showLiberacaoEntrega}
