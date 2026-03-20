@@ -671,7 +671,13 @@ export default function PDVCaixa() {
         setClienteVenda(cliente);
       }
 
-      setVendaFinalizada({ ...pedidoVenda, pagamentos: pagamentosArray });
+      // Mescla dados do pedido retornado com itens do rascunho (backend pode não retornar itens completos)
+      setVendaFinalizada({
+        ...pedidoSelecionado,
+        ...pedidoVenda,
+        itens: pedidoVenda.itens?.length ? pedidoVenda.itens : pedidoSelecionado.itens,
+        pagamentos: pagamentosArray,
+      });
 
       if (configVenda?.fluxo_venda_padrao === 'Completo') {
         toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
