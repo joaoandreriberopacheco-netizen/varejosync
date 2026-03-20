@@ -163,14 +163,20 @@ export default function TabelaPrecosConsulta() {
   };
 
   const produtosFiltrados = useMemo(() => {
-    if (!searchTerm) return produtos;
-    const termo = searchTerm.toLowerCase();
-    return produtos.filter(p =>
-      p.nome?.toLowerCase().includes(termo) ||
-      p.codigo_interno?.toLowerCase().includes(termo) ||
-      p.codigo_barras?.toLowerCase().includes(termo)
-    );
-  }, [produtos, searchTerm]);
+    let lista = produtos;
+    if (searchTerm) {
+      const termo = searchTerm.toLowerCase();
+      lista = lista.filter(p =>
+        p.nome?.toLowerCase().includes(termo) ||
+        p.codigo_interno?.toLowerCase().includes(termo) ||
+        p.codigo_barras?.toLowerCase().includes(termo)
+      );
+    }
+    if (ordenarAlfabetico) {
+      lista = [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+    }
+    return lista;
+  }, [produtos, searchTerm, ordenarAlfabetico]);
 
   const calcularPreco = useCallback((produto) => {
     if (!tabelaSelecionada) return produto.preco_venda_padrao || 0;
