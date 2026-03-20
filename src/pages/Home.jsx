@@ -178,7 +178,7 @@ export default function HomePage() {
             <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
               Acesso Rápido
             </h2>
-            {perfilDeAcesso?.permissoes?.homepage?.atalhos_personalizados && (
+            {podePersonalizar && (
             <button
               onClick={() => setShowPersonalizar(true)}
               className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
