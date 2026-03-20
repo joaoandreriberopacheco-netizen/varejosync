@@ -28,7 +28,7 @@ function SkuCard({ row, onEdit, onDelete }) {
           : <Package className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
       </div>
 
-      {/* Nome + info — ocupa o espaço restante, quebra normalmente */}
+      {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden" onClick={() => onEdit(p)}>
         <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words">
           {p.nome}
@@ -69,6 +69,13 @@ function SkuCard({ row, onEdit, onDelete }) {
           })()}
         </div>
       </div>
+      {/* Botão excluir */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(p); }}
+        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 dark:text-gray-600 active:text-red-500 dark:active:text-red-400 mt-1"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   );
 }
