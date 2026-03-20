@@ -62,17 +62,27 @@ export default function ImportarPlanilha({ onParsed }) {
       const alterados = [];
       const erros = [];
 
-      // 4. Processar cada linha
+      // 4. Processar cada linha (ignorar linhas completamente vazias)
       for (let i = 2; i <= ws.rowCount; i++) {
         const row = ws.getRow(i);
+
+        // Verificar se a linha inteira está vazia (nenhuma célula preenchida)
+        let linhaVazia = true;
+        for (let j = 1; j <= COLUNAS_CONFIG.length; j++) {
+          const cellValue = getCellValue(row.getCell(j));
+          if (cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') {
+            linhaVazia = false;
+            break;
+          }
+        }
+
+        if (linhaVazia) continue;
+
         const idCell = row.getCell(colIndexMap['id']);
         const h1Cell = row.getCell(colIndexMap['campo_hierarquico_1']);
-        
+
         const id = String(getCellValue(idCell) || '').trim();
         const h1 = String(getCellValue(h1Cell) || '').trim();
-
-        // Ignorar linhas vazias
-        if (!id && !h1) continue;
 
         const dadosExtraidos = {};
         let erroNaLinha = false;
