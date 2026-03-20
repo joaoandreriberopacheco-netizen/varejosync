@@ -186,6 +186,11 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
 
+      <Route path="/DesignerDocumento" element={
+        <LayoutWrapper currentPageName="DesignerDocumento">
+          <DesignerDocumento />
+        </LayoutWrapper>
+      } />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>
