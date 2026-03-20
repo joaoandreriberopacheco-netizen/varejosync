@@ -1308,6 +1308,7 @@ function ProdutosPageContent() {
                   <TreeGrid
                     produtos={filteredProdutos}
                     onEdit={handleEdit}
+                    onDelete={setProdutoParaExcluir}
                     visibleColumns={visibleColumns}
                     masterLevel={treeLevel}
                   />
