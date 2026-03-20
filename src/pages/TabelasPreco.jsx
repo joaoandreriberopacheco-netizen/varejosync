@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TabelaPreco } from '@/entities/TabelaPreco';
 import { Button } from '@/components/ui/button';
+import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,17 +74,17 @@ export default function TabelasPrecoPage() {
               </TableHeader>
               <TableBody>
                 {tabelas.map(tabela => {
-                  const exemplo = 100 * (tabela.fator_ajuste || 1);
-                  const ajuste = ((tabela.fator_ajuste || 1) - 1) * 100;
-                  return (
-                    <TableRow key={tabela.id}>
-                      <TableCell className="font-medium">{tabela.nome_tabela}</TableCell>
-                      <TableCell>
-                        <span className={ajuste > 0 ? 'text-green-600' : ajuste < 0 ? 'text-red-600' : ''}>
-                          {ajuste > 0 ? '+' : ''}{ajuste.toFixed(1)}%
-                        </span>
-                      </TableCell>
-                      <TableCell>R$ {exemplo.toFixed(2)}</TableCell>
+                   const exemplo = roundToTwoDecimals(100 * (tabela.fator_ajuste || 1));
+                   const ajuste = roundToTwoDecimals(((tabela.fator_ajuste || 1) - 1) * 100);
+                   return (
+                     <TableRow key={tabela.id}>
+                       <TableCell className="font-medium">{tabela.nome_tabela}</TableCell>
+                       <TableCell>
+                         <span className={ajuste > 0 ? 'text-green-600' : ajuste < 0 ? 'text-red-600' : ''}>
+                           {ajuste > 0 ? '+' : ''}{ajuste.toFixed(1)}%
+                         </span>
+                       </TableCell>
+                       <TableCell>R$ {exemplo.toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge variant={tabela.ativo ? "default" : "secondary"}>
                           {tabela.ativo ? 'Ativa' : 'Inativa'}
@@ -130,7 +131,7 @@ function TabelaPrecoForm({ tabela, onSave, onClose }) {
     onSave(formData);
   };
 
-  const ajustePercentual = ((formData.fator_ajuste - 1) * 100).toFixed(1);
+  const ajustePercentual = roundToTwoDecimals(((formData.fator_ajuste - 1) * 100)).toFixed(1);
 
   return (
     <DialogContent>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -72,7 +73,7 @@ const PedidosTab = () => {
   };
 
   const formatValor = (valor) => {
-    const num = parseFloat(valor) || 0;
+    const num = roundToTwoDecimals(parseFloat(valor) || 0);
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
