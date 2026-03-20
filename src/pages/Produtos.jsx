@@ -1298,6 +1298,7 @@ function ProdutosPageContent() {
                 <MobileHierarquica
                   produtos={filteredProdutos}
                   onEdit={handleEdit}
+                  onDelete={setProdutoParaExcluir}
                   formatarNumero={formatarNumero}
                 />
               </div>
