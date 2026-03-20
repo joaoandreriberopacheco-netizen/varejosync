@@ -1447,8 +1447,12 @@ function ProdutosPageContent() {
                                 <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
                                   <Copy className="mr-2 h-3.5 w-3.5"/>Duplicar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs">
-                                  <Archive className="mr-2 h-3.5 w-3.5"/>Inativar
+                                <DropdownMenuItem
+                                  onClick={() => setProdutoParaExcluir(produto)}
+                                  className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs"
+                                >
+                                  <Trash2 className="mr-2 h-3.5 w-3.5"/>
+                                  {produto.ativo ? 'Excluir / Inativar' : 'Reativar'}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
