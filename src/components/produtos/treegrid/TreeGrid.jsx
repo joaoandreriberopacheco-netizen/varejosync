@@ -161,7 +161,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 }
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-function SkuRow({ row, onEdit, onDelete, activeCols }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols }) {
   const p = row.produto;
 
   return (
