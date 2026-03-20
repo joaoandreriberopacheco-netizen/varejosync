@@ -284,24 +284,26 @@ export default function Layout({ children, currentPageName }) {
       <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
         {/* Sidebar Mobile */}
         {isMobile && (
-          <GlacialSidebar
-            isOpen={showMobileMenu}
-            onClose={() => setShowMobileMenu(false)}
-            menuItems={menuItems}
-            currentPageName={currentPageName}
-            isMobile={true}
-          />
+          <div className="transition-opacity duration-300 ease-in-out" style={{opacity: showMobileMenu ? 1 : 0, pointerEvents: showMobileMenu ? 'auto' : 'none'}}>
+            <GlacialSidebar
+              isOpen={showMobileMenu}
+              onClose={() => setShowMobileMenu(false)}
+              menuItems={menuItems}
+              currentPageName={currentPageName}
+              isMobile={true}
+            />
+          </div>
         )}
 
         {/* Sidebar Desktop */}
         {!isMobile && (
           <aside
-            className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width] duration-200 ease-out z-40 flex flex-col ${
+            className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width,box-shadow] duration-300 ease-in-out z-40 flex flex-col ${
               isOpen ? 'w-64' : 'w-16'
             }`}
             style={{ 
-              boxShadow: '1px 0 0 0 rgba(0,0,0,0.05)',
-              willChange: 'width'
+              boxShadow: isOpen ? '2px 0 8px rgba(0,0,0,0.08)' : '1px 0 0 0 rgba(0,0,0,0.05)',
+              willChange: 'width, box-shadow'
             }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
