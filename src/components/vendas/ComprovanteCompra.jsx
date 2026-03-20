@@ -217,11 +217,144 @@ function PreviewScaled({ children }) {
   );
 }
 
+// ── Cupom A4 ─────────────────────────────────────────────────────────────────────
+function CupomA4({ pedido, dadosEmpresa }) {
+  const itens = pedido.itens || [];
+
+  return (
+    <div
+      id="cupom-print"
+      style={{
+        width: '210mm',
+        minHeight: '297mm',
+        fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace",
+        fontSize: '12px',
+        color: '#000',
+        padding: '20mm 18mm',
+        background: '#fff',
+        lineHeight: '1.6',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10mm', borderBottom: '2px solid #000', paddingBottom: '6mm' }}>
+        <div>
+          {dadosEmpresa?.logo_url && (
+            <img
+              src={dadosEmpresa.logo_url}
+              alt="Logo"
+              style={{ maxWidth: '80mm', maxHeight: '30mm', filter: 'grayscale(100%) contrast(200%)', marginBottom: '3mm' }}
+            />
+          )}
+          <div style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.5px' }}>
+            {(dadosEmpresa?.razao_social || 'VAREJOSYNC').toUpperCase()}
+          </div>
+          {dadosEmpresa?.endereco && (
+            <div style={{ fontSize: '11px', color: '#555', marginTop: '2mm' }}>
+              {dadosEmpresa.endereco}{dadosEmpresa.numero ? ', ' + dadosEmpresa.numero : ''}
+            </div>
+          )}
+          {(dadosEmpresa?.bairro || dadosEmpresa?.cidade) && (
+            <div style={{ fontSize: '11px', color: '#555' }}>
+              {dadosEmpresa.bairro && `${dadosEmpresa.bairro}, `}
+              {dadosEmpresa.cidade}{dadosEmpresa.estado && `/${dadosEmpresa.estado}`}
+            </div>
+          )}
+          {dadosEmpresa?.cnpj && <div style={{ fontSize: '11px', color: '#555' }}>CNPJ: {dadosEmpresa.cnpj}</div>}
+          {dadosEmpresa?.telefone && <div style={{ fontSize: '11px', color: '#555' }}>Tel: {dadosEmpresa.telefone}</div>}
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', letterSpacing: '1px' }}>CUPOM DE VENDA</div>
+          <div style={{ fontSize: '12px', color: '#555', marginTop: '2mm' }}>Pedido: {pedido.numero || 'S/N'}</div>
+          <div style={{ fontSize: '11px', color: '#555' }}>{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</div>
+        </div>
+      </div>
+
+      {/* Cliente */}
+      {pedido.cliente_nome && (
+        <div style={{ marginBottom: '8mm', padding: '4mm 6mm', background: '#f5f5f5', borderRadius: '4px' }}>
+          <div style={{ fontSize: '10px', color: '#777', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Cliente</div>
+          <div style={{ fontSize: '13px', fontWeight: '600' }}>{pedido.cliente_nome}</div>
+        </div>
+      )}
+
+      {/* Tabela de itens */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8mm' }}>
+        <thead>
+          <tr style={{ borderBottom: '1.5px solid #ddd' }}>
+            <th style={{ textAlign: 'left', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Produto</th>
+            <th style={{ textAlign: 'center', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '15mm' }}>Qtd</th>
+            <th style={{ textAlign: 'right', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '28mm' }}>Preço</th>
+            <th style={{ textAlign: 'right', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {itens.map((item, i) => (
+            <tr key={i} style={{ borderBottom: '0.5px solid #eee' }}>
+              <td style={{ padding: '3mm 2mm', fontSize: '12px' }}>{item.produto_nome}</td>
+              <td style={{ padding: '3mm 2mm', textAlign: 'center', fontSize: '12px', fontWeight: '600' }}>{item.quantidade}</td>
+              <td style={{ padding: '3mm 2mm', textAlign: 'right', fontSize: '12px' }}>R$ {fmtV(item.preco_unitario_praticado)}</td>
+              <td style={{ padding: '3mm 2mm', textAlign: 'right', fontSize: '12px', fontWeight: '600' }}>R$ {fmtV(item.total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Totais */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12mm' }}>
+        <div style={{ borderTop: '2px solid #000', paddingTop: '4mm', minWidth: '100mm' }}>
+          {pedido.subtotal > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2mm' }}>
+              <span>Subtotal:</span>
+              <span>R$ {fmtV(pedido.subtotal)}</span>
+            </div>
+          )}
+          {pedido.valor_desconto > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2mm' }}>
+              <span>Desconto:</span>
+              <span>-R$ {fmtV(pedido.valor_desconto)}</span>
+            </div>
+          )}
+          {pedido.valor_frete > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2mm' }}>
+              <span>Frete:</span>
+              <span>R$ {fmtV(pedido.valor_frete)}</span>
+            </div>
+          )}
+          <div style={{ fontSize: '16px', fontWeight: '700', display: 'flex', justifyContent: 'space-between', marginTop: '2mm' }}>
+            <span>TOTAL</span>
+            <span>R$ {fmtV(pedido.valor_total || 0)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagamentos */}
+      {pedido.pagamentos && pedido.pagamentos.length > 0 && (
+        <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '4mm', marginBottom: '8mm' }}>
+          <div style={{ fontSize: '11px', fontWeight: '600', marginBottom: '2mm', textTransform: 'uppercase' }}>Formas de Pagamento:</div>
+          {pedido.pagamentos.map((pag, idx) => (
+            <div key={idx} style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', marginBottom: '1mm' }}>
+              <span>{pag.forma_pagamento}{pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}</span>
+              <span>R$ {fmtV(pag.valor)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Rodapé */}
+      <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '5mm', textAlign: 'center', fontSize: '10px', color: '#555' }}>
+        {dadosEmpresa?.mensagem_rodape && <div style={{ marginBottom: '2mm', fontWeight: '600' }}>{dadosEmpresa.mensagem_rodape.toUpperCase()}</div>}
+        <div>Este documento não possui validade fiscal.</div>
+      </div>
+    </div>
+  );
+}
+
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
   const [ipImpressora, setIpImpressora] = useState('');
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
+  const [formato, setFormato] = useState('80mm');
 
   useEffect(() => {
     if (!open) return;
@@ -246,7 +379,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         body { margin: 0; padding: 0; background: #fff; }
         @media print {
           body { margin: 0; }
-          @page { size: 80mm auto; margin: 0; }
+          @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
         }
       </style>
     </head><body>${el.outerHTML}</body></html>`);
@@ -300,32 +433,61 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         </Button>
       </div>
 
-      {/* Impressora térmica */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-        <Input
-          placeholder="IP impressora térmica (ex: 192.168.1.100)"
-          value={ipImpressora}
-          onChange={(e) => setIpImpressora(e.target.value)}
-          className="h-8 text-xs flex-1"
-        />
-        <Button
-          onClick={handleImprimirTermica}
-          disabled={imprimindoTermica}
-          size="sm"
-          className="h-8 bg-green-600 hover:bg-green-700 text-white whitespace-nowrap gap-1.5 text-xs"
-        >
-          <Zap className="w-3.5 h-3.5" />
-          {imprimindoTermica ? 'Enviando...' : 'Térmica'}
-        </Button>
+      {/* Opções de formato e impressora térmica */}
+      <div className="px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Formato:</span>
+          <Button
+            onClick={() => setFormato('80mm')}
+            size="sm"
+            variant={formato === '80mm' ? 'default' : 'outline'}
+            className="h-8 text-xs"
+          >
+            80mm
+          </Button>
+          <Button
+            onClick={() => setFormato('a4')}
+            size="sm"
+            variant={formato === 'a4' ? 'default' : 'outline'}
+            className="h-8 text-xs"
+          >
+            A4
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="IP impressora térmica (ex: 192.168.1.100)"
+            value={ipImpressora}
+            onChange={(e) => setIpImpressora(e.target.value)}
+            className="h-8 text-xs flex-1"
+          />
+          <Button
+            onClick={handleImprimirTermica}
+            disabled={imprimindoTermica}
+            size="sm"
+            className="h-8 bg-green-600 hover:bg-green-700 text-white whitespace-nowrap gap-1.5 text-xs"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            {imprimindoTermica ? 'Enviando...' : 'Térmica'}
+          </Button>
+        </div>
       </div>
 
       {/* Preview com scale - ocupa toda a tela */}
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="w-full h-full flex justify-center py-4 px-4">
-          <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
-            <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
+        {formato === '80mm' ? (
+          <div className="w-full h-full flex justify-center py-4 px-4">
+            <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
+              <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="w-full flex justify-center py-4 px-4">
+            <div style={{ width: `${210 * 3.7795}px`, transformOrigin: 'top center' }} className="shadow-2xl rounded-sm overflow-hidden">
+              <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
