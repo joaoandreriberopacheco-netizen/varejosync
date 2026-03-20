@@ -158,7 +158,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       ))}
     </tr>
   );
-}
+});
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
 const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols }) {
