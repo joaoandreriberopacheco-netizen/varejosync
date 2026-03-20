@@ -166,6 +166,7 @@ export default function GlacialSidebar({
               </div>
             );
           })}
+          </div>
         </nav>
       </aside>
     </>
