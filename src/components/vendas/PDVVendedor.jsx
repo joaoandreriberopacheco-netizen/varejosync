@@ -550,6 +550,18 @@ export default function PDVVendedor() {
     }
   };
 
+  const handleUpdatePrecoLivre = (produtoId, novoPreco) => {
+    const item = carrinho.find((i) => i.produto_id === produtoId);
+    if (!item) return;
+    const custo = item.custo_unitario_momento || 0;
+    const preco = Math.max(parseFloat(novoPreco) || 0, custo);
+    setCarrinho(carrinho.map((i) =>
+      i.produto_id === produtoId
+        ? { ...i, preco_unitario: preco, preco_unitario_praticado: preco, total: i.quantidade * preco }
+        : i
+    ));
+  };
+
   const handleRemoveItem = (produtoId) => {
     setCarrinho(carrinho.filter((item) => item.produto_id !== produtoId));
   };
