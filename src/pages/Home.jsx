@@ -60,47 +60,58 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadUser = async () => {
+      // Aplica cache imediatamente para renderizar sem esperar rede
+      const cached = getCachedUserSession();
+      if (cached?.user) {
+        setCurrentUser(cached.user);
+        if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
+        applyQuickActions(cached.user, cached.perfilDeAcesso);
+      }
+
       try {
         const user = await base44.auth.me();
-        setCurrentUser(user);
-        // Carregar perfil de acesso vinculado
+        let perfil = null;
         if (user?.perfil_acesso_id) {
           try {
             const perfis = await base44.entities.PerfilDeAcesso.list();
-            const encontrado = perfis.find(p => p.id === user.perfil_acesso_id);
-            if (encontrado) {
-              setPerfilDeAcesso(encontrado);
-              // Carregar atalhos: personalizado (localStorage) ou padrão do perfil
-              const podePersonalizarPerfil = encontrado.permissoes?.homepage?.atalhos_personalizados;
-              if (podePersonalizarPerfil) {
-                try {
-                  const saved = localStorage.getItem(STORAGE_KEY);
-                  setQuickActionIds(saved ? JSON.parse(saved) : (encontrado.atalhos_padrao || DEFAULT_QUICK_ACTIONS));
-                } catch {
-                  setQuickActionIds(encontrado.atalhos_padrao || DEFAULT_QUICK_ACTIONS);
-                }
-              } else {
-                // Usa apenas atalhos padrão do perfil (sem permitir personalização)
-                setQuickActionIds(encontrado.atalhos_padrao || []);
-              }
-            }
+            perfil = perfis.find(p => p.id === user.perfil_acesso_id) || null;
           } catch (e) {
             console.warn("Perfil de acesso não encontrado:", e);
           }
-        } else {
-          // Sem perfil vinculado — carrega do localStorage ou padrão
-          try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            setQuickActionIds(saved ? JSON.parse(saved) : DEFAULT_QUICK_ACTIONS);
-          } catch {
-            setQuickActionIds(DEFAULT_QUICK_ACTIONS);
-          }
         }
+        setCurrentUser(user);
+        setPerfilDeAcesso(perfil);
+        setCachedUserSession(user, perfil);
+        applyQuickActions(user, perfil);
         await loadKPIs();
       } catch (error) {
         console.error("Erro ao carregar usuário:", error);
       }
     };
+
+    const applyQuickActions = (user, perfil) => {
+      if (perfil) {
+        const podePersonalizar = perfil.permissoes?.homepage?.atalhos_personalizados;
+        if (podePersonalizar) {
+          try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            setQuickActionIds(saved ? JSON.parse(saved) : (perfil.atalhos_padrao || DEFAULT_QUICK_ACTIONS));
+          } catch {
+            setQuickActionIds(perfil.atalhos_padrao || DEFAULT_QUICK_ACTIONS);
+          }
+        } else {
+          setQuickActionIds(perfil.atalhos_padrao || []);
+        }
+      } else {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          setQuickActionIds(saved ? JSON.parse(saved) : DEFAULT_QUICK_ACTIONS);
+        } catch {
+          setQuickActionIds(DEFAULT_QUICK_ACTIONS);
+        }
+      }
+    };
+
     loadUser();
   }, [loadKPIs]);
 
