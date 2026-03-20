@@ -169,14 +169,14 @@ export default function MobileHierarquica({ produtos, onEdit, onDelete }) {
               key={row.key}
               row={row}
               isExpanded={expandedKeys.has(row.key)}
-              onToggle={() => handleToggle(row.key)}
+              onToggle={handleToggle}
             />
           ) : (
             <SkuCard
               key={row.key}
               row={row}
               onEdit={onEdit}
-              onDelete={onDelete || (() => {})}
+              onDelete={onDelete || noopDelete}
             />
           )
         )}
