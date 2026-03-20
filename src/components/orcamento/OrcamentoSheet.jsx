@@ -316,9 +316,15 @@ function ItemCarrinho({ item, onSelect, onRemove }) {
 }
 
 // ── Tela do carrinho ──────────────────────────────────────────────────────────
-function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida }) {
+function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida, desconto, setDesconto, tipoDesconto, setTipoDesconto, observacoes, setObservacoes }) {
   const [editandoItem, setEditandoItem] = useState(null);
-  const total = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
+  const subtotal = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
+  const valorDesconto = useMemo(() => {
+    if (!desconto || desconto <= 0) return 0;
+    if (tipoDesconto === 'percentual') return subtotal * (desconto / 100);
+    return desconto;
+  }, [desconto, tipoDesconto, subtotal]);
+  const total = subtotal - valorDesconto;
 
   const handleSelectItem = (item) => {
     const produto = produtos.find(p => p.id === item.id);
@@ -376,10 +382,43 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
             Registrar Venda Perdida
           </button>
 
+          {/* Desconto */}
+          <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-2.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
+            </div>
+            <div className="flex gap-1.5 items-center">
+              <div className="relative flex-1">
+                <Input type="number" min="0" step="0.01"
+                  value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
+                  className="pr-5 h-8 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-xs text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                  placeholder="0" />
+                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">{tipoDesconto === 'percentual' ? '%' : 'R$'}</span>
+              </div>
+              <button onClick={() => setTipoDesconto(tipoDesconto === 'percentual' ? 'fixo' : 'percentual')}
+                className="h-8 px-2 bg-gray-200 dark:bg-gray-700 rounded-lg text-[10px] font-semibold text-gray-700 dark:text-gray-300">
+                {tipoDesconto === 'percentual' ? '%' : 'R$'}
+              </button>
+            </div>
+          </div>
+
+          {/* Observações */}
+          <div className="relative">
+            <Input
+              placeholder="Observações (opcional)"
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              className="border-0 bg-gray-100 dark:bg-gray-800 h-10 text-sm rounded-2xl shadow-none focus-visible:ring-0"
+            />
+          </div>
+
           {/* Total */}
           <div className="flex items-baseline justify-between">
             <span className="text-sm text-gray-500 dark:text-gray-400">{itens.length} {itens.length === 1 ? 'item' : 'itens'}</span>
-            <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums">R$ {fmtR(total)}</span>
+            <div className="flex flex-col items-end gap-1">
+              {valorDesconto > 0 && <span className="text-xs text-gray-400 line-through">R$ {fmtR(subtotal)}</span>}
+              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums">R$ {fmtR(total)}</span>
+            </div>
           </div>
 
           {/* Formato de impressão */}
@@ -432,8 +471,17 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const [formatoCupom, setFormatoCupom] = useState('80mm');
   const [clienteNome, setClienteNome] = useState('');
   const [showLostSales, setShowLostSales] = useState(false);
+  const [desconto, setDesconto] = useState(0);
+  const [tipoDesconto, setTipoDesconto] = useState('percentual');
+  const [observacoes, setObservacoes] = useState('');
 
-  const total = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
+  const subtotal = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
+  const valorDesconto = useMemo(() => {
+    if (!desconto || desconto <= 0) return 0;
+    if (tipoDesconto === 'percentual') return subtotal * (desconto / 100);
+    return desconto;
+  }, [desconto, tipoDesconto, subtotal]);
+  const total = subtotal - valorDesconto;
 
   // Adiciona, atualiza ou remove (qtd=0) um item
   const handleSetQtd = useCallback((produto, preco, qtd) => {
@@ -464,6 +512,9 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
       <OrcamentoCupom
         itens={itens}
         total={total}
+        desconto={valorDesconto}
+        subtotal={subtotal}
+        observacoes={observacoes}
         formato={formatoCupom}
         nomeTabela={nomeTabela}
         clienteNome={clienteNome}
@@ -530,20 +581,26 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
             onVerCarrinho={() => setTela('carrinho')}
           />
         ) : (
-          <TelaCarrinho
-            itens={itens}
-            calcularPreco={calcularPreco}
-            produtos={produtos}
-            onSetQtd={handleSetQtd}
-            onRemove={handleRemove}
-            onGerar={() => setShowCupom(true)}
-            formatoCupom={formatoCupom}
-            setFormatoCupom={setFormatoCupom}
-            clienteNome={clienteNome}
-            setClienteNome={setClienteNome}
-            onVendaPerdida={() => setShowLostSales(true)}
-          />
-        )}
+           <TelaCarrinho
+             itens={itens}
+             calcularPreco={calcularPreco}
+             produtos={produtos}
+             onSetQtd={handleSetQtd}
+             onRemove={handleRemove}
+             onGerar={() => setShowCupom(true)}
+             formatoCupom={formatoCupom}
+             setFormatoCupom={setFormatoCupom}
+             clienteNome={clienteNome}
+             setClienteNome={setClienteNome}
+             onVendaPerdida={() => setShowLostSales(true)}
+             desconto={desconto}
+             setDesconto={setDesconto}
+             tipoDesconto={tipoDesconto}
+             setTipoDesconto={setTipoDesconto}
+             observacoes={observacoes}
+             setObservacoes={setObservacoes}
+           />
+         )}
       </div>
     </div>
   );
