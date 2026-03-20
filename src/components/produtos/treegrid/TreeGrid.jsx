@@ -304,11 +304,11 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                 row.type === 'group'
                   ? <GroupRow key={row.key} row={row}
                       isExpanded={expandedKeys.has(row.key)}
-                      onToggle={() => handleToggle(row.key)}
+                      onToggle={handleToggle}
                       activeCols={activeCols} />
                   : <SkuRow key={row.key} row={row}
                       onEdit={onEdit}
-                      onDelete={onDelete || (() => {})}
+                      onDelete={onDelete || noopDelete}
                       activeCols={activeCols} />
               )
             )}
