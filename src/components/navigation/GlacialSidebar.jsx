@@ -90,82 +90,77 @@ export default function GlacialSidebar({
         </div>
 
         {/* Menu Principal — scrollbar à esquerda para evitar fechar sidebar ao rolar */}
-        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto" style={{ direction: 'rtl' }}>
-          <div style={{ direction: 'ltr' }}>
-          {(isOpen || isMobile) && (
-            <p className="text-[10px] px-2 mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Menu</p>
-          )}
-          
-          {menuItems.map(item => {
-            const Icon = item.icon;
-            const isActive = isPageActive(item);
-            const hasSubmenu = item.submenu && item.submenu.length > 0;
-            const isExpanded = expandedMenus[item.name];
-            
-            return (
-              <div key={item.name}>
-                {hasSubmenu ? (
-                  <>
-                    <button
-                      onClick={() => toggleSubmenu(item.name)}
-                      className={`w-full flex items-center gap-2 px-2 py-2 rounded-xl transition-all duration-200 ${
+        <nav className="flex-1 overflow-y-auto" style={{ direction: 'rtl' }}>
+          <div className="p-2 space-y-0.5" style={{ direction: 'ltr' }}>
+            {(isOpen || isMobile) && (
+              <p className="text-[10px] px-2 mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Menu</p>
+            )}
+            {menuItems.map(item => {
+              const Icon = item.icon;
+              const isActive = isPageActive(item);
+              const hasSubmenu = item.submenu && item.submenu.length > 0;
+              const isExpanded = expandedMenus[item.name];
+              return (
+                <div key={item.name}>
+                  {hasSubmenu ? (
+                    <>
+                      <button
+                        onClick={() => toggleSubmenu(item.name)}
+                        className={`w-full flex items-center gap-2 px-2 py-2 rounded-xl transition-all duration-200 ${
+                          isActive
+                            ? 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive ? 2 : 1.5} />
+                        {(isOpen || isMobile) && (
+                          <>
+                            <span className="text-sm flex-1 text-left">{item.name}</span>
+                            <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                          </>
+                        )}
+                      </button>
+                      {isExpanded && (isOpen || isMobile) && (
+                        <div className="ml-6 mt-1 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
+                          {item.submenu.map(subItem => {
+                            const isSubActive = currentPageName === subItem.page || location.pathname.includes(subItem.page);
+                            return (
+                              <Link
+                                key={subItem.page}
+                                to={createPageUrl(subItem.page)}
+                                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-sm ${
+                                  isSubActive
+                                    ? 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                                onClick={closeMobileMenu}
+                              >
+                                {subItem.name}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <Link
+                      to={createPageUrl(item.page)}
+                      className={`flex items-center gap-2 px-2 py-2 rounded-xl transition-all duration-200 ${
                         isActive
                           ? 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
+                      onClick={closeMobileMenu}
                     >
                       <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive ? 2 : 1.5} />
                       {(isOpen || isMobile) && (
-                        <>
-                          <span className="text-sm flex-1 text-left">{item.name}</span>
-                          <ChevronRight 
-                            className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
-                          />
-                        </>
+                        <span className="text-sm">{item.name}</span>
                       )}
-                    </button>
-                    
-                    {isExpanded && (isOpen || isMobile) && (
-                      <div className="ml-6 mt-1 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
-                        {item.submenu.map(subItem => {
-                          const isSubActive = currentPageName === subItem.page || location.pathname.includes(subItem.page);
-                          return (
-                            <Link
-                              key={subItem.page}
-                              to={createPageUrl(subItem.page)}
-                              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors text-sm ${
-                                isSubActive
-                                  ? 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
-                                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                              }`}
-                              onClick={closeMobileMenu}
-                            >
-                              {subItem.name}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <Link
-                    to={createPageUrl(item.page)}
-                    className={`flex items-center gap-2 px-2 py-2 rounded-xl transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
-                    onClick={closeMobileMenu}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive ? 2 : 1.5} />
-                    {(isOpen || isMobile) && (
-                      <span className="text-sm">{item.name}</span>
-                    )}
-                  </Link>
-                )}
-              </div>
-            );
-          })}
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </nav>
       </aside>
