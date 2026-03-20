@@ -86,6 +86,14 @@ export default function HomePage() {
           } catch (e) {
             console.warn("Perfil de acesso não encontrado:", e);
           }
+        } else {
+          // Sem perfil vinculado — carrega do localStorage ou padrão
+          try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            setQuickActionIds(saved ? JSON.parse(saved) : DEFAULT_QUICK_ACTIONS);
+          } catch {
+            setQuickActionIds(DEFAULT_QUICK_ACTIONS);
+          }
         }
         await loadKPIs();
       } catch (error) {
