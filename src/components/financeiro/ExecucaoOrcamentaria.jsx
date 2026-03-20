@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, isWithinInterval, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
 import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale } from 'lucide-react';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
@@ -107,7 +108,17 @@ export default function ExecucaoOrcamentaria() {
         else if (l.tipo === 'Despesa') pSaiu += l.valor || 0;
       }
     });
-    return { entrou, saiu, saldo: entrou - saiu, pEntrou, pSaiu, saldoPrev: entrou + pEntrou - saiu - pSaiu, totalTransferencias, vencidos, qtdVencidos };
+    return {
+      entrou: roundToTwoDecimals(entrou),
+      saiu: roundToTwoDecimals(saiu),
+      saldo: roundToTwoDecimals(entrou - saiu),
+      pEntrou: roundToTwoDecimals(pEntrou),
+      pSaiu: roundToTwoDecimals(pSaiu),
+      saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu),
+      totalTransferencias: roundToTwoDecimals(totalTransferencias),
+      vencidos: roundToTwoDecimals(vencidos),
+      qtdVencidos
+    };
   }, [filtrados]);
 
   const grupos = useMemo(() => {
@@ -132,7 +143,7 @@ export default function ExecucaoOrcamentaria() {
         if (l.tipo === 'Receita' && l.status === 'Pago') totais.r += l.valor || 0;
         if (l.tipo === 'Despesa' && l.status === 'Pago') totais.d += l.valor || 0;
       });
-      return { k, label, items, totais };
+      return { k, label, items, totais: { r: roundToTwoDecimals(totais.r), d: roundToTwoDecimals(totais.d) } };
     });
   }, [filtrados]);
 
