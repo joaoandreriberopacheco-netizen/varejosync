@@ -26,7 +26,7 @@ function CupomSenha({ preVenda }) {
       }}
     >
       {/* Cabeçalho */}
-      <div style={{ textAlign: 'center', borderBottom: '1px dashed #000', paddingBottom: '6px', marginBottom: '6px' }}>
+      <div style={{ textAlign: 'center', paddingBottom: '4px', marginBottom: '4px' }}>
         <div style={{ fontSize: '13px', fontWeight: 'bold', letterSpacing: '1px' }}>SENHA DE ATENDIMENTO</div>
         <div style={{ fontSize: '9px', marginTop: '2px' }}>
           {format(new Date(preVenda.created_date || new Date()), 'dd/MM/yyyy HH:mm')}
@@ -47,7 +47,8 @@ function CupomSenha({ preVenda }) {
       </div>
 
       {/* Dados */}
-      <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '5px 0', margin: '5px 0', fontSize: '10px' }}>
+      <pre style={{ margin: '3px 0', fontSize: '8px', fontFamily: 'inherit' }}>------------------------------------------------</pre>
+      <div style={{ padding: '3px 0', margin: '3px 0', fontSize: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>CLIENTE:</span>
           <span style={{ fontWeight: 'bold', maxWidth: '160px', textAlign: 'right', wordBreak: 'break-word' }}>
@@ -65,7 +66,8 @@ function CupomSenha({ preVenda }) {
       </div>
 
       {/* Itens com colunas */}
-      <div style={{ fontSize: '9px', borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '3px 0', margin: '3px 0' }}>
+      <pre style={{ margin: '3px 0', fontSize: '8px', fontFamily: 'inherit' }}>------------------------------------------------</pre>
+      <div style={{ fontSize: '9px', padding: '3px 0', margin: '3px 0' }}>
         {/* Header das colunas */}
         <div style={{ display: 'flex', paddingBottom: '2px', borderBottom: '1px solid #000', marginBottom: '2px', fontSize: '7px', fontWeight: 'bold' }}>
           <div style={{ flex: '1', minWidth: '0' }}>DESC</div>
@@ -106,7 +108,8 @@ function CupomSenha({ preVenda }) {
       </div>
 
       {/* Formas de Pagamento */}
-      <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '4px 0', margin: '6px 0', fontSize: '9px' }}>
+      <pre style={{ margin: '3px 0', fontSize: '8px', fontFamily: 'inherit' }}>------------------------------------------------</pre>
+      <div style={{ padding: '3px 0', margin: '3px 0', fontSize: '9px' }}>
         <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>FORMAS DE PAGAMENTO:</div>
         {preVenda.pagamentos?.map((pag, i) => (
           <div key={i} style={{ fontSize: '9px', marginBottom: '1px' }}>
@@ -136,7 +139,8 @@ function CupomSenha({ preVenda }) {
       </div>
 
       {/* Rodapé */}
-      <div style={{ textAlign: 'center', borderTop: '1px dashed #000', paddingTop: '5px', fontSize: '8px', color: '#555' }}>
+      <pre style={{ margin: '3px 0', fontSize: '8px', fontFamily: 'inherit' }}>------------------------------------------------</pre>
+      <div style={{ textAlign: 'center', paddingTop: '4px', fontSize: '8px', color: '#555' }}>
         Este documento nao possui validade fiscal
       </div>
     </div>
