@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/components/ui/use-toast";
-import { Store, ShoppingBag, Truck, Save, Settings2 } from 'lucide-react';
+import { Store, ShoppingBag, Truck, Save, Settings2, Hash } from 'lucide-react';
 
 const FLUXOS = [
   { value: 'completo',     icon: Truck,       label: 'Completo',      desc: 'Venda → Pagamento → Entrega/Separação em etapas distintas.' },
@@ -25,7 +25,8 @@ const ToggleRow = ({ id, label, desc, checked, onChange }) => (
 export default function ConfiguracoesVendaManager() {
   const [config, setConfig] = useState({
     fluxo_venda_padrao: 'completo', auto_delivery_balcao: true,
-    exibir_estoque_pdv: true, vender_sem_estoque: false, bloquear_venda_preco_zero: true
+    exibir_estoque_pdv: true, vender_sem_estoque: false, bloquear_venda_preco_zero: true,
+    casas_decimais_quantidade: 0
   });
   const { toast } = useToast();
 
