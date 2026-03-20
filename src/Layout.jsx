@@ -362,7 +362,7 @@ export default function Layout({ children, currentPageName }) {
           )}
 
           {/* Menu Principal */}
-          <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+          <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto" style={{ direction: 'rtl' }}>
             {(isOpen || isMobile) && (
               <p className="text-[10px] px-2 mb-1 text-gray-500 dark:text-gray-400">Menu</p>
             )}

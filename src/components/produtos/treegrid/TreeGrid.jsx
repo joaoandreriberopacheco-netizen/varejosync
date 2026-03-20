@@ -286,8 +286,8 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   return (
     <div className="flex flex-col h-full w-full">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
-      <div className="flex-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch', direction: 'rtl' }} ref={scrollContainerRef} onScroll={handleScroll}>
-        <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%', direction: 'ltr' }}>
+      <div className="flex-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch' }} ref={scrollContainerRef} onScroll={handleScroll}>
+        <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
           {/* thead sticky no topo durante scroll vertical */}
           <thead className="sticky top-0 z-30 bg-white dark:bg-gray-900">
             <tr className="border-b-2 border-gray-200 dark:border-gray-700">
