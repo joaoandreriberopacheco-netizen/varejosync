@@ -156,30 +156,31 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
-  const toggleSubmenu = (menuName) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuName]: !prev[menuName]
-    }));
-  };
+  const toggleSubmenu = React.useCallback((menuName) => {
+    setExpandedMenus(prev => {
+      const newState = { ...prev };
+      newState[menuName] = !newState[menuName];
+      return newState;
+    });
+  }, []);
 
   // ── Quarter Master Logic: monta menu baseado em permissões resolvidas ──────
   const menuItems = useMemo(() => {
-    if (!currentUser) return [];
-    return buildMenuItems(currentUser, perfilDeAcesso);
-  }, [currentUser, perfilDeAcesso]);
+   if (!currentUser) return [];
+   return buildMenuItems(currentUser, perfilDeAcesso);
+  }, [currentUser?.id, currentUser?.role, perfilDeAcesso?.id]); // deps apenas de IDs mutáveis
 
   const allSearchableItems = React.useMemo(() => {
-    const items = [];
-    menuItems.forEach(item => {
-      if (item.page) items.push({ name: item.name, page: item.page, icon: item.icon, parent: null });
-      if (item.submenu) {
-        item.submenu.forEach(sub => {
-          items.push({ name: sub.name, page: sub.page, icon: item.icon, parent: item.name });
-        });
-      }
-    });
-    return items;
+   const items = [];
+   menuItems.forEach(item => {
+     if (item.page) items.push({ name: item.name, page: item.page, icon: item.icon, parent: null });
+     if (item.submenu) {
+       item.submenu.forEach(sub => {
+         items.push({ name: sub.name, page: sub.page, icon: item.icon, parent: item.name });
+       });
+     }
+   });
+   return items;
   }, [menuItems]);
 
   const filteredSearchItems = React.useMemo(() => {
@@ -212,27 +213,21 @@ export default function Layout({ children, currentPageName }) {
     };
   }, []);
 
-  const handleMouseEnter = () => {
-    if (!isMobile) {
-      setIsOpen(true);
-    }
-  };
+  const handleMouseEnter = React.useCallback(() => {
+    setIsOpen(true);
+  }, []);
 
-  const handleMouseLeave = () => {
-    if (!isMobile) {
-      setIsOpen(false);
-    }
-  };
+  const handleMouseLeave = React.useCallback(() => {
+    setIsOpen(false);
+  }, []);
 
   const handleMobileMenuToggle = () => {
     setIsOpen(!isOpen);
   };
 
-  const closeMobileMenu = () => {
-    if (isMobile) {
-      setIsOpen(false);
-    }
-  };
+  const closeMobileMenu = React.useCallback(() => {
+    setIsOpen(false);
+  }, []);
 
   const handleNavigation = (page) => {
     triggerTransition(() => {
