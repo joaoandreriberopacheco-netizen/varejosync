@@ -478,8 +478,9 @@ export default function PDVVendedor() {
       return;
     }
 
-    let precoFinal = produtoSelecionado.preco_venda_padrao;
-    if (tabelaPreco && tabelaPreco.fator_ajuste) {
+    // Se preço livre foi digitado, usar o preço digitado; caso contrário usar preço da tabela
+    let precoFinal = produtoSelecionado._preco_digitado || produtoSelecionado.preco_venda_padrao;
+    if (tabelaPreco && tabelaPreco.fator_ajuste && !produtoSelecionado._preco_digitado) {
       precoFinal = produtoSelecionado.preco_venda_padrao * tabelaPreco.fator_ajuste;
     }
 
