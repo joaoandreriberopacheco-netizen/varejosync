@@ -127,7 +127,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
   return (
     <tr
       className={`border-b border-gray-100 dark:border-gray-800 ${isLeaf ? '' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40'} select-none`}
-      onClick={isLeaf ? undefined : onToggle}
+      onClick={isLeaf ? undefined : () => onToggle(row.key)}
     >
       {/* Célula de edit vazia para grupos */}
       <td className="sticky left-0 bg-white dark:bg-gray-900 z-20"
