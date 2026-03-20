@@ -166,11 +166,17 @@ export default function ImportarPlanilha({ onParsed }) {
         dadosExtraidos.nome = nome;
 
         // 9. Classificar como novo ou existente
-        if (id && mapaAtual[id]) {
-          alterados.push({ id, dados: dadosExtraidos, nome, isNew: false });
-        } else if (!id && h1) {
-          alterados.push({ id: null, dados: dadosExtraidos, nome, isNew: true });
-        }
+          if (id && mapaAtual[id]) {
+            // Update existente
+            alterados.push({ id, dados: dadosExtraidos, nome, isNew: false });
+          } else if (!id && h1) {
+            // Novo produto (sem ID)
+            alterados.push({ id: null, dados: dadosExtraidos, nome, isNew: true });
+          } else if (id && !mapaAtual[id]) {
+            // ID existe no arquivo mas não no banco — trata como novo
+            console.warn(`ID ${id} não encontrado no banco. Criando como novo.`);
+            alterados.push({ id: null, dados: dadosExtraidos, nome, isNew: true });
+          }
       }
 
       // 10. Feedback ao usuário
