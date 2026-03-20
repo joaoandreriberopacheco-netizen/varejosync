@@ -124,6 +124,13 @@ export const ALL_QUICK_ACTIONS = [
     permissaoCheck: (p) => p?.estoque?.produtos?.editar,
   },
   {
+    id: 'caixas_ativos',
+    icon: MonitorCheck,
+    label: 'Caixas Ativos',
+    page: 'CaixasAtivos',
+    permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso,
+  },
+  {
     id: 'configuracoes',
     icon: Settings,
     label: 'Configurações',
