@@ -89,8 +89,9 @@ export default function GlacialSidebar({
           )}
         </div>
 
-        {/* Menu Principal */}
-        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+        {/* Menu Principal — scrollbar à esquerda para evitar fechar sidebar ao rolar */}
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto" style={{ direction: 'rtl' }}>
+          <div style={{ direction: 'ltr' }}>
           {(isOpen || isMobile) && (
             <p className="text-[10px] px-2 mb-1 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Menu</p>
           )}
