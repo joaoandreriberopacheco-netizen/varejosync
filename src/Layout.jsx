@@ -63,7 +63,7 @@ import {
 export default function Layout({ children, currentPageName }) {
   const { triggerTransition } = useNavigationTransition();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -301,11 +301,12 @@ export default function Layout({ children, currentPageName }) {
         {/* Sidebar Desktop */}
         {!isMobile && (
           <aside
-            className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 z-40 flex flex-col ${
+            className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width] duration-200 ease-out z-40 flex flex-col ${
               isOpen ? 'w-64' : 'w-16'
             }`}
             style={{ 
               boxShadow: '1px 0 0 0 rgba(0,0,0,0.05)',
+              willChange: 'width'
             }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -591,12 +592,12 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <div 
-          className={`flex-1 ${
+          className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
               ? 'ml-0 pt-12 pb-24' 
               : (isOpen ? 'ml-64' : 'ml-16')
           } ${(!isMobile && currentPageName === 'Produtos') ? 'h-screen overflow-hidden' : ''}`}
-          style={{ paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
+          style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
           {(!isMobile && currentPageName === 'Produtos') ? (
             <div className="h-full overflow-hidden">
