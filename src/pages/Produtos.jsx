@@ -112,6 +112,7 @@ function ProdutosPageContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState(null);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
+  const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState([
     'status', 'fornecedor', 'estoque_atual', 'preco_venda', 'margem'
   ]);
