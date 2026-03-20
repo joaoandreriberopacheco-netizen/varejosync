@@ -2,6 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { ChevronRight, ChevronDown, Package, MoreHorizontal, Edit, Copy, Archive, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
+import CamposEdicaoSistema from './CamposEdicaoSistema';
 
 const PAGE_SIZE = 50; // produtos por página
 
@@ -64,11 +67,13 @@ function GroupRow({ label, count, valorEstoque, abaixoMin, estoqueTotal, depth, 
   );
 }
 
-function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth }) {
+function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth, onEditInline }) {
   const indent = depth * 16;
   const margem = produto.preco_venda_padrao > 0
     ? ((produto.preco_venda_padrao - (produto.preco_custo_calculado || 0)) / produto.preco_venda_padrao) * 100
     : 0;
+  
+  const [editingField, setEditingField] = useState(null);
 
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/30 border-b border-gray-50 dark:border-gray-800/60 group">
@@ -177,13 +182,128 @@ function ProdutoRow({ produto, visibleColumns, fornecedorMap, onEdit, depth }) {
         </td>
       )}
       {visibleColumns.includes('estoque_minimo') && (
-        <td className="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell">
-          {formatarNumero(produto.estoque_minimo)}
+        <td className="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_minimo')}>
+          {editingField === 'estoque_minimo' ? (
+            <CamposEdicaoSistema
+              produto={produto}
+              campo="estoque_minimo"
+              valor={produto.estoque_minimo}
+              onSave={async (field, value) => {
+                try {
+                  await onEditInline(produto.id, field, value);
+                  setEditingField(null);
+                  toast.success('Campo atualizado!');
+                } catch {
+                  toast.error('Erro ao atualizar');
+                }
+              }}
+              onCancel={() => setEditingField(null)}
+            />
+          ) : (
+            <span>{formatarNumero(produto.estoque_minimo)}</span>
+          )}
         </td>
       )}
-    </tr>
-  );
-}
+
+      {/* Campos de Sistema (Casas Decimais, Tempo Reposição, Estoque, etc) */}
+      {visibleColumns.includes('sistema_casas_decimais') && (
+        <td className="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('casas_decimais')}>
+          {editingField === 'casas_decimais' ? (
+            <CamposEdicaoSistema
+              produto={produto}
+              campo="casas_decimais"
+              valor={produto.casas_decimais || 0}
+              onSave={async (field, value) => {
+                try {
+                  await onEditInline(produto.id, field, value);
+                  setEditingField(null);
+                  toast.success('Casas decimais atualizado!');
+                } catch {
+                  toast.error('Erro ao atualizar');
+                }
+              }}
+              onCancel={() => setEditingField(null)}
+            />
+          ) : (
+            <span>{produto.casas_decimais || 0}</span>
+          )}
+        </td>
+      )}
+
+      {visibleColumns.includes('sistema_tempo_reposicao') && (
+        <td className="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('tempo_reposicao_dias')}>
+          {editingField === 'tempo_reposicao_dias' ? (
+            <CamposEdicaoSistema
+              produto={produto}
+              campo="tempo_reposicao_dias"
+              valor={produto.tempo_reposicao_dias || 0}
+              onSave={async (field, value) => {
+                try {
+                  await onEditInline(produto.id, field, value);
+                  setEditingField(null);
+                  toast.success('Tempo de reposição atualizado!');
+                } catch {
+                  toast.error('Erro ao atualizar');
+                }
+              }}
+              onCancel={() => setEditingField(null)}
+            />
+          ) : (
+            <span>{produto.tempo_reposicao_dias || 0}</span>
+          )}
+        </td>
+      )}
+
+      {visibleColumns.includes('sistema_estoque_ideal') && (
+        <td className="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_ideal')}>
+          {editingField === 'estoque_ideal' ? (
+            <CamposEdicaoSistema
+              produto={produto}
+              campo="estoque_ideal"
+              valor={produto.estoque_ideal || 0}
+              onSave={async (field, value) => {
+                try {
+                  await onEditInline(produto.id, field, value);
+                  setEditingField(null);
+                  toast.success('Estoque ideal atualizado!');
+                } catch {
+                  toast.error('Erro ao atualizar');
+                }
+              }}
+              onCancel={() => setEditingField(null)}
+            />
+          ) : (
+            <span>{formatarNumero(produto.estoque_ideal || 0)}</span>
+          )}
+        </td>
+      )}
+
+      {visibleColumns.includes('sistema_estoque_maximo') && (
+        <td className="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => setEditingField('estoque_maximo')}>
+          {editingField === 'estoque_maximo' ? (
+            <CamposEdicaoSistema
+              produto={produto}
+              campo="estoque_maximo"
+              valor={produto.estoque_maximo || 0}
+              onSave={async (field, value) => {
+                try {
+                  await onEditInline(produto.id, field, value);
+                  setEditingField(null);
+                  toast.success('Estoque máximo atualizado!');
+                } catch {
+                  toast.error('Erro ao atualizar');
+                }
+              }}
+              onCancel={() => setEditingField(null)}
+            />
+          ) : (
+            <span>{formatarNumero(produto.estoque_maximo || 0)}</span>
+          )}
+        </td>
+      )}
+      </tr>
+      );
+      }
 
 function buildTree(produtos) {
   const root = {};
@@ -217,6 +337,10 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
   const [page, setPage] = useState(0);
 
   const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const handleEditInline = async (produtoId, field, value) => {
+    await base44.entities.Produto.update(produtoId, { [field]: value });
+  };
 
   // Paginação: fatia os produtos antes de construir a árvore
   const totalPages = Math.ceil(produtos.length / PAGE_SIZE);
@@ -255,6 +379,10 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
               {visibleColumns.includes('markup') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Markup</th>}
               {visibleColumns.includes('categoria') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold min-w-[120px] hidden md:table-cell">Categoria</th>}
               {visibleColumns.includes('estoque_minimo') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Mín.</th>}
+              {visibleColumns.includes('sistema_casas_decimais') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-center min-w-[70px] hidden md:table-cell">Casas</th>}
+              {visibleColumns.includes('sistema_tempo_reposicao') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-center min-w-[70px] hidden md:table-cell">Repos (d)</th>}
+              {visibleColumns.includes('sistema_estoque_ideal') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Ideal</th>}
+              {visibleColumns.includes('sistema_estoque_maximo') && <th className="py-2 px-3 text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold text-right min-w-[80px] hidden md:table-cell">Est. Máx.</th>}
             </tr>
           </thead>
           <tbody>
@@ -292,6 +420,7 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                           visibleColumns={visibleColumns}
                           fornecedorMap={fornecedorMap}
                           onEdit={onEdit}
+                          onEditInline={handleEditInline}
                           depth={1}
                         />
                       ))}
@@ -317,15 +446,16 @@ export default function TabelaDinamica({ produtos, visibleColumns, fornecedorMap
                               onToggle={() => toggle(l2FullKey)}
                             />
                             {l2Expanded && l2Node.items.map(p => (
-                              <ProdutoRow
-                                key={p.id}
-                                produto={p}
-                                visibleColumns={visibleColumns}
-                                fornecedorMap={fornecedorMap}
-                                onEdit={onEdit}
-                                depth={2}
-                              />
-                            ))}
+                               <ProdutoRow
+                                 key={p.id}
+                                 produto={p}
+                                 visibleColumns={visibleColumns}
+                                 fornecedorMap={fornecedorMap}
+                                 onEdit={onEdit}
+                                 onEditInline={handleEditInline}
+                                 depth={2}
+                               />
+                             ))}
                           </React.Fragment>
                         );
                       })}
