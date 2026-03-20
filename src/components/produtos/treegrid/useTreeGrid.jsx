@@ -181,8 +181,8 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     const rawKey   = parentKey ? `${parentKey}||${key}` : key;
     const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
     const nodeKey  = resolveCollapsedKey(rawKey, node, finalNode);
-    const allSkus  = collectSkus(finalNode);
-    const agg      = aggregateSkus(allSkus);
+    // Usa a agregação pré-computada no buildTree — evita recalcular collectSkus/aggregateSkus
+    const agg      = finalNode._agg || aggregateSkus(collectSkus(finalNode));
     const rowLevel = visualLevel + 1;
 
     const isLeafGroup = Object.keys(finalNode.children).length === 0;
