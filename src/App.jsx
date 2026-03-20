@@ -32,6 +32,7 @@ import ConferenciaEntrada from '@/pages/ConferenciaEntrada';
 import TabelaPrecosConsulta from '@/pages/TabelaPrecosConsulta';
 import ImportacaoProdutos from '@/pages/ImportacaoProdutos';
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
+import DesignerDocumento from '@/pages/DesignerDocumento';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
