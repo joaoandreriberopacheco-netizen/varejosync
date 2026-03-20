@@ -49,6 +49,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
+import { roundToTwoDecimals, formatCurrency, parseFinancialValue } from '@/lib/financialUtils';
 
 
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
@@ -197,8 +198,7 @@ function ProdutosPageContent() {
   }, []);
 
   const formatarNumero = React.useCallback((numero) => {
-    if (numero === null || numero === undefined) return '0,00';
-    return numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return formatCurrency(numero);
   }, []);
 
   const handleExportarCatalogo = () => {
@@ -555,14 +555,14 @@ function ProdutosPageContent() {
         const descontoComercialPercentual = parseNumber(linha.desconto_comercial_percentual) || 0;
         const outrosCustosPercentual = parseNumber(linha.outros_custos_percentual) || 0;
 
-        const frete = valorCompra * (fretePercentual / 100);
-        const imposto1 = valorCompra * (imposto1Percentual / 100);
-        const imposto2 = valorCompra * (imposto2Percentual / 100);
-        const desconto = valorCompra * (descontoComercialPercentual / 100);
-        const outros = valorCompra * (outrosCustosPercentual / 100);
+        const frete = roundToTwoDecimals(valorCompra * (fretePercentual / 100));
+        const imposto1 = roundToTwoDecimals(valorCompra * (imposto1Percentual / 100));
+        const imposto2 = roundToTwoDecimals(valorCompra * (imposto2Percentual / 100));
+        const desconto = roundToTwoDecimals(valorCompra * (descontoComercialPercentual / 100));
+        const outros = roundToTwoDecimals(valorCompra * (outrosCustosPercentual / 100));
         
         // Summing up costs based on the outline's logic
-        const custoTotal = valorCompra + frete + imposto1 + imposto2 + outros - desconto;
+        const custoTotal = roundToTwoDecimals(valorCompra + frete + imposto1 + imposto2 + outros - desconto);
 
         // Calculate preço de venda e markup automaticamente
         const precoVenda = parseNumber(linha.preco_venda_padrao) || 0;
@@ -869,12 +869,12 @@ function ProdutosPageContent() {
         const custoAnterior = produto.preco_custo_calculado || 0;
         
         // Recalcular custo total com o novo valor de compra
-        const frete = novoValorCompraParsed * ((produto.custo_frete_padrao || 0) / 100);
-        const imposto1 = novoValorCompraParsed * ((produto.custo_imposto1_padrao || 0) / 100);
-        const imposto2 = novoValorCompraParsed * ((produto.custo_imposto2_padrao || 0) / 100);
-        const desconto = novoValorCompraParsed * ((produto.desconto_compra_padrao || 0) / 100);
-        const outros = novoValorCompraParsed * ((produto.custo_outros_padrao || 0) / 100);
-        const novoCustoTotal = novoValorCompraParsed + frete + imposto1 + imposto2 + outros - desconto;
+        const frete = roundToTwoDecimals(novoValorCompraParsed * ((produto.custo_frete_padrao || 0) / 100));
+        const imposto1 = roundToTwoDecimals(novoValorCompraParsed * ((produto.custo_imposto1_padrao || 0) / 100));
+        const imposto2 = roundToTwoDecimals(novoValorCompraParsed * ((produto.custo_imposto2_padrao || 0) / 100));
+        const desconto = roundToTwoDecimals(novoValorCompraParsed * ((produto.desconto_compra_padrao || 0) / 100));
+        const outros = roundToTwoDecimals(novoValorCompraParsed * ((produto.custo_outros_padrao || 0) / 100));
+        const novoCustoTotal = roundToTwoDecimals(novoValorCompraParsed + frete + imposto1 + imposto2 + outros - desconto);
         
         // Recalcular preço de venda se for tipo percentual
         let novoPrecoVenda = produto.preco_venda_padrao || 0;
@@ -926,11 +926,11 @@ function ProdutosPageContent() {
         const produto = atualizacao.produto_completo;
         
         // Recalcular custos percentuais baseados no novo valor de compra
-        const frete = atualizacao.novo_valor_compra * ((produto.custo_frete_padrao || 0) / 100);
-        const imposto1 = atualizacao.novo_valor_compra * ((produto.custo_imposto1_padrao || 0) / 100);
-        const imposto2 = atualizacao.novo_valor_compra * ((produto.custo_imposto2_padrao || 0) / 100);
-        const desconto = atualizacao.novo_valor_compra * ((produto.desconto_compra_padrao || 0) / 100);
-        const outros = atualizacao.novo_valor_compra * ((produto.custo_outros_padrao || 0) / 100);
+        const frete = roundToTwoDecimals(atualizacao.novo_valor_compra * ((produto.custo_frete_padrao || 0) / 100));
+        const imposto1 = roundToTwoDecimals(atualizacao.novo_valor_compra * ((produto.custo_imposto1_padrao || 0) / 100));
+        const imposto2 = roundToTwoDecimals(atualizacao.novo_valor_compra * ((produto.custo_imposto2_padrao || 0) / 100));
+        const desconto = roundToTwoDecimals(atualizacao.novo_valor_compra * ((produto.desconto_compra_padrao || 0) / 100));
+        const outros = roundToTwoDecimals(atualizacao.novo_valor_compra * ((produto.custo_outros_padrao || 0) / 100));
 
         await base44.entities.Produto.update(atualizacao.produto_id, {
           valor_compra: atualizacao.novo_valor_compra,
