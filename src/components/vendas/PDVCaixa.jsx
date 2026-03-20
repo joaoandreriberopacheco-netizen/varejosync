@@ -59,6 +59,7 @@ import LiberacaoEntrega from './LiberacaoEntrega';
 import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
+import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 
 export default function PDVCaixa() {
   const navigate = useNavigate();
