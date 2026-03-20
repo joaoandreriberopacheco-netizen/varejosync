@@ -1019,6 +1019,47 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
               <Label htmlFor="ativo" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Produto Ativo</Label>
             </div>
 
+            {/* Preço Livre e Casas Decimais */}
+            <div className="border-t pt-6 dark:border-gray-700">
+              <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Comportamento no PDV</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={formData.preco_livre || false}
+                    onCheckedChange={v => handleChange('preco_livre', v)}
+                    id="preco_livre"
+                    className="dark:border-gray-500 h-5 w-5"
+                  />
+                  <div>
+                    <Label htmlFor="preco_livre" className="cursor-pointer text-sm text-gray-700 dark:text-gray-200">Preço Livre</Label>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Permite ao vendedor alterar o preço unitário no PDV (respeitando o custo mínimo)</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Casas Decimais na Quantidade</Label>
+                  <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden w-fit">
+                    {[0, 1, 2, 3].map(n => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => handleChange('casas_decimais', n)}
+                        className={`w-10 h-9 text-sm font-medium transition-colors ${
+                          (formData.casas_decimais ?? 0) === n
+                            ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900'
+                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    Exemplo: {(formData.casas_decimais ?? 0) === 0 ? '1, 2, 10' : (formData.casas_decimais ?? 0) === 1 ? '1,5 · 2,0' : (formData.casas_decimais ?? 0) === 2 ? '1,50 · 2,75' : '1,500 · 2,750'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="border-t pt-6 dark:border-gray-700">
               <h3 className="text-base font-semibold mb-4 text-gray-800 dark:text-gray-200">Rastreabilidade</h3>
               <div className="space-y-4">
