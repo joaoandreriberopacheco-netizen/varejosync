@@ -234,7 +234,7 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_COLS, masterLevel = 1 }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = 1 }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
 
   const tree = useTreeGrid(produtos);
@@ -305,6 +305,7 @@ export default function TreeGrid({ produtos, onEdit, visibleColumns = DEFAULT_CO
                       activeCols={activeCols} />
                   : <SkuRow key={row.key} row={row}
                       onEdit={onEdit}
+                      onDelete={onDelete || (() => {})}
                       activeCols={activeCols} />
               )
             )}
