@@ -42,24 +42,36 @@ export default function GlacialSidebar({
 
   return (
     <>
-      {/* Backdrop Mobile */}
-      {isMobile && isOpen && (
+      {/* Backdrop Mobile — aparece/some suavemente */}
+      {isMobile && (
         <div 
-          className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40"
+          className="fixed inset-0 z-40"
+          style={{
+            background: 'rgba(0,0,0,0.25)',
+            opacity: isOpen ? 1 : 0,
+            pointerEvents: isOpen ? 'auto' : 'none',
+            transition: isOpen
+              ? 'opacity 80ms ease-out'       // aparece rápido
+              : 'opacity 350ms ease-in-out',  // some devagar
+          }}
           onClick={closeMobileMenu}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — aparece instantâneo, some suavemente */}
       <aside
-        className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 transition-[width,transform] duration-200 ease-out z-40 flex flex-col ${
-          isMobile 
-            ? (isOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full') 
-            : (isOpen ? 'w-64' : 'w-16')
+        className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 z-50 flex flex-col ${
+          isMobile ? 'w-72' : (isOpen ? 'w-64' : 'w-16')
         } ${isMobile && !isOpen ? 'overflow-hidden' : ''}`}
         style={{ 
-          boxShadow: '1px 0 0 0 rgba(0,0,0,0.05)',
-          willChange: isMobile ? 'transform' : 'width' 
+          boxShadow: isOpen ? '4px 0 24px rgba(0,0,0,0.10)' : '1px 0 0 0 rgba(0,0,0,0.05)',
+          transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : undefined,
+          transition: isMobile
+            ? (isOpen
+                ? 'transform 80ms ease-out, box-shadow 80ms ease-out'   // aparece rápido
+                : 'transform 350ms cubic-bezier(0.4,0,0.2,1), box-shadow 350ms ease') // some devagar
+            : 'width 200ms ease-out',
+          willChange: isMobile ? 'transform' : 'width',
         }}
       >
         {/* Header */}
