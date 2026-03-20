@@ -1168,7 +1168,22 @@ export default function PDVVendedor() {
                       }
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.produto_nome}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')} cada</p>
+                        {item.preco_livre ? (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[9px] text-amber-500 font-medium uppercase">Preço livre</span>
+                            <div className="relative">
+                              <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                              <input
+                                type="number" step="0.01" inputMode="decimal" min={item.custo_unitario_momento || 0}
+                                value={item.preco_unitario_praticado?.toFixed(2)}
+                                onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
+                                className="pl-6 w-24 h-7 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-right border-0 shadow-sm focus:ring-1 focus:ring-amber-300"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 mt-0.5">R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')} cada</p>
+                        )}
                       </div>
                       <button onClick={() => handleRemoveItem(item.produto_id)}
                         className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg flex-shrink-0">
