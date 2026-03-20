@@ -1030,32 +1030,47 @@ export default function PDVVendedor() {
             <div key={item.produto_id} className="group p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <div className="flex items-start gap-2 mb-2">
                     {item.imagem_url
-                      ? <img src={item.imagem_url} alt={item.produto_nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 mt-0.5" />
-                      : <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Package className="w-3.5 h-3.5 text-gray-400" />
-                        </div>
-                    }
-                    <p className="text-xs font-medium text-gray-800 dark:text-gray-200 leading-tight flex-1 truncate">{item.produto_nome}</p>
-                    <button onClick={() => handleRemoveItem(item.produto_id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
-                      <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
-                        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="text-xs font-bold w-7 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
-                      <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
-                        disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
-                        className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
-                        <Plus className="w-3 h-3" />
+                        ? <img src={item.imagem_url} alt={item.produto_nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 mt-0.5" />
+                        : <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Package className="w-3.5 h-3.5 text-gray-400" />
+                          </div>
+                      }
+                      <p className="text-xs font-medium text-gray-800 dark:text-gray-200 leading-tight flex-1 truncate">{item.produto_nome}</p>
+                      <button onClick={() => handleRemoveItem(item.produto_id)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0">
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">R$ {item.total.toFixed(2)}</p>
-                  </div>
+                    {/* Preço livre editável */}
+                    {item.preco_livre && (
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
+                        <div className="relative flex-1">
+                          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                          <input
+                            type="number" step="0.01" min={item.custo_unitario_momento || 0}
+                            value={item.preco_unitario_praticado?.toFixed(2)}
+                            onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
+                            className="w-full pl-6 h-7 bg-white dark:bg-gray-900 rounded-lg text-xs text-right border-0 shadow-sm focus:ring-1 focus:ring-amber-300 text-gray-800 dark:text-gray-200"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
+                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
+                          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-xs font-bold w-7 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
+                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
+                          disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
+                          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">R$ {item.total.toFixed(2)}</p>
+                    </div>
                 </div>
             )
             }
