@@ -120,7 +120,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
       </div>
     </button>
   );
-}
+});
 
 // ── Componente principal ───────────────────────────────────────────────────────
 export default function MobileHierarquica({ produtos, onEdit, onDelete }) {
