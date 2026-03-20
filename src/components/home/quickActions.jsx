@@ -1,7 +1,7 @@
 import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
   Truck, BarChart3, Users, ClipboardList, Receipt, Warehouse,
-  FileText, QrCode, LayoutDashboard, Tag, Settings, Upload
+  FileText, QrCode, LayoutDashboard, Tag, Settings, Upload, MonitorCheck
 } from 'lucide-react';
 
 /**
