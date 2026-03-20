@@ -995,20 +995,21 @@ export default function PDVVendedor() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
                   {produtoSelecionado.preco_livre ? (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 mt-1">
                       <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
-                      <div className="relative flex-1 max-w-[100px]">
+                      <div className="relative flex-1 max-w-[120px]">
                         <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[9px] text-gray-400">R$</span>
                         <input
                           ref={precoLivreInputRef}
                           type="number" step="0.01" inputMode="decimal" min={produtoSelecionado.preco_custo_calculado || 0}
-                          value={produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) || ''}
+                          placeholder={(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)}
+                          defaultValue={(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)}
                           onChange={(e) => {
                             const precoAjustado = parseFloat(e.target.value) || 0;
                             const minimo = produtoSelecionado.preco_custo_calculado || 0;
                             const precoFinal = Math.max(precoAjustado, minimo);
                             // Manter o preço no estado do produto temporário
-                            setProdutoSelecionado({...produtoSelecionado, preco_venda_padrao: precoFinal});
+                            setProdutoSelecionado({...produtoSelecionado, _preco_digitado: precoFinal});
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -1016,12 +1017,13 @@ export default function PDVVendedor() {
                               handleConfirmarAdicao();
                             }
                           }}
-                          className="w-full pl-6 h-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-right border-0 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-gray-800 dark:text-gray-200 font-semibold"
+                          className="w-full pl-6 h-6 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-xs text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                         />
                       </div>
+                      <span className="text-[9px] text-gray-400">× {parseInt(quantidadeAtual) || 1}</span>
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 mt-1">
                       R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} × {parseInt(quantidadeAtual) || 1}
                       {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}</span>
                     </p>
