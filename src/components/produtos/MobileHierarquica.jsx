@@ -6,7 +6,7 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 // ── Card de SKU ────────────────────────────────────────────────────────────────
-function SkuCard({ row, onEdit, onDelete }) {
+const SkuCard = React.memo(function SkuCard({ row, onEdit, onDelete }) {
   const p      = row.produto;
   const markup = row.markup;
   const e = p.estoque_atual  || 0;
