@@ -1816,11 +1816,14 @@ function ProdutosPageContent() {
       <MassImageUploader 
         isOpen={isMassImageUploaderOpen}
         onClose={() => setIsMassImageUploaderOpen(false)}
-        onComplete={() => {
-          loadData();
-          // Optional: close dialog automatically or keep it open for results viewing
-          // setIsMassImageUploaderOpen(false); 
-        }}
+        onComplete={() => { loadData(); }}
+      />
+
+      <ExcluirProdutoDialog
+        produto={produtoParaExcluir}
+        open={!!produtoParaExcluir}
+        onClose={() => setProdutoParaExcluir(null)}
+        onSuccess={loadData}
       />
 
       {/* FAB - Floating Action Button */}
