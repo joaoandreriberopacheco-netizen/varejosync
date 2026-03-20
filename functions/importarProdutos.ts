@@ -71,8 +71,8 @@ Deno.serve(async (req) => {
       'valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao',
       'custo_imposto2_padrao', 'desconto_compra_padrao', 'preco_venda_percentual',
       'preco_custo_calculado', 'unidade_principal', 'unidades_por_pacote',
-      'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias',
-      'peso_kg', 'dimensoes_cm', 'abcd', 'ativo', 'nome',
+      'casas_decimais', 'estoque_minimo', 'estoque_ideal', 'estoque_maximo', 'tempo_reposicao_dias',
+      'peso_kg', 'dimensoes_cm', 'abcd', 'preco_livre', 'controla_serial', 'controla_lote', 'controla_validade', 'ativo', 'nome',
     ];
 
     // Processar cada produto com pequeno delay para evitar rate limit
