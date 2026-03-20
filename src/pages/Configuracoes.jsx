@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Percent, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
 import TabelasPrecoManager from '../components/config/TabelasPrecoManager';
 import ConfiguracoesVendaManager from '../components/config/ConfiguracoesVendaManager';
-import PoliticasDescontoManager from '../components/config/PoliticasDescontoManager';
 import AreasManager from '../components/config/AreasManager';
 import ContasFinanceirasManager from '../components/config/ContasFinanceirasManager';
 import CategoriasFinanceirasManager from '../components/config/CategoriasFinanceirasManager';
