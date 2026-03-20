@@ -59,6 +59,7 @@ import TabelaDinamica from '../components/produtos/TabelaDinamica';
 import TreeGrid, { LevelControl } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
+import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
 
 
 const isCadastroIncompleto = (produto) => {
