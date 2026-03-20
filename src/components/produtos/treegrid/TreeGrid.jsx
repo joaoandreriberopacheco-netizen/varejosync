@@ -161,19 +161,26 @@ function GroupRow({ row, isExpanded, onToggle, activeCols }) {
 }
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-function SkuRow({ row, onEdit, activeCols }) {
+function SkuRow({ row, onEdit, onDelete, activeCols }) {
   const p = row.produto;
 
   return (
     <tr className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50/70 dark:hover:bg-gray-800/25 group">
-      {/* Botão editar — sticky, congelado à esquerda */}
+      {/* Botão editar + excluir — sticky, congelado à esquerda */}
       <td className="py-1.5 sticky left-0 bg-white dark:bg-gray-900 z-20 text-center"
         style={{ width: W_EDIT, minWidth: W_EDIT }}>
-        <Button variant="ghost" size="icon"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
-          <Edit className="w-3 h-3 text-gray-500" />
-        </Button>
+        <div className="flex items-center gap-0.5 justify-center">
+          <Button variant="ghost" size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
+            <Edit className="w-3 h-3 text-gray-500" />
+          </Button>
+          <Button variant="ghost" size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => { e.stopPropagation(); onDelete(p); }}>
+            <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
+          </Button>
+        </div>
       </td>
       {/* Coluna Produto — sticky logo após o botão de editar */}
       <td
