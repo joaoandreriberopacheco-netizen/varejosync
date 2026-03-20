@@ -592,12 +592,12 @@ export default function Layout({ children, currentPageName }) {
         )}
 
         <div 
-          className={`flex-1 transition-[margin] duration-200 ease-out ${
+          className={`flex-1 ${
             isMobile 
               ? 'ml-0 pt-12 pb-24' 
               : (isOpen ? 'ml-64' : 'ml-16')
           } ${(!isMobile && currentPageName === 'Produtos') ? 'h-screen overflow-hidden' : ''}`}
-          style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
+          style={{ paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >
           {(!isMobile && currentPageName === 'Produtos') ? (
             <div className="h-full overflow-hidden">
