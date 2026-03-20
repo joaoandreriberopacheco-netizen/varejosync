@@ -58,12 +58,14 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
           </div>
         ))}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', marginBottom: '4mm' }}>
+      <LinhaHifens />
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', margin: '2mm 0' }}>
         <span>TOTAL</span>
         <span>R$ {fmtR(total)}</span>
       </div>
-      <div style={{ textAlign: 'center', fontSize: '10px', color: '#777', paddingTop: '3mm' }}>
-        Este documento não tem validade fiscal.
+      <LinhaHifens />
+      <div style={{ textAlign: 'center', fontSize: '9px', color: '#777', marginTop: '2mm' }}>
+        Nao possui validade fiscal.
       </div>
     </div>
   );
