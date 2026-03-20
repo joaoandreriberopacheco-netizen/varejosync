@@ -15,12 +15,18 @@ export default function ProdutosAccessGuard({ children }) {
           return;
         }
         
+        // Admin sempre tem acesso
+        if (user.role === 'admin') {
+          setAcessoPermitido(true);
+          return;
+        }
+
         if (user?.perfil_acesso_id) {
           const perfis = await base44.entities.PerfilDeAcesso.list();
           const perfil = perfis.find(p => p.id === user.perfil_acesso_id);
           setAcessoPermitido(perfil?.permissoes?.estoque?.acesso === true);
         } else {
-          setAcessoPermitido(true); // Admin sem perfil vinculado
+          setAcessoPermitido(true); // sem perfil vinculado = acesso livre
         }
       } catch (error) {
         console.error("Erro ao validar acesso a Produtos:", error);
