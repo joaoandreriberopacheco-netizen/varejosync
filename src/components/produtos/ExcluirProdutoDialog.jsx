@@ -26,7 +26,7 @@ export default function ExcluirProdutoDialog({ produto, open, onClose, onSuccess
   const [fase, setFase] = useState('verificando'); // 'verificando' | 'pode_excluir' | 'so_inativar' | 'ja_inativo'
   const [temMovimentos, setTemMovimentos] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open || !produto) return;
     verificarDependencias();
   }, [open, produto]);
