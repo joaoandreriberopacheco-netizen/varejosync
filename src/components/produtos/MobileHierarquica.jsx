@@ -6,7 +6,7 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 // ── Card de SKU ────────────────────────────────────────────────────────────────
-function SkuCard({ row, onEdit }) {
+function SkuCard({ row, onEdit, onDelete }) {
   const p      = row.produto;
   const markup = row.markup;
   const e = p.estoque_atual  || 0;
@@ -30,7 +30,7 @@ function SkuCard({ row, onEdit }) {
       </div>
 
       {/* Nome + info — ocupa o espaço restante, quebra normalmente */}
-      <div className="flex-1 min-w-0 overflow-hidden">
+      <div className="flex-1 min-w-0 overflow-hidden" onClick={() => onEdit(p)}>
         <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words">
           {p.nome}
         </p>
