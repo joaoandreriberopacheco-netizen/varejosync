@@ -1,15 +1,33 @@
 import React from 'react';
-import { Save, RotateCcw, ZoomIn, ZoomOut, Eye } from 'lucide-react';
+import { Save, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-export default function DesignerToolbar({ templateNome, onNomeChange, onSalvar, salvando, layout, onLayoutChange }) {
+export default function DesignerToolbar({ templateNome, onNomeChange, onSalvar, salvando, layout, onLayoutChange, onVoltar, documentoInfo }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 flex-wrap">
-      {/* Logo / Título */}
-      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mr-2 font-glacial">
-        Report Designer
-      </span>
+      {/* Voltar */}
+      {onVoltar && (
+        <button
+          onClick={onVoltar}
+          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 mr-1"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Documentos
+        </button>
+      )}
+
+      <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
+
+      {/* Ícone + nome do documento */}
+      {documentoInfo && (
+        <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <span>{documentoInfo.icone}</span>
+          <span className="font-medium text-gray-700 dark:text-gray-300">{documentoInfo.nome}</span>
+        </span>
+      )}
+
+      <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
 
       <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
 
