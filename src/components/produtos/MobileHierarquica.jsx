@@ -123,7 +123,7 @@ function GroupHeader({ row, isExpanded, onToggle }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit }) {
+export default function MobileHierarquica({ produtos, onEdit, onDelete }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
 
   const tree = useTreeGrid(produtos);
@@ -174,6 +174,7 @@ export default function MobileHierarquica({ produtos, onEdit }) {
               key={row.key}
               row={row}
               onEdit={onEdit}
+              onDelete={onDelete || (() => {})}
             />
           )
         )}
