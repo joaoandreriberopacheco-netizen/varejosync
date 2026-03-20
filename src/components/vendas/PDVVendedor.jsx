@@ -507,7 +507,8 @@ export default function PDVVendedor() {
         total: quantidade * precoFinal,
         estoque_disponivel: produtoSelecionado.estoque_atual,
         imagem_url: produtoSelecionado.imagem_url || null,
-        preco_livre: produtoSelecionado.preco_livre || false
+        preco_livre: produtoSelecionado.preco_livre || false,
+        preco_original_tabela: precoFinal
       }]);
     }
 
