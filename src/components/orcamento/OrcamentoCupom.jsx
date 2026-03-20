@@ -27,17 +27,19 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
       }}
     >
       {empresa?.nome && (
-        <div style={{ textAlign: 'center', marginBottom: '4mm', borderBottom: '1px dashed #999', paddingBottom: '4mm' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2mm', paddingBottom: '2mm' }}>
           <div style={{ fontWeight: 'bold', fontSize: '13px', letterSpacing: '0.5px' }}>{empresa.nome}</div>
           {empresa.cnpj && <div style={{ fontSize: '10px', color: '#555' }}>CNPJ: {empresa.cnpj}</div>}
           {empresa.telefone && <div style={{ fontSize: '10px', color: '#555' }}>{empresa.telefone}</div>}
           {empresa.cidade && <div style={{ fontSize: '10px', color: '#555' }}>{empresa.cidade} - {empresa.estado}</div>}
         </div>
       )}
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '18px', letterSpacing: '1px', marginBottom: '3mm' }}>ORÇAMENTO</div>
-      <div style={{ textAlign: 'center', fontSize: '11px', color: '#555', marginBottom: '4mm' }}>{fmtData()}</div>
-      {clienteNome && <div style={{ textAlign: 'center', fontSize: '11px', marginBottom: '4mm' }}>Cliente: <strong>{clienteNome}</strong></div>}
-      <div style={{ borderTop: '1px solid #999', borderBottom: '1px solid #999', paddingTop: '2mm', paddingBottom: '2mm', marginBottom: '3mm' }}>
+      <LinhaHifens />
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', letterSpacing: '1px', margin: '2mm 0' }}>ORÇAMENTO</div>
+      <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '2mm' }}>{fmtData()}</div>
+      {clienteNome && <div style={{ fontSize: '10px', marginBottom: '2mm' }}>CLIENTE: <strong>{clienteNome.toUpperCase()}</strong></div>}
+      <LinhaHifens />
+      <div style={{ marginBottom: '2mm' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '10px', color: '#555', marginBottom: '2mm', fontWeight: 'bold', textTransform: 'uppercase' }}>
           <span>DESCRIÇÃO</span>
           <span style={{ textAlign: 'center' }}>QTD</span>
