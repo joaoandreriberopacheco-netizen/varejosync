@@ -63,7 +63,7 @@ import {
 export default function Layout({ children, currentPageName }) {
   const { triggerTransition } = useNavigationTransition();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
