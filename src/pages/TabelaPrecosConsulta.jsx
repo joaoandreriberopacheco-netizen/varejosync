@@ -220,12 +220,26 @@ export default function TabelaPrecosConsulta() {
       <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-3 py-2 space-y-2">
 
         {/* Título + contagem */}
-        <div>
-          <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 font-glacial">Tabela de Preços</h1>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">
-            {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
-            {searchTerm && ` · "${searchTerm}"`}
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 font-glacial">Tabela de Preços</h1>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
+              {searchTerm && ` · "${searchTerm}"`}
+            </p>
+          </div>
+          <button
+            onClick={() => setOrdenarAlfabetico(v => !v)}
+            title={ordenarAlfabetico ? 'Ordem padrão' : 'Ordenar A→Z'}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all active:scale-95 ${
+              ordenarAlfabetico
+                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            {ordenarAlfabetico ? <ArrowDownAZ className="w-3.5 h-3.5" /> : <ArrowUpDown className="w-3.5 h-3.5" />}
+            <span>{ordenarAlfabetico ? 'A→Z' : 'Ordenar'}</span>
+          </button>
         </div>
 
         {/* Seletor de tabela */}
