@@ -95,17 +95,20 @@ Deno.serve(async (req) => {
           });
           await base44.asServiceRole.entities.Produto.create(novoProduto);
         } else {
-          const dadosAtualizacao = {};
-          validFields.forEach(field => {
-            const valor = dados[field];
-            if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
-              dadosAtualizacao[field] = valor;
-            }
-          });
-          if (Object.keys(dadosAtualizacao).length > 0) {
-            await base44.asServiceRole.entities.Produto.update(id, dadosAtualizacao);
-          }
-        }
+           const dadosAtualizacao = {};
+           validFields.forEach(field => {
+             const valor = dados[field];
+             if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
+               dadosAtualizacao[field] = valor;
+             }
+           });
+           if (Object.keys(dadosAtualizacao).length > 0) {
+             const resultado = await base44.asServiceRole.entities.Produto.update(id, dadosAtualizacao);
+             console.log(`✓ Produto ${id} atualizado:`, Object.keys(dadosAtualizacao).join(', '));
+           } else {
+             console.warn(`⚠ Nenhum campo para atualizar no produto ${id}`);
+           }
+         }
         processados++;
         await sleep(80);
       } catch (e) {
