@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
+import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import {
   Eye, EyeOff, BarChart3, AlertCircle, ChevronRight,
   Package, Receipt, ShoppingCart, Wallet, Settings2
@@ -127,7 +128,7 @@ export default function HomePage() {
     .map(id => ALL_QUICK_ACTIONS.find(a => a.id === id))
     .filter(Boolean);
 
-  const formatValor = (valor) => (valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  const formatValor = (valor) => formatCurrency(roundToTwoDecimals(valor || 0));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
