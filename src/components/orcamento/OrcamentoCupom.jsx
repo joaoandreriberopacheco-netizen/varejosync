@@ -12,7 +12,7 @@ const LinhaHifens = () => (
 );
 
 // ── Cupom 80mm ──────────────────────────────────────────────────────────────
-function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
+function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, clienteNome, empresa }) {
   return (
     <div
       id="cupom-print"
@@ -27,7 +27,7 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
       }}
     >
       {empresa?.nome && (
-        <div style={{ textAlign: 'center', marginBottom: '2mm', paddingBottom: '2mm' }}>
+         <div style={{ textAlign: 'center', marginBottom: '2mm', paddingBottom: '2mm' }}>
           <div style={{ fontWeight: 'bold', fontSize: '13px', letterSpacing: '0.5px' }}>{empresa.nome}</div>
           {empresa.cnpj && <div style={{ fontSize: '10px', color: '#555' }}>CNPJ: {empresa.cnpj}</div>}
           {empresa.telefone && <div style={{ fontSize: '10px', color: '#555' }}>{empresa.telefone}</div>}
@@ -59,11 +59,34 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
         ))}
       </div>
       <LinhaHifens />
+      {subtotal > 0 && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', margin: '1mm 0' }}>
+            <span>Subtotal</span>
+            <span>R$ {fmtR(subtotal)}</span>
+          </div>
+          {desconto > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e74c3c', fontWeight: 'bold', margin: '1mm 0' }}>
+              <span>Desconto</span>
+              <span>-R$ {fmtR(desconto)}</span>
+            </div>
+          )}
+        </>
+      )}
+      <LinhaHifens />
       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', margin: '2mm 0' }}>
         <span>TOTAL</span>
         <span>R$ {fmtR(total)}</span>
       </div>
       <LinhaHifens />
+      {observacoes && (
+        <>
+          <div style={{ fontSize: '9px', color: '#555', margin: '2mm 0 0 0', wordBreak: 'break-word' }}>
+            <strong>OBS:</strong> {observacoes}
+          </div>
+          <LinhaHifens />
+        </>
+      )}
       <div style={{ textAlign: 'center', fontSize: '9px', color: '#777', marginTop: '2mm' }}>
         Nao possui validade fiscal.
       </div>
@@ -72,7 +95,7 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
 }
 
 // ── Cupom A4 ────────────────────────────────────────────────────────────────
-function CupomA4({ itens, total, nomeTabela, clienteNome, empresa }) {
+function CupomA4({ itens, total, desconto, subtotal, observacoes, nomeTabela, clienteNome, empresa }) {
   return (
     <div
       id="cupom-print"
@@ -127,17 +150,39 @@ function CupomA4({ itens, total, nomeTabela, clienteNome, empresa }) {
             </tr>
           ))}
         </tbody>
-      </table>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12mm' }}>
-        <div style={{ borderTop: '2px solid #111', paddingTop: '4mm', minWidth: '80mm', textAlign: 'right' }}>
-          <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Geral</div>
-          <div style={{ fontSize: '22px', fontWeight: '700' }}>R$ {fmtR(total)}</div>
-          <div style={{ fontSize: '10px', color: '#999', marginTop: '1mm' }}>{itens.reduce((s, i) => s + i.qtd, 0)} itens</div>
+        </table>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8mm' }}>
+          <div style={{ minWidth: '100mm', textAlign: 'right' }}>
+            {subtotal > 0 && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '2mm' }}>
+                  <span>Subtotal</span>
+                  <span>R$ {fmtR(subtotal)}</span>
+                </div>
+                {desconto > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#e74c3c', fontWeight: '600', marginBottom: '2mm' }}>
+                    <span>Desconto</span>
+                    <span>-R$ {fmtR(desconto)}</span>
+                  </div>
+                )}
+              </>
+            )}
+            <div style={{ borderTop: '2px solid #111', paddingTop: '4mm' }}>
+              <div style={{ fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Geral</div>
+              <div style={{ fontSize: '22px', fontWeight: '700' }}>R$ {fmtR(total)}</div>
+              <div style={{ fontSize: '10px', color: '#999', marginTop: '1mm' }}>{itens.reduce((s, i) => s + i.qtd, 0)} itens</div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '5mm', textAlign: 'center', fontSize: '10px', color: '#999' }}>
-        Este documento não tem validade fiscal. Orçamento gerado em {fmtData()}.
-      </div>
+        {observacoes && (
+          <div style={{ background: '#f5f5f5', padding: '4mm 6mm', borderRadius: '4px', marginBottom: '6mm', fontSize: '10px' }}>
+            <div style={{ fontWeight: '600', marginBottom: '2mm' }}>Observações:</div>
+            <div style={{ color: '#555', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{observacoes}</div>
+          </div>
+        )}
+        <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '5mm', textAlign: 'center', fontSize: '10px', color: '#999' }}>
+          Este documento não tem validade fiscal. Orçamento gerado em {fmtData()}.
+        </div>
     </div>
   );
 }
@@ -186,7 +231,7 @@ function PreviewScaled({ formato, children }) {
 }
 
 // ── Componente principal ────────────────────────────────────────────────────
-export default function OrcamentoCupom({ itens, total, formato, nomeTabela, clienteNome, empresa, onVoltar, onClose }) {
+export default function OrcamentoCupom({ itens, total, desconto, subtotal, observacoes, formato, nomeTabela, clienteNome, empresa, onVoltar, onClose }) {
 
   const handlePrint = () => {
     const el = document.getElementById('cupom-print');
@@ -194,32 +239,37 @@ export default function OrcamentoCupom({ itens, total, formato, nomeTabela, clie
 
     const isMobile = /iPhone|iPad|Android|mobile/i.test(navigator.userAgent);
 
-    if (isMobile) {
-      // Mobile: abre em window.open para disparar print nativo direto
-      const printWindow = window.open('', '', 'width=800,height=600');
-      printWindow.document.write(`<!DOCTYPE html><html><head>
-        <title>Orçamento</title>
-        <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 0; background: #fff; }
-          @media print {
-            body { margin: 0; }
-            @page {
-              size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'};
-              margin: 0;
-            }
+    // HTML genérico para print em qualquer dispositivo
+    const html = `<!DOCTYPE html><html><head>
+      <title>Orçamento</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: #fff; }
+        @media print {
+          * { margin: 0; padding: 0; }
+          body { margin: 0; padding: 0; }
+          @page {
+            size: ${formato === 'a4' ? 'A4 portrait' : '80mm 210mm'};
+            margin: 0;
           }
-        </style>
-      </head><body>${el.outerHTML}</body></html>`);
-      printWindow.document.close();
+        }
+      </style>
+    </head><body>${el.outerHTML}</body></html>`;
+
+    if (isMobile) {
+      // Mobile: usa blob para evitar dialog de impressora
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank', 'toolbar=no,location=no,menubar=no');
       setTimeout(() => {
-        printWindow.focus();
         printWindow.print();
         printWindow.close();
       }, 500);
     } else {
-      // Desktop: usa iframe oculto
+      // Desktop: iframe fixo
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
       iframe.style.top = '-9999px';
@@ -230,25 +280,10 @@ export default function OrcamentoCupom({ itens, total, formato, nomeTabela, clie
 
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
-      doc.write(`<!DOCTYPE html><html><head>
-        <title>Orçamento</title>
-        <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 0; background: #fff; }
-          @media print {
-            body { margin: 0; }
-            @page {
-              size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'};
-              margin: 0;
-            }
-          }
-        </style>
-      </head><body>${el.outerHTML}</body></html>`);
+      doc.write(html);
       doc.close();
 
       setTimeout(() => {
-        iframe.contentWindow.focus();
         iframe.contentWindow.print();
         setTimeout(() => document.body.removeChild(iframe), 2000);
       }, 600);
@@ -281,8 +316,8 @@ export default function OrcamentoCupom({ itens, total, formato, nomeTabela, clie
       <div className="flex-1 overflow-y-auto">
         <PreviewScaled formato={formato}>
           {formato === '80mm'
-            ? <Cupom80mm itens={itens} total={total} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
-            : <CupomA4 itens={itens} total={total} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
+            ? <Cupom80mm itens={itens} total={total} desconto={desconto} subtotal={subtotal} observacoes={observacoes} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
+            : <CupomA4 itens={itens} total={total} desconto={desconto} subtotal={subtotal} observacoes={observacoes} nomeTabela={nomeTabela} clienteNome={clienteNome} empresa={empresa} />
           }
         </PreviewScaled>
       </div>
