@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 
 const KPI_CACHE_KEY = 'p38_kpis_cache';
 const KPI_CACHE_TTL = 60 * 1000; // 1 minuto
@@ -65,7 +66,7 @@ export function useKPIsCache() {
 
       const newKpis = {
         vendasHoje: vendasHoje.length,
-        valorVendasHoje: vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0),
+        valorVendasHoje: roundToTwoDecimals(vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0)),
         estoqueAlerta: produtosAlerta.length,
         pedidosPendentes: pedidos.length
       };
