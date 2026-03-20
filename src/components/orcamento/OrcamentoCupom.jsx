@@ -12,7 +12,7 @@ function Cupom80mm({ itens, total, nomeTabela, clienteNome, empresa }) {
       id="cupom-print"
       style={{
         width: '80mm',
-        fontFamily: "'Ubuntu Sans Mono', 'Courier New', monospace",
+        fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace",
         fontSize: '12px',
         color: '#111',
         padding: '6mm 1.5mm',

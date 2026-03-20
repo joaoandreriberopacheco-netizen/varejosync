@@ -18,7 +18,7 @@ function CupomSenha({ preVenda }) {
         width: '275px',
         background: '#fff',
         color: '#000',
-        fontFamily: "'Courier New', Courier, monospace",
+        fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace",
         fontSize: '11px',
         padding: '8px',
         margin: '0 auto',
