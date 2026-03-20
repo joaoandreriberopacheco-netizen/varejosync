@@ -86,7 +86,7 @@ const GroupHeader = React.memo(function GroupHeader({ row, isExpanded, onToggle 
 
   return (
     <button
-      onClick={onToggle}
+      onClick={() => onToggle(row.key)}
       className={`w-full flex items-center gap-2 py-2.5 text-left transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 ${
         isRoot
           ? 'px-4 bg-white dark:bg-gray-900'
