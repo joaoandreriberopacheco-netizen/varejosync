@@ -68,8 +68,8 @@ export default function GlacialSidebar({
           transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : undefined,
           transition: isMobile
             ? (isOpen
-                ? 'transform 80ms ease-out, box-shadow 80ms ease-out'   // aparece rápido
-                : 'transform 350ms cubic-bezier(0.4,0,0.2,1), box-shadow 350ms ease') // some devagar
+                ? 'none'
+                : 'transform 300ms cubic-bezier(0.4,0,0.2,1)')
             : 'width 200ms ease-out',
           willChange: isMobile ? 'transform' : 'width',
         }}
