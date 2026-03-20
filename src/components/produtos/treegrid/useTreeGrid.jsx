@@ -80,6 +80,8 @@ export function aggregateSkus(skus) {
 }
 
 // ── Constrói a árvore: h1-h4 são agrupadores; h5 é dado do SKU, nunca nó ─────
+// As agregações são calculadas UMA VEZ aqui, e cacheadas no nó.
+// Isso evita recalcular aggregateSkus() em cada chamada de flattenTree.
 export function buildTree(produtos) {
   const root = {};
 
@@ -89,16 +91,13 @@ export function buildTree(produtos) {
     const h2 = (p.campo_hierarquico_2 || '').trim();
     const h3 = (p.campo_hierarquico_3 || '').trim();
     const h4 = (p.campo_hierarquico_4 || '').trim();
-    // h5 → atributo visual do SKU, nunca cria nó
 
     const ensure = (parent, key, level) => {
       if (!parent[key]) parent[key] = { label: key, level, children: {}, skus: [] };
       return parent[key];
     };
 
-    // Se não há h2, adiciona SKU direto ao root (sem agrupamento)
-    if (!h2) { 
-      // Marca como SKU de raiz (sem grupo visual)
+    if (!h2) {
       if (!root._rootSkus) root._rootSkus = [];
       root._rootSkus.push(p);
       continue;
@@ -109,8 +108,20 @@ export function buildTree(produtos) {
     const n3 = ensure(n2.children, h3, 3);
     if (!h4) { n3.skus.push(p); continue; }
     const n4 = ensure(n3.children, h4, 4);
-    n4.skus.push(p); // h4 é o nível folha; SKU vai aqui
+    n4.skus.push(p);
   }
+
+  // Pré-calcula agregações em cada nó (bottom-up) para evitar recalcular no flatten
+  function precompute(nodeMap) {
+    for (const node of Object.values(nodeMap)) {
+      if (node.children && Object.keys(node.children).length > 0) {
+        precompute(node.children);
+      }
+      const allSkus = collectSkus(node);
+      node._agg = aggregateSkus(allSkus);
+    }
+  }
+  precompute(root);
 
   return root;
 }
