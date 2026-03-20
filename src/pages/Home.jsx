@@ -13,6 +13,7 @@ import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS } from '@/components/home/quic
 import PersonalizarHomeDialog from '@/components/home/PersonalizarHomeDialog';
 import { usePermissoesResolvidas } from '@/hooks/usePermissoesResolvidas';
 import { useKPIsCache } from '@/hooks/useKPIsCache';
+import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 const STORAGE_KEY = 'home_quick_actions';
 
