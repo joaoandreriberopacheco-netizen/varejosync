@@ -378,14 +378,15 @@ export default function Layout({ children, currentPageName }) {
                   {hasSubmenu ? (
                     <>
                       <button
-                        onClick={() => {
+                       onClick={() => {
                           const newExpanded = {};
                           if (!isExpanded) {
                             newExpanded[item.name] = true;
                           }
                           setExpandedMenus(newExpanded);
                         }}
-                        className={`w-full flex items-center gap-2 px-2 py-2 rounded transition-colors ${
+                       style={{ direction: 'ltr' }}
+                       className={`w-full flex items-center gap-2 px-2 py-2 rounded transition-colors ${
                           isActive
                             ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                             : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -408,18 +409,19 @@ export default function Layout({ children, currentPageName }) {
                             const isSubActive = currentPageName === subItem.page;
                             return (
                               <Link
-                                 key={subItem.page}
-                                 to={createPageUrl(subItem.page)}
-                                 onClick={(e) => {
-                                   handleNavigationLink(e, createPageUrl(subItem.page));
-                                   closeMobileMenu();
-                                 }}
-                                 className={`flex items-center gap-2 px-2 py-1.5 rounded transition-colors text-sm ${
-                                   isSubActive
-                                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
-                                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                 }`}
-                               >
+                              key={subItem.page}
+                              to={createPageUrl(subItem.page)}
+                              onClick={(e) => {
+                                handleNavigationLink(e, createPageUrl(subItem.page));
+                                closeMobileMenu();
+                              }}
+                              style={{ direction: 'ltr' }}
+                              className={`flex items-center gap-2 px-2 py-1.5 rounded transition-colors text-sm ${
+                                isSubActive
+                                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
+                                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                              }`}
+                              >
                                  {subItem.name}
                                </Link>
                             );
@@ -430,16 +432,17 @@ export default function Layout({ children, currentPageName }) {
                   ) : (
                     <Link
                        to={createPageUrl(item.page)}
-                       onClick={(e) => {
-                         handleNavigationLink(e, createPageUrl(item.page));
-                         closeMobileMenu();
-                       }}
-                       className={`flex items-center gap-2 px-2 py-2 rounded transition-colors ${
-                         isActive
-                           ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
-                       }`}
-                     >
+                        onClick={(e) => {
+                          handleNavigationLink(e, createPageUrl(item.page));
+                          closeMobileMenu();
+                        }}
+                        style={{ direction: 'ltr' }}
+                        className={`flex items-center gap-2 px-2 py-2 rounded transition-colors ${
+                          isActive
+                            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                            : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        }`}
+                      >
                        <Icon className="w-4 h-4" />
                        {(isOpen || isMobile) && (
                          <span className="text-sm">{item.name}</span>
