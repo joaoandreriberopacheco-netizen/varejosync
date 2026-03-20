@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { ChevronRight, Package } from 'lucide-react';
+import { ChevronRight, Package, Trash2 } from 'lucide-react';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from './treegrid/useTreeGrid';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

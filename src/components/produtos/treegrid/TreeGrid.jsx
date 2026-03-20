@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { ChevronRight, Package, Edit } from 'lucide-react';
+import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTreeGrid, flattenTree, buildExpandedForLevel } from './useTreeGrid';
 
