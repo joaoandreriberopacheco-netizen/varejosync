@@ -208,7 +208,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols })
       ))}
     </tr>
   );
-}
+});
 
 // ── Controle de Nível (exportado para uso externo no painel fixo) ─────────────
 export function LevelControl({ level, onChange }) {
