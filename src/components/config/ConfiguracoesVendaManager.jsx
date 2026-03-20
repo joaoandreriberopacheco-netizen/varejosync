@@ -95,6 +95,41 @@ export default function ConfiguracoesVendaManager() {
           checked={config.bloquear_venda_preco_zero} onChange={v => setConfig({ ...config, bloquear_venda_preco_zero: v })} />
       </div>
 
+      {/* Casas decimais de quantidade */}
+      <div className="space-y-2 pt-1">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide px-1">Produtos</p>
+        <div className="px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/60">
+          <div className="flex items-center justify-between gap-4 mb-1">
+            <div>
+              <Label className="text-xs font-medium text-gray-700 dark:text-gray-200">Casas Decimais na Quantidade</Label>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Define o padrão global para quantidades no PDV (ex: 0 = inteiro, 2 = kg/m², 3 = litros)</p>
+            </div>
+            <div className="flex items-center gap-1 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden flex-shrink-0">
+              {[0, 1, 2, 3].map(n => (
+                <button
+                  key={n}
+                  onClick={() => setConfig({ ...config, casas_decimais_quantidade: n })}
+                  className={`w-9 h-9 text-sm font-medium transition-colors ${
+                    config.casas_decimais_quantidade === n
+                      ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1">
+            <Hash className="w-3 h-3" />
+            Exemplo: {config.casas_decimais_quantidade === 0 ? '1, 2, 10' : config.casas_decimais_quantidade === 1 ? '1,5 · 2,0 · 10,3' : config.casas_decimais_quantidade === 2 ? '1,50 · 2,75 · 10,00' : '1,500 · 2,750 · 10,000'}
+          </p>
+        </div>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 px-1">
+          Para marcar produtos individuais como <strong>preço livre</strong> ou com casas decimais específicas, edite o produto na grade de produtos (aba Sistema) ou use a edição em massa.
+        </p>
+      </div>
+
       <div className="flex justify-end pt-2">
         <Button onClick={handleSave}
           className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white gap-2 h-9 text-sm">
