@@ -37,6 +37,14 @@ export default function HomePage() {
       .map(a => a.id);
   }, [currentUser, permissoes]);
 
+  // Pode personalizar: admin sempre pode; user com perfil que permite; user sem perfil também pode
+  const podePersonalizar = useMemo(() => {
+    if (!currentUser) return false;
+    if (currentUser.role === 'admin') return true;
+    if (perfilDeAcesso) return !!perfilDeAcesso.permissoes?.homepage?.atalhos_personalizados;
+    return true; // sem perfil vinculado → permite personalizar
+  }, [currentUser, perfilDeAcesso]);
+
   // Pode ver resumo de vendas: admin, ou quem tem dashboard.acesso, resumo_vendas_home, ou vendas.acesso
   const podeVerResumoVendas = useMemo(() => {
     if (!currentUser) return false;
