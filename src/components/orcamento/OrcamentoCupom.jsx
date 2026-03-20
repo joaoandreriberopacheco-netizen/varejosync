@@ -79,7 +79,7 @@ function CupomA4({ itens, total, nomeTabela, clienteNome, empresa }) {
       style={{
         width: '210mm',
         minHeight: '297mm',
-        fontFamily: "'Inter', Arial, sans-serif",
+        fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace",
         fontSize: '12px',
         color: '#111',
         padding: '20mm 18mm',
