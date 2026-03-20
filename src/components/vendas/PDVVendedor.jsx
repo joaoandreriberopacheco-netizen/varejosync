@@ -998,8 +998,8 @@ export default function PDVVendedor() {
                   {produtoSelecionado.preco_livre ? (
                     <div className="flex items-center gap-1.5 mt-1">
                       <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
-                      <div className="relative flex-1 max-w-[120px]">
-                        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[9px] text-gray-400">R$</span>
+                      <div className="relative flex-1">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
                         <input
                           ref={precoLivreInputRef}
                           type="number" step="0.01" inputMode="decimal" min={produtoSelecionado.preco_custo_calculado || 0}
@@ -1018,7 +1018,7 @@ export default function PDVVendedor() {
                               handleConfirmarAdicao();
                             }
                           }}
-                          className="w-full pl-6 h-6 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-xs text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+                          className="w-full pl-7 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                         />
                       </div>
                       <span className="text-[9px] text-gray-400">× {parseInt(quantidadeAtual) || 1}</span>
@@ -1086,12 +1086,12 @@ export default function PDVVendedor() {
                        <div className="flex items-center gap-1.5 mb-2">
                          <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
                          <div className="relative flex-1">
-                           <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-amber-600 dark:text-amber-400">R$</span>
+                           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-amber-600 dark:text-amber-400">R$</span>
                            <input
                              type="number" step="0.01" inputMode="decimal" min={item.custo_unitario_momento || 0}
                              value={item.preco_unitario_praticado?.toFixed(2)}
                              onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
-                             className="w-full pl-6 h-7 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-xs text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+                             className="w-full pl-7 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                            />
                          </div>
                        </div>
@@ -1208,15 +1208,15 @@ export default function PDVVendedor() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.produto_nome}</p>
                         {item.preco_livre ? (
-                           <div className="flex items-center gap-1.5 mt-0.5">
+                           <div className="flex items-center gap-2 mt-0.5">
                              <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
-                             <div className="relative flex-1">
-                               <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-amber-600 dark:text-amber-400">R$</span>
+                             <div className="relative flex-1 max-w-[140px]">
+                               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-amber-600 dark:text-amber-400">R$</span>
                                <input
                                  type="number" step="0.01" inputMode="decimal" min={item.custo_unitario_momento || 0}
                                  value={item.preco_unitario_praticado?.toFixed(2)}
                                  onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
-                                 className="w-full pl-6 h-7 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-xs text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+                                 className="w-full pl-7 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                                />
                              </div>
                            </div>
