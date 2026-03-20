@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { useNavigationTransition } from '@/lib/NavigationTransitionContext';
+import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/sonner";
