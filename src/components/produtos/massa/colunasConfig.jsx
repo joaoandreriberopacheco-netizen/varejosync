@@ -50,6 +50,14 @@ export const COLUNAS_CONFIG = [
   // --- Classificação ---
   { key: 'abcd',                    label: 'Curva ABCD',             editavel: true,  width: 14, tipo: 'string', enum: ['A','B','C','D'] },
 
+  // --- PDV e Comportamento ---
+  { key: 'preco_livre',             label: 'Preço Livre (SIM/NÃO)',  editavel: true,  width: 18, tipo: 'boolean' },
+
+  // --- Rastreabilidade ---
+  { key: 'controla_serial',         label: 'Controla Serial (SIM/NÃO)',  editavel: true,  width: 20, tipo: 'boolean' },
+  { key: 'controla_lote',           label: 'Controla Lote (SIM/NÃO)',    editavel: true,  width: 18, tipo: 'boolean' },
+  { key: 'controla_validade',       label: 'Controla Validade (SIM/NÃO)', editavel: true,  width: 20, tipo: 'boolean' },
+
   // --- Status ---
   { key: 'ativo',                   label: 'Ativo (SIM/NÃO)',        editavel: true,  width: 14, tipo: 'boolean' },
 ];
