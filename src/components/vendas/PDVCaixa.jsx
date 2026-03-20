@@ -163,6 +163,7 @@ export default function PDVCaixa() {
   const [processandoVenda, setProcessandoVenda] = useState(false); // Trava de duplo clique
   const [showPromissoria, setShowPromissoria] = useState(false);
   const [dadosPromissoria, setDadosPromissoria] = useState(null); // { pedido, valorFiado }
+  const [showComprovanteCaixa, setShowComprovanteCaixa] = useState(false);
   const [showRetornoDialog, setShowRetornoDialog] = useState(false);
   const [motivoRetorno, setMotivoRetorno] = useState('');
   const [showVendasDialog, setShowVendasDialog] = useState(false);
