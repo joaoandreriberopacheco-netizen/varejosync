@@ -256,6 +256,9 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     });
   }, []);
 
+  // Callbacks estáveis para onDelete fallback — evita recriar funções inline no map
+  const noopDelete = useCallback(() => {}, []);
+
   const activeCols = useMemo(
     () => COL_DEFS.filter(c => visibleColumns.includes(c.id)),
     [visibleColumns]
