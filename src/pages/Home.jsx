@@ -70,8 +70,8 @@ export default function HomePage() {
             if (encontrado) {
               setPerfilDeAcesso(encontrado);
               // Carregar atalhos: personalizado (localStorage) ou padrão do perfil
-              const podePersonalizar = encontrado.permissoes?.homepage?.atalhos_personalizados;
-              if (podePersonalizar) {
+              const podePersonalizarPerfil = encontrado.permissoes?.homepage?.atalhos_personalizados;
+              if (podePersonalizarPerfil) {
                 try {
                   const saved = localStorage.getItem(STORAGE_KEY);
                   setQuickActionIds(saved ? JSON.parse(saved) : (encontrado.atalhos_padrao || DEFAULT_QUICK_ACTIONS));
