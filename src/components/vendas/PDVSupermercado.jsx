@@ -32,6 +32,7 @@ export default function PDVSupermercado() {
   const [buscaCliente, setBuscaCliente] = useState('');
   const [clientes, setClientes] = useState([]);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showSimuladorTaxa, setShowSimuladorTaxa] = useState(false);
 
   // Product Entry States (Matching PDVVendedor)
   const [quantidadeAtual, setQuantidadeAtual] = useState('');

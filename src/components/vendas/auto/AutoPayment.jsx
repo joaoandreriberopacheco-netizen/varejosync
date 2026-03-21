@@ -9,7 +9,8 @@ import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
 export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   const [processing, setProcessing] = useState(false);
   const [method, setMethod] = useState(null); // 'credit', 'debit', 'pix'
-  const [pedidoFinalizado, setPedidoFinalizado] = useState(null); // Novo estado para mostrar o recibo
+  const [pedidoFinalizado, setPedidoFinalizado] = useState(null);
+  const [showSimulador, setShowSimulador] = useState(false);
   const { toast } = useToast();
 
   const total = carrinho.reduce((acc, item) => acc + item.total, 0);

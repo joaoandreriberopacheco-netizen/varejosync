@@ -472,6 +472,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const [formatoCupom, setFormatoCupom] = useState('80mm');
   const [clienteNome, setClienteNome] = useState('');
   const [showLostSales, setShowLostSales] = useState(false);
+  const [showSimuladorCartao, setShowSimuladorCartao] = useState(false);
   const [desconto, setDesconto] = useState(0);
   const [tipoDesconto, setTipoDesconto] = useState('percentual');
   const [observacoes, setObservacoes] = useState('');
