@@ -164,8 +164,11 @@ export default function PDVVendedor() {
     }
 
     const percent = sub > 0 ? valorAjusteCalc / sub * 100 : 0;
-    const limite = currentUser?.limite_desconto || 0;
-    const excedido = tipoAjuste === 'desconto' && currentUser && percent > limite;
+    // Limite efetivo = maior entre o limite do usuário e o percentual_desconto_maximo da tabela
+    const limiteUsuario = currentUser?.limite_desconto || 0;
+    const limiteTabela = tabelaPreco?.percentual_desconto_maximo || 0;
+    const limite = Math.max(limiteUsuario, limiteTabela);
+    const excedido = tipoAjuste === 'desconto' && currentUser && limite > 0 && percent > limite;
 
     let total = sub;
     if (tipoAjuste === 'desconto') {
