@@ -30,6 +30,22 @@ export default function ConfirmarPagamentoDialog({
   const [showSeletorFiado, setShowSeletorFiado] = useState(false);
   const [fiadoConfig, setFiadoConfig] = useState(null);
 
+  // Wrapper de máscara que intercepta débito/crédito para pedir maquininha antes de digitar
+  const handleInputMascaraComMaquininha = (e, setInput, setValor, modalidade) => {
+    // Se é débito ou crédito e ainda não tem maquininha, abre seletor e bloqueia digitação
+    if (modalidade === 'debito' && !maquininhaDebito && /^\d$/.test(e.key)) {
+      e.preventDefault();
+      setSeletorMaquininha('debito');
+      return;
+    }
+    if (modalidade === 'credito' && !maquininhaCredito && /^\d$/.test(e.key)) {
+      e.preventDefault();
+      setSeletorMaquininha('credito');
+      return;
+    }
+    handleInputMascara(e, setInput, setValor);
+  };
+
   if (!pedidoSelecionado) return null;
 
   const handleBuscarVale = async () => {
@@ -263,13 +279,9 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
             ? 'bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-600'
             : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800'
         }`}
-        onClick={(e) => {
-          if (onContainerClick) {
-            e.preventDefault();
-            onContainerClick();
-          } else {
-            onFocus?.();
-          }
+        onClick={() => {
+          if (onContainerClick) onContainerClick();
+          else onFocus?.();
         }}
       >
         <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
@@ -279,10 +291,7 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
           type="text"
           inputMode="numeric"
           value={value}
-          onFocus={(e) => {
-            e.stopPropagation();
-            onFocus?.();
-          }}
+          onFocus={onFocus}
           onKeyDown={onKeyDown}
           readOnly
           className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text tabular-nums"
