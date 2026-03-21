@@ -317,7 +317,7 @@ function ItemCarrinho({ item, onSelect, onRemove }) {
 }
 
 // ── Tela do carrinho ──────────────────────────────────────────────────────────
-function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida, desconto, setDesconto, tipoDesconto, setTipoDesconto, observacoes, setObservacoes }) {
+function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, onSimularCartao, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida, desconto, setDesconto, tipoDesconto, setTipoDesconto, observacoes, setObservacoes }) {
   const [editandoItem, setEditandoItem] = useState(null);
   const subtotal = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
   const valorDesconto = useMemo(() => {
@@ -438,6 +438,15 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
               </button>
             ))}
           </div>
+
+          {/* Botão simulador de taxa */}
+          <button
+            onClick={onSimularCartao}
+            className="w-full flex items-center justify-center gap-2 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 py-3 rounded-2xl text-xs font-medium active:scale-[0.98] transition-all"
+          >
+            <CreditCard className="w-4 h-4" />
+            Simular taxa no cartão
+          </button>
 
           {/* Botão gerar */}
           <button
