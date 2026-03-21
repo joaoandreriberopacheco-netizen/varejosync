@@ -25,39 +25,33 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
 
   return (
     <div
-      className="flex items-start gap-3 px-3 py-2.5 bg-white dark:bg-gray-900 w-full"
+      className="flex items-center gap-4 px-4 py-3.5 bg-white dark:bg-gray-900 w-full"
       style={{ boxSizing: 'border-box' }}
     >
       {/* Thumbnail */}
-      <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
+      <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
         {p.imagem_url
           ? <img src={p.imagem_url} alt="" className="w-full h-full object-cover" />
-          : <Package className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
+          : <Package className="w-5 h-5 text-gray-300 dark:text-gray-600" />}
       </div>
 
       {/* Nome + info */}
       <div className="flex-1 min-w-0 overflow-hidden">
-        <p className="text-[12px] font-normal text-gray-700 dark:text-gray-200 leading-snug uppercase break-words">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-snug break-words">
           {p.nome}
         </p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
           {/* Status estoque */}
-          <div className="flex items-center gap-1">
-            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
+            <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
               {fmtN(e)} {p.unidade_principal || 'UN'}
             </span>
           </div>
           {/* Código */}
           {p.codigo_interno && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono whitespace-nowrap">
+            <span className="text-xs text-gray-400 dark:text-gray-600 font-mono whitespace-nowrap">
               #{p.codigo_interno}
-            </span>
-          )}
-          {/* EAN */}
-          {p.codigo_barras && (
-            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono whitespace-nowrap">
-              EAN:{p.codigo_barras}
             </span>
           )}
         </div>
@@ -66,17 +60,17 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
       {/* Preço — direita */}
       <div className="flex-shrink-0 text-right">
         {temAjuste && precoOriginal > 0 && (
-          <div className="text-[10px] text-gray-400 line-through whitespace-nowrap tabular-nums">
+          <div className="text-xs text-gray-400 line-through whitespace-nowrap tabular-nums">
             R$ {fmtR(precoOriginal)}
           </div>
         )}
         {precoFinal > 0 && (
-          <div className="text-[14px] font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap tabular-nums">
+          <div className="text-base font-bold text-gray-800 dark:text-gray-100 whitespace-nowrap tabular-nums">
             R$ {fmtR(precoFinal)}
           </div>
         )}
-        {p.estoque_atual <= (p.estoque_minimo || 0) && p.estoque_atual <= 0 && (
-          <div className="text-[10px] text-red-500 whitespace-nowrap mt-0.5">sem estoque</div>
+        {e <= 0 && (
+          <div className="text-xs text-red-400 whitespace-nowrap mt-0.5">sem estoque</div>
         )}
       </div>
     </div>
