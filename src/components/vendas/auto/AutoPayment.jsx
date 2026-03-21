@@ -189,6 +189,15 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
           ) : (
             <div className="w-full max-w-md space-y-4">
               <h3 className="text-xl font-semibold mb-6 text-center">Escolha a forma de pagamento</h3>
+
+              {/* Simulador de taxa */}
+              <button
+                onClick={() => setShowSimulador(true)}
+                className="w-full flex items-center justify-center gap-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl py-2.5 transition-colors"
+              >
+                <CreditCard className="w-4 h-4" />
+                Simular taxa no cartão
+              </button>
               
               <button
                 onClick={() => handleProcessPayment('credit')}
@@ -233,5 +242,11 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
         </div>
       </div>
     </motion.div>
+    <SimuladorCartaoSheet
+      open={showSimulador}
+      onClose={() => setShowSimulador(false)}
+      valorTotal={total}
+      valorDesconto={0}
+    />
   );
 }

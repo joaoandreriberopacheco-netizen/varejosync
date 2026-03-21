@@ -545,6 +545,15 @@ export default function PDVSupermercado() {
              </div>
           </div>
 
+          {carrinho.length > 0 && (
+            <button
+              onClick={() => setShowSimuladorTaxa(true)}
+              className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 py-2 rounded-xl transition-colors mb-1"
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              Simular taxa no cartão
+            </button>
+          )}
           <Button 
             size="lg" 
             className="h-16 text-xl font-bold bg-emerald-600 hover:bg-emerald-700 w-full rounded-xl shadow-emerald-200"
@@ -629,6 +638,13 @@ export default function PDVSupermercado() {
            <Button variant="outline" onClick={() => { setCliente(null); setShowClienteDialog(false); }}>Consumidor Final</Button>
         </DialogContent>
       </Dialog>
+
+      <SimuladorCartaoSheet
+        open={showSimuladorTaxa}
+        onClose={() => setShowSimuladorTaxa(false)}
+        valorTotal={totalCarrinho}
+        valorDesconto={0}
+      />
 
       <BarcodeScanner
         open={showBarcodeScanner}
