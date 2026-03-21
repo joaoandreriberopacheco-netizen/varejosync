@@ -300,17 +300,7 @@ export default function PDVCaixa() {
     }
   }, [pedidoSelecionado]);
 
-  // Focar no input quando mudar forma de pagamento ativa
-  useEffect(() => {
-    if (isDialogOpen) {
-      const refMap = [inputRefs.dinheiro, inputRefs.pix, inputRefs.debito, inputRefs.credito];
-      // Aguarda 1.5s após a transição para focar no input
-      setTimeout(() => {
-        refMap[formaPagamentoAtiva]?.current?.focus();
-        refMap[formaPagamentoAtiva]?.current?.select();
-      }, 1500);
-    }
-  }, [formaPagamentoAtiva, isDialogOpen]);
+  // Foco gerenciado diretamente pelo clique do usuário — sem useEffect automático
 
   // Navegação entre formas de pagamento
   const handleNavegacaoPagamento = (e) => {
