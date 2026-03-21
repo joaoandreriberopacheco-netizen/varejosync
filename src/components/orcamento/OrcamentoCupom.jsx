@@ -19,7 +19,7 @@ function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, 
       style={{
         width: '80mm',
         fontFamily: "'Ubuntu Sans Mono', 'Cousine', monospace",
-        fontSize: '12px',
+        fontSize: '36px',
         color: '#111',
         padding: '6mm 1.5mm',
         background: '#fff',
@@ -28,19 +28,19 @@ function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, 
     >
       {empresa?.nome && (
          <div style={{ textAlign: 'center', marginBottom: '2mm', paddingBottom: '2mm' }}>
-          <div style={{ fontWeight: 'bold', fontSize: '13px', letterSpacing: '0.5px' }}>{empresa.nome}</div>
-          {empresa.cnpj && <div style={{ fontSize: '10px', color: '#555' }}>CNPJ: {empresa.cnpj}</div>}
-          {empresa.telefone && <div style={{ fontSize: '10px', color: '#555' }}>{empresa.telefone}</div>}
-          {empresa.cidade && <div style={{ fontSize: '10px', color: '#555' }}>{empresa.cidade} - {empresa.estado}</div>}
+          <div style={{ fontWeight: 'bold', fontSize: '39px', letterSpacing: '0.5px' }}>{empresa.nome}</div>
+          {empresa.cnpj && <div style={{ fontSize: '30px', color: '#555' }}>CNPJ: {empresa.cnpj}</div>}
+          {empresa.telefone && <div style={{ fontSize: '30px', color: '#555' }}>{empresa.telefone}</div>}
+          {empresa.cidade && <div style={{ fontSize: '30px', color: '#555' }}>{empresa.cidade} - {empresa.estado}</div>}
         </div>
       )}
       <LinhaHifens />
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', letterSpacing: '1px', margin: '2mm 0' }}>ORÇAMENTO</div>
-      <div style={{ textAlign: 'center', fontSize: '10px', color: '#555', marginBottom: '2mm' }}>{fmtData()}</div>
-      {clienteNome && <div style={{ fontSize: '10px', marginBottom: '2mm' }}>CLIENTE: <strong>{clienteNome.toUpperCase()}</strong></div>}
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '42px', letterSpacing: '1px', margin: '2mm 0' }}>ORÇAMENTO</div>
+      <div style={{ textAlign: 'center', fontSize: '30px', color: '#555', marginBottom: '2mm' }}>{fmtData()}</div>
+      {clienteNome && <div style={{ fontSize: '30px', marginBottom: '2mm' }}>CLIENTE: <strong>{clienteNome.toUpperCase()}</strong></div>}
       <LinhaHifens />
       <div style={{ marginBottom: '2mm' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '10px', color: '#555', marginBottom: '2mm', fontWeight: 'bold', textTransform: 'uppercase' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '30px', color: '#555', marginBottom: '2mm', fontWeight: 'bold', textTransform: 'uppercase' }}>
           <span>DESCRIÇÃO</span>
           <span style={{ textAlign: 'center' }}>QTD</span>
           <span style={{ textAlign: 'right' }}>PREÇO</span>
@@ -48,8 +48,8 @@ function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, 
         </div>
         {itens.map((item, i) => (
           <div key={i} style={{ marginBottom: '2.5mm', paddingBottom: '1.5mm', borderBottom: '0.5px solid #e0e0e0' }}>
-            <div style={{ fontWeight: '500', fontSize: '11px', wordBreak: 'break-word', marginBottom: '0.5mm' }}>{item.nome}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '11px' }}>
+            <div style={{ fontWeight: '500', fontSize: '33px', wordBreak: 'break-word', marginBottom: '0.5mm' }}>{item.nome}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 0.5fr 0.7fr 0.8fr', gap: '1mm', fontSize: '33px' }}>
               <span style={{ color: '#666' }}>{item.unidade}</span>
               <span style={{ textAlign: 'center', fontWeight: '500' }}>{item.qtd}</span>
               <span style={{ textAlign: 'right' }}>{fmtR(item.preco_unit)}</span>
@@ -61,12 +61,12 @@ function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, 
       <LinhaHifens />
       {subtotal > 0 && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', margin: '1mm 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '33px', margin: '1mm 0' }}>
             <span>Subtotal</span>
             <span>R$ {fmtR(subtotal)}</span>
           </div>
           {desconto > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e74c3c', fontWeight: 'bold', margin: '1mm 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '33px', color: '#e74c3c', fontWeight: 'bold', margin: '1mm 0' }}>
               <span>Desconto</span>
               <span>-R$ {fmtR(desconto)}</span>
             </div>
@@ -74,20 +74,20 @@ function Cupom80mm({ itens, total, desconto, subtotal, observacoes, nomeTabela, 
         </>
       )}
       <LinhaHifens />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', margin: '2mm 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '39px', margin: '2mm 0' }}>
         <span>TOTAL</span>
         <span>R$ {fmtR(total)}</span>
       </div>
       <LinhaHifens />
       {observacoes && (
         <>
-          <div style={{ fontSize: '9px', color: '#555', margin: '2mm 0 0 0', wordBreak: 'break-word' }}>
+          <div style={{ fontSize: '27px', color: '#555', margin: '2mm 0 0 0', wordBreak: 'break-word' }}>
             <strong>OBS:</strong> {observacoes}
           </div>
           <LinhaHifens />
         </>
       )}
-      <div style={{ textAlign: 'center', fontSize: '9px', color: '#777', marginTop: '2mm' }}>
+      <div style={{ textAlign: 'center', fontSize: '27px', color: '#777', marginTop: '2mm' }}>
         Nao possui validade fiscal.
       </div>
     </div>
