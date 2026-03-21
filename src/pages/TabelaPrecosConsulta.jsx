@@ -84,33 +84,33 @@ function GroupHeader({ row, isExpanded, onToggle }) {
   return (
     <button
       onClick={onToggle}
-      className={`w-full flex items-center gap-2 py-2.5 text-left transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 ${
+      className={`w-full flex items-center gap-3 py-3 text-left transition-colors active:bg-gray-100 dark:active:bg-gray-700/40 ${
         isRoot
-          ? 'px-4 bg-white dark:bg-gray-900'
-          : 'pl-8 pr-4 bg-gray-50/70 dark:bg-gray-800/40'
+          ? 'px-4 bg-gray-50 dark:bg-gray-800/50'
+          : 'pl-10 pr-4 bg-white dark:bg-gray-900'
       }`}
       style={{ boxSizing: 'border-box' }}
     >
       <ChevronRight
-        className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+        className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
       />
       <span className={`flex-1 min-w-0 truncate ${
         isRoot
-          ? 'text-[12px] font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wide'
-          : 'text-[11px] font-medium text-gray-500 dark:text-gray-300 uppercase'
+          ? 'text-sm font-semibold text-gray-800 dark:text-gray-100 uppercase tracking-wider'
+          : 'text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wide'
       }`}>
         {row.label}
       </span>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex items-center gap-2 flex-shrink-0">
         {row.criticalCount > 0 && (
-          <span className="text-[10px] text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">
             {row.criticalCount}⚠
           </span>
         )}
-        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
           isRoot
             ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
-            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'
         }`}>
           {row.count}
         </span>
