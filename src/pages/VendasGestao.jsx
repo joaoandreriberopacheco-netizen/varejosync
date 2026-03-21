@@ -377,7 +377,12 @@ export default function VendasGestaoPage() {
           <>
             {/* Mobile: Cards */}
             <div className="md:hidden space-y-2">
-              {rascunhosFiltrados.map(rascunho => (
+              {rascunhosFiltrados.map(rascunho => {
+                const hoje = new Date();
+                const criado = new Date(rascunho.created_date);
+                const mesmoDia = criado.toDateString() === hoje.toDateString();
+                const podeInutilizar = mesmoDia && !['Cancelado','Convertido'].includes(rascunho.status);
+                return (
                 <div key={rascunho.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -392,21 +397,28 @@ export default function VendasGestaoPage() {
                         {rascunho.cliente_nome || 'Cliente não informado'}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-green-600">● {rascunho.status}</span>
+                        <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
                         <span className="text-xs text-gray-400">{rascunho.vendedor_nome}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-col items-end gap-2">
                       <div className="font-semibold text-gray-800 dark:text-gray-200">
                         R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                       </div>
                       <div className="text-xs text-gray-400">
                         {rascunho.created_date ? format(new Date(rascunho.created_date), 'dd/MM/yy') : ''}
                       </div>
+                      {podeInutilizar && (
+                        <button onClick={() => handleInutilizarRascunho(rascunho)}
+                          className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors">
+                          <Ban className="w-3 h-3" /> Inutilizar
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Desktop: Tabela de Rascunhos */}
@@ -423,7 +435,12 @@ export default function VendasGestaoPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rascunhosFiltrados.map(rascunho => (
+                  {rascunhosFiltrados.map(rascunho => {
+                    const hoje = new Date();
+                    const criado = new Date(rascunho.created_date);
+                    const mesmoDia = criado.toDateString() === hoje.toDateString();
+                    const podeInutilizar = mesmoDia && !['Cancelado','Convertido'].includes(rascunho.status);
+                    return (
                     <TableRow key={rascunho.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <TableCell>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
@@ -437,7 +454,7 @@ export default function VendasGestaoPage() {
                         <div className="font-medium text-gray-800 dark:text-gray-200">{rascunho.cliente_nome || '-'}</div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs text-green-600">● {rascunho.status}</span>
+                        <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 dark:text-gray-400">{rascunho.vendedor_nome}</TableCell>
                       <TableCell className="text-sm text-gray-500 dark:text-gray-400">
@@ -446,8 +463,17 @@ export default function VendasGestaoPage() {
                       <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
                         R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                       </TableCell>
+                      <TableCell>
+                        {podeInutilizar && (
+                          <button onClick={() => handleInutilizarRascunho(rascunho)}
+                            className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
+                            <Ban className="w-3 h-3" /> Inutilizar
+                          </button>
+                        )}
+                      </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
