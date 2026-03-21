@@ -371,26 +371,32 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     const originalPosition = el.style.position;
     const isMobile = /iPhone|iPad|Android|mobile/i.test(navigator.userAgent);
     
+    const html = `<!DOCTYPE html><html><head>
+      <title>Pedido ${pedido?.numero || ''}</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: #fff; }
+        @media print {
+          body { margin: 0; }
+          @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
+        }
+      </style>
+    </head><body>${el.outerHTML}</body></html>`;
+
     if (isMobile) {
-      // Mobile: cria uma página impressível visível e dispara print nativo
-      const printWindow = window.open('', '', 'width=800,height=600');
-      printWindow.document.write(`<!DOCTYPE html><html><head>
-        <title>Pedido ${pedido?.numero || ''}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:wght@400;700&family=Cousine:wght@400;700&display=swap" rel="stylesheet">
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 0; background: #fff; }
-          @media print {
-            body { margin: 0; }
-            @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
-          }
-        </style>
-      </head><body>${el.outerHTML}</body></html>`);
-      printWindow.document.close();
+      // Mobile: usa blob URL para evitar bloqueio de popup
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank', 'toolbar=no,location=no,menubar=no');
       setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
+        if (printWindow) {
+          printWindow.print();
+          printWindow.close();
+        }
+        URL.revokeObjectURL(url);
       }, 500);
     } else {
       // Desktop: usa iframe oculto
