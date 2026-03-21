@@ -990,17 +990,17 @@ export default function PDVVendedor() {
                         </div>
                     }
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-medium text-gray-900 dark:text-gray-100 truncate leading-snug">{produto.nome}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug break-words whitespace-normal">{produto.nome}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${estoqueColor}`}>
                           {produto.estoque_atual} un
                         </span>
+                        <span className="text-base font-bold text-gray-900 dark:text-gray-100 ml-auto tabular-nums">
+                          R$ {precoTabela.toFixed(2).replace('.', ',')}
+                        </span>
                       </div>
                     </div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100 flex-shrink-0">
-                      R$ {precoTabela.toFixed(2).replace('.', ',')}
-                    </p>
                   </div>);
               })}
                 </div>
