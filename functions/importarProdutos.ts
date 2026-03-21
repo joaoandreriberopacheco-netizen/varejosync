@@ -45,11 +45,11 @@ Deno.serve(async (req) => {
     for (const item of atualizados) {
       if (!item.id) continue;
       try {
-        const prods = await base44.asServiceRole.entities.Produto.filter({ id: item.id }, null, 1);
+        const prods = await withRetry(() => base44.asServiceRole.entities.Produto.filter({ id: item.id }, null, 1));
         if (prods && prods.length > 0) {
           produtosAtualizadosSnapshot.push({ id: prods[0].id, dados_anteriores: prods[0] });
         }
-        await sleep(50);
+        await sleep(150);
       } catch (e) {
         console.warn(`Snapshot falhou para id ${item.id}:`, e.message);
       }
