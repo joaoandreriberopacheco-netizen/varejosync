@@ -432,6 +432,7 @@ export default function VendasGestaoPage() {
                     <TableHead>Vendedor</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
