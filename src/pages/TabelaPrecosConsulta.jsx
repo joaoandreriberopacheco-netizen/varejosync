@@ -211,13 +211,13 @@ export default function TabelaPrecosConsulta() {
     <div className="flex flex-col h-full overflow-hidden w-full bg-white dark:bg-gray-900 relative">
 
       {/* Header fixo */}
-      <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-3 py-2 space-y-2">
+      <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 space-y-3">
 
         {/* Título + contagem */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 font-glacial">Tabela de Preços</h1>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Tabela de Preços</h1>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
               {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
               {searchTerm && ` · "${searchTerm}"`}
             </p>
@@ -225,25 +225,25 @@ export default function TabelaPrecosConsulta() {
           <button
             onClick={() => setOrdenarAlfabetico(v => !v)}
             title={ordenarAlfabetico ? 'Ordem padrão' : 'Ordenar A→Z'}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all active:scale-95 ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-medium transition-all active:scale-95 ${
               ordenarAlfabetico
                 ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
-            {ordenarAlfabetico ? <ArrowDownAZ className="w-3.5 h-3.5" /> : <ArrowUpDown className="w-3.5 h-3.5" />}
+            {ordenarAlfabetico ? <ArrowDownAZ className="w-4 h-4" /> : <ArrowUpDown className="w-4 h-4" />}
             <span>{ordenarAlfabetico ? 'A→Z' : 'Ordenar'}</span>
           </button>
         </div>
 
         {/* Seletor de tabela */}
          {tabelas.length > 0 && (
-           <div className="flex gap-1.5 flex-wrap">
+           <div className="flex gap-2 flex-wrap">
              {tabelas.map(tabela => (
                <button
                  key={tabela.id}
                  onClick={() => setTabelaSelecionada(tabela)}
-                 className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition-all cursor-pointer active:scale-95 ${
+                 className={`px-4 py-2 rounded-2xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
                    tabelaSelecionada?.id === tabela.id
                      ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 shadow-sm'
                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -262,12 +262,12 @@ export default function TabelaPrecosConsulta() {
 
         {/* Busca */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
           <Input
-            placeholder="Buscar produto..."
+            placeholder="Buscar produto, código, EAN..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-0 w-full rounded-xl"
+            className="border-none bg-gray-100 dark:bg-gray-800 h-12 text-sm pl-10 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-0 w-full rounded-2xl"
           />
         </div>
       </div>
@@ -275,7 +275,7 @@ export default function TabelaPrecosConsulta() {
       {/* FAB Orçamento */}
       <button
         onClick={() => setShowOrcamento(true)}
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full bg-gray-900 dark:bg-gray-100 shadow-xl flex items-center justify-center active:scale-95 transition-all hover:bg-gray-700 dark:hover:bg-gray-200"
+        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-2xl bg-gray-900 dark:bg-gray-100 shadow-xl flex items-center justify-center active:scale-95 transition-all hover:bg-gray-700 dark:hover:bg-gray-200"
         title="Novo Orçamento"
       >
         <Calculator className="w-6 h-6 text-white dark:text-gray-900" />
