@@ -107,7 +107,8 @@ export default function ConfirmarPagamentoDialog({
                 icon={CreditCard}
                 index={2}
                 active={formaPagamentoAtiva === 2}
-                onFocus={() => { setFormaPagamentoAtiva(2); setSeletorMaquininha('debito'); }}
+                onFocus={() => setFormaPagamentoAtiva(2)}
+                onContainerClick={() => { setFormaPagamentoAtiva(2); if (!maquininhaDebito) setSeletorMaquininha('debito'); }}
                 inputRef={inputRefs.debito}
                 value={inputDebito}
                 onKeyDown={(e) => handleInputMascara(e, setInputDebito, setPagamentosDebito)}
@@ -123,7 +124,8 @@ export default function ConfirmarPagamentoDialog({
                 icon={CreditCard}
                 index={3}
                 active={formaPagamentoAtiva === 3}
-                onFocus={() => { setFormaPagamentoAtiva(3); setSeletorMaquininha('credito'); }}
+                onFocus={() => setFormaPagamentoAtiva(3)}
+                onContainerClick={() => { setFormaPagamentoAtiva(3); if (!maquininhaCredito) setSeletorMaquininha('credito'); }}
                 inputRef={inputRefs.credito}
                 value={inputCredito}
                 onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}

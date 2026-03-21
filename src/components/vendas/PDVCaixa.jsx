@@ -361,11 +361,7 @@ export default function PDVCaixa() {
         return;
       }
 
-      if (e.key === 'F5' && view === 'dashboard') {// Updated telaAtual to view
-        e.preventDefault();
-        handleAbrirMovimento('Sangria');
-        return;
-      }
+      // F5: reservado para refresh nativo do browser (sem atribuição)
 
       if (e.key === 'F6' && view === 'dashboard') {// Updated telaAtual to view
         e.preventDefault();
