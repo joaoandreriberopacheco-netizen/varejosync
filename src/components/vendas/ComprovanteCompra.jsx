@@ -15,7 +15,7 @@ const fmtV = (v) => {
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // adiciona pontos nos milhares
   return parts.join(',');
 };
-const F = 9; // base font size px
+const F = 27; // base font size px (3x para impressão mobile)
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
