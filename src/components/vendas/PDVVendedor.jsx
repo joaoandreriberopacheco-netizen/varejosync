@@ -1304,7 +1304,7 @@ export default function PDVVendedor() {
                       placeholder="0,00" />
                   </div>
                 </div>
-                {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>}
+                {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
               </div>
 
               <div className="flex items-center justify-between">
