@@ -291,9 +291,13 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
           type="text"
           inputMode="numeric"
           value={value}
-          onFocus={onFocus}
+          onFocus={(e) => {
+            // Evita que foco automático do browser ao abrir dialog dispare callbacks indesejados
+            e.stopPropagation();
+          }}
           onKeyDown={onKeyDown}
           readOnly
+          tabIndex={-1}
           className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text tabular-nums"
         />
       </div>
