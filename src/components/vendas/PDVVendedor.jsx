@@ -1006,11 +1006,9 @@ export default function PDVVendedor() {
                           placeholder={(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)}
                           defaultValue={(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)}
                           onChange={(e) => {
-                            const precoAjustado = parseFloat(e.target.value) || 0;
-                            const minimo = produtoSelecionado.preco_custo_calculado || 0;
-                            const precoFinal = Math.max(precoAjustado, minimo);
-                            // Manter o preço no estado do produto temporário
-                            setProdutoSelecionado({...produtoSelecionado, _preco_digitado: precoFinal});
+                            const precoDigitado = parseFloat(e.target.value) || 0;
+                            // Apenas armazena o valor digitado sem forçar mínimo durante edição
+                            setProdutoSelecionado({...produtoSelecionado, _preco_digitado: precoDigitado});
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
