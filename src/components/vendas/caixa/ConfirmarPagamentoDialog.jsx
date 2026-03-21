@@ -107,7 +107,8 @@ export default function ConfirmarPagamentoDialog({
                 icon={CreditCard}
                 index={2}
                 active={formaPagamentoAtiva === 2}
-                onFocus={() => { setFormaPagamentoAtiva(2); setSeletorMaquininha('debito'); }}
+                onFocus={() => setFormaPagamentoAtiva(2)}
+                onContainerClick={() => { setFormaPagamentoAtiva(2); if (!maquininhaDebito) setSeletorMaquininha('debito'); }}
                 inputRef={inputRefs.debito}
                 value={inputDebito}
                 onKeyDown={(e) => handleInputMascara(e, setInputDebito, setPagamentosDebito)}
@@ -123,7 +124,8 @@ export default function ConfirmarPagamentoDialog({
                 icon={CreditCard}
                 index={3}
                 active={formaPagamentoAtiva === 3}
-                onFocus={() => { setFormaPagamentoAtiva(3); setSeletorMaquininha('credito'); }}
+                onFocus={() => setFormaPagamentoAtiva(3)}
+                onContainerClick={() => { setFormaPagamentoAtiva(3); if (!maquininhaCredito) setSeletorMaquininha('credito'); }}
                 inputRef={inputRefs.credito}
                 value={inputCredito}
                 onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}
@@ -261,7 +263,10 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
             ? 'bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-600'
             : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800'
         }`}
-        onClick={() => onContainerClick ? onContainerClick() : onFocus?.()}
+        onClick={() => {
+          if (onContainerClick) onContainerClick();
+          else onFocus?.();
+        }}
       >
         <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
         <span className="text-sm text-gray-600 dark:text-gray-400 flex-1 select-none">{label}</span>
