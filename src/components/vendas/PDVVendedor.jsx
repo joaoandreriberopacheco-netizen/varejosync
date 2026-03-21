@@ -797,9 +797,9 @@ export default function PDVVendedor() {
   };
 
   const handleSair = () => {
-    const confirmExit = confirm('Deseja sair do PDV e voltar ao Dashboard?');
+    const confirmExit = confirm('Deseja sair do PDV e voltar ao início?');
     if (confirmExit) {
-      window.location.href = createPageUrl('Dashboard');
+      window.location.href = createPageUrl('Home');
     }
   };
 
