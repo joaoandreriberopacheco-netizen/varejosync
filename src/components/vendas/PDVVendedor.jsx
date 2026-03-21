@@ -961,13 +961,14 @@ export default function PDVVendedor() {
                   <Input
                   ref={quantidadeInputRef}
                   type="number"
-                  inputMode="numeric"
+                  inputMode="decimal"
+                  step="0.01"
                   placeholder="Qtd"
                   className="w-full bg-white dark:bg-gray-900 border-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
                   value={quantidadeAtual}
-                  onChange={(e) => setQuantidadeAtual(parseInt(e.target.value) || 1)}
+                  onChange={(e) => setQuantidadeAtual(e.target.value)}
                   onKeyDown={handleQuantidadeKeyDown}
-                  min="1"
+                  min="0.01"
                   disabled={!produtoSelecionado} />
                 </div>
             </div>
