@@ -1,130 +1,122 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
-/**
- * Calcula o próximo dia útil (pula sábado e domingo)
- */
-function proximoDiaUtil(data, diasParaAdicionar) {
-  const d = new Date(data);
-  let diasAdicionados = 0;
-  while (diasAdicionados < diasParaAdicionar) {
+// Retorna próximo dia útil (pula sábado e domingo)
+function proximoDiaUtil(dataBase, dias) {
+  const d = new Date(dataBase);
+  d.setDate(d.getDate() + dias);
+  while (d.getDay() === 0 || d.getDay() === 6) {
     d.setDate(d.getDate() + 1);
-    const dow = d.getDay();
-    if (dow !== 0 && dow !== 6) diasAdicionados++;
   }
   return d.toISOString().split('T')[0];
-}
-
-function toDateStr(d) {
-  return new Date(d).toISOString().split('T')[0];
 }
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
     if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const hoje = new Date();
-    // Processa pagamentos com status "Pendente" até hoje
+    const ontem = new Date(hoje);
+    ontem.setDate(ontem.getDate() - 1);
+    const dataOntem = ontem.toISOString().split('T')[0];
+
+    // Busca detalhes de cartão pendentes do dia anterior
     const pendentes = await base44.asServiceRole.entities.PagamentoCartaoDetalhe.filter({
+      data_venda: dataOntem,
       status_conciliacao: 'Pendente'
     });
 
     if (pendentes.length === 0) {
-      return Response.json({ ok: true, processados: 0, mensagem: 'Nenhum pagamento pendente encontrado.' });
+      return Response.json({ message: 'Nenhum pagamento pendente para processar', total: 0 });
     }
 
-    // Busca categorias financeiras
+    // Busca categoria financeira para taxas de maquininha
     const categorias = await base44.asServiceRole.entities.CategoriaFinanceira.list();
-    const catReceita = categorias.find(c =>
-      c.nome?.toLowerCase().includes('vend') || c.tipo === 'Receita'
-    );
-    const catTaxa = categorias.find(c =>
-      c.nome?.toLowerCase().includes('maquin') ||
-      c.nome?.toLowerCase().includes('taxa') ||
-      c.nome?.toLowerCase().includes('adquir')
+    const catMaquininha = categorias.find(c =>
+      c.nome?.toLowerCase().includes('maquininha') ||
+      c.nome?.toLowerCase().includes('adquirente')
     );
 
-    let processados = 0;
-    let erros = 0;
+    let lancamentosGerados = 0;
+    const erros = [];
 
-    for (const pag of pendentes) {
+    for (const pgto of pendentes) {
       try {
-        const dataLiquidacao = proximoDiaUtil(
-          pag.data_venda || toDateStr(pag.created_date),
-          pag.prazo_recebimento_dias || 1
-        );
+        // Busca dados da maquininha para prazos de recebimento
+        const maquininha = await base44.asServiceRole.entities.Maquininha.get(pgto.maquininha_id);
+        if (!maquininha) continue;
 
-        // 1. Lançamento de RECEITA (valor líquido)
+        // Calcula prazo baseado na modalidade
+        let prazoDias = 1;
+        if (pgto.modalidade === 'Débito') {
+          prazoDias = maquininha.prazo_debito_dias || 1;
+        } else if (pgto.modalidade === 'Crédito à Vista') {
+          prazoDias = maquininha.prazo_credito_vista_dias || 30;
+        } else {
+          prazoDias = maquininha.prazo_credito_parcelado_dias || 30;
+        }
+
+        const dataLiquidacao = proximoDiaUtil(pgto.data_venda, prazoDias);
+
+        // 1. Lançamento RECEITA — valor líquido a receber
         const lancamentoReceita = await base44.asServiceRole.entities.LancamentoFinanceiro.create({
           tipo: 'Receita',
-          descricao: `Recebimento cartão ${pag.bandeira} ${pag.modalidade}${pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''} — Pedido ${pag.pedido_numero || pag.pedido_venda_id}`,
-          valor: pag.valor_bruto,
-          valor_liquido: pag.valor_liquido_recebido,
+          descricao: `Venda Cartão ${pgto.modalidade} ${pgto.bandeira} ${pgto.parcelas > 1 ? pgto.parcelas + 'x' : ''} — ${pgto.maquininha_nome} — Pedido ${pgto.pedido_numero || pgto.pedido_venda_id}`,
+          valor: pgto.valor_bruto,
+          valor_liquido: pgto.valor_liquido,
+          conta_financeira_id: pgto.conta_destino_id || maquininha.conta_destino_id,
+          conta_financeira_nome: pgto.maquininha_nome,
+          forma_pagamento: `${pgto.modalidade} ${pgto.bandeira}`,
+          forma_pagamento_tipo: pgto.modalidade === 'Débito' ? 'Cartão Débito' : 'Cartão Crédito',
           data_vencimento: dataLiquidacao,
           data_liquidacao_prevista: dataLiquidacao,
+          referencia_id: pgto.pedido_venda_id,
+          referencia_tipo: 'PedidoVenda',
+          referencia_numero: pgto.pedido_numero,
           status: 'Em Aberto',
           status_conciliacao: 'Pendente',
-          conta_financeira_id: pag.conta_destino_id,
-          conta_financeira_nome: pag.conta_destino_nome,
-          forma_pagamento: `${pag.bandeira} ${pag.modalidade}`,
-          forma_pagamento_tipo: pag.modalidade === 'Débito' ? 'Cartão Débito' : 'Cartão Crédito',
-          categoria_id: catReceita?.id || null,
-          categoria: catReceita?.nome || 'Vendas',
-          referencia_id: pag.pedido_venda_id,
-          referencia_tipo: 'PedidoVenda',
-          referencia_numero: pag.pedido_numero,
-          observacoes: `Maquininha: ${pag.maquininha_nome || pag.adquirente} | Taxa total: ${pag.taxa_total_percentual?.toFixed(2)}% = R$ ${pag.valor_taxa_total?.toFixed(2)}`
+          tags: ['cartao', pgto.adquirente?.toLowerCase() || '', pgto.bandeira?.toLowerCase() || '']
         });
 
-        // 2. Lançamento de DESPESA (taxa da maquininha)
-        const lancamentoTaxa = await base44.asServiceRole.entities.LancamentoFinanceiro.create({
-          tipo: 'Despesa',
-          descricao: `Taxa maquininha ${pag.adquirente || pag.maquininha_nome} (${pag.bandeira} ${pag.modalidade}${pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''})`,
-          valor: pag.valor_taxa_total,
-          valor_liquido: pag.valor_taxa_total,
-          data_vencimento: dataLiquidacao,
-          data_liquidacao_prevista: dataLiquidacao,
-          status: 'Em Aberto',
-          status_conciliacao: 'Pendente',
-          conta_financeira_id: pag.conta_destino_id,
-          conta_financeira_nome: pag.conta_destino_nome,
-          forma_pagamento: `${pag.bandeira} ${pag.modalidade}`,
-          forma_pagamento_tipo: pag.modalidade === 'Débito' ? 'Cartão Débito' : 'Cartão Crédito',
-          categoria_id: catTaxa?.id || null,
-          categoria: catTaxa?.nome || 'Custos de Maquininha',
-          referencia_id: pag.pedido_venda_id,
-          referencia_tipo: 'PedidoVenda',
-          referencia_numero: pag.pedido_numero,
-          observacoes: `Intermediação: ${pag.taxa_intermediacao_percentual?.toFixed(2)}% | Parcelamento: ${pag.taxa_parcelamento_percentual?.toFixed(2)}%`
-        });
+        // 2. Lançamento DESPESA — taxa da maquininha (se houver)
+        if (pgto.valor_taxa_total > 0) {
+          await base44.asServiceRole.entities.LancamentoFinanceiro.create({
+            tipo: 'Despesa',
+            descricao: `Taxa Maquininha ${pgto.maquininha_nome} — ${pgto.taxa_total_percentual?.toFixed(2)}% — ${pgto.bandeira} ${pgto.modalidade}`,
+            valor: pgto.valor_taxa_total,
+            valor_liquido: pgto.valor_taxa_total,
+            conta_financeira_id: pgto.conta_destino_id || maquininha.conta_destino_id,
+            conta_financeira_nome: pgto.maquininha_nome,
+            categoria: catMaquininha?.nome || 'Custos de Maquininha',
+            categoria_id: catMaquininha?.id,
+            data_vencimento: dataLiquidacao,
+            referencia_id: pgto.pedido_venda_id,
+            referencia_tipo: 'PedidoVenda',
+            referencia_numero: pgto.pedido_numero,
+            status: 'Em Aberto',
+            tags: ['taxa-maquininha', pgto.adquirente?.toLowerCase() || '']
+          });
+        }
 
-        // 3. Atualizar o PagamentoCartaoDetalhe
-        await base44.asServiceRole.entities.PagamentoCartaoDetalhe.update(pag.id, {
+        // Atualiza o detalhe do cartão com o lançamento gerado
+        await base44.asServiceRole.entities.PagamentoCartaoDetalhe.update(pgto.id, {
           lancamento_financeiro_id: lancamentoReceita.id,
-          lancamento_taxa_id: lancamentoTaxa.id,
-          data_liquidacao_prevista: dataLiquidacao,
-          status_conciliacao: 'Lançado'
+          status_conciliacao: 'Lançamento Gerado'
         });
 
-        processados++;
+        lancamentosGerados++;
       } catch (err) {
-        console.error(`Erro ao processar PagamentoCartaoDetalhe ${pag.id}:`, err.message);
-        await base44.asServiceRole.entities.PagamentoCartaoDetalhe.update(pag.id, {
-          status_conciliacao: 'Erro'
-        });
-        erros++;
+        erros.push({ id: pgto.id, erro: err.message });
       }
     }
 
     return Response.json({
-      ok: true,
-      processados,
-      erros,
-      mensagem: `${processados} lançamento(s) gerado(s) com sucesso.`
+      message: `Processados ${lancamentosGerados} de ${pendentes.length} pagamentos`,
+      lancamentosGerados,
+      erros
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
