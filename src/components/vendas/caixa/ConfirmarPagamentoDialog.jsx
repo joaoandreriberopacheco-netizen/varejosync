@@ -275,7 +275,10 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
           type="text"
           inputMode="numeric"
           value={value}
-          onFocus={onFocus}
+          onFocus={(e) => {
+            e.stopPropagation();
+            onFocus?.();
+          }}
           onKeyDown={onKeyDown}
           readOnly
           className="w-24 text-right text-base font-semibold bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white cursor-text tabular-nums"
