@@ -2,7 +2,7 @@ import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
   Truck, BarChart3, Users, ClipboardList, Receipt, Warehouse,
   FileText, QrCode, LayoutDashboard, Tag, Settings, Upload, MonitorCheck,
-  ScanBarcode, TabletSmartphone
+  Scan, Tablet
 } from 'lucide-react';
 
 /**
@@ -133,14 +133,14 @@ export const ALL_QUICK_ACTIONS = [
   },
   {
     id: 'pdv_supermercado',
-    icon: ScanBarcode,
+    icon: Scan,
     label: 'PDV Mercado',
     page: 'PDVSupermercado',
     permissaoCheck: (p) => p?.pdv?.acesso_supermercado || p?.pdv?.acesso_vendedor,
   },
   {
     id: 'autoatendimento',
-    icon: TabletSmartphone,
+    icon: Tablet,
     label: 'Autoatendimento',
     page: 'AutoAtendimento',
     permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_caixa,
