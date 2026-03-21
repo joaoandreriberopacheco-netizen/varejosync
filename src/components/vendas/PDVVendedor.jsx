@@ -1227,19 +1227,20 @@ export default function PDVVendedor() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.produto_nome}</p>
                         {item.preco_livre ? (
-                           <div className="flex items-center gap-2 mt-0.5">
-                             <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
-                             <div className="relative flex-1 max-w-[140px]">
-                               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-amber-600 dark:text-amber-400">R$</span>
-                               <input
-                                 type="number" step="0.01" inputMode="decimal" min={item.custo_unitario_momento || 0}
-                                 value={item.preco_unitario_praticado?.toFixed(2)}
-                                 onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
-                                 className="w-full pl-7 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
-                               />
-                             </div>
-                           </div>
-                         ) : (
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
+                            <div className="relative flex-1 max-w-[160px]">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-600 dark:text-amber-400">R$</span>
+                              <input
+                                type="number" step="0.01" inputMode="decimal"
+                                value={item.preco_unitario_praticado?.toFixed(2)}
+                                onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
+                                onBlur={() => handleBlurPrecoLivre(item.produto_id)}
+                                className="w-full pl-8 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+                              />
+                            </div>
+                          </div>
+                        ) : (
                            <p className="text-xs text-gray-400 mt-0.5">R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')} cada</p>
                          )}
                       </div>
