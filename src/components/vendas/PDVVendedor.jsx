@@ -479,9 +479,17 @@ export default function PDVVendedor() {
     }
 
     // Se preço livre foi digitado, usar o preço digitado; caso contrário usar preço da tabela
-    let precoFinal = produtoSelecionado._preco_digitado || produtoSelecionado.preco_venda_padrao;
-    if (tabelaPreco && tabelaPreco.fator_ajuste && !produtoSelecionado._preco_digitado) {
+    let precoFinal = produtoSelecionado.preco_venda_padrao;
+    if (tabelaPreco && tabelaPreco.fator_ajuste) {
       precoFinal = produtoSelecionado.preco_venda_padrao * tabelaPreco.fator_ajuste;
+    }
+    if (produtoSelecionado._preco_digitado !== undefined) {
+      const custo = produtoSelecionado.preco_custo_calculado || 0;
+      if (produtoSelecionado._preco_digitado < custo) {
+        showFeedback('error', `Preço não pode ser menor que o custo (R$ ${custo.toFixed(2)})`, 3000);
+        return;
+      }
+      precoFinal = produtoSelecionado._preco_digitado;
     }
 
     const itemExistente = carrinho.find((item) => item.produto_id === produtoSelecionado.id);
