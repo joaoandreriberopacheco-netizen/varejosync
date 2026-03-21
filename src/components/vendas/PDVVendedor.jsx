@@ -68,6 +68,7 @@ export default function PDVVendedor() {
   const [senhaReeditar, setSenhaReeditar] = useState('');
   const [rascunhoEmEdicaoId, setRascunhoEmEdicaoId] = useState(null);
   const [showOrcamentosRecentes, setShowOrcamentosRecentes] = useState(false);
+  const [showSimuladorTaxa, setShowSimuladorTaxa] = useState(false);
 
   useEffect(() => {
     if (produtos.length === 0) return;
