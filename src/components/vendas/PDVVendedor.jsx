@@ -569,15 +569,28 @@ export default function PDVVendedor() {
   };
 
   const handleUpdatePrecoLivre = (produtoId, novoPreco) => {
-    const item = carrinho.find((i) => i.produto_id === produtoId);
-    if (!item) return;
-    const custo = item.custo_unitario_momento || 0;
-    const preco = Math.max(parseFloat(novoPreco) || 0, custo);
+    // Durante digitação: apenas atualiza o valor sem validar (permite apagar e redigitar)
+    const preco = parseFloat(novoPreco) || 0;
     setCarrinho(carrinho.map((i) =>
       i.produto_id === produtoId
         ? { ...i, preco_unitario: preco, preco_unitario_praticado: preco, total: i.quantidade * preco }
         : i
     ));
+  };
+
+  const handleBlurPrecoLivre = (produtoId) => {
+    // No blur: garante mínimo = custo calculado
+    const item = carrinho.find((i) => i.produto_id === produtoId);
+    if (!item) return;
+    const custo = item.custo_unitario_momento || 0;
+    if (item.preco_unitario_praticado < custo) {
+      showFeedback('error', `Preço mínimo: R$ ${custo.toFixed(2)} (custo)`, 2500);
+      setCarrinho(carrinho.map((i) =>
+        i.produto_id === produtoId
+          ? { ...i, preco_unitario: custo, preco_unitario_praticado: custo, total: i.quantidade * custo }
+          : i
+      ));
+    }
   };
 
   const handleRemoveItem = (produtoId) => {
