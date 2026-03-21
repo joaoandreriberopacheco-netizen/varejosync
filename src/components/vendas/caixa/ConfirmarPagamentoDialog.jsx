@@ -263,9 +263,13 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
             ? 'bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-300 dark:ring-gray-600'
             : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800'
         }`}
-        onClick={() => {
-          if (onContainerClick) onContainerClick();
-          else onFocus?.();
+        onClick={(e) => {
+          if (onContainerClick) {
+            e.preventDefault();
+            onContainerClick();
+          } else {
+            onFocus?.();
+          }
         }}
       >
         <Icon className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
