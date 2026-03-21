@@ -133,7 +133,7 @@ export default function MaquininhasManager() {
                 <button onClick={() => setExpandido(expandido === maq.id ? null : maq.id)} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
                   {expandido === maq.id ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </button>
-                <button onClick={() => setEditando({ ...maq, bandeiras: maq.bandeiras?.length ? maq.bandeiras : BANDEIRAS.map(b => ({ bandeira: b, taxa_debito: 0, taxa_credito_1x: 0, taxa_credito_2_6x: 0, taxa_credito_7_12x: 0 })) })} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
+                <button onClick={() => setEditando({ ...maq, bandeiras: (maq.bandeiras?.length ? maq.bandeiras : BANDEIRAS.map(bandeiraPadrao)).map(b => ({ ...bandeiraPadrao(b.bandeira), ...b, taxas_parcelamento_vendedor: b.taxas_parcelamento_vendedor?.length ? b.taxas_parcelamento_vendedor : PARCELAS_PADRAO.map(p => ({ parcelas: p, taxa_parcelamento_percentual: 0 })) })) })} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
                   <Pencil className="w-4 h-4 text-gray-400" />
                 </button>
                 <button onClick={() => handleExcluir(maq.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
