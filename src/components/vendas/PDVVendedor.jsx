@@ -1225,7 +1225,7 @@ export default function PDVVendedor() {
                           </div>
                       }
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-tight">{item.produto_nome}</p>
+                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-snug break-words">{item.produto_nome}</p>
                         {item.preco_livre ? (
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
