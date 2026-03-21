@@ -967,12 +967,12 @@ export default function PDVVendedor() {
                 </div>
             </div>
             {showSuggestions && produtosSugeridos.length > 0 &&
-            <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden max-h-[55vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
-                  <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+            <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
+                  <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
                       {produtosSugeridos.length} resultado{produtosSugeridos.length > 1 ? 's' : ''}
                     </span>
-                    <span className="text-[10px] text-gray-400 hidden md:block">Tab para quantidade · Enter para adicionar</span>
+                    <span className="text-xs text-gray-400 hidden md:block">Tab para quantidade · Enter para adicionar</span>
                   </div>
                   {produtosSugeridos.map((produto, index) => {
                 const precoTabela = produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
@@ -980,25 +980,25 @@ export default function PDVVendedor() {
                 const estoqueColor = estoqueStatus === 'sem' ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : estoqueStatus === 'baixo' ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
                 return (
                   <div key={produto.id}
-                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${
+                    className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${
                     index === produtoSelecionadoIndex ? 'bg-gray-50 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}`}
                     onClick={() => handleSelecionarProduto(produto)}>
                     {produto.imagem_url
-                      ? <img src={produto.imagem_url} alt={produto.nome} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-                      : <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                          <Package className={`w-4 h-4 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-gray-400'}`} />
+                      ? <img src={produto.imagem_url} alt={produto.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                      : <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                          <Package className={`w-5 h-5 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-gray-400'}`} />
                         </div>
                     }
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate leading-tight">{produto.nome}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${estoqueColor}`}>
+                      <p className="text-base font-medium text-gray-900 dark:text-gray-100 truncate leading-snug">{produto.nome}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${estoqueColor}`}>
                           {produto.estoque_atual} un
                         </span>
                       </div>
                     </div>
-                    <p className="text-base font-bold text-gray-900 dark:text-gray-100 flex-shrink-0">
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100 flex-shrink-0">
                       R$ {precoTabela.toFixed(2).replace('.', ',')}
                     </p>
                   </div>);
