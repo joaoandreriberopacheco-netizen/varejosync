@@ -26,7 +26,7 @@ export default function GestaoCaixa() {
 
   useEffect(() => {
     loadData();
-  }, [isDialogOpen]);
+  }, []);
 
   const loadData = async () => {
     const user = await base44.auth.me();
@@ -70,9 +70,14 @@ export default function GestaoCaixa() {
     });
   };
 
-  const handleAbrirDialog = (tipo) => {
+  const handleAbrirDialog = async (tipo) => {
     setTipoMovimento(tipo);
-    setMovimentoData({ valor: 0, observacao: '', conta_id: '' });
+    // Recarrega contas sempre que abre o dialog para garantir lista atualizada
+    const contasData = await base44.entities.ContasFinanceiras.filter({ ativo: true });
+    setContas(contasData);
+    // Pré-seleciona a conta Caixa Geral se existir
+    const caixaGeral = contasData.find(c => c.is_caixa_geral);
+    setMovimentoData({ valor: 0, observacao: '', conta_id: caixaGeral?.id || '' });
     setIsDialogOpen(true);
   };
 
