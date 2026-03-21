@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Camera, Undo2, X, Edit, FileText } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Camera, Undo2, X, Edit, FileText, CreditCard } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { format } from 'date-fns';
 
@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import ComprovantePreVenda from './ComprovantePreVenda';
 import LostSalesForm from './LostSalesForm';
 import OrcamentosRecentesSheet from './OrcamentosRecentesSheet';
+import SimuladorTaxaCartao from './SimuladorTaxaCartao';
 import BarcodeScanner from './BarcodeScanner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createPageUrl } from '@/utils';
