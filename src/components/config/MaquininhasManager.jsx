@@ -8,15 +8,15 @@ import { toast } from 'sonner';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
 
-const PARCELAS_PARCELAMENTO = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const PARCELAS_PADRAO = [2,3,4,5,6,7,8,9,10,11,12];
 
 const bandeiraPadrao = (b) => ({
   bandeira: b,
   taxa_debito: 0,
   taxa_credito_1x: 0,
-  taxa_credito_2_6x: 0,
-  taxa_credito_7_12x: 0,
-  taxas_parcelamento_vendedor: PARCELAS_PARCELAMENTO.map(n => ({ parcelas: n, taxa_percentual: 0 }))
+  taxa_intermediacao_parcelado: 0,
+  taxas_parcelamento_vendedor: PARCELAS_PADRAO.map(p => ({ parcelas: p, taxa_parcelamento_percentual: 0 })),
+  taxa_credito_7_12x: 0
 });
 
 const maqVazia = () => ({
@@ -82,24 +82,6 @@ export default function MaquininhasManager() {
     }));
   };
 
-  const updateTaxaParcelamento = (bandeira, parcelas, valor) => {
-    setEditando(prev => ({
-      ...prev,
-      bandeiras: (prev.bandeiras || []).map(b => {
-        if (b.bandeira !== bandeira) return b;
-        const taxasAtuais = b.taxas_parcelamento_vendedor || PARCELAS_PARCELAMENTO.map(n => ({ parcelas: n, taxa_percentual: 0 }));
-        return {
-          ...b,
-          taxas_parcelamento_vendedor: taxasAtuais.map(t =>
-            t.parcelas === parcelas ? { ...t, taxa_percentual: parseFloat(valor) || 0 } : t
-          )
-        };
-      })
-    }));
-  };
-
-  const [bandeiraExpandida, setBandeiraExpandida] = useState(null);
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -133,7 +115,7 @@ export default function MaquininhasManager() {
                 <button onClick={() => setExpandido(expandido === maq.id ? null : maq.id)} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
                   {expandido === maq.id ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                 </button>
-                <button onClick={() => setEditando({ ...maq, bandeiras: maq.bandeiras?.length ? maq.bandeiras.map(b => ({ ...bandeiraPadrao(b.bandeira), ...b, taxas_parcelamento_vendedor: b.taxas_parcelamento_vendedor?.length ? b.taxas_parcelamento_vendedor : PARCELAS_PARCELAMENTO.map(n => ({ parcelas: n, taxa_percentual: 0 })) })) : BANDEIRAS.map(bandeiraPadrao) })} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
+                <button onClick={() => setEditando({ ...maq, bandeiras: maq.bandeiras?.length ? maq.bandeiras : BANDEIRAS.map(b => ({ bandeira: b, taxa_debito: 0, taxa_credito_1x: 0, taxa_credito_2_6x: 0, taxa_credito_7_12x: 0 })) })} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
                   <Pencil className="w-4 h-4 text-gray-400" />
                 </button>
                 <button onClick={() => handleExcluir(maq.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
@@ -221,57 +203,36 @@ export default function MaquininhasManager() {
               {/* Taxas por bandeira */}
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Taxas por Bandeira (%)</p>
-                <div className="space-y-1">
-                  {(editando.bandeiras || []).map(b => (
-                    <div key={b.bandeira} className="border border-gray-100 dark:border-gray-700/50 rounded-xl overflow-hidden">
-                      {/* Linha de taxas base */}
-                      <div className="flex items-center gap-1 px-2 py-2">
-                        <button
-                          type="button"
-                          onClick={() => setBandeiraExpandida(bandeiraExpandida === b.bandeira ? null : b.bandeira)}
-                          className="text-xs font-medium text-gray-700 dark:text-gray-300 w-20 text-left flex items-center gap-1"
-                        >
-                          {b.bandeira}
-                          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${bandeiraExpandida === b.bandeira ? 'rotate-180' : ''}`} />
-                        </button>
-                        {[
-                          { campo: 'taxa_debito', label: 'Déb' },
-                          { campo: 'taxa_credito_1x', label: '1x' },
-                          { campo: 'taxa_credito_2_6x', label: '2-6x' },
-                          { campo: 'taxa_credito_7_12x', label: '7-12x' },
-                        ].map(({ campo, label }) => (
-                          <div key={campo} className="flex-1 flex flex-col items-center">
-                            <span className="text-[9px] text-gray-400 mb-0.5">{label}</span>
-                            <input
-                              type="number" step="0.01"
-                              value={b[campo] ?? 0}
-                              onChange={e => updateBandeira(b.bandeira, campo, e.target.value)}
-                              className="w-full h-7 text-center text-xs bg-gray-50 dark:bg-gray-700 rounded-lg focus:outline-none dark:text-gray-200"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      {/* Taxas de parcelamento expandidas */}
-                      {bandeiraExpandida === b.bandeira && (
-                        <div className="border-t border-gray-100 dark:border-gray-700/50 px-2 py-2 bg-gray-50/50 dark:bg-gray-800/30">
-                          <p className="text-[10px] text-gray-400 mb-2 uppercase tracking-wider">Taxa Parcelamento Vendedor (por nº de parcelas)</p>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {(b.taxas_parcelamento_vendedor || PARCELAS_PARCELAMENTO.map(n => ({ parcelas: n, taxa_percentual: 0 }))).map(t => (
-                              <div key={t.parcelas} className="flex flex-col items-center">
-                                <span className="text-[9px] text-gray-400 mb-0.5">{t.parcelas}x</span>
-                                <input
-                                  type="number" step="0.01"
-                                  value={t.taxa_percentual ?? 0}
-                                  onChange={e => updateTaxaParcelamento(b.bandeira, t.parcelas, e.target.value)}
-                                  className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none dark:text-gray-200 border border-gray-100 dark:border-gray-600"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-gray-400 dark:text-gray-500">
+                        <th className="text-left py-1">Bandeira</th>
+                        <th className="text-center py-1">Débito</th>
+                        <th className="text-center py-1">1x</th>
+                        <th className="text-center py-1">2-6x</th>
+                        <th className="text-center py-1">7-12x</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(editando.bandeiras || []).map(b => (
+                        <tr key={b.bandeira} className="border-t border-gray-50 dark:border-gray-700/50">
+                          <td className="py-1.5 font-medium text-gray-700 dark:text-gray-300 pr-2">{b.bandeira}</td>
+                          {['taxa_debito', 'taxa_credito_1x', 'taxa_credito_2_6x', 'taxa_credito_7_12x'].map(campo => (
+                            <td key={campo} className="py-1 px-1">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={b[campo] ?? 0}
+                                onChange={e => updateBandeira(b.bandeira, campo, e.target.value)}
+                                className="w-14 h-7 text-center text-xs bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 focus:outline-none dark:text-gray-200"
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
