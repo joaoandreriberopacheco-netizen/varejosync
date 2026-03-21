@@ -1066,50 +1066,51 @@ export default function PDVVendedor() {
         </div>
 
         {/* Sidebar Carrinho - Desktop Only */}
-        <div className="hidden md:flex w-72 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-800 flex-col flex-shrink-0">
-          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Carrinho</h2>
+        <div className="hidden md:flex w-80 bg-white dark:bg-gray-900 border-l border-gray-100 dark:border-gray-800 flex-col flex-shrink-0">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100">Carrinho</h2>
             {carrinho.length > 0 && (
-              <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{totalItens} un · {carrinho.length} itens</span>
+              <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2.5 py-1 rounded-full">{totalItens} un · {carrinho.length} itens</span>
             )}
           </div>
 
           {/* Lista de Itens */}
-          <div className="flex-1 overflow-auto p-3 space-y-1.5">
+          <div className="flex-1 overflow-auto p-3 space-y-2">
             {carrinho.length === 0 ?
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
-                  <ShoppingCart className="w-6 h-6 text-gray-300 dark:text-gray-600" />
+                <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
+                  <ShoppingCart className="w-7 h-7 text-gray-300 dark:text-gray-600" />
                 </div>
                 <p className="text-sm text-gray-400">Carrinho vazio</p>
-                <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-0.5">Busque um produto acima</p>
+                <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Busque um produto acima</p>
               </div> :
             carrinho.map((item) =>
-            <div key={item.produto_id} className="group p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <div className="flex items-start gap-2 mb-2">
+            <div key={item.produto_id} className="group p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-start gap-2.5 mb-2.5">
                     {item.imagem_url
-                        ? <img src={item.imagem_url} alt={item.produto_nome} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 mt-0.5" />
-                        : <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Package className="w-3.5 h-3.5 text-gray-400" />
+                        ? <img src={item.imagem_url} alt={item.produto_nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 mt-0.5" />
+                        : <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Package className="w-4 h-4 text-gray-400" />
                           </div>
                       }
-                      <p className="text-xs font-medium text-gray-800 dark:text-gray-200 leading-tight flex-1 truncate">{item.produto_nome}</p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug flex-1">{item.produto_nome}</p>
                       <button onClick={() => handleRemoveItem(item.produto_id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0">
-                        <X className="w-3 h-3" />
+                        className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     {/* Preço livre editável */}
                      {item.preco_livre && (
-                       <div className="flex items-center gap-1.5 mb-2">
-                         <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
+                       <div className="flex items-center gap-2 mb-2.5">
+                         <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide whitespace-nowrap">Preço livre</span>
                          <div className="relative flex-1">
-                           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-amber-600 dark:text-amber-400">R$</span>
+                           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-600 dark:text-amber-400">R$</span>
                            <input
-                             type="number" step="0.01" inputMode="decimal" min={item.custo_unitario_momento || 0}
+                             type="number" step="0.01" inputMode="decimal"
                              value={item.preco_unitario_praticado?.toFixed(2)}
                              onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
-                             className="w-full pl-7 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+                             onBlur={() => handleBlurPrecoLivre(item.produto_id)}
+                             className="w-full pl-8 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                            />
                          </div>
                        </div>
@@ -1117,17 +1118,17 @@ export default function PDVVendedor() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
                         <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
-                          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                          <Minus className="w-3 h-3" />
+                          className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="text-xs font-bold w-7 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
+                        <span className="text-sm font-bold w-9 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
                         <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
                           disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
-                          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
-                          <Plus className="w-3 h-3" />
+                          className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">R$ {item.total.toFixed(2)}</p>
+                      <p className="text-base font-semibold text-gray-900 dark:text-gray-100">R$ {item.total.toFixed(2)}</p>
                     </div>
                 </div>
             )
@@ -1135,57 +1136,57 @@ export default function PDVVendedor() {
           </div>
 
           {/* Resumo e Ações */}
-          <div className="border-t border-gray-100 dark:border-gray-800 p-3 space-y-3 flex-shrink-0">
+          <div className="border-t border-gray-100 dark:border-gray-800 p-4 space-y-3 flex-shrink-0">
             <button onClick={() => setShowLostSalesForm(true)}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors">
-              <AlertCircle className="w-3 h-3" />
+              className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors">
+              <AlertCircle className="w-3.5 h-3.5" />
               Registrar Venda Perdida
             </button>
 
-            <div className="space-y-2">
-              <div className="flex justify-between text-[11px] text-gray-400">
+            <div className="space-y-2.5">
+              <div className="flex justify-between text-xs text-gray-400">
                 <span>Subtotal</span>
                 <span>R$ {subtotal.toFixed(2)}</span>
               </div>
 
               {/* Desconto Two-Way */}
-              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-2.5 space-y-2">
+              <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
+                  <span className="text-xs text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
                   {tabelaPreco?.percentual_desconto_maximo > 0 && (
-                    <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
+                    <span className="text-[10px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
                   )}
                 </div>
-                <div className="flex gap-1.5 items-center">
+                <div className="flex gap-2 items-center">
                   <div className="relative flex-1">
                     <Input type="number" min="0" max={tabelaPreco?.percentual_desconto_maximo || 100} step="0.01"
                       value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
-                      className="pr-5 h-8 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-xs text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      className="pr-6 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-sm text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
                       placeholder="0" />
-                    <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
                   </div>
-                  <span className="text-gray-300 dark:text-gray-700 text-[10px]">=</span>
+                  <span className="text-gray-300 dark:text-gray-700 text-xs">=</span>
                   <div className="relative flex-1">
-                    <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">R$</span>
                     <Input type="number" min="0" step="0.01"
                       value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
-                      className="pl-6 h-8 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-xs focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
+                      className="pl-7 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-sm focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
                       placeholder="0,00" />
                   </div>
                 </div>
-                {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>}
+                {ajusteExcedido && <p className="text-xs text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>}
               </div>
 
               <div className="flex justify-between items-center pt-1">
-                <span className="text-xs text-gray-500">Total</span>
+                <span className="text-sm text-gray-500">Total</span>
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <Button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
-              className="w-full h-11 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-xl shadow-none border-0 text-sm disabled:opacity-40">
+              className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-xl shadow-none border-0 text-base disabled:opacity-40">
               Avançar
-              <ArrowRight className="w-4 h-4 ml-1.5" />
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
