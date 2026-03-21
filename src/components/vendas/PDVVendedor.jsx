@@ -1006,21 +1006,21 @@ export default function PDVVendedor() {
                 </div>
             }
                 {produtoSelecionado &&
-                <div className="mt-2 p-3 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-2">
+                <div className="mt-3 p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-3">
                 <div className="flex items-center gap-3">
                 {produtoSelecionado.imagem_url
-                  ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-                  : <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-4 h-4 text-gray-500" />
+                  ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                  : <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-5 h-5 text-gray-500" />
                     </div>
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{produtoSelecionado.nome}</p>
                   {produtoSelecionado.preco_livre ? (
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[9px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
                       <div className="relative flex-1">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">R$</span>
                         <input
                           ref={precoLivreInputRef}
                           type="number" step="0.01" inputMode="decimal" min={produtoSelecionado.preco_custo_calculado || 0}
@@ -1028,7 +1028,6 @@ export default function PDVVendedor() {
                           defaultValue={(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)}
                           onChange={(e) => {
                             const precoDigitado = parseFloat(e.target.value) || 0;
-                            // Apenas armazena o valor digitado sem forçar mínimo durante edição
                             setProdutoSelecionado({...produtoSelecionado, _preco_digitado: precoDigitado});
                           }}
                           onKeyDown={(e) => {
@@ -1037,28 +1036,28 @@ export default function PDVVendedor() {
                               handleConfirmarAdicao();
                             }
                           }}
-                          className="w-full pl-7 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+                          className="w-full pl-8 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                         />
                       </div>
-                      <span className="text-[9px] text-gray-400">× {parseInt(quantidadeAtual) || 1}</span>
+                      <span className="text-xs text-gray-400">× {parseInt(quantidadeAtual) || 1}</span>
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-sm text-gray-400 mt-1">
                       R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} × {parseInt(quantidadeAtual) || 1}
                       {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}</span>
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5">
+                </div>
+                <div className="flex items-center gap-2">
                   <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); inputProdutoRef.current?.focus(); }}
-                    variant="ghost" size="sm" className="h-8 text-gray-400 hover:text-gray-600 text-xs">
-                    <X className="w-3.5 h-3.5" />
+                    variant="ghost" size="sm" className="h-10 px-3 text-gray-400 hover:text-gray-600">
+                    <X className="w-4 h-4" />
                   </Button>
                   <Button onClick={handleConfirmarAdicao}
-                    className="h-8 px-4 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-xs font-semibold rounded-xl shadow-none">
+                    className="flex-1 h-10 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-sm font-semibold rounded-xl shadow-none">
                     + Adicionar
                   </Button>
-                </div>
                 </div>
                 </div>
                 }
