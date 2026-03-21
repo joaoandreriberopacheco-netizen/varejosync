@@ -599,6 +599,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
              onSetQtd={handleSetQtd}
              onRemove={handleRemove}
              onGerar={() => setShowCupom(true)}
+             onSimularCartao={() => setShowSimuladorCartao(true)}
              formatoCupom={formatoCupom}
              setFormatoCupom={setFormatoCupom}
              clienteNome={clienteNome}
@@ -610,6 +611,12 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
              setTipoDesconto={setTipoDesconto}
              observacoes={observacoes}
              setObservacoes={setObservacoes}
+           />
+           <SimuladorCartaoSheet
+             open={showSimuladorCartao}
+             onClose={() => setShowSimuladorCartao(false)}
+             valorTotal={total}
+             valorDesconto={valorDesconto}
            />
          )}
       </div>

@@ -132,6 +132,20 @@ export const ALL_QUICK_ACTIONS = [
     permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.acesso,
   },
   {
+    id: 'pdv_supermercado',
+    icon: ScanBarcode,
+    label: 'PDV Mercado',
+    page: 'PDVSupermercado',
+    permissaoCheck: (p) => p?.pdv?.acesso_supermercado || p?.pdv?.acesso_vendedor,
+  },
+  {
+    id: 'autoatendimento',
+    icon: TabletSmartphone,
+    label: 'Autoatendimento',
+    page: 'AutoAtendimento',
+    permissaoCheck: (p) => p?.pdv?.acesso_vendedor || p?.pdv?.acesso_caixa,
+  },
+  {
     id: 'configuracoes',
     icon: Settings,
     label: 'Configurações',
