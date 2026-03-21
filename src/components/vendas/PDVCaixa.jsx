@@ -302,7 +302,7 @@ export default function PDVCaixa() {
 
   // Foco gerenciado diretamente pelo clique do usuário — sem useEffect automático
 
-  // Navegação entre formas de pagamento
+  // Navegação entre formas de pagamento via teclado — sem efeitos colaterais de foco
   const handleNavegacaoPagamento = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -312,6 +312,9 @@ export default function PDVCaixa() {
       setFormaPagamentoAtiva((prev) => (prev - 1 + 6) % 6);
     }
   };
+
+  // Callback para abrir seletor de maquininha a partir do ConfirmarPagamentoDialog
+  const [solicitarMaquininha, setSolicitarMaquininha] = React.useState(null); // 'debito' | 'credito' | null
 
 
 
