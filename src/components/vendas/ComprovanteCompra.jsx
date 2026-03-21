@@ -405,18 +405,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
       document.body.appendChild(iframe);
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
-      doc.write(`<!DOCTYPE html><html><head>
-        <title>Pedido ${pedido?.numero || ''}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:wght@400;700&family=Cousine:wght@400;700&display=swap" rel="stylesheet">
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 0; background: #fff; }
-          @media print {
-            body { margin: 0; }
-            @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
-          }
-        </style>
-      </head><body>${el.outerHTML}</body></html>`);
+      doc.write(html);
       doc.close();
       setTimeout(() => {
         iframe.contentWindow.focus();
