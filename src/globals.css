@@ -58,6 +58,21 @@ nav,
 }
 
 /* ==========================================
+   SELECT ON FOCUS - GLOBAL
+   ========================================== */
+
+/* Seleciona todo o conteúdo do campo ao focar */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="email"]:focus,
+input[type="search"]:focus,
+input[type="date"]:focus,
+input[type="password"]:focus {
+  /* O select-on-focus é feito via JS no componente raiz */
+}
+
+/* ==========================================
    ESTILOS GLOBAIS DE UX/UI
    ========================================== */
 
