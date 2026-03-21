@@ -1162,7 +1162,7 @@ export default function PDVVendedor() {
                 </div>
                 <div className="flex gap-2 items-center">
                   <div className="relative flex-1">
-                    <Input type="number" min="0" max={tabelaPreco?.percentual_desconto_maximo || 100} step="0.01"
+                    <Input type="number" min="0" max={Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0) || 100} step="0.01"
                       value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
                       className="pr-6 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-lg text-sm text-right focus:ring-1 focus:ring-gray-200 dark:focus:ring-gray-700"
                       placeholder="0" />
@@ -1177,7 +1177,7 @@ export default function PDVVendedor() {
                       placeholder="0,00" />
                   </div>
                 </div>
-                {ajusteExcedido && <p className="text-xs text-red-500">Excede limite de {currentUser?.limite_desconto || 0}%</p>}
+                {ajusteExcedido && <p className="text-xs text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
               </div>
 
               <div className="flex justify-between items-center pt-1">
