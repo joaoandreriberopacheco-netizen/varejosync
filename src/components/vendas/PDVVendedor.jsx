@@ -1093,7 +1093,7 @@ export default function PDVVendedor() {
                             <Package className="w-4 h-4 text-gray-400" />
                           </div>
                       }
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug flex-1">{item.produto_nome}</p>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug flex-1 break-words">{item.produto_nome}</p>
                       <button onClick={() => handleRemoveItem(item.produto_id)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
                         <X className="w-3.5 h-3.5" />
