@@ -82,6 +82,24 @@ export default function MaquininhasManager() {
     }));
   };
 
+  const updateTaxaParcelamento = (bandeira, parcelas, valor) => {
+    setEditando(prev => ({
+      ...prev,
+      bandeiras: (prev.bandeiras || []).map(b => {
+        if (b.bandeira !== bandeira) return b;
+        const existing = b.taxas_parcelamento_vendedor || PARCELAS_PADRAO.map(p => ({ parcelas: p, taxa_parcelamento_percentual: 0 }));
+        return {
+          ...b,
+          taxas_parcelamento_vendedor: existing.map(t =>
+            t.parcelas === parcelas ? { ...t, taxa_parcelamento_percentual: parseFloat(valor) || 0 } : t
+          )
+        };
+      }),
+    }));
+  };
+
+  const [bandeirExpandida, setBandeirExpandida] = useState(null);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
