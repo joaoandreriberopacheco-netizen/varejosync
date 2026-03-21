@@ -221,36 +221,55 @@ export default function MaquininhasManager() {
               {/* Taxas por bandeira */}
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Taxas por Bandeira (%)</p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-gray-400 dark:text-gray-500">
-                        <th className="text-left py-1">Bandeira</th>
-                        <th className="text-center py-1">Débito</th>
-                        <th className="text-center py-1">1x</th>
-                        <th className="text-center py-1">2-6x</th>
-                        <th className="text-center py-1">7-12x</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(editando.bandeiras || []).map(b => (
-                        <tr key={b.bandeira} className="border-t border-gray-50 dark:border-gray-700/50">
-                          <td className="py-1.5 font-medium text-gray-700 dark:text-gray-300 pr-2">{b.bandeira}</td>
-                          {['taxa_debito', 'taxa_credito_1x', 'taxa_credito_2_6x', 'taxa_credito_7_12x'].map(campo => (
-                            <td key={campo} className="py-1 px-1">
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={b[campo] ?? 0}
-                                onChange={e => updateBandeira(b.bandeira, campo, e.target.value)}
-                                className="w-14 h-7 text-center text-xs bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 focus:outline-none dark:text-gray-200"
-                              />
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-3">
+                  {(editando.bandeiras || []).map(b => (
+                    <div key={b.bandeira} className="bg-gray-50 dark:bg-gray-800/60 rounded-xl overflow-hidden">
+                      {/* Linha principal */}
+                      <div className="px-3 py-2 flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 w-20">{b.bandeira}</span>
+                        <div className="flex-1 grid grid-cols-3 gap-1.5">
+                          <div>
+                            <div className="text-[9px] text-gray-400 mb-0.5 text-center">Débito</div>
+                            <input type="number" step="0.01" value={b.taxa_debito ?? 0}
+                              onChange={e => updateBandeira(b.bandeira, 'taxa_debito', e.target.value)}
+                              className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-gray-200" />
+                          </div>
+                          <div>
+                            <div className="text-[9px] text-gray-400 mb-0.5 text-center">Créd 1x</div>
+                            <input type="number" step="0.01" value={b.taxa_credito_1x ?? 0}
+                              onChange={e => updateBandeira(b.bandeira, 'taxa_credito_1x', e.target.value)}
+                              className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-gray-200" />
+                          </div>
+                          <div>
+                            <div className="text-[9px] text-gray-400 mb-0.5 text-center">Interm. Parc.</div>
+                            <input type="number" step="0.01" value={b.taxa_intermediacao_parcelado ?? 0}
+                              onChange={e => updateBandeira(b.bandeira, 'taxa_intermediacao_parcelado', e.target.value)}
+                              className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-gray-200" />
+                          </div>
+                        </div>
+                        <button onClick={() => setBandeirExpandida(bandeirExpandida === b.bandeira ? null : b.bandeira)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-white dark:hover:bg-gray-700">
+                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${bandeirExpandida === b.bandeira ? 'rotate-180' : ''}`} />
+                        </button>
+                      </div>
+                      {/* Taxas parcelamento expandidas */}
+                      {bandeirExpandida === b.bandeira && (
+                        <div className="px-3 pb-3 border-t border-gray-100 dark:border-gray-700 pt-2">
+                          <p className="text-[9px] text-gray-400 uppercase tracking-wider mb-2">Taxa Parcelamento Vendedor por Parcelas (%)</p>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {(b.taxas_parcelamento_vendedor || PARCELAS_PADRAO.map(p => ({ parcelas: p, taxa_parcelamento_percentual: 0 }))).map(t => (
+                              <div key={t.parcelas}>
+                                <div className="text-[9px] text-gray-400 mb-0.5 text-center">{t.parcelas}x</div>
+                                <input type="number" step="0.01" value={t.taxa_parcelamento_percentual ?? 0}
+                                  onChange={e => updateTaxaParcelamento(b.bandeira, t.parcelas, e.target.value)}
+                                  className="w-full h-7 text-center text-xs bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 dark:text-gray-200" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
