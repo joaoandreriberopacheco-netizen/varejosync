@@ -1148,6 +1148,15 @@ export default function PDVVendedor() {
               Registrar Venda Perdida
             </button>
 
+            {/* Botão simulador de taxa - desktop */}
+            {carrinho.length > 0 && (
+              <button onClick={() => setShowSimuladorTaxa(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <CreditCard className="w-3.5 h-3.5" />
+                Ver taxa no cartão
+              </button>
+            )}
+
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs text-gray-400">
                 <span>Subtotal</span>
