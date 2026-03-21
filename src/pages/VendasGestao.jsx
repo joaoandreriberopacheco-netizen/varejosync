@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, X } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, X, Ban } from 'lucide-react';
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
@@ -174,6 +174,19 @@ export default function VendasGestaoPage() {
   const handleReimprimir = (pedido) => {
     setPedidoParaImprimir(pedido);
     setShowComprovante(true);
+  };
+
+  const handleInutilizarRascunho = async (rascunho) => {
+    const hoje = new Date();
+    const criado = new Date(rascunho.created_date);
+    const mesmoDia = criado.toDateString() === hoje.toDateString();
+    if (!mesmoDia) {
+      alert('Só é possível inutilizar senhas criadas hoje.');
+      return;
+    }
+    if (!confirm(`Inutilizar a senha ${rascunho.senha_atendimento?.slice(-4)}? Ela será marcada como Cancelado.`)) return;
+    await base44.entities.RascunhoPedidoVenda.update(rascunho.id, { status: 'Cancelado' });
+    loadPedidos();
   };
 
   // getStatusBadge function is no longer used due to direct inline styling, but kept here for completeness
