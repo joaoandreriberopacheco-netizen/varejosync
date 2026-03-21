@@ -248,5 +248,6 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
       valorTotal={total}
       valorDesconto={0}
     />
+    </>
   );
 }

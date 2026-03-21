@@ -592,7 +592,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
             onVerCarrinho={() => setTela('carrinho')}
           />
         ) : (
-           <TelaCarrinho
+           <>
              itens={itens}
              calcularPreco={calcularPreco}
              produtos={produtos}
