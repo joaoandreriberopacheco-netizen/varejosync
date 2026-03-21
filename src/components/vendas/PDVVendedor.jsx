@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import ComprovantePreVenda from './ComprovantePreVenda';
 import LostSalesForm from './LostSalesForm';
 import OrcamentosRecentesSheet from './OrcamentosRecentesSheet';
-import SimuladorCartaoSheet from './SimuladorCartaoSheet';
+import SimuladorTaxaCartao from './SimuladorTaxaCartao';
 import BarcodeScanner from './BarcodeScanner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createPageUrl } from '@/utils';
@@ -68,7 +68,7 @@ export default function PDVVendedor() {
   const [senhaReeditar, setSenhaReeditar] = useState('');
   const [rascunhoEmEdicaoId, setRascunhoEmEdicaoId] = useState(null);
   const [showOrcamentosRecentes, setShowOrcamentosRecentes] = useState(false);
-  const [showSimuladorCartao, setShowSimuladorCartao] = useState(false);
+  const [showSimuladorTaxa, setShowSimuladorTaxa] = useState(false);
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -1148,6 +1148,15 @@ export default function PDVVendedor() {
               Registrar Venda Perdida
             </button>
 
+            {/* Botão simulador de taxa - desktop */}
+            {carrinho.length > 0 && (
+              <button onClick={() => setShowSimuladorTaxa(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <CreditCard className="w-3.5 h-3.5" />
+                Ver taxa no cartão
+              </button>
+            )}
+
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs text-gray-400">
                 <span>Subtotal</span>
@@ -1334,6 +1343,12 @@ export default function PDVVendedor() {
               className="w-10 h-10 flex items-center justify-center rounded-xl text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex-shrink-0">
               <AlertCircle className="w-5 h-5" />
             </button>
+            {carrinho.length > 0 && (
+              <button onClick={() => setShowSimuladorTaxa(true)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0">
+                <CreditCard className="w-5 h-5" />
+              </button>
+            )}
             <button onClick={() => setShowCarrinhoMobile(true)}
               className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0">
               <ShoppingCart className="w-5 h-5" />
