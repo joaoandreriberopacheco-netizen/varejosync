@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Camera, CreditCard, Banknote, Smartphone, CheckCircle2, Plus, Minus, X, AlertCircle, Package } from 'lucide-react';
+import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
 import { useToast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import BarcodeScanner from './BarcodeScanner';

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CreditCard, Smartphone, ArrowLeft, Loader2, Printer, CheckCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
 
 export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   const [processing, setProcessing] = useState(false);

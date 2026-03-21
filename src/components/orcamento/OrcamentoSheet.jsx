@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { Search, X, ShoppingCart, Printer, ArrowLeft, AlertCircle, Trash2, Plus, Minus, Check, User } from 'lucide-react';
+import { Search, X, ShoppingCart, Printer, ArrowLeft, AlertCircle, Trash2, Plus, Minus, Check, User, CreditCard } from 'lucide-react';
+import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import OrcamentoCupom from './OrcamentoCupom';
