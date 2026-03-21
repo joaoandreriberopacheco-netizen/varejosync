@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import ComprovantePreVenda from './ComprovantePreVenda';
 import LostSalesForm from './LostSalesForm';
 import OrcamentosRecentesSheet from './OrcamentosRecentesSheet';
-import SimuladorTaxaCartao from './SimuladorTaxaCartao';
+import SimuladorCartaoSheet from './SimuladorCartaoSheet';
 import BarcodeScanner from './BarcodeScanner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createPageUrl } from '@/utils';
@@ -68,7 +68,7 @@ export default function PDVVendedor() {
   const [senhaReeditar, setSenhaReeditar] = useState('');
   const [rascunhoEmEdicaoId, setRascunhoEmEdicaoId] = useState(null);
   const [showOrcamentosRecentes, setShowOrcamentosRecentes] = useState(false);
-  const [showSimuladorTaxa, setShowSimuladorTaxa] = useState(false);
+  const [showSimuladorCartao, setShowSimuladorCartao] = useState(false);
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -1147,15 +1147,6 @@ export default function PDVVendedor() {
               <AlertCircle className="w-3.5 h-3.5" />
               Registrar Venda Perdida
             </button>
-
-            {/* Botão simulador de taxa - desktop */}
-            {carrinho.length > 0 && (
-              <button onClick={() => setShowSimuladorTaxa(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <CreditCard className="w-3.5 h-3.5" />
-                Ver taxa no cartão
-              </button>
-            )}
 
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs text-gray-400">
