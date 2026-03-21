@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function MovimentoDialog({
   open, onOpenChange,
-  tipoMovimento, setTipoMovimento,
+  tipoMovimento,
   valorMovimento, setValorMovimento,
   observacaoMovimento, setObservacaoMovimento,
   movimentoStep, setMovimentoStep,
@@ -14,8 +14,27 @@ export default function MovimentoDialog({
   formatarValorExibicao,
 }) {
   const { toast } = useToast();
-  const valorMovimentoRef = React.useRef(null);
-  const obsMovimentoRef = React.useRef(null);
+  const valorRef = React.useRef(null);
+
+  const handleValorChange = (e) => {
+    let nums = e.target.value.replace(/\D/g, '') || '0';
+    setValorMovimento(formatarValorExibicao(parseInt(nums) / 100));
+  };
+
+  const handleValorKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const v = parseFloat((valorMovimento || '0').replace(/\./g, '').replace(',', '.')) || 0;
+      if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
+      onSalvar();
+    }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      let nums = (valorMovimento || '0,00').replace(/\D/g, '');
+      nums = nums.slice(0, -1) || '0';
+      setValorMovimento(formatarValorExibicao(parseInt(nums) / 100));
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onOpenChange(false); }}>
@@ -54,7 +73,6 @@ export default function MovimentoDialog({
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex-1">
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Observação (opcional)</label>
                 <textarea
-                  ref={obsMovimentoRef}
                   autoFocus
                   rows={4}
                   placeholder="Motivo ou observação..."
@@ -64,14 +82,14 @@ export default function MovimentoDialog({
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       setMovimentoStep('valor');
-                      setTimeout(() => valorMovimentoRef.current?.focus(), 100);
+                      setTimeout(() => valorRef.current?.focus(), 100);
                     }
                   }}
                   className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
                 />
               </div>
               <button
-                onClick={() => { setMovimentoStep('valor'); setTimeout(() => valorMovimentoRef.current?.focus(), 100); }}
+                onClick={() => { setMovimentoStep('valor'); setTimeout(() => valorRef.current?.focus(), 100); }}
                 className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'}`}
                 style={{ minHeight: '56px' }}>
                 Próximo →
@@ -81,63 +99,21 @@ export default function MovimentoDialog({
 
           {movimentoStep === 'valor' && (
             <>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-2 flex-1">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Valor do {tipoMovimento}</div>
-                <div className="text-5xl font-bold text-gray-900 dark:text-white font-glacial">
-                  R$ {valorMovimento || '0,00'}
-                </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 flex-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400">Valor do {tipoMovimento}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">R$</div>
                 <input
-                  ref={valorMovimentoRef}
+                  ref={valorRef}
+                  autoFocus
                   type="text"
                   inputMode="numeric"
-                  value={valorMovimento}
-                  onChange={() => {}}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const v = parseFloat((valorMovimento || '0').replace(/\./g, '').replace(',', '.')) || 0;
-                      if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
-                      onSalvar();
-                      return;
-                    }
-                    if (e.key === 'Backspace') {
-                      e.preventDefault();
-                      let nums = valorMovimento.replace(/\D/g, '');
-                      nums = nums.slice(0, -1) || '0';
-                      setValorMovimento(formatarValorExibicao(parseInt(nums) / 100));
-                      return;
-                    }
-                    if (/^\d$/.test(e.key)) {
-                      e.preventDefault();
-                      let nums = (valorMovimento || '0,00').replace(/\D/g, '') + e.key;
-                      setValorMovimento(formatarValorExibicao(parseInt(nums) / 100));
-                    }
-                  }}
-                  className="opacity-0 w-0 h-0 absolute"
+                  value={valorMovimento || '0,00'}
+                  onChange={handleValorChange}
+                  onKeyDown={handleValorKeyDown}
+                  onFocus={(e) => e.target.select()}
+                  className="text-5xl font-bold text-gray-900 dark:text-white font-glacial text-center bg-transparent border-0 focus:outline-none w-full"
+                  style={{ caretColor: 'transparent' }}
                 />
-                <div className="text-xs text-blue-500 dark:text-blue-400 mt-1">Digite o valor acima</div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {['1','2','3','4','5','6','7','8','9','000','0','⌫'].map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      if (key === '⌫') {
-                        let nums = (valorMovimento || '0,00').replace(/\D/g, '');
-                        nums = nums.slice(0, -1) || '0';
-                        setValorMovimento(formatarValorExibicao(parseInt(nums) / 100));
-                      } else {
-                        let nums = (valorMovimento || '0,00').replace(/\D/g, '') + (key === '000' ? '000' : key);
-                        if (nums.length > 10) return;
-                        setValorMovimento(formatarValorExibicao(parseInt(nums) / 100));
-                      }
-                    }}
-                    className={`h-14 rounded-2xl text-xl font-semibold transition-colors ${key === '⌫' ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'}`}
-                    style={{ minHeight: '56px' }}>
-                    {key}
-                  </button>
-                ))}
               </div>
 
               <button

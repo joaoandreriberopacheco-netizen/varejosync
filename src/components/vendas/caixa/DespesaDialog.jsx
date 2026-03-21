@@ -15,8 +15,27 @@ export default function DespesaDialog({
   formatarValorExibicao,
 }) {
   const { toast } = useToast();
-  const obsDespesaRef = React.useRef(null);
-  const valorDespesaRef = React.useRef(null);
+  const valorRef = React.useRef(null);
+
+  const handleValorChange = (e) => {
+    let nums = e.target.value.replace(/\D/g, '') || '0';
+    setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
+  };
+
+  const handleValorKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
+      if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
+      onSalvar(valorDespesaNum);
+    }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      let nums = (valorDespesaNum || '0,00').replace(/\D/g, '');
+      nums = nums.slice(0, -1) || '0';
+      setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => {
@@ -55,7 +74,6 @@ export default function DespesaDialog({
                 <div className="flex-1">
                   <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">Descrição *</label>
                   <textarea
-                    ref={obsDespesaRef}
                     autoFocus
                     rows={3}
                     placeholder="Ex: Gasolina, Sacolas, Material de limpeza..."
@@ -64,7 +82,10 @@ export default function DespesaDialog({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        if (descricaoDespesa.trim()) { setDespesaStep('valor'); setTimeout(() => valorDespesaRef.current?.focus(), 100); }
+                        if (descricaoDespesa.trim()) {
+                          setDespesaStep('valor');
+                          setTimeout(() => valorRef.current?.focus(), 100);
+                        }
                       }
                     }}
                     className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
@@ -88,7 +109,7 @@ export default function DespesaDialog({
                 onClick={() => {
                   if (!descricaoDespesa.trim()) { toast({ title: "Informe a descrição.", variant: "destructive" }); return; }
                   setDespesaStep('valor');
-                  setTimeout(() => valorDespesaRef.current?.focus(), 100);
+                  setTimeout(() => valorRef.current?.focus(), 100);
                 }}
                 className="w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm bg-red-600"
                 style={{ minHeight: '56px' }}>
@@ -99,63 +120,21 @@ export default function DespesaDialog({
 
           {despesaStep === 'valor' && (
             <>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-2 flex-1">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{descricaoDespesa}</div>
-                <div className="text-5xl font-bold text-red-600 dark:text-red-400 font-glacial">
-                  R$ {valorDespesaNum || '0,00'}
-                </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 flex-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400">{descricaoDespesa}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">R$</div>
                 <input
-                  ref={valorDespesaRef}
+                  ref={valorRef}
+                  autoFocus
                   type="text"
                   inputMode="numeric"
-                  value={valorDespesaNum}
-                  onChange={() => {}}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
-                      if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
-                      onSalvar(valorDespesaNum);
-                      return;
-                    }
-                    if (e.key === 'Backspace') {
-                      e.preventDefault();
-                      let nums = (valorDespesaNum || '0,00').replace(/\D/g, '');
-                      nums = nums.slice(0, -1) || '0';
-                      setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
-                      return;
-                    }
-                    if (/^\d$/.test(e.key)) {
-                      e.preventDefault();
-                      let nums = (valorDespesaNum || '0,00').replace(/\D/g, '') + e.key;
-                      setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
-                    }
-                  }}
-                  className="opacity-0 w-0 h-0 absolute"
+                  value={valorDespesaNum || '0,00'}
+                  onChange={handleValorChange}
+                  onKeyDown={handleValorKeyDown}
+                  onFocus={(e) => e.target.select()}
+                  className="text-5xl font-bold text-red-600 dark:text-red-400 font-glacial text-center bg-transparent border-0 focus:outline-none w-full"
+                  style={{ caretColor: 'transparent' }}
                 />
-                <div className="text-xs text-red-400 dark:text-red-500 mt-1">Digite o valor acima</div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {['1','2','3','4','5','6','7','8','9','000','0','⌫'].map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      if (key === '⌫') {
-                        let nums = (valorDespesaNum || '0,00').replace(/\D/g, '');
-                        nums = nums.slice(0, -1) || '0';
-                        setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
-                      } else {
-                        let nums = (valorDespesaNum || '0,00').replace(/\D/g, '') + (key === '000' ? '000' : key);
-                        if (nums.length > 10) return;
-                        setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
-                      }
-                    }}
-                    className={`h-14 rounded-2xl text-xl font-semibold transition-colors ${key === '⌫' ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'}`}
-                    style={{ minHeight: '56px' }}>
-                    {key}
-                  </button>
-                ))}
               </div>
 
               <button
