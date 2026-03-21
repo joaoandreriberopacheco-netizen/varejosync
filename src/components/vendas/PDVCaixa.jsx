@@ -331,7 +331,7 @@ export default function PDVCaixa() {
         e.preventDefault();
         toast({
           title: "Atalhos do PDV Caixa",
-          description: "F1: Ajuda | F2: Processar Vendas | F3: Balanço | F4: Reforço | F5: Sangria | F6: Fechar Caixa | F7: Atualizar | Enter: Confirmar Pagamento | ESC: Voltar",
+          description: "F1: Ajuda | F2: Processar Vendas | F3: Balanço | F4: Reforço | F6: Fechar Caixa | F7: Atualizar | Enter: Confirmar Pagamento | ESC: Voltar",
           duration: 8000
         });
         return;
