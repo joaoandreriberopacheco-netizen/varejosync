@@ -312,9 +312,9 @@ export default function PDVVendedor() {
       // ESC - Voltar ao Dashboard (só se nenhum dialog de cliente estiver aberto)
       if (e.key === 'Escape' && !showClienteDialog && !showComprovante) {
         e.preventDefault();
-        const confirmExit = confirm('Deseja sair do PDV e voltar ao Dashboard?');
+        const confirmExit = confirm('Deseja sair do PDV e voltar ao início?');
         if (confirmExit) {
-          window.location.href = createPageUrl('Dashboard');
+          window.location.href = createPageUrl('Home');
         }
         return;
       }
