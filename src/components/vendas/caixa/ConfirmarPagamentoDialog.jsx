@@ -123,11 +123,11 @@ export default function ConfirmarPagamentoDialog({
                 icon={CreditCard}
                 index={2}
                 active={formaPagamentoAtiva === 2}
-                onFocus={() => setFormaPagamentoAtiva(2)}
+                onFocus={() => { setFormaPagamentoAtiva(2); if (!maquininhaDebito) setSeletorMaquininha('debito'); }}
                 onContainerClick={() => { setFormaPagamentoAtiva(2); if (!maquininhaDebito) setSeletorMaquininha('debito'); }}
                 inputRef={inputRefs.debito}
                 value={inputDebito}
-                onKeyDown={(e) => handleInputMascara(e, setInputDebito, setPagamentosDebito)}
+                onKeyDown={(e) => handleInputMascaraComMaquininha(e, setInputDebito, setPagamentosDebito, 'debito')}
                 badge={maquininhaDebito ? `${maquininhaDebito.maquininha?.nome} · ${maquininhaDebito.bandeira} · ${maquininhaDebito.taxa}%` : null}
                 onBadgeClick={() => setSeletorMaquininha('debito')}
               />
@@ -140,11 +140,11 @@ export default function ConfirmarPagamentoDialog({
                 icon={CreditCard}
                 index={3}
                 active={formaPagamentoAtiva === 3}
-                onFocus={() => setFormaPagamentoAtiva(3)}
+                onFocus={() => { setFormaPagamentoAtiva(3); if (!maquininhaCredito) setSeletorMaquininha('credito'); }}
                 onContainerClick={() => { setFormaPagamentoAtiva(3); if (!maquininhaCredito) setSeletorMaquininha('credito'); }}
                 inputRef={inputRefs.credito}
                 value={inputCredito}
-                onKeyDown={(e) => handleInputMascara(e, setInputCredito, setPagamentosCredito)}
+                onKeyDown={(e) => handleInputMascaraComMaquininha(e, setInputCredito, setPagamentosCredito, 'credito')}
                 badge={maquininhaCredito ? `${maquininhaCredito.maquininha?.nome} · ${maquininhaCredito.bandeira} · ${parcelasCredito}x · ${maquininhaCredito.taxa}%` : null}
                 onBadgeClick={() => setSeletorMaquininha('credito')}
               />
