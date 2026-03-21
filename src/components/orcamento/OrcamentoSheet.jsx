@@ -593,31 +593,33 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
           />
         ) : (
            <>
-             itens={itens}
-             calcularPreco={calcularPreco}
-             produtos={produtos}
-             onSetQtd={handleSetQtd}
-             onRemove={handleRemove}
-             onGerar={() => setShowCupom(true)}
-             onSimularCartao={() => setShowSimuladorCartao(true)}
-             formatoCupom={formatoCupom}
-             setFormatoCupom={setFormatoCupom}
-             clienteNome={clienteNome}
-             setClienteNome={setClienteNome}
-             onVendaPerdida={() => setShowLostSales(true)}
-             desconto={desconto}
-             setDesconto={setDesconto}
-             tipoDesconto={tipoDesconto}
-             setTipoDesconto={setTipoDesconto}
-             observacoes={observacoes}
-             setObservacoes={setObservacoes}
-           />
-           <SimuladorCartaoSheet
-             open={showSimuladorCartao}
-             onClose={() => setShowSimuladorCartao(false)}
-             valorTotal={total}
-             valorDesconto={valorDesconto}
-           />
+             <TelaCarrinho
+               itens={itens}
+               calcularPreco={calcularPreco}
+               produtos={produtos}
+               onSetQtd={handleSetQtd}
+               onRemove={handleRemove}
+               onGerar={() => setShowCupom(true)}
+               onSimularCartao={() => setShowSimuladorCartao(true)}
+               formatoCupom={formatoCupom}
+               setFormatoCupom={setFormatoCupom}
+               clienteNome={clienteNome}
+               setClienteNome={setClienteNome}
+               onVendaPerdida={() => setShowLostSales(true)}
+               desconto={desconto}
+               setDesconto={setDesconto}
+               tipoDesconto={tipoDesconto}
+               setTipoDesconto={setTipoDesconto}
+               observacoes={observacoes}
+               setObservacoes={setObservacoes}
+             />
+             <SimuladorCartaoSheet
+               open={showSimuladorCartao}
+               onClose={() => setShowSimuladorCartao(false)}
+               valorTotal={total}
+               valorDesconto={valorDesconto}
+             />
+           </>
          )}
       </div>
     </div>

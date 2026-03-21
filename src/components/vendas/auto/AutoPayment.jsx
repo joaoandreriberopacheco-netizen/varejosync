@@ -132,6 +132,7 @@ export default function AutoPayment({ carrinho, cliente, onSuccess, onBack }) {
   }
 
   return (
+    <>
     <motion.div 
       className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900"
       initial={{ opacity: 0, y: 50 }}
