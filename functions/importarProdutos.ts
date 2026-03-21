@@ -2,6 +2,20 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+const withRetry = async (fn, retries = 3, baseDelay = 1500) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (e.status === 429 && i < retries - 1) {
+        await sleep(baseDelay * (i + 1));
+      } else {
+        throw e;
+      }
+    }
+  }
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
