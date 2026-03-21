@@ -474,7 +474,7 @@ export default function PDVVendedor() {
   const handleConfirmarAdicao = () => {
     if (!produtoSelecionado) return;
 
-    const quantidade = parseInt(quantidadeAtual) || 1; // Updated state
+    const quantidade = parseFloat(quantidadeAtual) || 1;
 
     console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
 
@@ -1045,12 +1045,12 @@ export default function PDVVendedor() {
                           className="w-full pl-8 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                         />
                       </div>
-                      <span className="text-xs text-gray-400">× {parseInt(quantidadeAtual) || 1}</span>
+                      <span className="text-xs text-gray-400">× {parseFloat(quantidadeAtual) || 1}</span>
                     </div>
                   ) : (
                     <p className="text-sm text-gray-400 mt-1">
-                      R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} × {parseInt(quantidadeAtual) || 1}
-                      {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseInt(quantidadeAtual) || 1)).toFixed(2)}</span>
+                      R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} × {parseFloat(quantidadeAtual) || 1}
+                      {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
                     </p>
                   )}
                 </div>
