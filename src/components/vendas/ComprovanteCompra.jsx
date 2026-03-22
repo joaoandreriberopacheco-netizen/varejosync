@@ -405,10 +405,32 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   }, [formato, templateAtivo80mm, templateAtivoA4, dadosEmpresa, pedido]);
 
   const handlePrint = () => {
+    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
+
+    // Se temos HTML do template, imprime diretamente — já tem estilos embutidos
+    if (htmlRenderizado) {
+      const htmlFinal = htmlRenderizado.includes('<!DOCTYPE') || htmlRenderizado.includes('<html')
+        ? htmlRenderizado
+        : `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>@page{size:${pageSize};margin:0}*{box-sizing:border-box;margin:0;padding:0}body{background:#fff}</style></head><body>${htmlRenderizado}</body></html>`;
+
+      const old = document.getElementById('print-frame');
+      if (old) old.remove();
+      const iframe = document.createElement('iframe');
+      iframe.id = 'print-frame';
+      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+      document.body.appendChild(iframe);
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(htmlFinal);
+      iframe.contentDocument.close();
+      iframe.onload = () => {
+        setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => iframe.remove(), 2000); }, 500);
+      };
+      return;
+    }
+
+    // Fallback: usa o componente React renderizado no DOM
     const el = document.getElementById('cupom-print');
     if (!el) return;
-
-    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
 
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
