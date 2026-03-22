@@ -319,6 +319,10 @@ export default function RelatoriosPage() {
               ))}
             </div>
           </TabsContent>
+
+          <TabsContent value="templates" className="-mx-4 md:-mx-6">
+            <GestaoTemplates />
+          </TabsContent>
         </div>
       </Tabs>
 
