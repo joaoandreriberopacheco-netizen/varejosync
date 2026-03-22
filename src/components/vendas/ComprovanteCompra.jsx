@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { renderTemplate, prepararDadosVenda } from '@/lib/templateEngine';
 
 // Formato brasileiro: virgula para decimais, ponto para milhares
 const fmtV = (v) => {
@@ -352,17 +351,6 @@ function CupomA4({ pedido, dadosEmpresa }) {
   );
 }
 
-// ── Preview via Template do Banco ─────────────────────────────────────────────
-function TemplatePreview({ htmlTemplate }) {
-  return (
-    <div
-      id="cupom-print"
-      dangerouslySetInnerHTML={{ __html: htmlTemplate }}
-      style={{ background: '#fff' }}
-    />
-  );
-}
-
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
@@ -370,67 +358,19 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
   const [formato, setFormato] = useState('80mm');
   const [gerando, setGerando] = useState(false);
-  const [templateAtivo80mm, setTemplateAtivo80mm] = useState(null);
-  const [templateAtivoA4, setTemplateAtivoA4] = useState(null);
-  const [htmlRenderizado, setHtmlRenderizado] = useState('');
 
   useEffect(() => {
     if (!open) return;
-
-    // Carrega dados da empresa e templates em paralelo
-    Promise.all([
-      base44.entities.DadosEmpresa.list(),
-      base44.entities.ComprovanteTemplate.filter({ tipo: 'venda_80mm', is_default: true }),
-      base44.entities.ComprovanteTemplate.filter({ tipo: 'venda_a4', is_default: true }),
-    ]).then(([empresaRes, tmpl80, tmplA4]) => {
-      if (empresaRes?.length) setDadosEmpresa(empresaRes[0]);
-      setTemplateAtivo80mm(tmpl80?.[0] || null);
-      setTemplateAtivoA4(tmplA4?.[0] || null);
-    }).catch(() => {});
-
+    base44.entities.DadosEmpresa.list().then(r => r?.length && setDadosEmpresa(r[0])).catch(() => {});
     const ip = localStorage.getItem('ip_impressora_termica');
     if (ip) setIpImpressora(ip);
   }, [open]);
 
-  // Re-renderiza o HTML sempre que muda formato, template ou dados da empresa
-  useEffect(() => {
-    if (!pedido || !dadosEmpresa) return;
-    const template = formato === 'a4' ? templateAtivoA4 : templateAtivo80mm;
-    if (!template?.html_template) {
-      setHtmlRenderizado(''); // sem template, usa fallback React
-      return;
-    }
-    const dados = prepararDadosVenda(pedido, dadosEmpresa);
-    setHtmlRenderizado(renderTemplate(template.html_template, dados));
-  }, [formato, templateAtivo80mm, templateAtivoA4, dadosEmpresa, pedido]);
-
   const handlePrint = () => {
-    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
-
-    // Se temos HTML do template, imprime diretamente — já tem estilos embutidos
-    if (htmlRenderizado) {
-      const htmlFinal = htmlRenderizado.includes('<!DOCTYPE') || htmlRenderizado.includes('<html')
-        ? htmlRenderizado
-        : `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>@page{size:${pageSize};margin:0}*{box-sizing:border-box;margin:0;padding:0}body{background:#fff}</style></head><body>${htmlRenderizado}</body></html>`;
-
-      const old = document.getElementById('print-frame');
-      if (old) old.remove();
-      const iframe = document.createElement('iframe');
-      iframe.id = 'print-frame';
-      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
-      document.body.appendChild(iframe);
-      iframe.contentDocument.open();
-      iframe.contentDocument.write(htmlFinal);
-      iframe.contentDocument.close();
-      iframe.onload = () => {
-        setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => iframe.remove(), 2000); }, 500);
-      };
-      return;
-    }
-
-    // Fallback: usa o componente React renderizado no DOM
     const el = document.getElementById('cupom-print');
     if (!el) return;
+
+    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
 
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
@@ -624,20 +564,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
       {/* Preview com scale - ocupa toda a tela */}
       <div className="flex-1 overflow-y-auto w-full">
-        {htmlRenderizado ? (
-          // Template do banco disponível — renderiza via iframe para isolar CSS
-          <div className="w-full flex justify-center py-4 px-4">
-            <div className="shadow-2xl rounded-sm overflow-hidden bg-white"
-              style={{ width: formato === 'a4' ? `${210 * 3.7795}px` : '275px', maxWidth: '100%' }}
-            >
-              <iframe
-                srcDoc={htmlRenderizado}
-                style={{ width: formato === 'a4' ? `${210 * 3.7795}px` : '275px', height: formato === 'a4' ? '1122px' : '600px', border: 'none', display: 'block' }}
-                title="preview-comprovante"
-              />
-            </div>
-          </div>
-        ) : formato === '80mm' ? (
+        {formato === '80mm' ? (
           <div className="w-full h-full flex justify-center py-4 px-4">
             <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
               <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />

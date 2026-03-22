@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, LayoutTemplate } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
 import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
 
 export default function RelatoriosPage() {
-  const navigate = useNavigate();
   const [showSeletor, setShowSeletor] = useState(false);
   const [showRPP, setShowRPP] = useState(false);
   const [dadosProdutoSelecionado, setDadosProdutoSelecionado] = useState(null);
@@ -251,12 +250,6 @@ export default function RelatoriosPage() {
               >
                 Financeiro
               </TabsTrigger>
-              <TabsTrigger 
-                value="templates" 
-                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
-              >
-                Templates
-              </TabsTrigger>
             </TabsList>
           </div>
         </div>
@@ -317,31 +310,6 @@ export default function RelatoriosPage() {
                 <RelatorioCard key={rel.id} relatorio={rel} />
               ))}
             </div>
-          </TabsContent>
-
-          <TabsContent value="templates" className="space-y-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              Gerencie os layouts de impressão para cupons, orçamentos e comprovantes.
-            </p>
-            <Card
-              onClick={() => navigate('/GestaoTemplates')}
-              className="cursor-pointer hover:shadow-sm transition-all"
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-                    <LayoutTemplate className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-sm text-gray-900 dark:text-white">Templates de Impressão</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Cupons 80mm, A4, orçamentos e comprovantes
-                    </p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </div>
       </Tabs>
