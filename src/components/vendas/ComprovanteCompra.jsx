@@ -371,35 +371,37 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Pedido ${pedido?.numero || ''}</title>
       <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { background: #fff; }
         @page { size: ${pageSize}; margin: 0; }
-        @media print { html, body { margin: 0; } }
       </style>
     </head><body>${el.outerHTML}</body></html>`;
 
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    // Aguarda recursos (fontes) carregarem antes de imprimir
-    w.onload = () => {
-      w.focus();
-      w.print();
-      w.onafterprint = () => w.close();
+    // Remove iframe anterior se existir
+    const old = document.getElementById('print-frame');
+    if (old) old.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'print-frame';
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+    document.body.appendChild(iframe);
+
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+
+    // Aguarda fontes/imagens carregarem, então imprime
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        // Remove após impressão
+        setTimeout(() => iframe.remove(), 2000);
+      }, 300);
     };
-    // Fallback caso onload não dispare (alguns browsers mobile)
-    setTimeout(() => {
-      if (!w.closed) {
-        w.focus();
-        w.print();
-      }
-    }, 1200);
   };
 
   const handleImprimirTermica = async () => {
