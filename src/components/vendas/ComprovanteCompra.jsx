@@ -366,53 +366,42 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const handlePrint = () => {
     const el = document.getElementById('cupom-print');
     if (!el) return;
-    
-    const originalDisplay = el.style.display;
-    const originalPosition = el.style.position;
-    const isMobile = /iPhone|iPad|Android|mobile/i.test(navigator.userAgent);
-    
-    const html = `<!DOCTYPE html><html><head>
-      <title>Pedido ${pedido?.numero || ''}</title>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
-      <style>
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; background: #fff; }
-        @media print {
-          body { margin: 0; }
-          @page { size: ${formato === 'a4' ? 'A4 portrait' : '80mm auto'}; margin: 0; }
-        }
-      </style>
-    </head><body>${el.outerHTML}</body></html>`;
 
-    if (isMobile) {
-      // Mobile: usa blob URL para evitar bloqueio de popup
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const printWindow = window.open(url, '_blank', 'toolbar=no,location=no,menubar=no');
-      setTimeout(() => {
-        if (printWindow) {
-          printWindow.print();
-          printWindow.close();
-        }
-        URL.revokeObjectURL(url);
-      }, 500);
-    } else {
-      // Desktop: usa iframe oculto
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0';
-      document.body.appendChild(iframe);
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
-      setTimeout(() => {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(() => document.body.removeChild(iframe), 2000);
-      }, 600);
+    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
+
+    // Injeta style de impressão na página atual (funciona em mobile sem popup)
+    const styleId = 'print-style-comprovante';
+    let styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
     }
+    styleEl.textContent = `
+      @media print {
+        body > * { display: none !important; }
+        #comprovante-print-root { display: block !important; position: fixed; inset: 0; background: #fff; z-index: 99999; }
+        @page { size: ${pageSize}; margin: 0; }
+      }
+    `;
+
+    // Cria wrapper temporário para impressão
+    let wrapper = document.getElementById('comprovante-print-root');
+    if (!wrapper) {
+      wrapper = document.createElement('div');
+      wrapper.id = 'comprovante-print-root';
+      wrapper.style.cssText = 'display:none;';
+      document.body.appendChild(wrapper);
+    }
+    wrapper.innerHTML = el.outerHTML;
+
+    window.print();
+
+    // Limpa após impressão
+    setTimeout(() => {
+      if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+      if (styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+    }, 1000);
   };
 
   const handleImprimirTermica = async () => {
