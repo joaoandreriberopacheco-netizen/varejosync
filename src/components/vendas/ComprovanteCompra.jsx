@@ -624,7 +624,20 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
       {/* Preview com scale - ocupa toda a tela */}
       <div className="flex-1 overflow-y-auto w-full">
-        {formato === '80mm' ? (
+        {htmlRenderizado ? (
+          // Template do banco disponível — renderiza via iframe para isolar CSS
+          <div className="w-full flex justify-center py-4 px-4">
+            <div className="shadow-2xl rounded-sm overflow-hidden bg-white"
+              style={{ width: formato === 'a4' ? `${210 * 3.7795}px` : '275px', maxWidth: '100%' }}
+            >
+              <iframe
+                srcDoc={htmlRenderizado}
+                style={{ width: formato === 'a4' ? `${210 * 3.7795}px` : '275px', height: formato === 'a4' ? '1122px' : '600px', border: 'none', display: 'block' }}
+                title="preview-comprovante"
+              />
+            </div>
+          </div>
+        ) : formato === '80mm' ? (
           <div className="w-full h-full flex justify-center py-4 px-4">
             <div style={{ width: '275px', transformOrigin: 'top center', transform: 'scale(1)' }} className="shadow-2xl rounded-sm overflow-hidden">
               <CupomTermico pedido={pedido} dadosEmpresa={dadosEmpresa} />
