@@ -357,6 +357,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [ipImpressora, setIpImpressora] = useState('');
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
   const [formato, setFormato] = useState('80mm');
+  const [gerando, setGerando] = useState(false);
 
   useEffect(() => {
     if (!open) return;
