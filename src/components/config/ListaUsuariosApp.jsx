@@ -213,7 +213,13 @@ export default function ListaUsuariosApp() {
                   return (
                     <TableRow key={user.id} className="border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <TableCell>
-                        <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">{user.full_name || '-'}</div>
+                       <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">{user.full_name || '-'}</div>
+                       {user.nickname && (
+                         <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                           <AtSign className="w-2.5 h-2.5" />
+                           {user.nickname}
+                         </div>
+                       )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <div className="text-xs text-gray-400">{user.email}</div>
@@ -271,6 +277,23 @@ export default function ListaUsuariosApp() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Nickname */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center gap-1.5">
+                <AtSign className="w-3.5 h-3.5" />
+                Nickname (apelido nas operações)
+              </label>
+              <Input
+                placeholder="Ex: João, Mari, Caixa 1..."
+                value={selectedNickname}
+                onChange={(e) => setSelectedNickname(e.target.value)}
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-9 text-sm"
+              />
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 pl-1">
+                Usado para identificar o usuário em vendas, caixa e relatórios.
+              </p>
+            </div>
+
             {/* Perfil de acesso */}
             <div className="space-y-1.5">
               <label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Perfil de Acesso</label>
