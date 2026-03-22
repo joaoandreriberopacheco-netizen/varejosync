@@ -352,6 +352,17 @@ function CupomA4({ pedido, dadosEmpresa }) {
   );
 }
 
+// ── Preview via Template do Banco ─────────────────────────────────────────────
+function TemplatePreview({ htmlTemplate }) {
+  return (
+    <div
+      id="cupom-print"
+      dangerouslySetInnerHTML={{ __html: htmlTemplate }}
+      style={{ background: '#fff' }}
+    />
+  );
+}
+
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
@@ -359,13 +370,39 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
   const [formato, setFormato] = useState('80mm');
   const [gerando, setGerando] = useState(false);
+  const [templateAtivo80mm, setTemplateAtivo80mm] = useState(null);
+  const [templateAtivoA4, setTemplateAtivoA4] = useState(null);
+  const [htmlRenderizado, setHtmlRenderizado] = useState('');
 
   useEffect(() => {
     if (!open) return;
-    base44.entities.DadosEmpresa.list().then(r => r?.length && setDadosEmpresa(r[0])).catch(() => {});
+
+    // Carrega dados da empresa e templates em paralelo
+    Promise.all([
+      base44.entities.DadosEmpresa.list(),
+      base44.entities.ComprovanteTemplate.filter({ tipo: 'venda_80mm', is_default: true }),
+      base44.entities.ComprovanteTemplate.filter({ tipo: 'venda_a4', is_default: true }),
+    ]).then(([empresaRes, tmpl80, tmplA4]) => {
+      if (empresaRes?.length) setDadosEmpresa(empresaRes[0]);
+      setTemplateAtivo80mm(tmpl80?.[0] || null);
+      setTemplateAtivoA4(tmplA4?.[0] || null);
+    }).catch(() => {});
+
     const ip = localStorage.getItem('ip_impressora_termica');
     if (ip) setIpImpressora(ip);
   }, [open]);
+
+  // Re-renderiza o HTML sempre que muda formato, template ou dados da empresa
+  useEffect(() => {
+    if (!pedido || !dadosEmpresa) return;
+    const template = formato === 'a4' ? templateAtivoA4 : templateAtivo80mm;
+    if (!template?.html_template) {
+      setHtmlRenderizado(''); // sem template, usa fallback React
+      return;
+    }
+    const dados = prepararDadosVenda(pedido, dadosEmpresa);
+    setHtmlRenderizado(renderTemplate(template.html_template, dados));
+  }, [formato, templateAtivo80mm, templateAtivoA4, dadosEmpresa, pedido]);
 
   const handlePrint = () => {
     const el = document.getElementById('cupom-print');
