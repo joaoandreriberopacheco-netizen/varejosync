@@ -318,6 +318,31 @@ export default function RelatoriosPage() {
               ))}
             </div>
           </TabsContent>
+
+          <TabsContent value="templates" className="space-y-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Gerencie os layouts de impressão para cupons, orçamentos e comprovantes.
+            </p>
+            <Card
+              onClick={() => navigate('/GestaoTemplates')}
+              className="cursor-pointer hover:shadow-sm transition-all"
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
+                    <LayoutTemplate className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-sm text-gray-900 dark:text-white">Templates de Impressão</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Cupons 80mm, A4, orçamentos e comprovantes
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </div>
       </Tabs>
 
