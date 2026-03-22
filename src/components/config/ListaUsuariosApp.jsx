@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, Edit, Shield, UserPlus, AlertTriangle, CheckCircle2, ArrowRight, Monitor, Tag } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Users, Edit, Shield, UserPlus, AlertTriangle, CheckCircle2, ArrowRight, Monitor, Tag, AtSign } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
 const MAPA_LEGADO = {
@@ -29,6 +30,7 @@ export default function ListaUsuariosApp() {
   const [selectedPerfilId, setSelectedPerfilId] = useState('');
   const [selectedCaixas, setSelectedCaixas] = useState([]);
   const [selectedTabelaId, setSelectedTabelaId] = useState('');
+  const [selectedNickname, setSelectedNickname] = useState('');
   const [orfaos, setOrfaos] = useState([]);
   const { toast } = useToast();
 
@@ -55,6 +57,7 @@ export default function ListaUsuariosApp() {
     setSelectedPerfilId(user.perfil_acesso_id || '');
     setSelectedCaixas(user.caixas_pdv_autorizados_ids || []);
     setSelectedTabelaId(user.tabela_preco_id || '');
+    setSelectedNickname(user.nickname || '');
     setIsDialogOpen(true);
   };
 
@@ -63,6 +66,7 @@ export default function ListaUsuariosApp() {
     const perfilSelecionado = perfisAcesso.find(p => p.id === selectedPerfilId);
     const tabelaSelecionada = tabelasPreco.find(t => t.id === selectedTabelaId);
     await base44.entities.User.update(editingUser.id, {
+      nickname: selectedNickname.trim() || null,
       perfil_acesso_id: selectedPerfilId || null,
       perfil_acesso_nome: perfilSelecionado?.nome || null,
       perfil: perfilSelecionado?.nome || editingUser.perfil,
