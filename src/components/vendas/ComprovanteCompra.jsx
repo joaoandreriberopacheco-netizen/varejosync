@@ -407,55 +407,65 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     };
   };
 
-  const handleShare = async () => {
+  const gerarPDF = async () => {
     const el = document.getElementById('cupom-print');
-    if (!el) return;
+    if (!el) return null;
 
-    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
-    const html = `<!DOCTYPE html><html><head>
-      <meta charset="UTF-8">
-      <title>Pedido ${pedido?.numero || ''}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background: #fff; }
-        @page { size: ${pageSize}; margin: 0; }
-      </style>
-    </head><body>${el.outerHTML}</body></html>`;
+    const isA4 = formato === 'a4';
 
-    const blob = new Blob([html], { type: 'text/html' });
-    const fileName = `pedido-${pedido?.numero || 'comprovante'}.html`;
+    const canvas = await html2canvas(el, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
 
-    // Tenta Web Share API (mobile nativo)
-    if (navigator.share && navigator.canShare) {
-      const file = new File([blob], fileName, { type: 'text/html' });
-      if (navigator.canShare({ files: [file] })) {
-        try {
+    const imgData = canvas.toDataURL('image/png');
+
+    let pdf;
+    if (isA4) {
+      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = 210;
+      const pageH = 297;
+      const ratio = canvas.width / canvas.height;
+      const imgH = pageW / ratio;
+      pdf.addImage(imgData, 'PNG', 0, 0, pageW, Math.min(imgH, pageH));
+    } else {
+      // 80mm cupom: largura fixa 80mm, altura proporcional
+      const widthMm = 80;
+      const heightMm = (canvas.height / canvas.width) * widthMm;
+      pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [widthMm, heightMm] });
+      pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+    }
+
+    return pdf;
+  };
+
+  const handleShare = async () => {
+    setGerando(true);
+    try {
+      const pdf = await gerarPDF();
+      if (!pdf) return;
+
+      const fileName = `pedido-${pedido?.numero || 'comprovante'}.pdf`;
+      const pdfBlob = pdf.output('blob');
+
+      // Tenta Web Share API com arquivo PDF (mobile nativo)
+      if (navigator.share && navigator.canShare) {
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        if (navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file], title: `Pedido ${pedido?.numero || ''}` });
-          return;
-        } catch (e) {
-          if (e.name !== 'AbortError') toast.error('Erro ao compartilhar');
           return;
         }
       }
-      // Share sem arquivo (apenas título/URL)
-      try {
-        const url = URL.createObjectURL(blob);
-        await navigator.share({ title: `Pedido ${pedido?.numero || ''}`, url });
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        return;
-      } catch (e) {
-        if (e.name === 'AbortError') return;
-      }
-    }
 
-    // Fallback desktop: download
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
+      // Fallback: download
+      pdf.save(fileName);
+    } catch (e) {
+      if (e.name !== 'AbortError') toast.error('Erro ao gerar PDF');
+    } finally {
+      setGerando(false);
+    }
   };
 
   const handleImprimirTermica = async () => {
