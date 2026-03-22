@@ -192,6 +192,11 @@ const AuthenticatedApp = () => {
           <DesignerDocumento />
         </LayoutWrapper>
       } />
+      <Route path="/GestaoTemplates" element={
+        <LayoutWrapper currentPageName="GestaoTemplates">
+          <GestaoTemplates />
+        </LayoutWrapper>
+      } />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>
