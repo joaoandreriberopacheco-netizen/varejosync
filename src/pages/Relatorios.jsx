@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, LayoutTemplate } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
 import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
 
 export default function RelatoriosPage() {
+  const navigate = useNavigate();
   const [showSeletor, setShowSeletor] = useState(false);
   const [showRPP, setShowRPP] = useState(false);
   const [dadosProdutoSelecionado, setDadosProdutoSelecionado] = useState(null);
