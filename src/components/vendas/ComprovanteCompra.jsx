@@ -487,14 +487,25 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           Voltar
         </button>
         <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 font-glacial">Comprovante</span>
-        <Button
-          onClick={handlePrint}
-          size="sm"
-          className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          Imprimir
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handlePrint}
+            size="sm"
+            variant="outline"
+            className="h-9 text-xs gap-1.5 rounded-xl px-3"
+            title="Imprimir"
+          >
+            <Printer className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            onClick={handleShare}
+            size="sm"
+            className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            Compartilhar
+          </Button>
+        </div>
       </div>
 
       {/* Opções de formato e impressora térmica */}
