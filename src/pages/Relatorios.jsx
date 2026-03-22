@@ -251,6 +251,12 @@ export default function RelatoriosPage() {
               >
                 Financeiro
               </TabsTrigger>
+              <TabsTrigger 
+                value="templates" 
+                className="px-0 py-3 text-xs md:text-sm font-medium border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400 rounded-none"
+              >
+                Templates
+              </TabsTrigger>
             </TabsList>
           </div>
         </div>
