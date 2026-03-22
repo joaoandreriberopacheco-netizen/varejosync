@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { renderTemplate, prepararDadosVenda } from '@/lib/templateEngine';
 
 // Formato brasileiro: virgula para decimais, ponto para milhares
 const fmtV = (v) => {
