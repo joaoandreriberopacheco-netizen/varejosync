@@ -369,39 +369,37 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
 
     const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
 
-    // Injeta style de impressão na página atual (funciona em mobile sem popup)
-    const styleId = 'print-style-comprovante';
-    let styleEl = document.getElementById(styleId);
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = styleId;
-      document.head.appendChild(styleEl);
-    }
-    styleEl.textContent = `
-      @media print {
-        body > * { display: none !important; }
-        #comprovante-print-root { display: block !important; position: fixed; inset: 0; background: #fff; z-index: 99999; }
+    const html = `<!DOCTYPE html><html><head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Pedido ${pedido?.numero || ''}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { background: #fff; }
         @page { size: ${pageSize}; margin: 0; }
-      }
-    `;
+        @media print { html, body { margin: 0; } }
+      </style>
+    </head><body>${el.outerHTML}</body></html>`;
 
-    // Cria wrapper temporário para impressão
-    let wrapper = document.getElementById('comprovante-print-root');
-    if (!wrapper) {
-      wrapper = document.createElement('div');
-      wrapper.id = 'comprovante-print-root';
-      wrapper.style.cssText = 'display:none;';
-      document.body.appendChild(wrapper);
-    }
-    wrapper.innerHTML = el.outerHTML;
-
-    window.print();
-
-    // Limpa após impressão
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Aguarda recursos (fontes) carregarem antes de imprimir
+    w.onload = () => {
+      w.focus();
+      w.print();
+      w.onafterprint = () => w.close();
+    };
+    // Fallback caso onload não dispare (alguns browsers mobile)
     setTimeout(() => {
-      if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
-      if (styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
-    }, 1000);
+      if (!w.closed) {
+        w.focus();
+        w.print();
+      }
+    }, 1200);
   };
 
   const handleImprimirTermica = async () => {
