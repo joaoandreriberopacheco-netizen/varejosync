@@ -404,6 +404,57 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     };
   };
 
+  const handleShare = async () => {
+    const el = document.getElementById('cupom-print');
+    if (!el) return;
+
+    const pageSize = formato === 'a4' ? 'A4 portrait' : '80mm auto';
+    const html = `<!DOCTYPE html><html><head>
+      <meta charset="UTF-8">
+      <title>Pedido ${pedido?.numero || ''}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { background: #fff; }
+        @page { size: ${pageSize}; margin: 0; }
+      </style>
+    </head><body>${el.outerHTML}</body></html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const fileName = `pedido-${pedido?.numero || 'comprovante'}.html`;
+
+    // Tenta Web Share API (mobile nativo)
+    if (navigator.share && navigator.canShare) {
+      const file = new File([blob], fileName, { type: 'text/html' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: `Pedido ${pedido?.numero || ''}` });
+          return;
+        } catch (e) {
+          if (e.name !== 'AbortError') toast.error('Erro ao compartilhar');
+          return;
+        }
+      }
+      // Share sem arquivo (apenas título/URL)
+      try {
+        const url = URL.createObjectURL(blob);
+        await navigator.share({ title: `Pedido ${pedido?.numero || ''}`, url });
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback desktop: download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  };
+
   const handleImprimirTermica = async () => {
     if (!ipImpressora) { toast.error('Informe o IP da impressora térmica'); return; }
     setImprimindoTermica(true);
