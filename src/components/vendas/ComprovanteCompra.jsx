@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Printer, Zap, Share2, Download } from 'lucide-react';
+import { ArrowLeft, Printer, Zap, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { imprimirCupomTermico } from '@/functions/imprimirCupomTermico';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 // Formato brasileiro: virgula para decimais, ponto para milhares
 const fmtV = (v) => {
