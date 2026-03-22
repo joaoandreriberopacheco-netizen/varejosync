@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3 } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Warehouse, DollarSign, Download, FileText, ChevronRight, BarChart3, LayoutTemplate } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RelatorioPerformance from './RelatorioPerformance';
 import SeletorProdutoRPP from '@/components/relatorios/SeletorProdutoRPP';
+import GestaoTemplates from './GestaoTemplates';
 
 export default function RelatoriosPage() {
   const [showSeletor, setShowSeletor] = useState(false);
