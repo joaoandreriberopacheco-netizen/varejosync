@@ -512,11 +512,12 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
           </Button>
           <Button
             onClick={handleShare}
+            disabled={gerando}
             size="sm"
             className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
           >
-            <Share2 className="w-3.5 h-3.5" />
-            Compartilhar
+            {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+            {gerando ? 'Gerando...' : 'Compartilhar'}
           </Button>
         </div>
       </div>
