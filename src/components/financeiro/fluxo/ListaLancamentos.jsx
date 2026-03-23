@@ -6,7 +6,7 @@ import {
   Clock, AlertCircle, ChevronRight, Scale, RefreshCw
 } from 'lucide-react';
 
-const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+const R = (v) => `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
@@ -46,9 +46,7 @@ function LancRow({ l, onClick }) {
   const prev = !pago && l.status !== 'Cancelado';
   const conc = l.status_conciliacao || 'N/A';
   const data = l.data_pagamento || l.data_vencimento;
-  // Datas tipo '2026-03-23' (sem hora) são UTC midnight → ficam um dia atrás no UTC-5.
-  // Adicionamos T12:00:00 para evitar esse shift.
-  const parseDate = (d) => !d ? null : (d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
+  const parseDate = (d) => !d ? null : (typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
 
   let icon, valColor;
   if (isT) {
