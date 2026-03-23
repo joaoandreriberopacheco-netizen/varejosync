@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ALL_QUICK_ACTIONS, DEFAULT_QUICK_ACTIONS } from '@/components/home/quickActions';
 import PersonalizarHomeDialog from '@/components/home/PersonalizarHomeDialog';
-import { usePermissoesResolvidas } from '@/hooks/usePermissoesResolvidas';
+import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
 import { useKPIsCache } from '@/hooks/useKPIsCache';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
@@ -26,14 +26,19 @@ export default function HomePage() {
   const [showPersonalizar, setShowPersonalizar] = useState(false);
   const { kpis, loadKPIs } = useKPIsCache();
 
-  // Resolve permissões do usuário atual (com cache otimizado)
-  const { permissoes } = usePermissoesResolvidas(currentUser, perfilDeAcesso);
+  // Resolve permissões no mesmo formato usado pelo menu lateral
+  const permissoes = useMemo(() => {
+    if (!currentUser || currentUser.role === 'admin') return null;
+    return resolverPermissoes(perfilDeAcesso, currentUser?.override_permissoes);
+  }, [currentUser, perfilDeAcesso]);
 
   // IDs dos atalhos que o usuário tem permissão de ver
   const allowedActionIds = useMemo(() => {
     if (!currentUser) return [];
     if (currentUser.role === 'admin') return ALL_QUICK_ACTIONS.map(a => a.id);
-    if (!permissoes) return ALL_QUICK_ACTIONS.map(a => a.id);
+    // Sem perfil e sem overrides = vê tudo
+    if (!currentUser.perfil_acesso_id && !currentUser.override_permissoes) return ALL_QUICK_ACTIONS.map(a => a.id);
+    if (!permissoes || Object.keys(permissoes).length === 0) return ALL_QUICK_ACTIONS.map(a => a.id);
     return ALL_QUICK_ACTIONS
       .filter(a => !a.permissaoCheck || a.permissaoCheck(permissoes))
       .map(a => a.id);
