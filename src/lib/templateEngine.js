@@ -87,6 +87,7 @@ export function prepararDadosVenda(pedido, dadosEmpresa) {
     num: String(idx + 1).padStart(2, '0'),
     nome: (item.produto_nome || '').toUpperCase(),
     quantidade: parseFloat(item.quantidade) || 0,
+    unidade: item.unidade_principal || item.unidade || 'UN',
     preco_unitario: `R$ ${fmtV(item.preco_unitario_praticado)}`,
     total: `R$ ${fmtV(item.total)}`,
     // valores numéricos brutos também disponíveis
