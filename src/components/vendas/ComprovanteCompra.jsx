@@ -29,7 +29,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
   const W = 42; // chars per line
 
   const empresa = {
-    nome: (dadosEmpresa?.razao_social || dadosEmpresa?.nome_fantasia || 'EMPRESA').toUpperCase(),
+    nome: (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase(),
     endereco: [dadosEmpresa?.endereco, dadosEmpresa?.numero].filter(Boolean).join(', '),
     bairro_cidade: [dadosEmpresa?.bairro, dadosEmpresa?.cidade, dadosEmpresa?.estado].filter(Boolean).join(', '),
     telefone: dadosEmpresa?.telefone,

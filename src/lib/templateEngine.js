@@ -104,8 +104,8 @@ export function prepararDadosVenda(pedido, dadosEmpresa) {
   }));
 
   return {
-    // Empresa
-    empresa_nome: (dadosEmpresa?.razao_social || 'VAREJOSYNC').toUpperCase(),
+    // Empresa — nome fantasia tem prioridade sobre razão social
+    empresa_nome: (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'VAREJOSYNC').toUpperCase(),
     empresa_endereco: dadosEmpresa?.endereco || '',
     empresa_numero: dadosEmpresa?.numero || '',
     empresa_bairro: dadosEmpresa?.bairro || '',
