@@ -24,130 +24,83 @@ const F = 9; // base font size px
 function CupomTermico({ pedido, dadosEmpresa }) {
   const itens = pedido.itens || [];
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
-  const F = 9; // base font size px
-  const W_DESC = 28; // largura da coluna de descrição em chars
+  const F = 9;
+
+  const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
+  const razaoSocial = (dadosEmpresa?.nome_fantasia && dadosEmpresa?.razao_social)
+    ? dadosEmpresa.razao_social
+    : null;
 
   const empresa = {
-    nome_fantasia: (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase(),
-    razao_social: dadosEmpresa?.razao_social || '',
-    endereco: [dadosEmpresa?.endereco, dadosEmpresa?.numero].filter(Boolean).join(', '),
-    bairro_cidade: [dadosEmpresa?.bairro, dadosEmpresa?.cidade, dadosEmpresa?.estado].filter(Boolean).join(', '),
-    telefone: dadosEmpresa?.telefone,
+    nomeFantasia,
+    razaoSocial,
     cnpj: dadosEmpresa?.cnpj,
-    site: dadosEmpresa?.site || dadosEmpresa?.website,
+    endereco: [dadosEmpresa?.endereco, dadosEmpresa?.numero].filter(Boolean).join(', '),
+    bairro_cidade: [dadosEmpresa?.bairro, dadosEmpresa?.cidade, dadosEmpresa?.estado].filter(Boolean).join(' - '),
+    telefone: dadosEmpresa?.telefone,
     mensagem: (dadosEmpresa?.mensagem_rodape || 'OBRIGADO PELA PREFERÊNCIA!').toUpperCase(),
   };
 
-  const Sep = ({ dashed = true }) => (
-    <div style={{ margin: '4px 0', fontFamily: font, fontSize: F, lineHeight: 1, letterSpacing: 0, color: '#555' }}>
-      {(dashed ? '-' : '=').repeat(44)}
+  const Sep = () => (
+    <div style={{ margin: '4px 0', fontSize: F - 1, fontFamily: font, color: '#999', letterSpacing: '1px' }}>
+      {'- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -'}
     </div>
   );
 
-  const Row = ({ label, value, large, small }) => (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      fontFamily: font,
-      fontSize: large ? F + 7 : small ? F - 1 : F + 1,
-      fontWeight: '400',
-      margin: large ? '3px 0' : '1px 0',
-      lineHeight: large ? 1.3 : 1.5,
-    }}>
-      <span>{label}</span>
-      <span>{value}</span>
-    </div>
-  );
-
-  // Quebra descrição em linhas, retorna array de strings
-  const quebrarDesc = (nome, maxW) => {
-    const palavras = nome.split(' ');
-    const linhas = [];
-    let atual = '';
-    for (const p of palavras) {
-      const candidato = atual ? atual + ' ' + p : p;
-      if (candidato.length <= maxW) { atual = candidato; }
-      else { if (atual) linhas.push(atual); atual = p.substring(0, maxW); }
-    }
-    if (atual) linhas.push(atual);
-    return linhas.length ? linhas : [''];
-  };
+  const maxNameW = 26;
 
   return (
     <div
       id="cupom-print"
       style={{
-        width: '275px',
-        background: '#fff',
-        color: '#111',
-        fontFamily: font,
-        fontSize: F + 1,
-        padding: '14px 12px 18px',
-        margin: '0 auto',
-        lineHeight: '1.5',
+        width: '275px', background: '#fff', color: '#111',
+        fontFamily: font, fontSize: F + 1,
+        padding: '16px 12px 20px', margin: '0 auto', lineHeight: '1.5',
       }}
     >
       {/* ── Cabeçalho ── */}
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
         {dadosEmpresa?.logo_url && (
-          <img
-            src={dadosEmpresa.logo_url}
-            alt="Logo"
-            style={{ maxWidth: '90px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }}
-          />
+          <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
-        {/* Nome Fantasia — maior, sem bold */}
-        <div style={{ fontSize: F + 8, fontWeight: '400', fontFamily: font, letterSpacing: '0.5px', lineHeight: 1.15, marginBottom: '3px' }}>
-          {empresa.nome_fantasia}
+        {/* Nome Fantasia — maior, peso 500 para visibilidade sem bold */}
+        <div style={{ fontSize: F + 12, fontWeight: '500', letterSpacing: '0.8px', lineHeight: 1.1, marginBottom: '5px' }}>
+          {empresa.nomeFantasia}
         </div>
         {/* Razão Social — se diferente do nome fantasia */}
-        {empresa.razao_social && empresa.razao_social.toUpperCase() !== empresa.nome_fantasia && (
-          <div style={{ fontSize: F, fontFamily: font, lineHeight: 1.5, color: '#333' }}>
-            {empresa.razao_social}
+        {empresa.razaoSocial && (
+          <div style={{ fontSize: F + 1, fontWeight: '400', color: '#333', lineHeight: 1.4 }}>
+            {empresa.razaoSocial}
           </div>
         )}
-        {/* CNPJ */}
-        {empresa.cnpj && (
-          <div style={{ fontSize: F - 1, fontFamily: font, lineHeight: 1.5, color: '#444' }}>
-            CNPJ: {empresa.cnpj}
-          </div>
-        )}
-        {/* Endereço */}
-        <div style={{ fontSize: F - 1, fontFamily: font, lineHeight: 1.5, color: '#444' }}>
+        {/* Dados da empresa */}
+        <div style={{ fontSize: F, fontWeight: '400', color: '#444', lineHeight: 1.55, marginTop: '3px' }}>
+          {empresa.cnpj && <div>CNPJ: {empresa.cnpj}</div>}
           {empresa.endereco && <div>{empresa.endereco}</div>}
           {empresa.bairro_cidade && <div>{empresa.bairro_cidade}</div>}
           {empresa.telefone && <div>Fone: {empresa.telefone}</div>}
         </div>
-        {/* Número do pedido */}
-        <div style={{ fontSize: F - 1, fontFamily: font, color: '#555', marginTop: '3px' }}>
-          Comprovante: {pedido.numero || 'S/N'}
-        </div>
+        <div style={{ fontSize: F - 1, color: '#666', marginTop: '4px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
       </div>
 
       <Sep />
 
       {/* ── Meta do pedido ── */}
-      <div style={{ fontFamily: font, fontSize: F - 1, lineHeight: 1.6 }}>
+      <div style={{ fontSize: F, lineHeight: 1.55 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span>
           <span>Nº {pedido.numero || 'S/N'}</span>
         </div>
-        {pedido.cliente_nome && (
-          <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>
-        )}
-        {pedido.vendedor_nome && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Vendedor: {pedido.vendedor_nome.split(' ')[0].toUpperCase()}</span>
-          </div>
-        )}
+        {pedido.cliente_nome && <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>}
+        {pedido.vendedor_nome && <div>Vendedor: {pedido.vendedor_nome}</div>}
       </div>
 
       <Sep />
 
       {/* ── Cabeçalho colunas ── */}
-      <div style={{ fontFamily: mono, fontSize: F - 1, fontWeight: '700', lineHeight: 1.4 }}>
-        {`NO. | ITEM`}
-        <span style={{ float: 'right' }}>QTD | PREÇO | TOTAL</span>
+      <div style={{ fontSize: F - 1, color: '#666', lineHeight: 1.4 }}>
+        <span>Nº  Descrição</span>
+        <span style={{ float: 'right' }}>Qtd  Unit  Total</span>
       </div>
 
       <Sep />
@@ -159,22 +112,37 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         const preco = fmtV(item.preco_unitario_praticado);
         const total = fmtV(item.total);
         const num = String(idx + 1).padStart(2, '0');
-        const unidade = item.unidade_principal || 'UN';
-        const valoresLinha = `${qtd} | ${unidade} | ${preco} | ${total}`;
-        const linhas = quebrarDesc(nome, W_DESC);
+        const valStr = `${qtd}  ${preco}  ${total}`;
+
+        // Quebra nome em linhas
+        const palavras = nome.split(' ');
+        const linhas = [];
+        let atual = '';
+        for (const p of palavras) {
+          if ((atual + (atual ? ' ' : '') + p).length <= maxNameW) {
+            atual = atual ? atual + ' ' + p : p;
+          } else {
+            if (atual) linhas.push(atual);
+            atual = p.substring(0, maxNameW);
+          }
+        }
+        if (atual) linhas.push(atual);
 
         return (
-          <div key={idx} style={{ fontFamily: font, fontSize: F - 1, marginBottom: '4px', lineHeight: 1.5 }}>
-            {/* Linhas de descrição (exceto a última) */}
-            {linhas.slice(0, -1).map((l, i) => (
-              <div key={i}>
-                {i === 0 ? `${num} | ` : '   | '}{l}
-              </div>
-            ))}
-            {/* Última linha: fim da descrição + valores alinhados à direita */}
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{linhas.length === 1 ? `${num} | ` : '   | '}{linhas[linhas.length - 1]}</span>
-              <span style={{ whiteSpace: 'nowrap', marginLeft: '6px', color: '#222' }}>{valoresLinha}</span>
+          <div key={idx} style={{ fontSize: F, marginBottom: '4px', lineHeight: 1.45 }}>
+            {/* Linhas intermediárias (sem valores) */}
+            {linhas.length > 1 && (
+              <>
+                <div>{num}  {linhas[0]}</div>
+                {linhas.slice(1, -1).map((l, i) => (
+                  <div key={i} style={{ paddingLeft: '20px' }}>{l}</div>
+                ))}
+              </>
+            )}
+            {/* Última linha: descrição + valores alinhados à direita */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span>{linhas.length === 1 ? `${num}  ${linhas[0]}` : `    ${linhas[linhas.length - 1]}`}</span>
+              <span style={{ whiteSpace: 'nowrap', marginLeft: '6px', color: '#222' }}>{valStr}</span>
             </div>
           </div>
         );
@@ -182,25 +150,38 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       <Sep />
 
-      {/* ── Totais hierarquizados ── */}
+      {/* ── Totais ── */}
       <div style={{ marginTop: '2px' }}>
-        {pedido.subtotal > 0 && <Row label="Subtotal:" value={`R$ ${fmtV(pedido.subtotal)}`} small />}
-        {pedido.valor_desconto > 0 && <Row label="Desconto:" value={`-R$ ${fmtV(pedido.valor_desconto)}`} small />}
-        {pedido.valor_frete > 0 && <Row label="Frete:" value={`R$ ${fmtV(pedido.valor_frete)}`} small />}
-        <div style={{ margin: '4px 0 2px' }}>
-          <Row label="TOTAL:" value={`R$ ${fmtV(pedido.valor_total || 0)}`} large />
+        {pedido.subtotal > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: '#555' }}>
+            <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
+          </div>
+        )}
+        {pedido.valor_desconto > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: '#555' }}>
+            <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
+          </div>
+        )}
+        {pedido.valor_frete > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F, color: '#555' }}>
+            <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
+          </div>
+        )}
+        {/* TOTAL — hierarquia por tamanho, sem bold */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 7, fontWeight: '500', margin: '5px 0 3px' }}>
+          <span>TOTAL</span>
+          <span>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
       </div>
 
       {/* ── Pagamentos ── */}
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <div style={{ marginTop: '2px' }}>
-          {pedido.pagamentos.map((pag, idx) => (
-            <Row
-              key={idx}
-              label={`${(pag.forma_pagamento || '').toUpperCase()}${pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}:`}
-              value={`R$ ${fmtV(pag.valor)}`}
-            />
+          {pedido.pagamentos.map((pag, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 2, fontWeight: '400' }}>
+              <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
+              <span>R$ {fmtV(pag.valor)}</span>
+            </div>
           ))}
         </div>
       )}
@@ -208,16 +189,11 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Rodapé ── */}
-      <div style={{ textAlign: 'center', fontFamily: font }}>
-        <div style={{ fontSize: F + 4, fontWeight: '400', letterSpacing: '0.5px', margin: '4px 0 2px' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: F + 4, fontWeight: '500', letterSpacing: '0.8px', margin: '4px 0 3px' }}>
           {empresa.mensagem}
         </div>
-        <div style={{ fontSize: F - 1, color: '#555', marginTop: '2px' }}>
-          Documento sem validade fiscal.
-        </div>
-        {empresa.site && (
-          <div style={{ fontSize: F - 1, color: '#555' }}>{empresa.site}</div>
-        )}
+        <div style={{ fontSize: F - 1, color: '#666' }}>Este documento não possui validade fiscal.</div>
       </div>
     </div>
   );
@@ -434,7 +410,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
       <title>Pedido ${pedido?.numero || ''}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { background: #fff; }
