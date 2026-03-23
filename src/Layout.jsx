@@ -108,33 +108,32 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const loadUser = async () => {
-    // Aplica cache imediatamente para renderizar sidebar sem esperar rede
-    const cached = getCachedUserSession();
-    if (cached?.user) {
-      setCurrentUser(cached.user);
-      if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
-    }
-
     try {
       const user = await base44.auth.me();
       if (user) {
         let perfil = null;
         if (user.perfil_acesso_id) {
           try {
-            const perfis = await base44.entities.PerfilDeAcesso.list();
-            perfil = perfis.find(p => p.id === user.perfil_acesso_id) || null;
+            const perfis = await base44.entities.PerfilDeAcesso.filter({ id: user.perfil_acesso_id });
+            perfil = perfis?.[0] || null;
           } catch (e) {
-            console.warn("Perfil de acesso não encontrado:", e);
+            console.warn('Perfil de acesso não encontrado:', e);
           }
         }
-        // Atualiza estado e salva no cache
         setCurrentUser(user);
         setPerfilDeAcesso(perfil);
         setCachedUserSession(user, perfil);
       }
     } catch (error) {
-      console.error("Erro ao carregar usuário:", error);
-      if (!cached?.user) setLoadError(error);
+      console.error('Erro ao carregar usuário:', error);
+      // Tenta cache como fallback
+      const cached = getCachedUserSession();
+      if (cached?.user) {
+        setCurrentUser(cached.user);
+        if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
+      } else {
+        setLoadError(error);
+      }
     }
   };
 
