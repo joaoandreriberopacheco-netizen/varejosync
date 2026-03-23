@@ -1,26 +1,28 @@
 /**
  * Quarter Master Logic — Resolver de Permissões
- * 
+ *
  * Combina PerfilDeAcesso (template) + override_permissoes (individual)
  * para retornar o objeto final de permissões de um usuário.
+ *
+ * FORMATO REAL (salvo por PerfilFormTela):
+ *   permissoes.pdv.acesso_vendedor = true
+ *   permissoes.estoque.visualizar_produtos = true
+ *   permissoes.estoque.compras.sugestoes = true
+ *   permissoes.estoque.compras.hub_logistico.manifestos = true
+ *   etc.
  */
 
 import { MODULOS } from './PerfilFormTela';
 
-/**
- * Resolve as permissões finais de um usuário.
- * @param {object|null} perfilDeAcesso - O objeto PerfilDeAcesso vinculado ao usuário
- * @param {object} overridePermissoes - Os overrides individuais do usuário (formato 'modulo.permissao': bool)
- * @returns {object} permissoes - Objeto final de permissões resolvidas
- */
+import {
+  LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
+  DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck
+} from 'lucide-react';
+
 export function resolverPermissoes(perfilDeAcesso, overridePermissoes = {}) {
-  // Base: permissões do perfil mestre (template)
   const base = perfilDeAcesso?.permissoes || {};
-  
-  // Clonar profundamente
   const resultado = JSON.parse(JSON.stringify(base));
 
-  // Aplicar overrides individuais (formato: 'modulo.permissao' ou 'modulo.permissao.subtipo')
   Object.entries(overridePermissoes || {}).forEach(([chave, valor]) => {
     const partes = chave.split('.');
     if (partes.length === 2) {
@@ -38,34 +40,15 @@ export function resolverPermissoes(perfilDeAcesso, overridePermissoes = {}) {
   return resultado;
 }
 
-/**
- * Verifica se um usuário tem uma permissão específica.
- * Admins (role === 'admin') têm tudo liberado automaticamente.
- * @param {object} user - O objeto do usuário logado
- * @param {object|null} perfilDeAcesso - O PerfilDeAcesso vinculado
- * @param {string} modulo - Ex: 'vendas'
- * @param {string} permissao - Ex: 'acesso'
- * @param {string|null} subtipo - Ex: 'ver' ou 'editar' (opcional)
- * @returns {boolean}
- */
 export function temPermissao(user, perfilDeAcesso, modulo, permissao, subtipo = null) {
-  // Admins têm acesso total
   if (user?.role === 'admin') return true;
-
   const permissoes = resolverPermissoes(perfilDeAcesso, user?.override_permissoes);
-  
   if (subtipo) {
     return permissoes?.[modulo]?.[permissao]?.[subtipo] === true;
   }
   return permissoes?.[modulo]?.[permissao] === true;
 }
 
-/**
- * Constrói os itens de menu visíveis para um usuário com base em suas permissões resolvidas.
- * @param {object} user - O objeto do usuário logado
- * @param {object|null} perfilDeAcesso - O PerfilDeAcesso vinculado
- * @returns {Array} - Lista de itens de menu autorizados
- */
 export function buildMenuItems(user, perfilDeAcesso) {
   // Admins vêem tudo
   if (user?.role === 'admin') return ALL_MENU_ITEMS;
@@ -76,36 +59,31 @@ export function buildMenuItems(user, perfilDeAcesso) {
   // Sem perfil E sem overrides = vê tudo
   if (!temPerfil && !temOverrides) return ALL_MENU_ITEMS;
 
-  // Tem perfil_acesso_id mas o objeto ainda não carregou = aguarda (menu vazio temporário)
+  // Tem perfil_acesso_id mas objeto ainda não carregou = aguarda
   if (temPerfil && !perfilDeAcesso) return [];
 
   const permissoes = resolverPermissoes(perfilDeAcesso, user?.override_permissoes);
 
-  // Perfil sem nenhuma permissão definida (perfil vazio/recém criado) = mostra tudo
+  // Perfil recém criado sem nenhuma permissão = mostra tudo
   if (Object.keys(permissoes).length === 0) return ALL_MENU_ITEMS;
 
-  return ALL_MENU_ITEMS.filter(item => {
-    if (item.permissaoCheck) return item.permissaoCheck(permissoes);
-    return true;
-  }).map(item => {
-    if (!item.submenu) return item;
-    const subsFiltrados = item.submenu.filter(sub => {
-      if (sub.permissaoCheck) return sub.permissaoCheck(permissoes);
+  return ALL_MENU_ITEMS
+    .map(item => {
+      if (!item.submenu) return item;
+      const subsFiltrados = item.submenu.filter(sub =>
+        sub.permissaoCheck ? sub.permissaoCheck(permissoes) : true
+      );
+      return { ...item, submenu: subsFiltrados };
+    })
+    .filter(item => {
+      const pass = item.permissaoCheck ? item.permissaoCheck(permissoes) : true;
+      if (!pass) return false;
+      if (item.submenu) return item.submenu.length > 0;
       return true;
     });
-    return { ...item, submenu: subsFiltrados };
-  }).filter(item => {
-    if (item.submenu) return item.submenu.length > 0;
-    return true;
-  });
 }
 
-// ─── Definição completa da estrutura de menu ─────────────────────────────────
-// Cada item tem uma função permissaoCheck que recebe o objeto de permissões resolvidas
-import {
-  LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
-  DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck
-} from 'lucide-react';
+// ─── Definição do menu alinhada com o formato real salvo pelo PerfilFormTela ──
 
 export const ALL_MENU_ITEMS = [
   {
@@ -167,22 +145,23 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Gestão de Vendas',
         page: 'VendasGestao',
-        permissaoCheck: (p) => p?.vendas?.listar_pedidos?.ver || p?.vendas?.listar_pedidos?.editar
+        // salvo como boolean direto: permissoes.vendas.listar_pedidos = true
+        permissaoCheck: (p) => p?.vendas?.listar_pedidos === true
       },
       {
         name: 'Vendas Perdidas',
         page: 'VendasPerdidas',
-        permissaoCheck: (p) => p?.vendas?.vendas_perdidas
+        permissaoCheck: (p) => p?.vendas?.vendas_perdidas === true
       },
       {
         name: 'Controle de Entregas',
         page: 'ControleEntregas',
-        permissaoCheck: (p) => p?.vendas?.controle_entregas?.ver || p?.vendas?.controle_entregas?.editar
+        permissaoCheck: (p) => p?.vendas?.controle_entregas === true
       },
       {
         name: 'Painel Gerencial',
         page: 'PainelGerente',
-        permissaoCheck: (p) => p?.vendas?.painel_gerencial
+        permissaoCheck: (p) => p?.vendas?.painel_gerencial === true
       }
     ]
   },
@@ -190,84 +169,97 @@ export const ALL_MENU_ITEMS = [
     name: 'Produtos',
     icon: Package,
     page: 'Produtos',
-    permissaoCheck: (p) => p?.estoque?.produtos?.ver || p?.estoque?.produtos?.editar || p?.estoque?.visualizar_produtos
+    permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true
   },
   {
     name: 'Compras',
     icon: ShoppingCart,
-    permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar,
+    permissaoCheck: (p) =>
+      p?.estoque?.compras?.sugestoes ||
+      p?.estoque?.compras?.cotacoes ||
+      p?.estoque?.compras?.pedidos ||
+      p?.estoque?.compras?.hub_logistico?.manifestos ||
+      p?.estoque?.compras?.hub_logistico?.supermanifestos ||
+      p?.estoque?.compras?.hub_logistico?.conferencia ||
+      p?.estoque?.logistica,
     submenu: [
       {
         name: 'Sugestões de Compra',
         page: 'SugestoesCompra',
-        permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar
+        permissaoCheck: (p) => p?.estoque?.compras?.sugestoes === true
       },
       {
         name: 'Cotações',
         page: 'Cotacoes',
-        permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar
+        permissaoCheck: (p) => p?.estoque?.compras?.cotacoes === true
       },
       {
         name: 'Pedidos de Compra',
         page: 'PedidosCompra',
-        permissaoCheck: (p) => p?.estoque?.compras?.ver || p?.estoque?.compras?.editar
+        permissaoCheck: (p) => p?.estoque?.compras?.pedidos === true
       },
       {
         name: 'Manifestos',
         page: 'GestaoManifestosPage',
-        permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar || p?.estoque?.compras?.ver
+        permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.manifestos === true || p?.estoque?.logistica === true
       },
       {
         name: 'Supermanifestos',
         page: 'GestaoSupermanifestosPage',
-        permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar || p?.estoque?.compras?.ver
+        permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.supermanifestos === true || p?.estoque?.logistica === true
       },
       {
         name: 'Conferência de Entrada',
         page: 'ConferenciaEntrada',
-        permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar || p?.estoque?.compras?.ver
+        permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.conferencia === true || p?.estoque?.logistica === true
       },
       {
         name: 'Logística',
         page: 'Logistica',
-        permissaoCheck: (p) => p?.estoque?.logistica?.ver || p?.estoque?.logistica?.editar
+        permissaoCheck: (p) => p?.estoque?.logistica === true
       }
     ]
   },
   {
     name: 'Estoque',
     icon: Warehouse,
-    permissaoCheck: (p) => p?.estoque?.acesso,
+    permissaoCheck: (p) =>
+      p?.estoque?.conferencia_estoque ||
+      p?.estoque?.auditoria_estoque ||
+      p?.estoque?.armazenagem ||
+      p?.estoque?.separacao_pedidos ||
+      p?.estoque?.tabela_precos ||
+      p?.estoque?.realizar_ajuste_estoque,
     submenu: [
       {
         name: 'Conferência',
         page: 'ConferenciaEstoque',
-        permissaoCheck: (p) => p?.estoque?.conferencia_estoque
+        permissaoCheck: (p) => p?.estoque?.conferencia_estoque === true
       },
       {
         name: 'Auditoria',
         page: 'AuditoriaEstoque',
-        permissaoCheck: (p) => p?.estoque?.auditoria_estoque
+        permissaoCheck: (p) => p?.estoque?.auditoria_estoque === true
       },
       {
         name: 'Armazenagem',
         page: 'Armazenagem',
-        permissaoCheck: (p) => p?.estoque?.armazenagem
+        permissaoCheck: (p) => p?.estoque?.armazenagem === true
       },
       {
         name: 'Separação de Pedidos',
         page: 'InterfaceSeparador',
-        permissaoCheck: (p) => p?.estoque?.separacao_pedidos
+        permissaoCheck: (p) => p?.estoque?.separacao_pedidos === true
       },
       {
         name: 'Tabela de Preços',
         page: 'TabelaPrecosConsulta',
-        permissaoCheck: (p) => p?.estoque?.tabela_precos
+        permissaoCheck: (p) => p?.estoque?.tabela_precos === true
       },
       {
         name: 'Importação em Massa',
         page: 'ImportacaoProdutos',
-        permissaoCheck: (p) => p?.estoque?.produtos?.editar
+        permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true
       }
     ]
   },
@@ -279,27 +271,27 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Fluxo de Caixa',
         page: 'FluxoCaixa',
-        permissaoCheck: (p) => p?.financeiro?.acesso
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
         name: 'Contas',
         page: 'ContasFinanceiras',
-        permissaoCheck: (p) => p?.financeiro?.acesso
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
         name: 'Aprovações',
         page: 'AprovacoesFinanceiras',
-        permissaoCheck: (p) => p?.financeiro?.acesso
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
         name: 'Caixas Ativos',
         page: 'CaixasAtivos',
-        permissaoCheck: (p) => p?.financeiro?.caixas_ativos || p?.financeiro?.acesso
+        permissaoCheck: (p) => p?.financeiro?.caixas_ativos === true || p?.financeiro?.acesso === true
       },
       {
         name: 'Turnos Fechados',
         page: 'TurnosFechados',
-        permissaoCheck: (p) => p?.financeiro?.acesso
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
       }
     ]
   },
@@ -307,12 +299,12 @@ export const ALL_MENU_ITEMS = [
     name: 'Relatórios',
     icon: BookOpen,
     page: 'Relatorios',
-    permissaoCheck: (p) => p?.relatorios?.acesso
+    permissaoCheck: (p) => p?.relatorios?.acesso === true
   },
   {
     name: 'Configurações',
     icon: Settings,
     page: 'Configuracoes',
-    permissaoCheck: (p) => p?.configuracoes?.acesso
+    permissaoCheck: (p) => p?.configuracoes?.acesso === true
   }
 ];
