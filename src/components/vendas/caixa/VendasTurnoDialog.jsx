@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer, Receipt, Eye } from 'lucide-react';
-import { format } from 'date-fns';
+
+const TZ = 'America/Rio_Branco';
+const fmtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '--:--';
+const fmtDtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '—';
 
 export default function VendasTurnoDialog({ open, onOpenChange, vendasFinalizadas, turnoAtivo, caixaData, formatValor, onVerDetalhes }) {
   return (
@@ -21,7 +24,7 @@ export default function VendasTurnoDialog({ open, onOpenChange, vendasFinalizada
             onClick={() => {
               const linhas = vendasFinalizadas.map(v => {
                 const pags = (v.pagamentos || []).map(p => `${p.forma_pagamento} R$ ${(p.valor||0).toFixed(2)}`).join(' | ');
-                return `<div style="border-bottom:1px solid #f3f4f6;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>${v.numero} · ${v.cliente_nome || ''} · ${new Date(v.created_date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span><span style="color:#059669;font-weight:600">+R$ ${(v.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af">${pags}</div></div>`;
+                return `<div style="border-bottom:1px solid #f3f4f6;padding:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>${v.numero} · ${v.cliente_nome || ''} · ${fmtHora(v.created_date)}</span><span style="color:#059669;font-weight:600">+R$ ${(v.valor_total||0).toFixed(2)}</span></div><div style="font-size:10px;color:#9ca3af">${pags}</div></div>`;
               }).join('');
               const cancelamentos = (turnoAtivo?.cancelamentos_rastro || []);
               const linhasCancelamentos = cancelamentos.length > 0
@@ -35,7 +38,7 @@ export default function VendasTurnoDialog({ open, onOpenChange, vendasFinalizada
               </style></head><body>
                 <div style="text-align:center;margin-bottom:14px"><b style="font-size:16px">VAREJOSYNC</b><br/><span style="color:#9ca3af;font-size:11px">Extrato de Vendas do Turno</span></div>
                 <div class="dashed"></div>
-                <h2>Turno: ${turnoAtivo?.numero || '-'} · Abertura: ${turnoAtivo?.data_abertura ? new Date(turnoAtivo.data_abertura).toLocaleString('pt-BR') : '-'}</h2>
+                <h2>Turno: ${turnoAtivo?.numero || '-'} · Abertura: ${turnoAtivo?.data_abertura ? fmtDtHora(turnoAtivo.data_abertura) : '-'}</h2>
                 <div class="dashed"></div>
                 <h2>Vendas (${vendasFinalizadas.length})</h2>
                 ${linhas || '<p style="color:#9ca3af;font-size:11px">Nenhuma venda</p>'}
@@ -95,8 +98,8 @@ export default function VendasTurnoDialog({ open, onOpenChange, vendasFinalizada
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{venda.numero}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(venda.created_date), 'HH:mm')}</span>
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white">{venda.numero}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{fmtHora(venda.created_date)}</span>
                           </div>
                           <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">{venda.cliente_nome}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">{venda.vendedor_nome}</div>
@@ -121,7 +124,7 @@ export default function VendasTurnoDialog({ open, onOpenChange, vendasFinalizada
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{venda.numero}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(venda.created_date), 'HH:mm')}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{fmtHora(venda.created_date)}</div>
                       </div>
                       <button onClick={() => onVerDetalhes(venda)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"

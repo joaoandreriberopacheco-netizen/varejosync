@@ -46,6 +46,9 @@ function LancRow({ l, onClick }) {
   const prev = !pago && l.status !== 'Cancelado';
   const conc = l.status_conciliacao || 'N/A';
   const data = l.data_pagamento || l.data_vencimento;
+  // Datas tipo '2026-03-23' (sem hora) são UTC midnight → ficam um dia atrás no UTC-5.
+  // Adicionamos T12:00:00 para evitar esse shift.
+  const parseDate = (d) => !d ? null : (d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
 
   let icon, valColor;
   if (isT) {
@@ -70,7 +73,7 @@ function LancRow({ l, onClick }) {
         </span>
         <span className="flex items-center flex-wrap gap-1 mt-0.5">
           <span className="text-[0.68rem] text-gray-400 dark:text-gray-500">
-            {data ? format(new Date(data), 'dd MMM', { locale: ptBR }) : '—'}
+            {data ? format(parseDate(data), 'dd MMM', { locale: ptBR }) : '—'}
             {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
           </span>
           {l.categoria && (
