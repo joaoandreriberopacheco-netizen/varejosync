@@ -407,7 +407,7 @@ export default function VendasGestaoPage() {
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <div className="font-semibold text-gray-800 dark:text-gray-200">
-                        R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </div>
                       <div className="text-xs text-gray-400">
                         {fmtDataCurta(rascunho.created_date)}
@@ -466,7 +466,7 @@ export default function VendasGestaoPage() {
                         {fmtDtHora(rascunho.created_date)}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
-                        R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                       <TableCell>
                         {podeInutilizar && (
@@ -528,7 +528,7 @@ export default function VendasGestaoPage() {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="font-semibold text-gray-800 dark:text-gray-200">
-                        R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </div>
                       <div className="text-xs text-gray-400">
                         {fmtDataCurta(pedido.created_date)}
@@ -605,7 +605,7 @@ export default function VendasGestaoPage() {
                         {fmtDtHora(pedido.created_date)}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
-                        R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </TableCell>
                     </TableRow>
                   ))}
