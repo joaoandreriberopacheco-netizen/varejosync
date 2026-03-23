@@ -67,20 +67,16 @@ export function temPermissao(user, perfilDeAcesso, modulo, permissao, subtipo = 
  * @returns {Array} - Lista de itens de menu autorizados
  */
 export function buildMenuItems(user, perfilDeAcesso) {
-  // Admins veem tudo
+  // Admins vêem tudo
   if (user?.role === 'admin') return ALL_MENU_ITEMS;
 
-  // Sem perfil de acesso atribuído E sem overrides = vê tudo
-  if (!user?.perfil_acesso_id && (!user?.override_permissoes || Object.keys(user.override_permissoes || {}).length === 0)) {
-    return ALL_MENU_ITEMS;
-  }
+  // Sem perfil atribuído E sem overrides individuais = vê tudo
+  const temPerfil = !!user?.perfil_acesso_id;
+  const temOverrides = user?.override_permissoes && Object.keys(user.override_permissoes).length > 0;
+  if (!temPerfil && !temOverrides) return ALL_MENU_ITEMS;
 
+  // Tem perfil ou overrides: aplica filtro sempre
   const permissoes = resolverPermissoes(perfilDeAcesso, user?.override_permissoes);
-
-  // Perfil atribuído mas sem permissões cadastradas ainda = mostra tudo
-  const permissoesKeys = Object.keys(perfilDeAcesso?.permissoes || {});
-  const overrideKeys = Object.keys(user?.override_permissoes || {});
-  if (permissoesKeys.length === 0 && overrideKeys.length === 0) return ALL_MENU_ITEMS;
 
   return ALL_MENU_ITEMS.filter(item => {
     if (item.permissaoCheck) return item.permissaoCheck(permissoes);
@@ -93,7 +89,6 @@ export function buildMenuItems(user, perfilDeAcesso) {
     });
     return { ...item, submenu: subsFiltrados };
   }).filter(item => {
-    // Remove módulos cujos submenus ficaram vazios
     if (item.submenu) return item.submenu.length > 0;
     return true;
   });
