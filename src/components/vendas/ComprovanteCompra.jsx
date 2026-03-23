@@ -23,7 +23,7 @@ const F = 9; // base font size px
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
   const itens = pedido.itens || [];
-  const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+  const font = "'Ubuntu Sans Mono', 'Cousine', monospace";
   const F = 9;
 
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
@@ -47,7 +47,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
     </div>
   );
 
-  const maxNameW = 26;
+  const maxNameW = 24;
 
   return (
     <div
@@ -63,8 +63,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         {dadosEmpresa?.logo_url && (
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
-        {/* Nome Fantasia — maior, peso 500 para visibilidade sem bold */}
-        <div style={{ fontSize: F + 12, fontWeight: '500', letterSpacing: '0.8px', lineHeight: 1.1, marginBottom: '5px' }}>
+        {/* Nome Fantasia — maior */}
+        <div style={{ fontSize: F + 8, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '4px' }}>
           {empresa.nomeFantasia}
         </div>
         {/* Razão Social — se diferente do nome fantasia */}
@@ -98,9 +98,9 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Cabeçalho colunas ── */}
-      <div style={{ fontSize: F - 1, color: '#666', lineHeight: 1.4 }}>
-        <span>Nº  Descrição</span>
-        <span style={{ float: 'right' }}>Qtd  Unit  Total</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F - 1, color: '#666', lineHeight: 1.4 }}>
+        <span>NO. | ITEM NAME</span>
+        <span>QTY | UN | PREÇO | TOTAL</span>
       </div>
 
       <Sep />
@@ -112,7 +112,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         const preco = fmtV(item.preco_unitario_praticado);
         const total = fmtV(item.total);
         const num = String(idx + 1).padStart(2, '0');
-        const valStr = `${qtd}  ${preco}  ${total}`;
+        const unidade = (item.unidade_principal || 'UN').substring(0, 4);
+        const valStr = `${qtd} | ${unidade} | ${preco} | ${total}`;
 
         // Quebra nome em linhas
         const palavras = nome.split(' ');
@@ -167,8 +168,8 @@ function CupomTermico({ pedido, dadosEmpresa }) {
             <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
           </div>
         )}
-        {/* TOTAL — hierarquia por tamanho, sem bold */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 7, fontWeight: '500', margin: '5px 0 3px' }}>
+        {/* TOTAL — hierarquia só por tamanho */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 7, fontWeight: '400', margin: '5px 0 3px' }}>
           <span>TOTAL</span>
           <span>R$ {fmtV(pedido.valor_total || 0)}</span>
         </div>
@@ -178,7 +179,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <div style={{ marginTop: '2px' }}>
           {pedido.pagamentos.map((pag, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 2, fontWeight: '400' }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 3, fontWeight: '400' }}>
               <span>{(pag.forma_pagamento || '').toUpperCase()}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
             </div>
@@ -190,7 +191,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
 
       {/* ── Rodapé ── */}
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: F + 4, fontWeight: '500', letterSpacing: '0.8px', margin: '4px 0 3px' }}>
+        <div style={{ fontSize: F + 4, fontWeight: '400', letterSpacing: '0.5px', margin: '4px 0 3px' }}>
           {empresa.mensagem}
         </div>
         <div style={{ fontSize: F - 1, color: '#666' }}>Este documento não possui validade fiscal.</div>
@@ -410,7 +411,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     const html = `<!DOCTYPE html><html><head>
       <meta charset="UTF-8">
       <title>Pedido ${pedido?.numero || ''}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:wght@400&family=Cousine:wght@400&display=swap" rel="stylesheet">
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { background: #fff; }
