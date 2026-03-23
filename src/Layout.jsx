@@ -33,8 +33,10 @@ import {
   Trash2,
   HelpCircle,
   Printer,
-  LayoutGrid
+  LayoutGrid,
+  Shield
 } from 'lucide-react';
+import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from "@/components/ui/dialog.jsx";
@@ -71,6 +73,7 @@ export default function Layout({ children, currentPageName }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
+  const [showPinSetup, setShowPinSetup] = useState(false);
   const location = useLocation();
   const [isHovering, setIsHovering] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -548,6 +551,14 @@ export default function Layout({ children, currentPageName }) {
                       <span>Personalizar Início</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setShowPinSetup(true)}
+                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      <span>{currentUser?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleProfileSwitch('Admin')} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleProfileSwitch('Vendedor')} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleProfileSwitch('Operador de Caixa')} className="dark:hover:bg-gray-700 dark:text-gray-200">Operador de Caixa</DropdownMenuItem>
@@ -626,6 +637,13 @@ export default function Layout({ children, currentPageName }) {
         )}
       </div>
       <Toaster />
+      {showPinSetup && (
+        <PinSetupDialog
+          isOpen={showPinSetup}
+          onClose={() => { setShowPinSetup(false); loadUser(); }}
+          user={currentUser}
+        />
+      )}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
         <DialogContent className="p-0 gap-0 max-w-xl bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 fixed top-4 md:top-[20%] translate-y-0">
           <div className="flex items-center px-4 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">

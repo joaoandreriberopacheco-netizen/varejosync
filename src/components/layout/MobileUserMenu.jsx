@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
-import { User, LogOut, Settings, Sun, Moon, X, Printer, Trash2, HelpCircle, MoreVertical } from 'lucide-react';
+import { User, LogOut, Settings, Sun, Moon, X, Printer, Trash2, HelpCircle, MoreVertical, Shield } from 'lucide-react';
+import PinSetupDialog from '@/components/auth/PinSetupDialog';
 
 export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [showPin, setShowPin] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(u => u && setUser(u)).catch(() => {});
@@ -104,6 +106,17 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
                 <span className="text-sm text-gray-700 dark:text-gray-200">Ajuda (IA)</span>
               </button>
 
+              {/* Meu PIN */}
+              <button
+                onClick={() => { setShowPin(true); }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Shield className="w-5 h-5 text-gray-500" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">
+                  {user?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}
+                </span>
+              </button>
+
               {/* Divisor */}
               <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
 
@@ -127,6 +140,13 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
             </div>
           </div>
         </>
+      )}
+      {showPin && (
+        <PinSetupDialog
+          isOpen={showPin}
+          onClose={() => { setShowPin(false); base44.auth.me().then(u => u && setUser(u)).catch(()=>{}); }}
+          user={user}
+        />
       )}
     </>
   );
