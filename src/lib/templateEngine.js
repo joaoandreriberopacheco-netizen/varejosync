@@ -106,12 +106,7 @@ export function prepararDadosVenda(pedido, dadosEmpresa) {
   return {
     // Empresa — nome fantasia tem prioridade sobre razão social
     empresa_nome: (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'VAREJOSYNC').toUpperCase(),
-    empresa_endereco: dadosEmpresa?.endereco || '',
-    empresa_numero: dadosEmpresa?.numero || '',
-    empresa_bairro: dadosEmpresa?.bairro || '',
-    empresa_cidade: dadosEmpresa?.cidade || '',
-    empresa_estado: dadosEmpresa?.estado || '',
-    empresa_telefone: dadosEmpresa?.telefone || '',
+    empresa_razao_social: dadosEmpresa?.razao_social || '',
     empresa_cnpj: dadosEmpresa?.cnpj || '',
     empresa_logo: dadosEmpresa?.logo_url || '',
     empresa_rodape: (dadosEmpresa?.mensagem_rodape || 'OBRIGADO PELA PREFERÊNCIA!').toUpperCase(),
