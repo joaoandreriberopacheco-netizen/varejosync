@@ -674,14 +674,22 @@ export default function PDVVendedor() {
     }
   };
 
+  // Cria cliente rápido apenas com nome (sem form completo)
+  const handleCriarClienteRapido = async (nome) => {
+    try {
+      const criado = await base44.entities.Terceiro.create({ nome, tipo: 'Cliente', ativo: true });
+      setClienteSelecionado(criado);
+      setClientes(prev => [...prev, criado]);
+      setBuscaCliente('');
+      showFeedback('success', `Cliente "${nome}" registrado!`, 2000);
+    } catch (err) {
+      showFeedback('error', `Erro: ${err.message}`, 3000);
+    }
+  };
+
   const handleFinalizarPreVenda = async () => {
     if (carrinho.length === 0) {
       showFeedback('error', 'Adicione produtos antes de finalizar', 3000);
-      return;
-    }
-
-    if (!clienteSelecionado) {
-      showFeedback('error', 'Selecione um cliente antes de finalizar', 3000);
       return;
     }
 
@@ -744,11 +752,12 @@ export default function PDVVendedor() {
         const proximoSequencial = rascunhosHoje.length + 1;
         const senhaAtendimento = `${prefixoData}${String(proximoSequencial).padStart(3, '0')}`;
 
+        const clienteParaUsar = clienteSelecionado || { id: null, nome: 'Avulso' };
         const rascunhoData = {
-          senha_atendimento: senhaAtendimento,
-          tipo: 'PDV',
-          cliente_id: clienteSelecionado.id,
-          cliente_nome: clienteSelecionado.nome,
+        senha_atendimento: senhaAtendimento,
+        tipo: 'PDV',
+        cliente_id: clienteParaUsar.id,
+        cliente_nome: clienteParaUsar.nome,
           vendedor_id: currentUser.id,
           vendedor_nome: currentUser.full_name,
           tabela_preco_id: tabelaPreco?.id,
@@ -1444,6 +1453,19 @@ export default function PDVVendedor() {
                   </div>
                 </div>
 
+                {/* Criação rápida por nome */}
+                {buscaCliente.trim().length >= 2 && clientesFiltrados.length === 0 && (
+                  <button
+                    onClick={() => handleCriarClienteRapido(buscaCliente.trim())}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <UserPlus className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Usar "{buscaCliente.trim()}" como novo cliente</p>
+                      <p className="text-xs text-gray-400">Cadastro rápido · detalhes podem ser adicionados depois</p>
+                    </div>
+                  </button>
+                )}
+
                 <Button
                 onClick={() => {
                   setShowNovoClienteForm(true);
@@ -1451,7 +1473,6 @@ export default function PDVVendedor() {
                 }}
                 variant="outline"
                 className="w-full h-14 text-base font-medium border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-all">
-
                   <UserPlus className="w-5 h-5 mr-2 text-gray-500" />
                   {isMobile ? 'Cadastrar Novo Cliente' : 'Cadastrar Novo Cliente (F2)'}
                 </Button>
@@ -1632,7 +1653,7 @@ export default function PDVVendedor() {
               </Button>
               <Button
               onClick={handleFinalizarPreVenda}
-              disabled={!clienteSelecionado || isProcessing || ajusteExcedido}
+              disabled={isProcessing || ajusteExcedido}
               className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 text-white w-full sm:w-auto h-12 text-base font-medium rounded-xl shadow-none disabled:opacity-50 border-0">
 
                 {isProcessing ? 'Processando...' : currentUser?.pode_acessar_caixa ? 'Ir para Pagamento' : 'Enviar ao Caixa'}
