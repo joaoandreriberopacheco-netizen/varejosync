@@ -12,7 +12,11 @@ import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
-import { format, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+
+const TZ = 'America/Rio_Branco';
+const fmtDtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
+const fmtDataCurta = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: '2-digit' }).format(new Date(d)) : '';
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -406,7 +410,7 @@ export default function VendasGestaoPage() {
                         R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                       </div>
                       <div className="text-xs text-gray-400">
-                        {rascunho.created_date ? format(new Date(rascunho.created_date), 'dd/MM/yy') : ''}
+                        {fmtDataCurta(rascunho.created_date)}
                       </div>
                       {podeInutilizar && (
                         <button onClick={() => handleInutilizarRascunho(rascunho)}
@@ -459,7 +463,7 @@ export default function VendasGestaoPage() {
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 dark:text-gray-400">{rascunho.vendedor_nome}</TableCell>
                       <TableCell className="text-sm text-gray-500 dark:text-gray-400">
-                        {rascunho.created_date ? format(new Date(rascunho.created_date), 'dd/MM/yyyy HH:mm') : '-'}
+                        {fmtDtHora(rascunho.created_date)}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
                         R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
@@ -527,7 +531,7 @@ export default function VendasGestaoPage() {
                         R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                       </div>
                       <div className="text-xs text-gray-400">
-                        {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yy') : ''}
+                        {fmtDataCurta(pedido.created_date)}
                       </div>
                     </div>
                     <DropdownMenu>
@@ -598,7 +602,7 @@ export default function VendasGestaoPage() {
                       </TableCell>
                       <TableCell className="text-sm text-gray-500 dark:text-gray-400">{pedido.vendedor_nome}</TableCell>
                       <TableCell className="text-sm text-gray-500 dark:text-gray-400">
-                        {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm') : '-'}
+                        {fmtDtHora(pedido.created_date)}
                       </TableCell>
                       <TableCell className="text-right font-semibold text-gray-800 dark:text-gray-200">
                         R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}

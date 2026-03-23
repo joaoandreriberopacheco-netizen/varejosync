@@ -175,7 +175,12 @@ function EditarPagamentosStep({ pedido, onConfirm }) {
 export default function AlterarPagamentoDialog({ open, onClose }) {
   const [step, setStep] = useState('buscar');
   const [pedido, setPedido] = useState(null);
+  const [formasDePagamento, setFormasDePagamento] = useState([]);
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    base44.entities.FormasDePagamento.filter({ ativo: true }).then(setFormasDePagamento).catch(() => {});
+  }, []);
   const { toast } = useToast();
 
   const handleClose = () => {
@@ -188,6 +193,31 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
     setSalvando(true);
     try {
       await base44.entities.PedidoVenda.update(pedido.id, { pagamentos: novosPagamentos });
+
+      // Atualizar LancamentoFinanceiro vinculados: conta conforme forma de pagamento
+      const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
+        referencia_id: pedido.id,
+        referencia_tipo: 'PedidoVenda'
+      });
+      for (const lanc of lancamentos) {
+        // Encontrar a forma de pagamento correspondente no novo array
+        const pag = novosPagamentos.find(p =>
+          p.forma_pagamento === lanc.forma_pagamento ||
+          novosPagamentos.length === 1
+        ) || novosPagamentos[0];
+        if (!pag) continue;
+        const forma = formasDePagamento.find(f => f.nome === pag.forma_pagamento);
+        if (forma && forma.conta_destino_id) {
+          await base44.entities.LancamentoFinanceiro.update(lanc.id, {
+            forma_pagamento: pag.forma_pagamento,
+            forma_pagamento_id: forma.id,
+            forma_pagamento_tipo: forma.tipo,
+            conta_financeira_id: forma.conta_destino_id,
+            conta_financeira_nome: forma.conta_destino_nome || '',
+          });
+        }
+      }
+
       toast({ title: '✓ Pagamento atualizado!', description: `Formas de pagamento do ${pedido.numero} foram alteradas.`, className: 'bg-emerald-100 text-emerald-800' });
       handleClose();
     } catch (error) {
