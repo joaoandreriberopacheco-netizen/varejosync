@@ -76,9 +76,12 @@ export default function ExecucaoOrcamentaria() {
     return { s: startOfMonth(h), e: endOfMonth(h) };
   }, [periodo, cs, ce]);
 
+  // Parseia date-only strings ('2026-03-23') com T12:00:00 para evitar shift UTC-5
+  const parseD = (d) => !d ? null : (typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
+
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado' && !statusSel.includes('Cancelado')) return false;
-    const dr = l.data_pagamento ? new Date(l.data_pagamento) : l.data_vencimento ? new Date(l.data_vencimento) : null;
+    const dr = l.data_pagamento ? parseD(l.data_pagamento) : l.data_vencimento ? parseD(l.data_vencimento) : null;
     if (ds && de && dr && !isWithinInterval(dr, { start: ds, end: de })) return false;
     if (contasSel.length && !contasSel.includes(l.conta_financeira_id)) return false;
     if (tiposSel.length && !tiposSel.includes(l.tipo)) return false;
@@ -128,7 +131,7 @@ export default function ExecucaoOrcamentaria() {
     const map = {};
     filtrados.forEach(l => {
       const dr = l.data_pagamento || l.data_vencimento;
-      const k = dr ? format(new Date(dr), 'yyyy-MM-dd') : 'sem-data';
+      const k = dr ? format(parseD(dr), 'yyyy-MM-dd') : 'sem-data';
       (map[k] = map[k] || []).push(l);
     });
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a)).map(([k, items]) => {

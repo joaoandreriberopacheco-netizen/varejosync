@@ -23,7 +23,9 @@ import {
   MoreVertical,
   Share2
 } from 'lucide-react';
-import { format } from 'date-fns';
+const TZ = 'America/Rio_Branco';
+const fmtDtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : 'N/A';
+const fmtData = (d) => !d ? '-' : new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' }).format(typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
@@ -60,7 +62,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
   if (!pedido) return null;
 
   const formatValor = (valor) => {
-    return `R$ ${(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    return `R$ ${(Math.round((valor || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const getStatusBadge = (status) => {
@@ -150,7 +152,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                 Data/Hora
               </div>
               <div className="text-sm md:text-base font-medium text-gray-700 dark:text-gray-300">
-                {pedido.created_date ? format(new Date(pedido.created_date), 'dd/MM/yyyy HH:mm') : 'N/A'}
+                {fmtDtHora(pedido.created_date)}
               </div>
             </div>
             <div>
@@ -394,7 +396,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                         <div>
                           <div className="font-medium text-gray-800 dark:text-gray-200">{lanc.descricao}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Venc: {lanc.data_vencimento ? format(new Date(lanc.data_vencimento), 'dd/MM/yyyy') : '-'}
+                            Venc: {fmtData(lanc.data_vencimento)}
                           </div>
                         </div>
                         <div className="text-right flex items-center gap-3">
@@ -460,7 +462,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                         <div>
                           <div className="font-medium text-gray-800 dark:text-gray-200">{mov.produto_nome}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {mov.created_date ? format(new Date(mov.created_date), 'dd/MM/yyyy HH:mm') : '-'}
+                            {fmtDtHora(mov.created_date)}
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
