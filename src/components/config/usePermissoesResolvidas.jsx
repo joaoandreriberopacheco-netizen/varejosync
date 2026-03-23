@@ -70,13 +70,19 @@ export function buildMenuItems(user, perfilDeAcesso) {
   // Admins vêem tudo
   if (user?.role === 'admin') return ALL_MENU_ITEMS;
 
-  // Sem perfil atribuído E sem overrides individuais = vê tudo
   const temPerfil = !!user?.perfil_acesso_id;
   const temOverrides = user?.override_permissoes && Object.keys(user.override_permissoes).length > 0;
+
+  // Sem perfil E sem overrides = vê tudo
   if (!temPerfil && !temOverrides) return ALL_MENU_ITEMS;
 
-  // Tem perfil ou overrides: aplica filtro sempre
+  // Tem perfil_acesso_id mas o objeto ainda não carregou = aguarda (menu vazio temporário)
+  if (temPerfil && !perfilDeAcesso) return [];
+
   const permissoes = resolverPermissoes(perfilDeAcesso, user?.override_permissoes);
+
+  // Perfil sem nenhuma permissão definida (perfil vazio/recém criado) = mostra tudo
+  if (Object.keys(permissoes).length === 0) return ALL_MENU_ITEMS;
 
   return ALL_MENU_ITEMS.filter(item => {
     if (item.permissaoCheck) return item.permissaoCheck(permissoes);
