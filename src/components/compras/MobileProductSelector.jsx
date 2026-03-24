@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package, AlertCircle, FileText } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package, AlertCircle, FileText, Delete, ArrowRight, Percent, TrendingDown, TrendingUp } from 'lucide-react';
 import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,7 @@ export default function MobileProductSelector({
   isLocked,
   onProductCreated
 }) {
-  const [view, setView] = useState('menu'); // 'menu' | 'catalog' | 'cart' | 'edit'
+  const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit'
   const [search, setSearch] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -136,6 +136,132 @@ export default function MobileProductSelector({
   const parseBR = (s) => parseFloat(String(s || '').replace(/\./g, '').replace(',', '.')) || 0;
   const fmtBR = (n) => (parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  // ── Tela: Entrada de Desconto/Acrésimo Global ─────────────────────────────
+  if (view === 'discount-entry') {
+    const [displayVal, setDisplayVal] = React.useState(descontoGlobalPct !== 0 ? String(Math.abs(descontoGlobalPct)) : '0');
+    const [tipoDesconto, setTipoDesconto] = React.useState(descontoGlobalPct < 0 ? 'acrescimo' : 'desconto');
+
+    const handleKey = (k) => {
+      setDisplayVal(prev => {
+        if (k === 'DEL') return prev.length > 1 ? prev.slice(0, -1) : '0';
+        if (k === '.' && prev.includes('.')) return prev;
+        if (k === '.' && prev === '0') return '0.';
+        if (k !== '.' && prev === '0') return k;
+        if (prev.length >= 6) return prev;
+        return prev + k;
+      });
+    };
+
+    const handleConfirm = () => {
+      const num = parseFloat(displayVal) || 0;
+      const final = tipoDesconto === 'acrescimo' ? -num : num;
+      setDescontoGlobalPct(final);
+      setDescontoGlobalPctInput(num !== 0 ? String(num) : '');
+      setView('catalog');
+    };
+
+    const numVal = parseFloat(displayVal) || 0;
+
+    const keys = ['7','8','9','4','5','6','1','2','3','.','0','DEL'];
+
+    return (
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <span className="ml-2 font-medium text-gray-900 dark:text-white">Desconto / Acréscimo Global</span>
+        </div>
+
+        <div className="flex-1 flex flex-col px-6 pt-6 pb-4 gap-5">
+          {/* Toggle Desconto / Acréscimo */}
+          <div className="flex rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 gap-1">
+            <button
+              onClick={() => setTipoDesconto('desconto')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+                tipoDesconto === 'desconto'
+                  ? 'bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <TrendingDown className="w-4 h-4" />
+              Desconto
+            </button>
+            <button
+              onClick={() => setTipoDesconto('acrescimo')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+                tipoDesconto === 'acrescimo'
+                  ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              Acréscimo
+            </button>
+          </div>
+
+          {/* Visor */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-6 py-5 flex flex-col items-center shadow-sm">
+            <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
+              {tipoDesconto === 'desconto' ? 'Desconto sobre todos os itens' : 'Acréscimo sobre todos os itens'}
+            </span>
+            <div className={`text-6xl font-bold tabular-nums tracking-tight ${
+              tipoDesconto === 'desconto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              {tipoDesconto === 'desconto' ? '-' : '+'}{displayVal}<span className="text-3xl font-medium text-gray-400 ml-1">%</span>
+            </div>
+            {numVal > 0 && (
+              <p className="text-xs text-gray-400 mt-3">
+                Ex: item R$ 100,00 → R$ {tipoDesconto === 'desconto' ? (100 - numVal).toFixed(2) : (100 + numVal).toFixed(2)}
+              </p>
+            )}
+          </div>
+
+          {/* Teclado numérico */}
+          <div className="grid grid-cols-3 gap-3 flex-1">
+            {keys.map(k => (
+              <button
+                key={k}
+                onClick={() => handleKey(k)}
+                className={`rounded-2xl flex items-center justify-center text-2xl font-semibold active:scale-95 transition-transform shadow-sm ${
+                  k === 'DEL'
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                    : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white'
+                }`}
+                style={{ minHeight: '64px' }}
+              >
+                {k === 'DEL' ? <Delete className="w-5 h-5" /> : k}
+              </button>
+            ))}
+          </div>
+
+          {/* Botões de ação */}
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 h-14 text-base rounded-2xl border-0 shadow-sm"
+              onClick={() => {
+                setDescontoGlobalPct(0);
+                setDescontoGlobalPctInput('');
+                setView('catalog');
+              }}
+            >
+              Sem desc./acrésc.
+            </Button>
+            <Button
+              className="flex-1 h-14 text-base rounded-2xl"
+              onClick={handleConfirm}
+            >
+              <ArrowRight className="w-5 h-5 mr-2" />
+              Buscar Itens
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Menu Principal
   if (view === 'menu') {
     return (
@@ -143,7 +269,7 @@ export default function MobileProductSelector({
         <div className="flex-1 flex flex-col p-4 space-y-3">
           {/* Buscar Produtos */}
           <button
-            onClick={() => setView('catalog')}
+            onClick={() => setView('discount-entry')}
             className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
             disabled={isLocked}
           >
@@ -505,39 +631,18 @@ export default function MobileProductSelector({
 
           <div className="flex-1 overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-              {/* Barra de Desconto Global */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Desc/Acrés. global (%):</span>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={descontoGlobalPctInput}
-                  onChange={e => {
-                    const v = e.target.value;
-                    if (/^-?[\d.,]*$/.test(v)) {
-                      setDescontoGlobalPctInput(v);
-                      const num = parseFloat(v.replace(',', '.'));
-                      if (!isNaN(num)) setDescontoGlobalPct(num);
-                      else if (v === '' || v === '-') setDescontoGlobalPct(0);
-                    }
-                  }}
-                  onFocus={e => e.target.select()}
-                  onBlur={() => {
-                    const num = parseFloat(descontoGlobalPctInput.replace(',', '.')) || 0;
-                    setDescontoGlobalPct(num);
-                    setDescontoGlobalPctInput(num !== 0 ? String(num) : '');
-                  }}
-                  className="h-9 w-20 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
-                  disabled={isLocked}
-                />
-                <span className="text-xs text-gray-400">%</span>
-                {descontoGlobalPct !== 0 && (
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${descontoGlobalPct > 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                    {descontoGlobalPct > 0 ? '-' : '+'}{Math.abs(descontoGlobalPct)}% aplicado
-                  </span>
-                )}
-              </div>
+              {/* Badge de desconto global ativo */}
+              {descontoGlobalPct !== 0 && (
+                <button
+                  onClick={() => setView('discount-entry')}
+                  className={`w-full mb-3 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm font-medium ${
+                    descontoGlobalPct > 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                  }`}
+                >
+                  {descontoGlobalPct > 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+                  {descontoGlobalPct > 0 ? 'Desconto' : 'Acréscimo'} global de {Math.abs(descontoGlobalPct)}% ativo — toque para alterar
+                </button>
+              )}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
