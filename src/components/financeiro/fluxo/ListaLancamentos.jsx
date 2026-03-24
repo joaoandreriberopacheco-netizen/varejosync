@@ -3,8 +3,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
-  Clock, AlertCircle, ChevronRight, Scale, RefreshCw
+  Clock, AlertCircle, ChevronRight, Scale, RefreshCw, X
 } from 'lucide-react';
+const parseDate = (d) => !d ? null : (typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
 
 const R = (v) => `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -43,10 +44,10 @@ function LancRow({ l, onClick }) {
   const isT = l.tipo === 'Transferência';
   const pago = l.status === 'Pago';
   const vencido = l.status === 'Vencido';
-  const prev = !pago && l.status !== 'Cancelado';
+  const cancelado = l.status === 'Cancelado';
+  const prev = !pago && !cancelado;
   const conc = l.status_conciliacao || 'N/A';
   const data = l.data_pagamento || l.data_vencimento;
-  const parseDate = (d) => !d ? null : (typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
 
   let icon, valColor;
   if (isT) {
@@ -60,13 +61,18 @@ function LancRow({ l, onClick }) {
     valColor = pago ? 'text-red-500 dark:text-red-400' : vencido ? 'text-red-400 dark:text-red-500' : 'text-gray-700 dark:text-gray-200';
   }
 
+  if (cancelado) {
+    icon = <X className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />;
+    valColor = 'text-gray-400 dark:text-gray-500 line-through';
+  }
+
   return (
     <button
       onClick={() => onClick(l)}
-      className="w-full flex items-start gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left">
-      <span className="bg-gray-100 rounded-xl flex-none w-8 h-8 flex items-center justify-center dark:bg-gray-700">{icon}</span>
+      className={`w-full flex items-start gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left ${cancelado ? 'opacity-60' : ''}`}>
+      <span className={`rounded-xl flex-none w-8 h-8 flex items-center justify-center ${cancelado ? 'bg-gray-100 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-700'}`}>{icon}</span>
       <span className="flex-1 min-w-0">
-        <span className={`block text-[0.82rem] font-medium whitespace-normal break-words leading-snug text-gray-800 dark:text-gray-100`}>
+        <span className={`block text-[0.82rem] font-medium whitespace-normal break-words leading-snug ${cancelado ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-100'}`}>
           {l.descricao}
         </span>
         <span className="flex items-center flex-wrap gap-1 mt-0.5">
@@ -80,6 +86,7 @@ function LancRow({ l, onClick }) {
             </span>
           )}
           <StatusBadge status={l.status} />
+          {cancelado && <span className="text-[0.6rem] px-1.5 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-400">Cancelado</span>}
           <RecorrenciaBadge l={l} />
           {(l.tags || []).slice(0, 2).map(t => (
             <span key={t} className="text-[0.6rem] px-1.5 py-0.5 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-400">{t}</span>
@@ -88,7 +95,7 @@ function LancRow({ l, onClick }) {
       </span>
       <span className="flex-none flex flex-col items-end gap-0.5 pl-1">
         <span className={`text-[0.82rem] font-bold whitespace-nowrap ${valColor}`}>
-          {isT ? '' : isR ? '+' : '−'}{R(Math.abs(l.valor || 0))}
+          {cancelado ? '—' : (isT ? '' : isR ? '+' : '−') + R(Math.abs(l.valor || 0))}
         </span>
         {conc === 'Pendente' && <Clock className="w-2.5 h-2.5 text-gray-400" />}
         {conc === 'Discrepância' && <AlertCircle className="w-2.5 h-2.5 text-gray-500" />}

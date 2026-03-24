@@ -4,7 +4,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save } from 'lucide-react';
+import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle } from 'lucide-react';
+import CancelarLancamentoDialog from './CancelarLancamentoDialog';
 import { useToast } from '@/components/ui/use-toast';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
@@ -39,7 +40,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [saving, setSaving] = useState(false);
   const [showEscopo, setShowEscopo] = useState(false);
   const [pendingSave, setPendingSave] = useState(null);
+  const [showCancelarDialog, setShowCancelarDialog] = useState(false);
   const { toast } = useToast();
+  const isCancelado = lancamento.status === 'Cancelado';
 
   const isReceita = lancamento.tipo === 'Receita';
   const isTransf = lancamento.tipo === 'Transferência';
@@ -133,6 +136,19 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setSaving(false);
   };
 
+  const handleRestaurar = async () => {
+    setSaving(true);
+    // Restaurar o status original (antes do cancelamento)
+    const statusAnterior = lancamento.referencia_tipo === 'MovimentosCaixa' ? 'Em Aberto' : lancamento.data_pagamento ? 'Pago' : 'Em Aberto';
+    await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+      status: statusAnterior,
+      observacoes: (lancamento.observacoes || '').replace(/\[CANCELADO.*?\]/gs, '').trim()
+    });
+    toast({ title: 'Lançamento restaurado!', className: 'bg-gray-100 text-gray-800' });
+    onSaved?.();
+    setSaving(false);
+  };
+
   let Icon = ArrowRightLeft;
   let iconClass = 'text-gray-400';
   if (!isTransf) {
@@ -193,8 +209,23 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
         <div className="h-px bg-gray-100 dark:bg-gray-800" />
 
+        {/* Botão Cancelar */}
+        {!isTransf && !isCancelado && (
+          <>
+            <div className="h-px bg-gray-100 dark:bg-gray-800" />
+            <div className="px-5 py-4">
+              <button
+                onClick={() => setShowCancelarDialog(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-medium border border-red-200 dark:border-red-900 active:scale-95 transition-transform">
+                <X className="w-4 h-4" />
+                Cancelar Lançamento
+              </button>
+            </div>
+          </>
+        )}
+
         {/* Seção: Marcar como pago */}
-        {!isTransf && (
+        {!isTransf && !isCancelado && (
           <div className="px-5 py-4 space-y-4">
             {/* Toggle */}
             <div className="flex items-center justify-between">
@@ -241,8 +272,34 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </div>
         )}
 
+        {/* Cancelado - Detalhes e Ações */}
+        {isCancelado && (
+          <>
+            <div className="h-px bg-gray-100 dark:bg-gray-800" />
+            <div className="px-5 py-4 space-y-3">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-300">Cancelado</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Este lançamento foi cancelado e não contribui para cálculos de saldo.</p>
+                  {lancamento.observacoes && (
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1.5 font-medium">Motivo: {lancamento.observacoes.replace(/\[CANCELADO.*?\]/gs, '').trim()}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleRestaurar}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-700 text-white text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
+                <RotateCcw className="w-4 h-4" />
+                Restaurar Lançamento
+              </button>
+            </div>
+          </>
+        )}
+
         {/* Conciliar (se pago e pendente) */}
-        {isPagoOriginal && isPendente && (
+        {isPagoOriginal && isPendente && !isCancelado && (
           <>
             <div className="h-px bg-gray-100 dark:bg-gray-800" />
             <div className="px-5 py-4 space-y-3">
@@ -294,6 +351,16 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       open={showEscopo}
       onClose={() => { setShowEscopo(false); setPendingSave(null); setSaving(false); }}
       onConfirm={(escopo) => aplicarPagamento(escopo)}
+    />
+    
+    <CancelarLancamentoDialog
+      lancamento={lancamento}
+      open={showCancelarDialog}
+      onClose={() => setShowCancelarDialog(false)}
+      onCancelado={() => {
+        setShowCancelarDialog(false);
+        onSaved?.();
+      }}
     />
     </>
   );
