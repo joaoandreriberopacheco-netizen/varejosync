@@ -11,7 +11,11 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 // ── Bottom-sheet de quantidade ao selecionar produto ──────────────────────────
 function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
   const [qtd, setQtd] = useState(qtdAtual > 0 ? String(qtdAtual) : '1');
+  const [precoEditado, setPrecoEditado] = useState(preco);
   const inputRef = useRef(null);
+  const precoRef = useRef(null);
+  const precoLivre = produto?.preco_livre || false;
+  const custoCalculado = produto?.preco_custo_calculado || 0;
 
   useEffect(() => {
     // Pequeno delay para garantir que o bottom-sheet está visível antes do focus
@@ -23,10 +27,13 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
   }, []);
 
   const qtdNum = parseFloat(qtd.replace(',', '.')) || 0;
-  const total = qtdNum * preco;
+  const precoFinal = precoLivre ? (parseFloat(precoEditado) || preco) : preco;
+  const total = qtdNum * precoFinal;
 
   const handleConfirm = () => {
-    if (qtdNum > 0) onConfirm(qtdNum);
+    if (qtdNum <= 0) return;
+    if (precoLivre && precoFinal < custoCalculado) return;
+    onConfirm(qtdNum, precoLivre ? precoFinal : undefined);
   };
 
   return (
@@ -86,6 +93,27 @@ function QuantidadeSheet({ produto, preco, qtdAtual, onConfirm, onClose }) {
               <Plus className="w-4 h-4 text-white dark:text-gray-900" />
             </button>
           </div>
+
+          {/* Campo de preço livre */}
+          {precoLivre && (
+            <div className="mb-4">
+              <p className="text-[10px] text-amber-500 font-medium uppercase tracking-wide mb-1.5">Preço livre</p>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">R$</span>
+                <input
+                  ref={precoRef}
+                  type="number" step="0.01" inputMode="decimal"
+                  value={precoEditado}
+                  onChange={e => setPrecoEditado(e.target.value)}
+                  onFocus={e => e.target.select()}
+                  className="w-full pl-9 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-2xl text-sm text-right border border-amber-200 dark:border-amber-800 focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+                />
+              </div>
+              {parseFloat(precoEditado) < custoCalculado && custoCalculado > 0 && (
+                <p className="text-[11px] text-red-500 mt-1">Mínimo: R$ {fmtR(custoCalculado)} (custo)</p>
+              )}
+            </div>
+          )}
 
           {/* Total */}
           {qtdNum > 0 && (
@@ -188,9 +216,9 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
     setProdutoSelecionado({ produto, preco });
   };
 
-  const handleConfirmQtd = (qtd) => {
+  const handleConfirmQtd = (qtd, novoPreco) => {
     const { produto, preco } = produtoSelecionado;
-    onSetQtd(produto, preco, qtd);
+    onSetQtd(produto, novoPreco ?? preco, qtd);
     setProdutoSelecionado(null);
     // Manter o search para continuar adicionando itens
     setTimeout(() => searchRef.current?.focus(), 50);
@@ -291,33 +319,47 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
 }
 
 // ── Item no carrinho ──────────────────────────────────────────────────────────
-function ItemCarrinho({ item, onSelect, onRemove }) {
+function ItemCarrinho({ item, onSelect, onRemove, onUpdatePreco }) {
   return (
-    <div
-      className="flex items-center gap-3 mx-3 my-1.5 px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl active:bg-gray-100 dark:active:bg-gray-700/60 cursor-pointer shadow-sm"
-      onClick={() => onSelect(item)}
-    >
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{item.nome}</p>
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
-          {item.qtd} {item.unidade} × R$ {fmtR(item.preco_unit)}
-        </p>
+    <div className="mx-3 my-1.5 px-4 py-3 bg-gray-50 dark:bg-gray-800/60 rounded-2xl shadow-sm">
+      <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(item)}>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-medium text-gray-800 dark:text-gray-100 leading-snug line-clamp-2">{item.nome}</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+            {item.qtd} {item.unidade} × R$ {fmtR(item.preco_unit)}
+          </p>
+        </div>
+        <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums flex-shrink-0">
+          R$ {fmtR(item.preco_unit * item.qtd)}
+        </span>
+        <button
+          onClick={e => { e.stopPropagation(); onRemove(item.id); }}
+          className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+        >
+          <Trash2 className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors" />
+        </button>
       </div>
-      <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums flex-shrink-0">
-        R$ {fmtR(item.preco_unit * item.qtd)}
-      </span>
-      <button
-        onClick={e => { e.stopPropagation(); onRemove(item.id); }}
-        className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
-      >
-        <Trash2 className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors" />
-      </button>
+      {item.preco_livre && (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide whitespace-nowrap">Preço livre</span>
+          <div className="relative flex-1">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-600 dark:text-amber-400">R$</span>
+            <input
+              type="number" step="0.01" inputMode="decimal"
+              value={item.preco_unit.toFixed(2)}
+              onChange={e => onUpdatePreco(item.id, parseFloat(e.target.value) || 0)}
+              onClick={e => e.stopPropagation()}
+              className="w-full pl-8 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-sm text-right border border-amber-200 dark:border-amber-800 focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Tela do carrinho ──────────────────────────────────────────────────────────
-function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, onSimularCartao, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida, desconto, setDesconto, tipoDesconto, setTipoDesconto, observacoes, setObservacoes }) {
+function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, onSimularCartao, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida, desconto, setDesconto, tipoDesconto, setTipoDesconto, observacoes, setObservacoes, onUpdatePreco }) {
   const [editandoItem, setEditandoItem] = useState(null);
   const subtotal = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
   const valorDesconto = useMemo(() => {
@@ -332,8 +374,8 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
     if (produto) setEditandoItem({ produto, preco: item.preco_unit });
   };
 
-  const handleConfirmQtd = (qtd) => {
-    onSetQtd(editandoItem.produto, editandoItem.preco, qtd);
+  const handleConfirmQtd = (qtd, novoPreco) => {
+    onSetQtd(editandoItem.produto, novoPreco ?? editandoItem.preco, qtd);
     setEditandoItem(null);
   };
 
@@ -366,6 +408,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
               item={item}
               onSelect={handleSelectItem}
               onRemove={onRemove}
+              onUpdatePreco={onUpdatePreco}
             />
           ))
         )}
@@ -469,6 +512,7 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
           onClose={() => setEditandoItem(null)}
         />
       )}
+    
     </div>
   );
 }
@@ -499,12 +543,29 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
     setItens(prev => {
       if (qtd <= 0) return prev.filter(i => i.id !== produto.id);
       const existe = prev.find(i => i.id === produto.id);
-      if (existe) return prev.map(i => i.id === produto.id ? { ...i, qtd } : i);
-      return [...prev, { id: produto.id, nome: produto.nome, preco_unit: preco, qtd, unidade: produto.unidade_principal || 'UN' }];
+      if (existe) return prev.map(i => i.id === produto.id ? { ...i, qtd, preco_unit: preco } : i);
+      return [...prev, {
+        id: produto.id,
+        nome: produto.nome,
+        preco_unit: preco,
+        qtd,
+        unidade: produto.unidade_principal || 'UN',
+        preco_livre: produto.preco_livre || false,
+        custo_calculado: produto.preco_custo_calculado || 0
+      }];
     });
   }, []);
 
+  const handleUpdatePreco = useCallback((id, novoPreco) => {
+    setItens(prev => prev.map(i => {
+      if (i.id !== id) return i;
+      const preco = Math.max(novoPreco, i.custo_calculado || 0);
+      return { ...i, preco_unit: preco };
+    }));
+  }, []);
+
   const handleRemove = useCallback((id) => setItens(prev => prev.filter(i => i.id !== id)), []);
+
 
   const handleClose = () => {
     onClose();
@@ -599,6 +660,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
                produtos={produtos}
                onSetQtd={handleSetQtd}
                onRemove={handleRemove}
+               onUpdatePreco={handleUpdatePreco}
                onGerar={() => setShowCupom(true)}
                onSimularCartao={() => setShowSimuladorCartao(true)}
                formatoCupom={formatoCupom}
