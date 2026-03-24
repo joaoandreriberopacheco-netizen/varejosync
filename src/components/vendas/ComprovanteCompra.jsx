@@ -18,13 +18,13 @@ const fmtV = (v) => {
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // adiciona pontos nos milhares
   return parts.join(',');
 };
-const F = 9; // base font size px
+const F = 14; // base font size px (aumentado 50%)
 
 // ── Cupom Térmico 80mm ────────────────────────────────────────────────────────
 function CupomTermico({ pedido, dadosEmpresa }) {
   const itens = pedido.itens || [];
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
-  const F = 9;
+  const F = 14;
 
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
   const razaoSocial = (dadosEmpresa?.nome_fantasia && dadosEmpresa?.razao_social)
