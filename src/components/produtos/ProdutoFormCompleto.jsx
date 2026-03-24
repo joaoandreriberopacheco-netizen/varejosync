@@ -85,14 +85,25 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     }
   };
 
+  const loadDependencies = async () => {
+    try {
+      const [catsResponse, fornResponse] = await Promise.all([
+        base44.entities.Categoria.list(),
+        base44.entities.Terceiro.filter({ tipo: 'Fornecedor' })
+      ]);
+      setCategorias(catsResponse || []);
+      setFornecedores(fornResponse || []);
+    } catch (error) {
+      console.error('Erro ao carregar dependências:', error);
+    }
+  };
+
   useEffect(() => {
     loadDependencies();
     if (produto?.id) {
       loadMovimentacoes();
     }
   }, [produto]);
-
-
 
   const loadMovimentacoes = async () => {
     if (!produto?.id) return;
