@@ -38,10 +38,13 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       ]);
       const movs = movsRaw.filter(m => m.status !== 'Cancelado');
 
-      // Filtrar apenas despesas manuais — excluir recolhimentos/sangrias por descrição também
+      // Filtrar apenas despesas manuais — EXCLUIR MovimentosCaixa, recolhimentos, sangrias
       const despesas = despesasRaw.filter(d => {
         if (d.status === 'Cancelado') return false;
+        // Excluir explicitamente MovimentosCaixa e tipos não-manuais
+        if (d.referencia_tipo === 'MovimentosCaixa') return false;
         if (d.referencia_tipo && d.referencia_tipo !== 'Manual') return false;
+        // Excluir por descrição também
         const desc = (d.descricao || '').toLowerCase();
         if (desc.includes('recolhimento') || desc.includes('sangria')) return false;
         return true;
