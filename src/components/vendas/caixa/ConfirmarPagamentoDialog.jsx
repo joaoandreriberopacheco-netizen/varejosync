@@ -208,7 +208,7 @@ export default function ConfirmarPagamentoDialog({
               icon={Receipt}
               index={5}
               active={formaPagamentoAtiva === 5}
-              onFocus={() => { setFormaPagamentoAtiva(5); setShowSeletorFiado(true); }}
+              onFocus={() => { setFormaPagamentoAtiva(5); if (!fiadoConfig) setShowSeletorFiado(true); }}
               inputRef={inputRefs.contaPagar}
               value={inputContaPagar}
               onKeyDown={(e) => handleInputMascara(e, setInputContaPagar, setPagamentosContaPagar)}
