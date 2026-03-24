@@ -117,38 +117,15 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         const total = fmtV(item.total);
         const num = String(idx + 1).padStart(2, '0');
         const unidade = (item.unidade_principal || 'UN').substring(0, 4);
-        const valStr = `${qtd} | ${unidade} | ${preco} | ${total}`;
-
-        // Quebra nome em linhas
-        const palavras = nome.split(' ');
-        const linhas = [];
-        let atual = '';
-        for (const p of palavras) {
-          if ((atual + (atual ? ' ' : '') + p).length <= maxNameW) {
-            atual = atual ? atual + ' ' + p : p;
-          } else {
-            if (atual) linhas.push(atual);
-            atual = p.substring(0, maxNameW);
-          }
-        }
-        if (atual) linhas.push(atual);
 
         return (
-          <div key={idx} style={{ fontSize: F + 2, marginBottom: '5px', lineHeight: 1.5 }}>
-            {/* Linhas intermediárias (sem valores) */}
-            {linhas.length > 1 && (
-              <>
-                <div>{num}  {linhas[0]}</div>
-                {linhas.slice(1, -1).map((l, i) => (
-                  <div key={i} style={{ paddingLeft: '20px' }}>{l}</div>
-                ))}
-              </>
-            )}
-            {/* Última linha: descrição + valores alinhados à direita */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span>{linhas.length === 1 ? `${num}  ${linhas[0]}` : `    ${linhas[linhas.length - 1]}`}</span>
-              <span style={{ whiteSpace: 'nowrap', marginLeft: '6px', color: '#222' }}>{valStr}</span>
-            </div>
+          <div key={idx} style={{ display: 'flex', alignItems: 'baseline', fontSize: F + 2, marginBottom: '4px', lineHeight: 1.5, gap: '2px' }}>
+            <span style={{ width: '28px', flexShrink: 0 }}>{num}</span>
+            <span style={{ flex: 1, wordBreak: 'break-word' }}>{nome}</span>
+            <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
+            <span style={{ width: '28px', textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
+            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{preco}</span>
+            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{total}</span>
           </div>
         );
       })}
