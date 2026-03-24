@@ -395,7 +395,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
             <div className="max-w-4xl mx-auto space-y-2">
               {(() => {
                 const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
-                const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
+                const recolhimentoIds = new Set((movimentos || []).filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map(m => m.id));
+                const itensDespesas = (caixaData?.despesasLista || []).filter(d => !recolhimentoIds.has(d.referencia_id)).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
                 const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
                 
                 if (todos.length === 0) return (
