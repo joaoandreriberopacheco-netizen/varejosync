@@ -238,28 +238,33 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           </div>
 
           {isMobile ? (
-            <div className="space-y-3 px-4">
+            <div className="space-y-3 px-4 pb-4">
               {itensCalc.map(item => (
-                <div key={item.produto_id} className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 space-y-3">
+                <div key={item.produto_id} className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-4 space-y-4">
+                  {/* Header do produto */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">{item.produto_nome}</div>
+                      <div className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{item.produto_nome}</div>
                       {item.temDiferenca && (
-                        <div className="flex items-center gap-1 text-xs">
+                        <div className="flex items-center gap-1 text-xs mt-1">
                           {item.diferencaCusto > 0 ? (
-                            <><TrendingUp className="w-3 h-3 text-red-500" /><span className="text-red-600 dark:text-red-400 font-medium">+R$ {fmt(item.diferencaCusto)}</span></>
+                            <><TrendingUp className="w-3.5 h-3.5 text-red-500" /><span className="text-red-500 font-semibold">+R$ {fmt(item.diferencaCusto)} no custo</span></>
                           ) : (
-                            <><TrendingDown className="w-3 h-3 text-green-500" /><span className="text-green-600 dark:text-green-400 font-medium">-R$ {fmt(Math.abs(item.diferencaCusto))}</span></>
+                            <><TrendingDown className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-500 font-semibold">-R$ {fmt(Math.abs(item.diferencaCusto))} no custo</span></>
                           )}
                         </div>
                       )}
                     </div>
                     {item.temDiferenca && (
-                      <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Atualizar</span>
+                        <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
+                      </div>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  {/* Grid de custos */}
+                  <div className="grid grid-cols-2 gap-3">
                     {[
                       { label: 'Preço Compra', field: 'valor_compra' },
                       { label: 'Desconto', field: 'desconto_compra_padrao' },
@@ -268,46 +273,50 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       { label: 'Imp 2', field: 'custo_imposto2_padrao' },
                       { label: 'Outros', field: 'custo_outros_padrao' },
                     ].map(({ label, field }) => (
-                      <div key={field}>
-                        <Label className="text-[10px] text-gray-500 dark:text-gray-400 mb-1 block">{label}</Label>
+                      <div key={field} className="space-y-1">
+                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</Label>
                         <Input
                           type="text"
                           value={inp(item.produto_id, field)}
                           onChange={(e) => setInp(item.produto_id, field, e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleCostBlur(item.produto_id, field)}
-                          className="h-9 text-sm border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
+                          className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-800 shadow-none rounded-xl"
                         />
                       </div>
                     ))}
                   </div>
 
-                  <div className="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Custo Total</span>
-                      <span className="font-bold text-gray-900 dark:text-gray-100">R$ {fmt(item.novoCusto)}</span>
+                  {/* Custo total + markup + preço venda */}
+                  <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Custo Total</span>
+                      <span className="text-base font-bold text-gray-900 dark:text-white">R$ {fmt(item.novoCusto)}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">Markup %</Label>
-                      <Input
-                        type="text"
-                        value={inp(item.produto_id, 'markup')}
-                        onChange={(e) => setInp(item.produto_id, 'markup', e.target.value)}
-                        onFocus={(e) => e.target.select()}
-                        onBlur={() => handleMarkupBlur(item.produto_id)}
-                        className="h-9 text-sm flex-1 border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">Preço Venda</Label>
-                      <Input
-                        type="text"
-                        value={inp(item.produto_id, 'preco')}
-                        onChange={(e) => setInp(item.produto_id, 'preco', e.target.value)}
-                        onFocus={(e) => e.target.select()}
-                        onBlur={() => handlePrecoBlur(item.produto_id)}
-                        className="h-9 text-sm flex-1 border-0 bg-gray-50 dark:bg-gray-800 shadow-sm font-bold"
-                      />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Markup %</Label>
+                        <Input
+                          type="text"
+                          value={inp(item.produto_id, 'markup')}
+                          onChange={(e) => setInp(item.produto_id, 'markup', e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={() => handleMarkupBlur(item.produto_id)}
+                          className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-700 shadow-none rounded-xl"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preço Venda</Label>
+                        <Input
+                          type="text"
+                          value={inp(item.produto_id, 'preco')}
+                          onChange={(e) => setInp(item.produto_id, 'preco', e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={() => handlePrecoBlur(item.produto_id)}
+                          className="h-11 text-base font-bold border-0 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 shadow-none rounded-xl"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
