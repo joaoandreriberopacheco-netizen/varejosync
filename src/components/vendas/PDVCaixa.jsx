@@ -975,12 +975,8 @@ export default function PDVCaixa() {
         });
       }
 
-      // Gerar lançamentos financeiros duplos (saída + entrada) para rastreabilidade
-      try {
-        await processarMovimentoCaixa(movimento, contaCaixaPDV, caixaGeral);
-      } catch (e) {
-        console.warn('Aviso: Lançamentos duplos não foram criados', e.message);
-      }
+      // Nota: Não criamos lançamentos financeiros para sangrias
+      // A MovimentosCaixa já reduz a conta, é redundante ter LancamentoFinanceiro
 
       // Atualizar saldos
       await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
