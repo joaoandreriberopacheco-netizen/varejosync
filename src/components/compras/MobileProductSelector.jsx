@@ -463,73 +463,86 @@ export default function MobileProductSelector({
             />
           </div>
 
-          {/* Desconto - campos interdependentes */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">Desconto %</Label>
-              <Input
-                type="text"
-                inputMode="decimal"
-                placeholder="0"
-                value={descontoPctInput}
-                onChange={e => {
-                  const v = e.target.value;
-                  if (/^[\d.,]*$/.test(v)) {
-                    setDescontoPctInput(v);
-                    const pct = parseBR(v);
-                    const custo = parseFloat(editingItem?.custo_unitario) || 0;
-                    const novoDesc = parseFloat((custo * pct / 100).toFixed(2));
-                    setDescontoValorInput(novoDesc > 0 ? fmtBR(novoDesc) : '');
-                    setEditingItem(prev => ({ ...prev, valor_desconto_item: novoDesc, desconto_pct_item: pct }));
-                  }
-                }}
-                onFocus={e => e.target.select()}
-                onBlur={() => {
-                  const pct = parseBR(descontoPctInput);
-                  setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
-                }}
-                className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
-                disabled={isLocked}
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">Desconto R$</Label>
-              <Input
-                type="text"
-                inputMode="decimal"
-                placeholder="0,00"
-                value={descontoValorInput}
-                onChange={e => {
-                  const v = e.target.value;
-                  if (/^[\d.,]*$/.test(v)) {
-                    setDescontoValorInput(v);
-                    const desc = parseBR(v);
-                    const custo = parseFloat(editingItem?.custo_unitario) || 0;
-                    const novoPct = custo > 0 ? parseFloat(((desc / custo) * 100).toFixed(4)) : 0;
-                    setDescontoPctInput(novoPct > 0 ? String(Math.round(novoPct * 100) / 100) : '');
-                    setEditingItem(prev => ({ ...prev, valor_desconto_item: desc, desconto_pct_item: novoPct }));
-                  }
-                }}
-                onFocus={e => e.target.select()}
-                onBlur={() => {
-                  const desc = parseBR(descontoValorInput);
-                  setDescontoValorInput(desc > 0 ? fmtBR(desc) : '');
-                }}
-                className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
-                disabled={isLocked}
-              />
-            </div>
-          </div>
+          {/* Desconto/Acréscimo - campos interdependentes */}
+          {(() => {
+            const isAcrescimo = (editingItem?.valor_desconto_item || 0) < 0;
+            const labelPct = isAcrescimo ? 'Acréscimo %' : 'Desconto %';
+            const labelVal = isAcrescimo ? 'Acréscimo R$' : 'Desconto R$';
+            return (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">{labelPct}</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={descontoPctInput}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (/^[\d.,]*$/.test(v)) {
+                        setDescontoPctInput(v);
+                        const pct = parseBR(v);
+                        const custo = parseFloat(editingItem?.custo_unitario) || 0;
+                        const absDesc = parseFloat((custo * pct / 100).toFixed(2));
+                        // preserve sign based on current state
+                        const sign = (editingItem?.valor_desconto_item || 0) < 0 ? -1 : 1;
+                        const novoDesc = sign * absDesc;
+                        setDescontoValorInput(absDesc > 0 ? fmtBR(absDesc) : '');
+                        setEditingItem(prev => ({ ...prev, valor_desconto_item: novoDesc, desconto_pct_item: pct }));
+                      }
+                    }}
+                    onFocus={e => e.target.select()}
+                    onBlur={() => {
+                      const pct = parseBR(descontoPctInput);
+                      setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
+                    }}
+                    className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
+                    disabled={isLocked}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">{labelVal}</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    value={descontoValorInput}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (/^[\d.,]*$/.test(v)) {
+                        setDescontoValorInput(v);
+                        const absDesc = parseBR(v);
+                        const custo = parseFloat(editingItem?.custo_unitario) || 0;
+                        const novoPct = custo > 0 ? parseFloat(((absDesc / custo) * 100).toFixed(4)) : 0;
+                        const sign = (editingItem?.valor_desconto_item || 0) < 0 ? -1 : 1;
+                        const novoDesc = sign * absDesc;
+                        setDescontoPctInput(novoPct > 0 ? String(Math.round(novoPct * 100) / 100) : '');
+                        setEditingItem(prev => ({ ...prev, valor_desconto_item: novoDesc, desconto_pct_item: novoPct }));
+                      }
+                    }}
+                    onFocus={e => e.target.select()}
+                    onBlur={() => {
+                      const desc = parseBR(descontoValorInput);
+                      setDescontoValorInput(desc > 0 ? fmtBR(desc) : '');
+                    }}
+                    className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
+                    disabled={isLocked}
+                  />
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Custo líquido + total */}
           {(() => {
             const custo = parseFloat(editingItem?.custo_unitario) || 0;
-            const desc = parseFloat(editingItem?.valor_desconto_item) || 0;
+            const desc = parseFloat(editingItem?.valor_desconto_item) || 0; // negativo = acréscimo
             const liquido = custo - desc;
-            return desc > 0 ? (
+            const isAcrescimo = desc < 0;
+            return desc !== 0 ? (
               <div className="flex justify-between items-center text-sm px-1">
-                <span className="text-gray-500 dark:text-gray-400">Custo líquido</span>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-400">{formatCurrency(liquido)}</span>
+                <span className="text-gray-500 dark:text-gray-400">Custo {isAcrescimo ? 'com acréscimo' : 'líquido'}</span>
+                <span className={`font-semibold ${isAcrescimo ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{formatCurrency(liquido)}</span>
               </div>
             ) : null;
           })()}
