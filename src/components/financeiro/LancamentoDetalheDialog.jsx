@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle, Trash2 } from 'lucide-react';
 import CancelarLancamentoDialog from './CancelarLancamentoDialog';
 import { useToast } from '@/components/ui/use-toast';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
@@ -209,20 +209,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
         <div className="h-px bg-gray-100 dark:bg-gray-800" />
 
-        {/* Botão Cancelar */}
-        {!isTransf && !isCancelado && (
-          <>
-            <div className="h-px bg-gray-100 dark:bg-gray-800" />
-            <div className="px-5 py-4">
-              <button
-                onClick={() => setShowCancelarDialog(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-medium border border-red-200 dark:border-red-900 active:scale-95 transition-transform">
-                <X className="w-4 h-4" />
-                Cancelar Lançamento
-              </button>
-            </div>
-          </>
-        )}
+
 
         {/* Seção: Marcar como pago */}
         {!isTransf && !isCancelado && (
@@ -362,6 +349,17 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         onSaved?.();
       }}
     />
+
+    {/* FAB Cancelar (canto inferior esquerdo) */}
+    {!isTransf && !isCancelado && (
+      <button
+        onClick={() => setShowCancelarDialog(true)}
+        className="absolute bottom-4 left-4 w-12 h-12 rounded-full bg-red-500 dark:bg-red-600 text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center hover:bg-red-600 dark:hover:bg-red-700"
+        title="Cancelar lançamento"
+      >
+        <Trash2 className="w-5 h-5" />
+      </button>
+    )}
     </>
   );
 }
