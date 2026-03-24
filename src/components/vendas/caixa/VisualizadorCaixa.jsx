@@ -302,7 +302,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                           <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.liquidez)}</span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">Inicial + vendas + reforços − recolhimentos</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">Inicial + vendas + reforços − recolhimentos − despesas</p>
                     </div>
                   </div>
                 </div>
