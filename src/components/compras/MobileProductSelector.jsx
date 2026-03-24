@@ -37,6 +37,8 @@ export default function MobileProductSelector({
   const discountInputRef = React.useRef(null);
   const quantidadeInputRef = React.useRef(null);
   const custoInputRef = React.useRef(null);
+  const descontoPctInputRef = React.useRef(null);
+  const descontoValorInputRef = React.useRef(null);
 
   // Auto-focus ao entrar na tela de edição
   useEffect(() => {
@@ -438,9 +440,11 @@ export default function MobileProductSelector({
                   const numVal = parseFloat(val.replace(',', '.'));
                   if (!isNaN(numVal)) {
                     setEditingItem(prev => {
+                      const sign = (prev.valor_desconto_item || 0) < 0 ? -1 : 1;
                       const pct = parseFloat(descontoPctInput) || 0;
-                      const novoDesc = parseFloat((numVal * pct / 100).toFixed(2));
-                      setDescontoValorInput(novoDesc > 0 ? fmtBR(novoDesc) : '');
+                      const absDesc = parseFloat((numVal * pct / 100).toFixed(2));
+                      const novoDesc = sign * absDesc;
+                      setDescontoValorInput(absDesc > 0 ? fmtBR(absDesc) : '');
                       return { ...prev, custo_unitario: numVal, valor_desconto_item: novoDesc };
                     });
                   }
@@ -451,13 +455,15 @@ export default function MobileProductSelector({
                 const num = parseFloat(custoInput.replace(',', '.')) || 0;
                 setCustoInput(fmtBR(num));
                 setEditingItem(prev => {
+                  const sign = (prev.valor_desconto_item || 0) < 0 ? -1 : 1;
                   const pct = parseFloat(descontoPctInput) || 0;
-                  const novoDesc = parseFloat((num * pct / 100).toFixed(2));
-                  setDescontoValorInput(novoDesc > 0 ? fmtBR(novoDesc) : '');
+                  const absDesc = parseFloat((num * pct / 100).toFixed(2));
+                  const novoDesc = sign * absDesc;
+                  setDescontoValorInput(absDesc > 0 ? fmtBR(absDesc) : '');
                   return { ...prev, custo_unitario: num, valor_desconto_item: novoDesc };
                 });
               }}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(); } }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); descontoPctInputRef.current?.focus(); descontoPctInputRef.current?.select(); } }}
               placeholder="0,00"
               disabled={isLocked}
             />
@@ -473,18 +479,17 @@ export default function MobileProductSelector({
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">{labelPct}</Label>
                   <Input
+                    ref={descontoPctInputRef}
                     type="text"
                     inputMode="decimal"
                     placeholder="0"
                     value={descontoPctInput}
-                    onChange={e => {
-                      const v = e.target.value;
+                    onChange={e => {  const v = e.target.value;
                       if (/^[\d.,]*$/.test(v)) {
                         setDescontoPctInput(v);
                         const pct = parseBR(v);
                         const custo = parseFloat(editingItem?.custo_unitario) || 0;
                         const absDesc = parseFloat((custo * pct / 100).toFixed(2));
-                        // preserve sign based on current state
                         const sign = (editingItem?.valor_desconto_item || 0) < 0 ? -1 : 1;
                         const novoDesc = sign * absDesc;
                         setDescontoValorInput(absDesc > 0 ? fmtBR(absDesc) : '');
@@ -496,6 +501,7 @@ export default function MobileProductSelector({
                       const pct = parseBR(descontoPctInput);
                       setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
                     }}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); descontoValorInputRef.current?.focus(); descontoValorInputRef.current?.select(); } }}
                     className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
                     disabled={isLocked}
                   />
@@ -503,6 +509,7 @@ export default function MobileProductSelector({
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">{labelVal}</Label>
                   <Input
+                    ref={descontoValorInputRef}
                     type="text"
                     inputMode="decimal"
                     placeholder="0,00"
@@ -525,6 +532,7 @@ export default function MobileProductSelector({
                       const desc = parseBR(descontoValorInput);
                       setDescontoValorInput(desc > 0 ? fmtBR(desc) : '');
                     }}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(); } }}
                     className="h-11 text-center bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-sm rounded-xl"
                     disabled={isLocked}
                   />
