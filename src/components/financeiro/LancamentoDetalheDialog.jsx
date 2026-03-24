@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -315,8 +315,17 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         )}
 
         {/* Footer: clipe + botão cancelar */}
-        <div className="px-5 pb-5 pt-2 flex items-center justify-between gap-3">
-
+        <div className="h-px bg-gray-100 dark:bg-gray-800" />
+        <div className="px-5 py-4 flex items-center justify-between gap-3">
+          {!isCancelado && (
+            <button
+              onClick={() => setShowCancelarDialog(true)}
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95 transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              Cancelar
+            </button>
+          )}
           <div className="flex items-center justify-end gap-3 flex-1">
           {lancamento.pedido_compra_vinculado_id && (
             <AnexosPanel
@@ -333,7 +342,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
            inline
           />
           </div>
-          </div>
+        </div>
       </DialogContent>
     </Dialog>
 
