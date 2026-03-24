@@ -281,6 +281,10 @@ export default function ConfirmarPagamentoDialog({
         formatValor={formatValor}
         onConfirm={(config) => {
           setFiadoConfig(config);
+          if (config.valor) {
+            setPagamentosContaPagar(config.valor);
+            setInputContaPagar(formatarValorExibicao(config.valor));
+          }
           setShowSeletorFiado(false);
         }}
         onCancel={() => setShowSeletorFiado(false)}

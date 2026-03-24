@@ -25,6 +25,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
   const [prazoDias, setPrazoDias] = useState(30);
   const [dataSelecionada, setDataSelecionada] = useState(null);
   const [observacao, setObservacao] = useState('');
+  const [valor, setValor] = useState('');
 
   useEffect(() => {
     // Só reset ao ABRIR
@@ -32,6 +33,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
       setPrazoDias(30);
       setDataSelecionada(null);
       setObservacao('');
+      setValor('');
     }
   }, [visible === true]);
 
@@ -53,9 +55,9 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
   const handleConfirmar = () => {
     if (dataSelecionada) {
       const diasDiferenca = Math.floor((dataSelecionada - new Date()) / (1000 * 60 * 60 * 24));
-      onConfirm({ prazo_dias: diasDiferenca, data_vencimento: dataSelecionada, observacao });
+      onConfirm({ prazo_dias: diasDiferenca, data_vencimento: dataSelecionada, observacao, valor: valor ? parseFloat(valor.replace(/\D/g, '')) / 100 : null });
     } else {
-      onConfirm({ prazo_dias: prazoDias, data_vencimento: addDays(new Date(), prazoDias), observacao });
+      onConfirm({ prazo_dias: prazoDias, data_vencimento: addDays(new Date(), prazoDias), observacao, valor: valor ? parseFloat(valor.replace(/\D/g, '')) / 100 : null });
     }
   };
 
@@ -144,6 +146,22 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
               className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
             />
           </div>
+        </div>
+
+        {/* Valor (opcional) */}
+        <div className="space-y-1.5">
+          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Valor (opcional)</p>
+          <input
+            type="text"
+            value={valor}
+            onChange={(e) => {
+              const numeros = e.target.value.replace(/\D/g, '');
+              const formatado = (parseFloat(numeros || 0) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+              setValor(formatado);
+            }}
+            placeholder="Ex: R$ 100,00"
+            className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+          />
         </div>
 
         {/* Observação */}
