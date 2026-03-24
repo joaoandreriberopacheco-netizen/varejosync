@@ -220,7 +220,7 @@ function PreviewScaled({ children }) {
 }
 
 // ── Cupom A4 ─────────────────────────────────────────────────────────────────────
-function CupomA4({ pedido, dadosEmpresa }) {
+function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
   const itens = pedido.itens || [];
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
