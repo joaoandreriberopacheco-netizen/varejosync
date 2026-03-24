@@ -38,11 +38,12 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       ]);
       const movs = movsRaw.filter(m => m.status !== 'Cancelado');
 
-      // Filtrar apenas despesas manuais (referencia_tipo = null ou 'Manual')
+      // Filtrar apenas despesas manuais — excluir recolhimentos/sangrias por descrição também
       const despesas = despesasRaw.filter(d => {
         if (d.status === 'Cancelado') return false;
-        // Só incluir se for despesa manual (sem referência a outros tipos)
         if (d.referencia_tipo && d.referencia_tipo !== 'Manual') return false;
+        const desc = (d.descricao || '').toLowerCase();
+        if (desc.includes('recolhimento') || desc.includes('sangria')) return false;
         return true;
       });
 
