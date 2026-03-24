@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, ArrowUpDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from '@/components/ui/use-toast';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
@@ -135,6 +135,11 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const handleDescontoPctBlur = (produtoId) => {
     const raw = inputs[`${produtoId}_desconto_pct`];
     const pct = parseFloat(raw) || 0;
+    handleDescontoPctBlurDirect(produtoId, pct);
+  };
+
+  // Versão direta (usada pelo toggle)
+  const handleDescontoPctBlurDirect = (produtoId, pct) => {
     setCosts(prev => {
       const c = { ...prev[produtoId], desconto_pct: pct };
       c.desconto_compra_padrao = recalcDesconto(c);
@@ -325,13 +330,33 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-800 shadow-none rounded-xl"
                       />
                     </div>
-                    {/* Desconto/Acréscimo % */}
+                    {/* Desconto/Acréscimo % com toggle */}
                     <div className="space-y-1">
-                      <Label className={`text-[11px] font-medium uppercase tracking-wide ${
-                        (costs[item.produto_id]?.desconto_pct || 0) < 0
-                          ? 'text-red-500 dark:text-red-400'
-                          : 'text-gray-500 dark:text-gray-400'
-                      }`}>{(costs[item.produto_id]?.desconto_pct || 0) < 0 ? 'Acréscimo %' : 'Desconto %'}</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className={`text-[11px] font-medium uppercase tracking-wide ${
+                          (costs[item.produto_id]?.desconto_pct || 0) < 0
+                            ? 'text-red-500 dark:text-red-400'
+                            : 'text-gray-500 dark:text-gray-400'
+                        }`}>{(costs[item.produto_id]?.desconto_pct || 0) < 0 ? 'Acréscimo %' : 'Desconto %'}</Label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const pct = costs[item.produto_id]?.desconto_pct || 0;
+                            const flipped = -pct;
+                            setInputs(p => ({ ...p, [`${item.produto_id}_desconto_pct`]: String(Math.round(flipped * 100) / 100) }));
+                            handleDescontoPctBlurDirect(item.produto_id, flipped);
+                          }}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                            (costs[item.produto_id]?.desconto_pct || 0) < 0
+                              ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                              : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                          }`}
+                        >
+                          {(costs[item.produto_id]?.desconto_pct || 0) < 0
+                            ? <><TrendingUp className="w-3 h-3" /> ACR</>
+                            : <><TrendingDown className="w-3 h-3" /> DESC</>}
+                        </button>
+                      </div>
                       <Input
                         type="text"
                         inputMode="decimal"
@@ -455,22 +480,43 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                         />
                       </td>
-                      {/* Desconto/Acréscimo % */}
+                      {/* Desconto/Acréscimo % com toggle */}
                       <td className="p-2">
-                        <Input
-                          type="text"
-                          value={inp(item.produto_id, 'desconto_pct')}
-                          onChange={(e) => setInp(item.produto_id, 'desconto_pct', e.target.value)}
-                          onFocus={(e) => e.target.select()}
-                          onBlur={() => handleDescontoPctBlur(item.produto_id)}
-                          className={`h-8 text-center text-sm border-0 shadow-sm ${
-                            (costs[item.produto_id]?.desconto_pct || 0) < 0
-                              ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                              : (costs[item.produto_id]?.desconto_pct || 0) > 0
-                              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-gray-50 dark:bg-gray-800'
-                          }`}
-                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const pct = costs[item.produto_id]?.desconto_pct || 0;
+                              const flipped = -pct;
+                              setInputs(p => ({ ...p, [`${item.produto_id}_desconto_pct`]: String(Math.round(flipped * 100) / 100) }));
+                              handleDescontoPctBlurDirect(item.produto_id, flipped);
+                            }}
+                            className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
+                              (costs[item.producto_id]?.desconto_pct || costs[item.produto_id]?.desconto_pct || 0) < 0
+                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                            }`}
+                            title={(costs[item.produto_id]?.desconto_pct || 0) < 0 ? 'Acréscimo → Desconto' : 'Desconto → Acréscimo'}
+                          >
+                            {(costs[item.produto_id]?.desconto_pct || 0) < 0
+                              ? <TrendingUp className="w-3.5 h-3.5" />
+                              : <TrendingDown className="w-3.5 h-3.5" />}
+                          </button>
+                          <Input
+                            type="text"
+                            value={inp(item.produto_id, 'desconto_pct')}
+                            onChange={(e) => setInp(item.produto_id, 'desconto_pct', e.target.value)}
+                            onFocus={(e) => e.target.select()}
+                            onBlur={() => handleDescontoPctBlur(item.produto_id)}
+                            className={`h-8 text-center text-sm border-0 shadow-sm flex-1 min-w-0 ${
+                              (costs[item.produto_id]?.desconto_pct || 0) < 0
+                                ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                                : (costs[item.produto_id]?.desconto_pct || 0) > 0
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                                : 'bg-gray-50 dark:bg-gray-800'
+                            }`}
+                          />
+                        </div>
                       </td>
                       {/* Frete, Imp1, Imp2, Outros */}
                       {['custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'].map(field => (
