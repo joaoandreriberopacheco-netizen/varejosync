@@ -62,6 +62,7 @@ import SeletorCaixaPDV from './SeletorCaixaPDV';
 import AutorizacoesEstornoPendentes from './AutorizacoesEstornoPendentes';
 import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
+import { processarMovimentoCaixa } from '@/lib/caixaHelper';
 
 export default function PDVCaixa() {
   const navigate = useNavigate();
@@ -940,7 +941,7 @@ export default function PDVCaixa() {
       const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;
 
-      // Para Recolhimento de Caixa, buscar Caixa Geral
+      // Para Recolhimento de Caixa, buscar Caixa Geral e gerar lançamentos duplos
       if (tipoMovimento === 'Recolhimento de Caixa') {
       const todasContas = await base44.entities.ContasFinanceiras.list();
       const caixaGeral = todasContas.find(c => c.is_caixa_geral);
@@ -971,6 +972,13 @@ export default function PDVCaixa() {
         await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
           movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
         });
+      }
+
+      // Gerar lançamentos financeiros duplos (saída + entrada) para rastreabilidade
+      try {
+        await processarMovimentoCaixa(movimento, contaCaixaPDV, caixaGeral);
+      } catch (e) {
+        console.warn('Aviso: Lançamentos duplos não foram criados', e.message);
       }
 
       // Atualizar saldos
