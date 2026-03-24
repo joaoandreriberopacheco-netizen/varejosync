@@ -64,10 +64,13 @@ export default function MobileProductSelector({
       handleEditItem(index);
     } else {
       const custo = product.valor_compra || 0;
-      // Aplica desconto global (%) sobre o custo
-      const descontoValor = descontoGlobalPct !== 0
+      // Aplica desconto/acréscimo global (%) sobre o custo
+      // descontoGlobalPct > 0 = desconto (subtrai), < 0 = acréscimo (soma)
+      const descontoValorBase = descontoGlobalPct !== 0
         ? parseFloat((custo * Math.abs(descontoGlobalPct) / 100).toFixed(2))
         : (product.desconto_compra_padrao || 0);
+      // Para acréscimo, valor negativo faz calculateTotal somar ao custo
+      const descontoValor = descontoGlobalPct < 0 ? -descontoValorBase : descontoValorBase;
       const newItem = {
         produto_id: product.id,
         produto_nome: product.nome,
@@ -83,7 +86,7 @@ export default function MobileProductSelector({
       setCustoInput(custo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       const pctNum = descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : (custo > 0 ? (product.desconto_compra_padrao || 0) / custo * 100 : 0);
       setDescontoPctInput(pctNum > 0 ? String(Math.round(pctNum * 100) / 100) : '');
-      setDescontoValorInput(descontoValor > 0 ? descontoValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+      setDescontoValorInput(Math.abs(descontoValor) > 0 ? Math.abs(descontoValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
       setEditingIndex(-1);
       setView('edit');
     }
@@ -719,6 +722,16 @@ export default function MobileProductSelector({
               )}
             </div>
           </div>
+          {/* FAB - Criar Produto */}
+          {!isLocked && (
+            <button
+              onClick={() => setShowNovoProduto(true)}
+              className="fixed bottom-6 right-6 z-[60] w-14 h-14 bg-gray-800 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
+              title="Criar novo produto"
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+          )}
         </div>
         <NovoProdutoRapidoDialog
           isOpen={showNovoProduto}
