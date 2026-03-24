@@ -27,12 +27,13 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
   const [observacao, setObservacao] = useState('');
 
   useEffect(() => {
+    // Só reset ao ABRIR
     if (visible) {
       setPrazoDias(30);
       setDataSelecionada(null);
       setObservacao('');
     }
-  }, [visible]);
+  }, [visible === true]);
 
   if (!visible) return null;
 
@@ -136,6 +137,8 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                 if (e.target.value) {
                   setDataSelecionada(new Date(e.target.value + 'T00:00:00'));
                   setPrazoDias(null);
+                } else {
+                  setDataSelecionada(null);
                 }
               }}
               className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
@@ -151,6 +154,7 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
             onChange={e => setObservacao(e.target.value)}
             placeholder="Ex: cliente conhece, vai pagar no final do mês..."
             rows={2}
+            autoFocus={false}
             className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 border-0 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
           />
         </div>

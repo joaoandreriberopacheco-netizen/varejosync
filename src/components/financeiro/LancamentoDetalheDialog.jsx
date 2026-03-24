@@ -158,7 +158,6 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
   return (
     <>
-    <div className="relative">
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-sm p-0 gap-0 dark:bg-gray-900 dark:border-gray-700 overflow-hidden rounded-2xl [&~div[data-radix-dialog-overlay]]:bg-white/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
 
@@ -315,6 +314,17 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </>
         )}
 
+        {/* FAB Cancelar (canto inferior esquerdo) */}
+        {!isTransf && !isCancelado && (
+          <button
+            onClick={() => setShowCancelarDialog(true)}
+            className="absolute bottom-4 left-4 w-12 h-12 rounded-full bg-red-500 dark:bg-red-600 text-white shadow-2xl active:scale-95 transition-transform flex items-center justify-center hover:bg-red-600 dark:hover:bg-red-700 z-50"
+            title="Cancelar lançamento"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Footer: clipe do lançamento + clipe do pedido de compra vinculado */}
         <div className="px-5 pb-5 pt-2 flex items-center justify-end gap-3">
           {lancamento.pedido_compra_vinculado_id && (
@@ -351,17 +361,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       }}
     />
 
-    {/* FAB Cancelar (canto inferior esquerdo) */}
-    {!isTransf && !isCancelado && (
-      <button
-        onClick={() => setShowCancelarDialog(true)}
-        className="fixed bottom-4 left-4 md:bottom-6 md:left-6 w-12 h-12 rounded-full bg-red-500 dark:bg-red-600 text-white shadow-2xl active:scale-95 transition-transform flex items-center justify-center hover:bg-red-600 dark:hover:bg-red-700 z-[9999]"
-        title="Cancelar lançamento"
-      >
-        <Trash2 className="w-5 h-5" />
-      </button>
-    )}
-    </div>
     </>
+    
   );
 }
