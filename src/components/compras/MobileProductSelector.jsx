@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package, AlertCircle, FileText } from 'lucide-react';
+import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 
@@ -13,7 +14,8 @@ export default function MobileProductSelector({
   onRemoveItem,
   formatCurrency,
   onOpenAdjustPrices,
-  isLocked
+  isLocked,
+  onProductCreated
 }) {
   const [view, setView] = useState('menu'); // 'menu' | 'catalog' | 'cart' | 'edit'
   const [search, setSearch] = useState('');
@@ -22,6 +24,7 @@ export default function MobileProductSelector({
   const [quantidadeInput, setQuantidadeInput] = useState('');
   const [custoInput, setCustoInput] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showNovoProduto, setShowNovoProduto] = useState(false);
   const quantidadeInputRef = React.useRef(null);
   const custoInputRef = React.useRef(null);
 
@@ -380,6 +383,7 @@ export default function MobileProductSelector({
   // View: Catalog (Busca de Produtos)
   if (view === 'catalog') {
     return (
+      <>
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
         <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
@@ -500,15 +504,37 @@ export default function MobileProductSelector({
                 )
               })
             ) : (
-              <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                 <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
                 <p className="font-medium">Nenhum produto encontrado</p>
-                <p className="text-sm mt-1">para "{search}"</p>
+                <p className="text-sm mt-1 mb-6">para "{search}"</p>
+                {!isLocked && (
+                  <Button
+                    variant="outline"
+                    className="border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl h-12 px-6"
+                    onClick={() => setShowNovoProduto(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar "{search}"
+                  </Button>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
+      <NovoProdutoRapidoDialog
+        isOpen={showNovoProduto}
+        onClose={() => setShowNovoProduto(false)}
+        nomeInicial={search}
+        onSuccess={(novoProduto) => {
+          if (onProductCreated) onProductCreated(novoProduto);
+          handleSelectProduct(novoProduto);
+          setSearch('');
+          setShowNovoProduto(false);
+        }}
+      />
+    </>
     );
   }
 

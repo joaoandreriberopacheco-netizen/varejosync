@@ -992,6 +992,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 formatCurrency={formatCurrency}
                 onOpenAdjustPrices={() => setShowAtualizarPrecos(true)}
                 isLocked={isLocked}
+                onProductCreated={(novoProduto) => {
+                  setProdutos(prev => [...prev, novoProduto]);
+                }}
               />
             </TabsContent>
 
