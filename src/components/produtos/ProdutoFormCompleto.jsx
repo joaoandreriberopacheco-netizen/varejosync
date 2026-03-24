@@ -43,7 +43,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     controla_serial: false, controla_lote: false, controla_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
   });
 
-  const [custos, setCustos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -89,48 +88,11 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   useEffect(() => {
     loadDependencies();
     if (produto?.id) {
-      loadCustos();
       loadMovimentacoes();
-    } else {
-      setCustos([
-        { descricao_custo: 'Valor de Compra', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Frete', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Custo Adicional', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Imposto 1', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
-        { descricao_custo: 'Imposto 2', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
-        { descricao_custo: 'Desconto Comercial', valor_custo: 0, tipo_valor: 'percentual', is_negativo: true }
-      ]);
     }
   }, [produto]);
 
-  const loadDependencies = async () => {
-    const [fornecedoresData, categoriasData] = await Promise.all([
-      base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
-      base44.entities.Categoria.list()
-    ]);
-    setFornecedores(fornecedoresData);
-    setCategorias(categoriasData);
-  };
 
-  const loadCustos = async () => {
-    const custosData = await base44.entities.CustoDetalhado.filter({ produto_id: produto.id });
-    if (custosData.length === 0) {
-      // Usar campos diretos do produto como fonte de verdade
-      const descPct = produto.desconto_compra_padrao && produto.valor_compra
-        ? (Math.abs(produto.desconto_compra_padrao) / produto.valor_compra) * 100
-        : 0;
-      setCustos([
-        { descricao_custo: 'Valor de Compra', valor_custo: produto.valor_compra || 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Frete', valor_custo: produto.custo_frete_padrao || 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Custo Adicional', valor_custo: produto.custo_outros_padrao || 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Imposto 1', valor_custo: produto.custo_imposto1_padrao || 0, tipo_valor: 'percentual', is_negativo: false },
-        { descricao_custo: 'Imposto 2', valor_custo: produto.custo_imposto2_padrao || 0, tipo_valor: 'percentual', is_negativo: false },
-        { descricao_custo: 'Desconto Comercial', valor_custo: descPct, tipo_valor: 'percentual', is_negativo: true }
-      ]);
-    } else {
-      setCustos(custosData);
-    }
-  };
 
   const loadMovimentacoes = async () => {
     if (!produto?.id) return;
@@ -155,22 +117,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     }
   }, [formData.dimensoes_cm]);
 
-  const custoBaseItem = custos.find(c => c.descricao_custo === 'Valor de Compra');
-  const custoBase = parseFloat(custoBaseItem?.valor_custo) || 0;
-
-  const precoCustoCalculado = Array.isArray(custos) ? custos.reduce((totalCusto, custo) => {
-    if (!custo || typeof custo !== 'object') return totalCusto;
-    const valor = parseFloat(custo.valor_custo) || 0;
-    let valorConsiderado = 0;
-    if (custo.descricao_custo === 'Valor de Compra') {
-      valorConsiderado = valor;
-    } else if (custo.tipo_valor === 'percentual') {
-      valorConsiderado = (custoBase * valor / 100);
-    } else {
-      valorConsiderado = valor;
-    }
-    return custo.is_negativo ? totalCusto - valorConsiderado : totalCusto + valorConsiderado;
-  }, 0) : 0;
+  // Custo calculado direto dos campos do produto
+  const custoBase = parseFloat(formData.valor_compra) || 0;
+  const precoCustoCalculado =
+    custoBase +
+    (parseFloat(formData.custo_frete_padrao) || 0) +
+    (parseFloat(formData.custo_imposto1_padrao) || 0) +
+    (parseFloat(formData.custo_imposto2_padrao) || 0) +
+    (parseFloat(formData.custo_outros_padrao) || 0) -
+    (parseFloat(formData.desconto_compra_padrao) || 0);
 
   const precoVendaCalculado = formData.preco_venda_tipo === 'numerico'
     ? (parseFloat(formData.preco_venda_padrao) || 0)
@@ -203,13 +158,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     setTemAlteracoesNaoSalvas(true);
   };
 
-  const handleCustoChange = (index, field, value) => {
-    saveToHistory({ formData, custos });
-    const newCustos = [...custos];
-    newCustos[index][field] = value;
-    setCustos(newCustos);
-    setTemAlteracoesNaoSalvas(true);
-  };
+
 
   const handleUndo = () => {
     if (historyIndex > 0) {
@@ -293,7 +242,12 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
         preco_custo_calculado: precoCustoCalculado,
         preco_venda_padrao: precoVendaCalculado,
         valor_compra: custoBase,
-        preco_venda_tipo: formData.preco_venda_tipo
+        preco_venda_tipo: formData.preco_venda_tipo,
+        custo_frete_padrao: parseFloat(formData.custo_frete_padrao) || 0,
+        custo_imposto1_padrao: parseFloat(formData.custo_imposto1_padrao) || 0,
+        custo_imposto2_padrao: parseFloat(formData.custo_imposto2_padrao) || 0,
+        custo_outros_padrao: parseFloat(formData.custo_outros_padrao) || 0,
+        desconto_compra_padrao: parseFloat(formData.desconto_compra_padrao) || 0,
       };
 
       let produtoId = produto?.id;
@@ -304,25 +258,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
         produtoId = novoProduto.id;
       }
 
-      if (produto?.id) {
-        const custosAntigos = await base44.entities.CustoDetalhado.filter({ produto_id: produtoId });
-        await Promise.all(custosAntigos.map(c => base44.entities.CustoDetalhado.delete(c.id)));
-      }
 
-      const custosParaCriar = custos
-        .filter(c => c.descricao_custo)
-        .map(c => ({
-          produto_id: produtoId, descricao_custo: c.descricao_custo,
-          valor_custo: parseFloat(c.valor_custo) || 0, tipo_valor: c.tipo_valor || 'percentual',
-          valor_calculado_reais: c.tipo_valor === 'percentual' 
-            ? (custoBase * (parseFloat(c.valor_custo) || 0) / 100)
-            : (parseFloat(c.valor_custo) || 0),
-          is_negativo: c.is_negativo || false
-        }));
-
-      if (custosParaCriar.length > 0) {
-        await base44.entities.CustoDetalhado.bulkCreate(custosParaCriar);
-      }
 
       toast({
         title: "✓ Produto salvo!",
@@ -634,73 +570,40 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
             {/* LAYOUT GRID - Desktop: lado a lado | Mobile: empilhado */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-              {/* Composição de Custos */}
+              {/* Composição de Custos - direto dos campos do produto */}
               <div className="relative">
                 <div className="flex items-center gap-2 mb-4">
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                   <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Composição de Custos</h3>
                 </div>
                 <div className="space-y-1">
-                  {custos.map((custo, index) => {
-                    const isCustoNumerico = ['Valor de Compra', 'Frete', 'Custo Adicional'].includes(custo.descricao_custo);
-                    const isDesconto = custo.descricao_custo === 'Desconto Comercial';
-                    const valorDigitado = parseFloat(custo.valor_custo) || 0;
-
-                    let valorCalculadoReais = 0;
-                    if (isCustoNumerico) {
-                      valorCalculadoReais = valorDigitado;
-                    } else {
-                      valorCalculadoReais = (custoBase * valorDigitado / 100);
-                    }
-
-                    const getIcon = () => {
-                      switch(custo.descricao_custo) {
-                        case 'Valor de Compra': return <Box className="w-3.5 h-3.5" />;
-                        case 'Frete': return <Truck className="w-3.5 h-3.5" />;
-                        case 'Custo Adicional': return <Plus className="w-3.5 h-3.5" />;
-                        case 'Imposto 1': return <FileText className="w-3.5 h-3.5" />;
-                        case 'Imposto 2': return <FileText className="w-3.5 h-3.5" />;
-                        case 'Desconto Comercial': return <Tag className="w-3.5 h-3.5" />;
-                        default: return null;
-                      }
-                    };
-
+                  {[
+                    { label: 'Valor de Compra', field: 'valor_compra', icon: <Box className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Frete', field: 'custo_frete_padrao', icon: <Truck className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Imposto 1', field: 'custo_imposto1_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Imposto 2', field: 'custo_imposto2_padrao', icon: <FileText className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Outros Custos', field: 'custo_outros_padrao', icon: <Plus className="w-3.5 h-3.5" />, isCurrency: true },
+                    { label: 'Desconto Comercial', field: 'desconto_compra_padrao', icon: <Tag className="w-3.5 h-3.5" />, isCurrency: true, isNegativo: true },
+                  ].map(({ label, field, icon, isNegativo }) => {
+                    const valor = parseFloat(formData[field]) || 0;
                     return (
-                      <div key={index} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                      <div key={field} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                          <span className="text-gray-400">{getIcon()}</span>
-                          <span className="whitespace-nowrap">{custo.descricao_custo}</span>
+                          <span className="text-gray-400">{icon}</span>
+                          <span className="whitespace-nowrap">{label}</span>
                         </div>
-                        
                         <div className="flex items-center justify-end gap-2">
-                          {isCustoNumerico ? (
-                            <>
-                              <CurrencyInput
-                                value={custo.valor_custo}
-                                onChange={val => handleCustoChange(index, 'valor_custo', val)}
-                                dataIndex={index}
-                                placeholder="0,00"
-                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
-                              />
-                              <span className="text-xs text-gray-400 w-8">(R$)</span>
-                            </>
-                          ) : (
-                            <>
-                              <CurrencyInput
-                                value={custo.valor_custo}
-                                onChange={val => handleCustoChange(index, 'valor_custo', val)}
-                                dataIndex={index}
-                                placeholder="0,00"
-                                isPercentage={true}
-                                className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-20 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
-                              />
-                              <span className="text-xs text-gray-400 w-8">%</span>
-                            </>
-                          )}
+                          <CurrencyInput
+                            value={formData[field] || 0}
+                            onChange={val => handleChange(field, val)}
+                            dataIndex={field}
+                            placeholder="0,00"
+                            className="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 rounded-none px-0 h-8 text-sm w-28 text-right text-gray-800 dark:text-gray-200 focus:border-gray-500 font-glacial"
+                          />
+                          <span className="text-xs text-gray-400 w-8">(R$)</span>
                         </div>
-
                         <span className="text-sm font-medium text-gray-800 dark:text-gray-200 text-right tabular-nums font-glacial whitespace-nowrap">
-                          {isDesconto && !isCustoNumerico ? '-' : ''}R$ {formatarNumero(isCustoNumerico ? valorCalculadoReais : Math.abs(valorCalculadoReais))}
+                          {isNegativo ? '-' : ''}R$ {formatarNumero(valor)}
                         </span>
                       </div>
                     );
