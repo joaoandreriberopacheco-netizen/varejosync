@@ -98,9 +98,13 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       <Sep />
 
       {/* ── Cabeçalho colunas ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: F + 1, color: '#666', lineHeight: 1.4 }}>
-        <span>NO. | ITEM NAME</span>
-        <span>QTY | UN | PREÇO | TOTAL</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', fontSize: F - 1, color: '#666', lineHeight: 1.4, whiteSpace: 'nowrap', gap: '2px' }}>
+        <span style={{ width: '28px', flexShrink: 0 }}>NO.</span>
+        <span style={{ flex: 1 }}>PRODUTO</span>
+        <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>QTD</span>
+        <span style={{ width: '28px', textAlign: 'right', flexShrink: 0 }}>UN</span>
+        <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>PREÇO</span>
+        <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>TOTAL</span>
       </div>
 
       <Sep />
