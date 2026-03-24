@@ -47,8 +47,6 @@ function CupomTermico({ pedido, dadosEmpresa }) {
     </div>
   );
 
-  const maxNameW = 24;
-
   return (
     <div
       id="cupom-print"
