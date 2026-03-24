@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Save, Trash2, X, DollarSign, Package, AlertCircle, FileText, Delete, ArrowRight, Percent, TrendingDown, TrendingUp } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp } from 'lucide-react';
 import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
