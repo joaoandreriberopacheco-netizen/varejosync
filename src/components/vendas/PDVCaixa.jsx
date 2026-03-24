@@ -1550,13 +1550,22 @@ export default function PDVCaixa() {
                  </TabsContent>
 
                  <TabsContent value="vendas" className="flex-1 overflow-auto p-4 mt-0 space-y-3 data-[state=inactive]:hidden">
-                  <div className="max-w-4xl mx-auto">
-                    <div className="mb-4">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aguardando</div>
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
-                        {rascunhosAguardando.length} {rascunhosAguardando.length === 1 ? 'Venda' : 'Vendas'}
-                      </div>
-                    </div>
+                   <div className="max-w-4xl mx-auto">
+                     <div className="mb-4 flex items-center justify-between">
+                       <div>
+                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aguardando</div>
+                         <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">
+                           {rascunhosAguardando.length} {rascunhosAguardando.length === 1 ? 'Venda' : 'Vendas'}
+                         </div>
+                       </div>
+                       <button
+                         onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
+                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                         style={{ minWidth: '44px', minHeight: '44px' }}
+                         title="Atualizar">
+                         <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                       </button>
+                     </div>
 
                     {rascunhosAguardando.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-16">
@@ -1572,7 +1581,7 @@ export default function PDVCaixa() {
                           <div
                             key={rascunho.id}
                             className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => handleAbrirPedido(rascunho)}>
+                            onClick={() => setRascunhoDetalhesTab(rascunho)}>
                             <div className="flex items-start justify-between gap-4 mb-3">
                               {rascunho.senha_atendimento && (
                                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-xl">
