@@ -69,49 +69,14 @@ Deno.serve(async (req) => {
           criados++;
           
         } else if (mov.tipo === 'Sangria' || mov.tipo === 'Recolhimento de Caixa') {
-          // Recolhimento: saída na origem + entrada no destino
+          // Recolhimento: DESATIVADO - não cria mais despesa, apenas MovimentosCaixa controla
           const descricao = `Recolhimento de caixa - ${mov.numero}`;
           
-          // Saída
-          await base44.asServiceRole.entities.LancamentoFinanceiro.create({
-            tipo: 'Despesa',
-            descricao: descricao,
-            valor: mov.valor,
-            conta_financeira_id: contaOrigem.id,
-            conta_financeira_nome: contaOrigem.nome,
-            data_vencimento: dataMov,
-            data_pagamento: dataMov,
-            status: 'Pago',
-            forma_pagamento_tipo: 'Dinheiro',
-            referencia_tipo: 'MovimentosCaixa',
-            referencia_id: mov.id,
-            referencia_numero: mov.numero,
-            observacoes: mov.observacao ? `Saída: ${mov.observacao}` : '',
-            grupo_lancamento_id: grupoId,
-            turno_caixa_id: mov.turno_caixa_id,
-          });
-          
+          // REMOVIDO: Saída já não é criada em LancamentoFinanceiro
           // Entrada no Caixa Geral (se diferente)
-          if (caixaGeral && caixaGeral.id !== contaOrigem.id) {
-            await base44.asServiceRole.entities.LancamentoFinanceiro.create({
-              tipo: 'Receita',
-              descricao: descricao,
-              valor: mov.valor,
-              conta_financeira_id: caixaGeral.id,
-              conta_financeira_nome: caixaGeral.nome,
-              data_vencimento: dataMov,
-              data_pagamento: dataMov,
-              status: 'Pago',
-              forma_pagamento_tipo: 'Dinheiro',
-              referencia_tipo: 'MovimentosCaixa',
-              referencia_id: mov.id,
-              referencia_numero: mov.numero,
-              observacoes: mov.observacao ? `Entrada: ${mov.observacao}` : '',
-              grupo_lancamento_id: grupoId,
-              turno_caixa_id: mov.turno_caixa_id,
-            });
-          }
-          criados++;
+          // REMOVIDO: Entrada também não é criada
+          // O MovimentosCaixa é o único registro de controle
+          // criados++; // Não incrementa pois não há lançamento
         }
       } catch (e) {
         erros.push(`Erro no movimento ${mov.numero}: ${e.message}`);
