@@ -86,7 +86,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       {/* ── Meta do pedido ── */}
       <div style={{ fontSize: F, lineHeight: 1.55 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</span>
+          <span>{fmtDtTZ(pedido.created_date || new Date())}</span>
           <span>Nº {pedido.numero || 'S/N'}</span>
         </div>
         {pedido.cliente_nome && <div>Cliente: {pedido.cliente_nome.toUpperCase()}</div>}
@@ -260,16 +260,27 @@ function CupomA4({ pedido, dadosEmpresa }) {
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '22px', fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1 }}>CUPOM DE VENDA</div>
           <div style={{ fontSize: '11px', color: '#555', marginTop: '3mm' }}>Pedido: {pedido.numero || 'S/N'}</div>
-          <div style={{ fontSize: '11px', color: '#555' }}>{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy, HH:mm')}</div>
+          <div style={{ fontSize: '11px', color: '#555' }}>{fmtDtTZ(pedido.created_date || new Date())}</div>
           {pedido.vendedor_nome && <div style={{ fontSize: '11px', color: '#555', marginTop: '1mm' }}>Vendedor: {pedido.vendedor_nome}</div>}
         </div>
       </div>
 
       {/* ── Dados do cliente ── */}
       {pedido.cliente_nome && (
-        <div style={{ marginBottom: '7mm' }}>
-          <div style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '1mm' }}>Cliente</div>
-          <div style={{ fontSize: '13px' }}>{pedido.cliente_nome}</div>
+        <div style={{ marginBottom: '7mm', padding: '3mm 4mm', background: '#f9f9f9', borderRadius: '2mm' }}>
+          <div style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '2mm' }}>Cliente</div>
+          <div style={{ fontSize: '13px', fontWeight: '500' }}>{pedido.cliente_nome}</div>
+          {(dadosCliente?.cpf_cnpj || dadosCliente?.telefone) && (
+            <div style={{ fontSize: '10px', color: '#555', marginTop: '1mm', lineHeight: 1.5 }}>
+              {dadosCliente?.cpf_cnpj && <span>CPF/CNPJ: {dadosCliente.cpf_cnpj} </span>}
+              {dadosCliente?.telefone && <span>Tel: {dadosCliente.telefone}</span>}
+            </div>
+          )}
+          {(dadosCliente?.endereco || dadosCliente?.cidade) && (
+            <div style={{ fontSize: '10px', color: '#555', marginTop: '1mm', lineHeight: 1.5 }}>
+              {[dadosCliente?.endereco, dadosCliente?.cidade, dadosCliente?.estado].filter(Boolean).join(', ')}
+            </div>
+          )}
         </div>
       )}
 
@@ -369,6 +380,16 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [formato, setFormato] = useState('80mm');
   const [gerando, setGerando] = useState(false);
   const [templates, setTemplates] = useState({ '80mm': null, 'a4': null });
+
+  useEffect(() => {
+    if (!open) return;
+    setDadosCliente(null);
+    base44.entities.DadosEmpresa.list().then(r => r?.length && setDadosEmpresa(r[0])).catch(() => {});
+    if (pedido?.cliente_id) {
+      base44.entities.Terceiro.get(pedido.cliente_id).then(setDadosCliente).catch(() => {});
+    }
+    const ip = localStorage.getItem('ip_impressora_termica');
+    if (ip) setIpImpressora(ip);
     base44.entities.ComprovanteTemplate.filter({ is_default: true }).then(tpls => {
       const map = { '80mm': null, 'a4': null };
       tpls.forEach(t => {
