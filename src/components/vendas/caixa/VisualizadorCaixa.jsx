@@ -32,13 +32,13 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     setLoading(true);
     try {
       const [vendas, movs, despesasRaw] = await Promise.all([
-        base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
-        base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' })
+       base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
+       base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id, status: { $ne: 'Cancelado' } }),
+       base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' })
       ]);
 
-      // Filtrar apenas despesas que NÃO são recolhimentos
-      const despesas = despesasRaw.filter(d => d.referencia_tipo !== 'MovimentosCaixa');
+      // Filtrar apenas despesas que NÃO são recolhimentos e NÃO estão canceladas
+      const despesas = despesasRaw.filter(d => d.referencia_tipo !== 'MovimentosCaixa' && d.status !== 'Cancelado');
 
       const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
@@ -55,8 +55,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         }
       });
 
-      const totalReforcos = movs.filter(m => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
-      const totalSangrias = movs.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((s, m) => s + (m.valor || 0), 0);
+      const totalReforcos = movs.filter(m => m.tipo === 'Reforço' && m.status !== 'Cancelado').reduce((s, m) => s + (m.valor || 0), 0);
+      const totalSangrias = movs.filter(m => (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') && m.status !== 'Cancelado').reduce((s, m) => s + (m.valor || 0), 0);
       // Despesas filtradas (apenas as que não são recolhimentos)
       const totalDespesas = despesas.reduce((s, d) => s + (d.valor || 0), 0);
 
@@ -112,11 +112,11 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         </div>${subLinhas}</div>`;
     }).join('');
 
-    const linhasReforcos = movimentos.filter(m => m.tipo === 'Reforço').map(m =>
+    const linhasReforcos = movimentos.filter(m => m.tipo === 'Reforço' && m.status !== 'Cancelado').map(m =>
       `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#059669">+R$ ${(m.valor || 0).toFixed(2)}</span></div>`
     ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum reforço</p>';
 
-    const linhasRecolhimentos = movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map(m =>
+    const linhasRecolhimentos = movimentos.filter(m => (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') && m.status !== 'Cancelado').map(m =>
       `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')}${m.observacao ? ' · ' + m.observacao : ''}</span><span style="color:#2563eb">-R$ ${(m.valor || 0).toFixed(2)}</span></div>`
     ).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum recolhimento</p>';
 
