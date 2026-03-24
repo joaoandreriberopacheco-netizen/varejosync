@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Loader2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
 export default function MovimentoDialog({
@@ -15,10 +15,20 @@ export default function MovimentoDialog({
 }) {
   const { toast } = useToast();
   const valorRef = React.useRef(null);
+  const [processando, setProcessando] = React.useState(false);
 
   const handleValorChange = (e) => {
     let nums = e.target.value.replace(/\D/g, '') || '0';
     setValorMovimento(formatarValorExibicao(parseInt(nums) / 100));
+  };
+
+  const executarSalvar = async () => {
+    setProcessando(true);
+    try {
+      await onSalvar();
+    } finally {
+      setProcessando(false);
+    }
   };
 
   const handleValorKeyDown = (e) => {
@@ -26,7 +36,7 @@ export default function MovimentoDialog({
       e.preventDefault();
       const v = parseFloat((valorMovimento || '0').replace(/\./g, '').replace(',', '.')) || 0;
       if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
-      onSalvar();
+      executarSalvar();
     }
     if (e.key === 'Backspace') {
       e.preventDefault();
@@ -42,7 +52,8 @@ export default function MovimentoDialog({
         <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-3 flex items-center flex-shrink-0">
           <button
             onClick={() => { if (movimentoStep === 'valor') setMovimentoStep('obs'); else onOpenChange(false); }}
-            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            disabled={processando}
+            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
             style={{ minWidth: '44px', minHeight: '44px' }}>
             <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </button>
@@ -75,6 +86,7 @@ export default function MovimentoDialog({
                 <textarea
                   autoFocus
                   rows={4}
+                  disabled={processando}
                   placeholder="Motivo ou observação..."
                   value={observacaoMovimento}
                   onChange={(e) => setObservacaoMovimento(e.target.value)}
@@ -85,12 +97,13 @@ export default function MovimentoDialog({
                       setTimeout(() => valorRef.current?.focus(), 100);
                     }
                   }}
-                  className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                  className="w-full resize-none bg-transparent border-0 focus:outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 disabled:opacity-60"
                 />
               </div>
               <button
                 onClick={() => { setMovimentoStep('valor'); setTimeout(() => valorRef.current?.focus(), 100); }}
-                className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'}`}
+                disabled={processando}
+                className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm transition-opacity ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'} ${processando ? 'opacity-60 cursor-not-allowed' : ''}`}
                 style={{ minHeight: '56px' }}>
                 Próximo →
               </button>
@@ -107,11 +120,12 @@ export default function MovimentoDialog({
                   autoFocus
                   type="text"
                   inputMode="numeric"
+                  disabled={processando}
                   value={valorMovimento || '0,00'}
                   onChange={handleValorChange}
                   onKeyDown={handleValorKeyDown}
                   onFocus={(e) => e.target.select()}
-                  className="text-5xl font-bold text-gray-900 dark:text-white font-glacial text-center bg-transparent border-0 focus:outline-none w-full"
+                  className="text-5xl font-bold text-gray-900 dark:text-white font-glacial text-center bg-transparent border-0 focus:outline-none w-full disabled:opacity-60"
                   style={{ caretColor: 'transparent' }}
                 />
               </div>
@@ -120,11 +134,19 @@ export default function MovimentoDialog({
                 onClick={() => {
                   const v = parseFloat((valorMovimento || '0').replace(/\./g, '').replace(',', '.')) || 0;
                   if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
-                  onSalvar();
+                  executarSalvar();
                 }}
-                className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'}`}
+                disabled={processando}
+                className={`w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm transition-opacity ${tipoMovimento === 'Reforço' ? 'bg-emerald-600' : 'bg-blue-600'} ${processando ? 'opacity-60 cursor-not-allowed' : ''}`}
                 style={{ minHeight: '56px' }}>
-                Confirmar
+                {processando ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                    Processando...
+                  </>
+                ) : (
+                  'Confirmar'
+                )}
               </button>
             </>
           )}
