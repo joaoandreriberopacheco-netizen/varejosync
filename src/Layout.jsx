@@ -471,6 +471,19 @@ export default function Layout({ children, currentPageName }) {
                   <DropdownMenuItem 
                     onClick={() => {
                       triggerTransition(() => {
+                        window.location.href = createPageUrl('ReversaoDespesasSangrias');
+                      });
+                      setShowMoreMenu(false);
+                      if (isMobile) setIsOpen(false);
+                    }}
+                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    <span>Reverter Despesas</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      triggerTransition(() => {
                         window.location.href = createPageUrl('ReimpressaoDocumentos');
                       });
                       setShowMoreMenu(false);
