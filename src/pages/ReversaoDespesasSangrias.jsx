@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertCircle, RefreshCw, Minus, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -11,6 +11,7 @@ export default function ReversaoDespesasSangrias() {
   const [movimentos, setMovimentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [revertendo, setRevertendo] = useState(false);
+  const [abaSelecionada, setAbaSelecionada] = useState('despesas');
 
   useEffect(() => {
     carregarDados();
@@ -54,10 +55,7 @@ export default function ReversaoDespesasSangrias() {
 
     setRevertendo(true);
     try {
-      // Deletar lançamento financeiro
       await base44.entities.LancamentoFinanceiro.delete(despesa.id);
-
-      // Restaurar saldo da conta
       if (despesa.conta_financeira_id) {
         const conta = await base44.entities.ContasFinanceiras.get(despesa.conta_financeira_id);
         if (conta) {
@@ -67,17 +65,40 @@ export default function ReversaoDespesasSangrias() {
           });
         }
       }
-
       toast({
         title: '✓ Revertido com sucesso',
         description: `${despesa.descricao} foi removido`,
         className: 'bg-emerald-100 text-emerald-800'
       });
-
       carregarDados();
     } catch (error) {
       toast({
         title: 'Erro ao reverter',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setRevertendo(false);
+    }
+  };
+
+  const deletarMovimento = async (movimento) => {
+    if (!window.confirm(`Deletar ${movimento.tipo} #${movimento.numero} (R$ ${movimento.valor.toFixed(2)})?`)) {
+      return;
+    }
+
+    setRevertendo(true);
+    try {
+      await base44.entities.MovimentosCaixa.delete(movimento.id);
+      toast({
+        title: '✓ Deletado com sucesso',
+        description: `${movimento.tipo} foi removido`,
+        className: 'bg-emerald-100 text-emerald-800'
+      });
+      carregarDados();
+    } catch (error) {
+      toast({
+        title: 'Erro ao deletar',
         description: error.message,
         variant: 'destructive'
       });
@@ -118,9 +139,32 @@ export default function ReversaoDespesasSangrias() {
         </button>
       </div>
 
+      <div className="border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 px-4">
+        <div className="max-w-2xl mx-auto flex gap-1">
+          <button
+            onClick={() => setAbaSelecionada('despesas')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              abaSelecionada === 'despesas'
+                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+            }`}>
+            Despesas ({despesasProblematicas.length})
+          </button>
+          <button
+            onClick={() => setAbaSelecionada('movimentos')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              abaSelecionada === 'movimentos'
+                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+            }`}>
+            Movimentos ({movimentos.length})
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-auto p-4">
         <div className="max-w-2xl mx-auto">
-          {despesasProblematicas.length === 0 ? (
+          {abaSelecionada === 'despesas' && despesasProblematicas.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
@@ -130,7 +174,7 @@ export default function ReversaoDespesasSangrias() {
                 Nenhuma despesa vinculada a sangrias foi encontrada.
               </p>
             </div>
-          ) : (
+          ) : abaSelecionada === 'despesas' ? (
             <div className="space-y-3">
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4">
                 <div className="flex gap-3">
@@ -179,7 +223,56 @@ export default function ReversaoDespesasSangrias() {
                 );
               })}
             </div>
-          )}
+          ) : null}
+
+          {abaSelecionada === 'movimentos' && movimentos.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nenhum movimento</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Não há movimentos de caixa para deletar.</p>
+            </div>
+          ) : abaSelecionada === 'movimentos' ? (
+            <div className="space-y-3">
+              {movimentos.map((movimento) => (
+                <div
+                  key={movimento.id}
+                  className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      movimento.tipo === 'Reforço' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-blue-50 dark:bg-blue-900/20'
+                    }`}>
+                      {movimento.tipo === 'Reforço'
+                        ? <Plus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        : <Minus className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{movimento.tipo}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">#{movimento.numero}</div>
+                      {movimento.observacao && (
+                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">{movimento.observacao}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                      R$ {movimento.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <button
+                      onClick={() => deletarMovimento(movimento)}
+                      disabled={revertendo}
+                      className="mt-3 h-10 px-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-medium text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                      style={{ minHeight: '40px' }}>
+                      <Trash2 className="w-4 h-4" />
+                      Deletar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
