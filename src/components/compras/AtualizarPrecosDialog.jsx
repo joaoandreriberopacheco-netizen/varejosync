@@ -283,10 +283,12 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleCostBlur(item.produto_id, field)}
                           className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-800 shadow-none rounded-xl"
-                        />
-                        </div>
+                          />
+                          </div>
+                          ))}
+                          </div>
 
-                  {/* Custo total + markup + preço venda */}
+                          {/* Custo total + markup + preço venda */}
                   <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Custo Total</span>
