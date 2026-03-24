@@ -355,7 +355,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     {!isTransf && !isCancelado && (
       <button
         onClick={() => setShowCancelarDialog(true)}
-        className="absolute bottom-4 left-4 w-12 h-12 rounded-full bg-red-500 dark:bg-red-600 text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center hover:bg-red-600 dark:hover:bg-red-700 z-50"
+        className="fixed bottom-4 left-4 md:bottom-6 md:left-6 w-12 h-12 rounded-full bg-red-500 dark:bg-red-600 text-white shadow-2xl active:scale-95 transition-transform flex items-center justify-center hover:bg-red-600 dark:hover:bg-red-700 z-[9999]"
         title="Cancelar lançamento"
       >
         <Trash2 className="w-5 h-5" />
