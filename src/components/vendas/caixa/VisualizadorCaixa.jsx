@@ -38,8 +38,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       ]);
       const movs = movsRaw.filter(m => m.status !== 'Cancelado');
 
-      // Filtrar apenas despesas que NÃO são recolhimentos e NÃO estão canceladas
-      const despesas = despesasRaw.filter(d => d.referencia_tipo !== 'MovimentosCaixa' && d.status !== 'Cancelado');
+      // Filtrar apenas despesas que NÃO são recolhimentos/movimentos de caixa
+      const despesas = despesasRaw.filter(d => !['MovimentosCaixa', 'Sangria', 'Recolhimento de Caixa'].includes(d.referencia_tipo) && d.status !== 'Cancelado');
 
       const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
@@ -395,8 +395,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
             <div className="max-w-4xl mx-auto space-y-2">
               {(() => {
                 const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
-                const recolhimentoIds = new Set((movimentos || []).filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').map(m => m.id));
-                const itensDespesas = (caixaData?.despesasLista || []).filter(d => !recolhimentoIds.has(d.referencia_id)).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
+                const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
                 const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
                 
                 if (todos.length === 0) return (
