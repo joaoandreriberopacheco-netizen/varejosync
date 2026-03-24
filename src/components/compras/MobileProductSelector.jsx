@@ -166,7 +166,7 @@ export default function MobileProductSelector({
     const isDesconto = tipoDesconto === 'desconto';
 
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
@@ -338,7 +338,7 @@ export default function MobileProductSelector({
   if (view === 'edit' && editingItem) {
     const total = calculateTotal(editingItem);
     return (
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
         <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <Button variant="ghost" size="icon" onClick={() => {
             setEditingItem(null);
@@ -625,7 +625,7 @@ export default function MobileProductSelector({
   if (view === 'catalog') {
     return (
       <>
-        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
           <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
             <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
               <ChevronLeft className="w-5 h-5" />
@@ -739,8 +739,11 @@ export default function MobileProductSelector({
           {/* FAB - Criar Produto */}
           {!isLocked && (
             <button
-              onClick={() => setShowNovoProduto(true)}
-              className="fixed bottom-6 right-6 z-[60] w-14 h-14 bg-gray-800 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
+              onClick={() => {
+                document.activeElement?.blur();
+                setShowNovoProduto(true);
+              }}
+              className="fixed bottom-6 right-6 z-[70] w-14 h-14 bg-gray-800 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
               title="Criar novo produto"
             >
               <Plus className="w-6 h-6" />
@@ -768,7 +771,7 @@ export default function MobileProductSelector({
   );
 
   return (
-    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-[60] flex flex-col">
       <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
         <Button variant="ghost" size="icon" onClick={() => setView('catalog')} className="h-10 w-10">
           <ChevronLeft className="w-5 h-5" />
