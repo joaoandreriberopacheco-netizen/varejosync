@@ -72,6 +72,7 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
           )}
         </div>
       </div>
+      </div>
 
     {/* Modal de Detalhes */}
     {rascunhoDetalhes && (
