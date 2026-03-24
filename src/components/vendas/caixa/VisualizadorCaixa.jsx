@@ -37,8 +37,11 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' })
       ]);
 
-      // Filtrar apenas despesas que NÃO são recolhimentos
-      const despesas = despesasRaw.filter(d => d.referencia_tipo !== 'MovimentosCaixa');
+      // Filtrar apenas despesas que NÃO são recolhimentos (tipo Sangria ou Recolhimento de Caixa)
+      const despesas = despesasRaw.filter(d => {
+        const movimentoAssociado = movs.find(m => m.id === d.referencia_id);
+        return !movimentoAssociado || (movimentoAssociado.tipo !== 'Sangria' && movimentoAssociado.tipo !== 'Recolhimento de Caixa');
+      });
 
       const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
