@@ -38,8 +38,15 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       ]);
       const movs = movsRaw.filter(m => m.status !== 'Cancelado');
 
-      // Filtrar apenas despesas que NÃO estão canceladas e NÃO são recolhimentos
-      const despesas = despesasRaw.filter(d => d.status !== 'Cancelado' && d.referencia_tipo !== 'MovimentosCaixa');
+      // Filtrar apenas despesas que NÃO estão canceladas e NÃO estão vinculadas a recolhimentos
+      const despesas = despesasRaw.filter(d => {
+        if (d.status === 'Cancelado') return false;
+        if (d.referencia_tipo === 'MovimentosCaixa') return false;
+        // Remove também se descrição menciona recolhimento/sangria
+        const desc = (d.descricao || '').toLowerCase();
+        if (desc.includes('recolhimento') || desc.includes('sangria')) return false;
+        return true;
+      });
 
       const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
