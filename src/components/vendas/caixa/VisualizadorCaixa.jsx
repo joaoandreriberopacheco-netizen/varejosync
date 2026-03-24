@@ -38,8 +38,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       ]);
       const movs = movsRaw.filter(m => m.status !== 'Cancelado');
 
-      // Filtrar apenas despesas que NÃO estão canceladas
-      const despesas = despesasRaw.filter(d => d.status !== 'Cancelado');
+      // Filtrar apenas despesas que NÃO estão canceladas e NÃO são recolhimentos
+      const despesas = despesasRaw.filter(d => d.status !== 'Cancelado' && d.referencia_tipo !== 'MovimentosCaixa');
 
       const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
