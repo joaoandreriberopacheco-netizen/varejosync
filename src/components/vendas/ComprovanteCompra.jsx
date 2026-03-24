@@ -118,20 +118,6 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         const num = String(idx + 1).padStart(2, '0');
         const unidade = (item.unidade_principal || 'UN').substring(0, 4);
 
-        // Quebra o nome em palavras para montar linhas
-        const palavras = nome.split(' ');
-        const linhas = [];
-        let atual = '';
-        for (const p of palavras) {
-          if ((atual + (atual ? ' ' : '') + p).length <= maxNameW) {
-            atual = atual ? atual + ' ' + p : p;
-          } else {
-            if (atual) linhas.push(atual);
-            atual = p.substring(0, maxNameW);
-          }
-        }
-        if (atual) linhas.push(atual);
-
         return (
           <div key={idx} style={{ display: 'flex', gap: '2px', fontSize: F + 2, lineHeight: 1.45, marginBottom: '3px' }}>
             {/* Número do item */}
