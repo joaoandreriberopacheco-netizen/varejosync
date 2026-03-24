@@ -263,9 +263,16 @@ export default function PDVVendedor() {
           if (rascunho.valor_desconto > 0) {
             setTipoAjuste('desconto');
             setValorAjuste(rascunho.valor_desconto);
+            setAjusteValor(rascunho.valor_desconto.toFixed(2));
             setTipoValorAjuste('valor');
+            setAjustePercentual('');
+          } else {
+            setValorAjuste(0);
+            setAjustePercentual('');
+            setAjusteValor('');
+            setTipoAjuste('desconto');
+            setTipoValorAjuste('percentual');
           }
-          
           showFeedback('info', `Editando rascunho - Senha ${rascunho.senha_atendimento.slice(-4)}`, 3000);
         }
       } catch (error) {
@@ -808,6 +815,12 @@ export default function PDVVendedor() {
 
   const handleCarregarOrcamento = (itensOrcamento, orcamento) => {
     setCarrinho(itensOrcamento);
+    // Reset desconto para evitar herança da venda anterior
+    setValorAjuste(0);
+    setAjustePercentual('');
+    setAjusteValor('');
+    setTipoAjuste('desconto');
+    setTipoValorAjuste('percentual');
     showFeedback('success', `Orçamento de ${orcamento.cliente_nome || 'cliente'} carregado`, 2000);
   };
 
@@ -875,9 +888,16 @@ export default function PDVVendedor() {
       if (rascunhoEncontrado.valor_desconto > 0) {
         setTipoAjuste('desconto');
         setValorAjuste(rascunhoEncontrado.valor_desconto);
+        setAjusteValor(rascunhoEncontrado.valor_desconto.toFixed(2));
         setTipoValorAjuste('valor');
+        setAjustePercentual('');
+      } else {
+        setValorAjuste(0);
+        setAjustePercentual('');
+        setAjusteValor('');
+        setTipoAjuste('desconto');
+        setTipoValorAjuste('percentual');
       }
-
       // Armazenar ID para atualização posterior
       setRascunhoEmEdicaoId(rascunhoEncontrado.id);
       
