@@ -414,12 +414,18 @@ export default function PDVCaixa() {
       const caixaAtual = contaAtualizada || caixa;
       setContaCaixaPDV(caixaAtual);
 
-      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesas] = await Promise.all([
+      const [todosPedidos, todosRascunhos, todasMovimentacoes, todasDespesasRaw] = await Promise.all([
         base44.entities.PedidoVenda.list(),
         base44.entities.RascunhoPedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turno.id, tipo: 'Despesa' })
       ]);
+
+      // Filtrar despesas: excluir as que foram geradas automaticamente para sangrias/recolhimentos
+      const todasDespesas = todasDespesasRaw.filter(d => {
+        if (d.referencia_tipo === 'MovimentosCaixa') return false;
+        return true;
+      });
 
       const pedidosAguardandoCaixa = todosPedidos.filter((p) =>
         p.status === 'Aguardando Caixa'
