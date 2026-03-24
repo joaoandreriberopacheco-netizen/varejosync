@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  Banknote, Smartphone, CreditCard, Ticket, Receipt, ArrowLeft, ChevronRight, RefreshCw
+  Banknote, Smartphone, CreditCard, Ticket, Receipt, ArrowLeft, ChevronRight, RefreshCw, Eye, EyeOff
 } from 'lucide-react';
 import SeletorMaquininhaSheet from './SeletorMaquininhaSheet';
 import SeletorFiadoSheet from './SeletorFiadoSheet';
@@ -29,6 +29,7 @@ export default function ConfirmarPagamentoDialog({
   const [seletorMaquininha, setSeletorMaquininha] = useState(null);
   const [showSeletorFiado, setShowSeletorFiado] = useState(false);
   const [fiadoConfig, setFiadoConfig] = useState(null);
+  const [valoresVisiveis, setValoresVisiveis] = useState(true);
 
   // Wrapper de máscara que intercepta débito/crédito para pedir maquininha antes de digitar
   const handleInputMascaraComMaquininha = (e, setInput, setValor, modalidade) => {
@@ -83,9 +84,22 @@ export default function ConfirmarPagamentoDialog({
               <span className="text-base font-semibold text-gray-900 dark:text-white font-glacial">
                 {pedidoSelecionado.cliente_nome || 'Avulso'}
               </span>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums">
-                {formatValor(pedidoSelecionado.valor_total)}
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setValoresVisiveis(!valoresVisiveis)}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  title={valoresVisiveis ? 'Ocultar valores' : 'Mostrar valores'}
+                >
+                  {valoresVisiveis ? (
+                    <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  ) : (
+                    <EyeOff className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  )}
+                </button>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums">
+                  {valoresVisiveis ? formatValor(pedidoSelecionado.valor_total) : '••••••'}
+                </span>
+              </div>
             </DialogTitle>
           </DialogHeader>
 
@@ -102,6 +116,7 @@ export default function ConfirmarPagamentoDialog({
               inputRef={inputRefs.dinheiro}
               value={inputDinheiro}
               onKeyDown={(e) => handleInputMascara(e, setInputDinheiro, setPagamentosDinheiro)}
+              valoresVisiveis={valoresVisiveis}
             />
 
             {/* PIX */}
@@ -114,6 +129,7 @@ export default function ConfirmarPagamentoDialog({
               inputRef={inputRefs.pix}
               value={inputPix}
               onKeyDown={(e) => handleInputMascara(e, setInputPix, setPagamentosPix)}
+              valoresVisiveis={valoresVisiveis}
             />
 
             {/* Débito */}
@@ -130,6 +146,7 @@ export default function ConfirmarPagamentoDialog({
                 onKeyDown={(e) => handleInputMascaraComMaquininha(e, setInputDebito, setPagamentosDebito, 'debito')}
                 badge={maquininhaDebito ? `${maquininhaDebito.maquininha?.nome} · ${maquininhaDebito.bandeira} · ${maquininhaDebito.taxa}%` : null}
                 onBadgeClick={() => setSeletorMaquininha('debito')}
+                valoresVisiveis={valoresVisiveis}
               />
             </div>
 
@@ -147,6 +164,7 @@ export default function ConfirmarPagamentoDialog({
                 onKeyDown={(e) => handleInputMascaraComMaquininha(e, setInputCredito, setPagamentosCredito, 'credito')}
                 badge={maquininhaCredito ? `${maquininhaCredito.maquininha?.nome} · ${maquininhaCredito.bandeira} · ${parcelasCredito}x · ${maquininhaCredito.taxa}%` : null}
                 onBadgeClick={() => setSeletorMaquininha('credito')}
+                valoresVisiveis={valoresVisiveis}
               />
             </div>
 
@@ -171,15 +189,16 @@ export default function ConfirmarPagamentoDialog({
               </div>
               {valeEncontrado && (
                 <InputPagamento
-                  label={`Vale (saldo: ${formatValor(valeEncontrado.saldo)})`}
-                  icon={Ticket}
-                  index={4}
-                  active={formaPagamentoAtiva === 4}
-                  onFocus={() => setFormaPagamentoAtiva(4)}
-                  inputRef={inputRefs.vale}
-                  value={inputVale}
-                  onKeyDown={(e) => handleInputMascara(e, setInputVale, setPagamentosVale)}
-                />
+                    label={`Vale (saldo: ${formatValor(valeEncontrado.saldo)})`}
+                    icon={Ticket}
+                    index={4}
+                    active={formaPagamentoAtiva === 4}
+                    onFocus={() => setFormaPagamentoAtiva(4)}
+                    inputRef={inputRefs.vale}
+                    value={inputVale}
+                    onKeyDown={(e) => handleInputMascara(e, setInputVale, setPagamentosVale)}
+                    valoresVisiveis={valoresVisiveis}
+                  />
               )}
             </div>
 
@@ -195,6 +214,7 @@ export default function ConfirmarPagamentoDialog({
               onKeyDown={(e) => handleInputMascara(e, setInputContaPagar, setPagamentosContaPagar)}
               badge={fiadoConfig ? `Vence em ${fiadoConfig.prazo_dias} dias` : null}
               onBadgeClick={() => setShowSeletorFiado(true)}
+              valoresVisiveis={valoresVisiveis}
             />
 
             {/* Resumo troco / falta */}
@@ -270,7 +290,7 @@ export default function ConfirmarPagamentoDialog({
 }
 
 // ── Input de pagamento glacial ────────────────────────────────────────────────
-function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, inputRef, value, onKeyDown, badge, onBadgeClick }) {
+function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, inputRef, value, onKeyDown, badge, onBadgeClick, valoresVisiveis }) {
   return (
     <div className="space-y-0.5">
       <div
@@ -290,7 +310,7 @@ function InputPagamento({ label, icon: Icon, active, onFocus, onContainerClick, 
           ref={inputRef}
           type="text"
           inputMode="numeric"
-          value={value}
+          value={valoresVisiveis ? value : value ? '••••••' : ''}
           onChange={() => {}}
           onFocus={(e) => { e.target.select(); onFocus?.(); }}
           onKeyDown={onKeyDown}
