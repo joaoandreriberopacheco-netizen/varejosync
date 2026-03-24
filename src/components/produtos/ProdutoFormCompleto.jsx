@@ -115,13 +115,17 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
   const loadCustos = async () => {
     const custosData = await base44.entities.CustoDetalhado.filter({ produto_id: produto.id });
     if (custosData.length === 0) {
+      // Usar campos diretos do produto como fonte de verdade
+      const descPct = produto.desconto_compra_padrao && produto.valor_compra
+        ? (Math.abs(produto.desconto_compra_padrao) / produto.valor_compra) * 100
+        : 0;
       setCustos([
         { descricao_custo: 'Valor de Compra', valor_custo: produto.valor_compra || 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Frete', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Custo Adicional', valor_custo: 0, tipo_valor: 'numerico', is_negativo: false },
-        { descricao_custo: 'Imposto 1', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
-        { descricao_custo: 'Imposto 2', valor_custo: 0, tipo_valor: 'percentual', is_negativo: false },
-        { descricao_custo: 'Desconto Comercial', valor_custo: 0, tipo_valor: 'percentual', is_negativo: true }
+        { descricao_custo: 'Frete', valor_custo: produto.custo_frete_padrao || 0, tipo_valor: 'numerico', is_negativo: false },
+        { descricao_custo: 'Custo Adicional', valor_custo: produto.custo_outros_padrao || 0, tipo_valor: 'numerico', is_negativo: false },
+        { descricao_custo: 'Imposto 1', valor_custo: produto.custo_imposto1_padrao || 0, tipo_valor: 'percentual', is_negativo: false },
+        { descricao_custo: 'Imposto 2', valor_custo: produto.custo_imposto2_padrao || 0, tipo_valor: 'percentual', is_negativo: false },
+        { descricao_custo: 'Desconto Comercial', valor_custo: descPct, tipo_valor: 'percentual', is_negativo: true }
       ]);
     } else {
       setCustos(custosData);
