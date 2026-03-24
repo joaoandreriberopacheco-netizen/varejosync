@@ -606,6 +606,9 @@ export default function PDVVendedor() {
     setCarrinho([]);
     setProdutoSelecionado(null);
     setValorAjuste(0);
+    setAjustePercentual('');
+    setAjusteValor('');
+    setTipoAjuste('desconto');
     setRascunhoEmEdicaoId(null);
     showFeedback('info', 'Carrinho limpo', 2000);
   };
@@ -789,6 +792,9 @@ export default function PDVVendedor() {
       setShowClienteDialog(false);
       setMetodoEntrega('Retirada');
       setValorAjuste(0);
+      setAjustePercentual('');
+      setAjusteValor('');
+      setTipoAjuste('desconto');
       setRascunhoEmEdicaoId(null);
 
       setTimeout(() => inputProdutoRef.current?.focus(), 500);
