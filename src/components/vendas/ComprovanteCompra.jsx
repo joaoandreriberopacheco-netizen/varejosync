@@ -132,28 +132,25 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         }
         if (atual) linhas.push(atual);
 
-        // larguras fixas das colunas de valor (iguais ao cabeçalho)
+        // larguras fixas das colunas de valor
         const colW = { num: '28px', qtd: '36px', un: '28px', preco: '46px', total: '46px' };
-        const rowBase = { display: 'flex', alignItems: 'baseline', gap: '2px', fontSize: F + 2, lineHeight: 1.45 };
+        // largura total das colunas de valor (para recuo da última linha)
+        const valoresW = 36 + 28 + 46 + 46 + 4 * 2; // soma das widths + gaps
+        const rowFs = { fontSize: F + 2, lineHeight: 1.45 };
 
         return (
-          <div key={idx} style={{ marginBottom: '3px' }}>
-            {/* Linhas de nome anteriores à última — reservam espaço das colunas de valor */}
+          <div key={idx} style={{ marginBottom: '3px', ...rowFs }}>
+            {/* Linhas de nome anteriores à última — ocupam TODA a largura */}
             {linhas.slice(0, -1).map((l, i) => (
-              <div key={i} style={rowBase}>
+              <div key={i} style={{ display: 'flex', gap: '2px' }}>
                 <span style={{ width: colW.num, flexShrink: 0 }}>{i === 0 ? num : ''}</span>
-                <span style={{ flex: 1 }}>{l}</span>
-                {/* espaços reservados para manter alinhamento */}
-                <span style={{ width: colW.qtd, flexShrink: 0 }} />
-                <span style={{ width: colW.un, flexShrink: 0 }} />
-                <span style={{ width: colW.preco, flexShrink: 0 }} />
-                <span style={{ width: colW.total, flexShrink: 0 }} />
+                <span>{l}</span>
               </div>
             ))}
-            {/* Última linha: nome + valores */}
-            <div style={rowBase}>
+            {/* Última linha: nome recuado + valores alinhados à direita */}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
               <span style={{ width: colW.num, flexShrink: 0 }}>{linhas.length === 1 ? num : ''}</span>
-              <span style={{ flex: 1 }}>{linhas[linhas.length - 1]}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>{linhas[linhas.length - 1]}</span>
               <span style={{ width: colW.qtd, textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
               <span style={{ width: colW.un, textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
               <span style={{ width: colW.preco, textAlign: 'right', flexShrink: 0 }}>{preco}</span>
