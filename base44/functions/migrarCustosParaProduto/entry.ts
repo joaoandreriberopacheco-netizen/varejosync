@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -12,6 +14,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const skip = body.skip || 0;
     const batchSize = 30;
+    // Modo "forcar" = recalcula mesmo se parecer correto, baseado em valor_compra > 0 e custo = 0
+    const forcar = body.forcar === true;
 
     const produtos = await base44.asServiceRole.entities.Produto.filter({}, '-created_date', batchSize, skip);
     
@@ -30,25 +34,33 @@ Deno.serve(async (req) => {
       const custoRecalculado = valorCompra + frete + imp1 + imp2 + outros - desconto;
       const custoAtual = p.preco_custo_calculado || 0;
       
-      if (Math.abs(custoRecalculado - custoAtual) > 0.01) {
-        const update = { preco_custo_calculado: custoRecalculado };
+      // Condição de correção:
+      // 1. Normal: custo recalculado difere do atual
+      // 2. Forçado: valor_compra > 0 mas custo calculado = 0 (dados que nunca foram consolidados)
+      const precisaCorrigir = Math.abs(custoRecalculado - custoAtual) > 0.01;
+      const custoZeradoComValor = forcar && valorCompra > 0 && custoAtual === 0;
+      
+      if (precisaCorrigir || custoZeradoComValor) {
+        const custoFinal = custoRecalculado > 0 ? custoRecalculado : valorCompra;
+        const update = { preco_custo_calculado: custoFinal };
         
-        if (p.preco_venda_tipo === 'percentual' && custoRecalculado > 0) {
-          const markup = p.preco_venda_percentual || 0;
-          update.preco_venda_padrao = parseFloat((custoRecalculado * (1 + markup / 100)).toFixed(2));
+        // Recalcular preço de venda se tipo percentual
+        if (p.preco_venda_tipo === 'percentual' && custoFinal > 0) {
+          const markup = p.preco_venda_percentual || 40;
+          update.preco_venda_padrao = parseFloat((custoFinal * (1 + markup / 100)).toFixed(2));
         }
         
         await base44.asServiceRole.entities.Produto.update(p.id, update);
         corrigidos++;
         detalhes.push({
           nome: p.nome,
+          valorCompra,
           custoAnterior: custoAtual,
-          custoNovo: custoRecalculado,
+          custoNovo: custoFinal,
           precoVendaNovo: update.preco_venda_padrao || p.preco_venda_padrao,
         });
 
-        // Pausa maior para evitar rate limit
-        await new Promise(r => setTimeout(r, 300));
+        await sleep(300);
       } else {
         jaCorretos++;
       }
