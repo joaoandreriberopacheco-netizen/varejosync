@@ -30,7 +30,7 @@ const calcPreco = (custo, markup) => custo > 0 ? custo * (1 + markup / 100) : 0;
 // Calcula markup a partir do custo e preço venda
 const calcMarkup = (custo, preco) => custo > 0 ? ((preco / custo) - 1) * 100 : 0;
 
-const COST_FIELDS = ['valor_compra', 'desconto_compra_padrao', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'];
+const COST_FIELDS = ['valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'];
 
 export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos }) {
   const [selecionados, setSelecionados] = useState({});
@@ -58,13 +58,27 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     itens.forEach(item => {
       const p = produtos.find(x => x.id === item.produto_id);
       if (!p) return;
+
+      // Resolve desconto percentual: prioriza o % do item (vindo do buscador), senão calcula do valor absoluto
+      const custoBase = item.custo_unitario || p.valor_compra || 0;
+      let descontoPct = item.desconto_pct_item || 0;
+      if (!descontoPct && item.valor_desconto_item && custoBase > 0) {
+        descontoPct = (Math.abs(item.valor_desconto_item) / custoBase) * 100;
+      }
+      // Se valor_desconto_item negativo = acréscimo, pct fica negativo
+      if (item.valor_desconto_item < 0) descontoPct = -Math.abs(descontoPct);
+
+      const descontoValorCalc = custoBase * Math.abs(descontoPct) / 100;
+      const descontoComSinal = descontoPct < 0 ? -descontoValorCalc : descontoValorCalc;
+
       const c = {
-        valor_compra: item.custo_unitario || p.valor_compra || 0,
+        valor_compra: custoBase,
         custo_frete_padrao: p.custo_frete_padrao || 0,
         custo_imposto1_padrao: p.custo_imposto1_padrao || 0,
         custo_imposto2_padrao: p.custo_imposto2_padrao || 0,
         custo_outros_padrao: p.custo_outros_padrao || 0,
-        desconto_compra_padrao: item.valor_desconto_item || p.desconto_compra_padrao || 0,
+        desconto_compra_padrao: descontoComSinal,
+        desconto_pct: descontoPct,
         preco_venda_percentual: p.preco_venda_percentual || 40,
         preco_venda_padrao: p.preco_venda_padrao || 0,
       };
@@ -77,6 +91,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       COST_FIELDS.forEach(f => {
         initialInputs[`${item.produto_id}_${f}`] = fmt(c[f]);
       });
+      initialInputs[`${item.produto_id}_desconto_pct`] = String(Math.round((descontoPct) * 100) / 100);
       initialInputs[`${item.produto_id}_markup`] = String(Math.round((c.preco_venda_percentual || 40) * 100) / 100);
       initialInputs[`${item.produto_id}_preco`] = fmt(c.preco_venda_padrao);
     });
@@ -84,12 +99,24 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     setInputs(initialInputs);
   }, [isOpen, itens, produtos]);
 
+  // Recalcula desconto absoluto a partir do %
+  const recalcDesconto = (c) => {
+    const pct = c.desconto_pct || 0;
+    const base = c.valor_compra || 0;
+    const absVal = parseFloat((base * Math.abs(pct) / 100).toFixed(2));
+    return pct < 0 ? -absVal : absVal;
+  };
+
   // Ao sair de um campo de custo: commita valor e recalcula preço venda mantendo markup
   const handleCostBlur = (produtoId, field) => {
     const raw = inputs[`${produtoId}_${field}`];
     const val = parse(raw);
     setCosts(prev => {
       const c = { ...prev[produtoId], [field]: val };
+      // Se mudou valor_compra, recalcular desconto absoluto baseado no %
+      if (field === 'valor_compra') {
+        c.desconto_compra_padrao = recalcDesconto(c);
+      }
       const custo = calcCusto(c);
       const markup = c.preco_venda_percentual || 0;
       const novoPreco = calcPreco(custo, markup);
@@ -98,6 +125,26 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       setInputs(p2 => ({
         ...p2,
         [`${produtoId}_${field}`]: fmt(val),
+        [`${produtoId}_preco`]: fmt(novoPreco),
+      }));
+      return { ...prev, [produtoId]: next };
+    });
+  };
+
+  // Ao sair do campo desconto %
+  const handleDescontoPctBlur = (produtoId) => {
+    const raw = inputs[`${produtoId}_desconto_pct`];
+    const pct = parseFloat(raw) || 0;
+    setCosts(prev => {
+      const c = { ...prev[produtoId], desconto_pct: pct };
+      c.desconto_compra_padrao = recalcDesconto(c);
+      const custo = calcCusto(c);
+      const markup = c.preco_venda_percentual || 0;
+      const novoPreco = calcPreco(custo, markup);
+      const next = { ...c, preco_venda_padrao: novoPreco };
+      setInputs(p2 => ({
+        ...p2,
+        [`${produtoId}_desconto_pct`]: String(Math.round(pct * 100) / 100),
         [`${produtoId}_preco`]: fmt(novoPreco),
       }));
       return { ...prev, [produtoId]: next };
@@ -265,9 +312,44 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
 
                   {/* Grid de custos */}
                   <div className="grid grid-cols-2 gap-3">
+                    {/* Preço Compra */}
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preço Compra</Label>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={inp(item.produto_id, 'valor_compra')}
+                        onChange={(e) => setInp(item.produto_id, 'valor_compra', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        onBlur={() => handleCostBlur(item.produto_id, 'valor_compra')}
+                        className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-800 shadow-none rounded-xl"
+                      />
+                    </div>
+                    {/* Desconto/Acréscimo % */}
+                    <div className="space-y-1">
+                      <Label className={`text-[11px] font-medium uppercase tracking-wide ${
+                        (costs[item.produto_id]?.desconto_pct || 0) < 0
+                          ? 'text-red-500 dark:text-red-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}>{(costs[item.produto_id]?.desconto_pct || 0) < 0 ? 'Acréscimo %' : 'Desconto %'}</Label>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={inp(item.produto_id, 'desconto_pct')}
+                        onChange={(e) => setInp(item.produto_id, 'desconto_pct', e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        onBlur={() => handleDescontoPctBlur(item.produto_id)}
+                        className={`h-11 text-base font-medium border-0 shadow-none rounded-xl ${
+                          (costs[item.produto_id]?.desconto_pct || 0) < 0
+                            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                            : (costs[item.produto_id]?.desconto_pct || 0) > 0
+                            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                            : 'bg-gray-100 dark:bg-gray-800'
+                        }`}
+                      />
+                    </div>
+                    {/* Frete, Imp1, Imp2, Outros */}
                     {[
-                      { label: 'Preço Compra', field: 'valor_compra' },
-                      { label: 'Desconto', field: 'desconto_compra_padrao' },
                       { label: 'Frete', field: 'custo_frete_padrao' },
                       { label: 'Imp 1', field: 'custo_imposto1_padrao' },
                       { label: 'Imp 2', field: 'custo_imposto2_padrao' },
@@ -332,7 +414,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     <th className="w-8 p-2"></th>
                     <th className="text-left p-2 min-w-[200px]">Produto</th>
                     <th className="text-center p-2 w-[100px]">Preço Compra</th>
-                    <th className="text-center p-2 w-[100px]">Desconto</th>
+                    <th className="text-center p-2 w-[90px]">Desc/Acrésc %</th>
                     <th className="text-center p-2 w-[90px]">Frete</th>
                     <th className="text-center p-2 w-[90px]">Imp 1</th>
                     <th className="text-center p-2 w-[90px]">Imp 2</th>
@@ -362,7 +444,36 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           </div>
                         )}
                       </td>
-                      {['valor_compra', 'desconto_compra_padrao', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'].map(field => (
+                      {/* Preço Compra */}
+                      <td className="p-2">
+                        <Input
+                          type="text"
+                          value={inp(item.produto_id, 'valor_compra')}
+                          onChange={(e) => setInp(item.produto_id, 'valor_compra', e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={() => handleCostBlur(item.produto_id, 'valor_compra')}
+                          className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+                        />
+                      </td>
+                      {/* Desconto/Acréscimo % */}
+                      <td className="p-2">
+                        <Input
+                          type="text"
+                          value={inp(item.produto_id, 'desconto_pct')}
+                          onChange={(e) => setInp(item.produto_id, 'desconto_pct', e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={() => handleDescontoPctBlur(item.produto_id)}
+                          className={`h-8 text-center text-sm border-0 shadow-sm ${
+                            (costs[item.produto_id]?.desconto_pct || 0) < 0
+                              ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                              : (costs[item.produto_id]?.desconto_pct || 0) > 0
+                              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                              : 'bg-gray-50 dark:bg-gray-800'
+                          }`}
+                        />
+                      </td>
+                      {/* Frete, Imp1, Imp2, Outros */}
+                      {['custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'].map(field => (
                         <td key={field} className="p-2">
                           <Input
                             type="text"
