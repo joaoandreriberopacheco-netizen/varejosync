@@ -358,20 +358,17 @@ function TemplateRenderer({ htmlContent }) {
   );
 }
 
+const TZ = 'America/Rio_Branco';
+const fmtDtTZ = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
+
 export default function ComprovanteCompra({ pedido, open, onClose }) {
   const [dadosEmpresa, setDadosEmpresa] = useState(null);
+  const [dadosCliente, setDadosCliente] = useState(null);
   const [ipImpressora, setIpImpressora] = useState('');
   const [imprimindoTermica, setImprimindoTermica] = useState(false);
   const [formato, setFormato] = useState('80mm');
   const [gerando, setGerando] = useState(false);
   const [templates, setTemplates] = useState({ '80mm': null, 'a4': null });
-
-  useEffect(() => {
-    if (!open) return;
-    base44.entities.DadosEmpresa.list().then(r => r?.length && setDadosEmpresa(r[0])).catch(() => {});
-    const ip = localStorage.getItem('ip_impressora_termica');
-    if (ip) setIpImpressora(ip);
-    // Busca templates padrão
     base44.entities.ComprovanteTemplate.filter({ is_default: true }).then(tpls => {
       const map = { '80mm': null, 'a4': null };
       tpls.forEach(t => {
