@@ -31,6 +31,10 @@ export default function MobileProductSelector({
   // Desconto por item na tela de edição (interdependentes)
   const [descontoPctInput, setDescontoPctInput] = useState('');
   const [descontoValorInput, setDescontoValorInput] = useState('');
+  // Estado da tela de entrada de desconto global
+  const [discountInputVal, setDiscountInputVal] = useState('');
+  const [tipoDesconto, setTipoDesconto] = useState('desconto');
+  const discountInputRef = React.useRef(null);
   const quantidadeInputRef = React.useRef(null);
   const custoInputRef = React.useRef(null);
 
@@ -136,21 +140,17 @@ export default function MobileProductSelector({
   const parseBR = (s) => parseFloat(String(s || '').replace(/\./g, '').replace(',', '.')) || 0;
   const fmtBR = (n) => (parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // ── Tela: Entrada de Desconto/Acrésimo Global ─────────────────────────────
+  // Sincroniza ao entrar na tela de desconto
+  useEffect(() => {
+    if (view === 'discount-entry') {
+      setDiscountInputVal(descontoGlobalPct !== 0 ? String(Math.abs(descontoGlobalPct)) : '');
+      setTipoDesconto(descontoGlobalPct < 0 ? 'acrescimo' : 'desconto');
+      setTimeout(() => discountInputRef.current?.focus(), 150);
+    }
+  }, [view]);
+
   if (view === 'discount-entry') {
-    const inputRef = useRef(null);
-    const [inputVal, setInputVal] = React.useState(
-      descontoGlobalPct !== 0 ? String(Math.abs(descontoGlobalPct)) : ''
-    );
-    const [tipoDesconto, setTipoDesconto] = React.useState(
-      descontoGlobalPct < 0 ? 'acrescimo' : 'desconto'
-    );
-
-    useEffect(() => {
-      setTimeout(() => inputRef.current?.focus(), 150);
-    }, []);
-
-    const numVal = parseFloat(inputVal.replace(',', '.')) || 0;
+    const numVal = parseFloat(discountInputVal.replace(',', '.')) || 0;
 
     const handleConfirm = () => {
       const final = tipoDesconto === 'acrescimo' ? -numVal : numVal;
@@ -208,14 +208,14 @@ export default function MobileProductSelector({
                 {isDesconto ? '−' : '+'}
               </span>
               <input
-                ref={inputRef}
+                ref={discountInputRef}
                 type="number"
                 inputMode="decimal"
                 min="0"
                 max="100"
                 step="0.01"
-                value={inputVal}
-                onChange={e => setInputVal(e.target.value)}
+                value={discountInputVal}
+                onChange={e => setDiscountInputVal(e.target.value)}
                 onFocus={e => e.target.select()}
                 placeholder="0"
                 className={`w-40 text-center text-6xl font-bold bg-transparent border-none outline-none tabular-nums ${
