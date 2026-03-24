@@ -31,24 +31,11 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const loadData = async () => {
     setLoading(true);
     try {
-      const [vendas, movsRaw, despesasRaw] = await Promise.all([
-       base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
-       base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id }),
-       base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' })
+      const [vendas, movs, despesas] = await Promise.all([
+        base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
+        base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id }),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' })
       ]);
-      const movs = movsRaw.filter(m => m.status !== 'Cancelado');
-
-      // Filtrar apenas despesas manuais — EXCLUIR MovimentosCaixa, recolhimentos, sangrias
-      const despesas = despesasRaw.filter(d => {
-        if (d.status === 'Cancelado') return false;
-        // Excluir explicitamente MovimentosCaixa e tipos não-manuais
-        if (d.referencia_tipo === 'MovimentosCaixa') return false;
-        if (d.referencia_tipo && d.referencia_tipo !== 'Manual') return false;
-        // Excluir por descrição também
-        const desc = (d.descricao || '').toLowerCase();
-        if (desc.includes('recolhimento') || desc.includes('sangria')) return false;
-        return true;
-      });
 
       const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
@@ -67,7 +54,6 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
       const totalReforcos = movs.filter(m => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
       const totalSangrias = movs.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((s, m) => s + (m.valor || 0), 0);
-      // Despesas filtradas (apenas as que não são recolhimentos)
       const totalDespesas = despesas.reduce((s, d) => s + (d.valor || 0), 0);
 
       const saldoInicial = turnoAtivo.saldo_inicial || 0;
@@ -311,7 +297,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                           <span className="text-2xl font-bold text-gray-900 dark:text-white font-glacial tabular-nums" style={{ minWidth: '110px', textAlign: 'right' }}>{formatValor(caixaData.liquidez)}</span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">Inicial + vendas + reforços − recolhimentos − despesas</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 text-right">Inicial + vendas + reforços − recolhimentos</p>
                     </div>
                   </div>
                 </div>
@@ -404,8 +390,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
             <div className="max-w-4xl mx-auto space-y-2">
               {(() => {
                 const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
-                const despesasNaoVinculadas = (caixaData?.despesasLista || []).filter(d => d.referencia_tipo !== 'MovimentosCaixa');
-                const itensDespesas = despesasNaoVinculadas.map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
+                const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
                 const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
                 
                 if (todos.length === 0) return (
