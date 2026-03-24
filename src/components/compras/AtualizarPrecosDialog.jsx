@@ -16,6 +16,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState(null);
   const [editedCosts, setEditedCosts] = useState({});
+  const [precoVendaInput, setPrecoVendaInput] = useState({}); // estado local do input sem recalcular
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -53,6 +54,13 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         }
       });
       setEditedCosts(initialCosts);
+      // Inicializar inputs locais
+      const inputs = {};
+      Object.keys(initialCosts).forEach(id => {
+        const c = initialCosts[id];
+        inputs[id] = formatMoneyStatic(c.preco_venda_padrao || 0);
+      });
+      setPrecoVendaInput(inputs);
     }
   }, [isOpen, itens, produtos]);
 
@@ -78,19 +86,23 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       const outros = costs.custo_outros_padrao || 0;
       const desconto = costs.desconto_compra_padrao || 0;
       const novoCusto = valorCompra + frete + imp1 + imp2 + outros - desconto;
+      const novoPreco = novoCusto > 0 ? novoCusto * (1 + markup / 100) : costs.preco_venda_padrao || 0;
+      // Atualiza input local também
+      setPrecoVendaInput(prev2 => ({ ...prev2, [produtoId]: formatMoneyStatic(novoPreco) }));
       return {
         ...prev,
         [produtoId]: {
           ...costs,
           preco_venda_percentual: markup,
-          preco_venda_padrao: novoCusto > 0 ? novoCusto * (1 + markup / 100) : costs.preco_venda_padrao || 0
+          preco_venda_padrao: novoPreco
         }
       };
     });
   };
 
-  // Handler circular: preço venda → recalcula markup
-  const handlePrecoVendaChange = (produtoId, precoStr) => {
+  // Handler circular: preço venda → recalcula markup (apenas no blur)
+  const handlePrecoVendaBlur = (produtoId) => {
+    const precoStr = precoVendaInput[produtoId] || '0';
     const preco = parseMoney(precoStr);
     setEditedCosts(prev => {
       const costs = prev[produtoId] || {};
@@ -111,6 +123,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         }
       };
     });
+    // Normaliza display
+    setPrecoVendaInput(prev => ({ ...prev, [produtoId]: formatMoneyStatic(preco) }));
   };
 
   // Calcular dados de comparação para cada item com custos editáveis
@@ -136,6 +150,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     const precoVendaSugerido = costs.preco_venda_padrao != null
       ? costs.preco_venda_padrao
       : novoCusto * (1 + markup / 100);
+
+    // Sync markup change → update precoVendaInput if not focused
+    // (handled via handleMarkupChange)
 
     return {
       ...item,
@@ -227,10 +244,12 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     }
   };
 
-  const formatMoney = (value) => {
+  const formatMoneyStatic = (value) => {
     const num = parseFloat(value) || 0;
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
+
+  const formatMoney = formatMoneyStatic;
 
   const parseMoney = (str) => {
     if (!str) return 0;
@@ -402,9 +421,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                       <Label className="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">Preço Venda</Label>
                       <Input
                         type="text"
-                        value={formatMoney(item.precoVendaSugerido)}
-                        onChange={(e) => handlePrecoVendaChange(item.produto_id, e.target.value)}
+                        value={precoVendaInput[item.produto_id] ?? formatMoney(item.precoVendaSugerido)}
+                        onChange={(e) => setPrecoVendaInput(prev => ({ ...prev, [item.produto_id]: e.target.value }))}
                         onFocus={(e) => e.target.select()}
+                        onBlur={() => handlePrecoVendaBlur(item.produto_id)}
                         className="h-9 text-sm flex-1 border-0 bg-gray-50 dark:bg-gray-800 shadow-sm font-bold"
                       />
                       </div>
@@ -548,9 +568,10 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     <td className="p-2 bg-gray-50 dark:bg-gray-800">
                       <Input
                         type="text"
-                        value={formatMoney(item.precoVendaSugerido)}
-                        onChange={(e) => handlePrecoVendaChange(item.produto_id, e.target.value)}
+                        value={precoVendaInput[item.produto_id] ?? formatMoney(item.precoVendaSugerido)}
+                        onChange={(e) => setPrecoVendaInput(prev => ({ ...prev, [item.produto_id]: e.target.value }))}
                         onFocus={(e) => e.target.select()}
+                        onBlur={() => handlePrecoVendaBlur(item.produto_id)}
                         className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-none font-bold"
                       />
                     </td>
