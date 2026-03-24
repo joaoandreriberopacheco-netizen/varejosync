@@ -316,15 +316,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
         {/* Footer: clipe + botão cancelar */}
         <div className="px-5 pb-5 pt-2 flex items-center justify-between gap-3">
-          {!isTransf && !isCancelado && (
-            <button
-              onClick={() => setShowCancelarDialog(true)}
-              className="h-10 w-10 rounded-full bg-red-500 dark:bg-red-600 text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center hover:bg-red-600 dark:hover:bg-red-700 flex-shrink-0"
-              title="Cancelar lançamento"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
+
           <div className="flex items-center justify-end gap-3 flex-1">
           {lancamento.pedido_compra_vinculado_id && (
             <AnexosPanel
@@ -353,9 +345,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     
     <CancelarLancamentoDialog
       lancamento={lancamento}
-      open={showCancelarDialog}
+      isOpen={showCancelarDialog}
       onClose={() => setShowCancelarDialog(false)}
-      onCancelado={() => {
+      onSuccess={() => {
         setShowCancelarDialog(false);
         onSaved?.();
       }}
