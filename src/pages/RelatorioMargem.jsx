@@ -62,6 +62,16 @@ export default function RelatorioMargemVendas() {
         const product = prodMap[prodId];
         if (!product) return;
 
+        // Calcular custo real: prioriza preco_custo_calculado, senão calcula manualmente
+        const custoCalculado = product.preco_custo_calculado || (
+          (product.valor_compra || 0) +
+          (product.custo_frete_padrao || 0) +
+          (product.custo_imposto1_padrao || 0) +
+          (product.custo_imposto2_padrao || 0) +
+          (product.custo_outros_padrao || 0) -
+          (product.desconto_compra_padrao || 0)
+        );
+
         if (!reportMap[prodId]) {
           reportMap[prodId] = {
             codigo_interno: product.codigo_interno,
@@ -70,7 +80,7 @@ export default function RelatorioMargemVendas() {
             vendas_count: 0,
             quantidade_vendida: 0,
             total_recebido: 0,
-            custo_unitario_cadastro: product.preco_custo_calculado || 0,
+            custo_unitario_cadastro: custoCalculado,
             total_descontos: 0
           };
         }
@@ -78,11 +88,13 @@ export default function RelatorioMargemVendas() {
         const entry = reportMap[prodId];
         entry.vendas_count += 1;
         entry.quantidade_vendida += item.quantidade;
-        entry.total_recebido += item.total; // Assuming item.total is net (after discount)
-        
-        // If item.total already includes discount, we might need to calculate discount if not stored explicitly
-        // Assuming item structure has preco_unitario_praticado (net) or discount field.
-        // For simplicity, let's assume item.total is final.
+        entry.total_recebido += item.total;
+
+        // Se o item da venda tem custo_unitario_momento gravado, usar esse (mais preciso)
+        if (item.custo_unitario_momento && item.custo_unitario_momento > 0) {
+          // Recalcular custo baseado no custo real do momento da venda
+          entry.custo_unitario_cadastro = item.custo_unitario_momento;
+        }
       });
     });
 
