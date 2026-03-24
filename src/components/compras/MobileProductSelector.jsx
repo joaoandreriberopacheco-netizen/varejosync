@@ -138,31 +138,28 @@ export default function MobileProductSelector({
 
   // ── Tela: Entrada de Desconto/Acrésimo Global ─────────────────────────────
   if (view === 'discount-entry') {
-    const [displayVal, setDisplayVal] = React.useState(descontoGlobalPct !== 0 ? String(Math.abs(descontoGlobalPct)) : '0');
-    const [tipoDesconto, setTipoDesconto] = React.useState(descontoGlobalPct < 0 ? 'acrescimo' : 'desconto');
+    const inputRef = useRef(null);
+    const [inputVal, setInputVal] = React.useState(
+      descontoGlobalPct !== 0 ? String(Math.abs(descontoGlobalPct)) : ''
+    );
+    const [tipoDesconto, setTipoDesconto] = React.useState(
+      descontoGlobalPct < 0 ? 'acrescimo' : 'desconto'
+    );
 
-    const handleKey = (k) => {
-      setDisplayVal(prev => {
-        if (k === 'DEL') return prev.length > 1 ? prev.slice(0, -1) : '0';
-        if (k === '.' && prev.includes('.')) return prev;
-        if (k === '.' && prev === '0') return '0.';
-        if (k !== '.' && prev === '0') return k;
-        if (prev.length >= 6) return prev;
-        return prev + k;
-      });
-    };
+    useEffect(() => {
+      setTimeout(() => inputRef.current?.focus(), 150);
+    }, []);
+
+    const numVal = parseFloat(inputVal.replace(',', '.')) || 0;
 
     const handleConfirm = () => {
-      const num = parseFloat(displayVal) || 0;
-      const final = tipoDesconto === 'acrescimo' ? -num : num;
+      const final = tipoDesconto === 'acrescimo' ? -numVal : numVal;
       setDescontoGlobalPct(final);
-      setDescontoGlobalPctInput(num !== 0 ? String(num) : '');
+      setDescontoGlobalPctInput(numVal !== 0 ? String(numVal) : '');
       setView('catalog');
     };
 
-    const numVal = parseFloat(displayVal) || 0;
-
-    const keys = ['7','8','9','4','5','6','1','2','3','.','0','DEL'];
+    const isDesconto = tipoDesconto === 'desconto';
 
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
@@ -171,16 +168,16 @@ export default function MobileProductSelector({
           <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <span className="ml-2 font-medium text-gray-900 dark:text-white">Desconto / Acréscimo Global</span>
+          <span className="ml-2 font-semibold text-gray-900 dark:text-white">Desconto / Acréscimo Global</span>
         </div>
 
-        <div className="flex-1 flex flex-col px-6 pt-6 pb-4 gap-5">
+        <div className="flex-1 flex flex-col px-6 pt-8 pb-6 gap-6">
           {/* Toggle Desconto / Acréscimo */}
           <div className="flex rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 gap-1">
             <button
               onClick={() => setTipoDesconto('desconto')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
-                tipoDesconto === 'desconto'
+              className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                isDesconto
                   ? 'bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow-sm'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
@@ -190,8 +187,8 @@ export default function MobileProductSelector({
             </button>
             <button
               onClick={() => setTipoDesconto('acrescimo')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
-                tipoDesconto === 'acrescimo'
+              className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                !isDesconto
                   ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
@@ -201,40 +198,43 @@ export default function MobileProductSelector({
             </button>
           </div>
 
-          {/* Visor */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-6 py-5 flex flex-col items-center shadow-sm">
-            <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
-              {tipoDesconto === 'desconto' ? 'Desconto sobre todos os itens' : 'Acréscimo sobre todos os itens'}
+          {/* Visor com input nativo */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl px-6 py-8 flex flex-col items-center shadow-sm gap-3">
+            <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+              {isDesconto ? 'Desconto sobre todos os itens' : 'Acréscimo sobre todos os itens'}
             </span>
-            <div className={`text-6xl font-bold tabular-nums tracking-tight ${
-              tipoDesconto === 'desconto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {tipoDesconto === 'desconto' ? '-' : '+'}{displayVal}<span className="text-3xl font-medium text-gray-400 ml-1">%</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-5xl font-bold ${isDesconto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                {isDesconto ? '−' : '+'}
+              </span>
+              <input
+                ref={inputRef}
+                type="number"
+                inputMode="decimal"
+                min="0"
+                max="100"
+                step="0.01"
+                value={inputVal}
+                onChange={e => setInputVal(e.target.value)}
+                onFocus={e => e.target.select()}
+                placeholder="0"
+                className={`w-40 text-center text-6xl font-bold bg-transparent border-none outline-none tabular-nums ${
+                  isDesconto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                }`}
+                style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+              />
+              <span className="text-3xl font-medium text-gray-400">%</span>
             </div>
             {numVal > 0 && (
-              <p className="text-xs text-gray-400 mt-3">
-                Ex: item R$ 100,00 → R$ {tipoDesconto === 'desconto' ? (100 - numVal).toFixed(2) : (100 + numVal).toFixed(2)}
+              <p className="text-sm text-gray-400 mt-1">
+                Ex: R$ 100,00 → <strong className={isDesconto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}>
+                  R$ {(isDesconto ? 100 - numVal : 100 + numVal).toFixed(2)}
+                </strong>
               </p>
             )}
           </div>
 
-          {/* Teclado numérico */}
-          <div className="grid grid-cols-3 gap-3 flex-1">
-            {keys.map(k => (
-              <button
-                key={k}
-                onClick={() => handleKey(k)}
-                className={`rounded-2xl flex items-center justify-center text-2xl font-semibold active:scale-95 transition-transform shadow-sm ${
-                  k === 'DEL'
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                    : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white'
-                }`}
-                style={{ minHeight: '64px' }}
-              >
-                {k === 'DEL' ? <Delete className="w-5 h-5" /> : k}
-              </button>
-            ))}
-          </div>
+          <div className="flex-1" />
 
           {/* Botões de ação */}
           <div className="flex gap-3">
