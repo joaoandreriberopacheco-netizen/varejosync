@@ -35,6 +35,7 @@ import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
 import DesignerDocumento from '@/pages/DesignerDocumento';
 import GestaoTemplates from '@/pages/GestaoTemplates';
 import LixeiraLancamentos from '@/pages/LixeiraLancamentos';
+import SimuladorCartao from '@/pages/SimuladorCartao';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -195,6 +196,7 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/GestaoTemplates" element={<LayoutWrapper currentPageName="GestaoTemplates"><GestaoTemplates /></LayoutWrapper>} />
       <Route path="/LixeiraLancamentos" element={<LayoutWrapper currentPageName="LixeiraLancamentos"><LixeiraLancamentos /></LayoutWrapper>} />
+      <Route path="/SimuladorCartao" element={<LayoutWrapper currentPageName="SimuladorCartao"><SimuladorCartao /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>
