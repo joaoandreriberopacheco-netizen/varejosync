@@ -40,50 +40,9 @@ export async function processarMovimentoCaixa(movimento, contaOrigem, contaDesti
       };
       await base44.entities.LancamentoFinanceiro.create(lancamento);
     } else if (movimento.tipo === 'Sangria' || movimento.tipo === 'Recolhimento de Caixa') {
-      // Recolhimento: saída na conta origem + entrada na conta destino
-      const descricao = `Recolhimento de caixa - ${movimento.numero}`;
-
-      // Lançamento 1: Saída (despesa) na conta origem
-      const lancSaida = {
-        tipo: 'Despesa',
-        descricao: descricao,
-        valor: movimento.valor,
-        conta_financeira_id: contaOrigem.id,
-        conta_financeira_nome: contaOrigem.nome,
-        data_vencimento: agora.split('T')[0],
-        data_pagamento: agora.split('T')[0],
-        status: 'Pago',
-        forma_pagamento_tipo: 'Dinheiro',
-        referencia_tipo: 'MovimentosCaixa',
-        referencia_id: movimento.id,
-        referencia_numero: movimento.numero,
-        observacoes: movimento.observacao ? `Saída: ${movimento.observacao}` : '',
-        grupo_lancamento_id: grupoId,
-        turno_caixa_id: movimento.turno_caixa_id,
-      };
-      await base44.entities.LancamentoFinanceiro.create(lancSaida);
-
-      // Lançamento 2: Entrada (receita) na conta destino (se especificada)
-      if (contaDestino && contaDestino.id !== contaOrigem.id) {
-        const lancEntrada = {
-          tipo: 'Receita',
-          descricao: descricao,
-          valor: movimento.valor,
-          conta_financeira_id: contaDestino.id,
-          conta_financeira_nome: contaDestino.nome,
-          data_vencimento: agora.split('T')[0],
-          data_pagamento: agora.split('T')[0],
-          status: 'Pago',
-          forma_pagamento_tipo: 'Dinheiro',
-          referencia_tipo: 'MovimentosCaixa',
-          referencia_id: movimento.id,
-          referencia_numero: movimento.numero,
-          observacoes: movimento.observacao ? `Entrada: ${movimento.observacao}` : '',
-          grupo_lancamento_id: grupoId,
-          turno_caixa_id: movimento.turno_caixa_id,
-        };
-        await base44.entities.LancamentoFinanceiro.create(lancEntrada);
-      }
+      // DESATIVADO: Recolhimentos NÃO criam mais lançamentos financeiros
+      // O MovimentosCaixa é o único registro de controle
+      // Nenhum lançamento é criado aqui
     }
 
     return { sucesso: true, grupoId };
