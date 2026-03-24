@@ -31,11 +31,14 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const loadData = async () => {
     setLoading(true);
     try {
-      const [vendas, movs, despesas] = await Promise.all([
+      const [vendas, movs, despesasRaw] = await Promise.all([
         base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
         base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id }),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' })
       ]);
+
+      // Filtrar apenas despesas que NÃO são recolhimentos
+      const despesas = despesasRaw.filter(d => d.referencia_tipo !== 'MovimentosCaixa');
 
       const totalVendas = vendas.reduce((s, v) => s + (v.valor_total || 0), 0);
       let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
@@ -54,6 +57,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
       const totalReforcos = movs.filter(m => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
       const totalSangrias = movs.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((s, m) => s + (m.valor || 0), 0);
+      // Despesas filtradas (apenas as que não são recolhimentos)
       const totalDespesas = despesas.reduce((s, d) => s + (d.valor || 0), 0);
 
       const saldoInicial = turnoAtivo.saldo_inicial || 0;
