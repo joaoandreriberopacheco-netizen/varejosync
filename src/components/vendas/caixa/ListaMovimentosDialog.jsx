@@ -17,7 +17,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
     : isSangrias
     ? movimentos.filter(m => (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') && m.status !== 'Cancelado')
     : isDespesas
-    ? (despesasLista || []).filter(d => d.status !== 'Cancelado')
+    ? (despesasLista || []).filter(d => d.referencia_tipo !== 'MovimentosCaixa' && d.status !== 'Cancelado')
     : [];
 
   const total = isReforcos ? totalReforcos : isSangrias ? totalSangrias : isDespesas ? totalDespesas : 0;
