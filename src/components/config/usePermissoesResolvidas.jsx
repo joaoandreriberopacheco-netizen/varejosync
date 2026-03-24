@@ -56,8 +56,8 @@ export function buildMenuItems(user, perfilDeAcesso) {
   const temPerfil = !!user?.perfil_acesso_id;
   const temOverrides = user?.override_permissoes && Object.keys(user.override_permissoes).length > 0;
 
-  // Sem perfil E sem overrides = vê tudo
-  if (!temPerfil && !temOverrides) return ALL_MENU_ITEMS;
+  // Sem perfil E sem overrides = ve tudo (exceto adminOnly)
+  if (!temPerfil && !temOverrides) return ALL_MENU_ITEMS.filter(item => !item.adminOnly);
 
   // Tem perfil_acesso_id mas objeto ainda não carregou = aguarda
   if (temPerfil && !perfilDeAcesso) return [];
@@ -305,6 +305,7 @@ export const ALL_MENU_ITEMS = [
     name: 'Configurações',
     icon: Settings,
     page: 'Configuracoes',
+    adminOnly: true,
     permissaoCheck: (p) => p?.configuracoes?.acesso === true
   }
 ];

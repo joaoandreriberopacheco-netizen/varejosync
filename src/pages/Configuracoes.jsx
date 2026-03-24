@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/AuthContext';
+import { base44 } from '@/api/base44Client';
+import { ShieldAlert } from 'lucide-react';
 import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
 import TabelasPrecoManager from '../components/config/TabelasPrecoManager';
@@ -17,11 +20,37 @@ import PersonalizacaoComprovanteManager from '@/components/config/Personalizacao
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
 
 export default function ConfiguracoesPage() {
+  const { currentUser } = useAuth();
+  const [userLoaded, setUserLoaded] = useState(false);
+  const [user, setUser] = useState(null);
   const [tab, setTab] = useState('vendas');
   const [vendaTab, setVendaTab] = useState('fluxo');
   const [opTab, setOpTab] = useState('estoque');
   const [finTab, setFinTab] = useState('contas');
   const [geralTab, setGeralTab] = useState('empresa');
+
+  useEffect(() => {
+    base44.auth.me().then(u => { setUser(u); setUserLoaded(true); }).catch(() => setUserLoaded(true));
+  }, []);
+
+  if (!userLoaded) return null;
+
+  const isAdmin = user?.role === 'admin';
+  const hasConfigAccess = isAdmin || user?.override_permissoes?.['configuracoes.acesso'] === true;
+
+  if (!hasConfigAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+        <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
+          <ShieldAlert className="w-8 h-8 text-red-500 dark:text-red-400" />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">Acesso Restrito</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+          Você não tem permissão para acessar as configurações do sistema. Solicite acesso ao administrador.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
