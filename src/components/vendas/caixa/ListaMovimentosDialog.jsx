@@ -13,11 +13,11 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
   const titulo = isReforcos ? 'Reforços do Turno' : isSangrias ? 'Recolhimentos do Turno' : isDespesas ? 'Despesas do Turno' : 'Movimentações';
 
   const listaFiltrada = isReforcos
-    ? movimentos.filter(m => m.tipo === 'Reforço')
+    ? movimentos.filter(m => m.tipo === 'Reforço' && m.status !== 'Cancelado')
     : isSangrias
-    ? movimentos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')
+    ? movimentos.filter(m => (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') && m.status !== 'Cancelado')
     : isDespesas
-    ? (despesasLista || [])
+    ? (despesasLista || []).filter(d => d.status !== 'Cancelado')
     : [];
 
   const total = isReforcos ? totalReforcos : isSangrias ? totalSangrias : isDespesas ? totalDespesas : 0;
