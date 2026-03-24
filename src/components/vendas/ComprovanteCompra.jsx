@@ -55,7 +55,7 @@ function CupomTermico({ pedido, dadosEmpresa }) {
       style={{
         width: '275px', background: '#fff', color: '#111',
         fontFamily: font, fontSize: F + 3,
-        padding: '16px 12px 20px', margin: '0 auto', lineHeight: '1.6',
+        padding: '8px 10px 12px', margin: '0 auto', lineHeight: '1.45',
       }}
     >
       {/* ── Cabeçalho ── */}
@@ -64,23 +64,23 @@ function CupomTermico({ pedido, dadosEmpresa }) {
           <img src={dadosEmpresa.logo_url} alt="Logo" style={{ maxWidth: '100px', maxHeight: '50px', filter: 'grayscale(100%) contrast(200%)', display: 'block', margin: '0 auto 6px' }} />
         )}
         {/* Nome Fantasia — maior */}
-        <div style={{ fontSize: F + 10, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '4px' }}>
+        <div style={{ fontSize: F + 10, fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1, marginBottom: '3px' }}>
           {empresa.nomeFantasia}
         </div>
-        {/* Razão Social — se diferente do nome fantasia */}
+        {/* Razão Social */}
         {empresa.razaoSocial && (
-          <div style={{ fontSize: F + 1, fontWeight: '400', color: '#333', lineHeight: 1.4 }}>
+          <div style={{ fontSize: Math.round((F + 1) * 0.75), fontWeight: '400', color: '#333', lineHeight: 1.3 }}>
             {empresa.razaoSocial}
           </div>
         )}
-        {/* Dados da empresa */}
-        <div style={{ fontSize: F, fontWeight: '400', color: '#444', lineHeight: 1.55, marginTop: '3px' }}>
+        {/* Dados da empresa — 25% menores */}
+        <div style={{ fontSize: Math.round(F * 0.75), fontWeight: '400', color: '#444', lineHeight: 1.4, marginTop: '2px' }}>
           {empresa.cnpj && <div>CNPJ: {empresa.cnpj}</div>}
           {empresa.endereco && <div>{empresa.endereco}</div>}
           {empresa.bairro_cidade && <div>{empresa.bairro_cidade}</div>}
           {empresa.telefone && <div>Fone: {empresa.telefone}</div>}
         </div>
-        <div style={{ fontSize: F - 1, color: '#666', marginTop: '4px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
+        <div style={{ fontSize: Math.round(F * 0.75), color: '#666', marginTop: '3px' }}>Cupom nº {pedido.numero || 'S/N'}</div>
       </div>
 
       <Sep />
@@ -118,14 +118,40 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         const num = String(idx + 1).padStart(2, '0');
         const unidade = (item.unidade_principal || 'UN').substring(0, 4);
 
+        // Quebra o nome em palavras para montar linhas
+        const palavras = nome.split(' ');
+        const linhas = [];
+        let atual = '';
+        for (const p of palavras) {
+          if ((atual + (atual ? ' ' : '') + p).length <= maxNameW) {
+            atual = atual ? atual + ' ' + p : p;
+          } else {
+            if (atual) linhas.push(atual);
+            atual = p.substring(0, maxNameW);
+          }
+        }
+        if (atual) linhas.push(atual);
+
+        const colStyle = { fontSize: F + 2, lineHeight: 1.45 };
+
         return (
-          <div key={idx} style={{ display: 'flex', alignItems: 'baseline', fontSize: F + 2, marginBottom: '4px', lineHeight: 1.5, gap: '2px' }}>
-            <span style={{ width: '28px', flexShrink: 0 }}>{num}</span>
-            <span style={{ flex: 1, wordBreak: 'break-word' }}>{nome}</span>
-            <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
-            <span style={{ width: '28px', textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
-            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{preco}</span>
-            <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{total}</span>
+          <div key={idx} style={{ marginBottom: '3px', ...colStyle }}>
+            {/* Linhas de nome anteriores à última */}
+            {linhas.slice(0, -1).map((l, i) => (
+              <div key={i} style={{ display: 'flex', gap: '2px' }}>
+                <span style={{ width: '28px', flexShrink: 0 }}>{i === 0 ? num : ''}</span>
+                <span style={{ flex: 1 }}>{l}</span>
+              </div>
+            ))}
+            {/* Última linha: nome + valores */}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+              <span style={{ width: '28px', flexShrink: 0 }}>{linhas.length === 1 ? num : ''}</span>
+              <span style={{ flex: 1 }}>{linhas[linhas.length - 1]}</span>
+              <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
+              <span style={{ width: '28px', textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
+              <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{preco}</span>
+              <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{total}</span>
+            </div>
           </div>
         );
       })}
