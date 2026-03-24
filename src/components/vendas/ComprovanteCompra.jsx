@@ -614,7 +614,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
               {templates['a4'] && dadosEmpresa !== undefined ? (
                 <TemplateRenderer htmlContent={renderTemplate(templates['a4'].html_template, prepararDadosVenda(pedido, dadosEmpresa))} />
               ) : (
-                <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} />
+                <CupomA4 pedido={pedido} dadosEmpresa={dadosEmpresa} dadosCliente={dadosCliente} />
               )}
             </div>
           </div>
