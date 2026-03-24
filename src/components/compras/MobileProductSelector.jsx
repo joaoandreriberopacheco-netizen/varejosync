@@ -714,17 +714,7 @@ export default function MobileProductSelector({
                 <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                   <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="font-medium">Nenhum produto encontrado</p>
-                  <p className="text-sm mt-1 mb-6">para "{search}"</p>
-                  {!isLocked && (
-                    <Button
-                      variant="outline"
-                      className="border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl h-12 px-6"
-                      onClick={() => setShowNovoProduto(true)}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar "{search}"
-                    </Button>
-                  )}
+                  <p className="text-sm mt-1">para "{search}"</p>
                 </div>
               )}
             </div>
