@@ -98,10 +98,11 @@ export default function MobileProductSelector({
     setQuantidadeInput((item.quantidade || 1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     setCustoInput((item.custo_unitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     const custo = item.custo_unitario || 0;
-    const desc = item.valor_desconto_item || 0;
-    const pct = item.desconto_pct_item || (custo > 0 ? (desc / custo) * 100 : 0);
+    const desc = item.valor_desconto_item || 0; // pode ser negativo (acréscimo)
+    const absDesc = Math.abs(desc);
+    const pct = item.desconto_pct_item || (custo > 0 ? (absDesc / custo) * 100 : 0);
     setDescontoPctInput(pct > 0 ? String(Math.round(pct * 100) / 100) : '');
-    setDescontoValorInput(desc > 0 ? desc.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+    setDescontoValorInput(absDesc > 0 ? absDesc.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
     setEditingIndex(index);
     setView('edit');
   };
