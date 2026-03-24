@@ -132,25 +132,32 @@ function CupomTermico({ pedido, dadosEmpresa }) {
         }
         if (atual) linhas.push(atual);
 
-        const colStyle = { fontSize: F + 2, lineHeight: 1.45 };
+        // larguras fixas das colunas de valor (iguais ao cabeçalho)
+        const colW = { num: '28px', qtd: '36px', un: '28px', preco: '46px', total: '46px' };
+        const rowBase = { display: 'flex', alignItems: 'baseline', gap: '2px', fontSize: F + 2, lineHeight: 1.45 };
 
         return (
-          <div key={idx} style={{ marginBottom: '3px', ...colStyle }}>
-            {/* Linhas de nome anteriores à última */}
+          <div key={idx} style={{ marginBottom: '3px' }}>
+            {/* Linhas de nome anteriores à última — reservam espaço das colunas de valor */}
             {linhas.slice(0, -1).map((l, i) => (
-              <div key={i} style={{ display: 'flex', gap: '2px' }}>
-                <span style={{ width: '28px', flexShrink: 0 }}>{i === 0 ? num : ''}</span>
+              <div key={i} style={rowBase}>
+                <span style={{ width: colW.num, flexShrink: 0 }}>{i === 0 ? num : ''}</span>
                 <span style={{ flex: 1 }}>{l}</span>
+                {/* espaços reservados para manter alinhamento */}
+                <span style={{ width: colW.qtd, flexShrink: 0 }} />
+                <span style={{ width: colW.un, flexShrink: 0 }} />
+                <span style={{ width: colW.preco, flexShrink: 0 }} />
+                <span style={{ width: colW.total, flexShrink: 0 }} />
               </div>
             ))}
             {/* Última linha: nome + valores */}
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
-              <span style={{ width: '28px', flexShrink: 0 }}>{linhas.length === 1 ? num : ''}</span>
+            <div style={rowBase}>
+              <span style={{ width: colW.num, flexShrink: 0 }}>{linhas.length === 1 ? num : ''}</span>
               <span style={{ flex: 1 }}>{linhas[linhas.length - 1]}</span>
-              <span style={{ width: '36px', textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
-              <span style={{ width: '28px', textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
-              <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{preco}</span>
-              <span style={{ width: '46px', textAlign: 'right', flexShrink: 0 }}>{total}</span>
+              <span style={{ width: colW.qtd, textAlign: 'right', flexShrink: 0 }}>{qtd}</span>
+              <span style={{ width: colW.un, textAlign: 'right', flexShrink: 0, color: '#666' }}>{unidade}</span>
+              <span style={{ width: colW.preco, textAlign: 'right', flexShrink: 0 }}>{preco}</span>
+              <span style={{ width: colW.total, textAlign: 'right', flexShrink: 0 }}>{total}</span>
             </div>
           </div>
         );
@@ -244,119 +251,112 @@ function PreviewScaled({ children }) {
 // ── Cupom A4 ─────────────────────────────────────────────────────────────────────
 function CupomA4({ pedido, dadosEmpresa }) {
   const itens = pedido.itens || [];
+  const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+  const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
 
   return (
     <div
       id="cupom-print"
       style={{
-        width: '210mm',
-        minHeight: '297mm',
-        fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif",
-        fontSize: '12px',
-        color: '#000',
-        padding: '20mm 18mm',
-        background: '#fff',
-        lineHeight: '1.6',
+        width: '210mm', minHeight: '297mm',
+        fontFamily: font, fontSize: '12px', color: '#111',
+        padding: '16mm 18mm 20mm', background: '#fff', lineHeight: '1.6',
       }}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10mm', borderBottom: '2px solid #000', paddingBottom: '6mm' }}>
+      {/* ── Cabeçalho empresa + título ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '6mm', borderBottom: '1.5px solid #111', marginBottom: '8mm' }}>
+        {/* Lado esquerdo: empresa */}
         <div>
           {dadosEmpresa?.logo_url && (
-            <img
-              src={dadosEmpresa.logo_url}
-              alt="Logo"
-              style={{ maxWidth: '80mm', maxHeight: '30mm', filter: 'grayscale(100%) contrast(200%)', marginBottom: '3mm' }}
+            <img src={dadosEmpresa.logo_url} alt="Logo"
+              style={{ maxWidth: '60mm', maxHeight: '20mm', filter: 'grayscale(100%) contrast(200%)', display: 'block', marginBottom: '3mm' }}
             />
           )}
-          <div style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.5px' }}>
-            {(dadosEmpresa?.razao_social || 'VAREJOSYNC').toUpperCase()}
+          <div style={{ fontSize: '20px', fontWeight: '400', letterSpacing: '-0.3px', lineHeight: 1.1 }}>{nomeFantasia}</div>
+          {dadosEmpresa?.razao_social && dadosEmpresa?.nome_fantasia && (
+            <div style={{ fontSize: '10px', color: '#555', marginTop: '1mm' }}>{dadosEmpresa.razao_social}</div>
+          )}
+          <div style={{ fontSize: '10px', color: '#666', marginTop: '2mm', lineHeight: 1.5 }}>
+            {dadosEmpresa?.cnpj && <div>CNPJ: {dadosEmpresa.cnpj}</div>}
+            {dadosEmpresa?.endereco && <div>{dadosEmpresa.endereco}{dadosEmpresa.numero ? ', ' + dadosEmpresa.numero : ''}</div>}
+            {(dadosEmpresa?.bairro || dadosEmpresa?.cidade) && (
+              <div>{[dadosEmpresa.bairro, dadosEmpresa.cidade, dadosEmpresa.estado].filter(Boolean).join(' - ')}</div>
+            )}
+            {dadosEmpresa?.telefone && <div>Tel: {dadosEmpresa.telefone}</div>}
           </div>
-          {dadosEmpresa?.endereco && (
-            <div style={{ fontSize: '11px', color: '#555', marginTop: '2mm' }}>
-              {dadosEmpresa.endereco}{dadosEmpresa.numero ? ', ' + dadosEmpresa.numero : ''}
-            </div>
-          )}
-          {(dadosEmpresa?.bairro || dadosEmpresa?.cidade) && (
-            <div style={{ fontSize: '11px', color: '#555' }}>
-              {dadosEmpresa.bairro && `${dadosEmpresa.bairro}, `}
-              {dadosEmpresa.cidade}{dadosEmpresa.estado && `/${dadosEmpresa.estado}`}
-            </div>
-          )}
-          {dadosEmpresa?.cnpj && <div style={{ fontSize: '11px', color: '#555' }}>CNPJ: {dadosEmpresa.cnpj}</div>}
-          {dadosEmpresa?.telefone && <div style={{ fontSize: '11px', color: '#555' }}>Tel: {dadosEmpresa.telefone}</div>}
         </div>
+        {/* Lado direito: tipo documento + meta */}
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '20px', fontWeight: '700', letterSpacing: '1px' }}>CUPOM DE VENDA</div>
-          <div style={{ fontSize: '12px', color: '#555', marginTop: '2mm' }}>Pedido: {pedido.numero || 'S/N'}</div>
-          <div style={{ fontSize: '11px', color: '#555' }}>{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy HH:mm')}</div>
+          <div style={{ fontSize: '22px', fontWeight: '400', letterSpacing: '0.5px', lineHeight: 1.1 }}>CUPOM DE VENDA</div>
+          <div style={{ fontSize: '11px', color: '#555', marginTop: '3mm' }}>Pedido: {pedido.numero || 'S/N'}</div>
+          <div style={{ fontSize: '11px', color: '#555' }}>{format(new Date(pedido.created_date || new Date()), 'dd/MM/yyyy, HH:mm')}</div>
+          {pedido.vendedor_nome && <div style={{ fontSize: '11px', color: '#555', marginTop: '1mm' }}>Vendedor: {pedido.vendedor_nome}</div>}
         </div>
       </div>
 
-      {/* Cliente */}
+      {/* ── Dados do cliente ── */}
       {pedido.cliente_nome && (
-        <div style={{ marginBottom: '8mm', padding: '4mm 6mm', background: '#f5f5f5', borderRadius: '4px' }}>
-          <div style={{ fontSize: '10px', color: '#777', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Cliente</div>
-          <div style={{ fontSize: '13px', fontWeight: '600' }}>{pedido.cliente_nome}</div>
+        <div style={{ marginBottom: '7mm' }}>
+          <div style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '1mm' }}>Cliente</div>
+          <div style={{ fontSize: '13px' }}>{pedido.cliente_nome}</div>
         </div>
       )}
 
-      {/* Tabela de itens */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8mm' }}>
+      {/* ── Tabela de itens ── */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6mm' }}>
         <thead>
-          <tr style={{ borderBottom: '1.5px solid #ddd' }}>
-            <th style={{ textAlign: 'left', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Produto</th>
-            <th style={{ textAlign: 'center', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '15mm' }}>Qtd</th>
-            <th style={{ textAlign: 'right', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '28mm' }}>Preço</th>
-            <th style={{ textAlign: 'right', padding: '3mm 2mm', fontSize: '11px', color: '#555', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>Total</th>
+          <tr style={{ borderBottom: '0.8px solid #ccc' }}>
+            <th style={{ textAlign: 'left', padding: '2.5mm 2mm', fontSize: '10px', color: '#777', fontWeight: '400', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Produto</th>
+            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#777', fontWeight: '400', textTransform: 'uppercase', letterSpacing: '0.5px', width: '14mm' }}>Qtd</th>
+            <th style={{ textAlign: 'center', padding: '2.5mm 2mm', fontSize: '10px', color: '#777', fontWeight: '400', textTransform: 'uppercase', letterSpacing: '0.5px', width: '12mm' }}>Un</th>
+            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#777', fontWeight: '400', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30mm' }}>Preço Unit.</th>
+            <th style={{ textAlign: 'right', padding: '2.5mm 2mm', fontSize: '10px', color: '#777', fontWeight: '400', textTransform: 'uppercase', letterSpacing: '0.5px', width: '32mm' }}>Total</th>
           </tr>
         </thead>
         <tbody>
           {itens.map((item, i) => (
             <tr key={i} style={{ borderBottom: '0.5px solid #eee' }}>
-              <td style={{ padding: '3mm 2mm', fontSize: '12px' }}>{item.produto_nome}</td>
-              <td style={{ padding: '3mm 2mm', textAlign: 'center', fontSize: '12px', fontWeight: '600' }}>{item.quantidade}</td>
-              <td style={{ padding: '3mm 2mm', textAlign: 'right', fontSize: '12px' }}>R$ {fmtV(item.preco_unitario_praticado)}</td>
-              <td style={{ padding: '3mm 2mm', textAlign: 'right', fontSize: '12px', fontWeight: '600' }}>R$ {fmtV(item.total)}</td>
+              <td style={{ padding: '2.5mm 2mm', fontSize: '12px' }}>{item.produto_nome}</td>
+              <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '12px' }}>{item.quantidade}</td>
+              <td style={{ padding: '2.5mm 2mm', textAlign: 'center', fontSize: '11px', color: '#777' }}>{item.unidade_principal || 'UN'}</td>
+              <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px' }}>R$ {fmtV(item.preco_unitario_praticado)}</td>
+              <td style={{ padding: '2.5mm 2mm', textAlign: 'right', fontSize: '12px', fontWeight: '400' }}>R$ {fmtV(item.total)}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Totais */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12mm' }}>
-        <div style={{ borderTop: '2px solid #000', paddingTop: '4mm', minWidth: '100mm' }}>
+      {/* ── Totais ── */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10mm' }}>
+        <div style={{ minWidth: '95mm' }}>
           {pedido.subtotal > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2mm' }}>
-              <span>Subtotal:</span>
-              <span>R$ {fmtV(pedido.subtotal)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', marginBottom: '1.5mm' }}>
+              <span>Subtotal</span><span>R$ {fmtV(pedido.subtotal)}</span>
             </div>
           )}
           {pedido.valor_desconto > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2mm' }}>
-              <span>Desconto:</span>
-              <span>-R$ {fmtV(pedido.valor_desconto)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', marginBottom: '1.5mm' }}>
+              <span>Desconto</span><span>-R$ {fmtV(pedido.valor_desconto)}</span>
             </div>
           )}
           {pedido.valor_frete > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '2mm' }}>
-              <span>Frete:</span>
-              <span>R$ {fmtV(pedido.valor_frete)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', marginBottom: '1.5mm' }}>
+              <span>Frete</span><span>R$ {fmtV(pedido.valor_frete)}</span>
             </div>
           )}
-          <div style={{ fontSize: '16px', fontWeight: '700', display: 'flex', justifyContent: 'space-between', marginTop: '2mm' }}>
-            <span>TOTAL</span>
+          <div style={{ borderTop: '1.5px solid #111', paddingTop: '3mm', display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
+            <span>Total</span>
             <span>R$ {fmtV(pedido.valor_total || 0)}</span>
           </div>
         </div>
       </div>
 
-      {/* Pagamentos */}
+      {/* ── Formas de Pagamento ── */}
       {pedido.pagamentos && pedido.pagamentos.length > 0 && (
         <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '4mm', marginBottom: '8mm' }}>
-          <div style={{ fontSize: '11px', fontWeight: '600', marginBottom: '2mm', textTransform: 'uppercase' }}>Formas de Pagamento:</div>
+          <div style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '2mm' }}>Formas de Pagamento</div>
           {pedido.pagamentos.map((pag, idx) => (
-            <div key={idx} style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', marginBottom: '1mm' }}>
+            <div key={idx} style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', marginBottom: '1mm' }}>
               <span>{pag.forma_pagamento}{pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}</span>
               <span>R$ {fmtV(pag.valor)}</span>
             </div>
@@ -364,9 +364,11 @@ function CupomA4({ pedido, dadosEmpresa }) {
         </div>
       )}
 
-      {/* Rodapé */}
-      <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '5mm', textAlign: 'center', fontSize: '10px', color: '#555' }}>
-        {dadosEmpresa?.mensagem_rodape && <div style={{ marginBottom: '2mm', fontWeight: '600' }}>{dadosEmpresa.mensagem_rodape.toUpperCase()}</div>}
+      {/* ── Rodapé ── */}
+      <div style={{ borderTop: '0.5px solid #ddd', paddingTop: '4mm', textAlign: 'center', fontSize: '10px', color: '#777' }}>
+        {dadosEmpresa?.mensagem_rodape && (
+          <div style={{ marginBottom: '2mm', color: '#444' }}>{dadosEmpresa.mensagem_rodape.toUpperCase()}</div>
+        )}
         <div>Este documento não possui validade fiscal.</div>
       </div>
     </div>
