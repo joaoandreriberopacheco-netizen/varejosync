@@ -384,157 +384,128 @@ export default function MobileProductSelector({
   if (view === 'catalog') {
     return (
       <>
-      <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
-        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
-          <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
-          {items.length > 0 && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setView('cart')}
-              className="h-10 w-10 relative"
-            >
-              <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                {items.length}
-              </div>
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+          <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setView('menu')} className="h-10 w-10">
+              <ChevronLeft className="w-5 h-5" />
             </Button>
-          )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                placeholder="Buscar produto..."
-                className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
-                value={search}
-                onChange={e => {
-                  setSearch(e.target.value);
-                  setSelectedIndex(-1);
-                }}
-                onKeyDown={e => {
-                  if (!filteredProducts.length) return;
-                  
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setSelectedIndex(prev => 
-                      prev < filteredProducts.length - 1 ? prev + 1 : 0
-                    );
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setSelectedIndex(prev => 
-                      prev > 0 ? prev - 1 : filteredProducts.length - 1
-                    );
-                  } else if (e.key === 'Enter' && selectedIndex >= 0) {
-                    e.preventDefault();
-                    handleSelectProduct(filteredProducts[selectedIndex]);
-                    setSelectedIndex(-1);
-                  } else if (e.key === 'Tab' && filteredProducts.length > 0) {
-                    e.preventDefault();
-                    setSelectedIndex(prev => 
-                      prev < filteredProducts.length - 1 ? prev + 1 : 0
-                    );
-                  }
-                }}
-                autoFocus
-                disabled={isLocked}
-              />
-            </div>
+            <div className="ml-2 font-medium flex-1 text-gray-900 dark:text-white">Buscar Produtos</div>
+            {items.length > 0 && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setView('cart')}
+                className="h-10 w-10 relative"
+              >
+                <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                  {items.length}
+                </div>
+              </Button>
+            )}
           </div>
 
-          <div className="p-4 space-y-2">
-            {search.trim() === '' ? (
-              <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-                <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p className="font-medium">Digite para buscar</p>
-                <p className="text-sm mt-1">Ex: areia, tinta, tubo...</p>
+          <div className="flex-1 overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 z-10 p-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Buscar produto..."
+                  className="pl-11 bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-12 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400"
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setSelectedIndex(-1); }}
+                  onKeyDown={e => {
+                    if (!filteredProducts.length) return;
+                    if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex(prev => prev < filteredProducts.length - 1 ? prev + 1 : 0); }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex(prev => prev > 0 ? prev - 1 : filteredProducts.length - 1); }
+                    else if (e.key === 'Enter' && selectedIndex >= 0) { e.preventDefault(); handleSelectProduct(filteredProducts[selectedIndex]); setSelectedIndex(-1); }
+                    else if (e.key === 'Tab' && filteredProducts.length > 0) { e.preventDefault(); setSelectedIndex(prev => prev < filteredProducts.length - 1 ? prev + 1 : 0); }
+                  }}
+                  autoFocus
+                  disabled={isLocked}
+                />
               </div>
-            ) : filteredProducts.length > 0 ? (
-              filteredProducts.map((product, idx) => {
-                const inCart = items.find(i => i.produto_id === product.id);
-                const isSelected = idx === selectedIndex;
-                
-                return (
-                  <div 
-                    key={product.id} 
-                    onClick={() => {
-                      if (!isLocked) handleSelectProduct(product);
-                    }}
-                    className={`p-4 rounded-xl shadow-sm cursor-pointer transition-all active:scale-[0.98] ${
+            </div>
+
+            <div className="p-4 space-y-2">
+              {search.trim() === '' ? (
+                <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+                  <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium">Digite para buscar</p>
+                  <p className="text-sm mt-1">Ex: areia, tinta, tubo...</p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                filteredProducts.map((product, idx) => {
+                  const inCart = items.find(i => i.produto_id === product.id);
+                  const isSelected = idx === selectedIndex;
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => { if (!isLocked) handleSelectProduct(product); }}
+                      className={`p-4 rounded-xl shadow-sm cursor-pointer transition-all active:scale-[0.98] ${
                         isSelected
-                        ? 'bg-indigo-100 border-2 border-indigo-400 dark:bg-indigo-900/40 dark:border-indigo-600'
-                        : inCart
-                        ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' 
-                        : 'bg-gray-50 dark:bg-gray-800'
-                    } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
-                          {product.nome}
+                          ? 'bg-indigo-100 border-2 border-indigo-400 dark:bg-indigo-900/40 dark:border-indigo-600'
+                          : inCart
+                          ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800'
+                          : 'bg-gray-50 dark:bg-gray-800'
+                      } ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-medium truncate ${inCart ? 'text-indigo-900 dark:text-indigo-200' : 'text-gray-800 dark:text-gray-100'}`}>
+                            {product.nome}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
+                            {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
-                          {product.codigo_interno || 'S/ Cód'} • {formatCurrency(product.valor_compra)}
-                        </div>
-                      </div>
-                      
-                      {inCart && (
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        {inCart && (
                           <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200 border-0">
                             {inCart.quantidade} {inCart.unidade_medida}
                           </Badge>
+                        )}
+                      </div>
+                      {inCart && (
+                        <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800 flex justify-between items-center">
+                          <span className="text-xs text-indigo-700 dark:text-indigo-300">Total do item</span>
+                          <span className="text-sm font-bold text-indigo-900 dark:text-indigo-100">{formatCurrency(inCart.total || 0)}</span>
                         </div>
                       )}
                     </div>
-                    
-                    {inCart && (
-                      <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800 flex justify-between items-center">
-                        <span className="text-xs text-indigo-700 dark:text-indigo-300">Total do item</span>
-                        <span className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
-                          {formatCurrency(inCart.total || 0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )
-              })
-            ) : (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p className="font-medium">Nenhum produto encontrado</p>
-                <p className="text-sm mt-1 mb-6">para "{search}"</p>
-                {!isLocked && (
-                  <Button
-                    variant="outline"
-                    className="border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl h-12 px-6"
-                    onClick={() => setShowNovoProduto(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar "{search}"
-                  </Button>
-                )}
-              </div>
-            )}
+                  );
+                })
+              ) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium">Nenhum produto encontrado</p>
+                  <p className="text-sm mt-1 mb-6">para "{search}"</p>
+                  {!isLocked && (
+                    <Button
+                      variant="outline"
+                      className="border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl h-12 px-6"
+                      onClick={() => setShowNovoProduto(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Criar "{search}"
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-      <NovoProdutoRapidoDialog
-        isOpen={showNovoProduto}
-        onClose={() => setShowNovoProduto(false)}
-        nomeInicial={search}
-        onSuccess={(novoProduto) => {
-          if (onProductCreated) onProductCreated(novoProduto);
-          handleSelectProduct(novoProduto);
-          setSearch('');
-          setShowNovoProduto(false);
-        }}
-      />
-    </>
+        <NovoProdutoRapidoDialog
+          isOpen={showNovoProduto}
+          onClose={() => setShowNovoProduto(false)}
+          nomeInicial={search}
+          onSuccess={(novoProduto) => {
+            if (onProductCreated) onProductCreated(novoProduto);
+            handleSelectProduct(novoProduto);
+            setSearch('');
+            setShowNovoProduto(false);
+          }}
+        />
+      </>
     );
   }
 
