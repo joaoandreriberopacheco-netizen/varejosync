@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronRight, User, AlertCircle, Calendar, FileText } from 'lucide-react';
+import { ChevronRight, User, AlertCircle, Calendar, FileText, Dice5 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 
 /**
@@ -23,21 +23,39 @@ const PRAZOS = [
 
 export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, formatValor, onConfirm, onCancel }) {
   const [prazoDias, setPrazoDias] = useState(30);
+  const [dataSelecionada, setDataSelecionada] = useState(null);
   const [observacao, setObservacao] = useState('');
 
   useEffect(() => {
     if (visible) {
       setPrazoDias(30);
+      setDataSelecionada(null);
       setObservacao('');
     }
   }, [visible]);
 
   if (!visible) return null;
 
-  const dataVencimento = format(addDays(new Date(), prazoDias), 'dd/MM/yyyy');
+  const gerarDataAleatoria = () => {
+    const diasMin = 7;
+    const diasMax = 90;
+    const diasAleatorios = Math.floor(Math.random() * (diasMax - diasMin + 1)) + diasMin;
+    const novaData = addDays(new Date(), diasAleatorios);
+    setDataSelecionada(novaData);
+    setPrazoDias(null); // Desselecionar botões de dias
+  };
+
+  const dataVencimento = dataSelecionada
+    ? format(dataSelecionada, 'dd/MM/yyyy')
+    : format(addDays(new Date(), prazoDias), 'dd/MM/yyyy');
 
   const handleConfirmar = () => {
-    onConfirm({ prazo_dias: prazoDias, data_vencimento: addDays(new Date(), prazoDias), observacao });
+    if (dataSelecionada) {
+      const diasDiferenca = Math.floor((dataSelecionada - new Date()) / (1000 * 60 * 60 * 24));
+      onConfirm({ prazo_dias: diasDiferenca, data_vencimento: dataSelecionada, observacao });
+    } else {
+      onConfirm({ prazo_dias: prazoDias, data_vencimento: addDays(new Date(), prazoDias), observacao });
+    }
   };
 
   return (
@@ -75,9 +93,12 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
             {PRAZOS.map(p => (
               <button
                 key={p.dias}
-                onClick={() => setPrazoDias(p.dias)}
+                onClick={() => {
+                  setPrazoDias(p.dias);
+                  setDataSelecionada(null);
+                }}
                 className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors ${
-                  prazoDias === p.dias
+                  prazoDias === p.dias && !dataSelecionada
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
@@ -85,6 +106,17 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
                 {p.label}
               </button>
             ))}
+            <button
+              onClick={gerarDataAleatoria}
+              className={`h-10 px-4 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+                dataSelecionada
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Dice5 className="w-4 h-4" />
+              Aleatória
+            </button>
           </div>
 
           {/* Data calculada */}
@@ -92,6 +124,22 @@ export default function SeletorFiadoSheet({ visible, clienteNome, valorTotal, fo
             <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <span className="text-sm text-gray-500 dark:text-gray-400">Vencimento em</span>
             <span className="text-sm font-semibold text-gray-900 dark:text-white ml-auto">{dataVencimento}</span>
+          </div>
+
+          {/* Input customizado de data (opcional) */}
+          <div className="space-y-1.5 mt-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">Ou selecione uma data específica</p>
+            <input
+              type="date"
+              value={dataSelecionada ? format(dataSelecionada, 'yyyy-MM-dd') : ''}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setDataSelecionada(new Date(e.target.value + 'T00:00:00'));
+                  setPrazoDias(null);
+                }
+              }}
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+            />
           </div>
         </div>
 
