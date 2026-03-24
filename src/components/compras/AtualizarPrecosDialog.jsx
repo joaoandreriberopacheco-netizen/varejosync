@@ -32,6 +32,14 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
       itens.forEach(item => {
         const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
+          const custoInicial = (item.custo_unitario || produto.valor_compra || 0)
+            + (produto.custo_frete_padrao || 0)
+            + (produto.custo_imposto1_padrao || 0)
+            + (produto.custo_imposto2_padrao || 0)
+            + (produto.custo_outros_padrao || 0)
+            - (item.valor_desconto_item || produto.desconto_compra_padrao || 0);
+          const markupInicial = produto.preco_venda_percentual || 40;
+          const precoVendaInicial = produto.preco_venda_padrao || custoInicial * (1 + markupInicial / 100);
           initialCosts[item.produto_id] = {
             valor_compra: item.custo_unitario || produto.valor_compra || 0,
             custo_frete_padrao: produto.custo_frete_padrao || 0,
@@ -39,8 +47,8 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
             custo_imposto2_padrao: produto.custo_imposto2_padrao || 0,
             custo_outros_padrao: produto.custo_outros_padrao || 0,
             desconto_compra_padrao: item.valor_desconto_item || produto.desconto_compra_padrao || 0,
-            preco_venda_percentual: produto.preco_venda_percentual || 40,
-            preco_venda_padrao: produto.preco_venda_padrao || 0
+            preco_venda_percentual: markupInicial,
+            preco_venda_padrao: precoVendaInicial
           };
         }
       });
@@ -56,6 +64,53 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
         [field]: parseFloat(value) || 0
       }
     }));
+  };
+
+  // Handler circular: markup → recalcula preço venda
+  const handleMarkupChange = (produtoId, markupValue) => {
+    const markup = parseFloat(markupValue) || 0;
+    setEditedCosts(prev => {
+      const costs = prev[produtoId] || {};
+      const valorCompra = costs.valor_compra || 0;
+      const frete = costs.custo_frete_padrao || 0;
+      const imp1 = costs.custo_imposto1_padrao || 0;
+      const imp2 = costs.custo_imposto2_padrao || 0;
+      const outros = costs.custo_outros_padrao || 0;
+      const desconto = costs.desconto_compra_padrao || 0;
+      const novoCusto = valorCompra + frete + imp1 + imp2 + outros - desconto;
+      return {
+        ...prev,
+        [produtoId]: {
+          ...costs,
+          preco_venda_percentual: markup,
+          preco_venda_padrao: novoCusto > 0 ? novoCusto * (1 + markup / 100) : costs.preco_venda_padrao || 0
+        }
+      };
+    });
+  };
+
+  // Handler circular: preço venda → recalcula markup
+  const handlePrecoVendaChange = (produtoId, precoStr) => {
+    const preco = parseMoney(precoStr);
+    setEditedCosts(prev => {
+      const costs = prev[produtoId] || {};
+      const valorCompra = costs.valor_compra || 0;
+      const frete = costs.custo_frete_padrao || 0;
+      const imp1 = costs.custo_imposto1_padrao || 0;
+      const imp2 = costs.custo_imposto2_padrao || 0;
+      const outros = costs.custo_outros_padrao || 0;
+      const desconto = costs.desconto_compra_padrao || 0;
+      const novoCusto = valorCompra + frete + imp1 + imp2 + outros - desconto;
+      const novoMarkup = novoCusto > 0 ? ((preco / novoCusto) - 1) * 100 : 0;
+      return {
+        ...prev,
+        [produtoId]: {
+          ...costs,
+          preco_venda_padrao: preco,
+          preco_venda_percentual: Math.max(0, novoMarkup)
+        }
+      };
+    });
   };
 
   // Calcular dados de comparação para cada item com custos editáveis
@@ -78,7 +133,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
 
     const markup = costs.preco_venda_percentual || 40;
     const precoVendaAtual = produto.preco_venda_padrao || 0;
-    const precoVendaSugerido = novoCusto * (1 + markup / 100);
+    const precoVendaSugerido = costs.preco_venda_padrao != null
+      ? costs.preco_venda_padrao
+      : novoCusto * (1 + markup / 100);
 
     return {
       ...item,
@@ -333,18 +390,24 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                     <div className="flex items-center gap-2">
                       <Label className="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">Markup %</Label>
                       <Input
-                        type="number"
-                        step="0.1"
-                        value={item.costs?.preco_venda_percentual || 40}
-                        onChange={(e) => handleCostChange(item.produto_id, 'preco_venda_percentual', e.target.value)}
-                        onFocus={(e) => e.target.select()}
-                        className="h-9 text-sm flex-1 border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
+                       type="number"
+                       step="0.1"
+                       value={item.costs?.preco_venda_percentual || 40}
+                       onChange={(e) => handleMarkupChange(item.produto_id, e.target.value)}
+                       onFocus={(e) => e.target.select()}
+                       className="h-9 text-sm flex-1 border-0 bg-gray-50 dark:bg-gray-800 shadow-sm"
                       />
-                    </div>
-                    <div className="flex justify-between items-center text-sm pt-1">
-                      <span className="text-gray-600 dark:text-gray-400 font-medium">Preço Venda</span>
-                      <span className="font-bold text-gray-900 dark:text-gray-100 text-base">R$ {formatMoney(item.precoVendaSugerido)}</span>
-                    </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                      <Label className="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">Preço Venda</Label>
+                      <Input
+                        type="text"
+                        value={formatMoney(item.precoVendaSugerido)}
+                        onChange={(e) => handlePrecoVendaChange(item.produto_id, e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-9 text-sm flex-1 border-0 bg-gray-50 dark:bg-gray-800 shadow-sm font-bold"
+                      />
+                      </div>
                   </div>
                 </div>
               ))}
@@ -477,15 +540,19 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         type="number"
                         step="0.1"
                         value={item.costs?.preco_venda_percentual || 40}
-                        onChange={(e) => handleCostChange(item.produto_id, 'preco_venda_percentual', e.target.value)}
+                        onChange={(e) => handleMarkupChange(item.produto_id, e.target.value)}
                         onFocus={(e) => e.target.select()}
                         className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
                       />
                     </td>
                     <td className="p-2 bg-gray-50 dark:bg-gray-800">
-                      <div className="text-center font-bold text-gray-900 dark:text-gray-100">
-                        R$ {formatMoney(item.precoVendaSugerido)}
-                      </div>
+                      <Input
+                        type="text"
+                        value={formatMoney(item.precoVendaSugerido)}
+                        onChange={(e) => handlePrecoVendaChange(item.produto_id, e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-none font-bold"
+                      />
                     </td>
                   </tr>
                 ))}
