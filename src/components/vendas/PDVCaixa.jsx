@@ -1192,9 +1192,18 @@ export default function PDVCaixa() {
           )}
         </div>
         
-        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-          <Clock className="w-4 h-4" />
-          {format(new Date(), 'HH:mm')}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { loadData(); toast({ title: "✓ Atualizado!", className: "bg-emerald-100 text-emerald-800", duration: 1000 }); }}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            style={{ minWidth: '44px', minHeight: '44px' }}
+            title="Atualizar (F7)">
+            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
+          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            {format(new Date(), 'HH:mm')}
+          </div>
         </div>
       </div>
 
