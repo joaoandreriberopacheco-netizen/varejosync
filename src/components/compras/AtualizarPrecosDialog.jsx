@@ -277,15 +277,14 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</Label>
                         <Input
                           type="text"
+                          inputMode="decimal"
                           value={inp(item.produto_id, field)}
                           onChange={(e) => setInp(item.produto_id, field, e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleCostBlur(item.produto_id, field)}
                           className="h-11 text-base font-medium border-0 bg-gray-100 dark:bg-gray-800 shadow-none rounded-xl"
                         />
-                      </div>
-                    ))}
-                  </div>
+                        </div>
 
                   {/* Custo total + markup + preço venda */}
                   <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
@@ -299,6 +298,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Markup %</Label>
                         <Input
                           type="text"
+                          inputMode="decimal"
                           value={inp(item.produto_id, 'markup')}
                           onChange={(e) => setInp(item.produto_id, 'markup', e.target.value)}
                           onFocus={(e) => e.target.select()}
@@ -310,6 +310,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         <Label className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Preço Venda</Label>
                         <Input
                           type="text"
+                          inputMode="decimal"
                           value={inp(item.produto_id, 'preco')}
                           onChange={(e) => setInp(item.produto_id, 'preco', e.target.value)}
                           onFocus={(e) => e.target.select()}
