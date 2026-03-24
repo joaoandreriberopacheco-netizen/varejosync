@@ -665,12 +665,7 @@ export default function PDVCaixa() {
       }
 
       // Mescla dados do pedido retornado com itens do rascunho (backend pode não retornar itens completos)
-      setVendaFinalizada({
-        ...pedidoSelecionado,
-        ...pedidoVenda,
-        itens: pedidoVenda.itens?.length ? pedidoVenda.itens : pedidoSelecionado.itens,
-        pagamentos: pagamentosArray,
-      });
+      // NÃO inicializa aqui — será iniciado junto com setShowComprovanteCaixa
 
       if (configVenda?.fluxo_venda_padrao === 'Completo') {
         toast({ title: "Ordem de Separação Criada", description: "Enviado para o estoque." });
@@ -779,6 +774,12 @@ export default function PDVCaixa() {
       }
 
       // Sempre mostra o comprovante primeiro; ao fechar, segue o fluxo normal
+      setVendaFinalizada({
+        ...pedidoSelecionado,
+        ...pedidoVenda,
+        itens: pedidoVenda.itens?.length ? pedidoVenda.itens : pedidoSelecionado.itens,
+        pagamentos: pagamentosArray,
+      });
       setShowComprovanteCaixa(true);
 
       loadData();
