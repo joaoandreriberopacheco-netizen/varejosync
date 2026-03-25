@@ -33,6 +33,7 @@ function Toggle({ checked, onChange }) {
 
 export default function LancamentoDetalheDialog({ lancamento, contas, onClose, onSaved }) {
   const [contaId, setContaId] = useState(lancamento.conta_financeira_id || '');
+  const [valorEditavel, setValorEditavel] = useState(String(lancamento.valor || ''));
   const [dataPagamento, setDataPagamento] = useState(
     lancamento.data_pagamento ? lancamento.data_pagamento : dataHoje()
   );
@@ -51,6 +52,15 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const isTransf = lancamento.tipo === 'Transferência';
   const isPagoOriginal = lancamento.status === 'Pago';
   const isPendente = lancamento.status_conciliacao === 'Pendente';
+  const isCartaoReceber = isReceita && ['Cartão Débito', 'Cartão Crédito'].includes(lancamento.forma_pagamento_tipo);
+  const valorNumerico = parseFloat(valorEditavel) || 0;
+  const valorLiquidoOriginal = parseFloat(lancamento.valor_liquido ?? lancamento.valor) || 0;
+  const proporcaoLiquida = (lancamento.valor || 0) > 0 ? valorLiquidoOriginal / lancamento.valor : 1;
+  const houveAlteracaoValor = isCartaoReceber && Math.abs(valorNumerico - (parseFloat(lancamento.valor) || 0)) > 0.009;
+  const payloadValor = houveAlteracaoValor ? {
+    valor: valorNumerico,
+    valor_liquido: parseFloat((valorNumerico * proporcaoLiquida).toFixed(2)),
+  } : {};
   const data = lancamento.data_pagamento || lancamento.data_vencimento;
 
   // Aplica pagamento com escopo de recorrência
@@ -92,23 +102,28 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     // Salvar apenas este
     if (isPagoLocal && !isPagoOriginal) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        ...payloadValor,
         status: 'Pago', data_pagamento: dataPagamento,
         status_conciliacao: 'Pendente',
         conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
       });
       if (conta) {
-        const delta = isReceita ? lancamento.valor || 0 : -(lancamento.valor || 0);
+        const delta = isReceita ? valorNumerico || lancamento.valor || 0 : -(valorNumerico || lancamento.valor || 0);
         await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
       toast({ title: 'Pagamento registrado!', className: 'bg-gray-100 text-gray-800' });
     } else if (!isPagoLocal && isPagoOriginal) {
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, { status: 'Em Aberto' });
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, { ...payloadValor, status: 'Em Aberto' });
       toast({ title: 'Marcado como em aberto', className: 'bg-gray-100 text-gray-800' });
     } else if (isPagoLocal && isPagoOriginal) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        ...payloadValor,
         data_pagamento: dataPagamento, conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
       });
       toast({ title: 'Dados atualizados!', className: 'bg-gray-100 text-gray-800' });
+    } else if (houveAlteracaoValor) {
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, payloadValor);
+      toast({ title: 'Valor atualizado!', className: 'bg-gray-100 text-gray-800' });
     }
     onSaved?.();
     setSaving(false);
@@ -117,6 +132,10 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const handleSalvarPagamento = async () => {
     if (isPagoLocal && !contaId) {
       toast({ title: 'Selecione uma conta', variant: 'destructive' });
+      return;
+    }
+    if (isCartaoReceber && valorNumerico <= 0) {
+      toast({ title: 'Informe um valor válido', variant: 'destructive' });
       return;
     }
     // Se recorrente e marcando como pago, perguntar escopo
@@ -212,7 +231,19 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
         <div className="h-px bg-gray-100 dark:bg-gray-800" />
 
-
+        {isCartaoReceber && !isCancelado && (
+          <div className="px-5 pt-4">
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Valor a receber</p>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={valorEditavel}
+              onChange={(e) => setValorEditavel(e.target.value)}
+              className="w-full h-10 px-3 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-0 outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+            />
+          </div>
+        )}
 
         {/* Seção: Marcar como pago */}
         {!isTransf && !isCancelado && (

@@ -964,6 +964,28 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                   />
                 </div>
                 
+                <div className="col-span-12 md:col-span-6 lg:col-span-3">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Data do Pedido</Label>
+                  <Input
+                    type="date"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
+                    value={formData.data_emissao || ''}
+                    onChange={e => handleChange('data_emissao', e.target.value)}
+                    disabled={isLocked}
+                  />
+                </div>
+
+                <div className="col-span-12 md:col-span-6 lg:col-span-3">
+                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Previsão de Entrega</Label>
+                  <Input
+                    type="date"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
+                    value={formData.data_prevista_entrega || ''}
+                    onChange={e => handleChange('data_prevista_entrega', e.target.value)}
+                    disabled={isLocked}
+                  />
+                </div>
+
                 {/* Observação em linha inteira */}
                 <div className="col-span-12">
                   <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Observações</Label>

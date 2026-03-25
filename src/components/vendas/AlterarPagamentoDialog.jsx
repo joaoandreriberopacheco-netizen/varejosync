@@ -194,28 +194,48 @@ export default function AlterarPagamentoDialog({ open, onClose }) {
     try {
       await base44.entities.PedidoVenda.update(pedido.id, { pagamentos: novosPagamentos });
 
-      // Atualizar LancamentoFinanceiro vinculados: conta conforme forma de pagamento
+      // Atualizar LancamentoFinanceiro vinculados: conta e valor conforme forma de pagamento
       const lancamentos = await base44.entities.LancamentoFinanceiro.filter({
         referencia_id: pedido.id,
         referencia_tipo: 'PedidoVenda'
       });
-      for (const lanc of lancamentos) {
-        // Encontrar a forma de pagamento correspondente no novo array
-        const pag = novosPagamentos.find(p =>
-          p.forma_pagamento === lanc.forma_pagamento ||
-          novosPagamentos.length === 1
-        ) || novosPagamentos[0];
-        if (!pag) continue;
-        const forma = formasDePagamento.find(f => f.nome === pag.forma_pagamento);
-        if (forma && forma.conta_destino_id) {
-          await base44.entities.LancamentoFinanceiro.update(lanc.id, {
-            forma_pagamento: pag.forma_pagamento,
-            forma_pagamento_id: forma.id,
-            forma_pagamento_tipo: forma.tipo,
-            conta_financeira_id: forma.conta_destino_id,
-            conta_financeira_nome: forma.conta_destino_nome || '',
-          });
+      const receitas = lancamentos.filter(l => l.tipo === 'Receita');
+      const usados = new Set();
+
+      for (const lanc of receitas) {
+        let pagamentoIndex = novosPagamentos.findIndex((p, index) =>
+          !usados.has(index) && (p.forma_pagamento === lanc.forma_pagamento || novosPagamentos.length === 1)
+        );
+
+        if (pagamentoIndex === -1) {
+          pagamentoIndex = novosPagamentos.findIndex((_, index) => !usados.has(index));
         }
+
+        if (pagamentoIndex === -1) continue;
+
+        usados.add(pagamentoIndex);
+        const pag = novosPagamentos[pagamentoIndex];
+        const forma = formasDePagamento.find(f => f.nome === pag.forma_pagamento);
+        const novoValor = parseFloat(pag.valor) || 0;
+        const valorAtual = parseFloat(lanc.valor) || 0;
+        const valorLiquidoAtual = parseFloat(lanc.valor_liquido ?? lanc.valor) || 0;
+        const proporcaoLiquida = valorAtual > 0 ? valorLiquidoAtual / valorAtual : 1;
+        const isCartao = (lanc.forma_pagamento_tipo || '').includes('Cartão') || (pag.forma_pagamento || '').includes('Cartão');
+
+        const payload = {
+          forma_pagamento: pag.forma_pagamento,
+          valor: novoValor,
+          valor_liquido: isCartao ? parseFloat((novoValor * proporcaoLiquida).toFixed(2)) : novoValor,
+        };
+
+        if (forma && forma.conta_destino_id) {
+          payload.forma_pagamento_id = forma.id;
+          payload.forma_pagamento_tipo = forma.tipo;
+          payload.conta_financeira_id = forma.conta_destino_id;
+          payload.conta_financeira_nome = forma.conta_destino_nome || '';
+        }
+
+        await base44.entities.LancamentoFinanceiro.update(lanc.id, payload);
       }
 
       toast({ title: '✓ Pagamento atualizado!', description: `Formas de pagamento do ${pedido.numero} foram alteradas.`, className: 'bg-emerald-100 text-emerald-800' });
