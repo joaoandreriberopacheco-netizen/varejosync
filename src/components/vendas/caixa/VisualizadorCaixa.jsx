@@ -9,7 +9,7 @@ import ListaMovimentosDialog from './ListaMovimentosDialog';
 import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
 
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
-  const [caixaData, setCaixaData] = useState({ saldoInicial: 0, liquidez: 0, totalVendas: 0, recebimentos: { dinheiro: 0, pix: 0, credito: 0, debito: 0, vale: 0 }, reforcos: 0, sangrias: 0, despesas: 0, despesasLista: [] });
+  const [caixaData, setCaixaData] = useState({ saldoInicial: 0, liquidez: 0, totalVendas: 0, recebimentos: { dinheiro: 0, pix: 0, credito: 0, debito: 0, vale: 0 }, reforcos: 0, sangrias: 0, despesas: 0, despesasLista: [], fiado: 0, fiadoLista: [] });
   const [vendasFinalizadas, setVendasFinalizadas] = useState([]);
   const [movimentos, setMovimentos] = useState([]);
   const [activeTab, setActiveTab] = useState('balanco');
@@ -31,10 +31,11 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const loadData = async () => {
     setLoading(true);
     try {
-      const [vendas, movs, despesasRaw] = await Promise.all([
+      const [vendas, movs, despesasRaw, fiados] = await Promise.all([
         base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
         base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' })
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' }),
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' })
       ]);
 
       // Filtrar apenas despesas que NÃO são recolhimentos/sangrias
@@ -71,6 +72,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
       const saldoInicial = turnoAtivo.saldo_inicial || 0;
       const liquidez = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
+      const totalFiado = fiados.reduce((s, f) => s + (f.valor || 0), 0);
 
       setCaixaData({
         saldoInicial,
@@ -81,6 +83,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         sangrias: totalSangrias,
         despesas: totalDespesas,
         despesasLista: despesas,
+        fiado: totalFiado,
+        fiadoLista: fiados,
       });
       setVendasFinalizadas(vendas);
       setMovimentos(movs);
@@ -349,6 +353,15 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                         <span className="text-base font-medium text-emerald-700 dark:text-emerald-300">{formatValor(caixaData.recebimentos.vale)}</span>
                       </div>
                     )}
+                    {(caixaData.fiado || 0) > 0 && (
+                      <div className="flex items-center justify-between py-2 px-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Fiado</span>
+                          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">a receber</span>
+                        </div>
+                        <span className="text-base font-medium text-gray-700 dark:text-gray-200">{formatValor(caixaData.fiado)}</span>
+                      </div>
+                    )}
                     
                     {/* Total Conferido - BLOQUEADO */}
                     <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 space-y-3">
@@ -406,7 +419,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
               {(() => {
                 const itensMovimentos = (movimentos || []).map(m => ({ id: m.id, tipo: m.tipo, valor: m.valor, descricao: m.observacao || m.tipo, hora: m.created_date, cor: m.tipo === 'Reforço' ? 'emerald' : 'blue' }));
                 const itensDespesas = (caixaData?.despesasLista || []).map(d => ({ id: d.id, tipo: 'Despesa', valor: d.valor, descricao: d.descricao, hora: d.created_date, cor: 'red' }));
-                const todos = [...itensMovimentos, ...itensDespesas].sort((a, b) => new Date(a.hora) - new Date(b.hora));
+                const itensFiado = (caixaData?.fiadoLista || []).map(f => ({ id: f.id, tipo: 'Fiado', valor: f.valor, descricao: f.descricao || 'Lançamento fiado', hora: f.created_date, cor: 'gray' }));
+                const todos = [...itensMovimentos, ...itensDespesas, ...itensFiado].sort((a, b) => new Date(a.hora) - new Date(b.hora));
                 
                 if (todos.length === 0) return (
                   <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600">
@@ -417,15 +431,15 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
 
                 return todos.map(item => (
                   <div key={item.id} className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between gap-3">
-                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                      {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${item.cor === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' : item.cor === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' : item.cor === 'gray' ? 'bg-gray-100 dark:bg-gray-700' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                      {item.cor === 'emerald' ? <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : item.cor === 'blue' ? <Minus className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : item.cor === 'gray' ? <Receipt className="w-4 h-4 text-gray-600 dark:text-gray-300" /> : <DollarSign className="w-4 h-4 text-red-600 dark:text-red-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.descricao}</div>
                       <div className="text-xs text-gray-400 dark:text-gray-500">{item.tipo} · {item.hora ? format(new Date(item.hora), 'HH:mm') : ''}</div>
                     </div>
-                    <div className={`text-base font-bold font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {item.cor === 'emerald' ? '+' : '−'}{formatValor(item.valor)}
+                    <div className={`text-base font-bold font-glacial flex-shrink-0 ${item.cor === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : item.cor === 'blue' ? 'text-blue-600 dark:text-blue-400' : item.cor === 'gray' ? 'text-gray-700 dark:text-gray-200' : 'text-red-600 dark:text-red-400'}`}>
+                      {item.cor === 'emerald' || item.cor === 'gray' ? '+' : '−'}{formatValor(item.valor)}
                     </div>
                   </div>
                 ));

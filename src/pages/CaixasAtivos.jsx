@@ -18,12 +18,13 @@ export default function CaixasAtivosPage() {
 
   const loadTurnos = async () => {
     try {
-      const [turnos, contas, vendas, movs, despesas] = await Promise.all([
+      const [turnos, contas, vendas, movs, despesas, fiados] = await Promise.all([
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
         base44.entities.ContasFinanceiras.list(),
         base44.entities.PedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
-        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' })
+        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
+        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Receita', forma_pagamento: 'Conta a Pagar' })
       ]);
 
       const caixasPDV = contas.filter(c => c.ativo && (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV'));
@@ -50,6 +51,8 @@ export default function CaixasAtivosPage() {
           const despesasTurno = despesas.filter(d => d.turno_caixa_id === turno.id && d.referencia_tipo !== 'MovimentosCaixa').reduce((s, d) => s + (d.valor || 0), 0);
           const liquidezTurno = (turno.saldo_inicial || 0) + totalVendas + reforcos - sangrias - despesasTurno;
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale;
+          const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
+          const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           
           liquidez[caixa.id] = {
             turnoAberto: true,
@@ -57,6 +60,8 @@ export default function CaixasAtivosPage() {
             totalVendas,
             liquidez: liquidezTurno,
             dinheiroNaGaveta,
+            totalFiado,
+            quantidadeFiado: lancamentosFiado.length,
           };
         }
       });
@@ -142,6 +147,11 @@ export default function CaixasAtivosPage() {
                           <p className="text-xs text-gray-400 dark:text-gray-500">
                             Saldo Inicial: {formatValor(liq.saldoInicial)} · Vendas: {formatValor(liq.totalVendas)}
                           </p>
+                          {(liq.quantidadeFiado || 0) > 0 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
