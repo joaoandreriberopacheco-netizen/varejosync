@@ -1,109 +1,155 @@
-// Utilitário centralizado de datas — fuso America/Rio_Branco (UTC-5 fixo)
-// Usa offset manual para garantir consistência em todos os navegadores/Android WebView
-
-const OFFSET_MS = -5 * 60 * 60 * 1000; // UTC-5
-
 /**
- * Converte uma data ISO/UTC para objeto Date local (UTC-5)
+ * Utilitário centralizado de data/hora do sistema VarejoSync.
+ *
+ * IMPORTANTE: O sistema opera SEMPRE no fuso horário America/Rio_Branco (UTC-5).
+ * Nunca use `new Date()` diretamente para gravar timestamps — use `agora()`.
+ * Isso garante que todos os registros de hora sigam o mesmo fuso, independente
+ * do dispositivo ou localidade do usuário.
  */
-function toLocalDate(date) {
-  if (!date) return null;
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (isNaN(d.getTime())) return null;
-  return new Date(d.getTime() + OFFSET_MS);
-}
+
+export const TIMEZONE_SISTEMA = 'America/Rio_Branco';
 
 /**
- * Retorna a chave de data local no formato 'YYYY-MM-DD'
- */
-export function toLocalDateKey(date) {
-  const local = toLocalDate(date);
-  if (!local) return '';
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-/**
- * Retorna a data de hoje como 'YYYY-MM-DD' em UTC-5
- */
-export function dataHoje() {
-  return toLocalDateKey(new Date());
-}
-
-/**
- * Formata data e hora: "24/03/2026 18:05"
- */
-export function formatarDataHora(date) {
-  const local = toLocalDate(date);
-  if (!local) return '-';
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const y = local.getUTCFullYear();
-  const h = String(local.getUTCHours()).padStart(2, '0');
-  const min = String(local.getUTCMinutes()).padStart(2, '0');
-  return `${d}/${m}/${y} ${h}:${min}`;
-}
-
-/**
- * Formata somente a data: "24/03/2026"
- */
-export function formatarSoData(date) {
-  if (!date) return '-';
-  // Se vier como string YYYY-MM-DD (sem hora), não precisa de conversão de fuso
-  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    const [y, m, d] = date.split('-');
-    return `${d}/${m}/${y}`;
-  }
-  const local = toLocalDate(date);
-  if (!local) return '-';
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const y = local.getUTCFullYear();
-  return `${d}/${m}/${y}`;
-}
-
-/**
- * Formata somente a hora: "18:05"
- */
-export function formatarHora(date) {
-  const local = toLocalDate(date);
-  if (!local) return '-';
-  const h = String(local.getUTCHours()).padStart(2, '0');
-  const min = String(local.getUTCMinutes()).padStart(2, '0');
-  return `${h}:${min}`;
-}
-
-/**
- * Formata para log: "24/03 18:05"
- */
-export function formatarLogTime(date) {
-  const local = toLocalDate(date);
-  if (!local) return '-';
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const h = String(local.getUTCHours()).padStart(2, '0');
-  const min = String(local.getUTCMinutes()).padStart(2, '0');
-  return `${d}/${m} ${h}:${min}`;
-}
-
-/**
- * Retorna chave de agrupamento: "Hoje", "Ontem" ou "24/03/2026"
- */
-export function formatarGrupoData(date) {
-  const key = toLocalDateKey(date);
-  const hoje = dataHoje();
-  if (key === hoje) return 'Hoje';
-  const ontemDate = new Date(new Date().getTime() + OFFSET_MS - 86400000);
-  const ontemKey = `${ontemDate.getUTCFullYear()}-${String(ontemDate.getUTCMonth()+1).padStart(2,'0')}-${String(ontemDate.getUTCDate()).padStart(2,'0')}`;
-  if (key === ontemKey) return 'Ontem';
-  return formatarSoData(date);
-}
-
-/**
- * Retorna ISO string atual em UTC-5
+ * Retorna o timestamp atual como string ISO 8601 (sempre UTC internamente).
+ * Use para TODOS os campos de data/hora persistidos na base de dados.
+ * A hora é a mesma globalmente — o fuso só importa na EXIBIÇÃO.
+ * @returns {string} ISO string e.g. "2026-03-16T15:32:00.000Z"
  */
 export function agora() {
   return new Date().toISOString();
+}
+
+/**
+ * Retorna a data de hoje no fuso do sistema no formato yyyy-MM-dd.
+ * Use para campos de tipo "date" (sem hora).
+ * @returns {string} e.g. "2026-03-16"
+ */
+export function dataHoje() {
+  const d = new Date();
+  const local = new Date(d.getTime() - 5 * 60 * 60 * 1000);
+  const y = local.getUTCFullYear();
+  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(local.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+/**
+ * Converte uma data/timestamp para o horário de Rio Branco (UTC-5 fixo).
+ * Usa offset manual como fallback garantido para Android/WebView.
+ * @param {string|Date} valor
+ * @returns {Date} objeto Date ajustado para UTC-5
+ */
+function toRioBranco(valor) {
+  const d = typeof valor === 'string' ? new Date(valor) : valor;
+  // Aplica offset UTC-5 manualmente (5 * 60 * 60 * 1000 ms)
+  return new Date(d.getTime() - 5 * 60 * 60 * 1000);
+}
+
+const pad = (n) => String(n).padStart(2, '0');
+
+/**
+ * Formata um timestamp para exibição no fuso do sistema (com hora).
+ * Usa offset UTC-5 fixo — funciona em qualquer navegador/Android.
+ * @param {string|Date} valor
+ * @returns {string} e.g. "16/03/2026 10:32"
+ */
+export function formatarDataHora(valor) {
+  if (!valor) return '—';
+  const d = typeof valor === 'string' ? new Date(valor) : valor;
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)}/${local.getUTCFullYear()} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
+}
+
+/**
+ * Formata apenas a data (sem hora) no fuso do sistema (UTC-5 fixo).
+ * @param {string|Date} valor
+ * @returns {string} e.g. "16/03/2026"
+ */
+export function formatarSoData(valor) {
+  if (!valor) return '—';
+  // Campos só-data (YYYY-MM-DD) não precisam de conversão de fuso
+  if (typeof valor === 'string' && valor.length === 10) {
+    const [y, m, dd] = valor.split('-');
+    return `${dd}/${m}/${y}`;
+  }
+  const d = new Date(valor);
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)}/${local.getUTCFullYear()}`;
+}
+
+// Meses em pt-BR — evita Intl.DateTimeFormat em Android WebView
+const MESES_CURTOS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+/**
+ * Retorna chave YYYY-MM-DD no fuso UTC-5 — para agrupamentos de listas.
+ * @param {string|Date} valor
+ * @returns {string} e.g. "2026-03-16"
+ */
+export function toLocalDateKey(valor) {
+  const d = typeof valor === 'string' ? new Date(valor) : valor;
+  if (isNaN(d.getTime())) return '';
+  const local = toRioBranco(d);
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`;
+}
+
+/**
+ * Formata data curta estilo "16 mar" — para uso em listas/rows.
+ * Campos só-data (YYYY-MM-DD) são tratados sem conversão de fuso.
+ * @param {string|Date} valor
+ * @returns {string} e.g. "16 mar"
+ */
+export function formatarDataCurta(valor) {
+  if (!valor) return '—';
+  if (typeof valor === 'string' && valor.length === 10) {
+    const [, m, dd] = valor.split('-');
+    return `${parseInt(dd, 10)} ${MESES_CURTOS[parseInt(m, 10) - 1]}`;
+  }
+  const d = new Date(valor);
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${local.getUTCDate()} ${MESES_CURTOS[local.getUTCMonth()]}`;
+}
+
+/**
+ * Formata data longa estilo "16 de março de 2026".
+ * @param {string|Date} valor
+ * @returns {string}
+ */
+export function formatarDataLonga(valor) {
+  if (!valor) return '—';
+  if (typeof valor === 'string' && valor.length === 10) {
+    const [y, m, dd] = valor.split('-');
+    return `${parseInt(dd, 10)} de ${MESES_LONGOS[parseInt(m, 10) - 1]} de ${y}`;
+  }
+  const d = new Date(valor);
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${local.getUTCDate()} de ${MESES_LONGOS[local.getUTCMonth()]} de ${local.getUTCFullYear()}`;
+}
+
+/** @deprecated Use formatarSoData */
+export function formatarData(valor) { return formatarSoData(valor); }
+
+/**
+ * Retorna a data de hoje (início do dia UTC-5) como objeto Date.
+ * @returns {Date}
+ */
+export function inicioDiaHoje() {
+  const hoje = dataHoje();
+  return new Date(`${hoje}T00:00:00-05:00`);
+}
+
+/**
+ * Retorna uma string "dd/MM HH:mm" no fuso UTC-5 — útil para logs.
+ * @param {string|Date} [valor]
+ * @returns {string} e.g. "16/03 10:32"
+ */
+export function formatarLogTime(valor) {
+  const ts = valor ? (typeof valor === 'string' ? new Date(valor) : valor) : new Date();
+  if (isNaN(ts.getTime())) return '—';
+  const local = toRioBranco(ts);
+  return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
 }

@@ -2,8 +2,15 @@ import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatarSoData, dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
+
+const mesAnoLabel = (dataStr) => {
+  if (!dataStr) return '';
+  const s = typeof dataStr === 'string' && dataStr.length >= 7 ? dataStr : toLocalDateKey(dataStr);
+  const meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const [y, m] = s.split('-');
+  return `${meses[parseInt(m,10)-1]}/${y}`;
+};
 import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle, Trash2 } from 'lucide-react';
 import CancelarLancamentoDialog from './CancelarLancamentoDialog';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,14 +34,10 @@ function Toggle({ checked, onChange }) {
 export default function LancamentoDetalheDialog({ lancamento, contas, onClose, onSaved }) {
   const [contaId, setContaId] = useState(lancamento.conta_financeira_id || '');
   const [dataPagamento, setDataPagamento] = useState(
-    lancamento.data_pagamento
-      ? format(new Date(lancamento.data_pagamento), 'yyyy-MM-dd')
-      : format(new Date(), 'yyyy-MM-dd')
+    lancamento.data_pagamento ? lancamento.data_pagamento : dataHoje()
   );
   const [dataLiquidacao, setDataLiquidacao] = useState(
-    lancamento.data_pagamento
-      ? format(new Date(lancamento.data_pagamento), 'yyyy-MM-dd')
-      : format(new Date(), 'yyyy-MM-dd')
+    lancamento.data_pagamento ? lancamento.data_pagamento : dataHoje()
   );
   const [isPagoLocal, setIsPagoLocal] = useState(lancamento.status === 'Pago');
   const [saving, setSaving] = useState(false);
@@ -181,14 +184,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               </p>
               {lancamento.is_recorrente && lancamento.data_vencimento && (
                 <span className="text-[0.65rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full font-medium">
-                  {format(new Date(lancamento.data_vencimento), "MMM/yyyy", { locale: ptBR }).toUpperCase()}
+                  {mesAnoLabel(lancamento.data_vencimento)}
                 </span>
               )}
             </div>
             <p className="text-xs text-gray-400 mt-0.5">
               {lancamento.categoria || 'Sem categoria'}
               {lancamento.conta_financeira_nome ? ` · ${lancamento.conta_financeira_nome}` : ''}
-              {data ? ` · ${format(new Date(data), 'dd MMM yyyy', { locale: ptBR })}` : ''}
+              {data ? ` · ${formatarSoData(data)}` : ''}
             </p>
           </div>
         </div>
