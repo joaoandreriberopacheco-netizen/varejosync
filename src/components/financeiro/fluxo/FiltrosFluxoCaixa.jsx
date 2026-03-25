@@ -3,6 +3,7 @@ import {
   Search, X, Wallet, BarChart3, Clock, ChevronDown,
   ChevronLeft, ChevronRight, AlertTriangle, RefreshCw
 } from 'lucide-react';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -80,10 +81,10 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
   const [offset, setOffset] = useState(0);
   const [hover, setHover] = useState(null);
 
-  const hoje = new Date();
+  const hoje = new Date(`${dataHoje()}T12:00:00Z`);
   const baseLeft = addMonths(new Date(hoje.getFullYear(), hoje.getMonth(), 1), offset);
-  const rs = customStart ? new Date(customStart) : null;
-  const re = customEnd ? new Date(customEnd + 'T23:59:59') : null;
+  const rs = customStart ? new Date(`${customStart}T12:00:00Z`) : null;
+  const re = customEnd ? new Date(`${customEnd}T12:00:00Z`) : null;
 
   const handleDay = (d) => {
     if (!rs || (rs && re)) {

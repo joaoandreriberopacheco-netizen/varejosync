@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,14 +16,16 @@ const PERIODOS = [
   { label: 'Período', value: 'periodo' },
 ];
 
+const parseDateKey = (dateKey) => new Date(`${dateKey}T12:00:00Z`);
+
 export function getDateRange(periodo, customStart, customEnd) {
-  const hoje = new Date();
+  const hoje = parseDateKey(dataHoje());
   switch (periodo) {
     case 'hoje':
-      return { start: new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()), end: new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59) };
+      return { start: hoje, end: hoje };
     case 'ontem': {
       const ontem = subDays(hoje, 1);
-      return { start: new Date(ontem.getFullYear(), ontem.getMonth(), ontem.getDate()), end: new Date(ontem.getFullYear(), ontem.getMonth(), ontem.getDate(), 23, 59, 59) };
+      return { start: ontem, end: ontem };
     }
     case 'semana':
       return { start: startOfWeek(hoje, { locale: ptBR }), end: endOfWeek(hoje, { locale: ptBR }) };
@@ -31,7 +34,7 @@ export function getDateRange(periodo, customStart, customEnd) {
     case 'tudo':
       return { start: null, end: null };
     case 'periodo':
-      return { start: customStart ? new Date(customStart) : null, end: customEnd ? new Date(customEnd) : null };
+      return { start: customStart ? parseDateKey(customStart) : null, end: customEnd ? parseDateKey(customEnd) : null };
     default:
       return { start: startOfMonth(hoje), end: endOfMonth(hoje) };
   }

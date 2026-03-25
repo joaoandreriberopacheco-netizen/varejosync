@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import {
-  format, isWithinInterval, subDays,
+  format, subDays,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
-  isSameDay, isBefore, isWithinInterval as isInRange,
+  isSameDay, isBefore, isWithinInterval, isWithinInterval as isInRange,
   eachDayOfInterval, getDay, addMonths
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { dataHoje, formatarDataCurta, toLocalDateKey } from '@/components/utils/dateUtils';
 import {
   Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
   Scale, Search, AlertCircle, ChevronDown, SlidersHorizontal,
@@ -20,15 +21,36 @@ import { Checkbox } from '@/components/ui/checkbox';
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+function parseDateKey(dateKey) {
+  return new Date(`${dateKey}T12:00:00Z`);
+}
+
 function dateRange(periodo, cs, ce) {
-  const h = new Date();
-  if (periodo === 'hoje')  return { s: new Date(h.getFullYear(), h.getMonth(), h.getDate()), e: new Date(h.getFullYear(), h.getMonth(), h.getDate(), 23, 59, 59) };
-  if (periodo === 'ontem') { const d = subDays(h, 1); return { s: new Date(d.getFullYear(), d.getMonth(), d.getDate()), e: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59) }; }
-  if (periodo === 'semana') return { s: startOfWeek(h, { locale: ptBR }), e: endOfWeek(h, { locale: ptBR }) };
-  if (periodo === 'mes')   return { s: startOfMonth(h), e: endOfMonth(h) };
-  if (periodo === 'tudo')  return { s: null, e: null };
-  if (periodo === 'periodo') return { s: cs ? new Date(cs) : null, e: ce ? new Date(ce + 'T23:59:59') : null };
-  return { s: startOfMonth(h), e: endOfMonth(h) };
+  const hojeKey = dataHoje();
+  const base = parseDateKey(hojeKey);
+  if (periodo === 'hoje') return { s: hojeKey, e: hojeKey };
+  if (periodo === 'ontem') {
+    const ontem = format(subDays(base, 1), 'yyyy-MM-dd');
+    return { s: ontem, e: ontem };
+  }
+  if (periodo === 'semana') {
+    return {
+      s: format(startOfWeek(base, { locale: ptBR }), 'yyyy-MM-dd'),
+      e: format(endOfWeek(base, { locale: ptBR }), 'yyyy-MM-dd')
+    };
+  }
+  if (periodo === 'mes') {
+    return {
+      s: format(startOfMonth(base), 'yyyy-MM-dd'),
+      e: format(endOfMonth(base), 'yyyy-MM-dd')
+    };
+  }
+  if (periodo === 'tudo') return { s: null, e: null };
+  if (periodo === 'periodo') return { s: cs || null, e: ce || null };
+  return {
+    s: format(startOfMonth(base), 'yyyy-MM-dd'),
+    e: format(endOfMonth(base), 'yyyy-MM-dd')
+  };
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
@@ -117,12 +139,12 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom })
   const [hover, setHover] = useState(null);
   const scrollRef = useRef(null);
 
-  const hoje = new Date();
+  const hoje = new Date(`${dataHoje()}T12:00:00Z`);
   const baseLeft  = addMonths(new Date(hoje.getFullYear(), hoje.getMonth(), 1), offset);
   const baseRight = addMonths(baseLeft, 1);
 
-  const rs = customStart ? new Date(customStart) : null;
-  const re = customEnd   ? new Date(customEnd + 'T23:59:59') : null;
+  const rs = customStart ? new Date(`${customStart}T12:00:00Z`) : null;
+  const re = customEnd   ? new Date(`${customEnd}T12:00:00Z`) : null;
 
   const handleDay = (d) => {
     if (!rs || (rs && re)) {
@@ -269,7 +291,7 @@ function LancRow({ l, onClick }) {
           {l.descricao}
         </span>
         <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
-          {data ? format(new Date(data), 'dd MMM', { locale: ptBR }) : '—'}
+          {data ? formatarDataCurta(data) : '—'}
           {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
           {prev ? <span className="ml-1 bg-gray-100 dark:bg-gray-700 text-gray-400 rounded px-1 text-[0.6rem]">prev.</span> : null}
         </span>
@@ -351,14 +373,14 @@ export default function FluxoCaixaTabV2() {
     // Lançamentos PAGOS: usa data_pagamento como âncora temporal (movimentação real de caixa)
     // Lançamentos EM ABERTO/VENCIDO: usa data_vencimento como âncora (previsão — aparecem mas marcados)
     const isPago = l.status === 'Pago';
-    const dr = isPago
-      ? (l.data_pagamento ? new Date(l.data_pagamento) : l.data_vencimento ? new Date(l.data_vencimento) : null)
-      : (l.data_vencimento ? new Date(l.data_vencimento) : null);
+    const dataAncora = isPago ? (l.data_pagamento || l.data_vencimento) : l.data_vencimento;
+    const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
 
     // Lançamentos pagos sem data ficam sempre visíveis; Em Aberto sem vencimento não aparecem no fluxo
-    if (!isPago && !dr) return false;
+    if (!isPago && !dataKey) return false;
 
-    if (ds && de && dr && !isWithinInterval(dr, { start: ds, end: de })) return false;
+    if (ds && dataKey && dataKey < ds) return false;
+    if (de && dataKey && dataKey > de) return false;
     if (contasSel.length && l.conta_financeira_id && !contasSel.includes(l.conta_financeira_id)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (search) {
@@ -387,13 +409,12 @@ export default function FluxoCaixaTabV2() {
   }, [filtrados]);
 
   const grupos = useMemo(() => {
-    const h = new Date();
-    const hStr = format(h, 'yyyy-MM-dd');
-    const oStr = format(subDays(h, 1), 'yyyy-MM-dd');
+    const hStr = dataHoje();
+    const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
     const map = {};
     filtrados.forEach(l => {
       const dr = l.data_pagamento || l.data_vencimento;
-      const k = dr ? format(new Date(dr), 'yyyy-MM-dd') : 'sem-data';
+      const k = dr ? toLocalDateKey(dr) : 'sem-data';
       (map[k] = map[k] || []).push(l);
     });
 
@@ -407,7 +428,7 @@ export default function FluxoCaixaTabV2() {
     return sorted.reverse().map(([k, items]) => {
       let label = 'Sem data';
       if (k !== 'sem-data') {
-        const d = new Date(k + 'T12:00:00');
+        const d = parseDateKey(k);
         label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' : format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
         if (k > hStr) label += ' (previsto)';
       }
@@ -420,7 +441,7 @@ export default function FluxoCaixaTabV2() {
       const saldoAcumulado = k === 'sem-data' ? null : allPagos.reduce((s, l) => {
         const dr = l.data_pagamento || l.data_vencimento;
         if (!dr) return s;
-        const lk = format(new Date(dr), 'yyyy-MM-dd');
+        const lk = toLocalDateKey(dr);
         if (lk <= k) return s + (l.tipo === 'Receita' ? (l.valor || 0) : -(l.valor || 0));
         return s;
       }, 0);

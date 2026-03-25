@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { format, isWithinInterval, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
+import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale } from 'lucide-react';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -12,15 +13,36 @@ import ListaLancamentos from './fluxo/ListaLancamentos';
 import ContasAbertas from './ContasAbertas';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
+function parseDateKey(dateKey) {
+  return new Date(`${dateKey}T12:00:00Z`);
+}
+
 function dateRange(periodo, cs, ce) {
-  const h = new Date();
-  if (periodo === 'hoje') return { s: new Date(h.getFullYear(), h.getMonth(), h.getDate()), e: new Date(h.getFullYear(), h.getMonth(), h.getDate(), 23, 59, 59) };
-  if (periodo === 'ontem') { const d = subDays(h, 1); return { s: new Date(d.getFullYear(), d.getMonth(), d.getDate()), e: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59) }; }
-  if (periodo === 'semana') return { s: startOfWeek(h, { locale: ptBR }), e: endOfWeek(h, { locale: ptBR }) };
-  if (periodo === 'mes') return { s: startOfMonth(h), e: endOfMonth(h) };
+  const hojeKey = dataHoje();
+  const base = parseDateKey(hojeKey);
+  if (periodo === 'hoje') return { s: hojeKey, e: hojeKey };
+  if (periodo === 'ontem') {
+    const ontem = format(subDays(base, 1), 'yyyy-MM-dd');
+    return { s: ontem, e: ontem };
+  }
+  if (periodo === 'semana') {
+    return {
+      s: format(startOfWeek(base, { locale: ptBR }), 'yyyy-MM-dd'),
+      e: format(endOfWeek(base, { locale: ptBR }), 'yyyy-MM-dd')
+    };
+  }
+  if (periodo === 'mes') {
+    return {
+      s: format(startOfMonth(base), 'yyyy-MM-dd'),
+      e: format(endOfMonth(base), 'yyyy-MM-dd')
+    };
+  }
   if (periodo === 'tudo') return { s: null, e: null };
-  if (periodo === 'periodo') return { s: cs ? new Date(cs) : null, e: ce ? new Date(ce + 'T23:59:59') : null };
-  return { s: startOfMonth(h), e: endOfMonth(h) };
+  if (periodo === 'periodo') return { s: cs || null, e: ce || null };
+  return {
+    s: format(startOfMonth(base), 'yyyy-MM-dd'),
+    e: format(endOfMonth(base), 'yyyy-MM-dd')
+  };
 }
 
 const FAB_ITEMS = [
@@ -60,29 +82,15 @@ export default function ExecucaoOrcamentaria() {
     setLoading(false);
   };
 
-  const { s: ds, e: de } = useMemo(() => {
-    const h = new Date();
-    if (periodo === 'hoje') return { s: new Date(h.getFullYear(), h.getMonth(), h.getDate()), e: new Date(h.getFullYear(), h.getMonth(), h.getDate(), 23, 59, 59) };
-    if (periodo === 'ontem') { const d = subDays(h, 1); return { s: new Date(d.getFullYear(), d.getMonth(), d.getDate()), e: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59) }; }
-    if (periodo === 'semana') {
-      const dow = h.getDay();
-      const start = new Date(h); start.setDate(h.getDate() - ((dow + 6) % 7)); start.setHours(0,0,0,0);
-      const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
-      return { s: start, e: end };
-    }
-    if (periodo === 'mes') return { s: startOfMonth(h), e: endOfMonth(h) };
-    if (periodo === 'tudo') return { s: null, e: null };
-    if (periodo === 'periodo') return { s: cs ? new Date(cs) : null, e: ce ? new Date(ce + 'T23:59:59') : null };
-    return { s: startOfMonth(h), e: endOfMonth(h) };
-  }, [periodo, cs, ce]);
-
-  // Parseia date-only strings ('2026-03-23') com T12:00:00 para evitar shift UTC-5
-  const parseD = (d) => !d ? null : (typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
+  const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado' && !statusSel.includes('Cancelado')) return false;
-    const dr = l.data_pagamento ? parseD(l.data_pagamento) : l.data_vencimento ? parseD(l.data_vencimento) : null;
-    if (ds && de && dr && !isWithinInterval(dr, { start: ds, end: de })) return false;
+    const dataAncora = l.data_pagamento || l.data_vencimento;
+    const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
+    if ((ds || de) && !dataKey) return false;
+    if (ds && dataKey < ds) return false;
+    if (de && dataKey > de) return false;
     if (contasSel.length && !contasSel.includes(l.conta_financeira_id)) return false;
     if (tiposSel.length && !tiposSel.includes(l.tipo)) return false;
     if (statusSel.length && !statusSel.includes(l.status)) return false;
@@ -125,19 +133,18 @@ export default function ExecucaoOrcamentaria() {
   }, [filtrados]);
 
   const grupos = useMemo(() => {
-    const h = new Date();
-    const hStr = format(h, 'yyyy-MM-dd');
-    const oStr = format(subDays(h, 1), 'yyyy-MM-dd');
+    const hStr = dataHoje();
+    const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
     const map = {};
     filtrados.forEach(l => {
       const dr = l.data_pagamento || l.data_vencimento;
-      const k = dr ? format(parseD(dr), 'yyyy-MM-dd') : 'sem-data';
+      const k = dr ? toLocalDateKey(dr) : 'sem-data';
       (map[k] = map[k] || []).push(l);
     });
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a)).map(([k, items]) => {
       let label = 'Sem data';
       if (k !== 'sem-data') {
-        const d = new Date(k + 'T12:00:00');
+        const d = parseDateKey(k);
         label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' : format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
         if (k > hStr) label += ' (previsto)';
       }

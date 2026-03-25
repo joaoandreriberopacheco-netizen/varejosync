@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isWithinInterval, isBefore, isAfter, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 const PERIODOS = [
   { label: 'Hoje', value: 'hoje' },
@@ -86,12 +87,12 @@ export default function PeriodoPicker({ periodo, onPeriodo, customStart, customE
   const [hoverDate, setHoverDate] = useState(null);
   const scrollRef = useRef(null);
 
-  const today = new Date();
+  const today = new Date(`${dataHoje()}T12:00:00Z`);
   const leftMonth = addMonths(startOfMonth(today), calOffset);
   const rightMonth = addMonths(leftMonth, 1);
 
-  const rangeStart = customStart ? new Date(customStart) : null;
-  const rangeEnd = customEnd ? new Date(customEnd + 'T23:59:59') : null;
+  const rangeStart = customStart ? new Date(`${customStart}T12:00:00Z`) : null;
+  const rangeEnd = customEnd ? new Date(`${customEnd}T12:00:00Z`) : null;
 
   const handleDayClick = (d) => {
     if (!rangeStart || (rangeStart && rangeEnd)) {

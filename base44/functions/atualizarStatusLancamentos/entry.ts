@@ -4,8 +4,9 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Verificar autenticação (chamado por automação como service role)
-    const hoje = new Date();
+    // Data de hoje no fuso fixo do sistema (America/Rio_Branco / UTC-5)
+    const agora = new Date();
+    const hoje = new Date(agora.getTime() - 5 * 60 * 60 * 1000);
     const hojeStr = hoje.toISOString().split('T')[0]; // yyyy-MM-dd
 
     // Buscar todos os lançamentos Em Aberto
