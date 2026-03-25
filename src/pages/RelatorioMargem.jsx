@@ -89,12 +89,6 @@ export default function RelatorioMargemVendas() {
         entry.vendas_count += 1;
         entry.quantidade_vendida += item.quantidade;
         entry.total_recebido += item.total;
-
-        // Se o item da venda tem custo_unitario_momento gravado, usar esse (mais preciso)
-        if (item.custo_unitario_momento && item.custo_unitario_momento > 0) {
-          // Recalcular custo baseado no custo real do momento da venda
-          entry.custo_unitario_cadastro = item.custo_unitario_momento;
-        }
       });
     });
 
