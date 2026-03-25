@@ -20,6 +20,8 @@ export default function FiltrosCompras({
   statusSel, onStatusSel, 
   fornecedores, fornecedorSel, onFornecedorSel,
   todasTags, tagsSel, onTagsSel,
+  dataInicial, onDataInicial,
+  dataFinal, onDataFinal,
   hasActiveFilters, onLimparFiltros 
 }) {
   const [showFilters, setShowFilters] = useState(false);
@@ -135,6 +137,24 @@ export default function FiltrosCompras({
                 Limpar tudo
               </button>
             )}
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Período do pedido</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Input
+                type="date"
+                className="h-9 text-xs bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
+                value={dataInicial}
+                onChange={e => onDataInicial(e.target.value)}
+              />
+              <Input
+                type="date"
+                className="h-9 text-xs bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
+                value={dataFinal}
+                onChange={e => onDataFinal(e.target.value)}
+              />
+            </div>
           </div>
 
           {/* Status */}

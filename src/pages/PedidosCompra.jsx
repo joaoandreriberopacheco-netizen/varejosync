@@ -18,6 +18,8 @@ export default function PedidosCompraPage() {
   const [statusSel, setStatusSel] = useState([]);
   const [fornecedorSel, setFornecedorSel] = useState([]);
   const [tagsSel, setTagsSel] = useState([]);
+  const [dataInicial, setDataInicial] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
   const [showImportador, setShowImportador] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -83,13 +85,16 @@ export default function PedidosCompraPage() {
   const filtrados = useMemo(() => {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
+      const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
       if (statusSel.length > 0 && !statusSel.includes(p.status)) return false;
       if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
       if (tagsSel.length > 0 && !tagsSel.some(t => (p.tags || []).includes(t))) return false;
+      if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
+      if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
       return true;
     });
-  }, [pedidos, search, statusSel, fornecedorSel, tagsSel]);
+  }, [pedidos, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal]);
 
   const valorTotal = useMemo(() => {
     return filtrados.reduce((acc, p) => acc + (p.valor_total || 0), 0);
@@ -98,8 +103,8 @@ export default function PedidosCompraPage() {
   const grupos = useMemo(() => {
     const map = {};
     filtrados.forEach(p => {
-      const data = p.data_prevista_entrega || p.created_date;
-      const key = data ? (p.data_prevista_entrega ? p.data_prevista_entrega : toLocalDate(data)) : 'sem-data';
+      const data = p.data_prevista_entrega || p.data_emissao || p.created_date;
+      const key = data ? (p.data_prevista_entrega || p.data_emissao ? data : toLocalDate(data)) : 'sem-data';
       if (!map[key]) map[key] = [];
       map[key].push(p);
     });
@@ -115,11 +120,19 @@ export default function PedidosCompraPage() {
           else if (key > hoje) label = `${dataFmt} (previsto)`;
           else label = dataFmt;
         }
-        return { key, label, pedidos: pedidos.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)) };
+        return {
+          key,
+          label,
+          pedidos: pedidos.sort((a, b) => {
+            const dataA = a.data_emissao || a.created_date || '';
+            const dataB = b.data_emissao || b.created_date || '';
+            return String(dataB).localeCompare(String(dataA));
+          })
+        };
       });
   }, [filtrados]);
 
-  const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0 || tagsSel.length > 0;
+  const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal;
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
@@ -135,12 +148,16 @@ export default function PedidosCompraPage() {
         statusSel={statusSel} onStatusSel={setStatusSel}
         fornecedores={fornecedores} fornecedorSel={fornecedorSel} onFornecedorSel={setFornecedorSel}
         todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
+        dataInicial={dataInicial} onDataInicial={setDataInicial}
+        dataFinal={dataFinal} onDataFinal={setDataFinal}
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
           setStatusSel([]);
           setFornecedorSel([]);
           setTagsSel([]);
+          setDataInicial('');
+          setDataFinal('');
         }}
       />
 
