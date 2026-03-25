@@ -12,7 +12,7 @@ import { PlusCircle, Search, Edit, Monitor, Receipt, Eye, Package } from 'lucide
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import PDVVendedor from '@/components/vendas/PDVVendedor';
 import PDVCaixa from '@/components/vendas/PDVCaixa';
-import { format } from 'date-fns';
+import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
 
 const PedidosTab = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -112,7 +112,7 @@ const PedidosTab = () => {
                 <TableRow key={pedido.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">{pedido.numero}</TableCell>
                   <TableCell>{pedido.cliente_nome}</TableCell>
-                  <TableCell>{format(new Date(pedido.created_date), 'dd/MM/yyyy')}</TableCell>
+                  <TableCell>{formatarSoData(pedido.created_date)}</TableCell>
                   <TableCell>{pedido.vendedor_nome}</TableCell>
                   <TableCell>R$ {formatValor(pedido.valor_total)}</TableCell>
                   <TableCell><Badge className={getStatusBadge(pedido.status)}>{pedido.status}</Badge></TableCell>
@@ -150,7 +150,7 @@ const PedidosTab = () => {
               <div className="flex items-center justify-between pb-4 border-b">
                 <div>
                   <h2 className="text-2xl font-bold">{pedidoParaVer.numero}</h2>
-                  <p className="text-sm text-gray-500">{format(new Date(pedidoParaVer.created_date), 'dd/MM/yyyy HH:mm')}</p>
+                  <p className="text-sm text-gray-500">{formatarDataHora(pedidoParaVer.created_date)}</p>
                 </div>
                 <Badge className={getStatusBadge(pedidoParaVer.status)}>{pedidoParaVer.status}</Badge>
               </div>

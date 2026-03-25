@@ -16,7 +16,7 @@ import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
-import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
+import { dataHoje, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
@@ -66,9 +66,8 @@ export default function VendasGestaoPage() {
       aprovados: data.filter(p => p.status === 'Aprovado').length,
       finalizados: data.filter(p => p.status === 'Finalizado').length,
       totalMes: data.filter(p => 
-        p.status === 'Finalizado' && 
-        new Date(p.created_date).getMonth() === new Date().getMonth() &&
-        new Date(p.created_date).getFullYear() === new Date().getFullYear()
+        p.status === 'Finalizado' &&
+        toLocalDateKey(p.created_date).startsWith(dataHoje().slice(0, 7))
       ).reduce((acc, p) => acc + (p.valor_total || 0), 0)
     };
     setStats(stats);
@@ -180,9 +179,7 @@ export default function VendasGestaoPage() {
   };
 
   const handleInutilizarRascunho = async (rascunho) => {
-    const hoje = new Date();
-    const criado = new Date(rascunho.created_date);
-    const mesmoDia = criado.toDateString() === hoje.toDateString();
+    const mesmoDia = toLocalDateKey(rascunho.created_date) === dataHoje();
     if (!mesmoDia) {
       alert('Só é possível inutilizar senhas criadas hoje.');
       return;

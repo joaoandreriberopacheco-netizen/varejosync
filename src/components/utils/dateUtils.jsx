@@ -39,8 +39,26 @@ export function dataHoje() {
  * @param {string|Date} valor
  * @returns {Date} objeto Date ajustado para UTC-5
  */
+function parseDateValue(valor) {
+  if (!valor) return null;
+  if (valor instanceof Date) return isNaN(valor.getTime()) ? null : valor;
+  if (typeof valor !== 'string') return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    return new Date(`${valor}T00:00:00.000Z`);
+  }
+
+  const normalized = /([zZ]|[+-]\d{2}:\d{2})$/.test(valor) ? valor : `${valor}Z`;
+  const parsed = new Date(normalized);
+  if (!isNaN(parsed.getTime())) return parsed;
+
+  const fallback = new Date(valor);
+  return isNaN(fallback.getTime()) ? null : fallback;
+}
+
 function toRioBranco(valor) {
-  const d = typeof valor === 'string' ? new Date(valor) : valor;
+  const d = parseDateValue(valor);
+  if (!d) return null;
   // Aplica offset UTC-5 manualmente (5 * 60 * 60 * 1000 ms)
   return new Date(d.getTime() - 5 * 60 * 60 * 1000);
 }
@@ -54,10 +72,8 @@ const pad = (n) => String(n).padStart(2, '0');
  * @returns {string} e.g. "16/03/2026 10:32"
  */
 export function formatarDataHora(valor) {
-  if (!valor) return '—';
-  const d = typeof valor === 'string' ? new Date(valor) : valor;
-  if (isNaN(d.getTime())) return '—';
-  const local = toRioBranco(d);
+  const local = toRioBranco(valor);
+  if (!local) return '—';
   return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)}/${local.getUTCFullYear()} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
 }
 
@@ -73,9 +89,8 @@ export function formatarSoData(valor) {
     const [y, m, dd] = valor.split('-');
     return `${dd}/${m}/${y}`;
   }
-  const d = new Date(valor);
-  if (isNaN(d.getTime())) return '—';
-  const local = toRioBranco(d);
+  const local = toRioBranco(valor);
+  if (!local) return '—';
   return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)}/${local.getUTCFullYear()}`;
 }
 
@@ -89,9 +104,8 @@ const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Jul
  * @returns {string} e.g. "2026-03-16"
  */
 export function toLocalDateKey(valor) {
-  const d = typeof valor === 'string' ? new Date(valor) : valor;
-  if (isNaN(d.getTime())) return '';
-  const local = toRioBranco(d);
+  const local = toRioBranco(valor);
+  if (!local) return '';
   return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`;
 }
 
@@ -107,9 +121,8 @@ export function formatarDataCurta(valor) {
     const [, m, dd] = valor.split('-');
     return `${parseInt(dd, 10)} ${MESES_CURTOS[parseInt(m, 10) - 1]}`;
   }
-  const d = new Date(valor);
-  if (isNaN(d.getTime())) return '—';
-  const local = toRioBranco(d);
+  const local = toRioBranco(valor);
+  if (!local) return '—';
   return `${local.getUTCDate()} ${MESES_CURTOS[local.getUTCMonth()]}`;
 }
 
@@ -124,9 +137,8 @@ export function formatarDataLonga(valor) {
     const [y, m, dd] = valor.split('-');
     return `${parseInt(dd, 10)} de ${MESES_LONGOS[parseInt(m, 10) - 1]} de ${y}`;
   }
-  const d = new Date(valor);
-  if (isNaN(d.getTime())) return '—';
-  const local = toRioBranco(d);
+  const local = toRioBranco(valor);
+  if (!local) return '—';
   return `${local.getUTCDate()} de ${MESES_LONGOS[local.getUTCMonth()]} de ${local.getUTCFullYear()}`;
 }
 
@@ -148,8 +160,8 @@ export function inicioDiaHoje() {
  * @returns {string} e.g. "16/03 10:32"
  */
 export function formatarLogTime(valor) {
-  const ts = valor ? (typeof valor === 'string' ? new Date(valor) : valor) : new Date();
-  if (isNaN(ts.getTime())) return '—';
+  const ts = valor || new Date();
   const local = toRioBranco(ts);
+  if (!local) return '—';
   return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
 }
