@@ -11,6 +11,7 @@ import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dat
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 export default function PedidosCompraPage() {
+  const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');

@@ -44,9 +44,17 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
   return (
     <>
       <div className="w-full flex items-stretch group">
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => onEdit(pedido)}
-          className="flex-1 flex items-start gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left min-w-0"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onEdit(pedido);
+            }
+          }}
+          className="flex-1 flex items-start gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left min-w-0 cursor-pointer"
         >
           <span className="bg-gray-100 dark:bg-gray-700 rounded-lg flex-none w-8 h-8 flex items-center justify-center">
             <span className="text-xs font-bold text-gray-600 dark:text-gray-300">#</span>
@@ -89,7 +97,7 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
               </button>
             )}
           </span>
-        </button>
+        </div>
       </div>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
