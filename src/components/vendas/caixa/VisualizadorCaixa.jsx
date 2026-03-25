@@ -90,7 +90,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       setMovimentos(movs);
       
       // Auto-preencher dinheiro esperado
-      const dinheiroEsperado = liquidez - totalPix - totalCredito - totalDebito - totalVale;
+      const dinheiroEsperado = liquidez - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
       setRecebimentosDinheiro(formatarValorExibicao(dinheiroEsperado));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -108,7 +108,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const dinheiroNaGaveta = caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0);
+  const dinheiroNaGaveta = caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0) - (caixaData.fiado || 0);
 
   const imprimirRelatorio = () => {
     const pw = window.open('', '_blank', 'width=800,height=900');
@@ -233,7 +233,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                 <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
                   {formatValor(dinheiroNaGaveta)}
                 </div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale + Fiado)</div>
               </div>
             </div>
           </div>

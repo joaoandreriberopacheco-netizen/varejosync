@@ -50,9 +50,9 @@ export default function CaixasAtivosPage() {
           const sangrias = movs.filter(m => m.turno_caixa_id === turno.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')).reduce((s, m) => s + (m.valor || 0), 0);
           const despesasTurno = despesas.filter(d => d.turno_caixa_id === turno.id && d.referencia_tipo !== 'MovimentosCaixa').reduce((s, d) => s + (d.valor || 0), 0);
           const liquidezTurno = (turno.saldo_inicial || 0) + totalVendas + reforcos - sangrias - despesasTurno;
-          const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale;
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
+          const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
           
           liquidez[caixa.id] = {
             turnoAberto: true,
