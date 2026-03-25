@@ -81,6 +81,7 @@ export default function Layout({ children, currentPageName }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
+  const [showDesktopUserPanel, setShowDesktopUserPanel] = useState(false);
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'ExtratoConta', 'PedidoCompraDetalhe'];
   const isFullscreen = fullscreenPages.some(page => location.pathname.includes(page));
@@ -217,6 +218,19 @@ export default function Layout({ children, currentPageName }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showDesktopUserPanel) return;
+
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('[data-desktop-user-panel]')) {
+        setShowDesktopUserPanel(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDesktopUserPanel]);
+
   const handleMouseEnter = React.useCallback(() => {
     setIsOpen(true);
   }, []);
@@ -344,18 +358,6 @@ export default function Layout({ children, currentPageName }) {
                 <span className="text-left flex-1">Buscar...</span>
                 <span className="text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 hidden lg:inline-block">Ctrl K</span>
               </button>
-
-              <button 
-                onClick={toggleDarkMode}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
-              >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                <span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
-              </button>
-
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-2.5 shadow-sm">
-                <FontScaleControl compact />
-              </div>
             </div>
           )}
           
@@ -535,59 +537,87 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           {/* User Profile */}
-          <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0 relative">
             {currentUser && (isOpen || isMobile) && (
-              <div className="p-2 space-y-1">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-                      <div className="w-7 h-7 rounded bg-white flex items-center justify-center">
-                        <User className="w-4 h-4 text-gray-700" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <div className="text-sm font-medium truncate text-gray-700 dark:text-white">{currentUser.full_name}</div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">{currentUser.perfil || 'Admin'}</div>
-                      </div>
-                      <ChevronDown className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+              <div className="p-2 space-y-1" data-desktop-user-panel>
+                {!isMobile && showDesktopUserPanel && (
+                  <div className="absolute bottom-full left-2 right-2 mb-2 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-2 space-y-2 z-50 max-h-[70vh] overflow-y-auto">
+                    <button 
+                      onClick={toggleDarkMode}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
+                    >
+                      {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                      <span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
                     </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 dark:bg-gray-800 dark:border-gray-700">
-                    <DropdownMenuLabel>Perfil Atual: {currentUser.perfil || 'Admin'}</DropdownMenuLabel>
-                    {currentUser.role === 'admin' && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-xs text-gray-500">Trocar Perfil (Apenas Admin)</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        triggerTransition(() => {
-                          window.location.href = createPageUrl('Home');
-                        });
-                      }}
-                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
-                    >
-                      <LayoutGrid className="w-4 h-4 mr-2" />
-                      <span>Personalizar Início</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setShowPinSetup(true)}
-                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      <span>{currentUser?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleProfileSwitch('Admin')} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleProfileSwitch('Vendedor')} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleProfileSwitch('Operador de Caixa')} className="dark:hover:bg-gray-700 dark:text-gray-200">Operador de Caixa</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleProfileSwitch('Gerente')} className="dark:hover:bg-gray-700 dark:text-gray-200">Gerente</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleProfileSwitch('Estoquista')} className="dark:hover:bg-gray-700 dark:text-gray-200">Estoquista</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleProfileSwitch('Financeiro')} className="dark:hover:bg-gray-700 dark:text-gray-200">Financeiro</DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 p-2.5 shadow-sm">
+                      <FontScaleControl compact />
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200">
+                          <span>Conta</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 dark:bg-gray-800 dark:border-gray-700">
+                        <DropdownMenuLabel>Perfil Atual: {currentUser.perfil || 'Admin'}</DropdownMenuLabel>
+                        {currentUser.role === 'admin' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-gray-500">Trocar Perfil (Apenas Admin)</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setShowDesktopUserPanel(false);
+                                triggerTransition(() => {
+                                  window.location.href = createPageUrl('Home');
+                                });
+                              }}
+                              className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
+                            >
+                              <LayoutGrid className="w-4 h-4 mr-2" />
+                              <span>Personalizar Início</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setShowDesktopUserPanel(false);
+                                setShowPinSetup(true);
+                              }}
+                              className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
+                            >
+                              <Shield className="w-4 h-4 mr-2" />
+                              <span>{currentUser?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => { setShowDesktopUserPanel(false); handleProfileSwitch('Admin'); }} className="dark:hover:bg-gray-700 dark:text-gray-200">Admin</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setShowDesktopUserPanel(false); handleProfileSwitch('Vendedor'); }} className="dark:hover:bg-gray-700 dark:text-gray-200">Vendedor</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setShowDesktopUserPanel(false); handleProfileSwitch('Operador de Caixa'); }} className="dark:hover:bg-gray-700 dark:text-gray-200">Operador de Caixa</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setShowDesktopUserPanel(false); handleProfileSwitch('Gerente'); }} className="dark:hover:bg-gray-700 dark:text-gray-200">Gerente</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setShowDesktopUserPanel(false); handleProfileSwitch('Estoquista'); }} className="dark:hover:bg-gray-700 dark:text-gray-200">Estoquista</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setShowDesktopUserPanel(false); handleProfileSwitch('Financeiro'); }} className="dark:hover:bg-gray-700 dark:text-gray-200">Financeiro</DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => !isMobile && setShowDesktopUserPanel((prev) => !prev)}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  <div className="w-7 h-7 rounded bg-white flex items-center justify-center">
+                    <User className="w-4 h-4 text-gray-700" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-sm font-medium truncate text-gray-700 dark:text-white">{currentUser.full_name}</div>
+                    <div className="text-[10px] text-gray-500 dark:text-gray-400">{currentUser.perfil || 'Admin'}</div>
+                  </div>
+                  <ChevronDown className={`w-3 h-3 text-gray-500 dark:text-gray-400 transition-transform ${showDesktopUserPanel ? 'rotate-180' : ''}`} />
+                </button>
 
                 <button 
                   onClick={() => base44.auth.logout()}
