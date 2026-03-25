@@ -468,73 +468,75 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           {/* More Menu - 3 Pontinhos */}
-          <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0 p-2">
-            <DropdownMenu open={showMoreMenu} onOpenChange={setShowMoreMenu}>
-              <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">
-                  <MoreVertical className="w-4 h-4" />
-                  {(isOpen || isMobile) && <span className="text-sm flex-1 text-left">Mais</span>}
-                </button>
-              </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      triggerTransition(() => {
-                        window.location.href = createPageUrl('ReversaoDespesasSangrias');
-                      });
-                      setShowMoreMenu(false);
-                      if (isMobile) setIsOpen(false);
-                    }}
-                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    <span>Reverter Despesas</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      triggerTransition(() => {
-                        window.location.href = createPageUrl('ReimpressaoDocumentos');
-                      });
-                      setShowMoreMenu(false);
-                      if (isMobile) setIsOpen(false);
-                    }}
-                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    <Printer className="w-4 h-4 mr-2" />
-                    <span>Reimpressão</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      triggerTransition(() => {
-                        window.location.href = createPageUrl('ExclusaoDocumentos');
-                      });
-                      setShowMoreMenu(false);
-                      if (isMobile) setIsOpen(false);
-                    }}
-                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    <span>Excluir Documentos</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
-                    <HelpCircle className="w-4 h-4 mr-2" />
-                    <span>Ajuda (IA)</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      triggerTransition(() => {
-                        window.location.href = createPageUrl('Configuracoes');
-                      });
-                      setShowMoreMenu(false);
-                      if (isMobile) setIsOpen(false);
-                    }}
-                    className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    <span>Configurações</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {isMobile && (
+            <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0 p-2">
+              <DropdownMenu open={showMoreMenu} onOpenChange={setShowMoreMenu}>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">
+                    <MoreVertical className="w-4 h-4" />
+                    {(isOpen || isMobile) && <span className="text-sm flex-1 text-left">Mais</span>}
+                  </button>
+                </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48 dark:bg-gray-800 dark:border-gray-700">
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        triggerTransition(() => {
+                          window.location.href = createPageUrl('ReversaoDespesasSangrias');
+                        });
+                        setShowMoreMenu(false);
+                        if (isMobile) setIsOpen(false);
+                      }}
+                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      <span>Reverter Despesas</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        triggerTransition(() => {
+                          window.location.href = createPageUrl('ReimpressaoDocumentos');
+                        });
+                        setShowMoreMenu(false);
+                        if (isMobile) setIsOpen(false);
+                      }}
+                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                      <Printer className="w-4 h-4 mr-2" />
+                      <span>Reimpressão</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        triggerTransition(() => {
+                          window.location.href = createPageUrl('ExclusaoDocumentos');
+                        });
+                        setShowMoreMenu(false);
+                        if (isMobile) setIsOpen(false);
+                      }}
+                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      <span>Excluir Documentos</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer">
+                      <HelpCircle className="w-4 h-4 mr-2" />
+                      <span>Ajuda (IA)</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        triggerTransition(() => {
+                          window.location.href = createPageUrl('Configuracoes');
+                        });
+                        setShowMoreMenu(false);
+                        if (isMobile) setIsOpen(false);
+                      }}
+                      className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      <span>Configurações</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
 
           {/* User Profile */}
           <div className="border-t border-gray-200 dark:border-gray-700 flex-shrink-0 relative">
@@ -553,6 +555,69 @@ export default function Layout({ children, currentPageName }) {
                     <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 p-2.5 shadow-sm">
                       <FontScaleControl compact />
                     </div>
+
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setShowDesktopUserPanel(false);
+                          triggerTransition(() => {
+                            window.location.href = createPageUrl('ReversaoDespesasSangrias');
+                          });
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Reverter Despesas</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowDesktopUserPanel(false);
+                          triggerTransition(() => {
+                            window.location.href = createPageUrl('ReimpressaoDocumentos');
+                          });
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
+                      >
+                        <Printer className="w-4 h-4" />
+                        <span>Reimpressão</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowDesktopUserPanel(false);
+                          triggerTransition(() => {
+                            window.location.href = createPageUrl('ExclusaoDocumentos');
+                          });
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Excluir Documentos</span>
+                      </button>
+
+                      <button
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
+                      >
+                        <HelpCircle className="w-4 h-4" />
+                        <span>Ajuda (IA)</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowDesktopUserPanel(false);
+                          triggerTransition(() => {
+                            window.location.href = createPageUrl('Configuracoes');
+                          });
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-200"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Configurações</span>
+                      </button>
+                    </div>
+
+                    <div className="h-px bg-gray-200 dark:bg-gray-700" />
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -602,6 +667,21 @@ export default function Layout({ children, currentPageName }) {
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
+
+                    <div className="h-px bg-gray-200 dark:bg-gray-700" />
+
+                    <button 
+                      onClick={() => {
+                        setShowDesktopUserPanel(false);
+                        base44.auth.logout();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      <span>Sair</span>
+                    </button>
                   </div>
                 )}
 
@@ -619,15 +699,17 @@ export default function Layout({ children, currentPageName }) {
                   <ChevronDown className={`w-3 h-3 text-gray-500 dark:text-gray-400 transition-transform ${showDesktopUserPanel ? 'rotate-180' : ''}`} />
                 </button>
 
-                <button 
-                  onClick={() => base44.auth.logout()}
-                  className="w-full flex items-center gap-2 px-2 py-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="text-sm">Sair</span>
-                </button>
+                {isMobile && (
+                  <button 
+                    onClick={() => base44.auth.logout()}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span className="text-sm">Sair</span>
+                  </button>
+                )}
               </div>
             )}
 
