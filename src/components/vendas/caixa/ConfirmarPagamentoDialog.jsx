@@ -53,16 +53,24 @@ export default function ConfirmarPagamentoDialog({
     if (!codigoVale.trim()) return;
     setBuscandoVale(true);
     try {
-      const vales = await base44.entities.ValeCompra.filter({ codigo: codigoVale.trim(), status: 'Ativo' });
-      if (vales.length > 0) {
-        setValeEncontrado(vales[0]);
-        const maxVale = Math.min(vales[0].saldo, pedidoSelecionado.valor_total);
+      const vales = await base44.entities.ValeCompra.filter({ codigo: codigoVale.trim() });
+      const valeValido = vales.find((vale) => {
+        const saldoDisponivel = vale.valor_disponivel ?? vale.saldo ?? 0;
+        return ['Ativo', 'Utilizado Parcialmente'].includes(vale.status) && saldoDisponivel > 0;
+      });
+
+      if (valeValido) {
+        const saldoDisponivel = valeValido.valor_disponivel ?? valeValido.saldo ?? 0;
+        setValeEncontrado(valeValido);
+        const maxVale = Math.min(saldoDisponivel, pedidoSelecionado.valor_total);
         setPagamentosVale(maxVale);
         setInputVale(formatarValorExibicao(maxVale));
-        toast({ title: `Vale encontrado: ${formatValor(vales[0].saldo)}`, className: 'bg-emerald-100 text-emerald-800', duration: 2000 });
+        toast({ title: `Vale encontrado: ${formatValor(saldoDisponivel)}`, className: 'bg-emerald-100 text-emerald-800', duration: 2000 });
       } else {
-        toast({ title: 'Vale não encontrado ou inativo', variant: 'destructive', duration: 2000 });
+        toast({ title: 'Vale não encontrado ou sem saldo disponível', variant: 'destructive', duration: 2000 });
         setValeEncontrado(null);
+        setPagamentosVale(0);
+        setInputVale('0,00');
       }
     } catch (e) {
       toast({ title: 'Erro ao buscar vale', variant: 'destructive' });
@@ -189,7 +197,7 @@ export default function ConfirmarPagamentoDialog({
               </div>
               {valeEncontrado && (
                 <InputPagamento
-                    label={`Vale (saldo: ${formatValor(valeEncontrado.saldo)})`}
+                    label={`Vale (saldo: ${formatValor(valeEncontrado.valor_disponivel ?? valeEncontrado.saldo ?? 0)})`}
                     icon={Ticket}
                     index={4}
                     active={formaPagamentoAtiva === 4}
