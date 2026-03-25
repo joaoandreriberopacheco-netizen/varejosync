@@ -7,6 +7,8 @@ import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCac
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/sonner";
 import P38Logo from '@/components/brand/P38Logo';
+import FontScaleControl from '@/components/accessibility/FontScaleControl';
+import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
 import { 
   LayoutDashboard, 
@@ -283,6 +285,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
+      <FontScaleInitializer />
       <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
         {/* Sidebar Mobile */}
         {isMobile && (
@@ -349,6 +352,10 @@ export default function Layout({ children, currentPageName }) {
                 {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 <span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
               </button>
+
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-2.5 shadow-sm">
+                <FontScaleControl compact />
+              </div>
             </div>
           )}
           

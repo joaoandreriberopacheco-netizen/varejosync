@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { User, LogOut, Settings, Sun, Moon, X, Printer, Trash2, HelpCircle, MoreVertical, Shield } from 'lucide-react';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
+import FontScaleControl from '@/components/accessibility/FontScaleControl';
 
 export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen, onExternalClose }) {
   const [open, setOpen] = useState(false);
@@ -116,6 +117,10 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
                   {user?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}
                 </span>
               </button>
+
+              <div className="px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800/80">
+                <FontScaleControl compact />
+              </div>
 
               {/* Divisor */}
               <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
