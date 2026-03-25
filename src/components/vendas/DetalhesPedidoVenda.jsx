@@ -23,12 +23,12 @@ import {
   MoreVertical,
   Share2
 } from 'lucide-react';
-import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
-const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
-const fmtData = (d) => d ? formatarSoData(d) : '-';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
+import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
+const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
+const fmtData = (d) => d ? formatarSoData(d) : '-';
 
 export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
   const [lancamentosFinanceiros, setLancamentosFinanceiros] = useState([]);

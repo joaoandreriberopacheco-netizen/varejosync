@@ -13,13 +13,12 @@ import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
-
-import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
-const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
-const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
+import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
+const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
+const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 
 export default function VendasGestaoPage() {
   const [pedidos, setPedidos] = useState([]);
