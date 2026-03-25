@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, Paperclip, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { format, addWeeks, addMonths, addYears } from 'date-fns';
+import { addWeeks, addMonths, addYears } from 'date-fns';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
@@ -30,7 +31,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const [contas, setContas] = useState([]);
   const [valorCents, setValorCents] = useState('0');
   const [descricao, setDescricao] = useState('');
-  const [data, setData] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [data, setData] = useState(dataHoje());
   const [categoria, setCategoria] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
   const [contaId, setContaId] = useState(contaDefaultId || '');
@@ -56,7 +57,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setTipo(tipoInicial || 'Despesa');
       setValorCents('0');
       setDescricao('');
-      setData(format(new Date(), 'yyyy-MM-dd'));
+      setData(dataHoje());
       setCategoria('');
       setCategoriaId('');
       setContaId(contaDefaultId || '');
