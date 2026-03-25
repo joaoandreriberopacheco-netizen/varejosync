@@ -12,13 +12,20 @@ import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
-import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { dataHoje, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
+const dateRangeMatches = (valor, inicio, fim) => {
+  const chave = toLocalDateKey(valor);
+  if (!chave) return false;
+  if (inicio && chave < inicio) return false;
+  if (fim && chave > fim) return false;
+  return true;
+};
 
 export default function VendasGestaoPage() {
   const [pedidos, setPedidos] = useState([]);
@@ -89,28 +96,8 @@ export default function VendasGestaoPage() {
     }
 
     // Filtro de data
-    if (dataInicio && dataFim) {
-      const inicio = startOfDay(new Date(dataInicio));
-      const fim = endOfDay(new Date(dataFim));
-      currentFiltered = currentFiltered.filter(p => {
-        if (!p.created_date) return false;
-        const pedidoDate = parseISO(p.created_date);
-        return isWithinInterval(pedidoDate, { start: inicio, end: fim });
-      });
-    } else if (dataInicio) {
-      const inicio = startOfDay(new Date(dataInicio));
-      currentFiltered = currentFiltered.filter(p => {
-        if (!p.created_date) return false;
-        const pedidoDate = parseISO(p.created_date);
-        return pedidoDate >= inicio;
-      });
-    } else if (dataFim) {
-      const fim = endOfDay(new Date(dataFim));
-      currentFiltered = currentFiltered.filter(p => {
-        if (!p.created_date) return false;
-        const pedidoDate = parseISO(p.created_date);
-        return pedidoDate <= fim;
-      });
+    if (dataInicio || dataFim) {
+      currentFiltered = currentFiltered.filter(p => dateRangeMatches(p.created_date, dataInicio, dataFim));
     }
 
     setPedidosFiltrados(currentFiltered);
@@ -130,28 +117,8 @@ export default function VendasGestaoPage() {
       currentFiltered = currentFiltered.filter(r => r.status === statusFiltro);
     }
 
-    if (dataInicio && dataFim) {
-      const inicio = startOfDay(new Date(dataInicio));
-      const fim = endOfDay(new Date(dataFim));
-      currentFiltered = currentFiltered.filter(r => {
-        if (!r.created_date) return false;
-        const rascDate = parseISO(r.created_date);
-        return isWithinInterval(rascDate, { start: inicio, end: fim });
-      });
-    } else if (dataInicio) {
-      const inicio = startOfDay(new Date(dataInicio));
-      currentFiltered = currentFiltered.filter(r => {
-        if (!r.created_date) return false;
-        const rascDate = parseISO(r.created_date);
-        return rascDate >= inicio;
-      });
-    } else if (dataFim) {
-      const fim = endOfDay(new Date(dataFim));
-      currentFiltered = currentFiltered.filter(r => {
-        if (!r.created_date) return false;
-        const rascDate = parseISO(r.created_date);
-        return rascDate <= fim;
-      });
+    if (dataInicio || dataFim) {
+      currentFiltered = currentFiltered.filter(r => dateRangeMatches(r.created_date, dataInicio, dataFim));
     }
 
     setRascunhosFiltrados(currentFiltered);
@@ -378,9 +345,7 @@ export default function VendasGestaoPage() {
             {/* Mobile: Cards */}
             <div className="md:hidden space-y-2">
               {rascunhosFiltrados.map(rascunho => {
-                const hoje = new Date();
-                const criado = new Date(rascunho.created_date);
-                const mesmoDia = criado.toDateString() === hoje.toDateString();
+                const mesmoDia = toLocalDateKey(rascunho.created_date) === dataHoje();
                 const podeInutilizar = mesmoDia && !['Cancelado','Convertido'].includes(rascunho.status);
                 return (
                 <div key={rascunho.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
@@ -437,9 +402,7 @@ export default function VendasGestaoPage() {
                 </TableHeader>
                 <TableBody>
                   {rascunhosFiltrados.map(rascunho => {
-                    const hoje = new Date();
-                    const criado = new Date(rascunho.created_date);
-                    const mesmoDia = criado.toDateString() === hoje.toDateString();
+                    const mesmoDia = toLocalDateKey(rascunho.created_date) === dataHoje();
                     const podeInutilizar = mesmoDia && !['Cancelado','Convertido'].includes(rascunho.status);
                     return (
                     <TableRow key={rascunho.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">

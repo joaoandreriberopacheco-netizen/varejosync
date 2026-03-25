@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, Paperclip, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { addWeeks, addMonths, addYears } from 'date-fns';
+import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
@@ -101,7 +101,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     } else if (isRecorrente && frequencia) {
       // Gerar múltiplos lançamentos agrupados
       const grupoId = gerarGrupoId();
-      const baseDate = new Date(data);
+      const baseDate = new Date(`${data}T12:00:00Z`);
       const isPago = status === 'Pago';
       const lotes = [];
 
