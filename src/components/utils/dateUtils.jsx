@@ -34,31 +34,56 @@ export function dataHoje() {
 }
 
 /**
- * Formata um timestamp para exibição no fuso do sistema (com hora).
+ * Converte uma data/timestamp para o horário de Rio Branco (UTC-5 fixo).
+ * Usa offset manual como fallback garantido para Android/WebView.
  * @param {string|Date} valor
- * @param {Object} [opcoes] - Opções extras de Intl.DateTimeFormat
- * @returns {string} e.g. "16/03/2026 às 10:32"
+ * @returns {Date} objeto Date ajustado para UTC-5
  */
-export function formatarDataHora(valor, opcoes = {}) {
-  if (!valor) return '—';
-  const data = typeof valor === 'string' ? new Date(valor) : valor;
-  if (isNaN(data.getTime())) return '—';
+function toRioBranco(valor) {
+  const d = typeof valor === 'string' ? new Date(valor) : valor;
+  // Aplica offset UTC-5 manualmente (5 * 60 * 60 * 1000 ms)
+  return new Date(d.getTime() - 5 * 60 * 60 * 1000);
+}
 
-  return new Intl.DateTimeFormat('pt-BR', {
-    timeZone: TIMEZONE_SISTEMA,
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    ...opcoes,
-  }).format(data);
+const pad = (n) => String(n).padStart(2, '0');
+
+/**
+ * Formata um timestamp para exibição no fuso do sistema (com hora).
+ * Usa offset UTC-5 fixo — funciona em qualquer navegador/Android.
+ * @param {string|Date} valor
+ * @returns {string} e.g. "16/03/2026 10:32"
+ */
+export function formatarDataHora(valor) {
+  if (!valor) return '—';
+  const d = typeof valor === 'string' ? new Date(valor) : valor;
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)}/${local.getUTCFullYear()} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
+}
+
+/**
+ * Formata apenas a data (sem hora) no fuso do sistema (UTC-5 fixo).
+ * @param {string|Date} valor
+ * @returns {string} e.g. "16/03/2026"
+ */
+export function formatarSoData(valor) {
+  if (!valor) return '—';
+  // Campos só-data (YYYY-MM-DD) não precisam de conversão de fuso
+  if (typeof valor === 'string' && valor.length === 10) {
+    const [y, m, dd] = valor.split('-');
+    return `${dd}/${m}/${y}`;
+  }
+  const d = new Date(valor);
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)}/${local.getUTCFullYear()}`;
 }
 
 /**
  * Formata apenas a data (sem hora) no fuso do sistema.
  * @param {string|Date} valor
  * @returns {string} e.g. "16/03/2026"
+ * @deprecated Use formatarSoData para datas sem hora
  */
 export function formatarData(valor) {
   if (!valor) return '—';

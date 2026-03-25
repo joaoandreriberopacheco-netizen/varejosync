@@ -14,9 +14,9 @@ import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 
-const TZ = 'America/Rio_Branco';
-const fmtDtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '-';
-const fmtDataCurta = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: '2-digit' }).format(new Date(d)) : '';
+import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
+const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
+const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';

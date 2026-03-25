@@ -23,9 +23,9 @@ import {
   MoreVertical,
   Share2
 } from 'lucide-react';
-const TZ = 'America/Rio_Branco';
-const fmtDtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : 'N/A';
-const fmtData = (d) => !d ? '-' : new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' }).format(typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
+import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
+const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
+const fmtData = (d) => d ? formatarSoData(d) : '-';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
