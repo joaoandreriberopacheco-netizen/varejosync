@@ -1871,11 +1871,8 @@ export default function PDVCaixa() {
           open={showComprovanteCaixa}
           onClose={() => {
             setShowComprovanteCaixa(false);
-            // Após fechar o comprovante, segue o fluxo normal
             if (dadosPromissoria) {
               setShowPromissoria(true);
-            } else {
-              setShowLiberacaoEntrega(true);
             }
           }}
         />
@@ -1911,7 +1908,7 @@ export default function PDVCaixa() {
         <RetornoEdicaoDialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog} motivo={motivoRetorno} onMotivoChange={setMotivoRetorno} onConfirmar={handleRetornarParaEdicao} />
         <PromissoriaDialog
           open={showPromissoria}
-          onClose={() => { setShowPromissoria(false); setShowLiberacaoEntrega(true); }}
+          onClose={() => { setShowPromissoria(false); }}
           pedido={dadosPromissoria?.pedido}
           valorFiado={dadosPromissoria?.valorFiado}
           empresaNome={configVenda?.nome_empresa || 'VAREJOSYNC'}
