@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { RefreshCw, ChevronDown, ChevronRight, Lock, Search, RotateCcw, AlertTriangle } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronRight, Lock, Search, RotateCcw, AlertTriangle, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -26,6 +26,72 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
   };
 
   const diferenca = turno.diferenca || 0;
+
+  const imprimirRelatorio = () => {
+    const pw = window.open('', '_blank', 'width=800,height=900');
+    if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
+
+    const linhasVendas = vendasTurno.map(v => {
+      const pagamentos = v.pagamentos || [];
+      const formas = pagamentos.map(p => `${p.forma_pagamento} R$ ${fmt(p.valor)}`).join(' · ');
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f3f4f6"><span>${v.numero} · ${v.cliente_nome || 'Consumidor'}${formas ? ` · ${formas}` : ''}</span><span><b>R$ ${fmt(v.valor_total)}</b></span></div>`;
+    }).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhuma venda registrada</p>';
+
+    const linhasMovimentos = [...reforcos, ...sangrias].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)).map(m => {
+      const sinal = m.tipo === 'Reforço' ? '+' : '-';
+      const cor = m.tipo === 'Reforço' ? '#059669' : '#2563eb';
+      return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #f3f4f6"><span>${m.numero} · ${format(new Date(m.created_date), 'HH:mm')} · ${m.tipo}${m.observacao ? ` · ${m.observacao}` : ''}</span><span style="color:${cor};font-weight:600">${sinal}R$ ${fmt(m.valor)}</span></div>`;
+    }).join('') || '<p style="color:#9ca3af;font-size:11px;margin:4px 0">Nenhum movimento registrado</p>';
+
+    const dinheiroNaGaveta = (turno.recebimentos_dinheiro || 0) + (turno.saldo_inicial || 0) + (turno.total_reforcos || 0) - (turno.total_sangrias || 0) - (turno.total_despesas || 0);
+
+    pw.document.write(`<html><head><title>Fechamento ${turno.numero}</title><style>
+      body{font-family:Inter,sans-serif;font-size:13px;padding:20px;max-width:760px;margin:0 auto;color:#111827}
+      h2{font-size:14px;font-weight:600;margin:14px 0 6px;color:#374151}
+      .row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
+      .dashed{border-top:1px dashed #9ca3af;margin:10px 0}
+      .total{font-size:15px;font-weight:700}
+    </style></head><body>
+      <div style="text-align:center;margin-bottom:14px"><b style="font-size:16px">VAREJOSYNC</b><br/><span style="color:#9ca3af;font-size:11px">Relatório de Fechamento de Caixa</span></div>
+      <div class="dashed"></div>
+      <h2>Turno</h2>
+      <div class="row"><span>Número:</span><b>${turno.numero}</b></div>
+      <div class="row"><span>Caixa:</span><span>${turno.conta_caixa_pdv_nome || '-'}</span></div>
+      <div class="row"><span>Abertura:</span><span>${turno.data_abertura ? format(new Date(turno.data_abertura), 'dd/MM/yyyy HH:mm') : '-'}</span></div>
+      <div class="row"><span>Fechamento:</span><span>${turno.data_fechamento ? format(new Date(turno.data_fechamento), 'dd/MM/yyyy HH:mm') : '-'}</span></div>
+      <div class="row"><span>Operador:</span><span>${turno.usuario_abertura_nome || '-'}</span></div>
+      <div class="row"><span>Fechado por:</span><span>${turno.usuario_fechamento_nome || '-'}</span></div>
+      <div class="dashed"></div>
+      <h2>Movimentações</h2>
+      <div class="row"><span>Saldo Inicial:</span><span>R$ ${fmt(turno.saldo_inicial || 0)}</span></div>
+      <div class="row"><span>+ Vendas:</span><span>R$ ${fmt(turno.total_vendas || 0)}</span></div>
+      <div class="row"><span>+ Reforços:</span><span>R$ ${fmt(turno.total_reforcos || 0)}</span></div>
+      <div class="row"><span>- Sangrias:</span><span>R$ ${fmt(turno.total_sangrias || 0)}</span></div>
+      <div class="row"><span>- Despesas:</span><span>R$ ${fmt(turno.total_despesas || 0)}</span></div>
+      <div class="row total"><span>Saldo do Turno:</span><span>R$ ${fmt(turno.saldo_final || 0)}</span></div>
+      <div class="dashed"></div>
+      <h2>Recebimentos</h2>
+      <div class="row"><span>Dinheiro na Gaveta:</span><span>R$ ${fmt(dinheiroNaGaveta)}</span></div>
+      <div class="row"><span>Dinheiro:</span><span>R$ ${fmt(turno.recebimentos_dinheiro || 0)}</span></div>
+      <div class="row"><span>PIX:</span><span>R$ ${fmt(turno.recebimentos_pix || 0)}</span></div>
+      <div class="row"><span>Cartão Débito:</span><span>R$ ${fmt(turno.recebimentos_debito || 0)}</span></div>
+      <div class="row"><span>Cartão Crédito:</span><span>R$ ${fmt(turno.recebimentos_credito || 0)}</span></div>
+      <div class="row"><span>Vale Troca:</span><span>R$ ${fmt(turno.recebimentos_vale_troca || 0)}</span></div>
+      <div class="row"><span>Total Conferido:</span><span>R$ ${fmt(turno.dinheiro_conferido || 0)}</span></div>
+      <div class="row total"><span>Diferença:</span><span>${diferenca >= 0 ? '+' : ''}R$ ${fmt(diferenca)}</span></div>
+      <div class="dashed"></div>
+      <h2>Movimentos de Caixa</h2>
+      ${linhasMovimentos}
+      <div class="dashed"></div>
+      <h2>Vendas (${vendasTurno.length})</h2>
+      ${linhasVendas}
+      <div class="dashed"></div>
+      <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:14px">Não é documento fiscal</p>
+    </body></html>`);
+    pw.document.close();
+    pw.focus();
+    setTimeout(() => { pw.print(); pw.close(); }, 300);
+  };
 
   return (
     <div className="border-b border-gray-100 dark:border-gray-700 last:border-0">
@@ -192,23 +258,35 @@ function TurnoRow({ turno, vendas, movimentos, onReabrir, currentUser }) {
               <span className="font-semibold text-gray-700 dark:text-gray-300">{turno.usuario_fechamento_nome || '-'}</span>
             </div>
 
-            {/* Botão de Reabertura - Estilo PDV */}
             <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-start gap-2 mb-3 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    imprimirRelatorio();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium text-sm shadow-sm hover:shadow-md transition-shadow active:scale-[0.98]"
+                  style={{ minHeight: '48px' }}
+                >
+                  <Printer className="w-4 h-4" />
+                  Imprimir Fechamento
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReabrir(turno);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm shadow-sm hover:shadow-md transition-shadow active:scale-[0.98]"
+                  style={{ minHeight: '48px' }}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Solicitar Reabertura
+                </button>
+              </div>
+              <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-xl">
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
                 <span>Reabertura requer autenticação do gestor responsável</span>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReabrir(turno);
-                }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm shadow-sm hover:shadow-md transition-shadow active:scale-[0.98]"
-                style={{ minHeight: '48px' }}
-              >
-                <RotateCcw className="w-4 h-4" />
-                Solicitar Reabertura
-              </button>
             </div>
           </div>
         </div>

@@ -34,15 +34,29 @@ export default function CaixasAtivosPage() {
         if (turno) {
           const vendasTurno = vendas.filter(v => v.turno_caixa_id === turno.id);
           const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
+          let totalDinheiro = 0, totalPix = 0, totalCredito = 0, totalDebito = 0, totalVale = 0;
+          vendasTurno.forEach(v => {
+            (v.pagamentos || []).forEach(p => {
+              const fp = (p.forma_pagamento || '').toLowerCase();
+              if (fp === 'dinheiro') totalDinheiro += p.valor || 0;
+              else if (fp === 'pix') totalPix += p.valor || 0;
+              else if (fp.includes('crédito') || fp.includes('credito')) totalCredito += p.valor || 0;
+              else if (fp.includes('débito') || fp.includes('debito')) totalDebito += p.valor || 0;
+              else if (fp.includes('vale')) totalVale += p.valor || 0;
+            });
+          });
           const reforcos = movs.filter(m => m.turno_caixa_id === turno.id && m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
           const sangrias = movs.filter(m => m.turno_caixa_id === turno.id && (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa')).reduce((s, m) => s + (m.valor || 0), 0);
-          const despesasTurno = despesas.filter(d => d.turno_caixa_id === turno.id).reduce((s, d) => s + (d.valor || 0), 0);
+          const despesasTurno = despesas.filter(d => d.turno_caixa_id === turno.id && d.referencia_tipo !== 'MovimentosCaixa').reduce((s, d) => s + (d.valor || 0), 0);
+          const liquidezTurno = (turno.saldo_inicial || 0) + totalVendas + reforcos - sangrias - despesasTurno;
+          const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale;
           
           liquidez[caixa.id] = {
             turnoAberto: true,
             saldoInicial: turno.saldo_inicial || 0,
             totalVendas,
-            liquidez: (turno.saldo_inicial || 0) + totalVendas + reforcos - sangrias - despesasTurno
+            liquidez: liquidezTurno,
+            dinheiroNaGaveta,
           };
         }
       });
@@ -121,6 +135,9 @@ export default function CaixasAtivosPage() {
                         <div className="space-y-0.5">
                           <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                             Turno aberto · Liquidez: {formatValor(liq.liquidez)}
+                          </p>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            Dinheiro na gaveta: {formatValor(liq.dinheiroNaGaveta)}
                           </p>
                           <p className="text-xs text-gray-400 dark:text-gray-500">
                             Saldo Inicial: {formatValor(liq.saldoInicial)} · Vendas: {formatValor(liq.totalVendas)}

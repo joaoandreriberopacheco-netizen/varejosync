@@ -104,6 +104,8 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
     return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const dinheiroNaGaveta = caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0);
+
   const imprimirRelatorio = () => {
     const pw = window.open('', '_blank', 'width=800,height=900');
     if (!pw) { alert('Permita pop-ups para imprimir.'); return; }
@@ -225,7 +227,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Dinheiro na Gaveta</div>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white font-glacial">
-                  {formatValor(caixaData.liquidez - (caixaData.recebimentos?.pix || 0) - (caixaData.recebimentos?.credito || 0) - (caixaData.recebimentos?.debito || 0) - (caixaData.recebimentos?.vale || 0))}
+                  {formatValor(dinheiroNaGaveta)}
                 </div>
                 <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Liquidez − (PIX + Crédito + Débito + Vale)</div>
               </div>
@@ -324,7 +326,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                         <span className="text-sm text-gray-600 dark:text-gray-400">Dinheiro</span>
                         <p className="text-xs text-gray-400 dark:text-gray-500">somente leitura</p>
                       </div>
-                      <span className="text-lg font-bold text-gray-500 dark:text-gray-400">{formatValor(caixaData.recebimentos.dinheiro)}</span>
+                      <span className="text-lg font-bold text-gray-500 dark:text-gray-400">{formatValor(dinheiroNaGaveta)}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 px-3">
                       <span className="text-sm text-gray-600 dark:text-gray-400">PIX</span>

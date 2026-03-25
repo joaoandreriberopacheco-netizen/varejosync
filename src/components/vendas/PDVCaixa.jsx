@@ -394,13 +394,6 @@ export default function PDVCaixa() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, valorRestante, pedidosAguardando]); // Updated telaAtual to view
 
-  // Auto-preencher saldo em dinheiro esperado (apenas dinheiro recebido nas vendas deste turno)
-  useEffect(() => {
-    // Sincronizar com o dinheiro recebido nas vendas (não inclui reforços/recolhimentos)
-    if (caixaData.recebimentos.dinheiro >= 0) {
-      setRecebimentosDinheiro(formatarValorExibicao(caixaData.recebimentos.dinheiro));
-    }
-  }, [caixaData.recebimentos.dinheiro]);
 
   // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
   const loadData = async (caixaParam, turnoParam) => {
@@ -1413,7 +1406,7 @@ export default function PDVCaixa() {
                         // Total conferido = dinheiro(conferido) + pix + crédito + débito (fiado não entra — é a receber)
                         const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
                         // Esperado = liquidez (já exclui fiado e vale)
-                        const esperado = caixaData.liquidez;
+                        const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
                         const diferenca = totalConferido - esperado;
                         const temDiferenca = Math.abs(diferenca) > 0.01;
 
@@ -1453,9 +1446,8 @@ export default function PDVCaixa() {
                    {!modoVisualizacao && (() => {
                       const dinheiroConferido = parseFloat(recebimentosDinheiro.replace(/\./g, '').replace(',', '.')) || 0;
                       const totalConferido = dinheiroConferido + caixaData.recebimentos.pix + (caixaData.recebimentos.credito || 0) + (caixaData.recebimentos.debito || 0);
-                      // Esperado = liquidez (que já inclui TODAS as formas de pagamento)
-                      // Vale é não-monetário, então não entra na comparação
-                      const esperado = caixaData.liquidez;
+                      // Vale é não-monetário, então não entra na comparação do fechamento
+                      const esperado = caixaData.liquidez - (caixaData.recebimentos.vale || 0);
                       const diferenca = totalConferido - esperado;
                       const temDiferenca = Math.abs(diferenca) > 0.01;
                      const imprimirRelatorio = () => {
