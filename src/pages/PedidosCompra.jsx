@@ -7,8 +7,10 @@ import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 
+const TZ = 'America/Rio_Branco';
+const toLocalDate = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(d));
+
 export default function PedidosCompraPage() {
-  const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');
@@ -96,7 +98,7 @@ export default function PedidosCompraPage() {
     const map = {};
     filtrados.forEach(p => {
       const data = p.data_prevista_entrega || p.created_date;
-      const key = data ? new Date(data).toISOString().split('T')[0] : 'sem-data';
+      const key = data ? (p.data_prevista_entrega ? p.data_prevista_entrega : toLocalDate(data)) : 'sem-data';
       if (!map[key]) map[key] = [];
       map[key].push(p);
     });
@@ -104,7 +106,7 @@ export default function PedidosCompraPage() {
     return Object.entries(map)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, pedidos]) => {
-        const hoje = new Date().toISOString().split('T')[0];
+        const hoje = toLocalDate(new Date());
         let label = 'Sem data';
         if (key !== 'sem-data') {
           const d = new Date(key + 'T12:00:00');
