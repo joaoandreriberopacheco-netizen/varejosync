@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatarDataCurta } from '@/components/utils/dateUtils';
 import { ChevronRight, AlertCircle, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
@@ -77,7 +76,7 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
               {R(pedido.valor_total)}
             </span>
             <span className="text-[0.68rem] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-              {pedido.data_prevista_entrega ? format(new Date(pedido.data_prevista_entrega + 'T12:00:00'), 'dd MMM', { locale: ptBR }) : '—'}
+              {pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : '—'}
             </span>
             {/* Lixeira sobreposta — não altera o layout */}
             {isRascunho && (

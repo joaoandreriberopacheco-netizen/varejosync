@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import {
-  ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
-  Clock, AlertCircle, ChevronRight, Scale, RefreshCw, X
-} from 'lucide-react';
-const parseDate = (d) => !d ? null : (typeof d === 'string' && d.length === 10 ? new Date(d + 'T12:00:00') : new Date(d));
+import { formatarDataCurta } from '@/components/utils/dateUtils';
 
 const R = (v) => `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -77,7 +71,7 @@ function LancRow({ l, onClick }) {
         </span>
         <span className="flex items-center flex-wrap gap-1 mt-0.5">
           <span className="text-[0.68rem] text-gray-400 dark:text-gray-500">
-            {data ? format(parseDate(data), 'dd MMM', { locale: ptBR }) : '—'}
+            {data ? formatarDataCurta(data) : '—'}
             {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
           </span>
           {l.categoria && (

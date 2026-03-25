@@ -7,8 +7,8 @@ import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 
-const TZ = 'America/Rio_Branco';
-const toLocalDate = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(d));
+import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
+const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
@@ -106,13 +106,13 @@ export default function PedidosCompraPage() {
     return Object.entries(map)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, pedidos]) => {
-        const hoje = toLocalDate(new Date());
+        const hoje = dataHoje();
         let label = 'Sem data';
         if (key !== 'sem-data') {
-          const d = new Date(key + 'T12:00:00');
+          const dataFmt = formatarSoData(key);
           if (key === hoje) label = 'Hoje';
-          else if (key > hoje) label = `${d.toLocaleDateString('pt-BR')} (previsto)`;
-          else label = d.toLocaleDateString('pt-BR');
+          else if (key > hoje) label = `${dataFmt} (previsto)`;
+          else label = dataFmt;
         }
         return { key, label, pedidos: pedidos.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)) };
       });

@@ -79,48 +79,77 @@ export function formatarSoData(valor) {
   return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)}/${local.getUTCFullYear()}`;
 }
 
-/**
- * Formata apenas a data (sem hora) no fuso do sistema.
- * @param {string|Date} valor
- * @returns {string} e.g. "16/03/2026"
- * @deprecated Use formatarSoData para datas sem hora
- */
-export function formatarData(valor) {
-  if (!valor) return '—';
-  const data = typeof valor === 'string' ? new Date(valor) : valor;
-  if (isNaN(data.getTime())) return '—';
+// Meses em pt-BR — evita Intl.DateTimeFormat em Android WebView
+const MESES_CURTOS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-  return new Intl.DateTimeFormat('pt-BR', {
-    timeZone: TIMEZONE_SISTEMA,
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(data);
+/**
+ * Retorna chave YYYY-MM-DD no fuso UTC-5 — para agrupamentos de listas.
+ * @param {string|Date} valor
+ * @returns {string} e.g. "2026-03-16"
+ */
+export function toLocalDateKey(valor) {
+  const d = typeof valor === 'string' ? new Date(valor) : valor;
+  if (isNaN(d.getTime())) return '';
+  const local = toRioBranco(d);
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}`;
 }
 
 /**
+ * Formata data curta estilo "16 mar" — para uso em listas/rows.
+ * Campos só-data (YYYY-MM-DD) são tratados sem conversão de fuso.
+ * @param {string|Date} valor
+ * @returns {string} e.g. "16 mar"
+ */
+export function formatarDataCurta(valor) {
+  if (!valor) return '—';
+  if (typeof valor === 'string' && valor.length === 10) {
+    const [, m, dd] = valor.split('-');
+    return `${parseInt(dd, 10)} ${MESES_CURTOS[parseInt(m, 10) - 1]}`;
+  }
+  const d = new Date(valor);
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${local.getUTCDate()} ${MESES_CURTOS[local.getUTCMonth()]}`;
+}
+
+/**
+ * Formata data longa estilo "16 de março de 2026".
+ * @param {string|Date} valor
+ * @returns {string}
+ */
+export function formatarDataLonga(valor) {
+  if (!valor) return '—';
+  if (typeof valor === 'string' && valor.length === 10) {
+    const [y, m, dd] = valor.split('-');
+    return `${parseInt(dd, 10)} de ${MESES_LONGOS[parseInt(m, 10) - 1]} de ${y}`;
+  }
+  const d = new Date(valor);
+  if (isNaN(d.getTime())) return '—';
+  const local = toRioBranco(d);
+  return `${local.getUTCDate()} de ${MESES_LONGOS[local.getUTCMonth()]} de ${local.getUTCFullYear()}`;
+}
+
+/** @deprecated Use formatarSoData */
+export function formatarData(valor) { return formatarSoData(valor); }
+
+/**
  * Retorna a data de hoje (início do dia UTC-5) como objeto Date.
- * Útil para filtros de "a partir de hoje".
  * @returns {Date}
  */
 export function inicioDiaHoje() {
-  const hoje = dataHoje(); // yyyy-MM-dd no fuso correto
-  // UTC-5 = -05:00
+  const hoje = dataHoje();
   return new Date(`${hoje}T00:00:00-05:00`);
 }
 
 /**
- * Retorna uma string "dd/MM HH:mm" no fuso do sistema — útil para logs.
- * @param {string|Date} [valor] - Se omitido, usa agora()
+ * Retorna uma string "dd/MM HH:mm" no fuso UTC-5 — útil para logs.
+ * @param {string|Date} [valor]
  * @returns {string} e.g. "16/03 10:32"
  */
 export function formatarLogTime(valor) {
   const ts = valor ? (typeof valor === 'string' ? new Date(valor) : valor) : new Date();
-  return new Intl.DateTimeFormat('pt-BR', {
-    timeZone: TIMEZONE_SISTEMA,
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(ts);
+  if (isNaN(ts.getTime())) return '—';
+  const local = toRioBranco(ts);
+  return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
 }
