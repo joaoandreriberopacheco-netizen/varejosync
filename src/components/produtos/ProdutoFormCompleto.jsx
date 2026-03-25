@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
 import CurrencyInput from './CurrencyInput';
+import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
@@ -760,11 +761,19 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
                 <Label className="text-sm text-gray-600 dark:text-gray-400 mb-2 block">Unidade Principal</Label>
                 <Input 
                   value={formData.unidade_principal} 
-                  onChange={e => handleChange('unidade_principal', e.target.value)} 
+                  onChange={e => handleChange('unidade_principal', e.target.value.toUpperCase())} 
                   placeholder="UN" 
                   className="bg-transparent border-0 border-b-2 border-gray-400 dark:border-gray-500 rounded-none px-0 h-10 text-sm text-gray-800 dark:text-gray-200"
                 />
               </div>
+            </div>
+
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5">
+              <UnidadesAlternativasEditor
+                unidades={formData.unidades_alternativas || []}
+                unidadePrincipal={formData.unidade_principal || 'UN'}
+                onChange={(value) => handleChange('unidades_alternativas', value)}
+              />
             </div>
 
             <div className="border-t pt-6 dark:border-gray-700">

@@ -271,19 +271,21 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             if (produto) {
                 item.produto_nome = produto.nome;
                 item.codigo_produto = produto.codigo_interno || produto.codigo_barras;
-                item.unidade_medida = produto.unidade_compra || 'UN';
+                item.unidade_medida = produto.unidade_principal || 'UN';
+                item.fator_conversao = 1;
                 item.custo_unitario = produto.valor_compra || 0;
                 item.valor_desconto_item = produto.desconto_compra_padrao || 0; 
             }
         }
     }
 
-    // Simplified calculation: price - discount
     const qty = parseFloat(item.quantidade) || 0;
     const cost = parseFloat(item.custo_unitario) || 0;
     const descUnit = parseFloat(item.valor_desconto_item) || 0;
+    const fatorConversao = parseFloat(item.fator_conversao) || 1;
     
     const custoFinalUnitario = cost - descUnit;
+    item.quantidade_base = qty * fatorConversao;
     item.custo_final_unitario = custoFinalUnitario;
     item.subtotal = qty * cost;
     item.total = custoFinalUnitario * qty;

@@ -107,7 +107,7 @@ export default function ProcessarVendasView({ rascunhosAguardando = [], onBack, 
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{item.produto_nome}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade} {item.unidade_medida || 'UN'}</div>
                   </div>
                   <div className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">R$ {formatarValorExibicao(item.total || 0)}</div>
                 </div>

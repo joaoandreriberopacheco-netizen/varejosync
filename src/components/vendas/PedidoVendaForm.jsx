@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, PlusCircle, AlertTriangle, Percent, FileText, DollarSign, Truck, Save } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AnaliseEntrega from './AnaliseEntrega';
+import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
+import { buildSaleUnitOptions } from '@/lib/productUnits';
 
 export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const [formData, setFormData] = useState(pedido || {
@@ -37,6 +39,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     currentUser: null,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [unitSelector, setUnitSelector] = useState({ open: false, product: null, index: -1 });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,25 +88,46 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
     }
   };
 
+  const applyProductUnitToItem = (index, produto, unidadeSelecionada) => {
+    const newItems = [...formData.itens];
+    const item = newItems[index];
+    const quantidade = parseFloat(item.quantidade) || 1;
+
+    item.produto_id = produto.id;
+    item.produto_nome = produto.nome;
+    item.unidade_medida = unidadeSelecionada.unidade;
+    item.fator_conversao = unidadeSelecionada.fator_conversao || 1;
+    item.quantidade_base = quantidade * (unidadeSelecionada.fator_conversao || 1);
+    item.preco_unitario_praticado = unidadeSelecionada.valor_unitario || 0;
+    item.custo_unitario_momento = produto.preco_custo_calculado || 0;
+    item.total = quantidade * item.preco_unitario_praticado;
+
+    setFormData(prev => ({ ...prev, itens: newItems }));
+  };
+
+  const handleProductChange = (index, produtoId) => {
+    const produto = dependencies.produtos.find(p => p.id === produtoId);
+    if (!produto) return;
+    const opcoes = buildSaleUnitOptions(produto);
+
+    if (opcoes.length > 1) {
+      setUnitSelector({ open: true, product: produto, index });
+      return;
+    }
+
+    applyProductUnitToItem(index, produto, opcoes[0]);
+  };
+
   const handleItemChange = (index, field, value) => {
     const newItems = [...formData.itens];
     const item = newItems[index];
     item[field] = value;
 
-    if (field === 'produto_id') {
-      const produto = dependencies.produtos.find(p => p.id === value);
-      if (produto) {
-        item.produto_nome = produto.nome;
-        item.preco_unitario_praticado = produto.preco_venda_padrao || 0;
-        item.custo_unitario_momento = produto.preco_custo_calculado || 0;
-      }
-    }
-
-    if (['quantidade', 'preco_unitario_praticado'].includes(field)) {
-      const qty = parseFloat(item.quantidade) || 0;
-      const price = parseFloat(item.preco_unitario_praticado) || 0;
-      item.total = qty * price;
-    }
+    const qty = parseFloat(item.quantidade) || 0;
+    const price = parseFloat(item.preco_unitario_praticado) || 0;
+    const fatorConversao = parseFloat(item.fator_conversao) || 1;
+    item.quantidade_base = qty * fatorConversao;
+    item.total = qty * price;
 
     setFormData(prev => ({ ...prev, itens: newItems }));
   };
@@ -111,7 +135,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
   const handleAddItem = () => {
     setFormData(prev => ({
       ...prev,
-      itens: [...prev.itens, { produto_id: '', produto_nome: '', quantidade: 1, preco_unitario_praticado: 0, custo_unitario_momento: 0, total: 0 }],
+      itens: [...prev.itens, { produto_id: '', produto_nome: '', quantidade: 1, unidade_medida: 'UN', fator_conversao: 1, quantidade_base: 1, preco_unitario_praticado: 0, custo_unitario_momento: 0, total: 0 }],
     }));
   };
 
@@ -284,7 +308,7 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                       formData.itens.map((item, index) => (
                         <TableRow key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 dark:border-gray-800">
                           <TableCell>
-                            <Select value={item.produto_id} onValueChange={v => handleItemChange(index, 'produto_id', v)}>
+                            <Select value={item.produto_id} onValueChange={v => handleProductChange(index, v)}>
                               <SelectTrigger className="h-8 bg-transparent border-gray-200 dark:border-gray-700 dark:text-gray-200">
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
@@ -296,6 +320,9 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
                                 ))}
                               </SelectContent>
                             </Select>
+                            <div className="text-[11px] mt-1 text-gray-400 dark:text-gray-500">
+                              Unidade: {item.unidade_medida || 'UN'}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Input 
@@ -479,6 +506,17 @@ export default function PedidoVendaForm({ pedido, onSave, onClose }) {
           </div>
         </div>
       </DialogFooter>
+
+      <ProductUnitSelectorDialog
+        open={unitSelector.open}
+        product={unitSelector.product}
+        mode="sale"
+        onClose={() => setUnitSelector({ open: false, product: null, index: -1 })}
+        onConfirm={(unitOption) => {
+          applyProductUnitToItem(unitSelector.index, unitSelector.product, unitOption);
+          setUnitSelector({ open: false, product: null, index: -1 });
+        }}
+      />
     </DialogContent>
   );
 }

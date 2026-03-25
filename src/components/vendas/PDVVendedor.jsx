@@ -26,6 +26,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { createPageUrl } from '@/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
+import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
+import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
 
 export default function PDVVendedor() {
   const [carrinho, setCarrinho] = useState([]);
@@ -69,6 +71,7 @@ export default function PDVVendedor() {
   const [rascunhoEmEdicaoId, setRascunhoEmEdicaoId] = useState(null);
   const [showOrcamentosRecentes, setShowOrcamentosRecentes] = useState(false);
   const [showSimuladorTaxa, setShowSimuladorTaxa] = useState(false);
+  const [unitSelector, setUnitSelector] = useState({ open: false, product: null });
 
   useEffect(() => {
     if (produtos.length === 0) return;
@@ -233,17 +236,20 @@ export default function PDVVendedor() {
         
         if (rascunho && rascunho.status === 'Retornado para Edição') {
           // Recarregar o carrinho com os itens do rascunho
-          const itensCarrinho = rascunho.itens.map(item => ({
+          const itensCarrinho = normalizeCartItems(rascunho.itens.map(item => ({
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
             codigo_interno: item.codigo_interno || '001',
             quantidade: item.quantidade,
+            unidade_medida: item.unidade_medida || 'UN',
+            fator_conversao: item.fator_conversao || 1,
+            quantidade_base: item.quantidade_base,
             preco_unitario: item.preco_unitario_praticado,
             preco_unitario_praticado: item.preco_unitario_praticado,
             custo_unitario_momento: item.custo_unitario_momento || 0,
             total: item.total,
             estoque_disponivel: 999
-          }));
+          })));
           
           setCarrinho(itensCarrinho);
           setRascunhoEmEdicaoId(rascunho.id);
@@ -461,67 +467,109 @@ export default function PDVVendedor() {
     }
   };
 
+  const focarQuantidade = () => {
+    setTimeout(() => {
+      quantidadeInputRef.current?.focus();
+    }, isMobile ? 400 : 100);
+  };
+
+  const normalizeCartItems = (itens = []) => itens.map((item) => {
+    const unidadeMedida = item.unidade_medida || 'UN';
+    const fatorConversao = item.fator_conversao || 1;
+    const precoUnitario = item.preco_unitario_praticado ?? item.preco_unitario ?? 0;
+
+    return {
+      ...item,
+      unidade_medida: unidadeMedida,
+      fator_conversao: fatorConversao,
+      quantidade_base: item.quantidade_base || calculateBaseQuantity(item.quantidade, fatorConversao),
+      preco_unitario: precoUnitario,
+      preco_unitario_praticado: precoUnitario,
+      item_key: item.item_key || getItemUnitKey(item.produto_id, unidadeMedida),
+    };
+  });
+
+  const aplicarUnidadeAoProdutoSelecionado = (produto, unidadeSelecionada) => {
+    if (!produto || !unidadeSelecionada) return;
+
+    setProdutoSelecionado({
+      ...produto,
+      unidade_medida: unidadeSelecionada.unidade,
+      fator_conversao: unidadeSelecionada.fator_conversao,
+      _preco_sugerido_unitade: unidadeSelecionada.valor_unitario,
+      _item_key: getItemUnitKey(produto.id, unidadeSelecionada.unidade),
+    });
+    setQuantidadeAtual('');
+    setUnitSelector({ open: false, product: null });
+    focarQuantidade();
+  };
+
   const handleSelecionarProduto = (produto) => {
-    setProdutoSelecionado(produto);
     setBuscaProduto('');
     setShowSuggestions(false);
-    setQuantidadeAtual(''); // Updated state
+    setQuantidadeAtual('');
 
-    // Garante que o teclado anterior feche e o input habilite
     if (isMobile) {
       inputProdutoRef.current?.blur();
     }
 
-    // Timeout maior para dispositivos móveis processarem a transição
-    setTimeout(() => {
-      quantidadeInputRef.current?.focus();
-    }, isMobile ? 400 : 100);
+    const opcoes = buildSaleUnitOptions(produto, tabelaPreco?.fator_ajuste || 1);
+    if (opcoes.length > 1) {
+      setUnitSelector({ open: true, product: produto });
+      return;
+    }
+
+    aplicarUnidadeAoProdutoSelecionado(produto, opcoes[0]);
   };
 
   const handleConfirmarAdicao = () => {
     if (!produtoSelecionado) return;
 
     const quantidade = parseFloat(quantidadeAtual) || 1;
+    const fatorConversao = produtoSelecionado.fator_conversao || 1;
+    const quantidadeBase = calculateBaseQuantity(quantidade, fatorConversao);
 
-    console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade:', quantidade);
+    console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade base:', quantidadeBase);
 
-    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidade) {
-      showFeedback('error', `Estoque insuficiente: ${produtoSelecionado.estoque_atual} disponível`, 3000);
+    if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBase) {
+      showFeedback('error', `Estoque insuficiente: ${produtoSelecionado.estoque_atual} ${produtoSelecionado.unidade_principal || 'UN'} disponível`, 3000);
       return;
     }
 
-    // Se preço livre foi digitado, usar o preço digitado; caso contrário usar preço da tabela
-    let precoFinal = produtoSelecionado.preco_venda_padrao;
-    if (tabelaPreco && tabelaPreco.fator_ajuste) {
-      precoFinal = produtoSelecionado.preco_venda_padrao * tabelaPreco.fator_ajuste;
-    }
+    let precoFinal = produtoSelecionado._preco_sugerido_unitade ?? produtoSelecionado.preco_venda_padrao;
     if (produtoSelecionado._preco_digitado !== undefined) {
-      const custo = produtoSelecionado.preco_custo_calculado || 0;
-      if (produtoSelecionado._preco_digitado < custo) {
-        showFeedback('error', `Preço não pode ser menor que o custo (R$ ${custo.toFixed(2)})`, 3000);
+      const custoMinimo = (produtoSelecionado.preco_custo_calculado || 0) * fatorConversao;
+      if (produtoSelecionado._preco_digitado < custoMinimo) {
+        showFeedback('error', `Preço não pode ser menor que o custo da unidade escolhida (R$ ${custoMinimo.toFixed(2)})`, 3000);
         return;
       }
       precoFinal = produtoSelecionado._preco_digitado;
     }
 
-    const itemExistente = carrinho.find((item) => item.produto_id === produtoSelecionado.id);
+    const itemKey = produtoSelecionado._item_key || getItemUnitKey(produtoSelecionado.id, produtoSelecionado.unidade_medida);
+    const itemExistente = carrinho.find((item) => item.item_key === itemKey);
 
     if (itemExistente) {
-      setCarrinho(carrinho.map((item) =>
-      item.produto_id === produtoSelecionado.id ?
-      {
-        ...item,
-        quantidade: item.quantidade + quantidade,
-        total: (item.quantidade + quantidade) * item.preco_unitario
-      } :
-      item
-      ));
+      setCarrinho(carrinho.map((item) => {
+        if (item.item_key !== itemKey) return item;
+        const novaQuantidade = item.quantidade + quantidade;
+        return {
+          ...item,
+          quantidade: novaQuantidade,
+          quantidade_base: calculateBaseQuantity(novaQuantidade, item.fator_conversao || fatorConversao),
+          total: novaQuantidade * item.preco_unitario,
+        };
+      }));
     } else {
       setCarrinho([...carrinho, {
         produto_id: produtoSelecionado.id,
         produto_nome: produtoSelecionado.nome,
         codigo_interno: produtoSelecionado.codigo_interno || '001',
         quantidade: quantidade,
+        unidade_medida: produtoSelecionado.unidade_medida || produtoSelecionado.unidade_principal || 'UN',
+        fator_conversao: fatorConversao,
+        quantidade_base: quantidadeBase,
+        item_key: itemKey,
         preco_unitario: precoFinal,
         preco_unitario_praticado: precoFinal,
         custo_unitario_momento: produtoSelecionado.preco_custo_calculado || 0,
@@ -533,12 +581,12 @@ export default function PDVVendedor() {
       }]);
     }
 
-    showFeedback('success', `${produtoSelecionado.nome} - ${quantidade} un.`, 1500);
+    showFeedback('success', `${produtoSelecionado.nome} - ${quantidade} ${produtoSelecionado.unidade_medida || 'UN'}`, 1500);
 
     setProdutoSelecionado(null);
-    setQuantidadeAtual(''); // Updated state
+    setQuantidadeAtual('');
     quantidadeInputRef.current?.blur();
-    setTimeout(() => inputProdutoRef.current?.focus(), 100); // Updated ref
+    setTimeout(() => inputProdutoRef.current?.focus(), 100);
   };
 
   // Original handleBuscaKeyDown - now merged into the main handleKeyDown for product input
@@ -563,15 +611,16 @@ export default function PDVVendedor() {
     }
   };
 
-  const handleUpdateQuantity = (produtoId, novaQuantidade) => {
+  const handleUpdateQuantity = (itemKey, novaQuantidade) => {
     if (novaQuantidade <= 0) {
-      setCarrinho(carrinho.filter((item) => item.produto_id !== produtoId));
+      setCarrinho(carrinho.filter((item) => item.item_key !== itemKey));
     } else {
-      const item = carrinho.find((i) => i.produto_id === produtoId);
-      if (configVenda?.vender_sem_estoque === true || item && novaQuantidade <= item.estoque_disponivel) {
+      const item = carrinho.find((i) => i.item_key === itemKey);
+      const quantidadeBase = calculateBaseQuantity(novaQuantidade, item?.fator_conversao || 1);
+      if (configVenda?.vender_sem_estoque === true || item && quantidadeBase <= item.estoque_disponivel) {
         setCarrinho(carrinho.map((item) =>
-        item.produto_id === produtoId ?
-        { ...item, quantidade: novaQuantidade, total: novaQuantidade * item.preco_unitario } :
+        item.item_key === itemKey ?
+        { ...item, quantidade: novaQuantidade, quantidade_base: quantidadeBase, total: novaQuantidade * item.preco_unitario } :
         item
         ));
       } else {
@@ -580,33 +629,31 @@ export default function PDVVendedor() {
     }
   };
 
-  const handleUpdatePrecoLivre = (produtoId, novoPreco) => {
-    // Durante digitação: apenas atualiza o valor sem validar (permite apagar e redigitar)
+  const handleUpdatePrecoLivre = (itemKey, novoPreco) => {
     const preco = parseFloat(novoPreco) || 0;
     setCarrinho(carrinho.map((i) =>
-      i.produto_id === produtoId
+      i.item_key === itemKey
         ? { ...i, preco_unitario: preco, preco_unitario_praticado: preco, total: i.quantidade * preco }
         : i
     ));
   };
 
-  const handleBlurPrecoLivre = (produtoId) => {
-    // No blur: garante mínimo = custo calculado
-    const item = carrinho.find((i) => i.produto_id === produtoId);
+  const handleBlurPrecoLivre = (itemKey) => {
+    const item = carrinho.find((i) => i.item_key === itemKey);
     if (!item) return;
-    const custo = item.custo_unitario_momento || 0;
-    if (item.preco_unitario_praticado < custo) {
-      showFeedback('error', `Preço mínimo: R$ ${custo.toFixed(2)} (custo)`, 2500);
+    const custoMinimo = (item.custo_unitario_momento || 0) * (item.fator_conversao || 1);
+    if (item.preco_unitario_praticado < custoMinimo) {
+      showFeedback('error', `Preço mínimo: R$ ${custoMinimo.toFixed(2)} (custo)`, 2500);
       setCarrinho(carrinho.map((i) =>
-        i.produto_id === produtoId
-          ? { ...i, preco_unitario: custo, preco_unitario_praticado: custo, total: i.quantidade * custo }
+        i.item_key === itemKey
+          ? { ...i, preco_unitario: custoMinimo, preco_unitario_praticado: custoMinimo, total: i.quantidade * custoMinimo }
           : i
       ));
     }
   };
 
-  const handleRemoveItem = (produtoId) => {
-    setCarrinho(carrinho.filter((item) => item.produto_id !== produtoId));
+  const handleRemoveItem = (itemKey) => {
+    setCarrinho(carrinho.filter((item) => item.item_key !== itemKey));
   };
 
   const handleLimparCarrinho = () => {
@@ -729,6 +776,9 @@ export default function PDVVendedor() {
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
             quantidade: item.quantidade,
+            unidade_medida: item.unidade_medida,
+            fator_conversao: item.fator_conversao,
+            quantidade_base: item.quantidade_base,
             preco_unitario_praticado: item.preco_unitario_praticado,
             custo_unitario_momento: item.custo_unitario_momento || 0,
             total: item.total
@@ -777,6 +827,9 @@ export default function PDVVendedor() {
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
             quantidade: item.quantidade,
+            unidade_medida: item.unidade_medida,
+            fator_conversao: item.fator_conversao,
+            quantidade_base: item.quantidade_base,
             preco_unitario_praticado: item.preco_unitario_praticado,
             custo_unitario_momento: item.custo_unitario_momento || 0,
             total: item.total
@@ -814,7 +867,7 @@ export default function PDVVendedor() {
   };
 
   const handleCarregarOrcamento = (itensOrcamento, orcamento) => {
-    setCarrinho(itensOrcamento);
+    setCarrinho(normalizeCartItems(itensOrcamento));
     // Reset desconto para evitar herança da venda anterior
     setValorAjuste(0);
     setAjustePercentual('');
@@ -859,17 +912,20 @@ export default function PDVVendedor() {
       }
 
       // Recarregar o carrinho com os itens do rascunho
-      const itensCarrinho = rascunhoEncontrado.itens.map(item => ({
+      const itensCarrinho = normalizeCartItems(rascunhoEncontrado.itens.map(item => ({
         produto_id: item.produto_id,
         produto_nome: item.produto_nome,
         codigo_interno: item.codigo_interno || '001',
         quantidade: item.quantidade,
+        unidade_medida: item.unidade_medida || 'UN',
+        fator_conversao: item.fator_conversao || 1,
+        quantidade_base: item.quantidade_base,
         preco_unitario: item.preco_unitario_praticado,
         preco_unitario_praticado: item.preco_unitario_praticado,
         custo_unitario_momento: item.custo_unitario_momento || 0,
         total: item.total,
         estoque_disponivel: 999
-      }));
+      })));
       
       setCarrinho(itensCarrinho);
       
@@ -1064,9 +1120,9 @@ export default function PDVVendedor() {
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">R$</span>
                         <input
                           ref={precoLivreInputRef}
-                          type="number" step="0.01" inputMode="decimal" min={produtoSelecionado.preco_custo_calculado || 0}
-                          placeholder={(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)}
-                          defaultValue={(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)}
+                          type="number" step="0.01" inputMode="decimal" min={(produtoSelecionado.preco_custo_calculado || 0) * (produtoSelecionado.fator_conversao || 1)}
+                          placeholder={((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)}
+                          defaultValue={((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)}
                           onChange={(e) => {
                             const precoDigitado = parseFloat(e.target.value) || 0;
                             setProdutoSelecionado({...produtoSelecionado, _preco_digitado: precoDigitado});
@@ -1080,14 +1136,15 @@ export default function PDVVendedor() {
                           className="w-full pl-8 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                         />
                       </div>
-                      <span className="text-xs text-gray-400">× {parseFloat(quantidadeAtual) || 1}</span>
+                      <span className="text-xs text-gray-400">× {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}</span>
                     </div>
                   ) : (
                     <p className="text-sm text-gray-400 mt-1">
-                      R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1)).toFixed(2)} × {parseFloat(quantidadeAtual) || 1}
-                      {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
+                      R$ {((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)} × {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}
+                      {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
                     </p>
                   )}
+                  <p className="text-xs text-gray-400 mt-1">Equivale a {produtoSelecionado.fator_conversao || 1} {produtoSelecionado.unidade_principal || 'UN'} por {produtoSelecionado.unidade_medida || 'UN'}</p>
                 </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1126,7 +1183,7 @@ export default function PDVVendedor() {
                 <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Busque um produto acima</p>
               </div> :
             carrinho.map((item) =>
-            <div key={item.produto_id} className="group p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <div key={item.item_key} className="group p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <div className="flex items-start gap-2.5 mb-2.5">
                     {item.imagem_url
                         ? <img src={item.imagem_url} alt={item.produto_nome} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 mt-0.5" />
@@ -1135,7 +1192,7 @@ export default function PDVVendedor() {
                           </div>
                       }
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-snug flex-1 break-words">{item.produto_nome}</p>
-                      <button onClick={() => handleRemoveItem(item.produto_id)}
+                      <button onClick={() => handleRemoveItem(item.item_key)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1149,25 +1206,28 @@ export default function PDVVendedor() {
                            <input
                              type="number" step="0.01" inputMode="decimal"
                              value={item.preco_unitario_praticado?.toFixed(2)}
-                             onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
-                             onBlur={() => handleBlurPrecoLivre(item.produto_id)}
+                             onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
+                             onBlur={() => handleBlurPrecoLivre(item.item_key)}
                              className="w-full pl-8 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                            />
                          </div>
                        </div>
                      )}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
-                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
+                        <div className="flex items-center bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm">
+                        <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade - 1)}
                           className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                           <Minus className="w-3.5 h-3.5" />
                         </button>
                         <span className="text-sm font-bold w-9 text-center text-gray-800 dark:text-gray-200">{item.quantidade}</span>
-                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
-                          disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
+                        <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
+                          disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
                           className="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40">
                           <Plus className="w-3.5 h-3.5" />
                         </button>
+                      </div>
                       </div>
                       <p className="text-base font-semibold text-gray-900 dark:text-gray-100">R$ {item.total.toFixed(2)}</p>
                     </div>
@@ -1266,7 +1326,7 @@ export default function PDVVendedor() {
                   <p className="text-base text-gray-400">Carrinho vazio</p>
                 </div> :
             carrinho.map((item) =>
-            <div key={item.produto_id} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+            <div key={item.item_key} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
                     <div className="flex items-start gap-3 mb-3">
                       {item.imagem_url
                         ? <img src={item.imagem_url} alt={item.produto_nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
@@ -1284,35 +1344,38 @@ export default function PDVVendedor() {
                               <input
                                 type="number" step="0.01" inputMode="decimal"
                                 value={item.preco_unitario_praticado?.toFixed(2)}
-                                onChange={e => handleUpdatePrecoLivre(item.produto_id, e.target.value)}
-                                onBlur={() => handleBlurPrecoLivre(item.produto_id)}
+                                onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
+                                onBlur={() => handleBlurPrecoLivre(item.item_key)}
                                 className="w-full pl-8 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-right border border-amber-200 dark:border-amber-800 shadow-sm focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                               />
                             </div>
                           </div>
                         ) : (
-                           <p className="text-xs text-gray-400 mt-0.5">R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')} cada</p>
+                           <p className="text-xs text-gray-400 mt-0.5">{item.quantidade} {item.unidade_medida || 'UN'} × R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')}</p>
                          )}
                       </div>
-                      <button onClick={() => handleRemoveItem(item.produto_id)}
+                      <button onClick={() => handleRemoveItem(item.item_key)}
                         className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg flex-shrink-0">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
-                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade - 1)}
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
+                        <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+                        <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade - 1)}
                           className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700">
                           <Minus className="w-4 h-4" />
                         </button>
                         <span className="text-base font-bold w-10 text-center text-gray-900 dark:text-white">{item.quantidade}</span>
-                        <button onClick={() => handleUpdateQuantity(item.produto_id, item.quantidade + 1)}
-                          disabled={!configVenda?.vender_sem_estoque && item.quantidade >= item.estoque_disponivel}
+                        <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
+                          disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
                           className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700 disabled:opacity-40">
                           <Plus className="w-4 h-4" />
                         </button>
-                      </div>
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">R$ {item.total.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                        </div>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">R$ {item.total.toFixed(2).replace('.', ',')}</p>
                     </div>
                   </div>
             )
@@ -1727,7 +1790,6 @@ export default function PDVVendedor() {
         onScan={(code) => {
           setBuscaProduto(code);
           setShowBarcodeScanner(false);
-          // Busca automática do produto pelo código
           const produto = produtos.find((p) =>
           p.codigo_barras === code || p.codigo_interno === code
           );
@@ -1735,6 +1797,15 @@ export default function PDVVendedor() {
             handleSelecionarProduto(produto);
           }
         }} />
+
+      <ProductUnitSelectorDialog
+        open={unitSelector.open}
+        product={unitSelector.product}
+        mode="sale"
+        priceMultiplier={tabelaPreco?.fator_ajuste || 1}
+        onClose={() => setUnitSelector({ open: false, product: null })}
+        onConfirm={(unitOption) => aplicarUnidadeAoProdutoSelecionado(unitSelector.product, unitOption)}
+      />
 
       {/* Dialog de Reeditar Rascunho */}
       <Dialog open={showReeditarDialog} onOpenChange={setShowReeditarDialog}>

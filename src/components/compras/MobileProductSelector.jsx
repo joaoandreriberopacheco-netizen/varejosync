@@ -5,6 +5,8 @@ import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, Ale
 import NovoProdutoRapidoDialog from './NovoProdutoRapidoDialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
+import { buildPurchaseUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
 
 export default function MobileProductSelector({ 
   items, 
@@ -25,6 +27,7 @@ export default function MobileProductSelector({
   const [custoInput, setCustoInput] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showNovoProduto, setShowNovoProduto] = useState(false);
+  const [unitSelector, setUnitSelector] = useState({ open: false, product: null });
   // Desconto global sobre preços de compra
   const [descontoGlobalPct, setDescontoGlobalPct] = useState(0);
   const [descontoGlobalPctInput, setDescontoGlobalPctInput] = useState('');
@@ -60,38 +63,52 @@ export default function MobileProductSelector({
     ).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 50);
   }, [products, search]);
 
-  const handleSelectProduct = (product) => {
-    const index = items.findIndex(i => i.produto_id === product.id);
+  const startEditingProductWithUnit = (product, selectedUnit) => {
+    if (!product || !selectedUnit) return;
+
+    const unitKey = getItemUnitKey(product.id, selectedUnit.unidade);
+    const index = items.findIndex(i => (i.item_key || getItemUnitKey(i.produto_id, i.unidade_medida || 'UN')) === unitKey);
     if (index >= 0) {
       handleEditItem(index);
-    } else {
-      const custo = product.valor_compra || 0;
-      // Aplica desconto/acréscimo global (%) sobre o custo
-      // descontoGlobalPct > 0 = desconto (subtrai), < 0 = acréscimo (soma)
-      const descontoValorBase = descontoGlobalPct !== 0
-        ? parseFloat((custo * Math.abs(descontoGlobalPct) / 100).toFixed(2))
-        : (product.desconto_compra_padrao || 0);
-      // Para acréscimo, valor negativo faz calculateTotal somar ao custo
-      const descontoValor = descontoGlobalPct < 0 ? -descontoValorBase : descontoValorBase;
-      const newItem = {
-        produto_id: product.id,
-        produto_nome: product.nome,
-        codigo_produto: product.codigo_interno || product.codigo_barras || '',
-        unidade_medida: product.unidade_principal || 'UN',
-        quantidade: 1,
-        custo_unitario: custo,
-        valor_desconto_item: descontoValor,
-        desconto_pct_item: descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : 0,
-      };
-      setEditingItem(newItem);
-      setQuantidadeInput((1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      setCustoInput(custo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      const pctNum = descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : (custo > 0 ? (product.desconto_compra_padrao || 0) / custo * 100 : 0);
-      setDescontoPctInput(pctNum > 0 ? String(Math.round(pctNum * 100) / 100) : '');
-      setDescontoValorInput(Math.abs(descontoValor) > 0 ? Math.abs(descontoValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
-      setEditingIndex(-1);
-      setView('edit');
+      return;
     }
+
+    const custo = selectedUnit.valor_unitario || 0;
+    const descontoValorBase = descontoGlobalPct !== 0
+      ? parseFloat((custo * Math.abs(descontoGlobalPct) / 100).toFixed(2))
+      : (product.desconto_compra_padrao || 0);
+    const descontoValor = descontoGlobalPct < 0 ? -descontoValorBase : descontoValorBase;
+    const newItem = {
+      produto_id: product.id,
+      produto_nome: product.nome,
+      codigo_produto: product.codigo_interno || product.codigo_barras || '',
+      unidade_medida: selectedUnit.unidade,
+      fator_conversao: selectedUnit.fator_conversao || 1,
+      item_key: unitKey,
+      quantidade: 1,
+      quantidade_base: calculateBaseQuantity(1, selectedUnit.fator_conversao || 1),
+      custo_unitario: custo,
+      valor_desconto_item: descontoValor,
+      desconto_pct_item: descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : 0,
+    };
+
+    setEditingItem(newItem);
+    setQuantidadeInput((1).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    setCustoInput(custo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    const pctNum = descontoGlobalPct !== 0 ? Math.abs(descontoGlobalPct) : (custo > 0 ? (product.desconto_compra_padrao || 0) / custo * 100 : 0);
+    setDescontoPctInput(pctNum > 0 ? String(Math.round(pctNum * 100) / 100) : '');
+    setDescontoValorInput(Math.abs(descontoValor) > 0 ? Math.abs(descontoValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '');
+    setEditingIndex(-1);
+    setView('edit');
+  };
+
+  const handleSelectProduct = (product) => {
+    const options = buildPurchaseUnitOptions(product);
+    if (options.length > 1) {
+      setUnitSelector({ open: true, product });
+      return;
+    }
+    startEditingProductWithUnit(product, options[0]);
   };
 
   const handleEditItem = (index) => {
@@ -112,12 +129,22 @@ export default function MobileProductSelector({
   const handleSaveEdit = () => {
     if (!editingItem) return;
 
+    const quantidade = parseFloat(editingItem.quantidade) || 0;
+    const custo = parseFloat(editingItem.custo_unitario) || 0;
+    const desconto = parseFloat(editingItem.valor_desconto_item) || 0;
+    const fatorConversao = parseFloat(editingItem.fator_conversao) || 1;
+    const itemAtualizado = {
+      ...editingItem,
+      quantidade_base: calculateBaseQuantity(quantidade, fatorConversao),
+      subtotal: quantidade * custo,
+      custo_final_unitario: custo - desconto,
+      total: (custo - desconto) * quantidade,
+    };
+
     if (editingIndex >= 0) {
-      // Update existing
-      onUpdateItem(editingIndex, editingItem);
+      onUpdateItem(editingIndex, itemAtualizado);
     } else {
-      // Add new - pass complete item
-      onAddItem(editingItem); 
+      onAddItem(itemAtualizado); 
     }
     
     // Reset form and return to catalog for quick next product
@@ -350,6 +377,9 @@ export default function MobileProductSelector({
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="ml-2 font-medium truncate flex-1 text-gray-900 dark:text-white">{editingItem.produto_nome}</div>
+          <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border-0 shadow-sm">
+            {editingItem.unidade_medida || 'UN'}
+          </Badge>
         </div>
         
         <div className="flex-1 overflow-y-auto p-3 space-y-5">
@@ -769,6 +799,16 @@ export default function MobileProductSelector({
             setShowNovoProduto(false);
           }}
         />
+        <ProductUnitSelectorDialog
+          open={unitSelector.open}
+          product={unitSelector.product}
+          mode="purchase"
+          onClose={() => setUnitSelector({ open: false, product: null })}
+          onConfirm={(unitOption) => {
+            startEditingProductWithUnit(unitSelector.product, unitOption);
+            setUnitSelector({ open: false, product: null });
+          }}
+        />
       </>
     );
   }
@@ -805,7 +845,7 @@ export default function MobileProductSelector({
         ) : (
           <div className="space-y-3">
             {sortedItems.map((item, index) => {
-              const originalIndex = items.findIndex(i => i.produto_id === item.produto_id && i.quantidade === item.quantidade);
+              const originalIndex = items.findIndex(i => (i.item_key || getItemUnitKey(i.produto_id, i.unidade_medida || 'UN')) === (item.item_key || getItemUnitKey(item.produto_id, item.unidade_medida || 'UN')));
               return (
               <div 
                 key={originalIndex} 

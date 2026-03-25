@@ -124,22 +124,24 @@ Deno.serve(async (req) => {
   // 4c. Movimentações de estoque
   for (const item of (rascunho.itens || [])) {
     try {
+      const quantidadeBase = item.quantidade_base || item.quantidade;
       await svc.entities.MovimentacaoEstoque.create({
         produto_id: item.produto_id,
         produto_nome: item.produto_nome,
         tipo: 'Saída',
         motivo: 'Venda',
-        quantidade: item.quantidade,
+        quantidade: quantidadeBase,
         custo_unitario: item.custo_unitario_momento || 0,
         referencia_tipo: 'PedidoVenda',
         referencia_id: pedidoVenda.id,
         referencia_numero: numeroPedido,
+        observacoes: item.unidade_medida ? `Venda em ${item.unidade_medida} (${item.quantidade} ${item.unidade_medida})` : undefined,
         usuario_responsavel: user.full_name,
       });
       const produto = await svc.entities.Produto.get(item.produto_id);
       if (produto) {
         await svc.entities.Produto.update(item.produto_id, {
-          estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade),
+          estoque_atual: Math.max(0, (produto.estoque_atual || 0) - quantidadeBase),
         });
       }
     } catch (err) { erros.push(`Estoque ${item.produto_nome}: ${err.message}`); }
@@ -318,8 +320,9 @@ Deno.serve(async (req) => {
         itens: (rascunho.itens || []).map(item => ({
           produto_id: item.produto_id,
           produto_nome: item.produto_nome,
-          quantidade_solicitada: item.quantidade,
+          quantidade_solicitada: item.quantidade_base || item.quantidade,
           quantidade_separada: 0,
+          observacao: item.unidade_medida ? `${item.quantidade} ${item.unidade_medida}` : undefined,
         })),
       });
     } catch (err) { erros.push(`Ordem de separação: ${err.message}`); }
