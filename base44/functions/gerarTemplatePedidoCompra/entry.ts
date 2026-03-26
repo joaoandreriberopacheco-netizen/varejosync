@@ -20,13 +20,13 @@ const NEW_BG      = { argb: 'FFF0FDF4' };
 const SECTION_BG  = { argb: 'FF111827' };
 
 // ── Aba 1 — PEDIDO ────────────────────────────────────────────────────────────
-// Colunas: A=Nome/Desc(edit,dropdown) | B=ID(calc) | C=Qtd(edit) |
-//          D=ValorCompra(calc lookup) | E=Desconto%(edit) | F=ValorLíq(calc) | G=Total(calc)
+// Colunas: A=ID(calc) | B=Nome/Desc(edit,dropdown) | C=Qtd(edit) |
+//          D=ValorCompra(edit livre) | E=Desconto%(edit) | F=ValorLíq(calc) | G=Total(calc)
 const PEDIDO_COLS = [
-  { header: 'Nome / Descrição',       key: 'nome',    width: 52, editavel: true,  calculado: false },
   { header: 'ID do Produto',          key: 'id',      width: 28, editavel: false, calculado: true  },
+  { header: 'Nome / Descrição',       key: 'nome',    width: 52, editavel: true,  calculado: false },
   { header: 'Quantidade',             key: 'qtd',     width: 16, editavel: true,  calculado: false },
-  { header: 'Valor de Compra (R$)',   key: 'custo',   width: 20, editavel: false, calculado: true  },
+  { header: 'Valor de Compra (R$)',   key: 'custo',   width: 20, editavel: true,  calculado: false },
   { header: 'Desconto (%)',           key: 'desc',    width: 14, editavel: true,  calculado: false },
   { header: 'Valor Líquido (R$)',     key: 'liq',     width: 20, editavel: false, calculado: true  },
   { header: 'Total (R$)',             key: 'total',   width: 18, editavel: false, calculado: true  },
@@ -203,52 +203,47 @@ Deno.serve(async (req) => {
     // (cabeçalho já escrito acima — apenas adicionamos tooltips via comentário)
 
     // Calcular letras de colunas do Produtos para VLOOKUP
-    const pIdxNome      = COLS_PRODUTOS.findIndex(c => c.key === 'nome') + 1;          // col C
-    const pIdxId        = COLS_PRODUTOS.findIndex(c => c.key === 'id') + 1;            // col A
-    const pIdxVC        = COLS_PRODUTOS.findIndex(c => c.key === 'valor_compra') + 1;  // col O
-    const pLetNome      = colLetter(pIdxNome);   // C
-    const pLetId        = colLetter(pIdxId);     // A
-    const pLetVC        = colLetter(pIdxVC);     // O
+    // Aba Pedido: A=ID(calc) B=Nome(edit) C=Qtd D=Custo(edit) E=Desc F=Liq G=Total
+    const pIdxNome      = COLS_PRODUTOS.findIndex(c => c.key === 'nome') + 1;
+    const pIdxId        = COLS_PRODUTOS.findIndex(c => c.key === 'id') + 1;
+    const pIdxVC        = COLS_PRODUTOS.findIndex(c => c.key === 'valor_compra') + 1;
+    const pLetNome      = colLetter(pIdxNome);
+    const pLetId        = colLetter(pIdxId);
 
     const MAX_ROWS_PEDIDO = 500;
 
     for (let rn = 15; rn <= 14 + MAX_ROWS_PEDIDO; rn++) {
       const row = wsPedido.getRow(rn);
 
-      // Col A: Nome / Descrição — editável, dropdown com nomes dos produtos
-      row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
-      row.getCell(1).protection = { locked: false };
-
-      // Col B: ID do Produto — INDEX/MATCH busca ID pelo nome selecionado em A
-      row.getCell(2).value = {
-        formula: `=IF(A${rn}="","",IFERROR(INDEX('Produtos Cadastrados'!$${pLetId}:$${pLetId},MATCH(A${rn},'Produtos Cadastrados'!$${pLetNome}:$${pLetNome},0)),"?"))`,
+      // Col A: ID do Produto — INDEX/MATCH busca ID pelo nome selecionado em B
+      row.getCell(1).value = {
+        formula: `=IF(B${rn}="","",IFERROR(INDEX('Produtos Cadastrados'!$${pLetId}:$${pLetId},MATCH(B${rn},'Produtos Cadastrados'!$${pLetNome}:$${pLetNome},0)),"?"))`,
         result: '',
       };
-      row.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
-      row.getCell(2).font = { italic: true, color: { argb: 'FF0369A1' }, size: 9 };
-      row.getCell(2).protection = { locked: true };
+      row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
+      row.getCell(1).font = { italic: true, color: { argb: 'FF0369A1' }, size: 9 };
+      row.getCell(1).protection = { locked: true };
+
+      // Col B: Nome / Descrição — editável, dropdown com nomes dos produtos
+      row.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
+      row.getCell(2).protection = { locked: false };
 
       // Col C: Quantidade — editável
       row.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
       row.getCell(3).protection = { locked: false };
       row.getCell(3).numFmt = '#,##0.##';
 
-      // Col D: Valor de Compra — INDEX/MATCH busca valor_compra pelo nome
-      row.getCell(4).value = {
-        formula: `=IF(A${rn}="","",IFERROR(INDEX('Produtos Cadastrados'!$${pLetVC}:$${pLetVC},MATCH(A${rn},'Produtos Cadastrados'!$${pLetNome}:$${pLetNome},0)),0))`,
-        result: 0,
-      };
-      row.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
-      row.getCell(4).font = { italic: true, color: { argb: 'FF0369A1' } };
+      // Col D: Valor de Compra — editável (livre, só número)
+      row.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
+      row.getCell(4).protection = { locked: false };
       row.getCell(4).numFmt = '#,##0.00';
-      row.getCell(4).protection = { locked: true };
 
-      // Col E: Desconto (%) — editável (5=5% desc | -5=5% acrésc)
+      // Col E: Desconto (%) — editável
       row.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
       row.getCell(5).protection = { locked: false };
       row.getCell(5).numFmt = '0.00"%"';
 
-      // Col F: Valor Líquido = D * (1 - E/100)  [E positivo=desconto, E negativo=acréscimo]
+      // Col F: Valor Líquido = D * (1 - E/100)
       row.getCell(6).value = {
         formula: `=IF(D${rn}="","",D${rn}*(1-E${rn}/100))`,
         result: 0,
@@ -271,9 +266,9 @@ Deno.serve(async (req) => {
       row.commit();
     }
 
-    // Data validation: col A — dropdown com nomes dos produtos
-    const nomesProdutosRef = `'Produtos Cadastrados'!$${pLetNome}$2:$${pLetNome}$${1 + produtos.length + 500}`;
-    wsPedido.dataValidations.add(`A15:A${14 + MAX_ROWS_PEDIDO}`, {
+    // Data validation: col B — dropdown com nomes dos produtos
+    const nomesProdutosRef = "'Produtos Cadastrados'!$" + pLetNome + "$2:$" + pLetNome + '$' + (1 + produtos.length + 500);
+    wsPedido.dataValidations.add('B15:B' + (14 + MAX_ROWS_PEDIDO), {
       type: 'list',
       allowBlank: true,
       showDropDown: false,
@@ -281,12 +276,19 @@ Deno.serve(async (req) => {
       formulae: [nomesProdutosRef],
     });
 
-    // Formatação condicional: linha em verde quando A preenchida
+    // Data validation: col D — somente número
+    wsPedido.dataValidations.add('D15:D' + (14 + MAX_ROWS_PEDIDO), {
+      type: 'decimal', operator: 'greaterThanOrEqual',
+      showErrorMessage: true, errorTitle: 'Inválido',
+      error: 'Informe um valor numérico.', formulae: [0],
+    });
+
+    // Formatação condicional: linha em verde quando B preenchida
     wsPedido.addConditionalFormatting({
       ref: `A15:${lastPedidoCol}${14 + MAX_ROWS_PEDIDO}`,
       rules: [{
         type: 'expression', priority: 1,
-        formulae: [`$A15<>""`],
+        formulae: [`$B15<>""`],
         style: {
           font: { color: { argb: 'FF166534' } },
           fill: { type: 'pattern', pattern: 'solid', bgColor: NEW_BG },
@@ -390,7 +392,18 @@ Deno.serve(async (req) => {
     });
 
     // ── Função para gerar hash original dos campos editáveis chave ────────────
+    const fmt = (v) => {
+      if (v === null || v === undefined || v === '') return '0';
+      const n = Number(v);
+      if (isNaN(n)) return String(v);
+      // Mesma lógica do TEXT(x,"0.##") do Excel: remove zeros à direita
+      return n % 1 === 0 ? String(n) : parseFloat(n.toFixed(2)).toString();
+    };
     const computeOrigHash = (p) => {
+      const custoCalc = (p.valor_compra || 0) + (p.custo_frete_padrao || 0) +
+                        (p.custo_imposto1_padrao || 0) + (p.custo_imposto2_padrao || 0) -
+                        (p.desconto_compra_padrao || 0);
+      const valorLiq = (p.valor_compra || 0); // desconto_perc inicia em 0
       const parts = [
         p.campo_hierarquico_1 || '',
         p.campo_hierarquico_2 || '',
@@ -399,21 +412,28 @@ Deno.serve(async (req) => {
         p.casas_decimais      ?? 0,
         p.preco_venda_padrao  ?? 0,
         p.unidade_principal   || '',
-        p.estoque_minimo      ?? 0,
-        p.estoque_ideal       ?? 0,
-        p.estoque_maximo      ?? 0,
-        p.custo_frete_padrao  ?? 0,
-        p.custo_imposto1_padrao ?? 0,
-        p.custo_imposto2_padrao ?? 0,
-        p.desconto_compra_padrao ?? 0,
-        p.ativo !== false ? 'SIM' : 'NÃO',
+        fmt(p.custo_frete_padrao  ?? 0),
+        fmt(p.custo_imposto1_padrao ?? 0),
+        fmt(p.custo_imposto2_padrao ?? 0),
+        fmt(p.desconto_compra_padrao ?? 0),
+        valorLiq,
       ];
       return parts.join('|');
     };
 
     // ── Fórmula para hash dinâmico (deve espelhar computeOrigHash) ────────────
     const hashFormula = (rn) =>
-      `CONCATENATE(${letH1}${rn},"|",${letH2}${rn},"|",${letH3}${rn},"|",${letVC}${rn},"|",${letCD}${rn},"|",${letPV}${rn},"|",${letUN}${rn},"|",${letFR}${rn},"|",${letI1}${rn},"|",${letI2}${rn},"|",${letDC}${rn})`;
+      'CONCATENATE(' + letH1 + rn + ',"|",'
+      + letH2 + rn + ',"|",'
+      + letH3 + rn + ',"|",'
+      + letVC + rn + ',"|",'
+      + letCD + rn + ',"|",'
+      + letPV + rn + ',"|",'
+      + letUN + rn + ',"|",'
+      + letFR + rn + ',"|",'
+      + letI1 + rn + ',"|",'
+      + letI2 + rn + ',"|",'
+      + letDC + rn + ')';
 
     // ── Fórmula Nome completo ─────────────────────────────────────────────────
     const nomeFormula = (rn) =>

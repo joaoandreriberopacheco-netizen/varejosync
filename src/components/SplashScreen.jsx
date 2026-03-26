@@ -13,20 +13,29 @@ export default function SplashScreen({ onFinish, darkMode }) {
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('visible'), 40);
-    const t2 = setTimeout(() => setPhase('out'), 800);
-    const t3 = setTimeout(() => onFinish?.(), 1250);
-    
-    // Anima a barra de progresso de 0 a 100% em 0.8 segundos
+    const t2 = setTimeout(() => setPhase('out'), 2400);
+    const t3 = setTimeout(() => onFinish?.(), 3100);
+
+    // Barra de progresso: 0→90% em 2s, depois 90→100% rapidinho
+    const totalMs = 2200;
+    const interval = 50;
+    const steps = totalMs / interval;
+    let step = 0;
     const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        const next = prev + (100 / 16); // 16 frames em 0.8s
-        return next >= 100 ? 100 : next;
-      });
-    }, 50);
-    
-    return () => { 
-      clearTimeout(t1); 
-      clearTimeout(t2); 
+      step++;
+      // ease-out: cresce rápido no início, desacelera no fim
+      const ratio = step / steps;
+      const eased = 1 - Math.pow(1 - ratio, 2);
+      setProgress(Math.min(95, eased * 100));
+      if (step >= steps) {
+        clearInterval(progressInterval);
+        setProgress(100);
+      }
+    }, interval);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
       clearTimeout(t3);
       clearInterval(progressInterval);
     };
