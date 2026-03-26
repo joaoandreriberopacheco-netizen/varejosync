@@ -72,6 +72,7 @@ export default function Layout({ children, currentPageName }) {
   const [darkMode, setDarkMode] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
   const [loadError, setLoadError] = useState(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
@@ -129,7 +130,6 @@ export default function Layout({ children, currentPageName }) {
       }
     } catch (error) {
       console.error('Erro ao carregar usuário:', error);
-      // Tenta cache como fallback
       const cached = getCachedUserSession();
       if (cached?.user) {
         setCurrentUser(cached.user);
@@ -137,6 +137,8 @@ export default function Layout({ children, currentPageName }) {
       } else {
         setLoadError(error);
       }
+    } finally {
+      setIsLoadingUser(false);
     }
   };
 
@@ -269,6 +271,14 @@ export default function Layout({ children, currentPageName }) {
     }
     return false;
   };
+
+  if (isLoadingUser) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
+        <div className="w-8 h-8 border-4 border-gray-200 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (loadError) {
     return (
