@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,11 @@ export default function ConsumoInternoPage() {
   const [itemDraft, setItemDraft] = useState({ produto_id: '', quantidade: 1 });
   const [novoCadastro, setNovoCadastro] = useState({ tipo: '', valor: '' });
   const [showProdutoSelector, setShowProdutoSelector] = useState(false);
+  const [mobileStep, setMobileStep] = useState('destinacao');
+  const destinacaoRef = useRef(null);
+  const responsavelRef = useRef(null);
+  const observacoesRef = useRef(null);
+  const tagsRef = useRef(null);
 
   useEffect(() => {
     loadData();
@@ -119,6 +124,18 @@ export default function ConsumoInternoPage() {
     loadData();
   };
 
+  useEffect(() => {
+    if (mobileStep === 'destinacao') {
+      setTimeout(() => destinacaoRef.current?.focus?.(), 150);
+    }
+    if (mobileStep === 'intervenientes') {
+      setTimeout(() => responsavelRef.current?.focus?.(), 150);
+    }
+    if (mobileStep === 'minuta') {
+      setTimeout(() => observacoesRef.current?.focus?.(), 150);
+    }
+  }, [mobileStep]);
+
   const handleSubmit = async () => {
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
       toast.error('Preencha destinação, responsável e itens');
@@ -164,6 +181,11 @@ export default function ConsumoInternoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900 md:p-6">
+      <div className="mb-4 flex gap-2 md:hidden">
+        <button onClick={() => setMobileStep('destinacao')} className={`flex-1 rounded-2xl px-3 py-2 text-xs font-semibold shadow-sm ${mobileStep === 'destinacao' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Destinação</button>
+        <button onClick={() => setMobileStep('intervenientes')} className={`flex-1 rounded-2xl px-3 py-2 text-xs font-semibold shadow-sm ${mobileStep === 'intervenientes' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Intervenientes / Itens</button>
+        <button onClick={() => setMobileStep('minuta')} className={`flex-1 rounded-2xl px-3 py-2 text-xs font-semibold shadow-sm ${mobileStep === 'minuta' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Minuta</button>
+      </div>
       <div className="mx-auto max-w-6xl space-y-5">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -178,7 +200,7 @@ export default function ConsumoInternoPage() {
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-5">
-            <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800">
+            <div className={`rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800 ${mobileStep !== 'destinacao' ? 'hidden md:block' : ''}`}>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="Caixa ativo do dia">
                   <Select value={formData.turno_caixa_id} onValueChange={(value) => setFormData((prev) => ({ ...prev, turno_caixa_id: value }))}>
@@ -194,7 +216,7 @@ export default function ConsumoInternoPage() {
                 <Field label="Destinação">
                   <div className="flex gap-2">
                     <Select value={formData.destinacao} onValueChange={(value) => setFormData((prev) => ({ ...prev, destinacao: value }))}>
-                      <SelectTrigger className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900">
+                      <SelectTrigger ref={destinacaoRef} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900">
                         <SelectValue placeholder="Escolha a destinação" />
                       </SelectTrigger>
                       <SelectContent>
@@ -205,10 +227,16 @@ export default function ConsumoInternoPage() {
                   </div>
                 </Field>
 
+                <div className="md:hidden">
+                  <Button type="button" onClick={() => setMobileStep('intervenientes')} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+                    Próximo
+                  </Button>
+                </div>
+
                 <Field label="Quem recebeu">
                   <div className="flex gap-2">
                     <Select value={formData.responsavel_recebimento} onValueChange={(value) => setFormData((prev) => ({ ...prev, responsavel_recebimento: value }))}>
-                      <SelectTrigger className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900">
+                      <SelectTrigger ref={responsavelRef} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900">
                         <SelectValue placeholder="Selecione o responsável" />
                       </SelectTrigger>
                       <SelectContent>
@@ -220,17 +248,17 @@ export default function ConsumoInternoPage() {
                 </Field>
 
                 <Field label="Tags">
-                  <Input className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900" placeholder="Ex: obra, manutenção" onChange={(e) => setFormData((prev) => ({ ...prev, tags: e.target.value.split(',').map((item) => item.trim()).filter(Boolean) }))} />
+                  <Input ref={tagsRef} type="text" inputMode="text" className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900" placeholder="Ex: obra, manutenção" onChange={(e) => setFormData((prev) => ({ ...prev, tags: e.target.value.split(',').map((item) => item.trim()).filter(Boolean) }))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setMobileStep('intervenientes'); } }} />
                 </Field>
               </div>
 
               <div className="mt-4">
                 <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Observações</Label>
-                <Textarea className="min-h-[100px] rounded-[24px] border-0 bg-gray-100 shadow-sm dark:bg-gray-900" value={formData.observacoes} onChange={(e) => setFormData((prev) => ({ ...prev, observacoes: e.target.value }))} />
+                <Textarea ref={observacoesRef} className="min-h-[100px] rounded-[24px] border-0 bg-gray-100 shadow-sm dark:bg-gray-900" value={formData.observacoes} onChange={(e) => setFormData((prev) => ({ ...prev, observacoes: e.target.value }))} />
               </div>
             </div>
 
-            <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800">
+            <div className={`rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800 ${mobileStep !== 'intervenientes' ? 'hidden md:block' : ''}`}>
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">Itens consumidos</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(totalAtual)}</p>
@@ -256,10 +284,15 @@ export default function ConsumoInternoPage() {
                   </div>
                 ))}
               </div>
+              <div className="mt-4 md:hidden">
+                <Button type="button" onClick={() => setMobileStep('minuta')} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+                  Próximo
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-5">
+          <div className={`space-y-5 ${mobileStep !== 'minuta' ? 'hidden md:block' : ''}`}>
             <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800">
               <p className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Minuta e anexos</p>
               <div className="space-y-3">
@@ -283,9 +316,14 @@ export default function ConsumoInternoPage() {
                 </div>
               </div>
 
-              <Button type="button" onClick={handleSubmit} className="mt-5 h-12 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
-                Confirmar consumo interno
-              </Button>
+              <div className="mt-5 flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setMobileStep('intervenientes')} className="h-12 flex-1 rounded-2xl border-0 shadow-sm md:hidden">
+                  Voltar
+                </Button>
+                <Button type="button" onClick={handleSubmit} className="h-12 flex-1 rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+                  Confirmar consumo interno
+                </Button>
+              </div>
             </div>
 
             <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800">
@@ -329,7 +367,7 @@ export default function ConsumoInternoPage() {
 
       <AssinaturaConsumoDialog open={showAssinatura} onOpenChange={setShowAssinatura} onConfirm={handleAssinaturaConfirm} />
       <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} />
-      <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={addItem} />
+      <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={(item) => { addItem(item); setMobileStep('intervenientes'); setShowProdutoSelector(true); }} />
     </div>
   );
 }

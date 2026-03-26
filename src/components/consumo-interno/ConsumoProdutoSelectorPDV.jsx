@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,9 @@ const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { m
 export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos, onAddItem }) {
   const [search, setSearch] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
-  const [quantidade, setQuantidade] = useState(1);
+  const [quantidade, setQuantidade] = useState('1');
+  const searchRef = useRef(null);
+  const quantidadeRef = useRef(null);
 
   const produtosFiltrados = useMemo(() => {
     const term = search.toLowerCase().trim();
@@ -26,8 +28,20 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
   const resetState = () => {
     setSearch('');
     setProdutoSelecionado(null);
-    setQuantidade(1);
+    setQuantidade('1');
   };
+
+  useEffect(() => {
+    if (!open) return;
+    if (!produtoSelecionado) {
+      setTimeout(() => searchRef.current?.focus(), 150);
+    } else {
+      setTimeout(() => {
+        quantidadeRef.current?.focus();
+        quantidadeRef.current?.select();
+      }, 150);
+    }
+  }, [open, produtoSelecionado]);
 
   const handleClose = (value) => {
     if (!value) resetState();
@@ -36,19 +50,20 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
 
   const handleSelect = (produto) => {
     setProdutoSelecionado(produto);
-    setQuantidade(1);
+    setQuantidade('1');
   };
 
   const handleAdd = () => {
-    if (!produtoSelecionado || quantidade <= 0) return;
+    const quantidadeNumerica = Number(String(quantidade).replace(',', '.')) || 0;
+    if (!produtoSelecionado || quantidadeNumerica <= 0) return;
     const custoUnitario = produtoSelecionado.preco_custo_calculado || 0;
     onAddItem({
       produto_id: produtoSelecionado.id,
       produto_nome: produtoSelecionado.nome,
-      quantidade,
+      quantidade: quantidadeNumerica,
       unidade_medida: produtoSelecionado.unidade_principal || 'UN',
       custo_unitario: custoUnitario,
-      subtotal: quantidade * custoUnitario,
+      subtotal: quantidadeNumerica * custoUnitario,
     });
     resetState();
     onOpenChange(false);
@@ -64,9 +79,18 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
               <div className="relative mt-3">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
+                  ref={searchRef}
                   autoFocus
+                  type="text"
+                  inputMode="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && produtosFiltrados[0]) {
+                      e.preventDefault();
+                      handleSelect(produtosFiltrados[0]);
+                    }
+                  }}
                   placeholder="Buscar produto..."
                   className="h-12 rounded-2xl border-0 bg-gray-100 pl-10 shadow-sm dark:bg-gray-800"
                 />
@@ -108,12 +132,28 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
             <div className="space-y-5 p-5">
               <div className="rounded-[28px] bg-gray-50 p-5 text-center shadow-sm dark:bg-gray-800">
                 <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Quantidade</p>
-                <div className="mt-4 flex items-center justify-center gap-5">
-                  <Button type="button" variant="outline" size="icon" className="h-12 w-12 rounded-full border-0 shadow-sm" onClick={() => setQuantidade((prev) => Math.max(1, prev - 1))}>
+                <div className="mt-4 flex items-center justify-center gap-4">
+                  <Button type="button" variant="outline" size="icon" className="h-12 w-12 rounded-full border-0 shadow-sm" onClick={() => setQuantidade(String(Math.max(1, (Number(String(quantidade).replace(',', '.')) || 1) - 1)))}>
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <div className="w-24 text-center text-4xl font-bold text-gray-900 dark:text-white">{quantidade}</div>
-                  <Button type="button" size="icon" className="h-12 w-12 rounded-full bg-gray-900 text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900" onClick={() => setQuantidade((prev) => prev + 1)}>
+                  <Input
+                    ref={quantidadeRef}
+                    type="number"
+                    inputMode="decimal"
+                    min="1"
+                    step="1"
+                    value={quantidade}
+                    onChange={(e) => setQuantidade(e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAdd();
+                      }
+                    }}
+                    className="h-16 w-24 rounded-2xl border-0 bg-white text-center text-3xl font-bold text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white"
+                  />
+                  <Button type="button" size="icon" className="h-12 w-12 rounded-full bg-gray-900 text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900" onClick={() => setQuantidade(String((Number(String(quantidade).replace(',', '.')) || 0) + 1))}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -125,7 +165,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
                 </div>
                 <div className="mt-3 flex items-center justify-between text-lg font-semibold text-gray-900 dark:text-white">
                   <span>Total</span>
-                  <span>{formatCurrency((produtoSelecionado.preco_custo_calculado || 0) * quantidade)}</span>
+                  <span>{formatCurrency((produtoSelecionado.preco_custo_calculado || 0) * ((Number(String(quantidade).replace(',', '.')) || 0)))}</span>
                 </div>
               </div>
               <Button type="button" onClick={handleAdd} className="h-12 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
