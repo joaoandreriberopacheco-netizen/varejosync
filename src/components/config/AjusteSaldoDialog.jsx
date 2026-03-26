@@ -1,0 +1,125 @@
+import React, { useEffect, useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+
+export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }) {
+  const [saldoInformado, setSaldoInformado] = useState('0');
+  const [observacao, setObservacao] = useState('Ajuste manual de saldo');
+  const [currentUser, setCurrentUser] = useState(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (open && conta) {
+      setSaldoInformado(String(conta.saldo_atual || 0));
+      base44.auth.me().then(setCurrentUser).catch(() => setCurrentUser(null));
+    }
+  }, [open, conta?.id]);
+
+  if (!conta) return null;
+
+  const saldoAtual = Number(conta.saldo_atual || 0);
+  const saldoNovo = Number(saldoInformado || 0);
+  const diferenca = saldoNovo - saldoAtual;
+  const isReforco = diferenca > 0;
+  const isSangria = diferenca < 0;
+
+  const formatValor = (valor) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const handleSalvar = async () => {
+    if (diferenca === 0) {
+      toast({ title: 'Nenhum ajuste necessário', className: 'bg-white dark:bg-gray-800' });
+      onOpenChange(false);
+      return;
+    }
+
+    await base44.entities.MovimentosCaixa.create({
+      tipo: isReforco ? 'Reforço' : 'Sangria',
+      valor: Math.abs(diferenca),
+      observacao: observacao || 'Ajuste manual de saldo',
+      conta_id: conta.id,
+      usuario_responsavel_id: currentUser?.id || 'sistema',
+      usuario_responsavel_nome: currentUser?.full_name || currentUser?.email || 'Sistema'
+    });
+
+    await base44.entities.ContasFinanceiras.update(conta.id, {
+      saldo_atual: saldoNovo
+    });
+
+    toast({
+      title: isReforco ? 'Ajuste para mais registrado' : 'Ajuste para menos registrado',
+      className: 'bg-white dark:bg-gray-800'
+    });
+
+    onSaved();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <Scale className="w-4 h-4 text-gray-400" />
+            Ajuste de Saldo
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-3 shadow-sm space-y-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Conta</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{conta.nome}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Saldo atual: {formatValor(saldoAtual)}</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Novo saldo real</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={saldoInformado}
+              onChange={(e) => setSaldoInformado(e.target.value)}
+              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-10 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-gray-500 dark:text-gray-400 font-medium">Observação</Label>
+            <Input
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm h-10 text-sm"
+            />
+          </div>
+
+          <div className="rounded-2xl bg-white dark:bg-gray-800 p-3 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Diferença</span>
+              <div className="flex items-center gap-2">
+                {isReforco && <ArrowUpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                {isSangria && <ArrowDownCircle className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                <span className={`text-sm font-semibold ${isReforco ? 'text-emerald-600 dark:text-emerald-400' : isSangria ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                  {diferenca >= 0 ? '+' : '-'}{formatValor(Math.abs(diferenca))}
+                </span>
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
+              Será criado um movimento de {isReforco ? 'reforço' : isSangria ? 'sangria' : 'ajuste zero'}.
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 pt-1">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="h-8 text-xs">Cancelar</Button>
+          <Button size="sm" onClick={handleSalvar} className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-200 dark:text-gray-900 text-white h-8 text-xs">
+            Confirmar Ajuste
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

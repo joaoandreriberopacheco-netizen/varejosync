@@ -5,12 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Wallet, Edit, Trash2, PlusCircle } from 'lucide-react';
+import { Wallet, Edit, Trash2, PlusCircle, Scale } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 
 export default function ContasFinanceirasManager() {
   const [contas, setContas] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAjusteOpen, setIsAjusteOpen] = useState(false);
   const [selectedConta, setSelectedConta] = useState(null);
   const [formData, setFormData] = useState({
     nome: '', tipo: 'Conta Bancária', banco: '', agencia: '', conta: '',
@@ -32,6 +34,11 @@ export default function ContasFinanceirasManager() {
     setFormData({ nome: '', tipo: 'Conta Bancária', banco: '', agencia: '', conta: '',
       saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false });
     setIsDialogOpen(true);
+  };
+
+  const handleAjusteSaldo = (conta) => {
+    setSelectedConta(conta);
+    setIsAjusteOpen(true);
   };
 
   const handleDelete = async (conta) => {
@@ -110,6 +117,10 @@ export default function ContasFinanceirasManager() {
               </div>
               {/* Ações */}
               <div className="flex gap-1 flex-shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => handleAjusteSaldo(conta)}
+                  className="h-7 w-7 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400">
+                  <Scale className="h-3.5 w-3.5" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleEdit(conta)}
                   className="h-7 w-7 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                   <Edit className="h-3.5 w-3.5" />
@@ -123,6 +134,13 @@ export default function ContasFinanceirasManager() {
           ))}
         </div>
       )}
+
+      <AjusteSaldoDialog
+        open={isAjusteOpen}
+        onOpenChange={setIsAjusteOpen}
+        conta={selectedConta}
+        onSaved={loadContas}
+      />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-sm dark:bg-gray-900 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
