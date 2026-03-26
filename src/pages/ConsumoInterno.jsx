@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Package, MapPin, UserRound, Search } from 'lucide-react';
+import { Package, MapPin, UserRound, Search, Plus } from 'lucide-react';
 import AssinaturaConsumoDialog from '@/components/consumo-interno/AssinaturaConsumoDialog';
 import ConsumoResumoDialog from '@/components/consumo-interno/ConsumoResumoDialog';
 import ConsumoProdutoSelectorPDV from '@/components/consumo-interno/ConsumoProdutoSelectorPDV';
-import { Plus } from 'lucide-react';
-import ConsumoFormDialog from '@/components/consumo-interno/ConsumoFormDialog';
+import ConsumoInternoFormPage from '@/components/consumo-interno/ConsumoInternoFormPage';
 import ComprovanteConsumoInterno from '@/components/consumo-interno/ComprovanteConsumoInterno';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -39,15 +38,8 @@ export default function ConsumoInternoPage() {
     assinatura_recolhedor_nome: '',
   });
   const [novoCadastro, setNovoCadastro] = useState({ tipo: '', valor: '' });
-  const [mobileStep, setMobileStep] = useState('destinacao');
-  const destinacaoRef = useRef(null);
-  const responsavelRef = useRef(null);
-  const observacoesRef = useRef(null);
-  const tagsRef = useRef(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     const [user, turnosData, produtosData, destinacoesData, responsaveisData, consumosData] = await Promise.all([
@@ -58,7 +50,6 @@ export default function ConsumoInternoPage() {
       base44.entities.ResponsavelConsumoInterno.list(),
       base44.entities.ConsumoInterno.list('-created_date'),
     ]);
-
     setCurrentUser(user);
     setTurnos(turnosData);
     setProdutos(produtosData.filter((item) => item.ativo !== false));
@@ -82,25 +73,15 @@ export default function ConsumoInternoPage() {
 
   const addItem = (novoItem) => {
     if (!novoItem?.produto_id) return;
-    setFormData((prev) => ({
-      ...prev,
-      itens: [...prev.itens, novoItem],
-    }));
+    setFormData((prev) => ({ ...prev, itens: [...prev.itens, novoItem] }));
   };
 
   const uploadAttachment = async (file, tipoDocumento, referenciaId, referenciaNumero) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     await base44.entities.AnexoDocumento.create({
-      referencia_tipo: 'Outro',
-      referencia_id: referenciaId,
-      referencia_numero: referenciaNumero,
-      tipo_documento: tipoDocumento,
-      nome_arquivo: file.name,
-      url_drive: file_url,
-      mime_type: file.type,
-      tamanho_bytes: file.size,
-      origem: 'upload_manual',
-      descricao: 'Consumo interno',
+      referencia_tipo: 'Outro', referencia_id: referenciaId, referencia_numero: referenciaNumero,
+      tipo_documento: tipoDocumento, nome_arquivo: file.name, url_drive: file_url,
+      mime_type: file.type, tamanho_bytes: file.size, origem: 'upload_manual', descricao: 'Consumo interno',
     });
   };
 
@@ -124,25 +105,16 @@ export default function ConsumoInternoPage() {
     loadData();
   };
 
-  useEffect(() => {
-    if (mobileStep === 'destinacao') setTimeout(() => destinacaoRef.current?.focus?.(), 150);
-    if (mobileStep === 'itens') setTimeout(() => responsavelRef.current?.focus?.(), 150);
-    if (mobileStep === 'minuta') setTimeout(() => observacoesRef.current?.focus?.(), 150);
-  }, [mobileStep]);
-
   const handleSubmit = async () => {
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
       toast.error('Preencha destinação, responsável e itens');
       return;
     }
-
     const turno = turnos.find((item) => item.id === formData.turno_caixa_id);
     const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
     const numero = response?.data?.numero || `CI-${Date.now()}`;
     const created = await base44.entities.ConsumoInterno.create({
-      ...formData,
-      numero,
-      status: 'Confirmado',
+      ...formData, numero, status: 'Confirmado',
       turno_caixa_numero: turno?.numero || '',
       usuario_solicitante_id: currentUser?.id,
       usuario_solicitante_nome: currentUser?.full_name || currentUser?.email,
@@ -150,43 +122,57 @@ export default function ConsumoInternoPage() {
       valor_total: totalAtual,
       data_confirmacao: new Date().toISOString(),
     });
-
     const fileInput = document.getElementById('consumo-anexo-input');
     const files = Array.from(fileInput?.files || []);
     await Promise.all(files.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero)));
-
     if (formData.assinatura_recolhedor_url) {
       await base44.entities.AnexoDocumento.create({
-        referencia_tipo: 'Outro',
-        referencia_id: created.id,
-        referencia_numero: numero,
-        tipo_documento: 'Contrato',
-        nome_arquivo: `assinatura-${numero}.png`,
-        url_drive: formData.assinatura_recolhedor_url,
-        mime_type: 'image/png',
-        origem: 'upload_manual',
-        descricao: `Assinatura do recolhedor: ${formData.assinatura_recolhedor_nome}`,
+        referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
+        tipo_documento: 'Contrato', nome_arquivo: `assinatura-${numero}.png`,
+        url_drive: formData.assinatura_recolhedor_url, mime_type: 'image/png',
+        origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${formData.assinatura_recolhedor_nome}`,
       });
     }
-
     toast.success('Consumo interno registrado');
     setConsumoSelecionado(created);
     setShowForm(false);
     setShowComprovante(true);
-    setFormData({
-      turno_caixa_id: turnos[0]?.id || '',
-      destinacao: '',
-      responsavel_recebimento: '',
-      tags: [],
-      observacoes: '',
-      itens: [],
-      assinatura_recolhedor_url: '',
-      assinatura_recolhedor_nome: '',
-    });
-    setMobileStep('destinacao');
+    setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' });
     if (fileInput) fileInput.value = '';
     loadData();
   };
+
+  if (showForm) {
+    return (
+      <>
+        <ConsumoInternoFormPage
+          onBack={() => setShowForm(false)}
+          formData={formData}
+          setFormData={setFormData}
+          turnos={turnos}
+          destinacoes={destinacoes}
+          responsaveis={responsaveis}
+          setNovoCadastro={setNovoCadastro}
+          totalAtual={totalAtual}
+          onOpenSelector={() => setShowProdutoSelector(true)}
+          currentUser={currentUser}
+          onOpenAssinatura={() => setShowAssinatura(true)}
+          onSubmit={handleSubmit}
+        />
+        <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
+          <DialogContent className="max-w-sm rounded-[28px] border-0 bg-white p-5 shadow-2xl dark:bg-gray-900">
+            <div className="space-y-4">
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">Novo cadastro interno</p>
+              <Input value={novoCadastro.valor} onChange={(e) => setNovoCadastro((prev) => ({ ...prev, valor: e.target.value }))} placeholder={novoCadastro.tipo === 'destinacao' ? 'Nome da destinação' : 'Nome do responsável'} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-800" />
+              <Button onClick={handleSalvarCadastro} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">Salvar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <AssinaturaConsumoDialog open={showAssinatura} onOpenChange={setShowAssinatura} onConfirm={handleAssinaturaConfirm} />
+        <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={(item) => { addItem(item); setShowProdutoSelector(false); }} />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900 md:p-6">
@@ -194,7 +180,7 @@ export default function ConsumoInternoPage() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-2xl font-semibold text-gray-900 dark:text-white">Consumo Interno</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Consulta principal das movimentações internas do dia com acesso rápido ao novo lançamento.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Movimentações internas do dia.</p>
           </div>
           <div className="rounded-[24px] bg-white px-4 py-3 shadow-sm dark:bg-gray-800">
             <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total em aberto hoje</p>
@@ -210,7 +196,6 @@ export default function ConsumoInternoPage() {
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar" className="h-10 rounded-2xl border-0 bg-gray-100 pl-9 shadow-sm dark:bg-gray-900" />
             </div>
           </div>
-
           <div className="space-y-2">
             {consumosFiltrados.map((item) => (
               <button key={item.id} onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 text-left shadow-sm dark:bg-gray-900">
@@ -234,50 +219,16 @@ export default function ConsumoInternoPage() {
         </div>
       </div>
 
-      <ConsumoFormDialog
-        open={showForm}
-        onOpenChange={setShowForm}
-        mobileStep={mobileStep}
-        setMobileStep={setMobileStep}
-        formData={formData}
-        setFormData={setFormData}
-        turnos={turnos}
-        destinacoes={destinacoes}
-        responsaveis={responsaveis}
-        setNovoCadastro={setNovoCadastro}
-        destinacaoRef={destinacaoRef}
-        responsavelRef={responsavelRef}
-        tagsRef={tagsRef}
-        observacoesRef={observacoesRef}
-        totalAtual={totalAtual}
-        onOpenSelector={() => setShowProdutoSelector(true)}
-        currentUser={currentUser}
-        onOpenAssinatura={() => setShowAssinatura(true)}
-        onSubmit={handleSubmit}
-      />
-
       <button
         type="button"
-        onClick={() => { setMobileStep('destinacao'); setShowForm(true); }}
+        onClick={() => setShowForm(true)}
         className="fixed bottom-24 right-4 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-white shadow-2xl transition-transform hover:scale-105 dark:bg-white dark:text-gray-900 md:bottom-6 md:right-6"
         aria-label="Novo consumo interno"
       >
         <Plus className="h-6 w-6" />
       </button>
 
-      <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
-        <DialogContent className="max-w-sm rounded-[28px] border-0 bg-white p-5 shadow-2xl dark:bg-gray-900">
-          <div className="space-y-4">
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">Novo cadastro interno</p>
-            <Input value={novoCadastro.valor} onChange={(e) => setNovoCadastro((prev) => ({ ...prev, valor: e.target.value }))} placeholder={novoCadastro.tipo === 'destinacao' ? 'Nome da destinação' : 'Nome do responsável'} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-800" />
-            <Button onClick={handleSalvarCadastro} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">Salvar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <AssinaturaConsumoDialog open={showAssinatura} onOpenChange={setShowAssinatura} onConfirm={handleAssinaturaConfirm} />
       <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} />
-      <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={(item) => { addItem(item); setMobileStep('itens'); setShowForm(true); }} />
       <ComprovanteConsumoInterno open={showComprovante} onClose={() => setShowComprovante(false)} consumo={consumoSelecionado} />
     </div>
   );
