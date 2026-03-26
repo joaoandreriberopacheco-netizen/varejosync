@@ -151,8 +151,9 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
             {formData.assinatura_recolhedor_nome ? `✓ ${formData.assinatura_recolhedor_nome}` : 'Coletar assinatura'}
           </Button>
           <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
-            <Paperclip className="h-4 w-4" /> Adicionar anexos
-            <input id="consumo-anexo-input" type="file" multiple className="hidden" />
+            <Paperclip className="h-4 w-4" />
+            {attachedCount > 0 ? `${attachedCount} arquivo(s)` : 'Adicionar anexos'}
+            <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={handleFileChange} />
           </label>
         </div>
         <div className="mt-4 rounded-2xl bg-gray-50 p-4 dark:bg-gray-900">
@@ -234,7 +235,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <Textarea className="rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800" value={formData.observacoes} onChange={(e) => setFormData((p) => ({ ...p, observacoes: e.target.value }))} />
         </Field>
       </div>
-      <div className="shrink-0 border-t border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
         <button onClick={() => setStep(1)} className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-lg font-semibold text-white shadow-sm dark:bg-white dark:text-gray-900">
           Próximo <ChevronRight className="h-5 w-5" />
         </button>
@@ -260,7 +261,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           )}
         </div>
       </div>
-      <div className="shrink-0 border-t border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex items-center justify-between px-1 text-sm text-gray-500 dark:text-gray-400">
           <span>{formData.itens.length} item(ns)</span>
           <span className="text-lg font-bold text-gray-900 dark:text-white">{fmt(totalAtual)}</span>
@@ -288,8 +289,9 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           ) : 'Coletar assinatura'}
         </button>
         <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
-          <Paperclip className="h-5 w-5" /> Adicionar anexos
-          <input id="consumo-anexo-input" type="file" multiple className="hidden" />
+          <Paperclip className="h-5 w-5" />
+          {attachedCount > 0 ? `${attachedCount} arquivo(s) selecionado(s)` : 'Adicionar anexos'}
+          <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={handleFileChange} />
         </label>
         <div className="rounded-2xl bg-gray-50 p-5 dark:bg-gray-800">
           <div className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-400">
@@ -304,7 +306,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           </div>
         </div>
       </div>
-      <div className="shrink-0 border-t border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => setStep(1)} className="flex h-16 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
             Voltar
@@ -333,11 +335,16 @@ export default function ConsumoInternoFormPage({
   onSubmit,
 }) {
   const [mobileStep, setMobileStep] = useState(0);
+  const [attachedCount, setAttachedCount] = useState(0);
 
   const stepLabels = ['Destino', 'Itens', 'Minuta'];
 
+  const handleFileChange = (e) => {
+    setAttachedCount(e.target.files?.length || 0);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="flex shrink-0 items-center gap-3 border-b border-gray-100 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
         <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
