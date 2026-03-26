@@ -1,9 +1,9 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Minus, DollarSign, Receipt } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, DollarSign, Receipt, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, totalReforcos, totalSangrias, totalDespesas, formatValor }) {
+export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, totalReforcos, totalSangrias, totalDespesas, formatValor, onSelectMovimento }) {
 
   const isReforcos = tipo === 'reforcos';
   const isSangrias = tipo === 'sangrias';
@@ -57,25 +57,40 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
                     <div className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">−{formatValor(d.valor)}</div>
                   </div>
                 </div>
-              )) : listaFiltrada.map((mov) => (
+              )) : listaFiltrada.map((mov) => {
+                const cancelado = mov.status_registro === 'Cancelado';
+                const editado = mov.status_registro === 'Editado';
+                return (
                 <div key={mov.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{mov.numero}</span>
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <span className={`text-sm font-semibold ${cancelado ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>{mov.numero}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(mov.created_date), 'HH:mm')}</span>
+                        {cancelado && <span className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">Cancelado</span>}
+                        {editado && <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Editado</span>}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">{mov.usuario_responsavel_nome}</div>
                     </div>
-                    <div className={`text-2xl font-bold font-glacial ${corTotal}`}>
-                      {sinal}{formatValor(mov.valor)}
+                    <div className="flex items-start gap-2">
+                      <div className={`text-2xl font-bold font-glacial ${cancelado ? 'line-through opacity-50 ' : ''}${corTotal}`}>
+                        {sinal}{formatValor(mov.valor)}
+                      </div>
+                      {onSelectMovimento && (
+                        <button onClick={() => onSelectMovimento(mov)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700">
+                          <Pencil className="w-4 h-4 text-gray-400" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   {mov.observacao && (
-                    <div className="text-sm text-gray-700 dark:text-gray-300 pt-3 border-t border-gray-100 dark:border-gray-700">{mov.observacao}</div>
+                    <div className={`text-sm pt-3 border-t border-gray-100 dark:border-gray-700 ${cancelado ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>{mov.observacao}</div>
+                  )}
+                  {mov.motivo_ajuste && (
+                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">Motivo: {mov.motivo_ajuste}</div>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>
@@ -85,7 +100,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
             <div className="flex justify-between items-center max-w-4xl mx-auto">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total do Turno</span>
               <span className={`text-2xl font-bold font-glacial ${corTotal}`}>
-                {sinal}{formatValor(total)}
+                {sinal}{formatValor(listaFiltrada.filter(item => item.status_registro !== 'Cancelado').reduce((sum, item) => sum + (item.valor || 0), 0))}
               </span>
             </div>
           </div>

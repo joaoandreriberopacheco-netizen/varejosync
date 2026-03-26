@@ -17,6 +17,7 @@ import DespesaDialog from './caixa/DespesaDialog';
 import ComprovanteDespesaDialog from './caixa/ComprovanteDespesaDialog';
 import ListaMovimentosDialog from './caixa/ListaMovimentosDialog';
 import SaldoConsolidadoDialog from './caixa/SaldoConsolidadoDialog';
+import GerenciarMovimentoDialog from './caixa/GerenciarMovimentoDialog';
 import CalculadoraCedulasDialog from './caixa/CalculadoraCedulasDialog';
 import RetornoEdicaoDialog from './caixa/RetornoEdicaoDialog';
 import VendasTurnoDialog from './caixa/VendasTurnoDialog';
@@ -177,6 +178,8 @@ export default function PDVCaixa() {
   const [activeTab, setActiveTab] = useState('balanco');
   const [showDespesaDialog, setShowDespesaDialog] = useState(false);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
+  const [showGerenciarMovimentoDialog, setShowGerenciarMovimentoDialog] = useState(false);
+  const [movimentoSelecionado, setMovimentoSelecionado] = useState(null);
   const [valorDespesa, setValorDespesa] = useState('');
   const [descricaoDespesa, setDescricaoDespesa] = useState('');
   const [categoriaDespesa, setCategoriaDespesa] = useState('Outros');
