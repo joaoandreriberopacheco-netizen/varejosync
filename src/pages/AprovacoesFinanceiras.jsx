@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter } from '@/components/
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import PedidoCompraForm from '@/components/compras/PedidoCompraForm';
+import PedidoCompraResumoDialog from '@/components/compras/PedidoCompraResumoDialog';
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -257,9 +257,11 @@ export default function AprovacoesFinanceirasPage() {
         )}
 
         {showPedidoDetails && selectedPedido && (
-          <Dialog open={showPedidoDetails} onOpenChange={setShowPedidoDetails}>
-            <PedidoCompraForm pedido={selectedPedido} isOpen={showPedidoDetails} onClose={() => setShowPedidoDetails(false)} readOnly />
-          </Dialog>
+          <PedidoCompraResumoDialog
+            open={showPedidoDetails}
+            onOpenChange={setShowPedidoDetails}
+            pedido={selectedPedido}
+          />
         )}
 
         <OperacaoAuthenticator
