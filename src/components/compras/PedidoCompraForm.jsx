@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,9 @@ import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
+  const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
+  const isRestoringDraftRef = useRef(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const [formData, setFormData] = useState(pedido || {
     fornecedor_id: '',
     fornecedor_nome: '',
@@ -113,8 +116,75 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       setFormData(pedido);
       setHistory([pedido]);
       setHistoryIndex(0);
+      return;
     }
-  }, [pedido]);
+
+    const savedDraft = localStorage.getItem(draftKey);
+    if (!savedDraft) return;
+
+    try {
+      const parsedDraft = JSON.parse(savedDraft);
+      if (!parsedDraft?.data) return;
+      isRestoringDraftRef.current = true;
+      setFormData(parsedDraft.data);
+      setHistory([parsedDraft.data]);
+      setHistoryIndex(0);
+      setDraftRestored(true);
+    } catch {
+      localStorage.removeItem(draftKey);
+    }
+  }, [pedido, draftKey]);
+
+  useEffect(() => {
+    if (!formData) return;
+    if (isRestoringDraftRef.current) {
+      isRestoringDraftRef.current = false;
+      return;
+    }
+
+    const hasContent = Boolean(
+      formData.fornecedor_id ||
+      formData.fornecedor_nome ||
+      formData.observacoes ||
+      formData.condicoes_pagamento ||
+      formData.tags?.length ||
+      formData.itens?.length
+    );
+
+    if (!hasContent) {
+      localStorage.removeItem(draftKey);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      localStorage.setItem(draftKey, JSON.stringify({
+        savedAt: new Date().toISOString(),
+        data: formData,
+      }));
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [formData, draftKey]);
+
+  useEffect(() => {
+    const hasUnsavedChanges = !pedido?.id && Boolean(
+      formData.fornecedor_id ||
+      formData.fornecedor_nome ||
+      formData.observacoes ||
+      formData.condicoes_pagamento ||
+      formData.tags?.length ||
+      formData.itens?.length
+    );
+
+    const handleBeforeUnload = (event) => {
+      if (!hasUnsavedChanges) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [pedido?.id, formData]);
 
   useEffect(() => {
     const loadDependencies = async () => {
@@ -472,6 +542,28 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setFormData(newData);
   };
 
+  const clearDraft = () => {
+    localStorage.removeItem(draftKey);
+  };
+
+  const handleCloseWithProtection = () => {
+    const hasUnsavedChanges = !pedido?.id && Boolean(
+      formData.fornecedor_id ||
+      formData.fornecedor_nome ||
+      formData.observacoes ||
+      formData.condicoes_pagamento ||
+      formData.tags?.length ||
+      formData.itens?.length
+    );
+
+    if (hasUnsavedChanges) {
+      const shouldLeave = window.confirm('Há um rascunho salvo localmente. Deseja sair mesmo assim?');
+      if (!shouldLeave) return;
+    }
+
+    onClose();
+  };
+
   const handleInitiateSave = () => {
     if (!formData.fornecedor_id) {
       toast({
@@ -670,6 +762,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         });
       }
 
+      clearDraft();
       toast({
         title: "Sucesso",
         description: "Pedido salvo com sucesso!",
@@ -801,7 +894,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       {isLocked && <BannerStatusPedido pedido={pedido} isMobile={false} />}
       {/* Header compacto */}
       <div className="flex-shrink-0 px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+        <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-8 w-8">
           <X className="w-4 h-4" />
         </Button>
         <div className="flex-1 flex items-center justify-between min-w-0">
@@ -835,6 +928,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
 
       </div>
+
+      {draftRestored && !pedido?.id && (
+        <div className="mx-3 mt-2 rounded-2xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800 shadow-sm dark:bg-emerald-900/30 dark:text-emerald-100">
+          Rascunho local recuperado automaticamente.
+        </div>
+      )}
 
       {/* Timeline */}
       <div className="px-2 pt-2 pb-1">

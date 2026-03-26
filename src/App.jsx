@@ -217,7 +217,6 @@ function App() {
             <NavigationTransitionOverlay />
             <AuthenticatedApp />
           </Router>
-          <Toaster />
           <VisualEditAgent />
         </NavigationTransitionProvider>
       </QueryClientProvider>

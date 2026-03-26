@@ -4,38 +4,39 @@ import { Toaster as Sonner } from "sonner";
 const Toaster = ({ ...props }) => {
   return (
     <Sonner
-      position="top-right"
+      position="top-left"
       expand={false}
       richColors
       closeButton
       toastOptions={{
-        duration: 4000,
+        duration: 5000,
         classNames: {
           toast: [
             "flex items-start gap-3 px-4 py-3.5",
-            "!rounded-2xl !shadow-lg !border-0",
-            "!min-w-[280px] !max-w-[380px]",
-            "font-sans",
+            "!rounded-[28px] !shadow-2xl !border-0",
+            "!min-w-[280px] !max-w-[420px]",
+            "font-sans overflow-hidden relative",
+            "before:absolute before:left-0 before:top-0 before:h-full before:w-28 before:rounded-l-[28px] before:opacity-80",
           ].join(" "),
           title: "!text-sm !font-semibold leading-tight",
           description: "!text-xs !mt-0.5 leading-snug opacity-80",
           icon: "!mt-0.5 !w-8 !h-8 !rounded-full !flex !items-center !justify-center !flex-shrink-0",
           closeButton: [
-            "!absolute !top-2.5 !right-2.5 !bg-transparent !border-0",
-            "!w-5 !h-5 !flex !items-center !justify-center !rounded-full",
-            "!transition-colors hover:!bg-black/10",
+            "!absolute !top-3 !right-3 !bg-transparent !border-0",
+            "!w-6 !h-6 !flex !items-center !justify-center !rounded-full",
+            "!text-black/35 dark:!text-white/50 !transition-colors hover:!bg-black/10 hover:!text-black/60",
           ].join(" "),
           success: [
-            "!bg-green-50 dark:!bg-green-900/30",
-            "!text-green-800 dark:!text-green-100",
-            "[&>[data-icon]]:!bg-green-100 dark:[&>[data-icon]]:!bg-green-800/50",
-            "[&>[data-icon]]:!text-green-600 dark:[&>[data-icon]]:!text-green-400",
+            "!bg-[#cfeecf] dark:!bg-green-900/40",
+            "!text-[#0f172a] dark:!text-green-50",
+            "before:!bg-[#9dd9b0] dark:before:!bg-green-800/60",
+            "[&>[data-icon]]:!bg-white [&>[data-icon]]:!text-green-600",
           ].join(" "),
           error: [
-            "!bg-red-50 dark:!bg-red-900/30",
-            "!text-red-800 dark:!text-red-100",
-            "[&>[data-icon]]:!bg-red-100 dark:[&>[data-icon]]:!bg-red-800/50",
-            "[&>[data-icon]]:!text-red-600 dark:[&>[data-icon]]:!text-red-400",
+            "!bg-[#f4c7cf] dark:!bg-red-900/40",
+            "!text-[#0f172a] dark:!text-red-50",
+            "before:!bg-[#e79aa8] dark:before:!bg-red-800/60",
+            "[&>[data-icon]]:!bg-white [&>[data-icon]]:!text-red-600",
           ].join(" "),
           warning: [
             "!bg-amber-50 dark:!bg-amber-900/30",
