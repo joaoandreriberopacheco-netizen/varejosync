@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Plus, Package, Paperclip, Signature, MapPin, UserRound, Search, Clock3 } from 'lucide-react';
 import AssinaturaConsumoDialog from '@/components/consumo-interno/AssinaturaConsumoDialog';
 import ConsumoResumoDialog from '@/components/consumo-interno/ConsumoResumoDialog';
+import ConsumoProdutoSelectorPDV from '@/components/consumo-interno/ConsumoProdutoSelectorPDV';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -36,6 +37,7 @@ export default function ConsumoInternoPage() {
   });
   const [itemDraft, setItemDraft] = useState({ produto_id: '', quantidade: 1 });
   const [novoCadastro, setNovoCadastro] = useState({ tipo: '', valor: '' });
+  const [showProdutoSelector, setShowProdutoSelector] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -72,22 +74,11 @@ export default function ConsumoInternoPage() {
 
   const totalAtual = useMemo(() => formData.itens.reduce((sum, item) => sum + (item.subtotal || 0), 0), [formData.itens]);
 
-  const addItem = () => {
-    const produto = produtos.find((item) => item.id === itemDraft.produto_id);
-    if (!produto) return;
-    const quantidade = Number(itemDraft.quantidade) || 0;
-    if (quantidade <= 0) return;
-    const subtotal = quantidade * (produto.valor_compra || 0);
+  const addItem = (novoItem) => {
+    if (!novoItem?.produto_id) return;
     setFormData((prev) => ({
       ...prev,
-      itens: [...prev.itens, {
-        produto_id: produto.id,
-        produto_nome: produto.nome,
-        quantidade,
-        unidade_medida: produto.unidade_principal || 'UN',
-        custo_unitario: produto.valor_compra || 0,
-        subtotal,
-      }],
+      itens: [...prev.itens, novoItem],
     }));
     setItemDraft({ produto_id: '', quantidade: 1 });
   };
@@ -245,19 +236,13 @@ export default function ConsumoInternoPage() {
                 <p className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(totalAtual)}</p>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_140px_120px]">
-                <Select value={itemDraft.produto_id} onValueChange={(value) => setItemDraft((prev) => ({ ...prev, produto_id: value }))}>
-                  <SelectTrigger className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900">
-                    <SelectValue placeholder="Escolha o material" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {produtos.map((item) => <SelectItem key={item.id} value={item.id}>{item.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Input type="number" min="0" step="0.01" value={itemDraft.quantidade} onChange={(e) => setItemDraft((prev) => ({ ...prev, quantidade: e.target.value }))} className="h-11 rounded-2xl border-0 bg-gray-100 shadow-sm dark:bg-gray-900" />
-                <Button type="button" onClick={addItem} className="h-11 rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
-                  <Plus className="mr-2 h-4 w-4" />Adicionar
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_160px]">
+                <Button type="button" variant="outline" onClick={() => setShowProdutoSelector(true)} className="h-12 justify-start rounded-2xl border-0 bg-gray-100 text-gray-700 shadow-sm hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800">
+                  <Search className="mr-2 h-4 w-4" />Escolher material estilo PDV
                 </Button>
+                <div className="flex h-12 items-center justify-center rounded-2xl bg-gray-100 px-4 text-sm font-medium text-gray-600 shadow-sm dark:bg-gray-900 dark:text-gray-300">
+                  Custo pelo calculado
+                </div>
               </div>
 
               <div className="mt-4 space-y-2">
@@ -265,7 +250,7 @@ export default function ConsumoInternoPage() {
                   <div key={`${item.produto_id}-${index}`} className="flex items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 shadow-sm dark:bg-gray-900">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{item.produto_nome}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.quantidade} {item.unidade_medida}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.quantidade} {item.unidade_medida} · custo calc. {formatCurrency(item.custo_unitario)}</p>
                     </div>
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.subtotal)}</p>
                   </div>
@@ -344,6 +329,7 @@ export default function ConsumoInternoPage() {
 
       <AssinaturaConsumoDialog open={showAssinatura} onOpenChange={setShowAssinatura} onConfirm={handleAssinaturaConfirm} />
       <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} />
+      <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={addItem} />
     </div>
   );
 }
