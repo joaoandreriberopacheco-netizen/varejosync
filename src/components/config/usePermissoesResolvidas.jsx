@@ -9,6 +9,7 @@
  *   permissoes.estoque.visualizar_produtos = true
  *   permissoes.estoque.compras.sugestoes = true
  *   permissoes.estoque.compras.hub_logistico.manifestos = true
+ *   permissoes.consumo_interno.acesso = true
  *   etc.
  */
 
@@ -267,7 +268,7 @@ export const ALL_MENU_ITEMS = [
     name: 'Consumo Interno',
     icon: ClipboardPenLine,
     page: 'ConsumoInterno',
-    permissaoCheck: (p) => p?.homepage?.acoes_rapidas === true || p?.estoque?.visualizar_produtos === true || p?.financeiro?.caixas_ativos === true
+    permissaoCheck: (p) => p?.consumo_interno?.acesso === true
   },
   {
     name: 'Financeiro',

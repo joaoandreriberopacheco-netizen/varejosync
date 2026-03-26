@@ -7,7 +7,7 @@ import { ArrowLeft, Shield, Eye, Pencil, ChevronDown, ChevronRight, Home } from 
 
 import {
   Monitor, LayoutDashboard, TrendingUp, Package,
-  DollarSign, BookOpen, Settings
+  DollarSign, BookOpen, Settings, ClipboardPenLine
 } from 'lucide-react';
 
 const MODULO_ICONS = {
@@ -18,6 +18,7 @@ const MODULO_ICONS = {
   estoque: Package,
   financeiro: DollarSign,
   relatorios: BookOpen,
+  consumo_interno: ClipboardPenLine,
   configuracoes: Settings,
 };
 
@@ -117,6 +118,15 @@ export const MODULOS = [
       { key: 'relatorio_estoque', label: 'Relatório de Estoque' },
       { key: 'relatorio_financeiro', label: 'Relatório Financeiro' },
       { key: 'relatorio_margem', label: 'Relatório de Margem' },
+    ]
+  },
+  {
+    key: 'consumo_interno', label: 'Consumo Interno',
+    submodulos: [
+      { key: 'acesso', label: 'Acesso ao módulo' },
+      { key: 'registrar', label: 'Registrar consumo interno' },
+      { key: 'visualizar_historico', label: 'Visualizar histórico' },
+      { key: 'anexos_assinatura', label: 'Anexos e assinatura' },
     ]
   },
   {
