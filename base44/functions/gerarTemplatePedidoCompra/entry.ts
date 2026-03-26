@@ -11,16 +11,29 @@ function colLetter(index) {
   return result;
 }
 
-// Cor de cabeçalho padrão (igual ao template de produtos)
 const HEADER_BG   = { argb: 'FF1F2937' };
 const HEADER_FONT = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
-const EDIT_BG     = { argb: 'FFF9FAFB' };   // editável — cinza claríssimo
-const LOCK_BG     = { argb: 'FFE5E7EB' };   // somente-leitura — cinza médio
-const CALC_BG     = { argb: 'FFE0F2FE' };   // calculado — azul gelo
-const NEW_BG      = { argb: 'FFF0FDF4' };   // linha nova — verde gelo (condicional)
-const SECTION_BG  = { argb: 'FF111827' };   // seção / titulo aba pedido
+const EDIT_BG     = { argb: 'FFF9FAFB' };
+const LOCK_BG     = { argb: 'FFE5E7EB' };
+const CALC_BG     = { argb: 'FFE0F2FE' };
+const NEW_BG      = { argb: 'FFF0FDF4' };
+const SECTION_BG  = { argb: 'FF111827' };
 
-// ── Configuração das colunas dos produtos (aba 2) ─────────────────────────────
+// ── Aba 1 — PEDIDO ────────────────────────────────────────────────────────────
+// Colunas: A=Nome/Desc(edit,dropdown) | B=ID(calc) | C=Qtd(edit) |
+//          D=ValorCompra(calc lookup) | E=Desconto%(edit) | F=ValorLíq(calc) | G=Total(calc)
+const PEDIDO_COLS = [
+  { header: 'Nome / Descrição',       key: 'nome',    width: 52, editavel: true,  calculado: false },
+  { header: 'ID do Produto',          key: 'id',      width: 28, editavel: false, calculado: true  },
+  { header: 'Quantidade',             key: 'qtd',     width: 16, editavel: true,  calculado: false },
+  { header: 'Valor de Compra (R$)',   key: 'custo',   width: 20, editavel: false, calculado: true  },
+  { header: 'Desconto (%)',           key: 'desc',    width: 14, editavel: true,  calculado: false },
+  { header: 'Valor Líquido (R$)',     key: 'liq',     width: 20, editavel: false, calculado: true  },
+  { header: 'Total (R$)',             key: 'total',   width: 18, editavel: false, calculado: true  },
+];
+const PEDIDO_COL_COUNT = PEDIDO_COLS.length; // 7
+
+// ── Aba 2 — PRODUTOS CADASTRADOS ─────────────────────────────────────────────
 const COLS_PRODUTOS = [
   { key: 'id',                     label: 'ID (não editar)',         editavel: false, width: 28, tipo: 'string' },
   { key: 'codigo_interno',         label: 'Cód. Interno',            editavel: false, width: 14, tipo: 'string' },
@@ -36,7 +49,11 @@ const COLS_PRODUTOS = [
   { key: 'abcd',                   label: 'Curva ABCD',              editavel: true,  width: 12, tipo: 'string', enum: ['A','B','C','D'] },
   { key: 'categoria_nome',         label: 'Categoria',               editavel: true,  width: 20, tipo: 'string' },
   { key: 'area_codigo',            label: 'Área',                    editavel: true,  width: 14, tipo: 'string' },
+  // ── Bloco custo ──────────────────────────────────────────────────────────
   { key: 'valor_compra',           label: 'Valor Compra (R$)',       editavel: true,  width: 18, tipo: 'numero' },
+  { key: 'casas_decimais',         label: 'Casas Decimais',          editavel: true,  width: 14, tipo: 'numero' }, // NOVO
+  { key: 'desconto_perc',          label: 'Desconto (%)',            editavel: true,  width: 14, tipo: 'numero' }, // NOVO: 5=desc, -5=acresc
+  { key: 'valor_compra_liq',       label: 'Valor Liq. (R$)',         editavel: false, width: 16, tipo: 'numero', calculado: true }, // NOVO calc
   { key: 'custo_frete_padrao',     label: 'Frete Padrão (R$)',       editavel: true,  width: 18, tipo: 'numero' },
   { key: 'custo_imposto1_padrao',  label: 'Imposto 1',               editavel: true,  width: 14, tipo: 'numero' },
   { key: 'custo_imposto2_padrao',  label: 'Imposto 2',               editavel: true,  width: 14, tipo: 'numero' },
@@ -52,9 +69,12 @@ const COLS_PRODUTOS = [
   { key: 'peso_kg',                label: 'Peso (kg)',               editavel: true,  width: 12, tipo: 'numero' },
   { key: 'dimensoes_cm',           label: 'Dimensões (cm)',          editavel: true,  width: 18, tipo: 'string' },
   { key: 'ativo',                  label: 'Ativo (SIM/NÃO)',         editavel: true,  width: 14, tipo: 'boolean' },
+  // ── Detecção de alteração ────────────────────────────────────────────────
+  { key: '_hash_orig',             label: 'HASH_ORIG',               editavel: false, width: 6,  tipo: 'string', hidden: true },
+  { key: 'alterado',               label: 'Alterado?',               editavel: false, width: 12, tipo: 'string', calculado: true },
 ];
 
-// ── Configuração das colunas dos fornecedores (aba 3) ─────────────────────────
+// ── Aba 3 — FORNECEDORES ─────────────────────────────────────────────────────
 const COLS_FORN = [
   { key: 'id',               label: 'ID (não editar)',  editavel: false, width: 28, tipo: 'string' },
   { key: 'codigo_interno',   label: 'Cód. Interno',     editavel: false, width: 14, tipo: 'string' },
@@ -73,10 +93,7 @@ const COLS_FORN = [
   { key: 'ativo',            label: 'Ativo (SIM/NÃO)',   editavel: true,  width: 14, tipo: 'boolean' },
 ];
 
-// ── Colunas da aba Pedido ─────────────────────────────────────────────────────
-// Linha 1 = título, Linha 2 = cabeçalho campos fornecedor, Linha 3+ = dados forn
-// Separador, depois cabeçalho itens, depois itens
-
+// ─────────────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -85,7 +102,6 @@ Deno.serve(async (req) => {
 
     const ExcelJS = (await import('npm:exceljs@4.4.0')).default;
 
-    // Buscar dados reais
     const [produtos, fornecedores] = await Promise.all([
       base44.asServiceRole.entities.Produto.list(),
       base44.asServiceRole.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
@@ -101,37 +117,27 @@ Deno.serve(async (req) => {
       views: [{ state: 'frozen', ySplit: 14 }],
     });
 
-    // Larguras das colunas da aba Pedido
-    // Col A: label, Col B: valor/ID, Col C: nome produto (lookup), Cols D+: extras
-    const PEDIDO_COLS = [
-      { header: 'Campo',                    key: 'campo',      width: 28,  editavel: false },
-      { header: 'ID / Valor',               key: 'valor',      width: 32,  editavel: true  },
-      { header: 'Nome / Descrição',         key: 'nome',       width: 50,  editavel: false, calculado: true },
-      { header: 'Quantidade Pedido',        key: 'qtd',        width: 20,  editavel: true  },
-      { header: 'Custo Unitário (R$)',      key: 'custo',      width: 22,  editavel: true  },
-      { header: 'Total (R$)',               key: 'total',      width: 18,  editavel: false, calculado: true },
-    ];
-
     wsPedido.columns = PEDIDO_COLS.map(c => ({ header: c.header, key: c.key, width: c.width }));
 
-    // ── Linha 1: título da aba ────────────────────────────────────────────────
+    const lastPedidoCol = colLetter(PEDIDO_COL_COUNT); // G
+
+    // Linha 1: título
     const titleRow = wsPedido.getRow(1);
     titleRow.getCell(1).value = '=== PEDIDO DE COMPRA ===';
     titleRow.getCell(1).font  = { bold: true, size: 13, color: { argb: 'FFFFFFFF' } };
     titleRow.getCell(1).fill  = { type: 'pattern', pattern: 'solid', fgColor: SECTION_BG };
     titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    wsPedido.mergeCells('A1:F1');
+    wsPedido.mergeCells(`A1:${lastPedidoCol}1`);
     titleRow.height = 26;
     titleRow.eachCell(c => { c.protection = { locked: true }; });
 
-    // ── Linhas 2-12: campos do fornecedor / cabeçalho ─────────────────────────
+    // Linhas 2-5: campos do fornecedor
     const FORN_FIELDS = [
       { campo: 'Fornecedor ID',          instrucao: 'Cole o ID da aba "Fornecedores Cadastrados" — obrigatório' },
       { campo: 'Data Prevista Entrega',  instrucao: 'Formato: AAAA-MM-DD — opcional' },
       { campo: 'Observações do Pedido',  instrucao: 'Texto livre — opcional' },
     ];
 
-    // Cabeçalho das linhas de metadados
     const metaHeaderRow = wsPedido.getRow(2);
     metaHeaderRow.getCell(1).value = 'CAMPO';
     metaHeaderRow.getCell(2).value = 'VALOR';
@@ -150,11 +156,9 @@ Deno.serve(async (req) => {
       r.getCell(1).font  = { bold: true, size: 10, color: { argb: 'FF374151' } };
       r.getCell(1).fill  = { type: 'pattern', pattern: 'solid', fgColor: LOCK_BG };
       r.getCell(1).protection = { locked: true };
-
       r.getCell(2).value = '';
       r.getCell(2).fill  = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
       r.getCell(2).protection = { locked: false };
-
       r.getCell(3).value = f.instrucao;
       r.getCell(3).font  = { italic: true, color: { argb: 'FF6B7280' }, size: 9 };
       r.getCell(3).fill  = { type: 'pattern', pattern: 'solid', fgColor: LOCK_BG };
@@ -162,27 +166,27 @@ Deno.serve(async (req) => {
       r.height = 18;
     });
 
-    // Linhas 6-13: espaço vazio reservado
+    // Linhas 6-12: espaço vazio
     for (let rn = 6; rn <= 12; rn++) {
       const r = wsPedido.getRow(rn);
-      for (let cn = 1; cn <= 6; cn++) {
+      for (let cn = 1; cn <= PEDIDO_COL_COUNT; cn++) {
         r.getCell(cn).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
         r.getCell(cn).protection = { locked: true };
       }
       r.height = 6;
     }
 
-    // ── Linha 13: título seção itens ──────────────────────────────────────────
+    // Linha 13: título seção itens
     const itensTitleRow = wsPedido.getRow(13);
     itensTitleRow.getCell(1).value = '=== ITENS DO PEDIDO ===';
     itensTitleRow.getCell(1).font  = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
     itensTitleRow.getCell(1).fill  = { type: 'pattern', pattern: 'solid', fgColor: SECTION_BG };
     itensTitleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    wsPedido.mergeCells('A13:F13');
+    wsPedido.mergeCells(`A13:${lastPedidoCol}13`);
     itensTitleRow.height = 22;
     itensTitleRow.eachCell(c => { c.protection = { locked: true }; });
 
-    // ── Linha 14: cabeçalho das colunas de itens ──────────────────────────────
+    // Linha 14: cabeçalho
     const itemHeaderRow = wsPedido.getRow(14);
     PEDIDO_COLS.forEach((col, i) => {
       const cell = itemHeaderRow.getCell(i + 1);
@@ -194,46 +198,59 @@ Deno.serve(async (req) => {
     });
     itemHeaderRow.height = 22;
 
-    // Lista de nomes dos produtos para data validation (busca incremental)
-    // O Excel permite até 255 chars na fórmula de lista — para grandes bases usamos aba auxiliar
-    // Usaremos referência à aba "Produtos Cadastrados", coluna C (Nome Completo)
+    // Linha de legenda logo abaixo do cabeçalho
+    const legendRow = wsPedido.getRow(14);
+    // (cabeçalho já escrito acima — apenas adicionamos tooltips via comentário)
+
+    // Calcular letras de colunas do Produtos para VLOOKUP
+    const pIdxNome      = COLS_PRODUTOS.findIndex(c => c.key === 'nome') + 1;          // col C
+    const pIdxId        = COLS_PRODUTOS.findIndex(c => c.key === 'id') + 1;            // col A
+    const pIdxVC        = COLS_PRODUTOS.findIndex(c => c.key === 'valor_compra') + 1;  // col O
+    const pLetNome      = colLetter(pIdxNome);   // C
+    const pLetId        = colLetter(pIdxId);     // A
+    const pLetVC        = colLetter(pIdxVC);     // O
+
     const MAX_ROWS_PEDIDO = 500;
-    const nomesProdutosRef = `'Produtos Cadastrados'!$C$2:$C$${1 + produtos.length + 500}`;
 
     for (let rn = 15; rn <= 14 + MAX_ROWS_PEDIDO; rn++) {
       const row = wsPedido.getRow(rn);
 
-      // Col A: ID do produto — editável, lista de IDs (coluna A da aba produtos)
+      // Col A: Nome / Descrição — editável, dropdown com nomes dos produtos
       row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
       row.getCell(1).protection = { locked: false };
 
-      // Col B: Nome — busca incremental via data validation apontando para aba Produtos col C
-      row.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
-      row.getCell(2).protection = { locked: false };
-
-      // Col C: Nome resultado (calculado pelo VLOOKUP) — somente leitura
-      // Fórmula: se B preenchido, busca ID na aba produtos (col C vs col A)
-      row.getCell(3).value = {
-        formula: `=IF(B${rn}="","",IFERROR(VLOOKUP(B${rn},'Produtos Cadastrados'!$C:$C,1,0),B${rn}))`,
+      // Col B: ID do Produto — INDEX/MATCH busca ID pelo nome selecionado em A
+      row.getCell(2).value = {
+        formula: `=IF(A${rn}="","",IFERROR(INDEX('Produtos Cadastrados'!$${pLetId}:$${pLetId},MATCH(A${rn},'Produtos Cadastrados'!$${pLetNome}:$${pLetNome},0)),"?"))`,
         result: '',
       };
-      row.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
-      row.getCell(3).font = { italic: true, color: { argb: 'FF0369A1' } };
-      row.getCell(3).protection = { locked: true };
+      row.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
+      row.getCell(2).font = { italic: true, color: { argb: 'FF0369A1' }, size: 9 };
+      row.getCell(2).protection = { locked: true };
 
-      // Col D: Quantidade
-      row.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
-      row.getCell(4).protection = { locked: false };
+      // Col C: Quantidade — editável
+      row.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
+      row.getCell(3).protection = { locked: false };
+      row.getCell(3).numFmt = '#,##0.##';
+
+      // Col D: Valor de Compra — INDEX/MATCH busca valor_compra pelo nome
+      row.getCell(4).value = {
+        formula: `=IF(A${rn}="","",IFERROR(INDEX('Produtos Cadastrados'!$${pLetVC}:$${pLetVC},MATCH(A${rn},'Produtos Cadastrados'!$${pLetNome}:$${pLetNome},0)),0))`,
+        result: 0,
+      };
+      row.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
+      row.getCell(4).font = { italic: true, color: { argb: 'FF0369A1' } };
       row.getCell(4).numFmt = '#,##0.00';
+      row.getCell(4).protection = { locked: true };
 
-      // Col E: Custo Unitário
+      // Col E: Desconto (%) — editável (5=5% desc | -5=5% acrésc)
       row.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: EDIT_BG };
       row.getCell(5).protection = { locked: false };
-      row.getCell(5).numFmt = '#,##0.00';
+      row.getCell(5).numFmt = '0.00"%"';
 
-      // Col F: Total = D * E
+      // Col F: Valor Líquido = D * (1 - E/100)  [E positivo=desconto, E negativo=acréscimo]
       row.getCell(6).value = {
-        formula: `=IF(D${rn}="","",D${rn}*E${rn})`,
+        formula: `=IF(D${rn}="","",D${rn}*(1-E${rn}/100))`,
         result: 0,
       };
       row.getCell(6).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
@@ -241,35 +258,35 @@ Deno.serve(async (req) => {
       row.getCell(6).numFmt = '#,##0.00';
       row.getCell(6).protection = { locked: true };
 
+      // Col G: Total = C * F
+      row.getCell(7).value = {
+        formula: `=IF(C${rn}="","",C${rn}*F${rn})`,
+        result: 0,
+      };
+      row.getCell(7).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
+      row.getCell(7).font = { italic: true, color: { argb: 'FF0369A1' } };
+      row.getCell(7).numFmt = '#,##0.00';
+      row.getCell(7).protection = { locked: true };
+
       row.commit();
     }
 
-    // Data validation: col B (Nome do Produto) busca incremental lista aba Produtos
-    wsPedido.dataValidations.add(`B15:B${14 + MAX_ROWS_PEDIDO}`, {
-      type: 'list',
-      allowBlank: true,
-      showDropDown: false,
-      showErrorMessage: true,
-      errorTitle: 'Produto não encontrado',
-      error: 'Digite o nome do produto conforme listado em "Produtos Cadastrados".',
-      formulae: [nomesProdutosRef],
-    });
-
-    // Data validation: col A (ID do produto) — lista de IDs da aba produtos
+    // Data validation: col A — dropdown com nomes dos produtos
+    const nomesProdutosRef = `'Produtos Cadastrados'!$${pLetNome}$2:$${pLetNome}$${1 + produtos.length + 500}`;
     wsPedido.dataValidations.add(`A15:A${14 + MAX_ROWS_PEDIDO}`, {
       type: 'list',
       allowBlank: true,
       showDropDown: false,
-      formulae: [`'Produtos Cadastrados'!$A$2:$A$${1 + produtos.length + 500}`],
+      showErrorMessage: false,
+      formulae: [nomesProdutosRef],
     });
 
-    // Formatação condicional: linha inteira em verde gelo se col B preenchida
+    // Formatação condicional: linha em verde quando A preenchida
     wsPedido.addConditionalFormatting({
-      ref: `A15:F${14 + MAX_ROWS_PEDIDO}`,
+      ref: `A15:${lastPedidoCol}${14 + MAX_ROWS_PEDIDO}`,
       rules: [{
-        type: 'expression',
-        priority: 1,
-        formulae: [`$B15<>""`],
+        type: 'expression', priority: 1,
+        formulae: [`$A15<>""`],
         style: {
           font: { color: { argb: 'FF166534' } },
           fill: { type: 'pattern', pattern: 'solid', bgColor: NEW_BG },
@@ -278,14 +295,11 @@ Deno.serve(async (req) => {
     });
 
     await wsPedido.protect('', {
-      insertColumns: false,
-      deleteRows: true,
-      formatCells: false,
-      selectLockedCells: true,
-      selectUnlockedCells: true,
+      insertColumns: false, deleteRows: true, formatCells: false,
+      selectLockedCells: true, selectUnlockedCells: true,
     });
 
-    wsPedido.autoFilter = { from: 'A14', to: 'F14' };
+    wsPedido.autoFilter = { from: 'A14', to: `${lastPedidoCol}14` };
 
     // ══════════════════════════════════════════════════════════════════════════
     // ABA 2 — PRODUTOS CADASTRADOS
@@ -296,6 +310,7 @@ Deno.serve(async (req) => {
 
     wsProd.columns = COLS_PRODUTOS.map(c => ({ header: c.label, key: c.key, width: c.width }));
 
+    // Cabeçalho
     const prodHeaderRow = wsProd.getRow(1);
     prodHeaderRow.eachCell(cell => {
       cell.font = HEADER_FONT;
@@ -305,37 +320,50 @@ Deno.serve(async (req) => {
     });
     prodHeaderRow.height = 24;
 
-    // Índices auxiliares para fórmulas
-    const idxValorCompra  = COLS_PRODUTOS.findIndex(c => c.key === 'valor_compra') + 1;
-    const idxFrete        = COLS_PRODUTOS.findIndex(c => c.key === 'custo_frete_padrao') + 1;
-    const idxImposto1     = COLS_PRODUTOS.findIndex(c => c.key === 'custo_imposto1_padrao') + 1;
-    const idxImposto2     = COLS_PRODUTOS.findIndex(c => c.key === 'custo_imposto2_padrao') + 1;
-    const idxDesconto     = COLS_PRODUTOS.findIndex(c => c.key === 'desconto_compra_padrao') + 1;
-    const idxCustoCalc    = COLS_PRODUTOS.findIndex(c => c.key === 'custo_total_calculado') + 1;
-    const idxPrecoVenda   = COLS_PRODUTOS.findIndex(c => c.key === 'preco_venda_padrao') + 1;
-    const idxIdProd       = COLS_PRODUTOS.findIndex(c => c.key === 'id') + 1;
-    const idxNome         = COLS_PRODUTOS.findIndex(c => c.key === 'nome') + 1;
-    const idxH1           = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_1') + 1;
-    const idxH2           = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_2') + 1;
-    const idxH3           = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_3') + 1;
-    const idxH4           = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_4') + 1;
-    const idxH5           = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_5') + 1;
+    // Índices e letras das colunas relevantes
+    const idxValorCompra   = COLS_PRODUTOS.findIndex(c => c.key === 'valor_compra') + 1;
+    const idxCasasDec      = COLS_PRODUTOS.findIndex(c => c.key === 'casas_decimais') + 1;
+    const idxDescontoPer   = COLS_PRODUTOS.findIndex(c => c.key === 'desconto_perc') + 1;
+    const idxValorLiq      = COLS_PRODUTOS.findIndex(c => c.key === 'valor_compra_liq') + 1;
+    const idxFrete         = COLS_PRODUTOS.findIndex(c => c.key === 'custo_frete_padrao') + 1;
+    const idxImposto1      = COLS_PRODUTOS.findIndex(c => c.key === 'custo_imposto1_padrao') + 1;
+    const idxImposto2      = COLS_PRODUTOS.findIndex(c => c.key === 'custo_imposto2_padrao') + 1;
+    const idxDesconto      = COLS_PRODUTOS.findIndex(c => c.key === 'desconto_compra_padrao') + 1;
+    const idxCustoCalc     = COLS_PRODUTOS.findIndex(c => c.key === 'custo_total_calculado') + 1;
+    const idxPrecoVenda    = COLS_PRODUTOS.findIndex(c => c.key === 'preco_venda_padrao') + 1;
+    const idxIdProd        = COLS_PRODUTOS.findIndex(c => c.key === 'id') + 1;
+    const idxNomeProd      = COLS_PRODUTOS.findIndex(c => c.key === 'nome') + 1;
+    const idxH1            = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_1') + 1;
+    const idxH2            = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_2') + 1;
+    const idxH3            = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_3') + 1;
+    const idxH4            = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_4') + 1;
+    const idxH5            = COLS_PRODUTOS.findIndex(c => c.key === 'campo_hierarquico_5') + 1;
+    const idxHashOrig      = COLS_PRODUTOS.findIndex(c => c.key === '_hash_orig') + 1;
+    const idxAlterado      = COLS_PRODUTOS.findIndex(c => c.key === 'alterado') + 1;
+    const idxUnidade       = COLS_PRODUTOS.findIndex(c => c.key === 'unidade_principal') + 1;
 
-    const letVC = colLetter(idxValorCompra);
-    const letFR = colLetter(idxFrete);
-    const letI1 = colLetter(idxImposto1);
-    const letI2 = colLetter(idxImposto2);
-    const letDC = colLetter(idxDesconto);
-    const letCC = colLetter(idxCustoCalc);
-    const letPV = colLetter(idxPrecoVenda);
-    const letId = colLetter(idxIdProd);
-    const letNm = colLetter(idxNome);
-    const letH1 = colLetter(idxH1);
-    const letH2 = colLetter(idxH2);
-    const letH3 = colLetter(idxH3);
-    const letH4 = colLetter(idxH4);
-    const letH5 = colLetter(idxH5);
+    const letVC   = colLetter(idxValorCompra);
+    const letCD   = colLetter(idxCasasDec);
+    const letDP   = colLetter(idxDescontoPer);
+    const letVL   = colLetter(idxValorLiq);
+    const letFR   = colLetter(idxFrete);
+    const letI1   = colLetter(idxImposto1);
+    const letI2   = colLetter(idxImposto2);
+    const letDC   = colLetter(idxDesconto);
+    const letCC   = colLetter(idxCustoCalc);
+    const letPV   = colLetter(idxPrecoVenda);
+    const letId   = colLetter(idxIdProd);
+    const letNm   = colLetter(idxNomeProd);
+    const letH1   = colLetter(idxH1);
+    const letH2   = colLetter(idxH2);
+    const letH3   = colLetter(idxH3);
+    const letH4   = colLetter(idxH4);
+    const letH5   = colLetter(idxH5);
+    const letHO   = colLetter(idxHashOrig);
+    const letAL   = colLetter(idxAlterado);
+    const letUN   = colLetter(idxUnidade);
     const lastProdCol = colLetter(COLS_PRODUTOS.length);
+
     const EXTRA_BLANK = 1000;
     const maxProdRows = 1 + produtos.length + EXTRA_BLANK;
 
@@ -350,10 +378,7 @@ Deno.serve(async (req) => {
           error: `"${col.label}" deve ser número.`, formulae: [0],
         });
       } else if (col.tipo === 'boolean') {
-        wsProd.dataValidations.add(range, {
-          type: 'list', allowBlank: true,
-          formulae: ['"SIM,NÃO"'],
-        });
+        wsProd.dataValidations.add(range, { type: 'list', allowBlank: true, formulae: ['"SIM,NÃO"'] });
       } else if (col.enum) {
         wsProd.dataValidations.add(range, {
           type: 'list', allowBlank: true,
@@ -364,31 +389,77 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Linhas de dados
+    // ── Função para gerar hash original dos campos editáveis chave ────────────
+    const computeOrigHash = (p) => {
+      const parts = [
+        p.campo_hierarquico_1 || '',
+        p.campo_hierarquico_2 || '',
+        p.campo_hierarquico_3 || '',
+        p.valor_compra        ?? 0,
+        p.casas_decimais      ?? 0,
+        p.preco_venda_padrao  ?? 0,
+        p.unidade_principal   || '',
+        p.estoque_minimo      ?? 0,
+        p.estoque_ideal       ?? 0,
+        p.estoque_maximo      ?? 0,
+        p.custo_frete_padrao  ?? 0,
+        p.custo_imposto1_padrao ?? 0,
+        p.custo_imposto2_padrao ?? 0,
+        p.desconto_compra_padrao ?? 0,
+        p.ativo !== false ? 'SIM' : 'NÃO',
+      ];
+      return parts.join('|');
+    };
+
+    // ── Fórmula para hash dinâmico (deve espelhar computeOrigHash) ────────────
+    const hashFormula = (rn) =>
+      `CONCATENATE(${letH1}${rn},"|",${letH2}${rn},"|",${letH3}${rn},"|",${letVC}${rn},"|",${letCD}${rn},"|",${letPV}${rn},"|",${letUN}${rn},"|",${letFR}${rn},"|",${letI1}${rn},"|",${letI2}${rn},"|",${letDC}${rn})`;
+
+    // ── Fórmula Nome completo ─────────────────────────────────────────────────
+    const nomeFormula = (rn) =>
+      `=TRIM(CONCATENATE(${letH1}${rn},IF(${letH2}${rn}<>""," "&${letH2}${rn},""),IF(${letH3}${rn}<>""," "&${letH3}${rn},""),IF(${letH4}${rn}<>""," "&${letH4}${rn},""),IF(${letH5}${rn}<>""," "&${letH5}${rn},"")))`;
+
+    // ── Linhas de dados ───────────────────────────────────────────────────────
     produtos.forEach((p, i) => {
       const rn = i + 2;
       const custoCalc = (p.valor_compra || 0) + (p.custo_frete_padrao || 0) +
                         (p.custo_imposto1_padrao || 0) + (p.custo_imposto2_padrao || 0) -
                         (p.desconto_compra_padrao || 0);
+      const nomePartes = [p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3,
+                          p.campo_hierarquico_4, p.campo_hierarquico_5].filter(Boolean).join(' ');
+      const origHash = computeOrigHash(p);
 
       const rowData = {};
       COLS_PRODUTOS.forEach(col => {
-        if (col.key === 'custo_total_calculado') {
-          rowData[col.key] = {
-            formula: `=${letVC}${rn}+${letFR}${rn}+${letI1}${rn}+${letI2}${rn}-${letDC}${rn}`,
-            result: custoCalc,
-          };
-        } else if (col.key === 'nome') {
-          const nomePartes = [p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3,
-                              p.campo_hierarquico_4, p.campo_hierarquico_5].filter(Boolean).join(' ');
-          rowData[col.key] = {
-            formula: `=TRIM(CONCATENATE(${letH1}${rn},IF(${letH2}${rn}<>""," "&${letH2}${rn},""),IF(${letH3}${rn}<>""," "&${letH3}${rn},""),IF(${letH4}${rn}<>""," "&${letH4}${rn},""),IF(${letH5}${rn}<>""," "&${letH5}${rn},"")))`,
-            result: nomePartes,
-          };
-        } else if (col.tipo === 'boolean') {
-          rowData[col.key] = p[col.key] !== false ? 'SIM' : 'NÃO';
-        } else {
-          rowData[col.key] = p[col.key] ?? '';
+        switch (col.key) {
+          case 'nome':
+            rowData[col.key] = { formula: nomeFormula(rn), result: nomePartes }; break;
+          case 'custo_total_calculado':
+            rowData[col.key] = {
+              formula: `=${letVC}${rn}+${letFR}${rn}+${letI1}${rn}+${letI2}${rn}-${letDC}${rn}`,
+              result: custoCalc,
+            }; break;
+          case 'valor_compra_liq':
+            // Valor de Compra * (1 - Desconto%/100) ; desconto>0=desconto, <0=acréscimo
+            rowData[col.key] = {
+              formula: `=IF(${letVC}${rn}="","",${letVC}${rn}*(1-${letDP}${rn}/100))`,
+              result: p.valor_compra || 0,
+            }; break;
+          case 'desconto_perc':
+            rowData[col.key] = 0; break; // inicia em 0 para produtos existentes
+          case 'casas_decimais':
+            rowData[col.key] = p.casas_decimais ?? 0; break;
+          case '_hash_orig':
+            rowData[col.key] = origHash; break; // valor estático gerado no servidor
+          case 'alterado':
+            rowData[col.key] = {
+              formula: `=IF(${hashFormula(rn)}=${letHO}${rn},"NÃO","SIM")`,
+              result: 'NÃO',
+            }; break;
+          case 'ativo':
+            rowData[col.key] = p[col.key] !== false ? 'SIM' : 'NÃO'; break;
+          default:
+            rowData[col.key] = p[col.key] ?? '';
         }
       });
 
@@ -397,7 +468,11 @@ Deno.serve(async (req) => {
         const cfg = COLS_PRODUTOS[cn - 1];
         const isLocked = !cfg || !cfg.editavel;
         cell.protection = { locked: isLocked };
-        if (cfg?.calculado) {
+        if (cfg?.key === '_hash_orig') {
+          // Coluna oculta — largura mínima, cinza bem suave
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: LOCK_BG };
+          cell.font = { size: 7, color: { argb: 'FFD1D5DB' } };
+        } else if (cfg?.calculado) {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
           cell.font = { italic: true, color: { argb: 'FF0369A1' } };
         } else if (cfg?.editavel) {
@@ -406,10 +481,11 @@ Deno.serve(async (req) => {
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: LOCK_BG };
         }
         if (cfg?.tipo === 'numero') cell.numFmt = '#,##0.00';
+        // Coluna Alterado? com destaque verde/vermelho via condicional
       });
     });
 
-    // Linhas em branco para novos produtos
+    // ── Linhas em branco para novos produtos ─────────────────────────────────
     const firstBlank = produtos.length + 2;
     for (let r = firstBlank; r <= maxProdRows; r++) {
       const row = wsProd.getRow(r);
@@ -422,42 +498,80 @@ Deno.serve(async (req) => {
           cell.protection = { locked: true };
         }
         if (col.key === 'nome' && col.calculado) {
+          cell.value = { formula: nomeFormula(r), result: '' };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
+          cell.font = { italic: true, color: { argb: 'FF0369A1' } };
+          cell.protection = { locked: true };
+        }
+        if (col.key === 'custo_total_calculado') {
+          cell.value = { formula: `=${letVC}${r}+${letFR}${r}+${letI1}${r}+${letI2}${r}-${letDC}${r}`, result: 0 };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
+          cell.font = { italic: true, color: { argb: 'FF0369A1' } };
+          cell.protection = { locked: true };
+        }
+        if (col.key === 'valor_compra_liq') {
+          cell.value = { formula: `=IF(${letVC}${r}="","",${letVC}${r}*(1-${letDP}${r}/100))`, result: 0 };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
+          cell.font = { italic: true, color: { argb: 'FF0369A1' } };
+          cell.protection = { locked: true };
+        }
+        if (col.key === '_hash_orig') {
+          // Linhas novas: hash vazio (produto ainda não existe no sistema)
+          cell.value = '';
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: LOCK_BG };
+          cell.font = { size: 7, color: { argb: 'FFD1D5DB' } };
+          cell.protection = { locked: true };
+        }
+        if (col.key === 'alterado') {
+          // Para linhas novas: se H1 preenchido = sempre SIM (produto novo)
           cell.value = {
-            formula: `=TRIM(CONCATENATE(${letH1}${r},IF(${letH2}${r}<>""," "&${letH2}${r},""),IF(${letH3}${r}<>""," "&${letH3}${r},""),IF(${letH4}${r}<>""," "&${letH4}${r},""),IF(${letH5}${r}<>""," "&${letH5}${r},"")))`,
+            formula: `=IF(${letH1}${r}="","",IF(${letHO}${r}="","SIM",IF(${hashFormula(r)}=${letHO}${r},"NÃO","SIM")))`,
             result: '',
           };
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
           cell.font = { italic: true, color: { argb: 'FF0369A1' } };
           cell.protection = { locked: true };
         }
-        if (col.key === 'custo_total_calculado') {
-          cell.value = {
-            formula: `=${letVC}${r}+${letFR}${r}+${letI1}${r}+${letI2}${r}-${letDC}${r}`,
-            result: 0,
-          };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
-          cell.font = { italic: true, color: { argb: 'FF0369A1' } };
-          cell.protection = { locked: true };
-        }
+        if (col.tipo === 'numero') cell.numFmt = '#,##0.00';
       });
       row.commit();
     }
 
-    // Formatação condicional
+    // ── Formatações condicionais ──────────────────────────────────────────────
+    // Preço de venda abaixo do custo: vermelho
     wsProd.addConditionalFormatting({
       ref: `${letPV}2:${letPV}${maxProdRows}`,
       rules: [{
         type: 'expression', priority: 1,
-        formulae: [`${letPV}2<${letCC}2`],
+        formulae: [`AND(${letPV}2<>"",${letPV}2<${letCC}2)`],
         style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFCA5A5' } }, font: { color: { argb: 'FF991B1B' }, bold: true } },
       }],
     });
+    // Nova linha (sem ID): verde gelo
     wsProd.addConditionalFormatting({
       ref: `A2:${lastProdCol}${maxProdRows}`,
       rules: [{
         type: 'expression', priority: 2,
         formulae: [`$${letId}2=""`],
         style: { font: { color: { argb: 'FF166534' } }, fill: { type: 'pattern', pattern: 'solid', bgColor: NEW_BG } },
+      }],
+    });
+    // Coluna Alterado? = SIM: amarelo suave
+    wsProd.addConditionalFormatting({
+      ref: `${letAL}2:${letAL}${maxProdRows}`,
+      rules: [{
+        type: 'expression', priority: 3,
+        formulae: [`${letAL}2="SIM"`],
+        style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFEF9C3' } }, font: { color: { argb: 'FF92400E' }, bold: true } },
+      }],
+    });
+    // Desconto negativo (acréscimo) na col desconto_perc: laranja suave
+    wsProd.addConditionalFormatting({
+      ref: `${letDP}2:${letDP}${maxProdRows}`,
+      rules: [{
+        type: 'expression', priority: 4,
+        formulae: [`${letDP}2<0`],
+        style: { font: { color: { argb: 'FF7C2D12' }, bold: true } },
       }],
     });
 
@@ -484,10 +598,9 @@ Deno.serve(async (req) => {
     });
     fornHeaderRow.height = 24;
 
-    const letIdForn = colLetter(COLS_FORN.findIndex(c => c.key === 'id') + 1);
+    const letIdForn  = colLetter(COLS_FORN.findIndex(c => c.key === 'id') + 1);
     const lastFornCol = colLetter(COLS_FORN.length);
-    const EXTRA_BLANK_FORN = 500;
-    const maxFornRows = 1 + fornecedores.length + EXTRA_BLANK_FORN;
+    const maxFornRows = 1 + fornecedores.length + 500;
 
     COLS_FORN.forEach((col, idx) => {
       const letter = colLetter(idx + 1);
@@ -534,7 +647,6 @@ Deno.serve(async (req) => {
       row.commit();
     }
 
-    // Condicional: nova linha (ID vazio) em verde
     wsForns.addConditionalFormatting({
       ref: `A2:${lastFornCol}${maxFornRows}`,
       rules: [{
@@ -550,7 +662,7 @@ Deno.serve(async (req) => {
     });
     wsForns.autoFilter = { from: 'A1', to: `${lastFornCol}1` };
 
-    // ── Gerar buffer e retornar ───────────────────────────────────────────────
+    // ── Gerar e retornar buffer ───────────────────────────────────────────────
     const buffer = await wb.xlsx.writeBuffer();
     const bytes = new Uint8Array(buffer);
     let binary = '';
