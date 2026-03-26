@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Package, MapPin, UserRound, Search, Plus } from 'lucide-react';
+import { Package, MapPin, UserRound, Search, Plus, ChevronDown } from 'lucide-react';
+import { format, subDays, startOfDay, endOfDay, startOfMonth, isWithinInterval } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import AssinaturaConsumoDialog from '@/components/consumo-interno/AssinaturaConsumoDialog';
 import ConsumoResumoDialog from '@/components/consumo-interno/ConsumoResumoDialog';
 import ConsumoProdutoSelectorPDV from '@/components/consumo-interno/ConsumoProdutoSelectorPDV';
@@ -21,6 +23,7 @@ export default function ConsumoInternoPage() {
   const [responsaveis, setResponsaveis] = useState([]);
   const [consumos, setConsumos] = useState([]);
   const [search, setSearch] = useState('');
+  const [filtroTemporal, setFiltroTemporal] = useState('hoje');
   const [showAssinatura, setShowAssinatura] = useState(false);
   const [showResumo, setShowResumo] = useState(false);
   const [showProdutoSelector, setShowProdutoSelector] = useState(false);
@@ -59,17 +62,40 @@ export default function ConsumoInternoPage() {
     setFormData((prev) => ({ ...prev, turno_caixa_id: turnosData[0]?.id || '' }));
   };
 
+  const rangeAtual = useMemo(() => {
+    const agora = new Date();
+    if (filtroTemporal === 'hoje') return { start: startOfDay(agora), end: endOfDay(agora) };
+    if (filtroTemporal === '7d') return { start: startOfDay(subDays(agora, 6)), end: endOfDay(agora) };
+    if (filtroTemporal === '30d') return { start: startOfDay(subDays(agora, 29)), end: endOfDay(agora) };
+    if (filtroTemporal === 'mes') return { start: startOfMonth(agora), end: endOfDay(agora) };
+    return { start: new Date(0), end: endOfDay(agora) };
+  }, [filtroTemporal]);
+
   const consumosFiltrados = useMemo(() => {
     const term = search.toLowerCase();
-    return consumos.filter((item) =>
-      !term ||
-      item.numero?.toLowerCase().includes(term) ||
-      item.destinacao?.toLowerCase().includes(term) ||
-      item.responsavel_recebimento?.toLowerCase().includes(term)
-    );
-  }, [consumos, search]);
+    return consumos.filter((item) => {
+      const dentroRange = isWithinInterval(new Date(item.created_date), rangeAtual);
+      const matchSearch = !term ||
+        item.numero?.toLowerCase().includes(term) ||
+        item.destinacao?.toLowerCase().includes(term) ||
+        item.responsavel_recebimento?.toLowerCase().includes(term);
+      return dentroRange && matchSearch;
+    });
+  }, [consumos, search, rangeAtual]);
+
+  const consumosAgrupadosPorDia = useMemo(() => {
+    const groups = {};
+    consumosFiltrados.forEach(item => {
+      const dia = format(new Date(item.created_date), 'yyyy-MM-dd');
+      if (!groups[dia]) groups[dia] = [];
+      groups[dia].push(item);
+    });
+    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [consumosFiltrados]);
 
   const totalAtual = useMemo(() => formData.itens.reduce((sum, item) => sum + (item.subtotal || 0), 0), [formData.itens]);
+
+  const labelFiltro = { hoje: 'Hoje', '7d': '7 dias', '30d': '30 dias', mes: 'Este mês', tudo: 'Tudo' };
 
   const addItem = (novoItem) => {
     if (!novoItem?.produto_id) return;
@@ -180,12 +206,29 @@ export default function ConsumoInternoPage() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-2xl font-semibold text-gray-900 dark:text-white">Consumo Interno</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Movimentações internas do dia.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Movimentações internas.</p>
           </div>
           <div className="rounded-[24px] bg-white px-4 py-3 shadow-sm dark:bg-gray-800">
-            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total em aberto hoje</p>
+            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total — {labelFiltro[filtroTemporal]}</p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatCurrency(consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0))}</p>
           </div>
+        </div>
+
+        {/* Filtros temporais */}
+        <div className="flex gap-2 flex-wrap">
+          {Object.entries(labelFiltro).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setFiltroTemporal(key)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                filtroTemporal === key
+                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  : 'bg-white text-gray-600 dark:bg-gray-800 dark:text-gray-300 shadow-sm'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800">
@@ -196,25 +239,39 @@ export default function ConsumoInternoPage() {
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar" className="h-10 rounded-2xl border-0 bg-gray-100 pl-9 shadow-sm dark:bg-gray-900" />
             </div>
           </div>
-          <div className="space-y-2">
-            {consumosFiltrados.map((item) => (
-              <button key={item.id} onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 text-left shadow-sm dark:bg-gray-900">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{item.numero}</p>
-                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
-                    <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
-                    <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
-                  </div>
-                </div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
-              </button>
-            ))}
-            {!consumosFiltrados.length && (
+          <div className="space-y-4">
+            {consumosAgrupadosPorDia.length === 0 && (
               <div className="rounded-[24px] bg-gray-50 px-4 py-10 text-center text-sm text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-400">
                 Nenhuma movimentação encontrada.
               </div>
             )}
+            {consumosAgrupadosPorDia.map(([dia, itens]) => (
+              <div key={dia}>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                    {format(new Date(dia + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                  </p>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    {formatCurrency(itens.reduce((s, i) => s + (i.valor_total || 0), 0))}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {itens.map((item) => (
+                    <button key={item.id} onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 text-left shadow-sm dark:bg-gray-900">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{item.numero}</p>
+                        <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+                          <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
+                          <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
+                          <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
