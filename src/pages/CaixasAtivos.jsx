@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Banknote, Lock } from 'lucide-react';
+import { Banknote, Lock, PackageCheck } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 
 export default function CaixasAtivosPage() {
@@ -10,6 +10,7 @@ export default function CaixasAtivosPage() {
   const [liquidezPorCaixa, setLiquidezPorCaixa] = useState({});
   const [turnoSelecionado, setTurnoSelecionado] = useState(null);
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
+  const [consumosHoje, setConsumosHoje] = useState([]);
 
   useEffect(() => {
     loadTurnos();
@@ -18,14 +19,24 @@ export default function CaixasAtivosPage() {
 
   const loadTurnos = async () => {
     try {
-      const [turnos, contas, vendas, movs, despesas, fiados] = await Promise.all([
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+
+      const [turnos, contas, vendas, movs, despesas, fiados, consumos] = await Promise.all([
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
         base44.entities.ContasFinanceiras.list(),
         base44.entities.PedidoVenda.list(),
         base44.entities.MovimentosCaixa.list(),
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Receita', forma_pagamento: 'Conta a Pagar' })
+        base44.entities.LancamentoFinanceiro.filter({ tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
+        base44.entities.ConsumoInterno.list('-created_date'),
       ]);
+
+      const consumosDeHoje = consumos.filter(c => {
+        const d = new Date(c.created_date);
+        return d >= hoje;
+      });
+      setConsumosHoje(consumosDeHoje);
 
       const caixasPDV = contas.filter(c => c.ativo && (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV'));
       
@@ -81,6 +92,20 @@ export default function CaixasAtivosPage() {
     setTurnoSelecionado(turno);
   };
 
+  const consumosPorDestinacao = useMemo(() => {
+    const map = {};
+    consumosHoje.forEach(c => {
+      const dest = c.destinacao || 'Sem destinação';
+      if (!map[dest]) map[dest] = { total: 0, qtdItens: 0, registros: 0 };
+      map[dest].total += c.valor_total || 0;
+      map[dest].qtdItens += c.quantidade_total_itens || 0;
+      map[dest].registros += 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1].total - a[1].total);
+  }, [consumosHoje]);
+
+  const totalConsumoHoje = useMemo(() => consumosHoje.reduce((s, c) => s + (c.valor_total || 0), 0), [consumosHoje]);
+
   const formatValor = (valor) => {
     const num = valor || 0;
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -119,46 +144,74 @@ export default function CaixasAtivosPage() {
             <p className="text-gray-500 dark:text-gray-400">Não há turnos ativos no momento</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {turnosAtivos.map(turno => {
-              const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
-              return (
-                <button
-                  key={turno.id}
-                  onClick={() => handleSelecionarCaixa(turno)}
-                  className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                      <Banknote className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
-                        {turno.conta_caixa_pdv_nome}
-                      </h3>
-                      {liq?.turnoAberto && (
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                            Turno aberto · Liquidez: {formatValor(liq.liquidez)}
-                          </p>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                            Dinheiro na gaveta: {formatValor(liq.dinheiroNaGaveta)}
-                          </p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">
-                            Saldo Inicial: {formatValor(liq.saldoInicial)} · Vendas: {formatValor(liq.totalVendas)}
-                          </p>
-                          {(liq.quantidadeFiado || 0) > 0 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {turnosAtivos.map(turno => {
+                const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
+                return (
+                  <button
+                    key={turno.id}
+                    onClick={() => handleSelecionarCaixa(turno)}
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <Banknote className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
+                          {turno.conta_caixa_pdv_nome}
+                        </h3>
+                        {liq?.turnoAberto && (
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                              Turno aberto · Liquidez: {formatValor(liq.liquidez)}
                             </p>
-                          )}
-                        </div>
-                      )}
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                              Dinheiro na gaveta: {formatValor(liq.dinheiroNaGaveta)}
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Saldo Inicial: {formatValor(liq.saldoInicial)} · Vendas: {formatValor(liq.totalVendas)}
+                            </p>
+                            {(liq.quantidadeFiado || 0) > 0 && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Relatório de Consumo Interno do Dia */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <PackageCheck className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">Consumo Interno — Hoje</h2>
+                </div>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(totalConsumoHoje)}</span>
+              </div>
+              {consumosPorDestinacao.length === 0 ? (
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhum consumo registrado hoje.</p>
+              ) : (
+                <div className="space-y-2">
+                  {consumosPorDestinacao.map(([dest, data]) => (
+                    <div key={dest} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{dest}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{data.registros} registro{data.registros > 1 ? 's' : ''} · {data.qtdItens} item(ns)</p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(data.total)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
