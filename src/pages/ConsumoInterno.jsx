@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Package, MapPin, UserRound, Search, Plus, ChevronDown } from 'lucide-react';
+import { Package, MapPin, UserRound, Search, Plus, MoreVertical, Trash2, Pencil, Paperclip } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, subDays, startOfDay, endOfDay, startOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AssinaturaConsumoDialog from '@/components/consumo-interno/AssinaturaConsumoDialog';
@@ -41,6 +42,9 @@ export default function ConsumoInternoPage() {
     assinatura_recolhedor_nome: '',
   });
   const [novoCadastro, setNovoCadastro] = useState({ tipo: '', valor: '' });
+  const [editandoConsumo, setEditandoConsumo] = useState(null);
+  const anexoInputRef = useRef(null);
+  const [consumoAnexoAlvo, setConsumoAnexoAlvo] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -131,40 +135,85 @@ export default function ConsumoInternoPage() {
     loadData();
   };
 
+  const handleDelete = async (consumo) => {
+    if (!window.confirm(`Excluir ${consumo.numero}? Esta ação não pode ser desfeita.`)) return;
+    await base44.entities.ConsumoInterno.delete(consumo.id);
+    toast.success('Consumo excluído');
+    loadData();
+  };
+
+  const handleAnexarDocumento = (consumo) => {
+    setConsumoAnexoAlvo(consumo);
+    anexoInputRef.current?.click();
+  };
+
+  const handleAnexoFileChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !consumoAnexoAlvo) return;
+    await Promise.all(files.map(file => uploadAttachment(file, 'Comprovante', consumoAnexoAlvo.id, consumoAnexoAlvo.numero)));
+    toast.success(`${files.length} arquivo(s) anexado(s)`);
+    e.target.value = '';
+    setConsumoAnexoAlvo(null);
+  };
+
+  const handleEditar = (consumo) => {
+    setEditandoConsumo(consumo);
+    setFormData({
+      turno_caixa_id: consumo.turno_caixa_id || '',
+      destinacao: consumo.destinacao || '',
+      responsavel_recebimento: consumo.responsavel_recebimento || '',
+      tags: consumo.tags || [],
+      observacoes: consumo.observacoes || '',
+      itens: consumo.itens || [],
+      assinatura_recolhedor_url: consumo.assinatura_recolhedor_url || '',
+      assinatura_recolhedor_nome: consumo.assinatura_recolhedor_nome || '',
+    });
+    setShowForm(true);
+  };
+
   const handleSubmit = async () => {
     if (!formData.destinacao || !formData.responsavel_recebimento || !formData.itens.length) {
       toast.error('Preencha destinação, responsável e itens');
       return;
     }
     const turno = turnos.find((item) => item.id === formData.turno_caixa_id);
-    const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
-    const numero = response?.data?.numero || `CI-${Date.now()}`;
-    const created = await base44.entities.ConsumoInterno.create({
-      ...formData, numero, status: 'Confirmado',
+    const payload = {
+      ...formData,
+      status: 'Confirmado',
       turno_caixa_numero: turno?.numero || '',
       usuario_solicitante_id: currentUser?.id,
       usuario_solicitante_nome: currentUser?.full_name || currentUser?.email,
       quantidade_total_itens: formData.itens.reduce((sum, item) => sum + (item.quantidade || 0), 0),
       valor_total: totalAtual,
       data_confirmacao: new Date().toISOString(),
-    });
-    const fileInput = document.getElementById('consumo-anexo-input');
-    const files = Array.from(fileInput?.files || []);
-    await Promise.all(files.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero)));
-    if (formData.assinatura_recolhedor_url) {
-      await base44.entities.AnexoDocumento.create({
-        referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
-        tipo_documento: 'Contrato', nome_arquivo: `assinatura-${numero}.png`,
-        url_drive: formData.assinatura_recolhedor_url, mime_type: 'image/png',
-        origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${formData.assinatura_recolhedor_nome}`,
-      });
+    };
+    let created;
+    if (editandoConsumo) {
+      created = await base44.entities.ConsumoInterno.update(editandoConsumo.id, payload);
+      toast.success('Consumo atualizado');
+    } else {
+      const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
+      const numero = response?.data?.numero || `CI-${Date.now()}`;
+      created = await base44.entities.ConsumoInterno.create({ ...payload, numero });
+      const fileInput = document.getElementById('consumo-anexo-input');
+      const files = Array.from(fileInput?.files || []);
+      await Promise.all(files.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero)));
+      if (formData.assinatura_recolhedor_url) {
+        await base44.entities.AnexoDocumento.create({
+          referencia_tipo: 'Outro', referencia_id: created.id, referencia_numero: numero,
+          tipo_documento: 'Contrato', nome_arquivo: `assinatura-${numero}.png`,
+          url_drive: formData.assinatura_recolhedor_url, mime_type: 'image/png',
+          origem: 'upload_manual', descricao: `Assinatura do recolhedor: ${formData.assinatura_recolhedor_nome}`,
+        });
+      }
+      if (fileInput) fileInput.value = '';
+      toast.success('Consumo interno registrado');
+      setShowComprovante(true);
     }
-    toast.success('Consumo interno registrado');
     setConsumoSelecionado(created);
+    setEditandoConsumo(null);
     setShowForm(false);
-    setShowComprovante(true);
     setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' });
-    if (fileInput) fileInput.value = '';
     loadData();
   };
 
@@ -172,7 +221,7 @@ export default function ConsumoInternoPage() {
     return (
       <>
         <ConsumoInternoFormPage
-          onBack={() => setShowForm(false)}
+          onBack={() => { setShowForm(false); setEditandoConsumo(null); setFormData({ turno_caixa_id: turnos[0]?.id || '', destinacao: '', responsavel_recebimento: '', tags: [], observacoes: '', itens: [], assinatura_recolhedor_url: '', assinatura_recolhedor_nome: '' }); }}
           formData={formData}
           setFormData={setFormData}
           turnos={turnos}
@@ -257,17 +306,38 @@ export default function ConsumoInternoPage() {
                 </div>
                 <div className="space-y-2">
                   {itens.map((item) => (
-                    <button key={item.id} onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 text-left shadow-sm dark:bg-gray-900">
-                      <div>
+                    <div key={item.id} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 shadow-sm dark:bg-gray-900">
+                      <button className="flex-1 text-left" onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }}>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{item.numero}</p>
                         <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
                           <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
                           <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
                           <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
                         </div>
+                      </button>
+                      <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                              <MoreVertical className="h-4 w-4 text-gray-400" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44 dark:bg-gray-800 dark:border-gray-700">
+                            <DropdownMenuItem onClick={() => handleEditar(item)} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer gap-2">
+                              <Pencil className="h-4 w-4" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAnexarDocumento(item)} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer gap-2">
+                              <Paperclip className="h-4 w-4" /> Anexar doc / foto
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleDelete(item)} className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 cursor-pointer gap-2">
+                              <Trash2 className="h-4 w-4" /> Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -284,6 +354,9 @@ export default function ConsumoInternoPage() {
       >
         <Plus className="h-6 w-6" />
       </button>
+
+      {/* Input oculto para anexos diretos da lista */}
+      <input ref={anexoInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={handleAnexoFileChange} />
 
       <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} />
       <ComprovanteConsumoInterno open={showComprovante} onClose={() => setShowComprovante(false)} consumo={consumoSelecionado} />
