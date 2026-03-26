@@ -181,10 +181,10 @@ export default function ConsumoInternoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900 md:p-6">
-      <div className="mb-4 flex gap-2 md:hidden">
-        <button onClick={() => setMobileStep('destinacao')} className={`flex-1 rounded-2xl px-3 py-2 text-xs font-semibold shadow-sm ${mobileStep === 'destinacao' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Destinação</button>
-        <button onClick={() => setMobileStep('intervenientes')} className={`flex-1 rounded-2xl px-3 py-2 text-xs font-semibold shadow-sm ${mobileStep === 'intervenientes' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Intervenientes / Itens</button>
-        <button onClick={() => setMobileStep('minuta')} className={`flex-1 rounded-2xl px-3 py-2 text-xs font-semibold shadow-sm ${mobileStep === 'minuta' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Minuta</button>
+      <div className="mb-4 grid grid-cols-3 gap-2 md:hidden">
+        <button onClick={() => setMobileStep('destinacao')} className={`rounded-2xl px-2 py-2 text-[11px] font-semibold shadow-sm ${mobileStep === 'destinacao' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Destinação</button>
+        <button onClick={() => setMobileStep('intervenientes')} className={`rounded-2xl px-2 py-2 text-[11px] font-semibold shadow-sm ${mobileStep === 'intervenientes' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Itens</button>
+        <button onClick={() => setMobileStep('minuta')} className={`rounded-2xl px-2 py-2 text-[11px] font-semibold shadow-sm ${mobileStep === 'minuta' ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>Minuta</button>
       </div>
       <div className="mx-auto max-w-6xl space-y-5">
         <div className="flex items-end justify-between gap-4">
@@ -227,12 +227,6 @@ export default function ConsumoInternoPage() {
                   </div>
                 </Field>
 
-                <div className="md:hidden">
-                  <Button type="button" onClick={() => setMobileStep('intervenientes')} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
-                    Próximo
-                  </Button>
-                </div>
-
                 <Field label="Quem recebeu">
                   <div className="flex gap-2">
                     <Select value={formData.responsavel_recebimento} onValueChange={(value) => setFormData((prev) => ({ ...prev, responsavel_recebimento: value }))}>
@@ -255,6 +249,12 @@ export default function ConsumoInternoPage() {
               <div className="mt-4">
                 <Label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Observações</Label>
                 <Textarea ref={observacoesRef} className="min-h-[100px] rounded-[24px] border-0 bg-gray-100 shadow-sm dark:bg-gray-900" value={formData.observacoes} onChange={(e) => setFormData((prev) => ({ ...prev, observacoes: e.target.value }))} />
+              </div>
+
+              <div className="mt-4 md:hidden">
+                <Button type="button" onClick={() => setMobileStep('intervenientes')} className="h-11 w-full rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+                  Próximo
+                </Button>
               </div>
             </div>
 
