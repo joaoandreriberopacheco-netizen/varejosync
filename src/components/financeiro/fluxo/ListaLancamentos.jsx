@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
+import { ArrowDownLeft, ArrowRightLeft, ArrowUpRight, AlertCircle, ChevronRight, Clock, Scale, X } from 'lucide-react';
 
 const R = (v) => `R$ ${(Math.round((v || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
