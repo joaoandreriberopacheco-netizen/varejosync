@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Banknote, Lock, PackageCheck } from 'lucide-react';
+import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 
 export default function CaixasAtivosPage() {
@@ -11,6 +11,7 @@ export default function CaixasAtivosPage() {
   const [turnoSelecionado, setTurnoSelecionado] = useState(null);
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
   const [consumosHoje, setConsumosHoje] = useState([]);
+  const [destinacoesExpandidas, setDestinacoesExpandidas] = useState({});
 
   useEffect(() => {
     loadTurnos();
@@ -106,6 +107,30 @@ export default function CaixasAtivosPage() {
 
   const totalConsumoHoje = useMemo(() => consumosHoje.reduce((s, c) => s + (c.valor_total || 0), 0), [consumosHoje]);
 
+  const toggleDestinacao = (dest) => setDestinacoesExpandidas(prev => ({ ...prev, [dest]: !prev[dest] }));
+
+  const imprimirRelatorioConsumo = () => {
+    const linhas = consumosPorDestinacao.map(([dest, data]) => {
+      const itensAgrupados = {};
+      consumosHoje
+        .filter(c => (c.destinacao || 'Sem destinação') === dest)
+        .forEach(c => (c.itens || []).forEach(it => {
+          if (!itensAgrupados[it.produto_nome]) itensAgrupados[it.produto_nome] = { qtd: 0, subtotal: 0, unidade: it.unidade_medida || '' };
+          itensAgrupados[it.produto_nome].qtd += it.quantidade || 0;
+          itensAgrupados[it.produto_nome].subtotal += it.subtotal || 0;
+        }));
+      const itensHtml = Object.entries(itensAgrupados).map(([nome, v]) =>
+        `<tr><td style="padding:2px 8px">${nome}</td><td style="padding:2px 8px;text-align:center">${v.qtd} ${v.unidade}</td><td style="padding:2px 8px;text-align:right">R$ ${v.subtotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td></tr>`
+      ).join('');
+      return `<tr style="background:#f3f4f6"><td colspan="3" style="padding:6px 8px;font-weight:600">${dest} — R$ ${data.total.toLocaleString('pt-BR',{minimumFractionDigits:2})} (${data.registros} registro${data.registros>1?'s':''})</td></tr>${itensHtml}`;
+    }).join('');
+    const html = `<html><head><title>Consumo Interno — Hoje</title><style>body{font-family:sans-serif;font-size:13px;padding:16px}table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #e5e7eb}</style></head><body><h2 style="margin-bottom:8px">Consumo Interno — Hoje</h2><p style="margin-bottom:12px;color:#6b7280">Total: R$ ${totalConsumoHoje.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p><table><tbody>${linhas}</tbody></table></body></html>`;
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    w.print();
+  };
+
   const formatValor = (valor) => {
     const num = valor || 0;
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -194,21 +219,59 @@ export default function CaixasAtivosPage() {
                   <PackageCheck className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   <h2 className="text-base font-semibold text-gray-900 dark:text-white">Consumo Interno — Hoje</h2>
                 </div>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(totalConsumoHoje)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(totalConsumoHoje)}</span>
+                  {consumosPorDestinacao.length > 0 && (
+                    <button onClick={imprimirRelatorioConsumo} className="p-1.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Imprimir relatório consolidado">
+                      <Printer className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                    </button>
+                  )}
+                </div>
               </div>
               {consumosPorDestinacao.length === 0 ? (
                 <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhum consumo registrado hoje.</p>
               ) : (
                 <div className="space-y-2">
-                  {consumosPorDestinacao.map(([dest, data]) => (
-                    <div key={dest} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{dest}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">{data.registros} registro{data.registros > 1 ? 's' : ''} · {data.qtdItens} item(ns)</p>
+                  {consumosPorDestinacao.map(([dest, data]) => {
+                    const expanded = destinacoesExpandidas[dest];
+                    const itensAgrupados = {};
+                    consumosHoje
+                      .filter(c => (c.destinacao || 'Sem destinação') === dest)
+                      .forEach(c => (c.itens || []).forEach(it => {
+                        if (!itensAgrupados[it.produto_nome]) itensAgrupados[it.produto_nome] = { qtd: 0, subtotal: 0, unidade: it.unidade_medida || '' };
+                        itensAgrupados[it.produto_nome].qtd += it.quantidade || 0;
+                        itensAgrupados[it.produto_nome].subtotal += it.subtotal || 0;
+                      }));
+                    return (
+                      <div key={dest} className="rounded-xl bg-gray-50 dark:bg-gray-900 overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{dest}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{data.registros} registro{data.registros > 1 ? 's' : ''} · {data.qtdItens} item(ns)</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(data.total)}</p>
+                            <button onClick={() => toggleDestinacao(dest)} className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                              {expanded ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                            </button>
+                          </div>
+                        </div>
+                        {expanded && (
+                          <div className="px-4 pb-3 space-y-1 border-t border-gray-100 dark:border-gray-800 pt-2">
+                            {Object.entries(itensAgrupados).map(([nome, v]) => (
+                              <div key={nome} className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                                <span>{nome}</span>
+                                <span className="flex items-center gap-3">
+                                  <span className="text-gray-400">{v.qtd} {v.unidade}</span>
+                                  <span className="font-medium text-gray-700 dark:text-gray-300">{formatValor(v.subtotal)}</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{formatValor(data.total)}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
