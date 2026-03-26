@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock, ClipboardPenLine } from 'lucide-react';
+import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import VendasTurnoDialog from './VendasTurnoDialog';
 import VendaDetalheDialog from './VendaDetalheDialog';
 import ListaMovimentosDialog from './ListaMovimentosDialog';
 import SaldoConsolidadoDialog from './SaldoConsolidadoDialog';
-import MovimentosConsumoDialog from '@/components/consumo-interno/MovimentosConsumoDialog';
+
 
 export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVoltar }) {
   const [caixaData, setCaixaData] = useState({ saldoInicial: 0, liquidez: 0, totalVendas: 0, recebimentos: { dinheiro: 0, pix: 0, credito: 0, debito: 0, vale: 0 }, reforcos: 0, sangrias: 0, despesas: 0, despesasLista: [], fiado: 0, fiadoLista: [] });
@@ -20,8 +20,6 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const [showDespesasDialog, setShowDespesasDialog] = useState(false);
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
-  const [showConsumoDialog, setShowConsumoDialog] = useState(false);
-  const [consumosInternos, setConsumosInternos] = useState([]);
   const [recebimentosDinheiro, setRecebimentosDinheiro] = useState('0,00');
   const [loading, setLoading] = useState(true);
 
@@ -34,12 +32,11 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
   const loadData = async () => {
     setLoading(true);
     try {
-      const [vendas, movs, despesasRaw, fiados, consumos] = await Promise.all([
+      const [vendas, movs, despesasRaw, fiados] = await Promise.all([
         base44.entities.PedidoVenda.filter({ turno_caixa_id: turnoAtivo.id }),
         base44.entities.MovimentosCaixa.filter({ turno_caixa_id: turnoAtivo.id }),
         base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Despesa' }),
-        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
-        base44.entities.ConsumoInterno.filter({ turno_caixa_id: turnoAtivo.id })
+        base44.entities.LancamentoFinanceiro.filter({ turno_caixa_id: turnoAtivo.id, tipo: 'Receita', forma_pagamento: 'Conta a Pagar' })
       ]);
 
       // Filtrar apenas despesas que NÃO são recolhimentos/sangrias
@@ -92,7 +89,6 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       });
       setVendasFinalizadas(vendas);
       setMovimentos(movs);
-      setConsumosInternos(consumos);
       
       // Auto-preencher dinheiro esperado
       const dinheiroEsperado = liquidez - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
@@ -385,19 +381,10 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                 </div>
               </div>
 
-              {/* Botão Imprimir APENAS */}
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-                  <button onClick={() => setShowConsumoDialog(true)} className="w-full h-12 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:shadow-lg transition-shadow" style={{ minHeight: '48px' }}>
-                    <ClipboardPenLine className="w-4 h-4" /> Consumo Interno
-                  </button>
-                  <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">{consumosInternos.length} registro(s) · R$ {(consumosInternos.reduce((sum, item) => sum + (item.valor_total || 0), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
-                  <button onClick={imprimirRelatorio} className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:shadow-lg transition-shadow" style={{ minHeight: '48px' }}>
-                    <Printer className="w-4 h-4" /> Imprimir Relatório
-                  </button>
-                </div>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+                <button onClick={imprimirRelatorio} className="w-full h-12 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-semibold flex items-center justify-center gap-2 text-sm hover:shadow-lg transition-shadow" style={{ minHeight: '48px' }}>
+                  <Printer className="w-4 h-4" /> Imprimir Relatório
+                </button>
               </div>
             </div>
           </TabsContent>
@@ -485,7 +472,6 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
       <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} />
       <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} />
       <SaldoConsolidadoDialog open={showSaldoConsolidadoDialog} onOpenChange={setShowSaldoConsolidadoDialog} caixaData={caixaData} formatValor={formatValor} />
-      <MovimentosConsumoDialog open={showConsumoDialog} onOpenChange={setShowConsumoDialog} consumos={consumosInternos} />
     </div>
   );
 }
