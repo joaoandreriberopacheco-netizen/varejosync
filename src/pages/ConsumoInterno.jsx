@@ -195,6 +195,31 @@ export default function ConsumoInternoPage() {
       const response = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'CI' });
       const numero = response?.data?.numero || `CI-${Date.now()}`;
       created = await base44.entities.ConsumoInterno.create({ ...payload, numero });
+
+      // ── Baixar estoque de cada item ───────────────────────────────────────
+      await Promise.all(formData.itens.map(async (item) => {
+        // 1. Registrar movimentação de saída
+        await base44.entities.MovimentacaoEstoque.create({
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          tipo: 'Saída',
+          motivo: 'Consumo Interno',
+          quantidade: item.quantidade,
+          custo_unitario: item.custo_unitario,
+          referencia_tipo: 'ConsumoInterno',
+          referencia_id: created.id,
+          referencia_numero: numero,
+          observacoes: `Consumo interno: ${formData.destinacao} — ${formData.responsavel_recebimento}`,
+          usuario_responsavel: currentUser?.full_name || currentUser?.email,
+        });
+        // 2. Atualizar estoque_atual do produto
+        const produtoAtual = produtos.find((p) => p.id === item.produto_id);
+        if (produtoAtual) {
+          const novoEstoque = (produtoAtual.estoque_atual || 0) - item.quantidade;
+          await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
+        }
+      }));
+
       const fileInput = document.getElementById('consumo-anexo-input');
       const files = Array.from(fileInput?.files || []);
       await Promise.all(files.map((file) => uploadAttachment(file, 'Comprovante', created.id, numero)));
