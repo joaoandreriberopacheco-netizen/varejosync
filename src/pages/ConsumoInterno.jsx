@@ -8,10 +8,8 @@ import { Package, MapPin, UserRound, Search } from 'lucide-react';
 import AssinaturaConsumoDialog from '@/components/consumo-interno/AssinaturaConsumoDialog';
 import ConsumoResumoDialog from '@/components/consumo-interno/ConsumoResumoDialog';
 import ConsumoProdutoSelectorPDV from '@/components/consumo-interno/ConsumoProdutoSelectorPDV';
-import ConsumoStepTabs from '@/components/consumo-interno/ConsumoStepTabs';
-import ConsumoDestinacaoStep from '@/components/consumo-interno/ConsumoDestinacaoStep';
-import ConsumoItensStep from '@/components/consumo-interno/ConsumoItensStep';
-import ConsumoMinutaStep from '@/components/consumo-interno/ConsumoMinutaStep';
+import { Plus } from 'lucide-react';
+import ConsumoFormDialog from '@/components/consumo-interno/ConsumoFormDialog';
 import ComprovanteConsumoInterno from '@/components/consumo-interno/ComprovanteConsumoInterno';
 
 const formatCurrency = (value) => `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -28,6 +26,7 @@ export default function ConsumoInternoPage() {
   const [showResumo, setShowResumo] = useState(false);
   const [showProdutoSelector, setShowProdutoSelector] = useState(false);
   const [showComprovante, setShowComprovante] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [consumoSelecionado, setConsumoSelecionado] = useState(null);
   const [formData, setFormData] = useState({
     turno_caixa_id: '',
@@ -172,6 +171,7 @@ export default function ConsumoInternoPage() {
 
     toast.success('Consumo interno registrado');
     setConsumoSelecionado(created);
+    setShowForm(false);
     setShowComprovante(true);
     setFormData({
       turno_caixa_id: turnos[0]?.id || '',
@@ -190,13 +190,11 @@ export default function ConsumoInternoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900 md:p-6">
-      <ConsumoStepTabs mobileStep={mobileStep} setMobileStep={setMobileStep} />
-
-      <div className="mx-auto max-w-6xl space-y-5">
+      <div className="mx-auto max-w-6xl space-y-5 pb-24">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-2xl font-semibold text-gray-900 dark:text-white">Consumo Interno</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Controle, filtros, totais e formulário de movimento de consumo interno na mesma página.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Consulta principal das movimentações internas do dia com acesso rápido ao novo lançamento.</p>
           </div>
           <div className="rounded-[24px] bg-white px-4 py-3 shadow-sm dark:bg-gray-800">
             <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total em aberto hoje</p>
@@ -204,72 +202,68 @@ export default function ConsumoInternoPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-5">
-            <div className={`${mobileStep !== 'destinacao' ? 'hidden md:block' : ''}`}>
-              <ConsumoDestinacaoStep
-                formData={formData}
-                setFormData={setFormData}
-                turnos={turnos}
-                destinacoes={destinacoes}
-                responsaveis={responsaveis}
-                setNovoCadastro={setNovoCadastro}
-                destinacaoRef={destinacaoRef}
-                responsavelRef={responsavelRef}
-                tagsRef={tagsRef}
-                observacoesRef={observacoesRef}
-                onNext={() => setMobileStep('itens')}
-              />
-            </div>
-
-            <div className={`${mobileStep !== 'itens' ? 'hidden md:block' : ''}`}>
-              <ConsumoItensStep
-                formData={formData}
-                totalAtual={totalAtual}
-                onOpenSelector={() => setShowProdutoSelector(true)}
-                onBack={() => setMobileStep('destinacao')}
-                onNext={() => setMobileStep('minuta')}
-              />
+        <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-lg font-semibold text-gray-900 dark:text-white">Histórico</p>
+            <div className="relative w-full max-w-[220px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar" className="h-10 rounded-2xl border-0 bg-gray-100 pl-9 shadow-sm dark:bg-gray-900" />
             </div>
           </div>
 
-          <div className={`space-y-5 ${mobileStep !== 'minuta' ? 'hidden md:block' : ''}`}>
-            <ConsumoMinutaStep
-              formData={formData}
-              currentUser={currentUser}
-              onOpenAssinatura={() => setShowAssinatura(true)}
-              onBack={() => setMobileStep('itens')}
-              onSubmit={handleSubmit}
-            />
-
-            <div className="rounded-[30px] bg-white p-5 shadow-sm dark:bg-gray-800">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">Histórico</p>
-                <div className="relative w-full max-w-[220px]">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar" className="h-10 rounded-2xl border-0 bg-gray-100 pl-9 shadow-sm dark:bg-gray-900" />
+          <div className="space-y-2">
+            {consumosFiltrados.map((item) => (
+              <button key={item.id} onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 text-left shadow-sm dark:bg-gray-900">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{item.numero}</p>
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
+                    <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
+                    <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
+                  </div>
                 </div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
+              </button>
+            ))}
+            {!consumosFiltrados.length && (
+              <div className="rounded-[24px] bg-gray-50 px-4 py-10 text-center text-sm text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-400">
+                Nenhuma movimentação encontrada.
               </div>
-
-              <div className="space-y-2">
-                {consumosFiltrados.map((item) => (
-                  <button key={item.id} onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 text-left shadow-sm dark:bg-gray-900">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.numero}</p>
-                      <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
-                        <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
-                        <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{item.responsavel_recebimento}</span>
-                        <span className="inline-flex items-center gap-1"><Package className="h-3.5 w-3.5" />{item.quantidade_total_itens} item(ns)</span>
-                      </div>
-                    </div>
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
+
+      <ConsumoFormDialog
+        open={showForm}
+        onOpenChange={setShowForm}
+        mobileStep={mobileStep}
+        setMobileStep={setMobileStep}
+        formData={formData}
+        setFormData={setFormData}
+        turnos={turnos}
+        destinacoes={destinacoes}
+        responsaveis={responsaveis}
+        setNovoCadastro={setNovoCadastro}
+        destinacaoRef={destinacaoRef}
+        responsavelRef={responsavelRef}
+        tagsRef={tagsRef}
+        observacoesRef={observacoesRef}
+        totalAtual={totalAtual}
+        onOpenSelector={() => setShowProdutoSelector(true)}
+        currentUser={currentUser}
+        onOpenAssinatura={() => setShowAssinatura(true)}
+        onSubmit={handleSubmit}
+      />
+
+      <button
+        type="button"
+        onClick={() => { setMobileStep('destinacao'); setShowForm(true); }}
+        className="fixed bottom-24 right-4 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-gray-900 text-white shadow-2xl transition-transform hover:scale-105 dark:bg-white dark:text-gray-900 md:bottom-6 md:right-6"
+        aria-label="Novo consumo interno"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
 
       <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
         <DialogContent className="max-w-sm rounded-[28px] border-0 bg-white p-5 shadow-2xl dark:bg-gray-900">
@@ -283,7 +277,7 @@ export default function ConsumoInternoPage() {
 
       <AssinaturaConsumoDialog open={showAssinatura} onOpenChange={setShowAssinatura} onConfirm={handleAssinaturaConfirm} />
       <ConsumoResumoDialog open={showResumo} onOpenChange={setShowResumo} consumo={consumoSelecionado} />
-      <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={(item) => { addItem(item); setMobileStep('itens'); }} />
+      <ConsumoProdutoSelectorPDV open={showProdutoSelector} onOpenChange={setShowProdutoSelector} produtos={produtos} onAddItem={(item) => { addItem(item); setMobileStep('itens'); setShowForm(true); }} />
       <ComprovanteConsumoInterno open={showComprovante} onClose={() => setShowComprovante(false)} consumo={consumoSelecionado} />
     </div>
   );
