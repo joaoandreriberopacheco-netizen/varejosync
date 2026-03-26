@@ -16,7 +16,7 @@ import { MODULOS } from './PerfilFormTela';
 
 import {
   LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
-  DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck
+  DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine
 } from 'lucide-react';
 
 export function resolverPermissoes(perfilDeAcesso, overridePermissoes = {}) {
@@ -262,6 +262,12 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true
       }
     ]
+  },
+  {
+    name: 'Consumo Interno',
+    icon: ClipboardPenLine,
+    page: 'ConsumoInterno',
+    permissaoCheck: (p) => p?.homepage?.acoes_rapidas === true || p?.estoque?.visualizar_produtos === true || p?.financeiro?.caixas_ativos === true
   },
   {
     name: 'Financeiro',

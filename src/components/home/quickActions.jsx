@@ -2,7 +2,7 @@ import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
   Truck, BarChart3, Users, ClipboardList, Receipt, Warehouse,
   FileText, QrCode, LayoutDashboard, Tag, Settings, Upload, MonitorCheck,
-  Scan, Tablet
+  Scan, Tablet, ClipboardPenLine
 } from 'lucide-react';
 
 /**
@@ -130,6 +130,13 @@ export const ALL_QUICK_ACTIONS = [
     label: 'Caixas Ativos',
     page: 'CaixasAtivos',
     permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.caixas_ativos || p?.financeiro?.acesso,
+  },
+  {
+    id: 'consumo_interno',
+    icon: ClipboardPenLine,
+    label: 'Consumo',
+    page: 'ConsumoInterno',
+    permissaoCheck: (p) => p?.homepage?.acoes_rapidas || p?.estoque?.visualizar_produtos || p?.financeiro?.caixas_ativos,
   },
   {
     id: 'pdv_supermercado',

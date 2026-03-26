@@ -37,6 +37,7 @@ import GestaoTemplates from '@/pages/GestaoTemplates';
 import LixeiraLancamentos from '@/pages/LixeiraLancamentos';
 import SimuladorCartao from '@/pages/SimuladorCartao';
 import ReversaoDespesasSangrias from '@/pages/ReversaoDespesasSangrias';
+import ConsumoInterno from '@/pages/ConsumoInterno';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -199,6 +200,7 @@ const AuthenticatedApp = () => {
       <Route path="/LixeiraLancamentos" element={<LayoutWrapper currentPageName="LixeiraLancamentos"><LixeiraLancamentos /></LayoutWrapper>} />
       <Route path="/SimuladorCartao" element={<LayoutWrapper currentPageName="SimuladorCartao"><SimuladorCartao /></LayoutWrapper>} />
       <Route path="/ReversaoDespesasSangrias" element={<LayoutWrapper currentPageName="ReversaoDespesasSangrias"><ReversaoDespesasSangrias /></LayoutWrapper>} />
+      <Route path="/ConsumoInterno" element={<LayoutWrapper currentPageName="ConsumoInterno"><ConsumoInterno /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>

@@ -5,7 +5,7 @@ import { createPageUrl } from '@/components/utils';
 import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import {
   Eye, EyeOff, BarChart3, AlertCircle, ChevronRight,
-  Package, Receipt, ShoppingCart, Wallet, Settings2
+  Package, Receipt, ShoppingCart, Wallet, Settings2, ClipboardPenLine
 } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
 import { format } from 'date-fns';
@@ -273,6 +273,17 @@ export default function HomePage() {
         })()}
 
         {/* Atalhos de lista adicionais — filtra por permissões */}
+        <Link to="/ConsumoInterno" className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow">
+          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+            <ClipboardPenLine className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Registrar Consumo Interno</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Saída rastreada com destinação, assinatura e anexos.</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+        </Link>
+
         {(() => {
           const outrosAtalhos = ALL_QUICK_ACTIONS
             .filter(a => allowedActionIds.includes(a.id) && !quickActionIds.includes(a.id))
