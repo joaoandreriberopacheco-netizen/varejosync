@@ -100,14 +100,23 @@ export default function TemplatesCompra() {
       setStep('reading');
       const base64 = await fileToBase64(file);
 
+      // Helper para extrair msg de erro de respostas axios
+      const extractError = (err) => {
+        const data = err?.response?.data;
+        if (data?.error) return { text: data.error, erros: data.erros || data.log?.erros || [] };
+        return { text: err?.message || 'Erro desconhecido.', erros: [] };
+      };
+
       // ETAPA 2 — análise no servidor (dry run)
       setStep('analyzing');
-      const analyzeResp = await base44.functions.invoke('importarPedidosCompra', { file_content: base64, phase: 'analyze' });
-      const analyzed = analyzeResp.data || analyzeResp;
-
-      if (analyzed.error && !analyzed.success) {
-        setMessage({ type: 'error', text: analyzed.error });
-        setImportResult({ erros: analyzed.erros || [] });
+      let analyzed;
+      try {
+        const analyzeResp = await base44.functions.invoke('importarPedidosCompra', { file_content: base64, phase: 'analyze' });
+        analyzed = analyzeResp.data || analyzeResp;
+      } catch (err) {
+        const { text, erros } = extractError(err);
+        setMessage({ type: 'error', text });
+        setImportResult({ erros });
         setStep(null);
         return;
       }
@@ -116,24 +125,28 @@ export default function TemplatesCompra() {
 
       // ETAPA 3 — importação real
       setStep('importing');
-      const importResp = await base44.functions.invoke('importarPedidosCompra', { file_content: base64, phase: 'import' });
-      const result = importResp.data || importResp;
-
-      if (result.error && !result.success) {
-        setMessage({ type: 'error', text: result.error });
-        setImportResult({ erros: result.erros || [] });
+      let result;
+      try {
+        const importResp = await base44.functions.invoke('importarPedidosCompra', { file_content: base64, phase: 'import' });
+        result = importResp.data || importResp;
+      } catch (err) {
+        const { text, erros } = extractError(err);
+        setMessage({ type: 'error', text });
+        setImportResult({ erros });
         setStep(null);
-      } else {
-        setImportResult(result);
-        setStep('done');
-        setMessage({
-          type: 'success',
-          text: `Pedido ${result.pedido_numero} criado com ${result.itens_criados} itens!`
-        });
+        return;
       }
+
+      setImportResult(result);
+      setStep('done');
+      setMessage({
+        type: 'success',
+        text: `Pedido ${result.pedido_numero} criado com ${result.itens_criados} itens!`
+      });
     } catch (error) {
       console.error('Erro:', error);
-      setMessage({ type: 'error', text: error.message || 'Erro ao importar. Verifique o arquivo.' });
+      const data = error?.response?.data;
+      setMessage({ type: 'error', text: data?.error || error.message || 'Erro ao importar. Verifique o arquivo.' });
       setStep(null);
     } finally {
       setIsImporting(false);
