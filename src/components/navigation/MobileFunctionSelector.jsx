@@ -33,7 +33,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
       <div className="bg-gradient-to-b from-[#162238] to-[#121a2b] px-4 pt-5 pb-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 min-w-0">
-            <P38Logo variant="icon-only" size="sm" />
+            <P38Logo variant="horizontal" size="sm" className="h-12 w-auto flex-none" />
             <div className="min-w-0">
               <p className="text-sm text-white/70">Olá{currentUser?.full_name ? `, ${currentUser.full_name.split(' ')[0]}` : ''}</p>
               <h2 className="text-lg font-semibold text-white font-glacial truncate">P38 ERP</h2>
