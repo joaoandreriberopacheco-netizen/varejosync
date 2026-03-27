@@ -242,29 +242,34 @@ export default function ExportarPlanilha() {
         const idxAT = 34;                                                // Ativo
 
         const letH1 = colLetter(idxH1), letH2 = colLetter(idxH2), letH3 = colLetter(idxH3), letH4 = colLetter(idxH4), letH5 = colLetter(idxH5);
-        const letCB = colLetter(idxCB), letMA = colLetter(idxMA), letTP = colLetter(idxTP);
-        const letCA = colLetter(idxCA), letAR = colLetter(idxAR);
-        const letVC = colLetter(idxVC), letDP = colLetter(idxDP), letFR = colLetter(idxFR), letI1 = colLetter(idxI1), letI2 = colLetter(idxI2);
-        const letPV = colLetter(idxPV);
-        const letUN = colLetter(idxUN), letCD = colLetter(idxCD), letUP = colLetter(idxUP);
-        const letEM = colLetter(idxEM), letEI = colLetter(idxEI), letEX = colLetter(idxEX), letRP = colLetter(idxRP);
-        const letPS = colLetter(idxPS), letDM = colLetter(idxDM), letABCD = colLetter(idxABCD);
-        const letPL = colLetter(idxPL), letCS = colLetter(idxCS), letCL = colLetter(idxCL), letCV = colLetter(idxCV);
-        const letAT = colLetter(idxAT);
+         const letCB = colLetter(idxCB), letMA = colLetter(idxMA), letTP = colLetter(idxTP);
+         const letCA = colLetter(idxCA), letAR = colLetter(idxAR);
+         const letVC = colLetter(idxVC), letDP = colLetter(idxDP), letFR = colLetter(idxFR), letI1 = colLetter(idxI1), letI2 = colLetter(idxI2);
+         const letPV = colLetter(idxPV);
+         const letUN = colLetter(idxUN), letCD = colLetter(idxCD), letUP = colLetter(idxUP);
+         const letEM = colLetter(idxEM), letEI = colLetter(idxEI), letEX = colLetter(idxEX), letRP = colLetter(idxRP);
+         const letPS = colLetter(idxPS), letDM = colLetter(idxDM), letABCD = colLetter(idxABCD);
+         const letPL = colLetter(idxPL), letCS = colLetter(idxCS), letCL = colLetter(idxCL), letCV = colLetter(idxCV);
+         const letAT = colLetter(idxAT);
 
-        // Helper para normalizar números (x100 sem ponto) — EM PORTUGUÊS
-         const T = (col) => `SE(${col}${rowNumber}="";"0";TEXTO(ARRED(${col}${rowNumber}*100;0);"0"))`;
-         // Helper para normalizar booleanos — EM PORTUGUÊS
-         const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
+         // Fórmula de checksum simplificada: soma os códigos ASCII de cada célula
+         // Usa CÓDIGO(EXT.TEXTO()) para extrair e somar valores numéricos
+         const buildChecksumFormula = (cells) => {
+           return cells.map(cell => `SOMARPRODUTO(CÓDIGO(EXT.TEXTO(${cell};SEQUÊNCIA(1;100);1)))`).join("+");
+         };
 
-        // Checksum otimizado: aplica UNICODE(EXT.TEXTO()) em cada célula editável
-        // e soma os valores numéricos resultantes em uma única fórmula elegante
-        const checksumFormula = `SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH1}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH2}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH3}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH4}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH5}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letCB}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letMA}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letTP}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letABCD}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letCA}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letAR}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letCD}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letDP}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letFR}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letI1}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letI2}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letUN}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letDM}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letAT}${rowNumber};SEQUÊNCIA(1;100);1));0))`;
+         const checksumCells = [
+           `${letH1}${rowNumber}`, `${letH2}${rowNumber}`, `${letH3}${rowNumber}`, `${letH4}${rowNumber}`, `${letH5}${rowNumber}`,
+           `${letCB}${rowNumber}`, `${letMA}${rowNumber}`, `${letTP}${rowNumber}`, `${letABCD}${rowNumber}`, `${letCA}${rowNumber}`, `${letAR}${rowNumber}`,
+           `${letCD}${rowNumber}`, `${letDP}${rowNumber}`, `${letFR}${rowNumber}`, `${letI1}${rowNumber}`, `${letI2}${rowNumber}`,
+           `${letUN}${rowNumber}`, `${letDM}${rowNumber}`, `${letAT}${rowNumber}`
+         ];
+         const checksumFormula = buildChecksumFormula(checksumCells);
 
-        row.getCell(idxAlterado).value = {
-          formula: `SE(${letHashOrig}${rowNumber}="","SIM",SE(${checksumFormula}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
-          result: 'NÃO',
-        };
+         row.getCell(idxAlterado).value = {
+           formula: `SE(${letHashOrig}${rowNumber}="","SIM",SE(${checksumFormula}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
+           result: 'NÃO',
+         };
 
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const colConfig = COLUNAS_CONFIG[colNumber - 1];
