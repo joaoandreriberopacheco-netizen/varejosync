@@ -33,38 +33,39 @@ function normStr(value) {
 }
 
 function computeProductHash(produto) {
+  // Ordem EXATA conforme COLUNAS_CONFIG
   return [
-    normStr(produto.campo_hierarquico_1),
-    normStr(produto.campo_hierarquico_2),
-    normStr(produto.campo_hierarquico_3),
-    normStr(produto.campo_hierarquico_4),
-    normStr(produto.campo_hierarquico_5),
-    normStr(produto.codigo_barras),
-    normStr(produto.marca),
-    normStr(produto.tipo),
-    normStr(produto.categoria_nome),
-    normStr(produto.area_codigo),
-    normNum(produto.valor_compra),
-    normNum(produto.desconto_perc ?? 0),
-    normNum(produto.custo_frete_padrao),
-    normNum(produto.custo_imposto1_padrao),
-    normNum(produto.custo_imposto2_padrao),
-    normStr(produto.unidade_principal),
-    normNum(produto.casas_decimais),
-    normNum(produto.unidades_por_pacote),
-    normNum(produto.estoque_minimo),
-    normNum(produto.estoque_ideal),
-    normNum(produto.estoque_maximo),
-    normNum(produto.tempo_reposicao_dias),
-    normNum(produto.peso_kg),
-    normStr(produto.dimensoes_cm),
-    normStr(produto.abcd),
-    produto.preco_livre ? 'true' : 'false',
-    produto.controla_serial ? 'true' : 'false',
-    produto.controla_lote ? 'true' : 'false',
-    produto.controla_validade ? 'true' : 'false',
-    produto.ativo === false ? 'false' : 'true',
-    normNum(produto.preco_venda_padrao),
+    normStr(produto.campo_hierarquico_1),    // idx 2
+    normStr(produto.campo_hierarquico_2),    // idx 3
+    normStr(produto.campo_hierarquico_3),    // idx 4
+    normStr(produto.campo_hierarquico_4),    // idx 5
+    normStr(produto.campo_hierarquico_5),    // idx 6
+    normStr(produto.codigo_barras),          // idx 7
+    normStr(produto.marca),                  // idx 8
+    normStr(produto.tipo),                   // idx 9
+    normStr(produto.categoria_nome),         // idx 10
+    normStr(produto.area_codigo),            // idx 11
+    normNum(produto.valor_compra),           // idx 12
+    normNum(produto.desconto_perc ?? 0),     // idx 13
+    normNum(produto.custo_frete_padrao),     // idx 14
+    normNum(produto.custo_imposto1_padrao),  // idx 15
+    normNum(produto.custo_imposto2_padrao),  // idx 16
+    normNum(produto.preco_venda_padrao),     // idx 19 (CUSTO_TOTAL pulado — é calculado)
+    normStr(produto.unidade_principal),      // idx 20
+    normNum(produto.casas_decimais),         // idx 21
+    normNum(produto.unidades_por_pacote),    // idx 22
+    normNum(produto.estoque_minimo),         // idx 23
+    normNum(produto.estoque_ideal),          // idx 24
+    normNum(produto.estoque_maximo),         // idx 25
+    normNum(produto.tempo_reposicao_dias),   // idx 26
+    normNum(produto.peso_kg),                // idx 27
+    normStr(produto.dimensoes_cm),           // idx 28
+    normStr(produto.abcd),                   // idx 29
+    produto.preco_livre ? 'true' : 'false',  // idx 30
+    produto.controla_serial ? 'true' : 'false', // idx 31
+    produto.controla_lote ? 'true' : 'false',   // idx 32
+    produto.controla_validade ? 'true' : 'false', // idx 33
+    produto.ativo === false ? 'false' : 'true',  // idx 34
   ].join('|');
 }
 
@@ -253,8 +254,8 @@ export default function ExportarPlanilha() {
         // Helper para normalizar booleanos
         const B = (col) => `IF(OR(LOWER(TRIM(${col}${rowNumber}))="sim",LOWER(TRIM(${col}${rowNumber}))="true",LOWER(TRIM(${col}${rowNumber}))="verdadeiro",TRIM(${col}${rowNumber})="1"),"true","false")`;
 
-        // Fórmula de hash — espelha computeProductHash no servidor
-        const hashCalc = `TRIM(${letH1}${rowNumber})&"|"&TRIM(${letH2}${rowNumber})&"|"&TRIM(${letH3}${rowNumber})&"|"&TRIM(${letH4}${rowNumber})&"|"&TRIM(${letH5}${rowNumber})&"|"&TRIM(${letCB}${rowNumber})&"|"&TRIM(${letMA}${rowNumber})&"|"&TRIM(${letTP}${rowNumber})&"|"&TRIM(${letCA}${rowNumber})&"|"&TRIM(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&TRIM(${letPV}${rowNumber})&"|"&TRIM(${letUN}${rowNumber})&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&TRIM(${letDM}${rowNumber})&"|"&TRIM(${letABCD}${rowNumber})&"|"&${B(letPL)}&"|"&${B(letCS)}&"|"&${B(letCL)}&"|"&${B(letCV)}&"|"&TRIM(${letAT}${rowNumber})`;
+        // Fórmula de hash — ORDEM EXATA conforme computeProductHash
+        const hashCalc = `TRIM(${letH1}${rowNumber})&"|"&TRIM(${letH2}${rowNumber})&"|"&TRIM(${letH3}${rowNumber})&"|"&TRIM(${letH4}${rowNumber})&"|"&TRIM(${letH5}${rowNumber})&"|"&TRIM(${letCB}${rowNumber})&"|"&TRIM(${letMA}${rowNumber})&"|"&TRIM(${letTP}${rowNumber})&"|"&TRIM(${letCA}${rowNumber})&"|"&TRIM(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&${T(letPV)}&"|"&TRIM(${letUN}${rowNumber})&"|"&${T(letCD)}&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&TRIM(${letDM}${rowNumber})&"|"&TRIM(${letABCD}${rowNumber})&"|"&${B(letPL)}&"|"&${B(letCS)}&"|"&${B(letCL)}&"|"&${B(letCV)}&"|"&TRIM(${letAT}${rowNumber})`;
 
         row.getCell(idxAlterado).value = {
           formula: `IF(${letHashOrig}${rowNumber}="","",IF(${hashCalc}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
