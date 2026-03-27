@@ -32,7 +32,7 @@ body {
 }
 
 .dark body {
-  background-color: #0b1020;
+  background-color: #1f1d22;
 }
 
 button,
@@ -73,30 +73,30 @@ nav,
 
 .dark body,
 .dark #root {
-  background: #10182b;
+  background: #1f1d22;
   color: #f1f5f9;
 }
 
 .dark .bg-white {
-  background-color: #162033 !important;
+  background-color: #23212a !important;
 }
 
 .dark .bg-gray-50,
 .dark .bg-slate-50 {
-  background-color: #10182b !important;
+  background-color: #1f1d22 !important;
 }
 
 .dark .bg-gray-100 {
-  background-color: #1c263a !important;
+  background-color: #34303a !important;
 }
 
 .dark .bg-gray-800 {
-  background-color: #162033 !important;
+  background-color: #23212a !important;
 }
 
 .dark .bg-gray-900,
 .dark .bg-slate-950 {
-  background-color: #10182b !important;
+  background-color: #1f1d22 !important;
 }
 
 .dark .text-gray-900,

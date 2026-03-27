@@ -4,6 +4,13 @@ const LOGO_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37
 const LOGO_VERTICAL_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/b901a6773_AdobeExpress-file1.png';
 const ICON_ONLY_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/46a482fd7_image.png';
 
+const getThemeFilter = () => {
+  if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
+    return 'brightness(0) invert(1)';
+  }
+  return 'brightness(0)';
+};
+
 /**
  * P38 Logo com suporte a múltiplas variantes
  * 
@@ -37,6 +44,7 @@ export default function P38Logo({
         src={ICON_ONLY_URL}
         alt="P38"
         className={`${h} w-auto object-contain select-none ${className}`}
+        style={{ filter: getThemeFilter() }}
         draggable={false}
       />
     );
@@ -56,6 +64,7 @@ export default function P38Logo({
         src={LOGO_VERTICAL_URL}
         alt="P38 ERP"
         className={`${h} w-auto object-contain select-none ${className}`}
+        style={{ filter: getThemeFilter() }}
         draggable={false}
       />
     );

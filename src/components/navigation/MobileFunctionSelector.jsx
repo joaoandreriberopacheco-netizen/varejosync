@@ -29,14 +29,13 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden bg-[#0b1020]">
-      <div className="bg-gradient-to-b from-[#162238] to-[#121a2b] px-4 pt-5 pb-4 shadow-sm">
+    <div className="fixed inset-0 z-50 md:hidden bg-[#1f1d22]">
+      <div className="bg-[#27242b] px-4 pt-5 pb-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <P38Logo variant="horizontal" size="sm" className="h-12 w-auto flex-none" />
-            <div className="min-w-0">
+          <div className="flex items-center justify-between gap-4 min-w-0 flex-1">
+            <P38Logo variant="horizontal" size="lg" className="h-14 w-auto max-w-[42vw] flex-none" />
+            <div className="min-w-0 text-right">
               <p className="text-sm text-white/70">Olá{currentUser?.full_name ? `, ${currentUser.full_name.split(' ')[0]}` : ''}</p>
-              <h2 className="text-lg font-semibold text-white font-glacial truncate">P38 ERP</h2>
             </div>
           </div>
           <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white">
@@ -44,7 +43,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-3 h-12 rounded-2xl bg-white/10 backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-3 h-12 rounded-2xl bg-[#3a3640] backdrop-blur-sm">
           <Search className="w-4 h-4 text-white/60 flex-none" />
           <input
             value={query}
@@ -57,7 +56,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
       {!activeGroup ? (
         <div className="px-4 py-5 space-y-5 overflow-y-auto h-[calc(100vh-132px-env(safe-area-inset-bottom))]">
-          <div className="rounded-[24px] bg-[#141a2b] p-4 shadow-sm">
+          <div className="rounded-[24px] bg-[#23212a] p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-white font-glacial">Funções</h3>
             </div>
