@@ -165,15 +165,18 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
-      <div className="pb-1">
-        <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial mb-3">Financeiro</p>
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1">
+      <div className="rounded-[28px] bg-white dark:bg-slate-900 shadow-sm p-4 space-y-4">
+        <div>
+          <p className="text-xl font-medium text-gray-800 dark:text-gray-100 font-glacial">Financeiro</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Fluxo e contas em uma navegação mais limpa</p>
+        </div>
+        <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-2xl p-1">
           <button onClick={() => setAba('fluxo')}
-            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
+            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
             Fluxo de Caixa
           </button>
           <button onClick={() => setAba('contas')}
-            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${aba === 'contas' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
+            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'contas' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
             Contas Abertas
           </button>
         </div>
@@ -220,14 +223,14 @@ export default function ExecucaoOrcamentaria() {
             {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
               <button key={tipo}
                 onClick={() => { setNovoTipo(tipo); setShowNovo(true); setFabOpen(false); }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
                 <Icon className="w-4 h-4" />{label}
               </button>
             ))}
             <button
               onClick={() => setFabOpen(o => !o)}
-              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-gray-400 rotate-45' : 'bg-gray-500 dark:bg-gray-200'}`}>
-              <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-gray-900'}`} />
+              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-slate-700 rotate-45' : 'bg-slate-900 dark:bg-slate-200'}`}>
+              <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-slate-900'}`} />
             </button>
           </div>
 

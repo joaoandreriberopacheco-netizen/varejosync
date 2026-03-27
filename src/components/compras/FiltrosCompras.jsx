@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Search, X, SlidersHorizontal, Tag } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 
 const STATUS_OPTIONS = [
   { codigo: 'Rascunho',             label: 'Rascunho',              cor: 'bg-gray-100 text-gray-700' },
@@ -78,21 +80,17 @@ export default function FiltrosCompras({
             value={search}
             onChange={e => onSearch(e.target.value)}
             placeholder="Buscar número, fornecedor..."
-            className="w-full pl-10 pr-4 h-11 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 rounded-2xl outline-none focus:border-gray-300 dark:focus:border-gray-600 transition-colors text-sm"
+            className="w-full pl-10 pr-4 h-12 bg-white dark:bg-slate-800 border-0 text-gray-700 dark:text-gray-100 placeholder:text-gray-400 rounded-2xl outline-none shadow-sm text-sm"
           />
         </div>
         <button
-          onClick={() => setShowFilters(v => !v)}
-          className={`h-11 w-11 rounded-full flex items-center justify-center transition-all flex-shrink-0 shadow-sm relative ${
-            showFilters 
-              ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900' 
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:shadow-md'
-          }`}
-          title="Abrir/fechar filtros"
+          onClick={() => setShowFilters(true)}
+          className="h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm relative bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200"
+          title="Filtros"
         >
           <SlidersHorizontal className="w-5 h-5" />
           {hasActiveFilters && (
-            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-orange-500 rounded-full border-2 border-white dark:border-gray-900" />
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-900 dark:bg-white rounded-full text-[10px] text-white dark:text-gray-900 flex items-center justify-center">•</span>
           )}
         </button>
       </div>
@@ -120,147 +118,103 @@ export default function FiltrosCompras({
         </div>
       )}
 
-      {showFilters && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 space-y-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
-            {hasActiveFilters && (
-              <button 
-                  onClick={() => {
-                    onLimparFiltros();
-                    setSearchFornecedor('');
-                    setSearchTag('');
-                  }}
-                className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
-              >
-                <X className="w-3 h-3" />
-                Limpar tudo
-              </button>
-            )}
-          </div>
+      <Drawer open={showFilters} onOpenChange={setShowFilters}>
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-slate-900 px-4 pb-6">
+          <DrawerHeader className="px-0 pb-2 text-left">
+            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+          </DrawerHeader>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Período do pedido</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <Input
-                type="date"
-                className="h-9 text-xs bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
-                value={dataInicial}
-                onChange={e => onDataInicial(e.target.value)}
-              />
-              <Input
-                type="date"
-                className="h-9 text-xs bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
-                value={dataFinal}
-                onChange={e => onDataFinal(e.target.value)}
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Período do pedido</label>
+              <MobileDateRangePicker
+                startDate={dataInicial}
+                endDate={dataFinal}
+                onApply={(inicio, fim) => { onDataInicial(inicio); onDataFinal(fim); }}
+                onClear={() => { onDataInicial(''); onDataFinal(''); }}
               />
             </div>
-          </div>
 
-          {/* Status */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Status</label>
-            <div className="flex flex-wrap gap-2">
-              {STATUS_OPTIONS.map(s => {
-                const selected = statusSel.includes(s.codigo);
-                return (
-                  <button
-                    key={s.codigo}
-                    onClick={() => toggleStatus(s.codigo)}
-                    className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-all ${
-                      selected
-                        ? `${s.cor} font-medium shadow-sm`
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {selected && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Tags — busca incremental */}
-          {(todasTags?.length > 0) && (
             <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Tags</label>
-              <div className="space-y-2">
-                <div className="relative">
-                  <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                  <Input
-                    placeholder="Buscar tag..."
-                    className="pl-8 h-9 text-xs bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
-                    value={searchTag}
-                    onChange={e => setSearchTag(e.target.value)}
-                  />
-                  {searchTag && (
-                    <button onClick={() => setSearchTag('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-32 overflow-y-auto space-y-0.5 pr-1">
-                  {tagsFiltradas.map(tag => (
-                    <label key={tag} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                      <Checkbox
-                        checked={tagsSel.includes(tag)}
-                        onCheckedChange={() => toggleTag(tag)}
-                        className="w-3.5 h-3.5"
-                      />
-                      <span className="text-xs text-gray-700 dark:text-gray-200 truncate">{tag}</span>
-                    </label>
-                  ))}
-                  {tagsFiltradas.length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-2">Nenhuma tag encontrada</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Fornecedores — busca incremental */}
-          {fornecedores.length > 0 && (
-            <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Fornecedores</label>
-              <div className="space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                  <Input
-                    placeholder="Buscar fornecedor..."
-                    className="pl-8 h-9 text-xs bg-gray-50 dark:bg-gray-700 border-0 shadow-sm"
-                    value={searchFornecedor}
-                    onChange={e => setSearchFornecedor(e.target.value)}
-                  />
-                  {searchFornecedor && (
-                    <button 
-                      onClick={() => setSearchFornecedor('')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Status</label>
+              <div className="flex flex-wrap gap-2">
+                {STATUS_OPTIONS.map(s => {
+                  const selected = statusSel.includes(s.codigo);
+                  return (
+                    <button
+                      key={s.codigo}
+                      onClick={() => toggleStatus(s.codigo)}
+                      className={`inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-full transition-all ${selected ? `${s.cor} font-medium shadow-sm` : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400'}`}
                     >
-                      <X className="w-3 h-3" />
+                      {selected && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
+                      {s.label}
                     </button>
-                  )}
-                </div>
-                <div className="max-h-40 overflow-y-auto space-y-0.5 pr-1">
-                  {fornecedoresFiltrados.map(f => (
-                    <label key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                      <Checkbox 
-                        checked={fornecedorSel.includes(f.id)}
-                        onCheckedChange={() => toggleFornecedor(f.id)}
-                        className="w-3.5 h-3.5"
-                      />
-                      <span className="text-xs text-gray-700 dark:text-gray-200 truncate">{f.nome}</span>
-                    </label>
-                  ))}
-                  {fornecedoresFiltrados.length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-2">Nenhum fornecedor encontrado</p>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {(todasTags?.length > 0) && (
+              <div>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Tags</label>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <Input placeholder="Buscar tag..." className="pl-8 h-11 text-xs bg-gray-100 dark:bg-slate-800 border-0 shadow-sm rounded-2xl" value={searchTag} onChange={e => setSearchTag(e.target.value)} />
+                  </div>
+                  <div className="max-h-32 overflow-y-auto space-y-0.5 pr-1">
+                    {tagsFiltradas.map(tag => (
+                      <label key={tag} className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer">
+                        <Checkbox checked={tagsSel.includes(tag)} onCheckedChange={() => toggleTag(tag)} className="w-3.5 h-3.5" />
+                        <span className="text-xs text-gray-700 dark:text-gray-200 truncate">{tag}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {fornecedores.length > 0 && (
+              <div>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Fornecedores</label>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <Input placeholder="Buscar fornecedor..." className="pl-8 h-11 text-xs bg-gray-100 dark:bg-slate-800 border-0 shadow-sm rounded-2xl" value={searchFornecedor} onChange={e => setSearchFornecedor(e.target.value)} />
+                  </div>
+                  <div className="max-h-40 overflow-y-auto space-y-0.5 pr-1">
+                    {fornecedoresFiltrados.map(f => (
+                      <label key={f.id} className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer">
+                        <Checkbox checked={fornecedorSel.includes(f.id)} onCheckedChange={() => toggleFornecedor(f.id)} className="w-3.5 h-3.5" />
+                        <span className="text-xs text-gray-700 dark:text-gray-200 truncate">{f.nome}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => {
+                  onLimparFiltros();
+                  setSearchFornecedor('');
+                  setSearchTag('');
+                }}
+                className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-slate-800 text-sm text-gray-600 dark:text-gray-300"
+              >
+                Limpar
+              </button>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="flex-1 h-11 rounded-2xl bg-slate-900 dark:bg-slate-200 text-sm text-white dark:text-slate-900"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
