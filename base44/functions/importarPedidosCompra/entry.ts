@@ -107,6 +107,13 @@ Deno.serve(async (req) => {
       const id = idCol ? str(getCellValue(row.getCell ? row.getCell(idCol) : null)) : '';
       const h1 = dados['campo_hierarquico_1'] || '';
 
+      // Se produto existente e coluna "Alterado?" = "NÃO", pular completamente
+      const alteradoCol = prodColMap['Alterado?'];
+      if (id && alteradoCol) {
+        const alteradoVal = str(getCellValue(row.getCell ? row.getCell(alteradoCol) : null));
+        if (alteradoVal === 'NÃO') continue;
+      }
+
       // Linha vazia — pular
       if (!id && !h1) continue;
 
