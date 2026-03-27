@@ -634,6 +634,7 @@ Deno.serve(async (req) => {
     await wsProd.protect('', {
       insertColumns: true, deleteRows: true, formatCells: true,
       selectLockedCells: true, selectUnlockedCells: true,
+      autoFilter: true,
     });
     wsProd.autoFilter = { from: 'A1', to: `${lastProdCol}1` };
 
