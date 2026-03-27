@@ -391,49 +391,50 @@ Deno.serve(async (req) => {
       }
     });
 
-    // ── Função para gerar hash original dos campos editáveis chave ────────────
-    const fmt = (v) => {
-      if (v === null || v === undefined || v === '') return '0';
-      const n = Number(v);
-      if (isNaN(n)) return String(v);
-      // Mesma lógica do TEXT(x,"0.##") do Excel: remove zeros à direita
-      return n % 1 === 0 ? String(n) : parseFloat(n.toFixed(2)).toString();
+    // ── Normalização de valores para o hash ────────────────────────────────
+    // Converte qualquer valor numérico para string com 2 casas decimais fixas
+    // Trata núlos/vazios como 0, e strings com vírgula (pt-BR) => ponto
+    const normNum = (v) => {
+      if (v === null || v === undefined || v === '') return '0.00';
+      const normalized = String(v).trim().replace(',', '.');
+      const n = parseFloat(normalized);
+      return isNaN(n) ? '0.00' : n.toFixed(2);
     };
+    // Normaliza texto: trim + vazio vira string vazia
+    const normStr = (v) => {
+      if (v === null || v === undefined) return '';
+      return String(v).trim();
+    };
+
     const computeOrigHash = (p) => {
-      const custoCalc = (p.valor_compra || 0) + (p.custo_frete_padrao || 0) +
-                        (p.custo_imposto1_padrao || 0) + (p.custo_imposto2_padrao || 0) -
-                        (p.desconto_compra_padrao || 0);
-      const valorLiq = (p.valor_compra || 0); // desconto_perc inicia em 0
       const parts = [
-        p.campo_hierarquico_1 || '',
-        p.campo_hierarquico_2 || '',
-        p.campo_hierarquico_3 || '',
-        p.valor_compra        ?? 0,
-        p.casas_decimais      ?? 0,
-        p.preco_venda_padrao  ?? 0,
-        p.unidade_principal   || '',
-        fmt(p.custo_frete_padrao  ?? 0),
-        fmt(p.custo_imposto1_padrao ?? 0),
-        fmt(p.custo_imposto2_padrao ?? 0),
-        fmt(p.desconto_compra_padrao ?? 0),
-        valorLiq,
+        normStr(p.campo_hierarquico_1),
+        normStr(p.campo_hierarquico_2),
+        normStr(p.campo_hierarquico_3),
+        normNum(p.valor_compra),
+        normNum(p.casas_decimais),
+        normNum(p.preco_venda_padrao),
+        normStr(p.unidade_principal),
+        normNum(p.custo_frete_padrao),
+        normNum(p.custo_imposto1_padrao),
+        normNum(p.custo_imposto2_padrao),
+        normNum(p.desconto_compra_padrao),
       ];
       return parts.join('|');
     };
 
     // ── Fórmula para hash dinâmico (deve espelhar computeOrigHash) ────────────
+    // Usa TEXT(x,"0.00") para garantir formato idêntico ao normNum do servidor
     const hashFormula = (rn) =>
-      'CONCATENATE(' + letH1 + rn + ',"|",'
-      + letH2 + rn + ',"|",'
-      + letH3 + rn + ',"|",'
-      + letVC + rn + ',"|",'
-      + letCD + rn + ',"|",'
-      + letPV + rn + ',"|",'
-      + letUN + rn + ',"|",'
-      + letFR + rn + ',"|",'
-      + letI1 + rn + ',"|",'
-      + letI2 + rn + ',"|",'
-      + letDC + rn + ')';
+      'CONCATENATE(TRIM(' + letH1 + rn + '),"|",TRIM(' + letH2 + rn + '),"|",TRIM(' + letH3 + rn + '),"|",'
+      + 'TEXT(' + letVC + rn + ',"0.00"),"|",'
+      + 'TEXT(' + letCD + rn + ',"0.00"),"|",'
+      + 'TEXT(' + letPV + rn + ',"0.00"),"|",'
+      + 'TRIM(' + letUN + rn + '),"|",'
+      + 'TEXT(' + letFR + rn + ',"0.00"),"|",'
+      + 'TEXT(' + letI1 + rn + ',"0.00"),"|",'
+      + 'TEXT(' + letI2 + rn + ',"0.00"),"|",'
+      + 'TEXT(' + letDC + rn + ',"0.00"))';
 
     // ── Fórmula Nome completo ─────────────────────────────────────────────────
     const nomeFormula = (rn) =>
