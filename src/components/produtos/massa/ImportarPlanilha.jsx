@@ -68,7 +68,8 @@ export default function ImportarPlanilha({ onParsed }) {
 
         // Verificar se a linha inteira está vazia (nenhuma célula preenchida)
         let linhaVazia = true;
-        for (let j = 1; j <= COLUNAS_CONFIG.length; j++) {
+        const totalColunasImportaveis = COLUNAS_CONFIG.filter(col => col.key !== '_hash_orig' && col.key !== 'alterado').length;
+        for (let j = 1; j <= totalColunasImportaveis; j++) {
           const cellValue = getCellValue(row.getCell(j));
           if (cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') {
             linhaVazia = false;

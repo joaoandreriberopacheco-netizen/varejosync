@@ -60,6 +60,10 @@ export const COLUNAS_CONFIG = [
 
   // --- Status ---
   { key: 'ativo',                   label: 'Ativo (SIM/NÃO)',        editavel: true,  width: 14, tipo: 'boolean' },
+
+  // --- Verificação (somente leitura) ---
+  { key: '_hash_orig',              label: 'Hash Verificação',       editavel: false, width: 24, tipo: 'string', calculado: true },
+  { key: 'alterado',                label: 'Alterado?',              editavel: false, width: 14, tipo: 'string', calculado: true },
 ];
 
 // Mapa rápido key → config
