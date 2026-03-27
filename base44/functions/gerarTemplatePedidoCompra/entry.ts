@@ -226,10 +226,8 @@ Deno.serve(async (req) => {
       const row = wsPedido.getRow(rn);
 
       // Col A: ID do Produto — INDEX/MATCH busca ID pelo nome selecionado em B
-      row.getCell(1).value = {
-        formula: `=IF(B${rn}="","",IFERROR(INDEX('Produtos Cadastrados'!$${pLetId}:$${pLetId},MATCH(B${rn},'Produtos Cadastrados'!$${pLetNome}:$${pLetNome},0)),"?"))`,
-        result: '',
-      };
+      const idFormula = `=IF(B${rn}="","",IFERROR(INDEX('Produtos Cadastrados'!$${pLetId}:$${pLetId},MATCH(B${rn},'Produtos Cadastrados'!$${pLetNome}:$${pLetNome},0)),""))`;
+      row.getCell(1).value = idFormula;
       row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
       row.getCell(1).font = { italic: true, color: { argb: 'FF0369A1' }, size: 9 };
       row.getCell(1).protection = { locked: true };
@@ -254,20 +252,14 @@ Deno.serve(async (req) => {
       row.getCell(5).numFmt = '0.00"%"';
 
       // Col F: Valor Líquido = D * (1 - E/100)
-      row.getCell(6).value = {
-        formula: `=IF(D${rn}="","",D${rn}*(1-E${rn}/100))`,
-        result: 0,
-      };
+      row.getCell(6).value = `=IF(D${rn}="","",D${rn}*(1-E${rn}/100))`;
       row.getCell(6).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
       row.getCell(6).font = { italic: true, color: { argb: 'FF0369A1' } };
       row.getCell(6).numFmt = '#,##0.00';
       row.getCell(6).protection = { locked: true };
 
       // Col G: Total = C * F
-      row.getCell(7).value = {
-        formula: `=IF(C${rn}="","",C${rn}*F${rn})`,
-        result: 0,
-      };
+      row.getCell(7).value = `=IF(C${rn}="","",C${rn}*F${rn})`;
       row.getCell(7).fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
       row.getCell(7).font = { italic: true, color: { argb: 'FF0369A1' } };
       row.getCell(7).numFmt = '#,##0.00';
