@@ -423,6 +423,14 @@ Deno.serve(async (req) => {
         normStr(p.campo_hierarquico_1),
         normStr(p.campo_hierarquico_2),
         normStr(p.campo_hierarquico_3),
+        normStr(p.campo_hierarquico_4),
+        normStr(p.campo_hierarquico_5),
+        normStr(p.codigo_barras),
+        normStr(p.marca),
+        normStr(p.tipo),
+        normStr(p.abcd),
+        normStr(p.categoria_nome),
+        normStr(p.area_codigo),
         normNum(p.valor_compra),
         normNum(p.casas_decimais),
         normNum(p.preco_venda_padrao),
@@ -431,6 +439,14 @@ Deno.serve(async (req) => {
         normNum(p.custo_imposto1_padrao),
         normNum(p.custo_imposto2_padrao),
         normNum(p.desconto_compra_padrao),
+        normNum(p.unidades_por_pacote),
+        normNum(p.estoque_minimo),
+        normNum(p.estoque_ideal),
+        normNum(p.estoque_maximo),
+        normNum(p.tempo_reposicao_dias),
+        normNum(p.peso_kg),
+        normStr(p.dimensoes_cm),
+        p.ativo !== false ? 'SIM' : 'NÃO',
       ];
       return parts.join('|');
     };
@@ -438,16 +454,49 @@ Deno.serve(async (req) => {
     // ── Fórmula para hash dinâmico (deve espelhar computeOrigHash) ────────────
     // ROUND(*100) converte para inteiro — sem separador decimal, imune a locale pt-BR
     const T = (col, rn) => `TEXT(ROUND(${col}${rn}*100,0),"0")`;
+    const letCB  = colLetter(idxCodigoBarras);
+    const letMA  = colLetter(idxMarca);
+    const letTP  = colLetter(idxTipo);
+    const letAB  = colLetter(idxAbcd);
+    const letCA  = colLetter(idxCategoria);
+    const letAR  = colLetter(idxArea);
+    const letUP  = colLetter(idxUnPacote);
+    const letEM  = colLetter(idxEstMin);
+    const letEI  = colLetter(idxEstIdeal);
+    const letEX  = colLetter(idxEstMax);
+    const letRP  = colLetter(idxReposicao);
+    const letPS  = colLetter(idxPeso);
+    const letDM  = colLetter(idxDimensoes);
+    const letATV = colLetter(idxAtivo);
     const hashFormula = (rn) =>
-      'CONCATENATE(TRIM(' + letH1 + rn + '),"|",TRIM(' + letH2 + rn + '),"|",TRIM(' + letH3 + rn + '),"|",'
-      + T(letVC, rn) + ',"|",'
-      + T(letCD, rn) + ',"|",'
-      + T(letPV, rn) + ',"|",'
-      + 'TRIM(' + letUN + rn + '),"|",'
-      + T(letFR, rn) + ',"|",'
-      + T(letI1, rn) + ',"|",'
-      + T(letI2, rn) + ',"|",'
-      + T(letDC, rn) + ')';
+      'CONCATENATE('
+      + 'TRIM(' + letH1  + rn + '),"|",'
+      + 'TRIM(' + letH2  + rn + '),"|",'
+      + 'TRIM(' + letH3  + rn + '),"|",'
+      + 'TRIM(' + letH4  + rn + '),"|",'
+      + 'TRIM(' + letH5  + rn + '),"|",'
+      + 'TRIM(' + letCB  + rn + '),"|",'
+      + 'TRIM(' + letMA  + rn + '),"|",'
+      + 'TRIM(' + letTP  + rn + '),"|",'
+      + 'TRIM(' + letAB  + rn + '),"|",'
+      + 'TRIM(' + letCA  + rn + '),"|",'
+      + 'TRIM(' + letAR  + rn + '),"|",'
+      + T(letVC,  rn) + ',"|",'
+      + T(letCD,  rn) + ',"|",'
+      + T(letPV,  rn) + ',"|",'
+      + 'TRIM(' + letUN  + rn + '),"|",'
+      + T(letFR,  rn) + ',"|",'
+      + T(letI1,  rn) + ',"|",'
+      + T(letI2,  rn) + ',"|",'
+      + T(letDC,  rn) + ',"|",'
+      + T(letUP,  rn) + ',"|",'
+      + T(letEM,  rn) + ',"|",'
+      + T(letEI,  rn) + ',"|",'
+      + T(letEX,  rn) + ',"|",'
+      + T(letRP,  rn) + ',"|",'
+      + T(letPS,  rn) + ',"|",'
+      + 'TRIM(' + letDM  + rn + '),"|",'
+      + 'TRIM(' + letATV + rn + '))';
 
     // ── Fórmula Nome completo ─────────────────────────────────────────────────
     const nomeFormula = (rn) =>
