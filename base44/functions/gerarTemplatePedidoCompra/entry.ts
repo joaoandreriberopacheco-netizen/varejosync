@@ -488,7 +488,7 @@ Deno.serve(async (req) => {
     // ── Linhas de dados ───────────────────────────────────────────────────────
     produtos.forEach((p, i) => {
       const rn = i + 2;
-      const descontoPerc = p.desconto_perc || 0;
+      const descontoPerc = p.desconto_perc ?? 0;
       const valorCompraLiquido = (p.valor_compra || 0) * (1 - (descontoPerc / 100));
       const custoCalc = valorCompraLiquido + (p.custo_frete_padrao || 0) +
                         (p.custo_imposto1_padrao || 0) + (p.custo_imposto2_padrao || 0);
@@ -503,13 +503,13 @@ Deno.serve(async (req) => {
             rowData[col.key] = { formula: nomeFormula(rn), result: nomePartes }; break;
           case 'custo_total_calculado':
             rowData[col.key] = {
-              formula: `=${letVL}${rn}+${letFR}${rn}+${letI1}${rn}+${letI2}${rn}`,
+              formula: `=IF(${letVL}${rn}="","",${letVL}${rn}+${letFR}${rn}+${letI1}${rn}+${letI2}${rn})`,
               result: custoCalc,
             }; break;
           case 'valor_compra_liq':
             // Valor de Compra * (1 - Desconto%/100) ; desconto>0=desconto, <0=acréscimo
             rowData[col.key] = {
-              formula: `=IF(${letVC}${rn}="","",${letVC}${rn}*(1-${letDP}${rn}/100))`,
+              formula: `=IF(${letVC}${rn}="","",${letVC}${rn}*(1-IF(${letDP}${rn}="",0,${letDP}${rn})/100))`,
               result: p.valor_compra || 0,
             }; break;
           case 'desconto_perc':
@@ -571,13 +571,13 @@ Deno.serve(async (req) => {
           cell.protection = { locked: true };
         }
         if (col.key === 'custo_total_calculado') {
-          cell.value = { formula: `=${letVL}${r}+${letFR}${r}+${letI1}${r}+${letI2}${r}`, result: 0 };
+          cell.value = { formula: `=IF(${letVL}${r}="","",${letVL}${r}+${letFR}${r}+${letI1}${r}+${letI2}${r})`, result: 0 };
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
           cell.font = { italic: true, color: { argb: 'FF0369A1' } };
           cell.protection = { locked: true };
         }
         if (col.key === 'valor_compra_liq') {
-          cell.value = { formula: `=IF(${letVC}${r}="","",${letVC}${r}*(1-${letDP}${r}/100))`, result: 0 };
+          cell.value = { formula: `=IF(${letVC}${r}="","",${letVC}${r}*(1-IF(${letDP}${r}="",0,${letDP}${r})/100))`, result: 0 };
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
           cell.font = { italic: true, color: { argb: 'FF0369A1' } };
           cell.protection = { locked: true };

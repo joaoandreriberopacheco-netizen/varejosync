@@ -45,7 +45,7 @@ function computeProductHash(produto) {
     normStr(produto.categoria_nome),
     normStr(produto.area_codigo),
     normNum(produto.valor_compra),
-    normNum(produto.desconto_perc),
+    normNum(produto.desconto_perc ?? 0),
     normNum(produto.custo_frete_padrao),
     normNum(produto.custo_imposto1_padrao),
     normNum(produto.custo_imposto2_padrao),
@@ -117,6 +117,7 @@ export default function ExportarPlanilha() {
       const idxFrete             = getColIndex('custo_frete_padrao');
       const idxImposto1          = getColIndex('custo_imposto1_padrao');
       const idxImposto2          = getColIndex('custo_imposto2_padrao');
+      const idxH1                = getColIndex('campo_hierarquico_1');
       const idxCustoCalc         = getColIndex('custo_total_calculado');
       const idxPrecoVenda        = getColIndex('preco_venda_padrao');
       const idxId                = getColIndex('id');
@@ -131,6 +132,7 @@ export default function ExportarPlanilha() {
       const letFrete       = colLetter(idxFrete);
       const letImposto1    = colLetter(idxImposto1);
       const letImposto2    = colLetter(idxImposto2);
+      const letH1          = colLetter(idxH1);
       const letHashOrig    = colLetter(idxHashOrig);
       const letAlterado    = colLetter(idxAlterado);
       const lastCol        = colLetter(COLUNAS_CONFIG.length);
@@ -176,7 +178,8 @@ export default function ExportarPlanilha() {
       produtos.forEach((p, dataRowIdx) => {
         const rowNumber = dataRowIdx + 2; // linha 2 em diante
 
-        const valorCompraLiquido = (p.valor_compra || 0) * (1 - ((p.desconto_perc || 0) / 100));
+        const descontoPerc = p.desconto_perc ?? 0;
+        const valorCompraLiquido = (p.valor_compra || 0) * (1 - (descontoPerc / 100));
         const custoCalc =
           valorCompraLiquido
           + (p.custo_frete_padrao || 0)
@@ -188,15 +191,15 @@ export default function ExportarPlanilha() {
         COLUNAS_CONFIG.forEach(col => {
           if (col.key === 'custo_total_calculado') {
             rowData[col.key] = {
-              formula: `=${letValorCompra}${rowNumber}*(1-${letDescontoPerc}${rowNumber}/100)+${letFrete}${rowNumber}+${letImposto1}${rowNumber}+${letImposto2}${rowNumber}`,
+              formula: `=${letValorCompra}${rowNumber}*(1-IF(${letDescontoPerc}${rowNumber}="",0,${letDescontoPerc}${rowNumber})/100)+${letFrete}${rowNumber}+${letImposto1}${rowNumber}+${letImposto2}${rowNumber}`,
               result: custoCalc,
             };
           } else if (col.key === '_hash_orig') {
             rowData[col.key] = hashOrig;
           } else if (col.key === 'alterado') {
             rowData[col.key] = {
-              formula: `=IF(${letHashOrig}${rowNumber}="","",IF(${letHashOrig}${rowNumber}=CONCAT(TRIM(D${rowNumber}),"|",TRIM(E${rowNumber}),"|",TRIM(F${rowNumber}),"|",TRIM(G${rowNumber}),"|",TRIM(H${rowNumber}),"|",TRIM(I${rowNumber}),"|",TRIM(J${rowNumber}),"|",TRIM(K${rowNumber}),"|",TRIM(L${rowNumber}),"|",TRIM(M${rowNumber}),"|",TEXT(ROUND(N${rowNumber}*100,0),"0"),"|",TEXT(ROUND(O${rowNumber}*100,0),"0"),"|",TEXT(ROUND(P${rowNumber}*100,0),"0"),"|",TEXT(ROUND(Q${rowNumber}*100,0),"0"),"|",TEXT(ROUND(R${rowNumber}*100,0),"0"),"|",TRIM(T${rowNumber}),"|",TEXT(ROUND(U${rowNumber}*100,0),"0"),"|",TEXT(ROUND(V${rowNumber}*100,0),"0"),"|",TEXT(ROUND(W${rowNumber}*100,0),"0"),"|",TEXT(ROUND(X${rowNumber}*100,0),"0"),"|",TEXT(ROUND(Y${rowNumber}*100,0),"0"),"|",TEXT(ROUND(Z${rowNumber}*100,0),"0"),"|",TEXT(ROUND(AA${rowNumber}*100,0),"0"),"|",TRIM(AB${rowNumber}),"|",TRIM(AC${rowNumber}),"|",TRIM(AD${rowNumber}),"|",TRIM(AE${rowNumber}),"|",TRIM(AF${rowNumber}),"|",TRIM(AG${rowNumber}),"|",TEXT(ROUND(AH${rowNumber}*100,0),"0")),"NÃO","SIM"))`,
-              result: 'NÃO',
+              formula: `=IF(${letHashOrig}${rowNumber}="","",IF(${letHashOrig}${rowNumber}=CONCAT(TRIM(D${rowNumber}),"|",TRIM(E${rowNumber}),"|",TRIM(F${rowNumber}),"|",TRIM(G${rowNumber}),"|",TRIM(H${rowNumber}),"|",TRIM(I${rowNumber}),"|",TRIM(J${rowNumber}),"|",TRIM(K${rowNumber}),"|",TRIM(L${rowNumber}),"|",TRIM(M${rowNumber}),"|",TEXT(ROUND(IF(N${rowNumber}="",0,N${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(O${rowNumber}="",0,O${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(P${rowNumber}="",0,P${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(Q${rowNumber}="",0,Q${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(R${rowNumber}="",0,R${rowNumber})*100,0),"0"),"|",TRIM(T${rowNumber}),"|",TEXT(ROUND(IF(U${rowNumber}="",0,U${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(V${rowNumber}="",0,V${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(W${rowNumber}="",0,W${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(X${rowNumber}="",0,X${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(Y${rowNumber}="",0,Y${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(Z${rowNumber}="",0,Z${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(AA${rowNumber}="",0,AA${rowNumber})*100,0),"0"),"|",TRIM(AB${rowNumber}),"|",TRIM(AC${rowNumber}),"|",TRIM(AD${rowNumber}),"|",TRIM(AE${rowNumber}),"|",TRIM(AF${rowNumber}),"|",TRIM(AG${rowNumber}),"|",TEXT(ROUND(IF(AH${rowNumber}="",0,AH${rowNumber})*100,0),"0")),"NÃO","SIM"))`,
+              result: 'SIM',
             };
           } else {
             rowData[col.key] = p[col.key] ?? '';
