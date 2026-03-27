@@ -424,17 +424,18 @@ Deno.serve(async (req) => {
     };
 
     // ── Fórmula para hash dinâmico (deve espelhar computeOrigHash) ────────────
-    // Usa TEXT(x,"0.00") para garantir formato idêntico ao normNum do servidor
+    // SUBSTITUTE garante ponto decimal independente do locale pt-BR do Excel
+    const T = (col, rn) => `SUBSTITUTE(TEXT(${col}${rn},"0.00"),",",".")`;
     const hashFormula = (rn) =>
       'CONCATENATE(TRIM(' + letH1 + rn + '),"|",TRIM(' + letH2 + rn + '),"|",TRIM(' + letH3 + rn + '),"|",'
-      + 'TEXT(' + letVC + rn + ',"0.00"),"|",'
-      + 'TEXT(' + letCD + rn + ',"0.00"),"|",'
-      + 'TEXT(' + letPV + rn + ',"0.00"),"|",'
+      + T(letVC, rn) + ',"|",'
+      + T(letCD, rn) + ',"|",'
+      + T(letPV, rn) + ',"|",'
       + 'TRIM(' + letUN + rn + '),"|",'
-      + 'TEXT(' + letFR + rn + ',"0.00"),"|",'
-      + 'TEXT(' + letI1 + rn + ',"0.00"),"|",'
-      + 'TEXT(' + letI2 + rn + ',"0.00"),"|",'
-      + 'TEXT(' + letDC + rn + ',"0.00"))';
+      + T(letFR, rn) + ',"|",'
+      + T(letI1, rn) + ',"|",'
+      + T(letI2, rn) + ',"|",'
+      + T(letDC, rn) + ')';
 
     // ── Fórmula Nome completo ─────────────────────────────────────────────────
     const nomeFormula = (rn) =>
