@@ -1,11 +1,25 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import P38Logo from '@/components/brand/P38Logo';
 
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+  useEffect(() => {
+    const update = () => setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+  return isDark;
+}
+
 export default function MobileFunctionSelector({ isOpen, onClose, menuItems = [], currentUser }) {
   const location = useLocation();
+  const isDark = useDarkMode();
   const [activeGroup, setActiveGroup] = useState(null);
   const [query, setQuery] = useState('');
 
@@ -25,49 +39,86 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
   const currentList = activeGroup?.submenu || [];
   const isItemActive = (page) => location.pathname.includes(page);
 
+  // Color tokens based on actual dark mode state
+  const c = isDark ? {
+    bg: '#1f1d22',
+    headerBg: '#27242b',
+    searchBg: '#3a3640',
+    cardBg: '#23212a',
+    text: '#f1f5f9',
+    textMuted: 'rgba(255,255,255,0.55)',
+    textSub: 'rgba(203,213,225,1)',
+    iconColor: '#94a3b8',
+    chevron: '#64748b',
+    divider: 'rgba(255,255,255,0.07)',
+    btnBg: 'rgba(255,255,255,0.07)',
+    backBg: '#1b2236',
+    closeBg: 'rgba(255,255,255,0.1)',
+    closeColor: '#fff',
+  } : {
+    bg: '#f8fafc',
+    headerBg: '#ffffff',
+    searchBg: '#f1f5f9',
+    cardBg: '#ffffff',
+    text: '#1e293b',
+    textMuted: '#64748b',
+    textSub: '#374151',
+    iconColor: '#6b7280',
+    chevron: '#9ca3af',
+    divider: '#e5e7eb',
+    btnBg: 'rgba(0,0,0,0.04)',
+    backBg: '#f1f5f9',
+    closeBg: '#e5e7eb',
+    closeColor: '#374151',
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden bg-white dark:bg-[#1f1d22]">
+    <div className="fixed inset-0 z-50 md:hidden" style={{ background: c.bg }}>
       {/* Header */}
-      <div className="bg-gray-100 dark:bg-[#27242b] px-4 pt-5 pb-4 shadow-sm">
+      <div style={{ background: c.headerBg, boxShadow: '0 1px 0 rgba(0,0,0,0.06)' }} className="px-4 pt-5 pb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <P38Logo variant="horizontal" size="sm" className="flex-none" />
             <div className="min-w-0 text-right flex-1">
-              <p className="text-sm text-gray-500 dark:text-white/70">
+              <p className="text-sm" style={{ color: c.textMuted }}>
                 Olá{currentUser?.full_name ? `, ${currentUser.full_name.split(' ')[0]}` : ''}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="ml-3 w-10 h-10 rounded-2xl bg-gray-200 dark:bg-white/10 flex items-center justify-center text-gray-700 dark:text-white"
+            className="ml-3 w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{ background: c.closeBg, color: c.closeColor }}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-3 h-11 rounded-2xl bg-gray-200 dark:bg-[#3a3640]">
-          <Search className="w-4 h-4 text-gray-400 dark:text-white/60 flex-none" />
+        <div className="flex items-center gap-2 px-3 h-11 rounded-2xl" style={{ background: c.searchBg }}>
+          <Search className="w-4 h-4 flex-none" style={{ color: c.iconColor }} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Pesquisar função..."
-            className="flex-1 bg-transparent text-sm text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/50 outline-none"
+            className="flex-1 bg-transparent text-sm outline-none"
+            style={{ color: c.text }}
           />
         </div>
       </div>
 
       {!activeGroup ? (
         /* Lista principal */
-        <div className="px-4 py-4 overflow-y-auto h-[calc(100vh-124px-env(safe-area-inset-bottom))]">
-          <div className="rounded-[24px] bg-gray-50 dark:bg-[#23212a] p-4 shadow-sm">
-            <h3 className="text-base font-semibold text-gray-700 dark:text-white font-glacial mb-3">Funções</h3>
+        <div className="px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
+          <div className="rounded-[24px] p-4" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <h3 className="text-base font-semibold font-glacial mb-3" style={{ color: c.textMuted }}>Funções</h3>
             <div className="space-y-0.5">
               {visibleGroups.map((item) => {
                 const Icon = item.icon;
                 const active = item.submenu?.some(sub => isItemActive(sub.page)) || (item.page && isItemActive(item.page));
+
+                const itemStyle = { background: active ? c.btnBg : 'transparent' };
 
                 if (item.page && !item.submenu?.length) {
                   return (
@@ -75,13 +126,12 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                       key={item.name}
                       to={createPageUrl(item.page)}
                       onClick={onClose}
-                      className={`flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors ${
-                        active ? 'bg-black/5 dark:bg-white/8' : 'hover:bg-black/4 dark:hover:bg-white/6'
-                      }`}
+                      className="flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
+                      style={itemStyle}
                     >
-                      <Icon className="w-5 h-5 text-gray-500 dark:text-slate-300" />
-                      <span className="flex-1 text-[1.02rem] font-semibold text-gray-800 dark:text-white tracking-[0.01em]">{item.name}</span>
-                      <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-400" />
+                      <Icon className="w-5 h-5" style={{ color: c.iconColor }} />
+                      <span className="flex-1 text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{item.name}</span>
+                      <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                     </Link>
                   );
                 }
@@ -90,35 +140,34 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                   <button
                     key={item.name}
                     onClick={() => setActiveGroup(item)}
-                    className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors ${
-                      active ? 'bg-black/5 dark:bg-white/8' : 'hover:bg-black/4 dark:hover:bg-white/6'
-                    }`}
+                    className="w-full flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
+                    style={itemStyle}
                   >
-                    <Icon className="w-5 h-5 text-gray-500 dark:text-slate-300" />
-                    <span className="flex-1 text-left text-[1.02rem] font-semibold text-gray-800 dark:text-white tracking-[0.01em]">{item.name}</span>
-                    <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-400" />
+                    <Icon className="w-5 h-5" style={{ color: c.iconColor }} />
+                    <span className="flex-1 text-left text-[1.02rem] font-semibold tracking-[0.01em]" style={{ color: c.text }}>{item.name}</span>
+                    <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                   </button>
                 );
               })}
             </div>
           </div>
-          {/* Espaço de respiração no final */}
           <div className="h-8" />
         </div>
       ) : (
         /* Submenu do grupo */
-        <div className="px-4 py-4 overflow-y-auto h-[calc(100vh-124px-env(safe-area-inset-bottom))]">
+        <div className="px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
           <div className="flex items-center gap-3 mb-5">
             <button
               onClick={() => setActiveGroup(null)}
-              className="w-10 h-10 rounded-2xl bg-gray-200 dark:bg-[#1b2236] flex items-center justify-center text-gray-700 dark:text-slate-200"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center"
+              style={{ background: c.backBg, color: c.textSub }}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h3 className="text-[1.6rem] font-semibold text-gray-800 dark:text-white font-glacial">{activeGroup.name}</h3>
+            <h3 className="text-[1.6rem] font-semibold font-glacial" style={{ color: c.text }}>{activeGroup.name}</h3>
           </div>
 
-          <div className="space-y-0">
+          <div>
             {currentList.map((subItem) => {
               const Icon = activeGroup?.icon;
               return (
@@ -126,20 +175,19 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                   key={subItem.page}
                   to={createPageUrl(subItem.page)}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-1 py-4 border-b border-gray-100 dark:border-white/6 transition-colors ${
-                    isItemActive(subItem.page)
-                      ? 'text-gray-900 dark:text-white'
-                      : 'text-gray-700 dark:text-slate-200'
-                  }`}
+                  className="flex items-center gap-3 px-1 py-4 transition-colors"
+                  style={{
+                    borderBottom: `1px solid ${c.divider}`,
+                    color: isItemActive(subItem.page) ? c.text : c.textSub,
+                  }}
                 >
-                  {Icon && <Icon className="w-5 h-5 text-gray-400 dark:text-slate-500 flex-none" />}
+                  {Icon && <Icon className="w-5 h-5 flex-none" style={{ color: c.iconColor }} />}
                   <span className="flex-1 text-[1.04rem] font-semibold leading-tight tracking-[0.01em]">{subItem.name}</span>
-                  <ChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-500" />
+                  <ChevronRight className="w-4 h-4" style={{ color: c.chevron }} />
                 </Link>
               );
             })}
           </div>
-          {/* Espaço de respiração no final */}
           <div className="h-8" />
         </div>
       )}
