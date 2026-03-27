@@ -59,7 +59,7 @@ function ItemCard({ item, onRemove }) {
 }
 
 // ── DESKTOP: vertical single-column full form ──────────────────────────────
-function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack }) {
+function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, onFileChange }) {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 pb-10">
       {/* Section: Dados */}
@@ -153,7 +153,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
           <label className="flex h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gray-100 text-sm text-gray-500 shadow-sm dark:bg-gray-900">
             <Paperclip className="h-4 w-4" />
             {attachedCount > 0 ? `${attachedCount} arquivo(s)` : 'Adicionar anexos'}
-            <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={handleFileChange} />
+            <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={onFileChange} />
           </label>
         </div>
         <div className="mt-4 rounded-2xl bg-gray-50 p-4 dark:bg-gray-900">
@@ -182,7 +182,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
 }
 
 // ── MOBILE: PDV-style step flow ────────────────────────────────────────────
-function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack }) {
+function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes, responsaveis, setNovoCadastro, totalAtual, onOpenSelector, currentUser, onOpenAssinatura, onSubmit, onBack, attachedCount, onFileChange }) {
 
   // Step 0: Dados básicos
   if (step === 0) return (
@@ -291,7 +291,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         <label className="flex h-16 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
           <Paperclip className="h-5 w-5" />
           {attachedCount > 0 ? `${attachedCount} arquivo(s) selecionado(s)` : 'Adicionar anexos'}
-          <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={handleFileChange} />
+          <input id="consumo-anexo-input" type="file" multiple className="hidden" onChange={onFileChange} />
         </label>
         <div className="rounded-2xl bg-gray-50 p-5 dark:bg-gray-800">
           <div className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-400">
@@ -385,6 +385,8 @@ export default function ConsumoInternoFormPage({
           onOpenAssinatura={onOpenAssinatura}
           onSubmit={onSubmit}
           onBack={onBack}
+          attachedCount={attachedCount}
+          onFileChange={handleFileChange}
         />
       </div>
 
@@ -405,6 +407,8 @@ export default function ConsumoInternoFormPage({
           onOpenAssinatura={onOpenAssinatura}
           onSubmit={onSubmit}
           onBack={onBack}
+          attachedCount={attachedCount}
+          onFileChange={handleFileChange}
         />
       </div>
     </div>
