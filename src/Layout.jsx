@@ -45,6 +45,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog.jsx";
 import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
 import GlacialSidebar from '@/components/navigation/GlacialSidebar';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
+import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -311,18 +312,7 @@ export default function Layout({ children, currentPageName }) {
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
       <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
-        {/* Sidebar Mobile */}
-        {isMobile && (
-          <div className="transition-opacity duration-300 ease-in-out" style={{opacity: showMobileMenu ? 1 : 0, pointerEvents: showMobileMenu ? 'auto' : 'none'}}>
-            <GlacialSidebar
-              isOpen={showMobileMenu}
-              onClose={() => setShowMobileMenu(false)}
-              menuItems={menuItems}
-              currentPageName={currentPageName}
-              isMobile={true}
-            />
-          </div>
-        )}
+
 
         {/* Sidebar Desktop */}
         {!isMobile && (
@@ -766,6 +756,14 @@ export default function Layout({ children, currentPageName }) {
             onMenuClick={() => setShowMobileMenu(true)}
             onProfileClick={() => setShowMobileUserMenu(true)}
             currentPageName={currentPageName}
+          />
+        )}
+        {isMobile && !isFullscreen && (
+          <MobileFunctionSelector
+            isOpen={showMobileMenu}
+            onClose={() => setShowMobileMenu(false)}
+            menuItems={menuItems}
+            currentUser={currentUser}
           />
         )}
         {isMobile && !isFullscreen && (

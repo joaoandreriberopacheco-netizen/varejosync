@@ -40,39 +40,34 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/96 dark:bg-slate-950/96 backdrop-blur-xl border-t border-slate-200/70 dark:border-white/5"
       style={{ 
         paddingBottom: 'env(safe-area-inset-bottom)',
-        boxShadow: '0 -1px 0 0 rgba(0,0,0,0.05), 0 -4px 12px -2px rgba(0,0,0,0.08)'
+        boxShadow: '0 -6px 24px -12px rgba(15,23,42,0.28)'
       }}
     >
-      <div className="flex items-stretch h-16">
+      <div className="flex items-stretch h-[68px]">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item);
 
           const content = (
-            <div className="flex flex-col items-center justify-center gap-1 w-full h-full">
-              <div 
-                className={`flex items-center justify-center transition-all duration-200 ${
-                  active 
-                    ? 'w-12 h-8 bg-gray-900 dark:bg-white rounded-2xl' 
-                    : 'w-12 h-8'
-                }`}
-              >
+            <div className="flex flex-col items-center justify-center gap-1 w-full h-full pt-1">
+              <div className={`h-1 w-10 rounded-full transition-all duration-200 ${active ? 'bg-slate-900 dark:bg-white' : 'bg-transparent'}`} />
+              <div className="flex items-center justify-center w-12 h-7">
                 <Icon 
                   className={`transition-all duration-200 ${
                     active 
-                      ? 'w-5 h-5 text-white dark:text-gray-900 stroke-[2]' 
-                      : 'w-5 h-5 text-gray-400 dark:text-gray-500 stroke-[1.5]'
+                      ? 'w-5 h-5 text-slate-900 dark:text-white stroke-[2]' 
+                      : 'w-5 h-5 text-slate-400 dark:text-slate-500 stroke-[1.75]'
                   }`} 
                 />
               </div>
               <span 
                 className={`text-[10px] font-medium transition-colors duration-200 ${
                   active 
-                    ? 'text-gray-900 dark:text-white' 
-                    : 'text-gray-400 dark:text-gray-500'
+                    ? 'text-slate-900 dark:text-white' 
+                    : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
                 {item.label}
