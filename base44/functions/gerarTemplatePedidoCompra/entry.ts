@@ -454,7 +454,7 @@ Deno.serve(async (req) => {
 
     // ── Fórmula para hash dinâmico (deve espelhar computeOrigHash) ────────────
     // ROUND(*100) converte para inteiro — sem separador decimal, imune a locale pt-BR
-    const T = (col, rn) => `TEXT(ROUND(${col}${rn}*100,0),"0")`;
+    const T = (col, rn) => `IF(${col}${rn}="","0",TEXT(ROUND(${col}${rn}*100,0),"0"))`;  
     const letCB  = colLetter(idxCodigoBarras);
     const letMA  = colLetter(idxMarca);
     const letTP  = colLetter(idxTipo);
