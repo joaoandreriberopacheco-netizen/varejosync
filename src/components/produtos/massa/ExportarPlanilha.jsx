@@ -257,18 +257,15 @@ export default function ExportarPlanilha() {
          // Helper para normalizar booleanos — EM PORTUGUÊS
          const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
-        // Checksum robusto: blocos de concatenação em colunas auxiliares (hidden)
-        // Bloco 1: Hierarquia (H1-H5) + Barras + Marca + Tipo
-        const checksumBloco1 = `CONCATENAR(${letH1}${rowNumber},${letH2}${rowNumber},${letH3}${rowNumber},${letH4}${rowNumber},${letH5}${rowNumber},${letCB}${rowNumber},${letMA}${rowNumber},${letTP}${rowNumber})`;
-        // Bloco 2: Custos e Descontos
-        const checksumBloco2 = `CONCATENAR(${letVC}${rowNumber},${letDP}${rowNumber},${letFR}${rowNumber},${letI1}${rowNumber},${letI2}${rowNumber})`;
-        // Bloco 3: Estoque e Físico
-        const checksumBloco3 = `CONCATENAR(${letUN}${rowNumber},${letUP}${rowNumber},${letEM}${rowNumber},${letEI}${rowNumber},${letEX}${rowNumber},${letRP}${rowNumber})`;
-        // Bloco 4: Categoria, Área, Classificação, Ativo
-        const checksumBloco4 = `CONCATENAR(${letCA}${rowNumber},${letAR}${rowNumber},${letABCD}${rowNumber},${letDM}${rowNumber},${letAT}${rowNumber})`;
-        
-        // Checksum final: soma dos códigos Unicode de cada bloco (até 100 caracteres por bloco)
-        const checksumFormula = `SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${checksumBloco1};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${checksumBloco2};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${checksumBloco3};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${checksumBloco4};SEQUÊNCIA(1;100);1));0))`;
+        // Checksum: comparar concatenação dos dados (simples)
+        // Checksum SUMPRODUCT(UNICODE) de todos os campos editáveis
+        const fieldsForChecksum = [
+          `${letH1}${rowNumber}`, `${letH2}${rowNumber}`, `${letH3}${rowNumber}`, `${letH4}${rowNumber}`, `${letH5}${rowNumber}`,
+          `${letCB}${rowNumber}`, `${letMA}${rowNumber}`, `${letTP}${rowNumber}`, `${letABCD}${rowNumber}`, `${letCA}${rowNumber}`, `${letAR}${rowNumber}`,
+          `${letCD}${rowNumber}`, `${letDP}${rowNumber}`, `${letFR}${rowNumber}`, `${letI1}${rowNumber}`, `${letI2}${rowNumber}`,
+          `${letUN}${rowNumber}`, `${letDM}${rowNumber}`, `${letAT}${rowNumber}`
+        ];
+        const checksumFormula = fieldsForChecksum.map(f => `SUMPRODUCT(UNICODE(${f}))`).join("+");
 
         row.getCell(idxAlterado).value = {
           formula: `SE(${letHashOrig}${rowNumber}="","SIM",SE(${checksumFormula}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
