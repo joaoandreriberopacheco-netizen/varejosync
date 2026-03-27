@@ -77,30 +77,22 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
             </Select>
           </Field>
           <Field label="Destinação">
-            <div className="flex gap-2">
-              <Select value={formData.destinacao} onValueChange={(v) => setFormData((p) => ({ ...p, destinacao: v }))}>
-                <SelectTrigger className="h-12 flex-1 rounded-2xl border-0 bg-gray-100 text-sm shadow-sm dark:bg-gray-900">
-                  <SelectValue placeholder="Escolha" />
-                </SelectTrigger>
-                <SelectContent>
-                  {destinacoes.map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Button type="button" variant="ghost" onClick={() => setNovoCadastro({ tipo: 'destinacao', valor: '' })} className="h-12 w-12 shrink-0 rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-900">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </Field>
-          <Field label="Interveniente / quem recebeu">
-            <div className="flex gap-2">
-              <Select value={formData.responsavel_recebimento} onValueChange={(v) => setFormData((p) => ({ ...p, responsavel_recebimento: v }))}>
-                <SelectTrigger className="h-12 flex-1 rounded-2xl border-0 bg-gray-100 text-sm shadow-sm dark:bg-gray-900">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {responsaveis.map((r) => <SelectItem key={r.id} value={r.nome}>{r.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
+           <div className="flex gap-2">
+             <Select value={formData.destinacao || ''} onValueChange={(v) => {
+               console.log('[DEBUG] Destinação selecionada:', v);
+               setFormData((p) => ({ ...p, destinacao: v }));
+             }}>
+               <SelectTrigger className="h-12 flex-1 rounded-2xl border-0 bg-gray-100 text-sm shadow-sm dark:bg-gray-900">
+                 <SelectValue placeholder="Escolha" />
+               </SelectTrigger>
+               <SelectContent>
+                 {destinacoes && destinacoes.length > 0 ? (
+                   destinacoes.map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)
+                 ) : (
+                   <div className="p-2 text-xs text-gray-500">Nenhuma destinação disponível</div>
+                 )}
+               </SelectContent>
+             </Select>
               <Button type="button" variant="ghost" onClick={() => setNovoCadastro({ tipo: 'responsavel', valor: '' })} className="h-12 w-12 shrink-0 rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-900">
                 <Plus className="h-4 w-4" />
               </Button>
@@ -200,27 +192,19 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </Field>
         <Field label="Destinação">
           <div className="flex gap-2">
-            <Select value={formData.destinacao} onValueChange={(v) => setFormData((p) => ({ ...p, destinacao: v }))}>
+            <Select value={formData.destinacao || ''} onValueChange={(v) => {
+              console.log('[DEBUG Mobile] Destinação:', v);
+              setFormData((p) => ({ ...p, destinacao: v }));
+            }}>
               <SelectTrigger className="h-14 flex-1 rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800">
                 <SelectValue placeholder="Escolha a destinação" />
               </SelectTrigger>
               <SelectContent>
-                {destinacoes.map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <button type="button" onClick={() => { console.log('[DEBUG] Criando destinação'); setNovoCadastro({ tipo: 'destinacao', valor: '' }); }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
-              <Plus className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-            </button>
-          </div>
-        </Field>
-        <Field label="Interveniente / quem recebeu">
-          <div className="flex gap-2">
-            <Select value={formData.responsavel_recebimento} onValueChange={(v) => setFormData((p) => ({ ...p, responsavel_recebimento: v }))}>
-              <SelectTrigger className="h-14 flex-1 rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800">
-                <SelectValue placeholder="Selecione o responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                {responsaveis.map((r) => <SelectItem key={r.id} value={r.nome}>{r.nome}</SelectItem>)}
+                {destinacoes && destinacoes.length > 0 ? (
+                  destinacoes.map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)
+                ) : (
+                  <div className="p-2 text-xs text-gray-500">Nenhuma destinação</div>
+                )}
               </SelectContent>
             </Select>
             <button type="button" onClick={() => { console.log('[DEBUG] Criando responsável'); setNovoCadastro({ tipo: 'responsavel', valor: '' }); }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
@@ -236,7 +220,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </Field>
       </div>
       <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
-        <button onClick={() => setStep(1)} className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-lg font-semibold text-white shadow-sm dark:bg-white dark:text-gray-900">
+        <button type="button" onClick={() => { console.log('[DEBUG] Step 0->1'); setStep(1); }} className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-lg font-semibold text-white shadow-sm dark:bg-white dark:text-gray-900">
           Próximo <ChevronRight className="h-5 w-5" />
         </button>
       </div>
