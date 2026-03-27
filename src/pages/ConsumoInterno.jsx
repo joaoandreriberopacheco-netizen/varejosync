@@ -255,9 +255,23 @@ export default function ConsumoInternoPage() {
           responsaveis={responsaveis}
           setNovoCadastro={setNovoCadastro}
           totalAtual={totalAtual}
-          onOpenSelector={() => setShowProdutoSelector(true)}
+          onOpenSelector={() => {
+           try {
+             setShowProdutoSelector(true);
+           } catch (err) {
+             console.error('[ERRO] Ao abrir seletor:', err);
+             toast.error('Erro ao abrir seletor de produtos');
+           }
+          }}
           currentUser={currentUser}
-          onOpenAssinatura={() => setShowAssinatura(true)}
+          onOpenAssinatura={() => {
+           try {
+             setShowAssinatura(true);
+           } catch (err) {
+             console.error('[ERRO] Ao abrir assinatura:', err);
+             toast.error('Erro ao abrir dialog de assinatura');
+           }
+          }}
           onSubmit={handleSubmit}
         />
         <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
