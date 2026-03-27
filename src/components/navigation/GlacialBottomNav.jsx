@@ -14,9 +14,9 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
   const navItems = [
     { id: 'menu', icon: MenuIcon, label: 'Menu', action: 'menu' },
-    { id: 'home', icon: Home, label: 'Início', page: 'Home' },
+    { id: 'home', icon: Home, label: 'Início', page: 'Home', action: null },
     { id: 'search', icon: Search, label: 'Busca', action: 'search' },
-    { id: 'notifications', icon: Bell, label: 'Avisos', page: 'Notificacoes' },
+    { id: 'notifications', icon: Bell, label: 'Avisos', page: 'Notificacoes', action: null },
     { id: 'profile', icon: User, label: 'Perfil', action: 'profile' },
   ];
 

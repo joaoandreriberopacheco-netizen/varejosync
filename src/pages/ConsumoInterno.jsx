@@ -60,8 +60,9 @@ export default function ConsumoInternoPage() {
     setCurrentUser(user);
     setTurnos(turnosData);
     setProdutos(produtosData.filter((item) => item.ativo !== false));
-    setDestinacoes(destinacoesData.filter((item) => item.ativo !== false));
-    setResponsaveis(responsaveisData.filter((item) => item.ativo !== false));
+    // Não filtrar inativos — permitir escolher qualquer destinação/responsável
+    setDestinacoes(destinacoesData);
+    setResponsaveis(responsaveisData);
     setConsumos(consumosData);
     setFormData((prev) => ({ ...prev, turno_caixa_id: turnosData[0]?.id || '' }));
   };
