@@ -173,7 +173,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
         <Button type="button" variant="outline" onClick={onBack} className="h-14 flex-1 rounded-2xl border-0 bg-white text-base shadow-sm dark:bg-gray-800">
           Cancelar
         </Button>
-        <Button type="button" onClick={onSubmit} className="h-14 flex-[2] rounded-2xl bg-gray-900 text-base text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+        <Button type="button" onClick={() => { console.log('[DEBUG] Desktop onSubmit:', typeof onSubmit); onSubmit?.(); }} className="h-14 flex-[2] rounded-2xl bg-gray-900 text-base text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900">
           Concluir
         </Button>
       </div>
@@ -208,7 +208,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
                 {destinacoes.map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)}
               </SelectContent>
             </Select>
-            <button onClick={() => setNovoCadastro({ tipo: 'destinacao', valor: '' })} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
+            <button type="button" onClick={() => { console.log('[DEBUG] Criando destinação'); setNovoCadastro({ tipo: 'destinacao', valor: '' }); }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
               <Plus className="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
@@ -223,7 +223,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
                 {responsaveis.map((r) => <SelectItem key={r.id} value={r.nome}>{r.nome}</SelectItem>)}
               </SelectContent>
             </Select>
-            <button onClick={() => setNovoCadastro({ tipo: 'responsavel', valor: '' })} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
+            <button type="button" onClick={() => { console.log('[DEBUG] Criando responsável'); setNovoCadastro({ tipo: 'responsavel', valor: '' }); }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
               <Plus className="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
@@ -247,7 +247,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
   if (step === 1) return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-5">
-        <button onClick={onOpenSelector} className="mb-5 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+        <button type="button" onClick={() => { console.log('[DEBUG] onOpenSelector:', typeof onOpenSelector); onOpenSelector?.(); }} className="mb-5 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
           <Search className="h-5 w-5" /> Buscar e adicionar item
         </button>
         <div className="space-y-3">
@@ -267,10 +267,10 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <span className="text-lg font-bold text-gray-900 dark:text-white">{fmt(totalAtual)}</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => setStep(0)} className="flex h-14 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-            Voltar
+          <button type="button" onClick={() => setStep(0)} className="flex h-14 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+           Voltar
           </button>
-          <button onClick={() => setStep(2)} className="flex h-14 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
+          <button type="button" onClick={() => setStep(2)} className="flex h-14 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
             Próximo <ChevronRight className="ml-1 h-5 w-5" />
           </button>
         </div>
@@ -282,8 +282,8 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
   if (step === 2) return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
-        <button onClick={onOpenAssinatura} className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
-          <Signature className="h-5 w-5" />
+        <button type="button" onClick={() => { console.log('[DEBUG] onOpenAssinatura:', typeof onOpenAssinatura); onOpenAssinatura?.(); }} className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+         <Signature className="h-5 w-5" />
           {formData.assinatura_recolhedor_nome ? (
             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> {formData.assinatura_recolhedor_nome}</span>
           ) : 'Coletar assinatura'}
@@ -308,10 +308,10 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
       </div>
       <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
         <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => setStep(1)} className="flex h-16 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+          <button type="button" onClick={() => setStep(1)} className="flex h-16 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
             Voltar
           </button>
-          <button onClick={onSubmit} className="flex h-16 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
+          <button type="button" onClick={() => { console.log('[DEBUG] onSubmit:', typeof onSubmit); onSubmit?.(); }} className="flex h-16 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
             Concluir
           </button>
         </div>
