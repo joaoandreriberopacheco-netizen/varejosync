@@ -225,11 +225,36 @@ export default function ExportarPlanilha() {
 
         const row = ws.addRow(rowData);
 
-        // Fórmula de hash concatenada com & (iguala template_pedido_compra que funciona)
-        // SEM o = no início — exceljs injeta automaticamente
+        // Fórmula de hash — usa índices REAIS das colunas em COLUNAS_CONFIG
+        // Helpers para normalizar valores (sem usar ARRUMAR/TRIM que pode variar por locale)
+        const idxH1 = 2, idxH2 = 3, idxH3 = 4, idxH4 = 5, idxH5 = 6;  // Nível 1-5
+        const idxCB = 7, idxMA = 8, idxTP = 9;                          // Cód.Barras, Marca, Tipo
+        const idxCA = 10, idxAR = 11;                                    // Categoria, Área
+        const idxVC = 12, idxDP = 13, idxFR = 14, idxI1 = 15, idxI2 = 16; // Preços e custos
+        const idxPV = 19;                                                // Preço Venda
+        const idxUN = 20, idxCD = 21, idxUP = 22, idxEM = 23, idxEI = 24, idxEX = 25, idxRP = 26;
+        const idxPS = 27, idxDM = 28, idxABCD = 29;                     // Físico e classificação
+        const idxPL = 30, idxCS = 31, idxCL = 32, idxCV = 33;           // PDV e rastreabilidade
+        const idxAT = 34;                                                // Ativo
+
+        const letH1 = colLetter(idxH1), letH2 = colLetter(idxH2), letH3 = colLetter(idxH3), letH4 = colLetter(idxH4), letH5 = colLetter(idxH5);
+        const letCB = colLetter(idxCB), letMA = colLetter(idxMA), letTP = colLetter(idxTP);
+        const letCA = colLetter(idxCA), letAR = colLetter(idxAR);
+        const letVC = colLetter(idxVC), letDP = colLetter(idxDP), letFR = colLetter(idxFR), letI1 = colLetter(idxI1), letI2 = colLetter(idxI2);
+        const letPV = colLetter(idxPV);
+        const letUN = colLetter(idxUN), letCD = colLetter(idxCD), letUP = colLetter(idxUP);
+        const letEM = colLetter(idxEM), letEI = colLetter(idxEI), letEX = colLetter(idxEX), letRP = colLetter(idxRP);
+        const letPS = colLetter(idxPS), letDM = colLetter(idxDM), letABCD = colLetter(idxABCD);
+        const letPL = colLetter(idxPL), letCS = colLetter(idxCS), letCL = colLetter(idxCL), letCV = colLetter(idxCV);
+        const letAT = colLetter(idxAT);
+
+        // Helper para normalizar números (x100 sem ponto, imune a locale)
         const T = (col) => `IF(${col}${rowNumber}="","0",TEXT(ROUND(${col}${rowNumber}*100,0),"0"))`;
+        // Helper para normalizar booleanos
         const B = (col) => `IF(OR(LOWER(TRIM(${col}${rowNumber}))="sim",LOWER(TRIM(${col}${rowNumber}))="true",LOWER(TRIM(${col}${rowNumber}))="verdadeiro",TRIM(${col}${rowNumber})="1"),"true","false")`;
-        const hashCalc = `TRIM(D${rowNumber})&"|"&TRIM(E${rowNumber})&"|"&TRIM(F${rowNumber})&"|"&TRIM(G${rowNumber})&"|"&TRIM(H${rowNumber})&"|"&TRIM(I${rowNumber})&"|"&TRIM(J${rowNumber})&"|"&TRIM(K${rowNumber})&"|"&TRIM(L${rowNumber})&"|"&TRIM(M${rowNumber})&"|"&${T('N')}&"|"&${T('O')}&"|"&${T('P')}&"|"&${T('Q')}&"|"&${T('R')}&"|"&TRIM(T${rowNumber})&"|"&${T('U')}&"|"&${T('V')}&"|"&${T('W')}&"|"&${T('X')}&"|"&${T('Y')}&"|"&${T('Z')}&"|"&${T('AA')}&"|"&TRIM(AB${rowNumber})&"|"&${B('AC')}&"|"&${B('AD')}&"|"&${B('AE')}&"|"&${B('AF')}&"|"&${B('AG')}&"|"&${T('AH')}`;
+
+        // Fórmula de hash — espelha computeProductHash no servidor
+        const hashCalc = `TRIM(${letH1}${rowNumber})&"|"&TRIM(${letH2}${rowNumber})&"|"&TRIM(${letH3}${rowNumber})&"|"&TRIM(${letH4}${rowNumber})&"|"&TRIM(${letH5}${rowNumber})&"|"&TRIM(${letCB}${rowNumber})&"|"&TRIM(${letMA}${rowNumber})&"|"&TRIM(${letTP}${rowNumber})&"|"&TRIM(${letCA}${rowNumber})&"|"&TRIM(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&TRIM(${letPV}${rowNumber})&"|"&TRIM(${letUN}${rowNumber})&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&TRIM(${letDM}${rowNumber})&"|"&TRIM(${letABCD}${rowNumber})&"|"&${B(letPL)}&"|"&${B(letCS)}&"|"&${B(letCL)}&"|"&${B(letCV)}&"|"&TRIM(${letAT}${rowNumber})`;
 
         row.getCell(idxAlterado).value = {
           formula: `IF(${letHashOrig}${rowNumber}="","",IF(${hashCalc}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
