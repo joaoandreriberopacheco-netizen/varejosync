@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ArrowLeft, Plus, Search, X, Signature, Paperclip, Clock3, ChevronRight, Check
 } from 'lucide-react';
+import SearchableSelect from './SearchableSelect';
 
 const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -50,7 +51,7 @@ function ItemCard({ item, onRemove }) {
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <span className="text-base font-bold text-gray-800 dark:text-gray-200">{fmt(item.subtotal)}</span>
-        <button onClick={onRemove} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:bg-gray-700 dark:text-gray-500">
+        <button type="button" onClick={onRemove} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:bg-gray-700 dark:text-gray-500">
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -77,23 +78,17 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
             </Select>
           </Field>
           <Field label="Destinação">
-           <div className="flex gap-2">
-             <Select value={formData.destinacao || ''} onValueChange={(v) => {
-               console.log('[DEBUG] Destinação selecionada:', v);
-               setFormData((p) => ({ ...p, destinacao: v }));
-             }}>
-               <SelectTrigger className="h-12 flex-1 rounded-2xl border-0 bg-gray-100 text-sm shadow-sm dark:bg-gray-900">
-                 <SelectValue placeholder="Escolha" />
-               </SelectTrigger>
-               <SelectContent>
-                 {destinacoes && destinacoes.length > 0 ? (
-                   destinacoes.map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)
-                 ) : (
-                   <div className="p-2 text-xs text-gray-500">Nenhuma destinação disponível</div>
-                 )}
-               </SelectContent>
-             </Select>
-              <Button type="button" variant="ghost" onClick={() => setNovoCadastro({ tipo: 'responsavel', valor: '' })} className="h-12 w-12 shrink-0 rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-900">
+            <div className="flex gap-2">
+              <SearchableSelect
+                items={destinacoes || []}
+                value={formData.destinacao}
+                onChange={(v) => setFormData((p) => ({ ...p, destinacao: v }))}
+                placeholder="Buscar destino"
+                onAddNew={(name) => setNovoCadastro({ tipo: 'destinacao', valor: name })}
+                displayField="nome"
+                idField="id"
+              />
+              <Button type="button" variant="ghost" onClick={() => setNovoCadastro({ tipo: 'destinacao', valor: '' })} className="h-12 w-12 shrink-0 rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-900">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -104,6 +99,22 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
               placeholder="obra, manutenção..."
               onChange={(e) => setFormData((p) => ({ ...p, tags: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) }))}
             />
+          </Field>
+          <Field label="Interveniente / quem recebeu">
+            <div className="flex gap-2">
+              <SearchableSelect
+                items={responsaveis || []}
+                value={formData.responsavel_recebimento}
+                onChange={(v) => setFormData((p) => ({ ...p, responsavel_recebimento: v }))}
+                placeholder="Buscar interveniente"
+                onAddNew={(name) => setNovoCadastro({ tipo: 'responsavel', valor: name })}
+                displayField="nome"
+                idField="id"
+              />
+              <Button type="button" variant="ghost" onClick={() => setNovoCadastro({ tipo: 'responsavel', valor: '' })} className="h-12 w-12 shrink-0 rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-900">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </Field>
         </div>
         <Field label="Observações">
@@ -165,7 +176,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
         <Button type="button" variant="outline" onClick={onBack} className="h-14 flex-1 rounded-2xl border-0 bg-white text-base shadow-sm dark:bg-gray-800">
           Cancelar
         </Button>
-        <Button type="button" onClick={() => { console.log('[DEBUG] Desktop onSubmit:', typeof onSubmit); onSubmit?.(); }} className="h-14 flex-[2] rounded-2xl bg-gray-900 text-base text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900">
+        <Button type="button" onClick={onSubmit} className="h-14 flex-[2] rounded-2xl bg-gray-900 text-base text-white shadow-sm hover:bg-gray-800 dark:bg-white dark:text-gray-900">
           Concluir
         </Button>
       </div>
@@ -192,22 +203,32 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </Field>
         <Field label="Destinação">
           <div className="flex gap-2">
-            <Select value={formData.destinacao || ''} onValueChange={(v) => {
-              console.log('[DEBUG Mobile] Destinação:', v);
-              setFormData((p) => ({ ...p, destinacao: v }));
-            }}>
-              <SelectTrigger className="h-14 flex-1 rounded-2xl border-0 bg-gray-100 text-base shadow-sm dark:bg-gray-800">
-                <SelectValue placeholder="Escolha a destinação" />
-              </SelectTrigger>
-              <SelectContent>
-                {destinacoes && destinacoes.length > 0 ? (
-                  destinacoes.map((d) => <SelectItem key={d.id} value={d.nome}>{d.nome}</SelectItem>)
-                ) : (
-                  <div className="p-2 text-xs text-gray-500">Nenhuma destinação</div>
-                )}
-              </SelectContent>
-            </Select>
-            <button type="button" onClick={() => { console.log('[DEBUG] Criando responsável'); setNovoCadastro({ tipo: 'responsavel', valor: '' }); }} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
+            <SearchableSelect
+              items={destinacoes || []}
+              value={formData.destinacao}
+              onChange={(v) => setFormData((p) => ({ ...p, destinacao: v }))}
+              placeholder="Buscar destino"
+              onAddNew={(name) => setNovoCadastro({ tipo: 'destinacao', valor: name })}
+              displayField="nome"
+              idField="id"
+            />
+            <button type="button" onClick={() => setNovoCadastro({ tipo: 'destinacao', valor: '' })} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
+              <Plus className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+            </button>
+          </div>
+        </Field>
+        <Field label="Interveniente / quem recebeu">
+          <div className="flex gap-2">
+            <SearchableSelect
+              items={responsaveis || []}
+              value={formData.responsavel_recebimento}
+              onChange={(v) => setFormData((p) => ({ ...p, responsavel_recebimento: v }))}
+              placeholder="Buscar interveniente"
+              onAddNew={(name) => setNovoCadastro({ tipo: 'responsavel', valor: name })}
+              displayField="nome"
+              idField="id"
+            />
+            <button type="button" onClick={() => setNovoCadastro({ tipo: 'responsavel', valor: '' })} className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 shadow-sm dark:bg-gray-800">
               <Plus className="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
@@ -220,7 +241,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </Field>
       </div>
       <div className="shrink-0 border-t border-gray-100 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] dark:border-gray-800 dark:bg-gray-900">
-        <button type="button" onClick={() => { console.log('[DEBUG] Step 0->1'); setStep(1); }} className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-lg font-semibold text-white shadow-sm dark:bg-white dark:text-gray-900">
+        <button type="button" onClick={() => setStep(1)} className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 text-lg font-semibold text-white shadow-sm dark:bg-white dark:text-gray-900">
           Próximo <ChevronRight className="h-5 w-5" />
         </button>
       </div>
@@ -231,7 +252,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
   if (step === 1) return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-5">
-        <button type="button" onClick={() => { console.log('[DEBUG] onOpenSelector:', typeof onOpenSelector); onOpenSelector?.(); }} className="mb-5 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+        <button type="button" onClick={onOpenSelector} className="mb-5 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
           <Search className="h-5 w-5" /> Buscar e adicionar item
         </button>
         <div className="space-y-3">
@@ -252,7 +273,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
         </div>
         <div className="grid grid-cols-2 gap-3">
           <button type="button" onClick={() => setStep(0)} className="flex h-14 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-           Voltar
+            Voltar
           </button>
           <button type="button" onClick={() => setStep(2)} className="flex h-14 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
             Próximo <ChevronRight className="ml-1 h-5 w-5" />
@@ -266,8 +287,8 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
   if (step === 2) return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
-        <button type="button" onClick={() => { console.log('[DEBUG] onOpenAssinatura:', typeof onOpenAssinatura); onOpenAssinatura?.(); }} className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
-         <Signature className="h-5 w-5" />
+        <button type="button" onClick={onOpenAssinatura} className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+          <Signature className="h-5 w-5" />
           {formData.assinatura_recolhedor_nome ? (
             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> {formData.assinatura_recolhedor_nome}</span>
           ) : 'Coletar assinatura'}
@@ -295,7 +316,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           <button type="button" onClick={() => setStep(1)} className="flex h-16 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
             Voltar
           </button>
-          <button type="button" onClick={() => { console.log('[DEBUG] onSubmit:', typeof onSubmit); onSubmit?.(); }} className="flex h-16 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
+          <button type="button" onClick={onSubmit} className="flex h-16 items-center justify-center rounded-2xl bg-gray-900 text-base font-semibold text-white dark:bg-white dark:text-gray-900">
             Concluir
           </button>
         </div>
