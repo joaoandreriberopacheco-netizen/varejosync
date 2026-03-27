@@ -23,10 +23,19 @@ function fileToBase64(file) {
   });
 }
 
+const STEPS = [
+  { id: 'reading',    label: 'Lendo arquivo…'           },
+  { id: 'analyzing', label: 'Analisando dados…'          },
+  { id: 'importing', label: 'Importando registros…'      },
+  { id: 'done',      label: 'Concluído'                  },
+];
+
 export default function TemplatesCompra() {
   const [activeTab, setActiveTab] = useState('download');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [step, setStep] = useState(null);   // null | 'reading' | 'analyzing' | 'importing' | 'done'
+  const [analyzeResult, setAnalyzeResult] = useState(null);
   const [message, setMessage] = useState(null);
   const [importResult, setImportResult] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -84,18 +93,39 @@ export default function TemplatesCompra() {
     setIsImporting(true);
     setMessage(null);
     setImportResult(null);
+    setAnalyzeResult(null);
 
     try {
+      // ETAPA 1 — leitura local
+      setStep('reading');
       const base64 = await fileToBase64(file);
 
-      const axiosResponse = await base44.functions.invoke('importarPedidosCompra', { file_content: base64 });
-      const result = axiosResponse.data || axiosResponse;
+      // ETAPA 2 — análise no servidor (dry run)
+      setStep('analyzing');
+      const analyzeResp = await base44.functions.invoke('importarPedidosCompra', { file_content: base64, phase: 'analyze' });
+      const analyzed = analyzeResp.data || analyzeResp;
+
+      if (analyzed.error && !analyzed.success) {
+        setMessage({ type: 'error', text: analyzed.error });
+        setImportResult({ erros: analyzed.erros || [] });
+        setStep(null);
+        return;
+      }
+
+      setAnalyzeResult(analyzed);
+
+      // ETAPA 3 — importação real
+      setStep('importing');
+      const importResp = await base44.functions.invoke('importarPedidosCompra', { file_content: base64, phase: 'import' });
+      const result = importResp.data || importResp;
 
       if (result.error && !result.success) {
         setMessage({ type: 'error', text: result.error });
-        if (result.erros && result.erros.length > 0) setImportResult({ erros: result.erros });
+        setImportResult({ erros: result.erros || [] });
+        setStep(null);
       } else {
         setImportResult(result);
+        setStep('done');
         setMessage({
           type: 'success',
           text: `Pedido ${result.pedido_numero} criado com ${result.itens_criados} itens!`
@@ -104,6 +134,7 @@ export default function TemplatesCompra() {
     } catch (error) {
       console.error('Erro:', error);
       setMessage({ type: 'error', text: error.message || 'Erro ao importar. Verifique o arquivo.' });
+      setStep(null);
     } finally {
       setIsImporting(false);
     }
@@ -261,6 +292,66 @@ export default function TemplatesCompra() {
       {/* Import Tab */}
       {activeTab === 'import' && (
         <div className="space-y-4">
+
+          {/* Barra de progresso */}
+          {isImporting && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm space-y-3">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Progresso da importação</p>
+              <div className="space-y-2">
+                {STEPS.map((s, i) => {
+                  const currentIdx = STEPS.findIndex(x => x.id === step);
+                  const isDone  = i < currentIdx || step === 'done';
+                  const isActive = s.id === step;
+                  return (
+                    <div key={s.id} className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                        isDone  ? 'bg-green-500' :
+                        isActive ? 'bg-gray-700 dark:bg-gray-200' :
+                                   'bg-gray-200 dark:bg-gray-700'
+                      }`}>
+                        {isDone ? (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        ) : isActive ? (
+                          <div className="w-2 h-2 rounded-full bg-white dark:bg-gray-900 animate-pulse" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
+                        )}
+                      </div>
+                      <span className={`text-sm ${
+                        isDone  ? 'text-green-600 dark:text-green-400' :
+                        isActive ? 'text-gray-900 dark:text-white font-medium' :
+                                   'text-gray-400 dark:text-gray-600'
+                      }`}>{s.label}</span>
+                      {isActive && s.id === 'analyzing' && analyzeResult === null && (
+                        <span className="text-xs text-gray-400 ml-auto">verificando dados…</span>
+                      )}
+                      {isActive && s.id === 'importing' && analyzeResult && (
+                        <span className="text-xs text-gray-400 ml-auto">
+                          {analyzeResult.itens_count} iten{analyzeResult.itens_count !== 1 ? 's' : ''}, {analyzeResult.fornecedor_nome}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Resumo da análise após fase analyze */}
+              {analyzeResult && step === 'importing' && (
+                <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-1.5">
+                  {[
+                    { label: 'Itens no pedido',     val: analyzeResult.itens_count },
+                    { label: 'Produtos a atualizar', val: analyzeResult.produtos_atualizados },
+                    { label: 'Produtos novos',       val: analyzeResult.produtos_novos },
+                    { label: 'Avisos',               val: analyzeResult.erros?.length || 0 },
+                  ].map(({ label, val }) => (
+                    <div key={label} className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">{val} </span>{label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}

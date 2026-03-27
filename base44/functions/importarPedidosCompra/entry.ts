@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+// phase: 'analyze' → só lê e valida, sem gravar no banco
+// phase: 'import'  → processa tudo e grava (padrão)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getCellValue(cell) {
@@ -19,7 +21,7 @@ Deno.serve(async (req) => {
 
     const ExcelJS = (await import('npm:exceljs@4.4.0')).default;
     const body = await req.json();
-    const { file_content } = body;
+    const { file_content, phase = 'import' } = body;
     if (!file_content) return Response.json({ error: 'Arquivo não enviado.' }, { status: 400 });
 
     // Decodificar Base64
@@ -39,6 +41,7 @@ Deno.serve(async (req) => {
     if (!wsPedido) return Response.json({ error: 'Aba "Pedido" não encontrada.' }, { status: 400 });
 
     const log = { produtos_atualizados: [], produtos_criados: [], fornecedores_atualizados: [], fornecedores_criados: [], erros: [] };
+    const dryRun = phase === 'analyze';
 
     // ════════════════════════════════════════════════════════════════════════
     // FASE 1 — Processar aba "Produtos Cadastrados"
@@ -133,10 +136,12 @@ Deno.serve(async (req) => {
         }
         dados.tipo = dados.tipo || 'Produto';
         dados.unidade_principal = dados.unidade_principal || 'UN';
-        const novo = await base44.asServiceRole.entities.Produto.create(dados);
-        mapaProdsById[novo.id] = novo;
-        if (novo.nome) mapaProdsByNome[novo.nome.trim().toLowerCase()] = novo;
-        log.produtos_criados.push(novo.nome || h1);
+        if (!dryRun) {
+          const novo = await base44.asServiceRole.entities.Produto.create(dados);
+          mapaProdsById[novo.id] = novo;
+          if (novo.nome) mapaProdsByNome[novo.nome.trim().toLowerCase()] = novo;
+        }
+        log.produtos_criados.push(h1);
       } else {
         // Atualizar existente
         const prodAtual = mapaProdsById[id];
@@ -147,9 +152,11 @@ Deno.serve(async (req) => {
           if (String(v ?? '') !== String(prodAtual[k] ?? '')) diff[k] = v;
         }
         if (Object.keys(diff).length > 0) {
-          await base44.asServiceRole.entities.Produto.update(id, diff);
-          Object.assign(mapaProdsById[id], diff);
-          if (diff.nome) { delete mapaProdsByNome[prodAtual.nome?.trim().toLowerCase()]; mapaProdsByNome[diff.nome.trim().toLowerCase()] = mapaProdsById[id]; }
+          if (!dryRun) {
+            await base44.asServiceRole.entities.Produto.update(id, diff);
+            Object.assign(mapaProdsById[id], diff);
+            if (diff.nome) { delete mapaProdsByNome[prodAtual.nome?.trim().toLowerCase()]; mapaProdsByNome[diff.nome.trim().toLowerCase()] = mapaProdsById[id]; }
+          }
           log.produtos_atualizados.push(prodAtual.nome || id);
         }
       }
@@ -210,10 +217,12 @@ Deno.serve(async (req) => {
       if (!id) {
         if (!nome) { log.erros.push(`Fornecedores linha ${rowNum}: Nome obrigatório para novo fornecedor.`); continue; }
         dados.tipo = dados.tipo || 'Fornecedor';
-        const novo = await base44.asServiceRole.entities.Terceiro.create(dados);
-        mapaFornsById[novo.id] = novo;
-        if (novo.nome) mapaFornsByNome[novo.nome.trim().toLowerCase()] = novo;
-        log.fornecedores_criados.push(novo.nome);
+        if (!dryRun) {
+          const novo = await base44.asServiceRole.entities.Terceiro.create(dados);
+          mapaFornsById[novo.id] = novo;
+          if (novo.nome) mapaFornsByNome[novo.nome.trim().toLowerCase()] = novo;
+        }
+        log.fornecedores_criados.push(nome);
       } else {
         const fornAtual = mapaFornsById[id];
         if (!fornAtual) { log.erros.push(`Fornecedores linha ${rowNum}: ID "${id}" não encontrado.`); continue; }
@@ -222,8 +231,10 @@ Deno.serve(async (req) => {
           if (String(v ?? '') !== String(fornAtual[k] ?? '')) diff[k] = v;
         }
         if (Object.keys(diff).length > 0) {
-          await base44.asServiceRole.entities.Terceiro.update(id, diff);
-          Object.assign(mapaFornsById[id], diff);
+          if (!dryRun) {
+            await base44.asServiceRole.entities.Terceiro.update(id, diff);
+            Object.assign(mapaFornsById[id], diff);
+          }
           log.fornecedores_atualizados.push(fornAtual.nome || id);
         }
       }
@@ -297,6 +308,23 @@ Deno.serve(async (req) => {
         error: 'Nenhum item válido encontrado na aba "Pedido".',
         log,
       }, { status: 400 });
+    }
+
+    // Se apenas análise, retorna resumo sem gravar
+    if (dryRun) {
+      return Response.json({
+        success: true,
+        dry_run: true,
+        fornecedor_nome: fornecedor.nome,
+        itens_count: itens.length,
+        produtos_novos: log.produtos_criados.length,
+        produtos_atualizados: log.produtos_atualizados.length,
+        fornecedores_novos: log.fornecedores_criados.length,
+        fornecedores_atualizados: log.fornecedores_atualizados.length,
+        erros: log.erros,
+        data_prevista_entrega: dataPrevEntrega || null,
+        observacoes: observacoesPed || null,
+      });
     }
 
     // Gerar número do pedido — mesmo padrão do formulário (PC-00001)
