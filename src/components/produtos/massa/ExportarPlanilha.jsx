@@ -32,9 +32,9 @@ function normStr(value) {
   return String(value).trim();
 }
 
-function computeProductHash(produto) {
-  // Ordem EXATA do template gerarTemplatePedidoCompra.js (linhas 431-463)
-  return [
+function computeChecksum(produto) {
+  // Checksum simples — só quer saber se algo mudou
+  const concat = [
     normStr(produto.campo_hierarquico_1),
     normStr(produto.campo_hierarquico_2),
     normStr(produto.campo_hierarquico_3),
@@ -43,27 +43,33 @@ function computeProductHash(produto) {
     normStr(produto.codigo_barras),
     normStr(produto.marca),
     normStr(produto.tipo),
-    normStr(produto.abcd),                   // POSIÇÃO 9 — ANTES de categoria/area
-    normStr(produto.categoria_nome),         // POSIÇÃO 10
-    normStr(produto.area_codigo),            // POSIÇÃO 11
-    normNum(produto.valor_compra),           // POSIÇÃO 12
-    normNum(produto.casas_decimais),         // POSIÇÃO 13 — casas_decimais ANTES de desconto
-    normNum(produto.desconto_perc ?? 0),     // POSIÇÃO 14
-    normNum(produto.custo_frete_padrao),     // POSIÇÃO 15
-    normNum(produto.custo_imposto1_padrao),  // POSIÇÃO 16
-    normNum(produto.custo_imposto2_padrao),  // POSIÇÃO 17
-    normNum(produto.desconto_compra_padrao ?? 0), // POSIÇÃO 18
-    normNum(produto.preco_venda_padrao),     // POSIÇÃO 19
-    normStr(produto.unidade_principal),      // POSIÇÃO 20
-    normNum(produto.unidades_por_pacote),    // POSIÇÃO 21
-    normNum(produto.estoque_minimo),         // POSIÇÃO 22
-    normNum(produto.estoque_ideal),          // POSIÇÃO 23
-    normNum(produto.estoque_maximo),         // POSIÇÃO 24
-    normNum(produto.tempo_reposicao_dias),   // POSIÇÃO 25
-    normNum(produto.peso_kg),                // POSIÇÃO 26
-    normStr(produto.dimensoes_cm),           // POSIÇÃO 27
-    produto.ativo !== false ? 'sim' : 'não', // POSIÇÃO 28 — string em pt-BR
+    normStr(produto.abcd),
+    normStr(produto.categoria_nome),
+    normStr(produto.area_codigo),
+    normNum(produto.valor_compra),
+    normNum(produto.casas_decimais),
+    normNum(produto.desconto_perc ?? 0),
+    normNum(produto.custo_frete_padrao),
+    normNum(produto.custo_imposto1_padrao),
+    normNum(produto.custo_imposto2_padrao),
+    normNum(produto.desconto_compra_padrao ?? 0),
+    normNum(produto.preco_venda_padrao),
+    normStr(produto.unidade_principal),
+    normNum(produto.unidades_por_pacote),
+    normNum(produto.estoque_minimo),
+    normNum(produto.estoque_ideal),
+    normNum(produto.estoque_maximo),
+    normNum(produto.tempo_reposicao_dias),
+    normNum(produto.peso_kg),
+    normStr(produto.dimensoes_cm),
+    produto.ativo !== false ? 'sim' : 'não',
   ].join('|');
+  // CRC16 simples
+  let crc = 0;
+  for (let i = 0; i < concat.length; i++) {
+    crc = ((crc << 8) ^ (concat.charCodeAt(i))) & 0xffff;
+  }
+  return crc.toString(16).padStart(4, '0').toUpperCase();
 }
 
 function normalizeBooleanCell(value) {
@@ -199,7 +205,7 @@ export default function ExportarPlanilha() {
           + (p.custo_frete_padrao || 0)
           + (p.custo_imposto1_padrao || 0)
           + (p.custo_imposto2_padrao || 0);
-        const hashOrig = computeProductHash(p);
+        const checksumOrig = computeChecksum(p);
 
         const rowData = {};
         COLUNAS_CONFIG.forEach(col => {
@@ -209,7 +215,7 @@ export default function ExportarPlanilha() {
               result: custoCalc,
             };
           } else if (col.key === '_hash_orig') {
-            rowData[col.key] = hashOrig;
+            rowData[col.key] = computeChecksum(p);
           } else if (col.key === 'alterado') {
             rowData[col.key] = '';
           } else if (col.tipo === 'boolean') {
@@ -251,11 +257,11 @@ export default function ExportarPlanilha() {
          // Helper para normalizar booleanos — EM PORTUGUÊS
          const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
-        // Fórmula de hash — ORDEM EXATA do template gerarTemplatePedidoCompra.js
-        const hashCalc = `ARRUMAR(${letH1}${rowNumber})&"|"&ARRUMAR(${letH2}${rowNumber})&"|"&ARRUMAR(${letH3}${rowNumber})&"|"&ARRUMAR(${letH4}${rowNumber})&"|"&ARRUMAR(${letH5}${rowNumber})&"|"&ARRUMAR(${letCB}${rowNumber})&"|"&ARRUMAR(${letMA}${rowNumber})&"|"&ARRUMAR(${letTP}${rowNumber})&"|"&ARRUMAR(${letABCD}${rowNumber})&"|"&ARRUMAR(${letCA}${rowNumber})&"|"&ARRUMAR(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letCD)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&${T(letUP)}&"|"&${T(letPV)}&"|"&ARRUMAR(${letUN}${rowNumber})&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&ARRUMAR(${letDM}${rowNumber})&"|"&SE(${letAT}${rowNumber}<>""MINÚSCULA(ARRUMAR(${letAT}${rowNumber}))="sim";"sim";"não")`;
+        // Checksum: comparar concatenação dos dados (simples)
+        const checksumCalc = `=CONCATENAR(ARRUMAR(${letH1}${rowNumber}),"|",ARRUMAR(${letH2}${rowNumber}),"|",ARRUMAR(${letH3}${rowNumber}),"|",ARRUMAR(${letH4}${rowNumber}),"|",ARRUMAR(${letH5}${rowNumber}),"|",ARRUMAR(${letCB}${rowNumber}),"|",ARRUMAR(${letMA}${rowNumber}),"|",ARRUMAR(${letTP}${rowNumber}),"|",ARRUMAR(${letABCD}${rowNumber}),"|",ARRUMAR(${letCA}${rowNumber}),"|",ARRUMAR(${letAR}${rowNumber}),"|",${T(letVC)},"|",${T(letCD)},"|",${T(letDP)},"|",${T(letFR)},"|",${T(letI1)},"|",${T(letI2)},"|",${T(letUP)},"|",${T(letPV)},"|",ARRUMAR(${letUN}${rowNumber}),"|",${T(letUP)},"|",${T(letEM)},"|",${T(letEI)},"|",${T(letEX)},"|",${T(letRP)},"|",${T(letPS)},"|",ARRUMAR(${letDM}${rowNumber}),"|",SE(${letAT}${rowNumber})<>"",MINÚSCULA(ARRUMAR(${letAT}${rowNumber}))="sim","sim","não"))`
 
         row.getCell(idxAlterado).value = {
-          formula: `SE(${letHashOrig}${rowNumber}="";""SE(${hashCalc}=${letHashOrig}${rowNumber};"NÃO";"SIM"))`,
+          formula: `SE(${letHashOrig}${rowNumber}="","",SE(${checksumCalc}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
           result: 'NÃO',
         };
 
