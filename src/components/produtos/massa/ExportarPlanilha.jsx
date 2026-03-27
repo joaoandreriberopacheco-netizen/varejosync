@@ -225,13 +225,14 @@ export default function ExportarPlanilha() {
 
         const row = ws.addRow(rowData);
 
-        // Fórmula usando & (mais compacta que CONCATENAR) — Excel aceita melhor
-        const T = (col) => `SE(${col}${rowNumber}="";"0";TEXTO(ARRED(${col}${rowNumber}*100;0);"0"))`;
-        const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
-        const hashCalc = `ARRUMAR(D${rowNumber})&"|"&ARRUMAR(E${rowNumber})&"|"&ARRUMAR(F${rowNumber})&"|"&ARRUMAR(G${rowNumber})&"|"&ARRUMAR(H${rowNumber})&"|"&ARRUMAR(I${rowNumber})&"|"&ARRUMAR(J${rowNumber})&"|"&ARRUMAR(K${rowNumber})&"|"&ARRUMAR(L${rowNumber})&"|"&ARRUMAR(M${rowNumber})&"|"&${T('N')}&"|"&${T('O')}&"|"&${T('P')}&"|"&${T('Q')}&"|"&${T('R')}&"|"&ARRUMAR(T${rowNumber})&"|"&${T('U')}&"|"&${T('V')}&"|"&${T('W')}&"|"&${T('X')}&"|"&${T('Y')}&"|"&${T('Z')}&"|"&${T('AA')}&"|"&ARRUMAR(AB${rowNumber})&"|"&${B('AC')}&"|"&${B('AD')}&"|"&${B('AE')}&"|"&${B('AF')}&"|"&${B('AG')}&"|"&${T('AH')}`;
+        // Fórmula de hash concatenada com & (iguala template_pedido_compra que funciona)
+        // SEM o = no início — exceljs injeta automaticamente
+        const T = (col) => `IF(${col}${rowNumber}="","0",TEXT(ROUND(${col}${rowNumber}*100,0),"0"))`;
+        const B = (col) => `IF(OR(LOWER(TRIM(${col}${rowNumber}))="sim",LOWER(TRIM(${col}${rowNumber}))="true",LOWER(TRIM(${col}${rowNumber}))="verdadeiro",TRIM(${col}${rowNumber})="1"),"true","false")`;
+        const hashCalc = `TRIM(D${rowNumber})&"|"&TRIM(E${rowNumber})&"|"&TRIM(F${rowNumber})&"|"&TRIM(G${rowNumber})&"|"&TRIM(H${rowNumber})&"|"&TRIM(I${rowNumber})&"|"&TRIM(J${rowNumber})&"|"&TRIM(K${rowNumber})&"|"&TRIM(L${rowNumber})&"|"&TRIM(M${rowNumber})&"|"&${T('N')}&"|"&${T('O')}&"|"&${T('P')}&"|"&${T('Q')}&"|"&${T('R')}&"|"&TRIM(T${rowNumber})&"|"&${T('U')}&"|"&${T('V')}&"|"&${T('W')}&"|"&${T('X')}&"|"&${T('Y')}&"|"&${T('Z')}&"|"&${T('AA')}&"|"&TRIM(AB${rowNumber})&"|"&${B('AC')}&"|"&${B('AD')}&"|"&${B('AE')}&"|"&${B('AF')}&"|"&${B('AG')}&"|"&${T('AH')}`;
 
         row.getCell(idxAlterado).value = {
-          formula: `SE(${letHashOrig}${rowNumber}="";"";SE(${hashCalc}=${letHashOrig}${rowNumber};"NÃO";"SIM"))`,
+          formula: `IF(${letHashOrig}${rowNumber}="","",IF(${hashCalc}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
           result: 'NÃO',
         };
 
