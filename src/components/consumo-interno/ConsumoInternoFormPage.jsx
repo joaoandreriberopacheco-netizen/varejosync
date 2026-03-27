@@ -345,10 +345,10 @@ export default function ConsumoInternoFormPage({
         {/* Desktop: show all step labels */}
         <div className="hidden items-center gap-1 md:flex">
           {stepLabels.map((label, i) => (
-            <React.Fragment key={label}>
+            <div key={i} className="flex items-center gap-1">
               <span className={`text-xs font-semibold ${i === mobileStep ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>{label}</span>
               {i < stepLabels.length - 1 && <ChevronRight className="h-3 w-3 text-gray-300 dark:text-gray-700" />}
-            </React.Fragment>
+            </div>
           ))}
         </div>
       </div>
