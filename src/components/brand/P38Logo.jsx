@@ -1,100 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const LOGO_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/b901a6773_AdobeExpress-file1.png';
-const LOGO_VERTICAL_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/b901a6773_AdobeExpress-file1.png';
 const ICON_ONLY_URL = 'https://media.base44.com/images/public/68a91b1a009497f8d44af37e/46a482fd7_image.png';
 
-const getThemeFilter = () => {
-  if (typeof document !== 'undefined' && document.documentElement.classList.contains('dark')) {
-    return 'brightness(0) invert(1)';
-  }
-  return 'brightness(0)';
-};
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
 
-/**
- * P38 Logo com suporte a múltiplas variantes
- * 
- * Variantes:
- * - 'horizontal': Logo completa (raio + P38 + ERP) em uma linha
- * - 'vertical': Logo empilhada (raio, P38, ERP) centralizado
- * - 'icon-only': Apenas o raio/ícone
- * 
- * Cores:
- * - Claro: cinza escuro/preto
- * - Escuro: cinza claro/branco
- */
-export default function P38Logo({
-  variant = 'horizontal',
-  size = 'md',
-  className = ''
-}) {
-  // Icon-only (raio sozinho)
+  useEffect(() => {
+    const update = () => setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return isDark;
+}
+
+export default function P38Logo({ variant = 'horizontal', size = 'md', className = '' }) {
+  const isDark = useDarkMode();
+  const filter = isDark ? 'brightness(0) invert(1)' : 'brightness(0)';
+
   if (variant === 'icon-only') {
-    const sizes = {
-      xs: 'h-6',
-      sm: 'h-8',
-      md: 'h-10',
-      lg: 'h-12',
-      xl: 'h-16'
-    };
-    const h = sizes[size] || sizes.md;
-
+    const sizes = { xs: 'h-5', sm: 'h-7', md: 'h-9', lg: 'h-11', xl: 'h-14' };
     return (
       <img
         src={ICON_ONLY_URL}
         alt="P38"
-        className={`${h} w-auto object-contain select-none ${className}`}
-        style={{ filter: getThemeFilter() }}
+        className={`${sizes[size] || sizes.md} w-auto object-contain select-none ${className}`}
+        style={{ filter }}
         draggable={false}
       />
     );
   }
 
-  // Vertical (empilhado)
-  if (variant === 'vertical') {
-    const sizes = {
-      sm: 'h-20',
-      md: 'h-28',
-      lg: 'h-36'
-    };
-    const h = sizes[size] || sizes.md;
-
-    return (
-      <img
-        src={LOGO_VERTICAL_URL}
-        alt="P38 ERP"
-        className={`${h} w-auto object-contain select-none ${className}`}
-        style={{ filter: getThemeFilter() }}
-        draggable={false}
-      />
-    );
-
-
-
-
-
-
-
-
-
-  }
-
-  // Horizontal (padrão)
-  const sizes = {
-    xs: 'h-8',
-    sm: 'h-12',
-    md: 'h-16',
-    lg: 'h-20',
-    xl: 'h-24',
-    xxl: 'h-32'
-  };
-  const h = sizes[size] || sizes.md;
-
+  // horizontal (default) e vertical usam o mesmo asset
+  const sizes = { xs: 'h-7', sm: 'h-9', md: 'h-11', lg: 'h-13', xl: 'h-16', xxl: 'h-20' };
   return (
     <img
       src={LOGO_URL}
       alt="P38 ERP"
-      className={`${h} w-auto object-contain select-none ${className}`}
+      className={`${sizes[size] || sizes.md} w-auto object-contain select-none ${className}`}
+      style={{ filter }}
       draggable={false}
     />
   );
