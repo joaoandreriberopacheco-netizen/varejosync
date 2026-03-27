@@ -60,18 +60,16 @@ Deno.serve(async (req) => {
       'Nível 3': 'campo_hierarquico_3', 'Nível 4': 'campo_hierarquico_4', 'Nível 5': 'campo_hierarquico_5',
       'Cód. Barras': 'codigo_barras', 'Marca': 'marca', 'Tipo': 'tipo', 'Curva ABCD': 'abcd',
       'Categoria': 'categoria_nome', 'Área': 'area_codigo',
-      'Valor Compra (R$)': 'valor_compra', 'Frete Padrão (R$)': 'custo_frete_padrao',
+      'Valor Compra (R$)': 'valor_compra', 'Desconto (%)': 'desconto_perc', 'Frete Padrão (R$)': 'custo_frete_padrao',
       'Imposto 1': 'custo_imposto1_padrao', 'Imposto 2': 'custo_imposto2_padrao',
-      'Desconto Compra': 'desconto_compra_padrao', 'Custo Total Calculado': '__custo_calc',
-      'Preço Venda (*)': 'preco_venda_padrao', 'Unidade': 'unidade_principal',
-      'Qtd/Pacote': 'unidades_por_pacote', 'Estoque Mínimo': 'estoque_minimo',
+      'Custo Total Calculado': '__custo_calc', 'Preço Venda (*)': 'preco_venda_padrao',
+      'Unidade': 'unidade_principal', 'Casas Decimais': 'casas_decimais', 'Qtd/Pacote': 'unidades_por_pacote', 'Estoque Mínimo': 'estoque_minimo',
       'Estoque Ideal': 'estoque_ideal', 'Estoque Máximo': 'estoque_maximo',
       'Tempo Reposição (dias)': 'tempo_reposicao_dias', 'Peso (kg)': 'peso_kg',
       'Dimensões (cm)': 'dimensoes_cm', 'Ativo (SIM/NÃO)': 'ativo',
     };
-    const PROD_NUM_KEYS = new Set(['valor_compra','custo_frete_padrao','custo_imposto1_padrao',
-      'custo_imposto2_padrao','desconto_compra_padrao','preco_venda_padrao',
-      'unidades_por_pacote','estoque_minimo','estoque_ideal','estoque_maximo',
+    const PROD_NUM_KEYS = new Set(['valor_compra','desconto_perc','custo_frete_padrao','custo_imposto1_padrao',
+      'custo_imposto2_padrao','preco_venda_padrao','casas_decimais','unidades_por_pacote','estoque_minimo','estoque_ideal','estoque_maximo',
       'tempo_reposicao_dias','peso_kg','__custo_calc']);
     const PROD_BOOL_KEYS = new Set(['ativo']);
     const PROD_READONLY  = new Set(['id','codigo_interno','nome','__custo_calc']);
@@ -124,9 +122,10 @@ Deno.serve(async (req) => {
       }
 
       // Recalcular custo e nome
-      const custoCalc = (num(dados.valor_compra) || 0) + (num(dados.custo_frete_padrao) || 0) +
-                        (num(dados.custo_imposto1_padrao) || 0) + (num(dados.custo_imposto2_padrao) || 0) -
-                        (num(dados.desconto_compra_padrao) || 0);
+      const descontoPerc = num(dados.desconto_perc) || 0;
+      const valorCompraLiquido = (num(dados.valor_compra) || 0) * (1 - (descontoPerc / 100));
+      const custoCalc = valorCompraLiquido + (num(dados.custo_frete_padrao) || 0) +
+                        (num(dados.custo_imposto1_padrao) || 0) + (num(dados.custo_imposto2_padrao) || 0);
       const nomeGerado = concatNome(dados.campo_hierarquico_1, dados.campo_hierarquico_2,
                                      dados.campo_hierarquico_3, dados.campo_hierarquico_4, dados.campo_hierarquico_5);
       if (nomeGerado) { dados.nome = nomeGerado; mapaProdsById[id]?.nome; }

@@ -26,18 +26,18 @@ export const COLUNAS_CONFIG = [
 
   // --- Precificação ---
   { key: 'valor_compra',            label: 'Valor Compra (R$)',      editavel: true,  width: 18, tipo: 'numero' },
+  { key: 'desconto_perc',           label: 'Desconto (%)',           editavel: true,  width: 14, tipo: 'numero' },
   { key: 'custo_frete_padrao',      label: 'Frete Padrão (R$)',      editavel: true,  width: 18, tipo: 'numero' },
   { key: 'custo_imposto1_padrao',   label: 'Imposto 1',              editavel: true,  width: 14, tipo: 'numero' },
   { key: 'custo_imposto2_padrao',   label: 'Imposto 2',              editavel: true,  width: 14, tipo: 'numero' },
-  { key: 'desconto_compra_padrao',  label: 'Desconto Compra',        editavel: true,  width: 16, tipo: 'numero' },
   // coluna calculada (bloqueada) — injetada após os custos na exportação
   { key: 'custo_total_calculado',   label: 'Custo Total Calculado',  editavel: false, width: 22, tipo: 'numero', calculado: true },
   { key: 'preco_venda_padrao',      label: 'Preço Venda (*)',        editavel: true,  width: 18, tipo: 'numero' },
 
   // --- Estoque e Sistema ---
   { key: 'unidade_principal',       label: 'Unidade',                editavel: true,  width: 12, tipo: 'string' },
-  { key: 'unidades_por_pacote',     label: 'Qtd/Pacote',             editavel: true,  width: 14, tipo: 'numero' },
   { key: 'casas_decimais',          label: 'Casas Decimais',         editavel: true,  width: 16, tipo: 'numero' },
+  { key: 'unidades_por_pacote',     label: 'Qtd/Pacote',             editavel: true,  width: 14, tipo: 'numero' },
   { key: 'estoque_minimo',          label: 'Estoque Mínimo',         editavel: true,  width: 16, tipo: 'numero' },
   { key: 'estoque_ideal',           label: 'Estoque Ideal',          editavel: true,  width: 16, tipo: 'numero' },
   { key: 'estoque_maximo',          label: 'Estoque Máximo',         editavel: true,  width: 16, tipo: 'numero' },

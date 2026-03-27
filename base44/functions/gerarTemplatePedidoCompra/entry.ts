@@ -51,16 +51,15 @@ const COLS_PRODUTOS = [
   { key: 'area_codigo',            label: 'Área',                    editavel: true,  width: 14, tipo: 'string' },
   // ── Bloco custo ──────────────────────────────────────────────────────────
   { key: 'valor_compra',           label: 'Valor Compra (R$)',       editavel: true,  width: 18, tipo: 'numero' },
-  { key: 'casas_decimais',         label: 'Casas Decimais',          editavel: true,  width: 14, tipo: 'numero' }, // NOVO
-  { key: 'desconto_perc',          label: 'Desconto (%)',            editavel: true,  width: 14, tipo: 'numero' }, // NOVO: 5=desc, -5=acresc
-  { key: 'valor_compra_liq',       label: 'Valor Liq. (R$)',         editavel: false, width: 16, tipo: 'numero', calculado: true }, // NOVO calc
+  { key: 'desconto_perc',          label: 'Desconto (%)',            editavel: true,  width: 14, tipo: 'numero' },
+  { key: 'valor_compra_liq',       label: 'Valor Liq. (R$)',         editavel: false, width: 16, tipo: 'numero', calculado: true },
   { key: 'custo_frete_padrao',     label: 'Frete Padrão (R$)',       editavel: true,  width: 18, tipo: 'numero' },
   { key: 'custo_imposto1_padrao',  label: 'Imposto 1',               editavel: true,  width: 14, tipo: 'numero' },
   { key: 'custo_imposto2_padrao',  label: 'Imposto 2',               editavel: true,  width: 14, tipo: 'numero' },
-  { key: 'desconto_compra_padrao', label: 'Desconto Compra',         editavel: true,  width: 16, tipo: 'numero' },
   { key: 'custo_total_calculado',  label: 'Custo Total Calculado',   editavel: false, width: 22, tipo: 'numero', calculado: true },
   { key: 'preco_venda_padrao',     label: 'Preço Venda (*)',         editavel: true,  width: 18, tipo: 'numero' },
   { key: 'unidade_principal',      label: 'Unidade',                 editavel: true,  width: 12, tipo: 'string' },
+  { key: 'casas_decimais',         label: 'Casas Decimais',          editavel: true,  width: 14, tipo: 'numero' },
   { key: 'unidades_por_pacote',    label: 'Qtd/Pacote',              editavel: true,  width: 14, tipo: 'numero' },
   { key: 'estoque_minimo',         label: 'Estoque Mínimo',          editavel: true,  width: 16, tipo: 'numero' },
   { key: 'estoque_ideal',          label: 'Estoque Ideal',           editavel: true,  width: 16, tipo: 'numero' },
@@ -133,7 +132,7 @@ Deno.serve(async (req) => {
 
     // Linhas 2-5: campos do fornecedor
     const FORN_FIELDS = [
-      { campo: 'Fornecedor ID',          instrucao: 'Cole o ID da aba "Fornecedores Cadastrados" — obrigatório' },
+      { campo: 'Fornecedor ID',          instrucao: 'Escolha na lista suspensa da aba "Fornecedores Cadastrados" — obrigatório' },
       { campo: 'Data Prevista Entrega',  instrucao: 'Formato: AAAA-MM-DD — opcional' },
       { campo: 'Observações do Pedido',  instrucao: 'Texto livre — opcional' },
     ];
@@ -164,6 +163,17 @@ Deno.serve(async (req) => {
       r.getCell(3).fill  = { type: 'pattern', pattern: 'solid', fgColor: LOCK_BG };
       r.getCell(3).protection = { locked: true };
       r.height = 18;
+    });
+
+    const fornecedoresRef = `'Fornecedores Cadastrados'!$A$2:$A$${1 + fornecedores.length + 500}`;
+    wsPedido.dataValidations.add('B3', {
+      type: 'list',
+      allowBlank: false,
+      showDropDown: false,
+      showErrorMessage: true,
+      errorTitle: 'Fornecedor obrigatório',
+      error: 'Selecione um fornecedor da lista.',
+      formulae: [fornecedoresRef],
     });
 
     // Linhas 6-12: espaço vazio
@@ -478,9 +488,10 @@ Deno.serve(async (req) => {
     // ── Linhas de dados ───────────────────────────────────────────────────────
     produtos.forEach((p, i) => {
       const rn = i + 2;
-      const custoCalc = (p.valor_compra || 0) + (p.custo_frete_padrao || 0) +
-                        (p.custo_imposto1_padrao || 0) + (p.custo_imposto2_padrao || 0) -
-                        (p.desconto_compra_padrao || 0);
+      const descontoPerc = p.desconto_perc || 0;
+      const valorCompraLiquido = (p.valor_compra || 0) * (1 - (descontoPerc / 100));
+      const custoCalc = valorCompraLiquido + (p.custo_frete_padrao || 0) +
+                        (p.custo_imposto1_padrao || 0) + (p.custo_imposto2_padrao || 0);
       const nomePartes = [p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3,
                           p.campo_hierarquico_4, p.campo_hierarquico_5].filter(Boolean).join(' ');
       const origHash = computeOrigHash(p);
@@ -492,7 +503,7 @@ Deno.serve(async (req) => {
             rowData[col.key] = { formula: nomeFormula(rn), result: nomePartes }; break;
           case 'custo_total_calculado':
             rowData[col.key] = {
-              formula: `=${letVC}${rn}+${letFR}${rn}+${letI1}${rn}+${letI2}${rn}-${letDC}${rn}`,
+              formula: `=${letVL}${rn}+${letFR}${rn}+${letI1}${rn}+${letI2}${rn}`,
               result: custoCalc,
             }; break;
           case 'valor_compra_liq':
@@ -560,7 +571,7 @@ Deno.serve(async (req) => {
           cell.protection = { locked: true };
         }
         if (col.key === 'custo_total_calculado') {
-          cell.value = { formula: `=${letVC}${r}+${letFR}${r}+${letI1}${r}+${letI2}${r}-${letDC}${r}`, result: 0 };
+          cell.value = { formula: `=${letVL}${r}+${letFR}${r}+${letI1}${r}+${letI2}${r}`, result: 0 };
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: CALC_BG };
           cell.font = { italic: true, color: { argb: 'FF0369A1' } };
           cell.protection = { locked: true };

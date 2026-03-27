@@ -82,12 +82,16 @@ export default function ImportarEstoque({ onParsed }) {
         }
 
         const estoqueAtual = produtoAtual.estoque_atual || 0;
-        if (estoqueNovo !== estoqueAtual) {
+        const hashOrig = `${id}|${estoqueAtual}`;
+        const hashNovo = `${id}|${estoqueNovo}`;
+        if (hashNovo !== hashOrig) {
           alterados.push({
             id,
             produto_nome: produtoAtual.nome,
             estoque_anterior: estoqueAtual,
             estoque_novo: estoqueNovo,
+            _hash_orig: hashOrig,
+            _hash_novo: hashNovo,
           });
         }
 
