@@ -257,18 +257,9 @@ export default function ExportarPlanilha() {
          // Helper para normalizar booleanos — EM PORTUGUÊS
          const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
-        // Checksum robusto: decomponha cada célula em seus caracteres individuais
-        // Usa SOMARPRODUTO + EXT.TEXTO + SEQUÊNCIA + UNICODE para considerar TODOS os caracteres
-        const fieldsForChecksum = [
-          `${letH1}${rowNumber}`, `${letH2}${rowNumber}`, `${letH3}${rowNumber}`, `${letH4}${rowNumber}`, `${letH5}${rowNumber}`,
-          `${letCB}${rowNumber}`, `${letMA}${rowNumber}`, `${letTP}${rowNumber}`, `${letABCD}${rowNumber}`, `${letCA}${rowNumber}`, `${letAR}${rowNumber}`,
-          `${letCD}${rowNumber}`, `${letDP}${rowNumber}`, `${letFR}${rowNumber}`, `${letI1}${rowNumber}`, `${letI2}${rowNumber}`,
-          `${letUN}${rowNumber}`, `${letDM}${rowNumber}`, `${letAT}${rowNumber}`
-        ];
-        // Fórmula para cada campo: SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(campo;SEQUÊNCIA(1;100);1));0))
-        const checksumFormula = fieldsForChecksum
-          .map(f => `SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${f};SEQUÊNCIA(1;100);1));0))`)
-          .join("+");
+        // Checksum otimizado: aplica UNICODE(EXT.TEXTO()) em cada célula editável
+        // e soma os valores numéricos resultantes em uma única fórmula elegante
+        const checksumFormula = `SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH1}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH2}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH3}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH4}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letH5}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letCB}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letMA}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letTP}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letABCD}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letCA}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letAR}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letCD}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letDP}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letFR}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letI1}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letI2}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letUN}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letDM}${rowNumber};SEQUÊNCIA(1;100);1));0))+SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${letAT}${rowNumber};SEQUÊNCIA(1;100);1));0))`;
 
         row.getCell(idxAlterado).value = {
           formula: `SE(${letHashOrig}${rowNumber}="","SIM",SE(${checksumFormula}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
