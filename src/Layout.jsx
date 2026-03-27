@@ -319,6 +319,15 @@ export default function Layout({ children, currentPageName }) {
           <div
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            style={{
+              position: 'fixed',
+              left: 0,
+              top: 0,
+              height: '100%',
+              width: isOpen ? '300px' : '64px',
+              zIndex: 40,
+              transition: 'width 0.22s ease-out',
+            }}
           >
             <GlacialSidebar
               isOpen={isOpen}
