@@ -16,6 +16,8 @@ import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 import { dataHoje, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
@@ -177,6 +179,13 @@ export default function VendasGestaoPage() {
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const limparFiltros = () => {
+    setSearchTerm('');
+    setStatusFiltro('todos');
+    setDataInicio('');
+    setDataFim('');
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
       {/* Header limpo */}
@@ -186,22 +195,22 @@ export default function VendasGestaoPage() {
           <p className="text-xs text-gray-400 dark:text-gray-500">Orçamentos, pedidos e acompanhamento</p>
         </div>
         <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-end flex-shrink-0 w-full sm:w-auto">
-          <Button variant="ghost" size="icon" className="h-10 w-full sm:w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
-            <RotateCcw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+            <RotateCcw className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-10 w-full sm:w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
-            <RefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+            <RefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-10 w-full sm:w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
-            <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
+            <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="h-10 w-full sm:hidden rounded-xl border-gray-200 dark:border-gray-700"
-            onClick={() => setShowFiltros(!showFiltros)}
+            className="h-11 w-full sm:hidden rounded-2xl bg-gray-100 dark:bg-slate-800"
+            onClick={() => setShowFiltros(true)}
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </Button>
         </div>
       </div>
@@ -215,46 +224,42 @@ export default function VendasGestaoPage() {
               placeholder="Buscar por número, cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 h-11 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl min-w-0"
+              className="pl-10 pr-4 h-12 bg-white dark:bg-slate-800 border-0 rounded-2xl min-w-0 shadow-sm"
             />
           </div>
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="hidden sm:flex h-11 w-11 rounded-xl border-gray-200 dark:border-gray-700 shrink-0"
-            onClick={() => setShowFiltros(!showFiltros)}
+            className="hidden sm:flex h-12 w-12 rounded-2xl bg-gray-100 dark:bg-slate-800 shrink-0"
+            onClick={() => setShowFiltros(true)}
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </Button>
         </div>
+      </div>
 
-        {/* Painel de Filtros Expansível */}
-        {showFiltros && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 space-y-3 shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros</span>
-              <button onClick={() => setShowFiltros(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-slate-900 px-4 pb-6">
+          <DrawerHeader className="px-0 pb-2 text-left">
+            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+          </DrawerHeader>
 
-            {/* Tipo de Pedido */}
+          <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Tipo</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">Tipo</label>
               <GlacialTabsList className="w-full">
-                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Rascunhos" icon={FileText} />
+                <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
                 <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
               </GlacialTabsList>
             </div>
 
-            {/* Status */}
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Status</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">Status</label>
               <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-                <SelectTrigger className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
+                <SelectTrigger className="h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 border-0">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                <SelectContent className="dark:bg-slate-900 dark:border-slate-700">
                   <SelectItem value="todos">Todos</SelectItem>
                   {activeTab === 'rascunhos' ? (
                     <>
@@ -278,54 +283,42 @@ export default function VendasGestaoPage() {
               </Select>
             </div>
 
-            {/* Período */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">De</label>
-                <Input
-                  type="date"
-                  value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
-                  className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">Até</label>
-                <Input
-                  type="date"
-                  value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
-                  className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
-                />
-              </div>
-            </div>
-
-            {/* Botões */}
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFiltro('todos');
+            <div>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">Período</label>
+              <MobileDateRangePicker
+                startDate={dataInicio}
+                endDate={dataFim}
+                onApply={(inicio, fim) => {
+                  setDataInicio(inicio);
+                  setDataFim(fim);
+                }}
+                onClear={() => {
                   setDataInicio('');
                   setDataFim('');
                 }}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 h-11 rounded-2xl"
+                onClick={limparFiltros}
               >
                 Limpar
               </Button>
               <Button
                 size="sm"
-                className="flex-1 bg-gray-800 dark:bg-gray-700"
+                className="flex-1 h-11 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
                 onClick={() => setShowFiltros(false)}
               >
                 Aplicar
               </Button>
             </div>
           </div>
-        )}
-      </div>
+        </DrawerContent>
+      </Drawer>
 
       <div>
 
@@ -356,34 +349,34 @@ export default function VendasGestaoPage() {
                 const mesmoDia = toLocalDateKey(rascunho.created_date) === dataHoje();
                 const podeInutilizar = mesmoDia && !['Cancelado','Convertido'].includes(rascunho.status);
                 return (
-                <div key={rascunho.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2">
+                <div key={rascunho.id} className="bg-white dark:bg-slate-900 rounded-[26px] p-4 shadow-sm overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="inline-flex items-center gap-2 mb-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider">Senha</span>
-                        <span className="text-2xl font-bold text-gray-800 dark:text-gray-200 font-mono">
+                      <div className="inline-flex items-center gap-2 mb-2 px-3 py-2 bg-gray-100 dark:bg-slate-800 rounded-2xl max-w-full">
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">Senha</span>
+                        <span className="text-2xl font-bold text-gray-800 dark:text-gray-100 font-mono leading-none truncate">
                           {rascunho.senha_atendimento?.slice(-4)}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-400 mb-1">{rascunho.senha_atendimento}</div>
-                      <div className="font-medium text-gray-800 dark:text-gray-200 truncate">
+                      <div className="text-xs text-gray-400 mb-1 break-all">{rascunho.senha_atendimento}</div>
+                      <div className="font-semibold text-gray-800 dark:text-gray-100 break-words leading-tight">
                         {rascunho.cliente_nome || 'Cliente não informado'}
                       </div>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
                         <span className={`text-xs ${rascunho.status === 'Cancelado' ? 'text-red-500' : 'text-green-600'}`}>● {rascunho.status}</span>
-                        <span className="text-xs text-gray-400">{rascunho.vendedor_nome}</span>
+                        <span className="text-xs text-gray-400 break-words">{rascunho.vendedor_nome}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="font-semibold text-gray-800 dark:text-gray-200">
+                    <div className="flex flex-col items-end gap-2 shrink-0 max-w-[40%]">
+                      <div className="font-semibold text-gray-800 dark:text-gray-100 text-right break-words leading-tight">
                         R$ {(rascunho.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-gray-400 text-right">
                         {fmtDataCurta(rascunho.created_date)}
                       </div>
                       {podeInutilizar && (
                         <button onClick={() => handleInutilizarRascunho(rascunho)}
-                          className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors">
+                          className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded-lg transition-colors whitespace-nowrap">
                           <Ban className="w-3 h-3" /> Inutilizar
                         </button>
                       )}
