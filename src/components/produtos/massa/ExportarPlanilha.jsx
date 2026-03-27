@@ -257,15 +257,18 @@ export default function ExportarPlanilha() {
          // Helper para normalizar booleanos — EM PORTUGUÊS
          const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
-        // Checksum: comparar concatenação dos dados (simples)
-        // Checksum SUMPRODUCT(UNICODE) de todos os campos editáveis
+        // Checksum robusto: decomponha cada célula em seus caracteres individuais
+        // Usa SOMARPRODUTO + EXT.TEXTO + SEQUÊNCIA + UNICODE para considerar TODOS os caracteres
         const fieldsForChecksum = [
           `${letH1}${rowNumber}`, `${letH2}${rowNumber}`, `${letH3}${rowNumber}`, `${letH4}${rowNumber}`, `${letH5}${rowNumber}`,
           `${letCB}${rowNumber}`, `${letMA}${rowNumber}`, `${letTP}${rowNumber}`, `${letABCD}${rowNumber}`, `${letCA}${rowNumber}`, `${letAR}${rowNumber}`,
           `${letCD}${rowNumber}`, `${letDP}${rowNumber}`, `${letFR}${rowNumber}`, `${letI1}${rowNumber}`, `${letI2}${rowNumber}`,
           `${letUN}${rowNumber}`, `${letDM}${rowNumber}`, `${letAT}${rowNumber}`
         ];
-        const checksumFormula = fieldsForChecksum.map(f => `SUMPRODUCT(UNICODE(${f}))`).join("+");
+        // Fórmula para cada campo: SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(campo;SEQUÊNCIA(1;100);1));0))
+        const checksumFormula = fieldsForChecksum
+          .map(f => `SOMARPRODUTO(SEERRO(UNICODE(EXT.TEXTO(${f};SEQUÊNCIA(1;100);1));0))`)
+          .join("+");
 
         row.getCell(idxAlterado).value = {
           formula: `SE(${letHashOrig}${rowNumber}="","SIM",SE(${checksumFormula}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
