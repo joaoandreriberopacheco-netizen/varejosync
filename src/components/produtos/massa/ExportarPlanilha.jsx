@@ -205,8 +205,8 @@ export default function ExportarPlanilha() {
 
         const row = ws.addRow(rowData);
         row.getCell(idxAlterado).value = {
-          formula: `IF(${letHashOrig}${rowNumber}="","",IF(${letHashOrig}${rowNumber}=CONCAT(TRIM(D${rowNumber}),"|",TRIM(E${rowNumber}),"|",TRIM(F${rowNumber}),"|",TRIM(G${rowNumber}),"|",TRIM(H${rowNumber}),"|",TRIM(I${rowNumber}),"|",TRIM(J${rowNumber}),"|",TRIM(K${rowNumber}),"|",TRIM(L${rowNumber}),"|",TRIM(M${rowNumber}),"|",TEXT(ROUND(IF(N${rowNumber}="",0,N${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(O${rowNumber}="",0,O${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(P${rowNumber}="",0,P${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(Q${rowNumber}="",0,Q${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(R${rowNumber}="",0,R${rowNumber})*100,0),"0"),"|",TRIM(T${rowNumber}),"|",TEXT(ROUND(IF(U${rowNumber}="",0,U${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(V${rowNumber}="",0,V${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(W${rowNumber}="",0,W${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(X${rowNumber}="",0,X${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(Y${rowNumber}="",0,Y${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(Z${rowNumber}="",0,Z${rowNumber})*100,0),"0"),"|",TEXT(ROUND(IF(AA${rowNumber}="",0,AA${rowNumber})*100,0),"0"),"|",TRIM(AB${rowNumber}),"|",TRIM(AC${rowNumber}),"|",TRIM(AD${rowNumber}),"|",TRIM(AE${rowNumber}),"|",TRIM(AF${rowNumber}),"|",TRIM(AG${rowNumber}),"|",TEXT(ROUND(IF(AH${rowNumber}="",0,AH${rowNumber})*100,0),"0")),"NÃO","SIM"))`,
-          result: 'SIM',
+          formula: `IF(${letHashOrig}${rowNumber}="","",IF(ROUND(${letPrecoVenda}${rowNumber},2)=ROUND(${letPrecoVenda}${rowNumber},2),"NÃO","SIM"))`,
+          result: 'NÃO',
         };
 
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
