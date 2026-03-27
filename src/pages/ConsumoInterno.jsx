@@ -255,23 +255,9 @@ export default function ConsumoInternoPage() {
           responsaveis={responsaveis}
           setNovoCadastro={setNovoCadastro}
           totalAtual={totalAtual}
-          onOpenSelector={() => {
-           try {
-             setShowProdutoSelector(true);
-           } catch (err) {
-             console.error('[ERRO] Ao abrir seletor:', err);
-             toast.error('Erro ao abrir seletor de produtos');
-           }
-          }}
+          onOpenSelector={() => setShowProdutoSelector(true)}
           currentUser={currentUser}
-          onOpenAssinatura={() => {
-           try {
-             setShowAssinatura(true);
-           } catch (err) {
-             console.error('[ERRO] Ao abrir assinatura:', err);
-             toast.error('Erro ao abrir dialog de assinatura');
-           }
-          }}
+          onOpenAssinatura={() => setShowAssinatura(true)}
           onSubmit={handleSubmit}
         />
         <Dialog open={!!novoCadastro.tipo} onOpenChange={() => setNovoCadastro({ tipo: '', valor: '' })}>
@@ -307,6 +293,7 @@ export default function ConsumoInternoPage() {
         <div className="flex gap-2 flex-wrap">
           {Object.entries(labelFiltro).map(([key, label]) => (
             <button
+              type="button"
               key={key}
               onClick={() => setFiltroTemporal(key)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -347,7 +334,7 @@ export default function ConsumoInternoPage() {
                 <div className="space-y-2">
                   {itens.map((item) => (
                     <div key={item.id} className="flex w-full items-center justify-between rounded-[24px] bg-gray-50 px-4 py-3 shadow-sm dark:bg-gray-900">
-                      <button className="flex-1 text-left" onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }}>
+                      <button type="button" className="flex-1 text-left" onClick={() => { setConsumoSelecionado(item); setShowResumo(true); }}>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{item.numero}</p>
                         <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
                           <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.destinacao}</span>
@@ -359,7 +346,7 @@ export default function ConsumoInternoPage() {
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.valor_total)}</p>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <button type="button" onClick={e => e.stopPropagation()} className="p-1.5 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                               <MoreVertical className="h-4 w-4 text-gray-400" />
                             </button>
                           </DropdownMenuTrigger>
