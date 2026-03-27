@@ -33,39 +33,36 @@ function normStr(value) {
 }
 
 function computeProductHash(produto) {
-  // Ordem EXATA conforme COLUNAS_CONFIG
+  // Ordem EXATA do template gerarTemplatePedidoCompra.js (linhas 431-463)
   return [
-    normStr(produto.campo_hierarquico_1),    // idx 2
-    normStr(produto.campo_hierarquico_2),    // idx 3
-    normStr(produto.campo_hierarquico_3),    // idx 4
-    normStr(produto.campo_hierarquico_4),    // idx 5
-    normStr(produto.campo_hierarquico_5),    // idx 6
-    normStr(produto.codigo_barras),          // idx 7
-    normStr(produto.marca),                  // idx 8
-    normStr(produto.tipo),                   // idx 9
-    normStr(produto.categoria_nome),         // idx 10
-    normStr(produto.area_codigo),            // idx 11
-    normNum(produto.valor_compra),           // idx 12
-    normNum(produto.desconto_perc ?? 0),     // idx 13
-    normNum(produto.custo_frete_padrao),     // idx 14
-    normNum(produto.custo_imposto1_padrao),  // idx 15
-    normNum(produto.custo_imposto2_padrao),  // idx 16
-    normNum(produto.preco_venda_padrao),     // idx 19 (CUSTO_TOTAL pulado — é calculado)
-    normStr(produto.unidade_principal),      // idx 20
-    normNum(produto.casas_decimais),         // idx 21
-    normNum(produto.unidades_por_pacote),    // idx 22
-    normNum(produto.estoque_minimo),         // idx 23
-    normNum(produto.estoque_ideal),          // idx 24
-    normNum(produto.estoque_maximo),         // idx 25
-    normNum(produto.tempo_reposicao_dias),   // idx 26
-    normNum(produto.peso_kg),                // idx 27
-    normStr(produto.dimensoes_cm),           // idx 28
-    normStr(produto.abcd),                   // idx 29
-    produto.preco_livre ? 'true' : 'false',  // idx 30
-    produto.controla_serial ? 'true' : 'false', // idx 31
-    produto.controla_lote ? 'true' : 'false',   // idx 32
-    produto.controla_validade ? 'true' : 'false', // idx 33
-    produto.ativo === false ? 'false' : 'true',  // idx 34
+    normStr(produto.campo_hierarquico_1),
+    normStr(produto.campo_hierarquico_2),
+    normStr(produto.campo_hierarquico_3),
+    normStr(produto.campo_hierarquico_4),
+    normStr(produto.campo_hierarquico_5),
+    normStr(produto.codigo_barras),
+    normStr(produto.marca),
+    normStr(produto.tipo),
+    normStr(produto.abcd),                   // POSIÇÃO 9 — ANTES de categoria/area
+    normStr(produto.categoria_nome),         // POSIÇÃO 10
+    normStr(produto.area_codigo),            // POSIÇÃO 11
+    normNum(produto.valor_compra),           // POSIÇÃO 12
+    normNum(produto.casas_decimais),         // POSIÇÃO 13 — casas_decimais ANTES de desconto
+    normNum(produto.desconto_perc ?? 0),     // POSIÇÃO 14
+    normNum(produto.custo_frete_padrao),     // POSIÇÃO 15
+    normNum(produto.custo_imposto1_padrao),  // POSIÇÃO 16
+    normNum(produto.custo_imposto2_padrao),  // POSIÇÃO 17
+    normNum(produto.desconto_compra_padrao ?? 0), // POSIÇÃO 18
+    normNum(produto.preco_venda_padrao),     // POSIÇÃO 19
+    normStr(produto.unidade_principal),      // POSIÇÃO 20
+    normNum(produto.unidades_por_pacote),    // POSIÇÃO 21
+    normNum(produto.estoque_minimo),         // POSIÇÃO 22
+    normNum(produto.estoque_ideal),          // POSIÇÃO 23
+    normNum(produto.estoque_maximo),         // POSIÇÃO 24
+    normNum(produto.tempo_reposicao_dias),   // POSIÇÃO 25
+    normNum(produto.peso_kg),                // POSIÇÃO 26
+    normStr(produto.dimensoes_cm),           // POSIÇÃO 27
+    produto.ativo !== false ? 'sim' : 'não', // POSIÇÃO 28 — string em pt-BR
   ].join('|');
 }
 
@@ -254,8 +251,8 @@ export default function ExportarPlanilha() {
          // Helper para normalizar booleanos — EM PORTUGUÊS
          const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
-        // Fórmula de hash — ORDEM EXATA conforme computeProductHash — EM PORTUGUÊS
-        const hashCalc = `ARRUMAR(${letH1}${rowNumber})&"|"&ARRUMAR(${letH2}${rowNumber})&"|"&ARRUMAR(${letH3}${rowNumber})&"|"&ARRUMAR(${letH4}${rowNumber})&"|"&ARRUMAR(${letH5}${rowNumber})&"|"&ARRUMAR(${letCB}${rowNumber})&"|"&ARRUMAR(${letMA}${rowNumber})&"|"&ARRUMAR(${letTP}${rowNumber})&"|"&ARRUMAR(${letCA}${rowNumber})&"|"&ARRUMAR(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&${T(letPV)}&"|"&ARRUMAR(${letUN}${rowNumber})&"|"&${T(letCD)}&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&ARRUMAR(${letDM}${rowNumber})&"|"&ARRUMAR(${letABCD}${rowNumber})&"|"&${B(letPL)}&"|"&${B(letCS)}&"|"&${B(letCL)}&"|"&${B(letCV)}&"|"&ARRUMAR(${letAT}${rowNumber})`;
+        // Fórmula de hash — ORDEM EXATA do template gerarTemplatePedidoCompra.js
+        const hashCalc = `ARRUMAR(${letH1}${rowNumber})&"|"&ARRUMAR(${letH2}${rowNumber})&"|"&ARRUMAR(${letH3}${rowNumber})&"|"&ARRUMAR(${letH4}${rowNumber})&"|"&ARRUMAR(${letH5}${rowNumber})&"|"&ARRUMAR(${letCB}${rowNumber})&"|"&ARRUMAR(${letMA}${rowNumber})&"|"&ARRUMAR(${letTP}${rowNumber})&"|"&ARRUMAR(${letABCD}${rowNumber})&"|"&ARRUMAR(${letCA}${rowNumber})&"|"&ARRUMAR(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letCD)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&${T(letUP)}&"|"&${T(letPV)}&"|"&ARRUMAR(${letUN}${rowNumber})&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&ARRUMAR(${letDM}${rowNumber})&"|"&SE(${letAT}${rowNumber}<>""MINÚSCULA(ARRUMAR(${letAT}${rowNumber}))="sim";"sim";"não")`;
 
         row.getCell(idxAlterado).value = {
           formula: `SE(${letHashOrig}${rowNumber}="";""SE(${hashCalc}=${letHashOrig}${rowNumber};"NÃO";"SIM"))`,
