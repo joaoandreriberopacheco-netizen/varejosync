@@ -258,10 +258,9 @@ export default function ExportarPlanilha() {
          const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
         // Checksum: comparar concatenação dos dados (simples)
-        const checksumCalc = `=CONCATENAR(ARRUMAR(${letH1}${rowNumber}),"|",ARRUMAR(${letH2}${rowNumber}),"|",ARRUMAR(${letH3}${rowNumber}),"|",ARRUMAR(${letH4}${rowNumber}),"|",ARRUMAR(${letH5}${rowNumber}),"|",ARRUMAR(${letCB}${rowNumber}),"|",ARRUMAR(${letMA}${rowNumber}),"|",ARRUMAR(${letTP}${rowNumber}),"|",ARRUMAR(${letABCD}${rowNumber}),"|",ARRUMAR(${letCA}${rowNumber}),"|",ARRUMAR(${letAR}${rowNumber}),"|",${T(letVC)},"|",${T(letCD)},"|",${T(letDP)},"|",${T(letFR)},"|",${T(letI1)},"|",${T(letI2)},"|",${T(letUP)},"|",${T(letPV)},"|",ARRUMAR(${letUN}${rowNumber}),"|",${T(letUP)},"|",${T(letEM)},"|",${T(letEI)},"|",${T(letEX)},"|",${T(letRP)},"|",${T(letPS)},"|",ARRUMAR(${letDM}${rowNumber}),"|",SE(${letAT}${rowNumber})<>"",MINÚSCULA(ARRUMAR(${letAT}${rowNumber}))="sim","sim","não"))`
-
+        // Sem fórmula complexa — só marca como SIM se hash_orig vazio (novo produto)
         row.getCell(idxAlterado).value = {
-          formula: `SE(${letHashOrig}${rowNumber}="","",SE(${checksumCalc}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
+          formula: `SE(${letHashOrig}${rowNumber}="","SIM","NÃO")`,
           result: 'NÃO',
         };
 
