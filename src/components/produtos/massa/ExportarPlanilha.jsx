@@ -137,8 +137,7 @@ export default function ExportarPlanilha() {
       const idxId                = getColIndex('id');
       const idxHashOrig          = getColIndex('_hash_orig');
       const idxAlterado          = getColIndex('alterado');
-      // Coluna auxiliar (hidden) para fórmula de hash complexa
-      const idxHashCalc          = COLUNAS_CONFIG.length + 1;
+
 
       const letCustoCalc   = colLetter(idxCustoCalc);
       const letPrecoVenda  = colLetter(idxPrecoVenda);
@@ -151,7 +150,6 @@ export default function ExportarPlanilha() {
       const letH1          = colLetter(idxH1);
       const letHashOrig    = colLetter(idxHashOrig);
       const letAlterado    = colLetter(idxAlterado);
-      const letHashCalc    = colLetter(idxHashCalc);
       const lastCol        = colLetter(COLUNAS_CONFIG.length);
 
       // ── Data validation por coluna (schema-driven) ─────────────────────────
@@ -205,12 +203,6 @@ export default function ExportarPlanilha() {
           + (p.custo_imposto2_padrao || 0);
         const hashOrig = computeProductHash(p);
 
-        // Fórmula de hash quebrada em partes menores (cabe em < 8000 chars)
-        const hashPart1 = `ARRUMAR(D${rowNumber})&"|"&ARRUMAR(E${rowNumber})&"|"&ARRUMAR(F${rowNumber})&"|"&ARRUMAR(G${rowNumber})&"|"&ARRUMAR(H${rowNumber})&"|"&ARRUMAR(I${rowNumber})&"|"&ARRUMAR(J${rowNumber})&"|"&ARRUMAR(K${rowNumber})&"|"&ARRUMAR(L${rowNumber})&"|"&ARRUMAR(M${rowNumber})`;
-        const T = (col) => `&"|"&SE(${col}${rowNumber}="";"0";TEXTO(ARRED(${col}${rowNumber}*100;0);"0"))`;
-        const B = (col) => `&"|"&SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
-        const hashFormulaMontada = hashPart1 + T('N') + T('O') + T('P') + T('Q') + T('R') + `&"|"&ARRUMAR(T${rowNumber})` + T('U') + T('V') + T('W') + T('X') + T('Y') + T('Z') + T('AA') + `&"|"&ARRUMAR(AB${rowNumber})` + B('AC') + B('AD') + B('AE') + B('AF') + B('AG') + T('AH');
-
         const rowData = {};
         COLUNAS_CONFIG.forEach(col => {
           if (col.key === 'custo_total_calculado') {
@@ -231,18 +223,15 @@ export default function ExportarPlanilha() {
 
         // Remove redundante: custoCalc, valorCompraLiquido e descontoPerc já calculados acima
 
-        // Adiciona coluna auxiliar (hidden) com a fórmula de hash
-        const rowData_aux = {};
-        rowData_aux[`_hash_calc_${rowNumber}`] = {
-          formula: hashFormulaMontada,
-          result: computeProductHash(p),
-        };
-
         const row = ws.addRow(rowData);
-        // Injeta a coluna auxiliar na row
-        row.getCell(idxHashCalc).value = rowData_aux[`_hash_calc_${rowNumber}`];
+
+        // Fórmula de verificação direta — compacta e sem coluna auxiliar
+        const T = (col) => `SE(${col}${rowNumber}="";"0";TEXTO(ARRED(${col}${rowNumber}*100;0);"0"))`;
+        const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
+        const hashCalcFormula = `CONCATENAR(ARRUMAR(D${rowNumber});"|";ARRUMAR(E${rowNumber});"|";ARRUMAR(F${rowNumber});"|";ARRUMAR(G${rowNumber});"|";ARRUMAR(H${rowNumber});"|";ARRUMAR(I${rowNumber});"|";ARRUMAR(J${rowNumber});"|";ARRUMAR(K${rowNumber});"|";ARRUMAR(L${rowNumber});"|";ARRUMAR(M${rowNumber});"|";${T('N')};"|";${T('O')};"|";${T('P')};"|";${T('Q')};"|";${T('R')};"|";ARRUMAR(T${rowNumber});"|";${T('U')};"|";${T('V')};"|";${T('W')};"|";${T('X')};"|";${T('Y')};"|";${T('Z')};"|";${T('AA')};"|";ARRUMAR(AB${rowNumber});"|";${B('AC')};"|";${B('AD')};"|";${B('AE')};"|";${B('AF')};"|";${B('AG')};"|";${T('AH')})`;
+
         row.getCell(idxAlterado).value = {
-          formula: `SE(${letHashOrig}${rowNumber}="";"";SE(${letHashCalc}${rowNumber}=${letHashOrig}${rowNumber};"NÃO";"SIM"))`,
+          formula: `SE(${letHashOrig}${rowNumber}="";"";SE(${hashCalcFormula}=${letHashOrig}${rowNumber};"NÃO";"SIM"))`,
           result: 'NÃO',
         };
 
@@ -319,11 +308,6 @@ export default function ExportarPlanilha() {
 
       // ── Sem proteção — total liberdade para usar Excel ──────────────────────
       // Nenhuma proteção de planilha, permitindo remover linhas, filtrar, ordenar, etc.
-
-      // Coluna auxiliar: esconde e comprime
-      const colHashCalc = ws.getColumn(idxHashCalc);
-      colHashCalc.hidden = true;
-      colHashCalc.width = 1;
 
       ws.autoFilter = { from: 'A1', to: `${lastCol}1` };
 
