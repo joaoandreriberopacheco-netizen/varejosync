@@ -269,11 +269,11 @@ Deno.serve(async (req) => {
     const itens = [];
     for (let rn = 15; rn <= 514; rn++) {
       const row = wsPedido.getRow(rn);
-      // Col A = ID produto, Col B = Nome produto (busca incremental), Col D = qtd, Col E = custo
+      // Col A=ID(calc) | B=Nome | C=Quantidade | D=Valor de Compra | E=Desconto% | F=Valor Líquido | G=Total
       const prodIdCell   = str(getCellValue(row.getCell(1)));
       const prodNomeCell = str(getCellValue(row.getCell(2)));
-      const qtd          = num(getCellValue(row.getCell(4)));
-      const custo        = num(getCellValue(row.getCell(5)));
+      const qtd          = num(getCellValue(row.getCell(3)));  // Col C = Quantidade
+      const custo        = num(getCellValue(row.getCell(4)));  // Col D = Valor de Compra
 
       if (!prodIdCell && !prodNomeCell) continue;
       if (qtd === null || qtd <= 0) {
