@@ -318,7 +318,7 @@ export default function Layout({ children, currentPageName }) {
         {!isMobile && (
           <aside
             className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 transition-[width,box-shadow] duration-300 ease-in-out z-40 flex flex-col ${
-              isOpen ? 'w-64' : 'w-16'
+              isOpen ? 'w-[300px]' : 'w-16'
             }`}
             style={{ 
               boxShadow: isOpen ? '2px 0 8px rgba(0,0,0,0.08)' : '1px 0 0 0 rgba(0,0,0,0.05)',
@@ -737,7 +737,7 @@ export default function Layout({ children, currentPageName }) {
           className={`flex-1 transition-[margin] duration-200 ease-out ${
             isMobile 
               ? 'ml-0 pt-12 pb-24' 
-              : (isOpen ? 'ml-64' : 'ml-16')
+              : (isOpen ? 'ml-[300px]' : 'ml-16')
           } ${(!isMobile && currentPageName === 'Produtos') ? 'h-screen overflow-hidden' : ''}`}
           style={{ willChange: 'margin', paddingTop: isMobile ? `calc(3rem + env(safe-area-inset-top))` : undefined }}
         >

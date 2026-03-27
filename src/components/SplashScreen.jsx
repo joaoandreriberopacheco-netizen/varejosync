@@ -2,10 +2,7 @@ import React, { useEffect, useState } from 'react';
 import P38Logo from '@/components/brand/P38Logo';
 
 /**
- * Tela Splash com animação de chamas/fogo como transição fluida
- * Props:
- *   onFinish: () => void
- *   darkMode: boolean
+ * Tela Splash — logo centralizado com animação de entrada suave e barra de progresso
  */
 export default function SplashScreen({ onFinish, darkMode }) {
   const [phase, setPhase] = useState('in'); // 'in' | 'visible' | 'out'
@@ -16,14 +13,12 @@ export default function SplashScreen({ onFinish, darkMode }) {
     const t2 = setTimeout(() => setPhase('out'), 2400);
     const t3 = setTimeout(() => onFinish?.(), 3100);
 
-    // Barra de progresso: 0→90% em 2s, depois 90→100% rapidinho
     const totalMs = 2200;
     const interval = 50;
     const steps = totalMs / interval;
     let step = 0;
     const progressInterval = setInterval(() => {
       step++;
-      // ease-out: cresce rápido no início, desacelera no fim
       const ratio = step / steps;
       const eased = 1 - Math.pow(1 - ratio, 2);
       setProgress(Math.min(95, eased * 100));
@@ -41,8 +36,7 @@ export default function SplashScreen({ onFinish, darkMode }) {
     };
   }, [onFinish]);
 
-  const bg = darkMode ? '#000000' : '#ffffff';
-  const fillColor = darkMode ? '#ffffff' : '#111827';
+  const bg = darkMode ? '#0d0d0d' : '#ffffff';
 
   return (
     <div
@@ -56,15 +50,15 @@ export default function SplashScreen({ onFinish, darkMode }) {
         justifyContent: 'center',
         background: bg,
         transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-        opacity: phase === 'visible' || phase === 'in' ? 1 : 0,
+        opacity: phase === 'out' ? 0 : 1,
         pointerEvents: phase === 'out' ? 'none' : 'auto',
       }}
     >
-      {/* Logo com animação de entrada suave */}
+      {/* Logo */}
       <div
         style={{
           transition: 'transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.7s ease-out',
-          transform: phase === 'visible' ? 'scale(1)' : 'scale(0.8)',
+          transform: phase === 'visible' ? 'scale(1)' : 'scale(0.82)',
           opacity: phase === 'visible' ? 1 : 0,
         }}
       >
@@ -75,11 +69,11 @@ export default function SplashScreen({ onFinish, darkMode }) {
       <div
         style={{
           position: 'absolute',
-          bottom: '80px',
-          width: '120px',
-          height: '2px',
-          background: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-          borderRadius: '1px',
+          bottom: 80,
+          width: 120,
+          height: 2,
+          background: darkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+          borderRadius: 1,
           overflow: 'hidden',
           opacity: phase === 'visible' ? 1 : 0,
           transition: 'opacity 0.3s ease-out',
@@ -91,133 +85,10 @@ export default function SplashScreen({ onFinish, darkMode }) {
             background: darkMode ? '#ffffff' : '#111827',
             width: `${progress}%`,
             transition: 'width 0.05s linear',
-            borderRadius: '1px',
+            borderRadius: 1,
           }}
         />
       </div>
-
-      {/* Efeito de chamas/fogo com múltiplas camadas */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          opacity: phase === 'out' ? 1 : 0,
-          transition: 'opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-      >
-        {/* Chama 1 - Canto superior esquerdo */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '-20%',
-            left: '-10%',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle at 30% 30%, ${fillColor}20 0%, transparent 70%)`,
-            filter: 'blur(40px)',
-            animation: 'flame-dance-1 2s ease-in-out forwards',
-          }}
-        />
-
-        {/* Chama 2 - Canto superior direito */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '-20%',
-            right: '-10%',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle at 70% 30%, ${fillColor}20 0%, transparent 70%)`,
-            filter: 'blur(40px)',
-            animation: 'flame-dance-2 2s ease-in-out forwards',
-          }}
-        />
-
-        {/* Chama 3 - Centro */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '300px',
-            height: '300px',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${fillColor}30 0%, transparent 70%)`,
-            filter: 'blur(50px)',
-            animation: 'flame-expand 1.5s ease-out forwards',
-          }}
-        />
-
-        {/* Chama 4 - Cobertura geral */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: `linear-gradient(to bottom, ${fillColor}0 0%, ${fillColor}40 50%, ${fillColor}0 100%)`,
-            filter: 'blur(60px)',
-            animation: 'fade-in 1.2s ease-out forwards',
-          }}
-        />
-      </div>
-
-      <style>{`
-        @keyframes flame-dance-1 {
-          0% {
-            opacity: 0;
-            transform: translateY(0) scale(1);
-          }
-          50% {
-            opacity: 0.4;
-            transform: translateY(-30px) scale(1.2);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-100px) scale(0.8);
-          }
-        }
-
-        @keyframes flame-dance-2 {
-          0% {
-            opacity: 0;
-            transform: translateY(0) scale(1);
-          }
-          50% {
-            opacity: 0.4;
-            transform: translateY(-30px) scale(1.2);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-100px) scale(0.8);
-          }
-        }
-
-        @keyframes flame-expand {
-          0% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.5);
-          }
-          50% {
-            opacity: 0.5;
-          }
-          100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(2);
-          }
-        }
-
-        @keyframes fade-in {
-          0% {
-            opacity: 0;
-          }
-          100% {
-            opacity: 0.8;
-          }
-        }
-      `}</style>
     </div>
   );
 }
