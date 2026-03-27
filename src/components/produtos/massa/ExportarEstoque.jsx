@@ -20,6 +20,8 @@ export default function ExportarEstoque() {
         { header: 'ID', key: 'id', width: 30 },
         { header: 'Nome do Produto', key: 'nome', width: 50 },
         { header: 'Estoque Atual', key: 'estoque_atual', width: 15 },
+        { header: 'HASH_ORIG', key: '_hash_orig', width: 8, hidden: true },
+        { header: 'Alterado?', key: 'alterado', width: 14 },
       ];
 
       const headerRow = ws.getRow(1);
@@ -31,11 +33,15 @@ export default function ExportarEstoque() {
       });
       headerRow.height = 24;
 
-      produtos.forEach((p) => {
+      produtos.forEach((p, index) => {
+        const rowNumber = index + 2;
+        const hashOrig = `${p.id}|${p.estoque_atual || 0}`;
         const row = ws.addRow({
           id: p.id,
           nome: p.nome || '',
           estoque_atual: p.estoque_atual || 0,
+          _hash_orig: hashOrig,
+          alterado: { formula: `=IF(D${rowNumber}="","",IF(D${rowNumber}=CONCAT(A${rowNumber},"|",C${rowNumber}),"NÃO","SIM"))`, result: 'NÃO' },
         });
 
         row.getCell(1).protection = { locked: true };
@@ -43,6 +49,10 @@ export default function ExportarEstoque() {
         row.getCell(3).protection = { locked: false };
         row.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9FAFB' } };
         row.getCell(3).numFmt = '#,##0';
+        row.getCell(4).protection = { locked: true };
+        row.getCell(5).protection = { locked: true };
+        row.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
+        row.getCell(5).font = { italic: true, color: { argb: 'FF0369A1' } };
       });
 
       ws.dataValidations.add('C2:C' + (produtos.length + 1501), {
@@ -54,14 +64,27 @@ export default function ExportarEstoque() {
         formulae: [0],
       });
 
+      ws.addConditionalFormatting({
+        ref: `E2:E${produtos.length + 1501}`,
+        rules: [{
+          type: 'expression',
+          priority: 1,
+          formulae: ['E2="SIM"'],
+          style: {
+            fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFEF9C3' } },
+            font: { color: { argb: 'FF92400E' }, bold: true },
+          },
+        }],
+      });
+
       await ws.protect('', {
-        deleteRows: false, // permite deletar linhas sem senha
+        deleteRows: false,
         formatCells: true,
         selectLockedCells: true,
         selectUnlockedCells: true,
       });
 
-      ws.autoFilter = { from: 'A1', to: 'C1' };
+      ws.autoFilter = { from: 'A1', to: 'E1' };
 
       const buffer = await wb.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

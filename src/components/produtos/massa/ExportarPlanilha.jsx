@@ -20,6 +20,54 @@ function colLetter(index) {
   return result;
 }
 
+function normNum(value) {
+  if (value === null || value === undefined || value === '') return '0';
+  const normalized = String(value).trim().replace(',', '.');
+  const parsed = parseFloat(normalized);
+  return Number.isNaN(parsed) ? '0' : Math.round(parsed * 100).toString();
+}
+
+function normStr(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function computeProductHash(produto) {
+  return [
+    normStr(produto.campo_hierarquico_1),
+    normStr(produto.campo_hierarquico_2),
+    normStr(produto.campo_hierarquico_3),
+    normStr(produto.campo_hierarquico_4),
+    normStr(produto.campo_hierarquico_5),
+    normStr(produto.codigo_barras),
+    normStr(produto.marca),
+    normStr(produto.tipo),
+    normStr(produto.categoria_nome),
+    normStr(produto.area_codigo),
+    normNum(produto.valor_compra),
+    normNum(produto.desconto_perc),
+    normNum(produto.custo_frete_padrao),
+    normNum(produto.custo_imposto1_padrao),
+    normNum(produto.custo_imposto2_padrao),
+    normStr(produto.unidade_principal),
+    normNum(produto.casas_decimais),
+    normNum(produto.unidades_por_pacote),
+    normNum(produto.estoque_minimo),
+    normNum(produto.estoque_ideal),
+    normNum(produto.estoque_maximo),
+    normNum(produto.tempo_reposicao_dias),
+    normNum(produto.peso_kg),
+    normStr(produto.dimensoes_cm),
+    normStr(produto.abcd),
+    produto.preco_livre ? 'true' : 'false',
+    produto.controla_serial ? 'true' : 'false',
+    produto.controla_lote ? 'true' : 'false',
+    produto.controla_validade ? 'true' : 'false',
+    produto.ativo === false ? 'false' : 'true',
+    normNum(produto.preco_venda_padrao),
+  ].join('|');
+}
+
 export default function ExportarPlanilha() {
   const [loading, setLoading] = useState(false);
 
@@ -65,22 +113,26 @@ export default function ExportarPlanilha() {
 
       // Índices relevantes para fórmulas e formatação condicional
       const idxValorCompra       = getColIndex('valor_compra');
+      const idxDescontoPerc      = getColIndex('desconto_perc');
       const idxFrete             = getColIndex('custo_frete_padrao');
       const idxImposto1          = getColIndex('custo_imposto1_padrao');
       const idxImposto2          = getColIndex('custo_imposto2_padrao');
-      const idxDesconto          = getColIndex('desconto_compra_padrao');
       const idxCustoCalc         = getColIndex('custo_total_calculado');
       const idxPrecoVenda        = getColIndex('preco_venda_padrao');
       const idxId                = getColIndex('id');
+      const idxHashOrig          = getColIndex('_hash_orig');
+      const idxAlterado          = getColIndex('alterado');
 
-      const letCustoCalc  = colLetter(idxCustoCalc);
-      const letPrecoVenda = colLetter(idxPrecoVenda);
-      const letId         = colLetter(idxId);
+      const letCustoCalc   = colLetter(idxCustoCalc);
+      const letPrecoVenda  = colLetter(idxPrecoVenda);
+      const letId          = colLetter(idxId);
       const letValorCompra = colLetter(idxValorCompra);
+      const letDescontoPerc = colLetter(idxDescontoPerc);
       const letFrete       = colLetter(idxFrete);
       const letImposto1    = colLetter(idxImposto1);
       const letImposto2    = colLetter(idxImposto2);
-      const letDesconto    = colLetter(idxDesconto);
+      const letHashOrig    = colLetter(idxHashOrig);
+      const letAlterado    = colLetter(idxAlterado);
       const lastCol        = colLetter(COLUNAS_CONFIG.length);
 
       // ── Data validation por coluna (schema-driven) ─────────────────────────
@@ -124,20 +176,27 @@ export default function ExportarPlanilha() {
       produtos.forEach((p, dataRowIdx) => {
         const rowNumber = dataRowIdx + 2; // linha 2 em diante
 
+        const valorCompraLiquido = (p.valor_compra || 0) * (1 - ((p.desconto_perc || 0) / 100));
         const custoCalc =
-          (p.valor_compra || 0)
+          valorCompraLiquido
           + (p.custo_frete_padrao || 0)
           + (p.custo_imposto1_padrao || 0)
-          + (p.custo_imposto2_padrao || 0)
-          - (p.desconto_compra_padrao || 0);
+          + (p.custo_imposto2_padrao || 0);
+        const hashOrig = computeProductHash(p);
 
         const rowData = {};
         COLUNAS_CONFIG.forEach(col => {
           if (col.key === 'custo_total_calculado') {
-            // Fórmula dinâmica no Excel
             rowData[col.key] = {
-              formula: `=${letValorCompra}${rowNumber}+${letFrete}${rowNumber}+${letImposto1}${rowNumber}+${letImposto2}${rowNumber}-${letDesconto}${rowNumber}`,
+              formula: `=${letValorCompra}${rowNumber}*(1-${letDescontoPerc}${rowNumber}/100)+${letFrete}${rowNumber}+${letImposto1}${rowNumber}+${letImposto2}${rowNumber}`,
               result: custoCalc,
+            };
+          } else if (col.key === '_hash_orig') {
+            rowData[col.key] = hashOrig;
+          } else if (col.key === 'alterado') {
+            rowData[col.key] = {
+              formula: `=IF(${letHashOrig}${rowNumber}="","",IF(${letHashOrig}${rowNumber}=CONCAT(TRIM(D${rowNumber}),"|",TRIM(E${rowNumber}),"|",TRIM(F${rowNumber}),"|",TRIM(G${rowNumber}),"|",TRIM(H${rowNumber}),"|",TRIM(I${rowNumber}),"|",TRIM(J${rowNumber}),"|",TRIM(K${rowNumber}),"|",TRIM(L${rowNumber}),"|",TRIM(M${rowNumber}),"|",TEXT(ROUND(N${rowNumber}*100,0),"0"),"|",TEXT(ROUND(O${rowNumber}*100,0),"0"),"|",TEXT(ROUND(P${rowNumber}*100,0),"0"),"|",TEXT(ROUND(Q${rowNumber}*100,0),"0"),"|",TEXT(ROUND(R${rowNumber}*100,0),"0"),"|",TRIM(T${rowNumber}),"|",TEXT(ROUND(U${rowNumber}*100,0),"0"),"|",TEXT(ROUND(V${rowNumber}*100,0),"0"),"|",TEXT(ROUND(W${rowNumber}*100,0),"0"),"|",TEXT(ROUND(X${rowNumber}*100,0),"0"),"|",TEXT(ROUND(Y${rowNumber}*100,0),"0"),"|",TEXT(ROUND(Z${rowNumber}*100,0),"0"),"|",TEXT(ROUND(AA${rowNumber}*100,0),"0"),"|",TRIM(AB${rowNumber}),"|",TRIM(AC${rowNumber}),"|",TRIM(AD${rowNumber}),"|",TRIM(AE${rowNumber}),"|",TRIM(AF${rowNumber}),"|",TRIM(AG${rowNumber}),"|",TEXT(ROUND(AH${rowNumber}*100,0),"0")),"NÃO","SIM"))`,
+              result: 'NÃO',
             };
           } else {
             rowData[col.key] = p[col.key] ?? '';
@@ -168,6 +227,7 @@ export default function ExportarPlanilha() {
       // ── Formatação Condicional ─────────────────────────────────────────────
       const dataRange = `A2:${lastCol}${maxRows}`;
       const precoRange = `${letPrecoVenda}2:${letPrecoVenda}${maxRows}`;
+      const alteradoRange = `${letAlterado}2:${letAlterado}${maxRows}`;
 
       // 1. Preço de Venda com fundo vermelho se < Custo Calculado
       ws.addConditionalFormatting({
@@ -196,6 +256,21 @@ export default function ExportarPlanilha() {
             style: {
               font: { color: { argb: 'FF166534' } },
               fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFF0FDF4' } },
+            },
+          },
+        ],
+      });
+
+      ws.addConditionalFormatting({
+        ref: alteradoRange,
+        rules: [
+          {
+            type: 'expression',
+            priority: 3,
+            formulae: [`${letAlterado}2="SIM"`],
+            style: {
+              fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFEF9C3' } },
+              font: { color: { argb: 'FF92400E' }, bold: true },
             },
           },
         ],
