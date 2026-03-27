@@ -197,16 +197,17 @@ export default function ExportarPlanilha() {
           } else if (col.key === '_hash_orig') {
             rowData[col.key] = hashOrig;
           } else if (col.key === 'alterado') {
-            rowData[col.key] = {
-              formula: `=SE(${letHashOrig}${rowNumber}="";"";SE(${letHashOrig}${rowNumber}=CONCAT(TRIM(D${rowNumber});"|";TRIM(E${rowNumber});"|";TRIM(F${rowNumber});"|";TRIM(G${rowNumber});"|";TRIM(H${rowNumber});"|";TRIM(I${rowNumber});"|";TRIM(J${rowNumber});"|";TRIM(K${rowNumber});"|";TRIM(L${rowNumber});"|";TRIM(M${rowNumber});"|";TEXT(ROUND(SE(N${rowNumber}="";0;N${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(O${rowNumber}="";0;O${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(P${rowNumber}="";0;P${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(Q${rowNumber}="";0;Q${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(R${rowNumber}="";0;R${rowNumber})*100;0);"0");"|";TRIM(T${rowNumber});"|";TEXT(ROUND(SE(U${rowNumber}="";0;U${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(V${rowNumber}="";0;V${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(W${rowNumber}="";0;W${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(X${rowNumber}="";0;X${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(Y${rowNumber}="";0;Y${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(Z${rowNumber}="";0;Z${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(AA${rowNumber}="";0;AA${rowNumber})*100;0);"0");"|";TRIM(AB${rowNumber});"|";TRIM(AC${rowNumber});"|";TRIM(AD${rowNumber});"|";TRIM(AE${rowNumber});"|";TRIM(AF${rowNumber});"|";TRIM(AG${rowNumber});"|";TEXT(ROUND(SE(AH${rowNumber}="";0;AH${rowNumber})*100;0);"0"));"NÃO";"SIM"))`,
-              result: 'SIM',
-            };
+            rowData[col.key] = '';
           } else {
             rowData[col.key] = p[col.key] ?? '';
           }
         });
 
         const row = ws.addRow(rowData);
+        row.getCell(idxAlterado).value = {
+          formula: `SE(${letHashOrig}${rowNumber}="";"";SE(${letHashOrig}${rowNumber}=CONCAT(TRIM(D${rowNumber});"|";TRIM(E${rowNumber});"|";TRIM(F${rowNumber});"|";TRIM(G${rowNumber});"|";TRIM(H${rowNumber});"|";TRIM(I${rowNumber});"|";TRIM(J${rowNumber});"|";TRIM(K${rowNumber});"|";TRIM(L${rowNumber});"|";TRIM(M${rowNumber});"|";TEXT(ROUND(SE(N${rowNumber}="";0;N${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(O${rowNumber}="";0;O${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(P${rowNumber}="";0;P${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(Q${rowNumber}="";0;Q${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(R${rowNumber}="";0;R${rowNumber})*100;0);"0");"|";TRIM(T${rowNumber});"|";TEXT(ROUND(SE(U${rowNumber}="";0;U${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(V${rowNumber}="";0;V${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(W${rowNumber}="";0;W${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(X${rowNumber}="";0;X${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(Y${rowNumber}="";0;Y${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(Z${rowNumber}="";0;Z${rowNumber})*100;0);"0");"|";TEXT(ROUND(SE(AA${rowNumber}="";0;AA${rowNumber})*100;0);"0");"|";TRIM(AB${rowNumber});"|";TRIM(AC${rowNumber});"|";TRIM(AD${rowNumber});"|";TRIM(AE${rowNumber});"|";TRIM(AF${rowNumber});"|";TRIM(AG${rowNumber});"|";TEXT(ROUND(SE(AH${rowNumber}="";0;AH${rowNumber})*100;0);"0"));"NÃO";"SIM"))`,
+          result: 'SIM',
+        };
 
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const colConfig = COLUNAS_CONFIG[colNumber - 1];
