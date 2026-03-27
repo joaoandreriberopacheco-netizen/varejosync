@@ -392,15 +392,13 @@ Deno.serve(async (req) => {
     });
 
     // ── Normalização de valores para o hash ────────────────────────────────
-    // Converte qualquer valor numérico para string com 2 casas decimais fixas
-    // Trata núlos/vazios como 0, e strings com vírgula (pt-BR) => ponto
+    // Converte número para inteiro x100 (sem ponto decimal = sem problema de locale)
     const normNum = (v) => {
-      if (v === null || v === undefined || v === '') return '0.00';
+      if (v === null || v === undefined || v === '') return '0';
       const normalized = String(v).trim().replace(',', '.');
       const n = parseFloat(normalized);
-      return isNaN(n) ? '0.00' : n.toFixed(2);
+      return isNaN(n) ? '0' : Math.round(n * 100).toString();
     };
-    // Normaliza texto: trim + vazio vira string vazia
     const normStr = (v) => {
       if (v === null || v === undefined) return '';
       return String(v).trim();
@@ -424,8 +422,8 @@ Deno.serve(async (req) => {
     };
 
     // ── Fórmula para hash dinâmico (deve espelhar computeOrigHash) ────────────
-    // SUBSTITUTE garante ponto decimal independente do locale pt-BR do Excel
-    const T = (col, rn) => `SUBSTITUTE(TEXT(${col}${rn},"0.00"),",",".")`;
+    // ROUND(*100) converte para inteiro — sem separador decimal, imune a locale pt-BR
+    const T = (col, rn) => `TEXT(ROUND(${col}${rn}*100,0),"0")`;
     const hashFormula = (rn) =>
       'CONCATENATE(TRIM(' + letH1 + rn + '),"|",TRIM(' + letH2 + rn + '),"|",TRIM(' + letH3 + rn + '),"|",'
       + T(letVC, rn) + ',"|",'
