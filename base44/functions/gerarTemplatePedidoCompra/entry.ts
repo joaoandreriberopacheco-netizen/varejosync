@@ -343,6 +343,20 @@ Deno.serve(async (req) => {
     const idxHashOrig      = COLS_PRODUTOS.findIndex(c => c.key === '_hash_orig') + 1;
     const idxAlterado      = COLS_PRODUTOS.findIndex(c => c.key === 'alterado') + 1;
     const idxUnidade       = COLS_PRODUTOS.findIndex(c => c.key === 'unidade_principal') + 1;
+    const idxCodigoBarras  = COLS_PRODUTOS.findIndex(c => c.key === 'codigo_barras') + 1;
+    const idxMarca         = COLS_PRODUTOS.findIndex(c => c.key === 'marca') + 1;
+    const idxTipo          = COLS_PRODUTOS.findIndex(c => c.key === 'tipo') + 1;
+    const idxAbcd          = COLS_PRODUTOS.findIndex(c => c.key === 'abcd') + 1;
+    const idxCategoria     = COLS_PRODUTOS.findIndex(c => c.key === 'categoria_nome') + 1;
+    const idxArea          = COLS_PRODUTOS.findIndex(c => c.key === 'area_codigo') + 1;
+    const idxUnPacote      = COLS_PRODUTOS.findIndex(c => c.key === 'unidades_por_pacote') + 1;
+    const idxEstMin        = COLS_PRODUTOS.findIndex(c => c.key === 'estoque_minimo') + 1;
+    const idxEstIdeal      = COLS_PRODUTOS.findIndex(c => c.key === 'estoque_ideal') + 1;
+    const idxEstMax        = COLS_PRODUTOS.findIndex(c => c.key === 'estoque_maximo') + 1;
+    const idxReposicao     = COLS_PRODUTOS.findIndex(c => c.key === 'tempo_reposicao_dias') + 1;
+    const idxPeso          = COLS_PRODUTOS.findIndex(c => c.key === 'peso_kg') + 1;
+    const idxDimensoes     = COLS_PRODUTOS.findIndex(c => c.key === 'dimensoes_cm') + 1;
+    const idxAtivo         = COLS_PRODUTOS.findIndex(c => c.key === 'ativo') + 1;
 
     const letVC   = colLetter(idxValorCompra);
     const letCD   = colLetter(idxCasasDec);
