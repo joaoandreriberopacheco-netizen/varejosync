@@ -28,6 +28,11 @@ html {
 body {
   overscroll-behavior: none;
   touch-action: manipulation;
+  background-color: #f8fafc;
+}
+
+.dark body {
+  background-color: #0b1020;
 }
 
 button,
@@ -88,7 +93,7 @@ input[type="password"]:focus {
 }
 
 .dark .glacial-card {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.28), 0 1px 2px -1px rgba(0, 0, 0, 0.28);
 }
 
 /* Transições suaves */
@@ -249,15 +254,15 @@ textarea,
 }
 
 .dark .pdv-button-static {
-  background-color: rgb(31 41 55) !important;
-  color: rgb(243 244 246) !important;
+  background-color: rgb(20 26 43) !important;
+  color: rgb(241 245 249) !important;
 }
 
 .dark .pdv-button-static:hover,
 .dark .pdv-button-static:active,
 .dark .pdv-button-static:focus {
-  background-color: rgb(31 41 55) !important;
-  color: rgb(243 244 246) !important;
+  background-color: rgb(20 26 43) !important;
+  color: rgb(241 245 249) !important;
 }
 
 /* ==========================================

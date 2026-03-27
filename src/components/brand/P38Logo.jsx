@@ -36,12 +36,10 @@ export default function P38Logo({
       <img
         src={ICON_ONLY_URL}
         alt="P38"
-        className={`${h} w-auto object-contain select-none
-          mix-blend-multiply dark:mix-blend-normal dark:invert
-          ${className}`}
-        draggable={false} />);
-
-
+        className={`${h} w-auto object-contain select-none ${className}`}
+        draggable={false}
+      />
+    );
   }
 
   // Vertical (empilhado)
@@ -53,7 +51,14 @@ export default function P38Logo({
     };
     const h = sizes[size] || sizes.md;
 
-    return null;
+    return (
+      <img
+        src={LOGO_VERTICAL_URL}
+        alt="P38 ERP"
+        className={`${h} w-auto object-contain select-none ${className}`}
+        draggable={false}
+      />
+    );
 
 
 
@@ -80,10 +85,8 @@ export default function P38Logo({
     <img
       src={LOGO_URL}
       alt="P38 ERP"
-      className={`${h} w-auto object-contain select-none
-        mix-blend-multiply dark:mix-blend-normal dark:invert
-        ${className}`}
-      draggable={false} />);
-
-
+      className={`${h} w-auto object-contain select-none ${className}`}
+      draggable={false}
+    />
+  );
 }

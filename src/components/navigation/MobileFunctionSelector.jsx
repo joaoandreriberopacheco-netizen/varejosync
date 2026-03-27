@@ -29,8 +29,8 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 md:hidden bg-white dark:bg-slate-950">
-      <div className="bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-900 dark:to-slate-900 px-4 pt-5 pb-4 shadow-sm">
+    <div className="fixed inset-0 z-50 md:hidden bg-[#0b1020]">
+      <div className="bg-gradient-to-b from-[#162238] to-[#121a2b] px-4 pt-5 pb-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 min-w-0">
             <P38Logo variant="icon-only" size="sm" />
@@ -57,30 +57,9 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
       {!activeGroup ? (
         <div className="px-4 py-5 space-y-5 overflow-y-auto h-[calc(100vh-132px-env(safe-area-inset-bottom))]">
-          <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 mb-3">Funções</p>
-            <div className="grid grid-cols-4 gap-x-2 gap-y-5">
-              {visibleGroups.slice(0, 8).map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => item.submenu?.length ? setActiveGroup(item) : onClose()}
-                    className="flex flex-col items-center gap-2"
-                  >
-                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 shadow-sm flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-slate-700 dark:text-slate-200" />
-                    </div>
-                    <span className="text-[11px] leading-tight text-center text-slate-800 dark:text-slate-100 max-w-[72px]">{item.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="rounded-[24px] bg-slate-50 dark:bg-slate-900/70 p-4 shadow-sm">
+          <div className="rounded-[24px] bg-[#141a2b] p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white font-glacial">Menu completo</h3>
+              <h3 className="text-base font-semibold text-white font-glacial">Funções</h3>
             </div>
             <div className="space-y-1">
               {visibleGroups.map((item) => {
@@ -92,10 +71,10 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                       key={item.name}
                       to={createPageUrl(item.page)}
                       onClick={onClose}
-                      className={`flex items-center gap-3 px-3 py-3 rounded-2xl ${active ? 'bg-white dark:bg-slate-800' : 'hover:bg-white/70 dark:hover:bg-slate-800/80'}`}
+                      className={`flex items-center gap-3 px-3 py-3.5 rounded-2xl ${active ? 'bg-white/8' : 'hover:bg-white/6'}`}
                     >
-                      <Icon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-                      <span className="flex-1 text-sm text-slate-900 dark:text-white">{item.name}</span>
+                      <Icon className="w-5 h-5 text-slate-300" />
+                      <span className="flex-1 text-[1.02rem] font-semibold text-white tracking-[0.01em]">{item.name}</span>
                       <ChevronRight className="w-4 h-4 text-slate-400" />
                     </Link>
                   );
@@ -105,10 +84,10 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                   <button
                     key={item.name}
                     onClick={() => setActiveGroup(item)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl ${active ? 'bg-white dark:bg-slate-800' : 'hover:bg-white/70 dark:hover:bg-slate-800/80'}`}
+                    className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-2xl ${active ? 'bg-white/8' : 'hover:bg-white/6'}`}
                   >
-                    <Icon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-                    <span className="flex-1 text-left text-sm text-slate-900 dark:text-white">{item.name}</span>
+                    <Icon className="w-5 h-5 text-slate-300" />
+                    <span className="flex-1 text-left text-[1.02rem] font-semibold text-white tracking-[0.01em]">{item.name}</span>
                     <ChevronRight className="w-4 h-4 text-slate-400" />
                   </button>
                 );
@@ -119,10 +98,10 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
       ) : (
         <div className="px-4 py-5 overflow-y-auto h-[calc(100vh-132px-env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-2 mb-4">
-            <button onClick={() => setActiveGroup(null)} className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-200">
+            <button onClick={() => setActiveGroup(null)} className="w-10 h-10 rounded-2xl bg-[#1b2236] flex items-center justify-center text-slate-200">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h3 className="text-2xl font-semibold text-slate-900 dark:text-white font-glacial">{activeGroup.name}</h3>
+            <h3 className="text-[1.7rem] font-semibold text-white font-glacial">{activeGroup.name}</h3>
           </div>
           <div className="space-y-1">
             {currentList.map((subItem) => (
@@ -130,9 +109,9 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                 key={subItem.page}
                 to={createPageUrl(subItem.page)}
                 onClick={onClose}
-                className={`flex items-center justify-between px-1 py-4 border-b border-slate-200/70 dark:border-slate-800 ${isItemActive(subItem.page) ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-700 dark:text-slate-200'}`}
+                className={`flex items-center justify-between px-1 py-4 border-b border-white/6 ${isItemActive(subItem.page) ? 'text-white' : 'text-slate-200'}`}
               >
-                <span className="text-base leading-tight">{subItem.name}</span>
+                <span className="text-[1.06rem] font-semibold leading-tight tracking-[0.01em]">{subItem.name}</span>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
             ))}
