@@ -68,9 +68,19 @@ function computeProductHash(produto) {
   ].join('|');
 }
 
+function normalizeBooleanCell(value) {
+  if (value === true) return 'true';
+  if (value === false) return 'false';
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (['sim', 'true', 'verdadeiro', '1'].includes(normalized)) return 'true';
+  if (['não', 'nao', 'false', 'falso', '0'].includes(normalized)) return 'false';
+  return 'false';
+}
+
 function hashFormula(rowNumber) {
   const T = (col) => `IF(${col}${rowNumber}="","0",TEXT(ROUND(${col}${rowNumber}*100,0),"0"))`;
-  return `TRIM(D${rowNumber})&"|"&TRIM(E${rowNumber})&"|"&TRIM(F${rowNumber})&"|"&TRIM(G${rowNumber})&"|"&TRIM(H${rowNumber})&"|"&TRIM(I${rowNumber})&"|"&TRIM(J${rowNumber})&"|"&TRIM(K${rowNumber})&"|"&TRIM(L${rowNumber})&"|"&TRIM(M${rowNumber})&"|"&${T('N')}&"|"&${T('O')}&"|"&${T('P')}&"|"&${T('Q')}&"|"&${T('R')}&"|"&TRIM(T${rowNumber})&"|"&${T('U')}&"|"&${T('V')}&"|"&${T('W')}&"|"&${T('X')}&"|"&${T('Y')}&"|"&${T('Z')}&"|"&${T('AA')}&"|"&TRIM(AB${rowNumber})&"|"&TRIM(AC${rowNumber})&"|"&TRIM(AD${rowNumber})&"|"&TRIM(AE${rowNumber})&"|"&TRIM(AF${rowNumber})&"|"&TRIM(AG${rowNumber})&"|"&${T('AH')}`;
+  const B = (col) => `IF(OR(LOWER(TRIM(${col}${rowNumber}))="sim",LOWER(TRIM(${col}${rowNumber}))="true",LOWER(TRIM(${col}${rowNumber}))="verdadeiro",TRIM(${col}${rowNumber})="1"),"true","false")`;
+  return `TRIM(D${rowNumber})&"|"&TRIM(E${rowNumber})&"|"&TRIM(F${rowNumber})&"|"&TRIM(G${rowNumber})&"|"&TRIM(H${rowNumber})&"|"&TRIM(I${rowNumber})&"|"&TRIM(J${rowNumber})&"|"&TRIM(K${rowNumber})&"|"&TRIM(L${rowNumber})&"|"&TRIM(M${rowNumber})&"|"&${T('N')}&"|"&${T('O')}&"|"&${T('P')}&"|"&${T('Q')}&"|"&${T('R')}&"|"&TRIM(T${rowNumber})&"|"&${T('U')}&"|"&${T('V')}&"|"&${T('W')}&"|"&${T('X')}&"|"&${T('Y')}&"|"&${T('Z')}&"|"&${T('AA')}&"|"&TRIM(AB${rowNumber})&"|"&${B('AC')}&"|"&${B('AD')}&"|"&${B('AE')}&"|"&${B('AF')}&"|"&${B('AG')}&"|"&${T('AH')}`;
 }
 
 export default function ExportarPlanilha() {
@@ -203,6 +213,8 @@ export default function ExportarPlanilha() {
             rowData[col.key] = hashOrig;
           } else if (col.key === 'alterado') {
             rowData[col.key] = '';
+          } else if (col.tipo === 'boolean') {
+            rowData[col.key] = normalizeBooleanCell(p[col.key]);
           } else {
             rowData[col.key] = p[col.key] ?? '';
           }
