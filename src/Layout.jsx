@@ -321,7 +321,8 @@ export default function Layout({ children, currentPageName }) {
               isOpen ? 'w-[300px]' : 'w-16'
             }`}
             style={{ 
-              boxShadow: isOpen ? '2px 0 8px rgba(0,0,0,0.08)' : '1px 0 0 0 rgba(0,0,0,0.05)',
+              background: darkMode ? '#1f1d22' : '#ffffff',
+              boxShadow: isOpen ? '2px 0 12px rgba(0,0,0,0.10)' : `1px 0 0 0 ${darkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
               willChange: 'width, box-shadow'
             }}
             onMouseEnter={handleMouseEnter}
