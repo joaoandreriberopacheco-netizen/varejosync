@@ -178,42 +178,50 @@ export default function VendasGestaoPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4">
+    <div className="max-w-7xl mx-auto space-y-4 overflow-x-hidden">
       {/* Header limpo */}
-      <div className="flex items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 pr-2">
           <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 font-glacial">Gestão de Vendas</h1>
           <p className="text-xs text-gray-400 dark:text-gray-500">Orçamentos, pedidos e acompanhamento</p>
         </div>
-        <div className="flex gap-1.5 flex-shrink-0">
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
+        <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:justify-end flex-shrink-0 w-full sm:w-auto">
+          <Button variant="ghost" size="icon" className="h-10 w-full sm:w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Devolução" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Devolução')}>
             <RotateCcw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
+          <Button variant="ghost" size="icon" className="h-10 w-full sm:w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
             <RefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
+          <Button variant="ghost" size="icon" className="h-10 w-full sm:w-9 rounded-xl bg-gray-100 dark:bg-gray-800" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
             <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-full sm:hidden rounded-xl border-gray-200 dark:border-gray-700"
+            onClick={() => setShowFiltros(!showFiltros)}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {/* Barra de Busca com Filtro */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               placeholder="Buscar por número, cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 h-11 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl"
+              className="pl-10 pr-4 h-11 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl min-w-0"
             />
           </div>
           <Button
             variant="outline"
             size="icon"
-            className="h-11 w-11 rounded-xl border-gray-200 dark:border-gray-700"
+            className="hidden sm:flex h-11 w-11 rounded-xl border-gray-200 dark:border-gray-700 shrink-0"
             onClick={() => setShowFiltros(!showFiltros)}
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -322,11 +330,11 @@ export default function VendasGestaoPage() {
       <div>
 
         {activeTab === 'rascunhos' && (
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Total no topo */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">{quantidadeFiltrada} pedido(s)</span>
-            <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
+          <div className="flex items-start justify-between gap-3 text-sm min-w-0">
+            <span className="text-gray-500 dark:text-gray-400 min-w-0">{quantidadeFiltrada} pedido(s)</span>
+            <span className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
           </div>
 
           {/* Lista de Rascunhos */}
@@ -450,11 +458,11 @@ export default function VendasGestaoPage() {
         )}
 
         {activeTab === 'pedidos' && (
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Total no topo */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">{quantidadeFiltrada} pedido(s)</span>
-            <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">R$ {formatValor(subtotalFiltrado)}</span>
+          <div className="flex items-start justify-between gap-3 text-sm min-w-0">
+            <span className="text-gray-500 dark:text-gray-400 min-w-0">{quantidadeFiltrada} pedido(s)</span>
+            <span className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">R$ {formatValor(subtotalFiltrado)}</span>
           </div>
 
           {/* Lista de Pedidos */}
@@ -473,29 +481,29 @@ export default function VendasGestaoPage() {
             {/* Mobile: Cards */}
             <div className="md:hidden space-y-2">
               {pedidosFiltrados.map(pedido => (
-                <div key={pedido.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2">
+                <div key={pedido.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm overflow-hidden">
+                  <div className="flex items-start gap-3 min-w-0">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-800 dark:text-gray-200 truncate">
+                      <div className="font-medium text-gray-800 dark:text-gray-200 break-words leading-tight">
                         {pedido.cliente_nome || 'Cliente não informado'}
                       </div>
-                      <div className="text-xs text-blue-600 dark:text-blue-400">{pedido.numero}</div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-green-600">● {pedido.status}</span>
-                        <span className="text-xs text-gray-400">{pedido.vendedor_nome}</span>
+                      <div className="text-xs text-blue-600 dark:text-blue-400 break-all">{pedido.numero}</div>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 min-w-0">
+                        <span className="text-xs text-green-600 break-words">● {pedido.status}</span>
+                        <span className="text-xs text-gray-400 break-words">{pedido.vendedor_nome}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="font-semibold text-gray-800 dark:text-gray-200">
+                    <div className="flex flex-col items-end gap-1 shrink-0 max-w-[42%]">
+                      <div className="font-semibold text-gray-800 dark:text-gray-200 text-right break-words leading-tight">
                         R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-gray-400 text-right">
                         {fmtDataCurta(pedido.created_date)}
                       </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 shrink-0">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
