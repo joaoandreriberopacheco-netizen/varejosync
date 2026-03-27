@@ -6,10 +6,10 @@ import { Wallet, Landmark, ArrowLeftRight } from "lucide-react";
 
 export default function FinanceiroPage() {
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-background">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Módulo Financeiro</h1>
-        <p className="text-gray-600 mb-8">Controle suas contas, fluxo de caixa e conciliações bancárias.</p>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-foreground mb-2">Módulo Financeiro</h1>
+        <p className="text-gray-600 dark:text-muted-foreground mb-8">Controle suas contas, fluxo de caixa e conciliações bancárias.</p>
 
         <Tabs defaultValue="caixa" className="space-y-4">
           <TabsList>

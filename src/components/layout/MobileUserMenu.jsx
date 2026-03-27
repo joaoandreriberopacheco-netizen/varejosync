@@ -40,7 +40,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
           />
 
           {/* Sheet */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl px-5 pt-5 pb-8 safe-area-container">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#162033] rounded-t-3xl shadow-2xl px-5 pt-5 pb-8 safe-area-container">
             {/* Handle */}
             <div className="w-10 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-5" />
 

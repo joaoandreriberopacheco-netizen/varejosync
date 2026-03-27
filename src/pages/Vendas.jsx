@@ -249,10 +249,10 @@ export default function VendasPage() {
 
   // Caso contrário, renderizar tabs normais
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-background">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Módulo de Vendas</h1>
-        <p className="text-gray-600 mb-8">Gerencie orçamentos, pedidos e ponto de venda com fluxos especializados.</p>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-foreground mb-2">Módulo de Vendas</h1>
+        <p className="text-gray-600 dark:text-muted-foreground mb-8">Gerencie orçamentos, pedidos e ponto de venda com fluxos especializados.</p>
 
         <Tabs value={activeTab} className="space-y-4">
           <TabsList>
