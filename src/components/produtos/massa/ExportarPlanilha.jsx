@@ -68,6 +68,11 @@ function computeProductHash(produto) {
   ].join('|');
 }
 
+function hashFormula(rowNumber) {
+  const T = (col) => `IF(${col}${rowNumber}="","0",TEXT(ROUND(${col}${rowNumber}*100,0),"0"))`;
+  return `TRIM(D${rowNumber})&"|"&TRIM(E${rowNumber})&"|"&TRIM(F${rowNumber})&"|"&TRIM(G${rowNumber})&"|"&TRIM(H${rowNumber})&"|"&TRIM(I${rowNumber})&"|"&TRIM(J${rowNumber})&"|"&TRIM(K${rowNumber})&"|"&TRIM(L${rowNumber})&"|"&TRIM(M${rowNumber})&"|"&${T('N')}&"|"&${T('O')}&"|"&${T('P')}&"|"&${T('Q')}&"|"&${T('R')}&"|"&TRIM(T${rowNumber})&"|"&${T('U')}&"|"&${T('V')}&"|"&${T('W')}&"|"&${T('X')}&"|"&${T('Y')}&"|"&${T('Z')}&"|"&${T('AA')}&"|"&TRIM(AB${rowNumber})&"|"&TRIM(AC${rowNumber})&"|"&TRIM(AD${rowNumber})&"|"&TRIM(AE${rowNumber})&"|"&TRIM(AF${rowNumber})&"|"&TRIM(AG${rowNumber})&"|"&${T('AH')}`;
+}
+
 export default function ExportarPlanilha() {
   const [loading, setLoading] = useState(false);
 
@@ -191,7 +196,7 @@ export default function ExportarPlanilha() {
         COLUNAS_CONFIG.forEach(col => {
           if (col.key === 'custo_total_calculado') {
             rowData[col.key] = {
-              formula: `=${letValorCompra}${rowNumber}*(1-SE(${letDescontoPerc}${rowNumber}="";0;${letDescontoPerc}${rowNumber})/100)+${letFrete}${rowNumber}+${letImposto1}${rowNumber}+${letImposto2}${rowNumber}`,
+              formula: `=${letValorCompra}${rowNumber}*(1-IF(${letDescontoPerc}${rowNumber}="",0,${letDescontoPerc}${rowNumber})/100)+${letFrete}${rowNumber}+${letImposto1}${rowNumber}+${letImposto2}${rowNumber}`,
               result: custoCalc,
             };
           } else if (col.key === '_hash_orig') {
@@ -205,7 +210,7 @@ export default function ExportarPlanilha() {
 
         const row = ws.addRow(rowData);
         row.getCell(idxAlterado).value = {
-          formula: `IF(${letHashOrig}${rowNumber}="","",IF(ROUND(${letPrecoVenda}${rowNumber},2)=ROUND(${letPrecoVenda}${rowNumber},2),"NÃO","SIM"))`,
+          formula: `IF(${letHashOrig}${rowNumber}="","",IF(${hashFormula(rowNumber)}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
           result: 'NÃO',
         };
 
