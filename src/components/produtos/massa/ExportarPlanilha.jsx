@@ -195,6 +195,16 @@ export default function ExportarPlanilha() {
       produtos.forEach((p, dataRowIdx) => {
         const rowNumber = dataRowIdx + 2; // linha 2 em diante
 
+        // Calcula custoCalc para usar nas fórmulas
+        const descontoPerc = p.desconto_perc ?? 0;
+        const valorCompraLiquido = (p.valor_compra || 0) * (1 - (descontoPerc / 100));
+        const custoCalc =
+          valorCompraLiquido
+          + (p.custo_frete_padrao || 0)
+          + (p.custo_imposto1_padrao || 0)
+          + (p.custo_imposto2_padrao || 0);
+        const hashOrig = computeProductHash(p);
+
         // Fórmula de hash quebrada em partes menores (cabe em < 8000 chars)
         const hashPart1 = `ARRUMAR(D${rowNumber})&"|"&ARRUMAR(E${rowNumber})&"|"&ARRUMAR(F${rowNumber})&"|"&ARRUMAR(G${rowNumber})&"|"&ARRUMAR(H${rowNumber})&"|"&ARRUMAR(I${rowNumber})&"|"&ARRUMAR(J${rowNumber})&"|"&ARRUMAR(K${rowNumber})&"|"&ARRUMAR(L${rowNumber})&"|"&ARRUMAR(M${rowNumber})`;
         const T = (col) => `&"|"&SE(${col}${rowNumber}="";"0";TEXTO(ARRED(${col}${rowNumber}*100;0);"0"))`;
@@ -218,6 +228,8 @@ export default function ExportarPlanilha() {
             rowData[col.key] = p[col.key] ?? '';
           }
         });
+
+        // Remove redundante: custoCalc, valorCompraLiquido e descontoPerc já calculados acima
 
         // Adiciona coluna auxiliar (hidden) com a fórmula de hash
         const rowData_aux = {};
