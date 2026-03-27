@@ -249,16 +249,16 @@ export default function ExportarPlanilha() {
         const letPL = colLetter(idxPL), letCS = colLetter(idxCS), letCL = colLetter(idxCL), letCV = colLetter(idxCV);
         const letAT = colLetter(idxAT);
 
-        // Helper para normalizar números (x100 sem ponto, imune a locale)
-        const T = (col) => `IF(${col}${rowNumber}="","0",TEXT(ROUND(${col}${rowNumber}*100,0),"0"))`;
-        // Helper para normalizar booleanos
-        const B = (col) => `IF(OR(LOWER(TRIM(${col}${rowNumber}))="sim",LOWER(TRIM(${col}${rowNumber}))="true",LOWER(TRIM(${col}${rowNumber}))="verdadeiro",TRIM(${col}${rowNumber})="1"),"true","false")`;
+        // Helper para normalizar números (x100 sem ponto) — EM PORTUGUÊS
+         const T = (col) => `SE(${col}${rowNumber}="";"0";TEXTO(ARRED(${col}${rowNumber}*100;0);"0"))`;
+         // Helper para normalizar booleanos — EM PORTUGUÊS
+         const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
-        // Fórmula de hash — ORDEM EXATA conforme computeProductHash
-        const hashCalc = `TRIM(${letH1}${rowNumber})&"|"&TRIM(${letH2}${rowNumber})&"|"&TRIM(${letH3}${rowNumber})&"|"&TRIM(${letH4}${rowNumber})&"|"&TRIM(${letH5}${rowNumber})&"|"&TRIM(${letCB}${rowNumber})&"|"&TRIM(${letMA}${rowNumber})&"|"&TRIM(${letTP}${rowNumber})&"|"&TRIM(${letCA}${rowNumber})&"|"&TRIM(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&${T(letPV)}&"|"&TRIM(${letUN}${rowNumber})&"|"&${T(letCD)}&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&TRIM(${letDM}${rowNumber})&"|"&TRIM(${letABCD}${rowNumber})&"|"&${B(letPL)}&"|"&${B(letCS)}&"|"&${B(letCL)}&"|"&${B(letCV)}&"|"&TRIM(${letAT}${rowNumber})`;
+        // Fórmula de hash — ORDEM EXATA conforme computeProductHash — EM PORTUGUÊS
+        const hashCalc = `ARRUMAR(${letH1}${rowNumber})&"|"&ARRUMAR(${letH2}${rowNumber})&"|"&ARRUMAR(${letH3}${rowNumber})&"|"&ARRUMAR(${letH4}${rowNumber})&"|"&ARRUMAR(${letH5}${rowNumber})&"|"&ARRUMAR(${letCB}${rowNumber})&"|"&ARRUMAR(${letMA}${rowNumber})&"|"&ARRUMAR(${letTP}${rowNumber})&"|"&ARRUMAR(${letCA}${rowNumber})&"|"&ARRUMAR(${letAR}${rowNumber})&"|"&${T(letVC)}&"|"&${T(letDP)}&"|"&${T(letFR)}&"|"&${T(letI1)}&"|"&${T(letI2)}&"|"&${T(letPV)}&"|"&ARRUMAR(${letUN}${rowNumber})&"|"&${T(letCD)}&"|"&${T(letUP)}&"|"&${T(letEM)}&"|"&${T(letEI)}&"|"&${T(letEX)}&"|"&${T(letRP)}&"|"&${T(letPS)}&"|"&ARRUMAR(${letDM}${rowNumber})&"|"&ARRUMAR(${letABCD}${rowNumber})&"|"&${B(letPL)}&"|"&${B(letCS)}&"|"&${B(letCL)}&"|"&${B(letCV)}&"|"&ARRUMAR(${letAT}${rowNumber})`;
 
         row.getCell(idxAlterado).value = {
-          formula: `IF(${letHashOrig}${rowNumber}="","",IF(${hashCalc}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
+          formula: `SE(${letHashOrig}${rowNumber}="";""SE(${hashCalc}=${letHashOrig}${rowNumber};"NÃO";"SIM"))`,
           result: 'NÃO',
         };
 
