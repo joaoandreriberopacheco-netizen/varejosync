@@ -5,7 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Truck, Search, Package, X } from 'lucide-react';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
+import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Truck, Search, Package, X, SlidersHorizontal } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
 export default function SugestaoCompra() {
@@ -23,6 +24,7 @@ export default function SugestaoCompra() {
   const [tagSearch, setTagSearch] = useState('');
   const [hidePending, setHidePending] = useState(false);
   const [roundingMode, setRoundingMode] = useState('auto');
+  const [showFilters, setShowFilters] = useState(false);
   
   const { toast } = useToast();
 
@@ -201,117 +203,175 @@ export default function SugestaoCompra() {
     return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-gray-400" /></div>;
   }
 
+  const activeFiltersCount = [
+    categoryFilter !== 'all',
+    supplierFilter !== 'all',
+    selectedTags.length > 0,
+    hidePending,
+    roundingMode !== 'auto'
+  ].filter(Boolean).length;
+
+  const filtersPanel = (
+    <div className="space-y-3">
+      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-0 h-12 rounded-xl">
+          <SelectValue placeholder="Todas Categorias" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas Categorias</SelectItem>
+          {categorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
+      <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+        <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-0 h-12 rounded-xl">
+          <SelectValue placeholder="Todos Fornecedores" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos Fornecedores</SelectItem>
+          {fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
+      {selectedTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selectedTags.map(tag => (
+            <Badge key={tag} className="bg-gray-800 text-white px-2 py-1 flex items-center gap-1 rounded-lg">
+              {tag}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))} />
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      <div className="relative">
+        <Input 
+          placeholder="Buscar tag..."
+          value={tagSearch}
+          onChange={(e) => setTagSearch(e.target.value)}
+          className="bg-gray-100 dark:bg-gray-800 border-0 h-12 rounded-xl"
+        />
+        {tagSearch && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 max-h-40 overflow-y-auto z-10">
+            {allTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(t)).slice(0, 10).map(tag => (
+              <button
+                key={tag}
+                onClick={() => { setSelectedTags([...selectedTags, tag]); setTagSearch(''); }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm"
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Button onClick={() => setHidePending(!hidePending)} variant="outline" className="w-full h-12 justify-start border-0 bg-gray-100 dark:bg-gray-800 rounded-xl">
+        <FilterX className="w-4 h-4 mr-2" />
+        {hidePending ? 'Mostrar' : 'Ocultar'} Pendentes
+      </Button>
+
+      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl">
+        <div className="flex items-center gap-3 mb-3">
+          <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">Otimização de Pacotes</span>
+        </div>
+        <Select value={roundingMode} onValueChange={setRoundingMode}>
+          <SelectTrigger className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Automático (Mais Próximo)</SelectItem>
+            <SelectItem value="up">Arredondar p/ Cima</SelectItem>
+            <SelectItem value="down">Arredondar p/ Baixo</SelectItem>
+            <SelectItem value="none">Quantidade Exata</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Button
+        variant="ghost"
+        className="w-full h-11 rounded-xl text-gray-500 dark:text-gray-400"
+        onClick={() => {
+          setCategoryFilter('all');
+          setSupplierFilter('all');
+          setSelectedTags([]);
+          setTagSearch('');
+          setHidePending(false);
+          setRoundingMode('auto');
+        }}
+      >
+        Limpar filtros
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-4 -mx-2 md:mx-0">
-      <div className="flex flex-col gap-3 pb-4 border-b border-gray-200 dark:border-gray-700 px-2 md:px-0">
-        <div>
-          <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            Sugestões de Compra
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Reposição baseada em estoque mínimo</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={loadData} variant="outline" size="sm" className="gap-1.5 h-9">
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span className="text-xs">Atualizar</span>
-          </Button>
-          <div className="hidden md:flex gap-2">
-            <Button onClick={handleQuote} disabled={selectedCount === 0} variant="outline" size="sm" className="gap-1.5">
+      <div className="px-2 md:px-0">
+        <div className="rounded-[28px] bg-slate-950 text-white p-4 md:p-5 shadow-sm space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-lg md:text-xl font-semibold font-glacial flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-gray-300" />
+                Sugestões de Compra
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">Reposição baseada em estoque mínimo</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button onClick={loadData} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-white/8 hover:bg-white/12 text-white border-0">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => setShowFilters(true)} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-white/8 hover:bg-white/12 text-white border-0 relative">
+                <SlidersHorizontal className="h-4 w-4" />
+                {activeFiltersCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-white text-slate-950 text-[10px] font-bold flex items-center justify-center">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Input 
+              placeholder="Buscar produto..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 bg-white/8 text-white placeholder:text-gray-500 border-0 h-12 rounded-2xl"
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3 text-sm text-gray-300">
+            <span>{filteredProducts.length} item(ns)</span>
+            <span>{selectedCount} selecionado(s)</span>
+          </div>
+
+          <div className="grid grid-cols-2 md:flex gap-2">
+            <Button onClick={handleQuote} disabled={selectedCount === 0} variant="outline" size="sm" className="gap-1.5 h-11 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10">
               <FileText className="w-3.5 h-3.5" />Cotação
             </Button>
-            <Button onClick={handleGenerate} disabled={selectedCount === 0} size="sm" className="gap-1.5 bg-teal-600 hover:bg-teal-700">
+            <Button onClick={handleGenerate} disabled={selectedCount === 0} size="sm" className="gap-1.5 h-11 rounded-2xl bg-white text-slate-950 hover:bg-gray-200">
               <ShoppingCart className="w-3.5 h-3.5" />Gerar ({selectedCount})
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="space-y-3 px-2 md:px-0">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input 
-            placeholder="Buscar produto..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 bg-gray-50 dark:bg-gray-800/50 border-0 h-11"
-          />
-        </div>
+      <Drawer open={showFilters} onOpenChange={setShowFilters}>
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-950 px-4 pb-6">
+          <DrawerHeader className="px-0 pb-2 text-left">
+            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+            <DrawerDescription>Refine as sugestões sem ocupar a tela principal.</DrawerDescription>
+          </DrawerHeader>
+          {filtersPanel}
+        </DrawerContent>
+      </Drawer>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-0 h-11">
-            <SelectValue placeholder="Todas Categorias" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas Categorias</SelectItem>
-            {categorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-          <SelectTrigger className="bg-gray-50 dark:bg-gray-800/50 border-0 h-11">
-            <SelectValue placeholder="Todos Fornecedores" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Fornecedores</SelectItem>
-            {fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        {selectedTags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {selectedTags.map(tag => (
-              <Badge key={tag} className="bg-gray-700 text-white px-2 py-1 flex items-center gap-1">
-                {tag}
-                <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))} />
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        <div className="relative">
-          <Input 
-            placeholder="Buscar tag..."
-            value={tagSearch}
-            onChange={(e) => setTagSearch(e.target.value)}
-            className="bg-gray-50 dark:bg-gray-800/50 border-0 h-11"
-          />
-          {tagSearch && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border max-h-40 overflow-y-auto z-10">
-              {allTags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(t)).slice(0, 10).map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => { setSelectedTags([...selectedTags, tag]); setTagSearch(''); }}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm"
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <Button onClick={() => setHidePending(!hidePending)} variant="outline" className="w-full h-11 justify-start border-0 bg-gray-50 dark:bg-gray-800/50">
-          <FilterX className="w-4 h-4 mr-2" />
-          {hidePending ? 'Mostrar' : 'Ocultar'} Pendentes
-        </Button>
-
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
-          <div className="flex items-center gap-3 mb-3">
-            <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">Otimização de Pacotes</span>
-          </div>
-          <Select value={roundingMode} onValueChange={setRoundingMode}>
-            <SelectTrigger className="h-11 bg-white dark:bg-gray-900 border-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Automático (Mais Próximo)</SelectItem>
-              <SelectItem value="up">Arredondar p/ Cima</SelectItem>
-              <SelectItem value="down">Arredondar p/ Baixo</SelectItem>
-              <SelectItem value="none">Quantidade Exata</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="hidden md:block px-2 md:px-0">
+        <div className="rounded-2xl bg-white dark:bg-gray-900 p-4 shadow-sm">
+          {filtersPanel}
         </div>
       </div>
 
