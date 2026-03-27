@@ -258,9 +258,17 @@ export default function ExportarPlanilha() {
          const B = (col) => `SE(OU(MINÚSCULA(ARRUMAR(${col}${rowNumber}))="sim";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="true";MINÚSCULA(ARRUMAR(${col}${rowNumber}))="verdadeiro";ARRUMAR(${col}${rowNumber})="1");"true";"false")`;
 
         // Checksum: comparar concatenação dos dados (simples)
-        // Sem fórmula complexa — só marca como SIM se hash_orig vazio (novo produto)
+        // Checksum SUMPRODUCT(UNICODE) de todos os campos editáveis
+        const fieldsForChecksum = [
+          `${letH1}${rowNumber}`, `${letH2}${rowNumber}`, `${letH3}${rowNumber}`, `${letH4}${rowNumber}`, `${letH5}${rowNumber}`,
+          `${letCB}${rowNumber}`, `${letMA}${rowNumber}`, `${letTP}${rowNumber}`, `${letABCD}${rowNumber}`, `${letCA}${rowNumber}`, `${letAR}${rowNumber}`,
+          `${letCD}${rowNumber}`, `${letDP}${rowNumber}`, `${letFR}${rowNumber}`, `${letI1}${rowNumber}`, `${letI2}${rowNumber}`,
+          `${letUN}${rowNumber}`, `${letDM}${rowNumber}`, `${letAT}${rowNumber}`
+        ];
+        const checksumFormula = fieldsForChecksum.map(f => `SUMPRODUCT(UNICODE(${f}))`).join("+");
+
         row.getCell(idxAlterado).value = {
-          formula: `SE(${letHashOrig}${rowNumber}="","SIM","NÃO")`,
+          formula: `SE(${letHashOrig}${rowNumber}="","SIM",SE(${checksumFormula}=${letHashOrig}${rowNumber},"NÃO","SIM"))`,
           result: 'NÃO',
         };
 
