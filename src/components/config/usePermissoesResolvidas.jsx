@@ -17,7 +17,10 @@ import { MODULOS } from './PerfilFormTela';
 
 import {
   LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
-  DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine
+  DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
+  BarChart2, Users, MapPin, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
+  Layers, ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, TruckIcon, RefreshCcw
 } from 'lucide-react';
 
 export function resolverPermissoes(perfilDeAcesso, overridePermissoes = {}) {
@@ -101,11 +104,13 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Dashboard Completo',
         page: 'Dashboard',
+        icon: BarChart2,
         permissaoCheck: (p) => p?.dashboard?.acesso
       },
       {
         name: 'Painel Gerencial',
         page: 'PainelGerente',
+        icon: Activity,
         permissaoCheck: (p) => p?.vendas?.painel_gerencial
       }
     ]
@@ -118,16 +123,19 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Vendedor',
         page: 'PDVVendedor',
+        icon: Users,
         permissaoCheck: (p) => p?.pdv?.acesso_vendedor
       },
       {
         name: 'Supermercado',
         page: 'PDV?mode=supermercado',
+        icon: ShoppingCart,
         permissaoCheck: (p) => p?.pdv?.acesso_supermercado
       },
       {
         name: 'Auto-Atendimento',
         page: 'AutoAtendimento',
+        icon: Monitor,
         permissaoCheck: (p) => p?.pdv?.acesso_auto_atendimento
       }
     ]
@@ -146,22 +154,25 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Gestão de Vendas',
         page: 'VendasGestao',
-        // salvo como boolean direto: permissoes.vendas.listar_pedidos = true
+        icon: ClipboardList,
         permissaoCheck: (p) => p?.vendas?.listar_pedidos === true
       },
       {
         name: 'Vendas Perdidas',
         page: 'VendasPerdidas',
+        icon: TrendingDown,
         permissaoCheck: (p) => p?.vendas?.vendas_perdidas === true
       },
       {
         name: 'Controle de Entregas',
         page: 'ControleEntregas',
+        icon: Truck,
         permissaoCheck: (p) => p?.vendas?.controle_entregas === true
       },
       {
         name: 'Painel Gerencial',
         page: 'PainelGerente',
+        icon: Activity,
         permissaoCheck: (p) => p?.vendas?.painel_gerencial === true
       }
     ]
@@ -187,36 +198,43 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Sugestões de Compra',
         page: 'SugestoesCompra',
+        icon: Lightbulb,
         permissaoCheck: (p) => p?.estoque?.compras?.sugestoes === true
       },
       {
         name: 'Cotações',
         page: 'Cotacoes',
+        icon: FileText,
         permissaoCheck: (p) => p?.estoque?.compras?.cotacoes === true
       },
       {
         name: 'Pedidos de Compra',
         page: 'PedidosCompra',
+        icon: PackageSearch,
         permissaoCheck: (p) => p?.estoque?.compras?.pedidos === true
       },
       {
         name: 'Manifestos',
         page: 'GestaoManifestosPage',
+        icon: Ship,
         permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.manifestos === true || p?.estoque?.logistica === true
       },
       {
         name: 'Supermanifestos',
         page: 'GestaoSupermanifestosPage',
+        icon: Layers,
         permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.supermanifestos === true || p?.estoque?.logistica === true
       },
       {
         name: 'Conferência de Entrada',
         page: 'ConferenciaEntrada',
+        icon: ScanLine,
         permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.conferencia === true || p?.estoque?.logistica === true
       },
       {
         name: 'Logística',
         page: 'Logistica',
+        icon: TruckIcon,
         permissaoCheck: (p) => p?.estoque?.logistica === true
       }
     ]
@@ -235,31 +253,37 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Conferência',
         page: 'ConferenciaEstoque',
+        icon: CheckSquare,
         permissaoCheck: (p) => p?.estoque?.conferencia_estoque === true
       },
       {
         name: 'Auditoria',
         page: 'AuditoriaEstoque',
+        icon: Search,
         permissaoCheck: (p) => p?.estoque?.auditoria_estoque === true
       },
       {
         name: 'Armazenagem',
         page: 'Armazenagem',
+        icon: Warehouse,
         permissaoCheck: (p) => p?.estoque?.armazenagem === true
       },
       {
         name: 'Separação de Pedidos',
         page: 'InterfaceSeparador',
+        icon: PackageSearch,
         permissaoCheck: (p) => p?.estoque?.separacao_pedidos === true
       },
       {
         name: 'Tabela de Preços',
         page: 'TabelaPrecosConsulta',
+        icon: Tags,
         permissaoCheck: (p) => p?.estoque?.tabela_precos === true
       },
       {
         name: 'Importação em Massa',
         page: 'ImportacaoProdutos',
+        icon: Upload,
         permissaoCheck: (p) => p?.estoque?.visualizar_produtos === true
       }
     ]
@@ -278,26 +302,31 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Fluxo de Caixa',
         page: 'FluxoCaixa',
+        icon: ArrowLeftRight,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
         name: 'Contas',
         page: 'ContasFinanceiras',
+        icon: Wallet,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
         name: 'Aprovações',
         page: 'AprovacoesFinanceiras',
+        icon: CreditCard,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
         name: 'Caixas Ativos',
         page: 'CaixasAtivos',
+        icon: ReceiptText,
         permissaoCheck: (p) => p?.financeiro?.caixas_ativos === true || p?.financeiro?.acesso === true
       },
       {
         name: 'Turnos Fechados',
         page: 'TurnosFechados',
+        icon: Clock,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       }
     ]

@@ -169,7 +169,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
           <div>
             {currentList.map((subItem) => {
-              const Icon = activeGroup?.icon;
+              const Icon = subItem.icon || activeGroup?.icon;
               return (
                 <Link
                   key={subItem.page}
