@@ -8,8 +8,9 @@ import {
 import { ptBR } from 'date-fns/locale';
 import {
   ArrowDownLeft, ArrowUpRight, Plus, X, Search,
-  AlertTriangle, Calendar, CheckCircle2, FileText
+  AlertTriangle, Calendar, CheckCircle2, FileText, SlidersHorizontal
 } from 'lucide-react';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 
@@ -190,6 +191,7 @@ export default function ContasAbertas() {
   const [detalhe, setDetalhe]         = useState(null);
   const [mostrarPagas, setMostrarPagas] = useState(false);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -342,49 +344,94 @@ export default function ContasAbertas() {
           </div>
 
           <button
-            onClick={() => setFabOpen(false)}
-            className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-sm"
+            onClick={() => setShowFilters(true)}
+            className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-sm relative"
           >
-            <Calendar className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4" />
+            {(periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || cs || ce) && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-900 dark:bg-white text-[10px] text-white dark:text-slate-900 flex items-center justify-center">•</span>
+            )}
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2 pt-3">
-          {PERIODOS.map(p => (
-            <button key={p.v} onClick={() => setPeriodo(p.v)}
-              className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${periodo === p.v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
-              {p.l}
-            </button>
-          ))}
-        </div>
-
-        {periodo === 'personalizado' && (
-          <div className="pt-3 flex gap-2">
-            <input type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
-            <input type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-2 pt-3">
-          {[
-            { v: 'todos',   l: 'Todos' },
-            { v: 'Receita', l: 'A Receber' },
-            { v: 'Despesa', l: 'A Pagar' },
-            { v: 'compras', l: 'Compras' },
-          ].map(({ v, l }) => (
-            <button key={v} onClick={() => setTipoFiltro(v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${tipoFiltro === v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
-              {l}
-            </button>
-          ))}
-          <button onClick={() => setMostrarPagas(p => !p)} className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
-            <CheckCircle2 className="w-3 h-3" /> Pagas
-          </button>
-        </div>
-
-        <div className="pt-2 px-1">
+        <div className="pt-2 px-1 flex items-center justify-between gap-2">
           <p className="text-[0.7rem] text-gray-500 dark:text-gray-400">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
+          <div className="flex flex-wrap justify-end gap-1.5">
+            <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300">{PERIODOS.find(p => p.v === periodo)?.l || 'Período'}</span>
+            {tipoFiltro !== 'todos' && <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300">{tipoFiltro === 'Receita' ? 'A Receber' : tipoFiltro === 'Despesa' ? 'A Pagar' : 'Compras'}</span>}
+            {mostrarPagas && <span className="px-2 py-1 rounded-full text-[10px] bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Pagas</span>}
+          </div>
         </div>
       </div>
+
+      <Drawer open={showFilters} onOpenChange={setShowFilters}>
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-slate-900 px-4 pb-6">
+          <DrawerHeader className="px-0 pb-2 text-left">
+            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+          </DrawerHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Período</label>
+              <div className="flex flex-wrap gap-2">
+                {PERIODOS.map(p => (
+                  <button key={p.v} onClick={() => setPeriodo(p.v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${periodo === p.v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
+                    {p.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {periodo === 'personalizado' && (
+              <div className="flex gap-2">
+                <input type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
+                <input type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Tipo</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { v: 'todos', l: 'Todos' },
+                  { v: 'Receita', l: 'A Receber' },
+                  { v: 'Despesa', l: 'A Pagar' },
+                  { v: 'compras', l: 'Compras' },
+                ].map(({ v, l }) => (
+                  <button key={v} onClick={() => setTipoFiltro(v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${tipoFiltro === v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Exibição</label>
+              <button onClick={() => setMostrarPagas(p => !p)} className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
+                <CheckCircle2 className="w-3 h-3" /> Pagas
+              </button>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setPeriodo('mes');
+                  setTipoFiltro('todos');
+                  setMostrarPagas(false);
+                  setCs('');
+                  setCe('');
+                }}
+                className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-slate-800 text-sm text-gray-600 dark:text-gray-300"
+              >
+                Limpar
+              </button>
+              <button onClick={() => setShowFilters(false)} className="flex-1 h-11 rounded-2xl bg-slate-900 dark:bg-slate-200 text-sm text-white dark:text-slate-900">
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Lista */}
       {loading ? (
