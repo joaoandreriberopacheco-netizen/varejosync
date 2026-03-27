@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import {
   Search, X, Wallet, BarChart3, Clock, ChevronDown,
-  ChevronLeft, ChevronRight, AlertTriangle, RefreshCw
+  ChevronLeft, ChevronRight, AlertTriangle, RefreshCw, SlidersHorizontal
 } from 'lucide-react';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import {
   format, isWithinInterval, subDays,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
@@ -244,52 +245,82 @@ export default function FiltrosFluxoCaixa({
   pendentes, onPendentes,
   totalFiltrados, hasActiveFilters, onLimparFiltros,
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-      {/* Busca */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-50 dark:border-white/5">
-        <Search className="w-4 h-4 text-gray-400 flex-none" />
-        <input
-          value={search} onChange={e => onSearch(e.target.value)}
-          placeholder="Buscar lançamento, categoria, tag..."
-          className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 outline-none" />
-        {search && <button onClick={() => onSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
-      </div>
+    <>
+      <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm p-3">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-gray-100 dark:bg-slate-800">
+            <Search className="w-4 h-4 text-gray-400 flex-none" />
+            <input
+              value={search} onChange={e => onSearch(e.target.value)}
+              placeholder="Buscar lançamento, categoria, tag..."
+              className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-100 placeholder:text-gray-400 outline-none"
+            />
+            {search && <button onClick={() => onSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
+          </div>
 
-      {/* Período */}
-      <div className="px-3 py-2 border-b border-gray-50 dark:border-white/5 relative">
-        <PeriodoPicker
-          periodo={periodo} onPeriodo={onPeriodo}
-          customStart={customStart} customEnd={customEnd}
-          onCustom={onCustom} />
-      </div>
-
-      {/* Filtros secundários */}
-      <div className="px-3 pb-2.5 pt-2 flex flex-col gap-1.5">
-        <div className="flex gap-1.5">
-          <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
-          <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
-        </div>
-        <div className="flex gap-1.5">
-          <StatusFiltro sel={statusSel} onSel={onStatusSel} />
           <button
-            onClick={() => onPendentes(!pendentes)}
-            className={`flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-              ${pendentes ? 'bg-gray-500 dark:bg-gray-200 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-            <Clock className="w-3 h-3" /> Conciliação
+            onClick={() => setOpen(true)}
+            className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-700 dark:text-gray-200 relative shadow-sm"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            {hasActiveFilters && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-900 dark:bg-white text-[10px] text-white dark:text-slate-900 flex items-center justify-center">•</span>
+            )}
           </button>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 px-1">
+          <p className="text-[0.7rem] text-gray-500 dark:text-gray-400">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
+          {hasActiveFilters && (
+            <button onClick={onLimparFiltros} className="text-[0.7rem] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1">
+              <X className="w-3 h-3" /> Limpar
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Contagem e limpar */}
-      <div className="flex items-center justify-between px-4 pb-2.5">
-        <p className="text-[0.65rem] text-gray-400">{totalFiltrados} lançamento{totalFiltrados !== 1 ? 's' : ''}</p>
-        {hasActiveFilters && (
-          <button onClick={onLimparFiltros} className="text-[0.65rem] text-gray-400 hover:text-gray-600 flex items-center gap-0.5">
-            <X className="w-2.5 h-2.5" /> Limpar filtros
-          </button>
-        )}
-      </div>
-    </div>
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-slate-900 px-4 pb-6">
+          <DrawerHeader className="px-0 pb-2 text-left">
+            <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtros</DrawerTitle>
+          </DrawerHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block uppercase tracking-wide">Período</label>
+              <PeriodoPicker
+                periodo={periodo} onPeriodo={onPeriodo}
+                customStart={customStart} customEnd={customEnd}
+                onCustom={onCustom}
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
+              <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
+              <StatusFiltro sel={statusSel} onSel={onStatusSel} />
+              <button
+                onClick={() => onPendentes(!pendentes)}
+                className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${pendentes ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}
+              >
+                <Clock className="w-3 h-3" /> Conciliação
+              </button>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button onClick={onLimparFiltros} className="flex-1 h-11 rounded-2xl bg-gray-100 dark:bg-slate-800 text-sm text-gray-600 dark:text-gray-300">
+                Limpar
+              </button>
+              <button onClick={() => setOpen(false)} className="flex-1 h-11 rounded-2xl bg-slate-900 dark:bg-slate-200 text-sm text-white dark:text-slate-900">
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }

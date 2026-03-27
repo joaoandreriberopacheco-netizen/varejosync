@@ -329,66 +329,60 @@ export default function ContasAbertas() {
       <KpiAbertas kpis={kpis} />
 
       {/* Filtros */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-        {/* Busca */}
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-50 dark:border-white/5">
-          <Search className="w-4 h-4 text-gray-400 flex-none" />
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar..."
-            className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder:text-gray-400 outline-none"
-          />
-          {search && <button onClick={() => setSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
-        </div>
-
-        {/* Chips período — linha 1 */}
-        <div className="px-3 pt-2 pb-1.5 border-b border-gray-50 dark:border-white/5">
-          <div className="flex flex-wrap gap-1.5">
-            {PERIODOS.map(p => (
-              <button key={p.v} onClick={() => setPeriodo(p.v)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-                  ${periodo === p.v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-                {p.l}
-              </button>
-            ))}
+      <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm p-3">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-gray-100 dark:bg-slate-800">
+            <Search className="w-4 h-4 text-gray-400 flex-none" />
+            <input
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar..."
+              className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 dark:text-gray-100 placeholder:text-gray-400 outline-none"
+            />
+            {search && <button onClick={() => setSearch('')}><X className="w-3.5 h-3.5 text-gray-400" /></button>}
           </div>
+
+          <button
+            onClick={() => setFabOpen(false)}
+            className="h-12 w-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-sm"
+          >
+            <Calendar className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Datas personalizadas */}
+        <div className="flex flex-wrap gap-2 pt-3">
+          {PERIODOS.map(p => (
+            <button key={p.v} onClick={() => setPeriodo(p.v)}
+              className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${periodo === p.v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
+              {p.l}
+            </button>
+          ))}
+        </div>
+
         {periodo === 'personalizado' && (
-          <div className="px-3 py-2 border-b border-gray-50 dark:border-white/5 flex gap-2">
-            <input type="date" value={cs} onChange={e => setCs(e.target.value)}
-              className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 rounded-xl px-3 py-2 outline-none border-0" />
-            <input type="date" value={ce} onChange={e => setCe(e.target.value)}
-              className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 rounded-xl px-3 py-2 outline-none border-0" />
+          <div className="pt-3 flex gap-2">
+            <input type="date" value={cs} onChange={e => setCs(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
+            <input type="date" value={ce} onChange={e => setCe(e.target.value)} className="flex-1 min-w-0 bg-gray-100 dark:bg-slate-800 text-sm text-gray-700 dark:text-gray-100 rounded-2xl px-3 py-3 outline-none border-0" />
           </div>
         )}
 
-        {/* Chips tipo + toggle pagas — linha 2 */}
-        <div className="px-3 pt-1.5 pb-2.5">
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { v: 'todos',   l: 'Todos' },
-              { v: 'Receita', l: 'A Receber' },
-              { v: 'Despesa', l: 'A Pagar' },
-              { v: 'compras', l: 'Compras' },
-            ].map(({ v, l }) => (
-              <button key={v} onClick={() => setTipoFiltro(v)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-                  ${tipoFiltro === v ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-                {l}
-              </button>
-            ))}
-            <button onClick={() => setMostrarPagas(p => !p)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-                ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-              <CheckCircle2 className="w-3 h-3" /> Pagas
+        <div className="flex flex-wrap gap-2 pt-3">
+          {[
+            { v: 'todos',   l: 'Todos' },
+            { v: 'Receita', l: 'A Receber' },
+            { v: 'Despesa', l: 'A Pagar' },
+            { v: 'compras', l: 'Compras' },
+          ].map(({ v, l }) => (
+            <button key={v} onClick={() => setTipoFiltro(v)} className={`px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${tipoFiltro === v ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
+              {l}
             </button>
-          </div>
+          ))}
+          <button onClick={() => setMostrarPagas(p => !p)} className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${mostrarPagas ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}>
+            <CheckCircle2 className="w-3 h-3" /> Pagas
+          </button>
         </div>
 
-        <div className="px-3 pb-2">
-          <p className="text-[0.65rem] text-gray-400 dark:text-gray-500">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
+        <div className="pt-2 px-1">
+          <p className="text-[0.7rem] text-gray-500 dark:text-gray-400">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
