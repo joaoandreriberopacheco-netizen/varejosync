@@ -124,7 +124,8 @@ export default function GlacialSidebar({
       )}
 
       <aside
-        className="fixed left-0 top-0 h-full z-40 flex flex-col overflow-hidden"
+        className="fixed left-0 top-0 z-40 flex flex-col"
+        style={{ height: '100dvh', overflow: 'hidden' }}
         style={{
           background: c.bg,
           width: isMobile ? '300px' : desktopWidth,
@@ -152,7 +153,7 @@ export default function GlacialSidebar({
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
+        <nav className="px-2 py-3 space-y-0.5" style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0 }}>
           {isOpen && (
             <p
               className="text-[10px] px-3 mb-2 uppercase tracking-widest"
