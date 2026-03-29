@@ -113,8 +113,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   useEffect(() => {
     if (pedido) {
-      setFormData(pedido);
-      setHistory([pedido]);
+      // Se o pedido não tem data_emissao, usa a created_date como fallback
+      const dataEmissao = pedido.data_emissao ||
+        (pedido.created_date ? format(new Date(pedido.created_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
+      const pedidoComData = { ...pedido, data_emissao: dataEmissao };
+      setFormData(pedidoComData);
+      setHistory([pedidoComData]);
       setHistoryIndex(0);
       return;
     }
