@@ -335,6 +335,8 @@ export default function Layout({ children, currentPageName }) {
               currentPageName={currentPageName}
               isMobile={false}
               currentUser={currentUser}
+              darkMode={darkMode}
+              toggleDarkMode={toggleDarkMode}
             />
           </div>
         )}

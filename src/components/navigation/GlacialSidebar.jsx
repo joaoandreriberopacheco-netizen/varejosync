@@ -25,14 +25,16 @@ export default function GlacialSidebar({
   menuItems,
   currentPageName,
   isMobile,
-  currentUser: currentUserProp
+  currentUser: currentUserProp,
+  darkMode: darkModeProp,
+  toggleDarkMode,
 }) {
   const [expandedMenus, setExpandedMenus] = useState({});
   const [currentUser, setCurrentUser] = useState(currentUserProp || null);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [userPanelOpen, setUserPanelOpen] = useState(false);
   const [isDarkLocal, setIsDarkLocal] = useState(() =>
-    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+    darkModeProp ?? (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'))
   );
   const [fontSize, setFontSize] = useState(() => {
     const saved = localStorage.getItem('font_scale');
@@ -48,14 +50,19 @@ export default function GlacialSidebar({
   }, []);
 
   const toggleDark = () => {
-    const next = !isDarkLocal;
-    setIsDarkLocal(next);
-    if (next) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+    if (toggleDarkMode) {
+      toggleDarkMode();
+      setIsDarkLocal(d => !d);
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      const next = !isDarkLocal;
+      setIsDarkLocal(next);
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
     }
   };
 
