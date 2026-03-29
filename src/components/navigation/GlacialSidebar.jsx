@@ -30,6 +30,7 @@ export default function GlacialSidebar({
   const [expandedMenus, setExpandedMenus] = useState({});
   const [currentUser, setCurrentUser] = useState(currentUserProp || null);
   const [showPinSetup, setShowPinSetup] = useState(false);
+  const [userPanelOpen, setUserPanelOpen] = useState(false);
   const [isDarkLocal, setIsDarkLocal] = useState(() =>
     typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   );
@@ -249,68 +250,66 @@ export default function GlacialSidebar({
         </nav>
 
         {/* Rodapé do usuário */}
-        <div
-          className="flex-shrink-0 px-2 py-3"
-          style={{ borderTop: `1px solid ${c.border}` }}
-        >
+        <div className="flex-shrink-0 px-2 py-3" style={{ borderTop: `1px solid ${c.border}` }}>
           {isOpen ? (
+            // Expandido: avatar + painel inline
             <div className="space-y-1">
-              {/* Info do usuário */}
-              <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl" style={{ background: c.hoverBg }}>
+              <button
+                onClick={() => setUserPanelOpen(p => !p)}
+                className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl transition-colors"
+                style={{ background: userPanelOpen ? c.activeBg : c.hoverBg }}
+              >
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.activeBg }}>
                   <User size={14} style={{ color: c.iconColor }} />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium truncate" style={{ color: c.text }}>{currentUser?.nickname || currentUser?.full_name?.split(' ')[0] || 'Usuário'}</p>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-xs font-medium truncate" style={{ color: c.text }}>{currentUser?.full_name?.split(' ')[0] || 'Usuário'}</p>
                   <p className="text-[10px] truncate" style={{ color: c.textSub }}>{currentUser?.email}</p>
                 </div>
-              </div>
+                <ChevronRight size={12} style={{ color: c.chevron, transform: userPanelOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
+              </button>
 
-              {/* Ações */}
-              <div className="flex gap-1">
-                <button
-                  onClick={toggleDark}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs transition-colors"
-                  style={{ color: c.textSub, background: 'transparent' }}
-                  title={isDarkLocal ? 'Modo claro' : 'Modo escuro'}
-                >
-                  {isDarkLocal ? <Sun size={14} /> : <Moon size={14} />}
-                  <span>{isDarkLocal ? 'Claro' : 'Escuro'}</span>
-                </button>
-                <button
-                  onClick={cycleFontSize}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs transition-colors"
-                  style={{ color: c.textSub, background: 'transparent' }}
-                  title="Ajustar fonte"
-                >
-                  <ALargeSmall size={14} />
-                  <span>{fontLabel}</span>
-                </button>
-                <button
-                  onClick={() => setShowPinSetup(true)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs transition-colors"
-                  style={{ color: currentUser?.pin_definido ? c.textSub : '#f59e0b', background: 'transparent' }}
-                  title="Configurar PIN"
-                >
-                  <Shield size={14} />
-                  <span>PIN</span>
-                </button>
-              </div>
+              {userPanelOpen && (
+                <div className="flex gap-1 pt-1">
+                  <button
+                    onClick={toggleDark}
+                    className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] transition-colors"
+                    style={{ color: c.textSub, background: c.hoverBg }}
+                    title={isDarkLocal ? 'Modo claro' : 'Modo escuro'}
+                  >
+                    {isDarkLocal ? <Sun size={13} /> : <Moon size={13} />}
+                    <span>{isDarkLocal ? 'Claro' : 'Escuro'}</span>
+                  </button>
+                  <button
+                    onClick={cycleFontSize}
+                    className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] transition-colors"
+                    style={{ color: c.textSub, background: c.hoverBg }}
+                    title="Ajustar fonte"
+                  >
+                    <ALargeSmall size={13} />
+                    <span>{fontLabel}</span>
+                  </button>
+                  <button
+                    onClick={() => setShowPinSetup(true)}
+                    className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] transition-colors"
+                    style={{ color: currentUser?.pin_definido ? c.textSub : '#f59e0b', background: c.hoverBg }}
+                    title="Configurar PIN"
+                  >
+                    <Shield size={13} />
+                    <span>PIN</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            // Recolhido: apenas ícones empilhados
-            <div className="flex flex-col items-center gap-2">
-              <button onClick={() => {}} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title={currentUser?.full_name}>
+            // Recolhido: só avatar centralizado
+            <div className="flex justify-center">
+              <button
+                className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: c.hoverBg }}
+                title={currentUser?.full_name}
+              >
                 <User size={14} style={{ color: c.iconColor }} />
-              </button>
-              <button onClick={toggleDark} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title={isDarkLocal ? 'Modo claro' : 'Modo escuro'}>
-                {isDarkLocal ? <Sun size={14} style={{ color: c.iconColor }} /> : <Moon size={14} style={{ color: c.iconColor }} />}
-              </button>
-              <button onClick={cycleFontSize} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title="Ajustar fonte">
-                <ALargeSmall size={14} style={{ color: c.iconColor }} />
-              </button>
-              <button onClick={() => setShowPinSetup(true)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title="Configurar PIN">
-                <Shield size={14} style={{ color: currentUser?.pin_definido ? c.iconColor : '#f59e0b' }} />
               </button>
             </div>
           )}
