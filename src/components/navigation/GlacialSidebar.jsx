@@ -126,8 +126,9 @@ export default function GlacialSidebar({
 
       <aside
         className="fixed left-0 top-0 z-40 flex flex-col"
-        style={{ height: '100dvh', overflow: 'hidden' }}
         style={{
+          height: '100dvh',
+          overflow: 'hidden',
           background: c.bg,
           width: isMobile ? '300px' : desktopWidth,
           transform: isMobile ? mobileTranslate : 'none',
