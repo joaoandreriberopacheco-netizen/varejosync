@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
-import { User, LogOut, Settings, Sun, Moon, X, Printer, Trash2, HelpCircle, MoreVertical, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Sun, Moon, X, HelpCircle, Shield } from 'lucide-react';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import FontScaleControl from '@/components/accessibility/FontScaleControl';
 
@@ -81,23 +81,7 @@ export default function MobileUserMenu({ darkMode, toggleDarkMode, externalOpen,
                 </span>
               </button>
 
-              {/* Reimpressão */}
-              <button
-                onClick={() => { window.location.href = createPageUrl('ReimpressaoDocumentos'); handleClose(); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <Printer className="w-5 h-5 text-gray-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-200">Reimpressão</span>
-              </button>
 
-              {/* Excluir Documentos */}
-              <button
-                onClick={() => { window.location.href = createPageUrl('ExclusaoDocumentos'); handleClose(); }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <Trash2 className="w-5 h-5 text-gray-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-200">Excluir Documentos</span>
-              </button>
 
               {/* Ajuda IA */}
               <button

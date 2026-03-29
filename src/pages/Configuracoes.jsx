@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt, Printer, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/components/utils';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
 import TabelasPrecoManager from '../components/config/TabelasPrecoManager';
 import ConfiguracoesVendaManager from '../components/config/ConfiguracoesVendaManager';
@@ -148,6 +150,34 @@ export default function ConfiguracoesPage() {
               <Wrench className="w-4 h-4 text-gray-400" />
               <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Ferramentas de Sistema</h2>
             </div>
+
+            {/* Documentos */}
+            <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Documentos</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Link
+                  to={createPageUrl('ReimpressaoDocumentos')}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-900/60 shadow-sm hover:shadow transition-shadow"
+                >
+                  <Printer className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Reimpressão</p>
+                    <p className="text-xs text-gray-400">Reimprimir cupons e pedidos</p>
+                  </div>
+                </Link>
+                <Link
+                  to={createPageUrl('ExclusaoDocumentos')}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-gray-900/60 shadow-sm hover:shadow transition-shadow"
+                >
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Excluir Documentos</p>
+                    <p className="text-xs text-gray-400">Remoção permanente de registros</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+
             <RecomecarDoZero />
           </div>
         )}
