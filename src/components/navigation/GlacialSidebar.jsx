@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User } from 'lucide-react';
+import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User, Settings, LogOut } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
@@ -251,7 +251,11 @@ export default function GlacialSidebar({
         </nav>
 
         {/* Rodapé do usuário */}
-        <div className="flex-shrink-0 p-3 flex justify-center" style={{ borderTop: `1px solid ${c.border}`, position: 'relative' }}>
+        <div
+          className="flex-shrink-0 p-3 flex justify-center"
+          style={{ borderTop: `1px solid ${c.border}`, position: 'relative' }}
+          onMouseLeave={() => setUserPanelOpen(false)}
+        >
           <button
             onClick={() => setUserPanelOpen(p => !p)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
@@ -261,54 +265,90 @@ export default function GlacialSidebar({
             <User size={15} style={{ color: c.iconColor }} />
           </button>
 
-          {/* Popover flutuante */}
+          {/* Popover estilo cracha mobile */}
           {userPanelOpen && (
             <div
-              className="absolute bottom-14 left-3 z-50 rounded-2xl p-3 space-y-2"
+              className="absolute bottom-14 left-3 z-50 rounded-2xl p-4 space-y-3"
               style={{
                 background: c.bg,
                 boxShadow: isDark
-                  ? '0 8px 32px rgba(0,0,0,0.5)'
-                  : '0 8px 32px rgba(0,0,0,0.12)',
-                minWidth: 200,
+                  ? '0 8px 32px rgba(0,0,0,0.55)'
+                  : '0 8px 32px rgba(0,0,0,0.14)',
+                minWidth: 220,
+                border: `1px solid ${c.border}`,
               }}
             >
-              {/* Info */}
-              <div className="flex items-center gap-2 px-1 pb-2" style={{ borderBottom: `1px solid ${c.border}` }}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: c.hoverBg }}>
-                  <User size={13} style={{ color: c.iconColor }} />
+              {/* Info do usuário */}
+              {currentUser && (
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${c.border}` }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: c.hoverBg }}>
+                    <span className="text-sm font-semibold font-glacial" style={{ color: c.text }}>
+                      {currentUser.full_name?.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase() || '?'}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: c.text }}>{currentUser.full_name}</p>
+                    <p className="text-[11px] truncate" style={{ color: c.textSub }}>{currentUser.email}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold truncate" style={{ color: c.text }}>{currentUser?.full_name?.split(' ')[0] || 'Usuário'}</p>
-                  <p className="text-[10px] truncate" style={{ color: c.textSub }}>{currentUser?.email}</p>
-                </div>
-              </div>
+              )}
 
-              {/* Ações */}
-              <div className="flex gap-1">
+              {/* Ações rápidas */}
+              <div className="space-y-0.5">
                 <button
                   onClick={toggleDark}
-                  className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] transition-colors"
-                  style={{ color: c.textSub, background: c.hoverBg }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
+                  style={{ color: c.text }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  {isDarkLocal ? <Sun size={13} /> : <Moon size={13} />}
-                  <span>{isDarkLocal ? 'Claro' : 'Escuro'}</span>
+                  {isDarkLocal ? <Sun size={15} style={{ color: c.iconColor }} /> : <Moon size={15} style={{ color: c.iconColor }} />}
+                  <span className="text-sm">{isDarkLocal ? 'Modo Claro' : 'Modo Escuro'}</span>
                 </button>
+
                 <button
                   onClick={cycleFontSize}
-                  className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] transition-colors"
-                  style={{ color: c.textSub, background: c.hoverBg }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
+                  style={{ color: c.text }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <ALargeSmall size={13} />
-                  <span>{fontLabel}</span>
+                  <ALargeSmall size={15} style={{ color: c.iconColor }} />
+                  <span className="text-sm">Fonte ({fontLabel})</span>
                 </button>
+
                 <button
                   onClick={() => { setShowPinSetup(true); setUserPanelOpen(false); }}
-                  className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] transition-colors"
-                  style={{ color: currentUser?.pin_definido ? c.textSub : '#f59e0b', background: c.hoverBg }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
+                  style={{ color: c.text }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <Shield size={13} />
-                  <span>PIN</span>
+                  <Shield size={15} style={{ color: currentUser?.pin_definido ? c.iconColor : '#f59e0b' }} />
+                  <span className="text-sm">{currentUser?.pin_definido ? 'Alterar PIN' : 'Cadastrar PIN'}</span>
+                </button>
+
+                <div style={{ height: 1, background: c.border, margin: '4px 0' }} />
+
+                <button
+                  onClick={() => { window.location.href = createPageUrl('Configuracoes'); setUserPanelOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
+                  style={{ color: c.text }}
+                  onMouseEnter={e => e.currentTarget.style.background = c.hoverBg}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Settings size={15} style={{ color: c.iconColor }} />
+                  <span className="text-sm">Configurações</span>
+                </button>
+
+                <button
+                  onClick={() => base44.auth.logout()}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left"
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.07)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <LogOut size={15} style={{ color: '#ef4444' }} />
+                  <span className="text-sm" style={{ color: '#ef4444' }}>Sair</span>
                 </button>
               </div>
             </div>
