@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
     if (operacao === 'set_pin') {
       const { pin, pin_atual } = body;
 
-      if (!pin || pin.length < 4 || pin.length > 8 || !/^\d+$/.test(pin)) {
-        return Response.json({ error: 'PIN inválido. Use 4 a 8 dígitos numéricos.' }, { status: 400 });
+      if (!pin || pin.length !== 6 || !/^\d+$/.test(pin)) {
+        return Response.json({ error: 'PIN inválido. Use exatamente 6 dígitos numéricos.' }, { status: 400 });
       }
 
       // Se já tem PIN definido, exige PIN atual para trocar
@@ -95,6 +95,51 @@ Por segurança, este PIN é de uso pessoal. Não compartilhe com ninguém.
       });
 
       return Response.json({ sucesso: true, mensagem: `PIN temporário enviado para ${user.email}.` });
+    }
+
+    // ── Admin: resetar PIN de outro usuário ─────────────────────────────────
+    if (operacao === 'admin_reset_pin') {
+      if (user.role !== 'admin') {
+        return Response.json({ error: 'Acesso negado. Apenas administradores.' }, { status: 403 });
+      }
+
+      const { target_user_id, target_email } = body;
+
+      if (!target_user_id && !target_email) {
+        return Response.json({ error: 'Informe target_user_id ou target_email.' }, { status: 400 });
+      }
+
+      // Buscar usuário alvo
+      let targetUsers;
+      if (target_user_id) {
+        targetUsers = await base44.asServiceRole.entities.User.filter({ id: target_user_id });
+      } else {
+        targetUsers = await base44.asServiceRole.entities.User.filter({ email: target_email });
+      }
+
+      if (!targetUsers || targetUsers.length === 0) {
+        return Response.json({ error: 'Usuário não encontrado.' }, { status: 404 });
+      }
+
+      const targetUser = targetUsers[0];
+
+      // Gerar PIN temporário de 6 dígitos
+      const pinTemp = String(Math.floor(100000 + Math.random() * 900000));
+      const hashTemp = await hashPin(pinTemp);
+
+      await base44.asServiceRole.entities.User.update(targetUser.id, {
+        pin_hash: hashTemp,
+        pin_definido: true
+      });
+
+      // Enviar e-mail ao usuário alvo
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: targetUser.email,
+        subject: 'Seu PIN foi redefinido pelo administrador — P38 ERP',
+        body: `Olá, ${targetUser.full_name}!\n\nSeu PIN de segurança foi redefinido pelo administrador.\n\nNovo PIN temporário: ${pinTemp}\n\nAcesse o sistema e redefina para um PIN de sua preferência em: Perfil → Meu PIN.\n\nPor segurança, este PIN é de uso pessoal. Não compartilhe com ninguém.\n\n— Equipe P38 ERP`.trim()
+      });
+
+      return Response.json({ sucesso: true, mensagem: `PIN temporário enviado para ${targetUser.email}.` });
     }
 
     return Response.json({ error: 'Operação inválida.' }, { status: 400 });

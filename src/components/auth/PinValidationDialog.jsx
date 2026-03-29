@@ -37,7 +37,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
   }, [isOpen]);
 
   const handleValidar = async () => {
-    if (pin.length < 4) return setErro('PIN deve ter pelo menos 4 dígitos.');
+    if (pin.length < 6) return setErro('PIN deve ter 6 dígitos.');
     setLoading(true); setErro('');
     try {
       const res = await gerenciarPin({ operacao: 'verify_pin', pin });
@@ -161,7 +161,7 @@ export default function PinValidationDialog({ isOpen, onClose, onSuccess, operat
 
           <Button
             onClick={handleValidar}
-            disabled={loading || pin.length < 4}
+            disabled={loading || pin.length < 6}
             className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 text-white"
           >
             {loading ? 'Verificando...' : 'Confirmar'}

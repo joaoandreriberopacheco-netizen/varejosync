@@ -1,25 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, RefreshCw, CheckCircle, AlertCircle, X, User, KeyRound } from 'lucide-react';
+import { Camera, RefreshCw, CheckCircle, AlertCircle, KeyRound, Shield, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
+import { gerenciarPin } from '@/functions/gerenciarPin';
+import PinSetupDialog from './PinSetupDialog';
 
 export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, operationName = "Nova Operação" }) {
-    const [step, setStep] = useState('camera'); // camera, preview, pin, processing
+    const [step, setStep] = useState('camera'); // camera | pin | need_setup
     const [stream, setStream] = useState(null);
     const [photoData, setPhotoData] = useState(null);
     const [pin, setPin] = useState('');
     const [error, setError] = useState('');
     const [operationCode, setOperationCode] = useState('');
     const [loading, setLoading] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [showPinSetup, setShowPinSetup] = useState(false);
     
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const inputRef = useRef(null);
 
-    // Generate operation code on mount
     useEffect(() => {
         if (isOpen) {
             const code = `OP-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
@@ -29,11 +31,19 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
             setPin('');
             setError('');
             startCamera();
+            // Carregar usuário atual
+            base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
         } else {
             stopCamera();
         }
         return () => stopCamera();
     }, [isOpen]);
+
+    useEffect(() => {
+        if (step === 'pin') {
+            setTimeout(() => inputRef.current?.focus(), 150);
+        }
+    }, [step]);
 
     const startCamera = async () => {
         try {
@@ -65,55 +75,45 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
-        // Set canvas dimensions to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-
-        // Draw video frame
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Get current user info for overlay
-        let userName = "Usuário Desconhecido";
-        try {
-            const user = await base44.auth.me();
-            if (user) userName = user.full_name;
-        } catch (e) {
-            console.log("User not logged in or error fetching user");
-        }
-
-        // Add Overlay Data
+        const userName = currentUser?.full_name || 'Usuário Desconhecido';
         const timestamp = format(new Date(), 'dd/MM/yyyy HH:mm:ss');
         
-        // Gradient background for text
         const gradient = context.createLinearGradient(0, canvas.height - 100, 0, canvas.height);
         gradient.addColorStop(0, "transparent");
         gradient.addColorStop(1, "rgba(0,0,0,0.8)");
         context.fillStyle = gradient;
         context.fillRect(0, canvas.height - 100, canvas.width, 100);
 
-        // Text settings
         context.font = "bold 16px Inter, sans-serif";
         context.fillStyle = "#ffffff";
         context.textAlign = "left";
         context.shadowColor = "rgba(0,0,0,0.5)";
         context.shadowBlur = 4;
 
-        // Draw text
         const padding = 20;
         context.fillText(`Op: ${operationCode}`, padding, canvas.height - 50);
         context.fillText(`User: ${userName}`, padding, canvas.height - 30);
         context.fillText(`Data: ${timestamp}`, padding, canvas.height - 10);
 
-        // Convert to data URL
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         setPhotoData(dataUrl);
-        setStep('pin');
         stopCamera();
+
+        // Verificar se usuário tem PIN cadastrado
+        if (!currentUser?.pin_definido) {
+            setStep('need_setup');
+        } else {
+            setStep('pin');
+        }
     };
 
     const handlePinSubmit = async () => {
-        if (!pin || pin.length < 4) {
-            setError("PIN inválido. Digite pelo menos 4 dígitos.");
+        if (pin.length < 6) {
+            setError('PIN deve ter 6 dígitos.');
             return;
         }
 
@@ -121,49 +121,32 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
         setError('');
 
         try {
-            // Validate PIN against Interveniente entity
-            // Note: In a real prod app, we should use a backend function to verify PIN securely.
-            // For this implementation, we fetch active intervenientes and check client-side (or filter).
-            const intervenientes = await base44.entities.Interveniente.filter({ 
-                pin: pin,
-                active: true 
-            });
+            const res = await gerenciarPin({ operacao: 'verify_pin', pin });
 
-            if (intervenientes.length === 0) {
-                throw new Error("PIN incorreto ou interveniente inativo.");
+            if (!res.data?.sucesso) {
+                throw new Error(res.data?.error || 'PIN incorreto.');
             }
 
-            const interveniente = intervenientes[0];
+            // Upload foto como evidência
+            const blob = await (await fetch(photoData)).blob();
+            const file = new File([blob], `auth_${operationCode}.jpg`, { type: 'image/jpeg' });
+            const uploadResult = await base44.integrations.Core.UploadFile({ file });
 
-            // Upload the photo evidence
-            // Convert dataURL to Blob
-            const res = await fetch(photoData);
-            const blob = await res.blob();
-            // Create a File object
-            const file = new File([blob], `auth_${operationCode}.jpg`, { type: "image/jpeg" });
+            if (!uploadResult?.file_url) throw new Error('Erro ao salvar evidência fotográfica.');
 
-            // Upload using integration
-            const uploadResult = await base44.integrations.Core.UploadFile({ file: file });
-
-            if (!uploadResult || !uploadResult.file_url) {
-                throw new Error("Erro ao salvar evidência fotográfica.");
-            }
-
-            // Success! Return all data
             onSuccess({
                 operationCode,
-                intervenienteId: interveniente.id,
-                intervenienteName: interveniente.full_name,
+                userId: currentUser?.id,
+                userName: currentUser?.full_name,
                 evidenceUrl: uploadResult.file_url,
                 timestamp: new Date().toISOString()
             });
-            
             onClose();
 
         } catch (err) {
-            console.error("Auth error:", err);
-            setError(err.message || "Erro na autenticação. Tente novamente.");
-            setPin(''); // Clear PIN on error
+            setError(err?.response?.data?.error || err.message || 'Erro na autenticação.');
+            setPin('');
+            setTimeout(() => inputRef.current?.focus(), 50);
         } finally {
             setLoading(false);
         }
@@ -177,7 +160,10 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
         startCamera();
     };
 
+    const dots = Array.from({ length: 6 }, (_, i) => i < pin.length);
+
     return (
+        <>
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 border-none shadow-xl">
                 <DialogHeader>
@@ -186,77 +172,111 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                         Autenticação de Operação
                     </DialogTitle>
                     <DialogDescription className="text-gray-500">
-                        {operationName} - Código: <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{operationCode}</span>
+                        {operationName} — <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{operationCode}</span>
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex flex-col items-center gap-4 py-4">
-                    {/* Camera View */}
+                <div className="flex flex-col items-center gap-4 py-2">
+
+                    {/* Step: Camera */}
                     {step === 'camera' && (
-                        <div className="relative w-full aspect-[4/3] bg-black rounded-lg overflow-hidden shadow-inner">
-                            <video 
-                                ref={videoRef} 
-                                autoPlay 
-                                playsInline 
-                                className="w-full h-full object-cover"
-                            />
+                        <div className="relative w-full aspect-[4/3] bg-black rounded-2xl overflow-hidden shadow-inner">
+                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
                             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                                <Button 
+                                <button
                                     onClick={takePhoto}
-                                    className="rounded-full w-14 h-14 bg-white/20 hover:bg-white/40 border-2 border-white backdrop-blur-sm p-0 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                                    className="rounded-full w-16 h-16 bg-white/20 hover:bg-white/40 border-2 border-white backdrop-blur-sm flex items-center justify-center transition-all active:scale-90"
                                 >
-                                    <div className="w-10 h-10 bg-white rounded-full"></div>
-                                </Button>
+                                    <div className="w-12 h-12 bg-white rounded-full" />
+                                </button>
                             </div>
                             {error && (
-                                <div className="absolute top-4 left-4 right-4">
-                                    <Alert variant="destructive" className="bg-red-500/90 border-none text-white">
-                                        <AlertDescription>{error}</AlertDescription>
-                                    </Alert>
-                                </div>
+                                <div className="absolute top-3 left-3 right-3 bg-red-500/90 rounded-xl px-3 py-2 text-white text-xs">{error}</div>
                             )}
                         </div>
                     )}
 
-                    {/* PIN Entry View (shows captured photo bg) */}
+                    {/* Step: Precisa configurar PIN */}
+                    {step === 'need_setup' && (
+                        <div className="w-full flex flex-col items-center gap-4 py-4 text-center">
+                            <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                                <Shield className="w-8 h-8 text-amber-500" />
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-800 dark:text-white text-base">PIN não configurado</p>
+                                <p className="text-xs text-gray-400 mt-1 max-w-xs">
+                                    Você precisa definir um PIN de 6 dígitos antes de autorizar operações.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => setShowPinSetup(true)}
+                                className="bg-gray-900 dark:bg-white dark:text-gray-900 text-white gap-2"
+                            >
+                                Configurar PIN agora
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                            <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600">Tirar nova foto</button>
+                        </div>
+                    )}
+
+                    {/* Step: PIN */}
                     {step === 'pin' && (
                         <div className="w-full space-y-4">
-                            <div className="relative w-full aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden shadow-md group">
-                                <img src={photoData} alt="Evidence" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
-                                    <User className="w-12 h-12 text-white mb-2 opacity-80" />
-                                    <h3 className="text-white text-lg font-medium mb-4 text-center">Interveniente Responsável</h3>
-                                    
-                                    <div className="w-full max-w-[200px]">
-                                        <Input
-                                            type="password"
-                                            placeholder="Digite seu PIN"
-                                            value={pin}
-                                            onChange={(e) => setPin(e.target.value)}
-                                            className="bg-white/90 border-none text-center text-2xl tracking-widest h-12 text-gray-900 placeholder:text-gray-400 placeholder:text-sm placeholder:tracking-normal focus-visible:ring-indigo-500"
-                                            maxLength={6}
-                                            autoFocus
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') handlePinSubmit();
-                                            }}
-                                        />
-                                    </div>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        onClick={reset}
-                                        className="mt-4 text-white/70 hover:text-white hover:bg-white/10"
-                                    >
-                                        <RefreshCw className="w-4 h-4 mr-2" />
-                                        Tirar nova foto
-                                    </Button>
-                                </div>
+                            {/* Mini preview da foto */}
+                            <div className="w-full h-24 rounded-xl overflow-hidden relative">
+                                <img src={photoData} alt="Evidência" className="w-full h-full object-cover opacity-70" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                <button onClick={reset} className="absolute bottom-2 right-2 text-white/70 text-xs hover:text-white flex items-center gap-1">
+                                    <RefreshCw className="w-3 h-3" /> Nova foto
+                                </button>
                             </div>
+
+                            {/* Dots */}
+                            <div className="flex justify-center gap-3 py-2">
+                                {dots.map((filled, i) => (
+                                    <div key={i} className={`w-3 h-3 rounded-full transition-all duration-150 ${
+                                        filled ? 'bg-gray-800 dark:bg-white scale-110' : 'bg-gray-200 dark:bg-gray-700'
+                                    }`} />
+                                ))}
+                            </div>
+
+                            {/* Input oculto */}
+                            <input
+                                ref={inputRef}
+                                type="password"
+                                inputMode="numeric"
+                                value={pin}
+                                onChange={e => { setError(''); setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); }}
+                                onKeyDown={e => e.key === 'Enter' && pin.length === 6 && handlePinSubmit()}
+                                className="absolute opacity-0 w-0 h-0"
+                                maxLength={6}
+                            />
+
+                            {/* Teclado numérico */}
+                            <div className="grid grid-cols-3 gap-2 px-2">
+                                {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((key, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => {
+                                            if (key === '⌫') setPin(p => p.slice(0, -1));
+                                            else if (key !== '') { const next = (pin + key).slice(0, 6); setPin(next); setError(''); }
+                                        }}
+                                        className={`h-12 rounded-xl text-lg font-medium transition-all active:scale-95 ${
+                                            key === '' ? 'pointer-events-none'
+                                            : key === '⌫' ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 text-sm'
+                                            : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        }`}
+                                    >
+                                        {key}
+                                    </button>
+                                ))}
+                            </div>
+
                             {error && (
-                                <Alert variant="destructive" className="animate-shake">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertDescription>{error}</AlertDescription>
-                                </Alert>
+                                <div className="flex items-center justify-center gap-1.5 text-red-500 text-xs">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    {error}
+                                </div>
                             )}
                         </div>
                     )}
@@ -267,29 +287,37 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                         Cancelar
                     </Button>
                     {step === 'pin' && (
-                        <Button 
-                            onClick={handlePinSubmit} 
-                            disabled={loading}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]"
+                        <Button
+                            onClick={handlePinSubmit}
+                            disabled={loading || pin.length < 6}
+                            className="bg-gray-900 dark:bg-white dark:text-gray-900 text-white min-w-[120px]"
                         >
                             {loading ? (
-                                <>
-                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                    Validando...
-                                </>
+                                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Validando...</>
                             ) : (
-                                <>
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Confirmar
-                                </>
+                                <><CheckCircle className="w-4 h-4 mr-2" />Confirmar</>
                             )}
                         </Button>
                     )}
                 </DialogFooter>
 
-                {/* Hidden canvas for processing */}
                 <canvas ref={canvasRef} className="hidden" />
             </DialogContent>
         </Dialog>
+
+        {/* Setup de PIN (se usuário não tem) */}
+        <PinSetupDialog
+            isOpen={showPinSetup}
+            onClose={() => {
+                setShowPinSetup(false);
+                // Recarregar user para verificar se definiu o PIN
+                base44.auth.me().then(u => {
+                    setCurrentUser(u);
+                    if (u?.pin_definido) setStep('pin');
+                }).catch(() => {});
+            }}
+            user={currentUser}
+        />
+        </>
     );
 }

@@ -25,7 +25,7 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
 
   const handleSalvar = async () => {
     setErro('');
-    if (pinNovo.length < 4) return setErro('PIN deve ter pelo menos 4 dígitos.');
+    if (pinNovo.length !== 6) return setErro('PIN deve ter exatamente 6 dígitos.');
     if (!/^\d+$/.test(pinNovo)) return setErro('Use apenas números.');
     if (pinNovo !== pinConfirm) return setErro('Os PINs não coincidem.');
 
@@ -97,7 +97,7 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
                   <Input
                     type={mostrar ? 'text' : 'password'}
                     value={pinAtual}
-                    onChange={e => setPinAtual(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    onChange={e => setPinAtual(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="••••"
                     className="text-center tracking-widest text-lg border-0 bg-gray-50 dark:bg-gray-800"
                     maxLength={8}
@@ -107,12 +107,12 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
             )}
 
             <div className="space-y-1">
-              <label className="text-xs text-gray-500">{temPin ? 'Novo PIN' : 'Criar PIN'} (4–8 dígitos)</label>
+              <label className="text-xs text-gray-500">{temPin ? 'Novo PIN' : 'Criar PIN'} (6 dígitos)</label>
               <div className="relative">
                 <Input
                   type={mostrar ? 'text' : 'password'}
                   value={pinNovo}
-                  onChange={e => setPinNovo(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  onChange={e => setPinNovo(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="••••"
                   className="text-center tracking-widest text-lg border-0 bg-gray-50 dark:bg-gray-800 pr-10"
                   maxLength={8}
@@ -132,7 +132,7 @@ export default function PinSetupDialog({ isOpen, onClose, user }) {
               <Input
                 type={mostrar ? 'text' : 'password'}
                 value={pinConfirm}
-                onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="••••"
                 className="text-center tracking-widest text-lg border-0 bg-gray-50 dark:bg-gray-800"
                 maxLength={8}
