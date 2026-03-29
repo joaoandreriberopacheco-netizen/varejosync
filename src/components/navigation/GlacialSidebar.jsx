@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Sun, Moon, ALargeSmall, Shield, User } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import P38Logo from '@/components/brand/P38Logo';
 
 function useDarkMode() {
@@ -22,11 +24,50 @@ export default function GlacialSidebar({
   onClose,
   menuItems,
   currentPageName,
-  isMobile
+  isMobile,
+  currentUser: currentUserProp
 }) {
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [currentUser, setCurrentUser] = useState(currentUserProp || null);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [isDarkLocal, setIsDarkLocal] = useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem('font_scale');
+    return saved ? parseFloat(saved) : 1;
+  });
   const location = useLocation();
   const isDark = useDarkMode();
+
+  useEffect(() => {
+    if (!currentUser) {
+      base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
+    }
+  }, []);
+
+  const toggleDark = () => {
+    const next = !isDarkLocal;
+    setIsDarkLocal(next);
+    if (next) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+
+  const cycleFontSize = () => {
+    const steps = [0.85, 1, 1.1, 1.2];
+    const idx = steps.indexOf(fontSize);
+    const next = steps[(idx + 1) % steps.length];
+    setFontSize(next);
+    localStorage.setItem('font_scale', String(next));
+    document.documentElement.style.setProperty('--app-font-scale', String(next));
+  };
+
+  const fontLabel = fontSize === 1 ? 'A' : fontSize < 1 ? 'A-' : 'A+';
 
   const c = isDark ? {
     bg: '#1f1d22',
@@ -203,10 +244,86 @@ export default function GlacialSidebar({
             );
           })}
 
-          {/* Respiro no final */}
-          <div style={{ height: 24 }} />
+          <div style={{ height: 12 }} />
         </nav>
+
+        {/* Rodapé do usuário */}
+        <div
+          className="flex-shrink-0 px-2 py-3"
+          style={{ borderTop: `1px solid ${c.border}` }}
+        >
+          {isOpen ? (
+            <div className="space-y-1">
+              {/* Info do usuário */}
+              <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl" style={{ background: c.hoverBg }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.activeBg }}>
+                  <User size={14} style={{ color: c.iconColor }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium truncate" style={{ color: c.text }}>{currentUser?.nickname || currentUser?.full_name?.split(' ')[0] || 'Usuário'}</p>
+                  <p className="text-[10px] truncate" style={{ color: c.textSub }}>{currentUser?.email}</p>
+                </div>
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-1">
+                <button
+                  onClick={toggleDark}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs transition-colors"
+                  style={{ color: c.textSub, background: 'transparent' }}
+                  title={isDarkLocal ? 'Modo claro' : 'Modo escuro'}
+                >
+                  {isDarkLocal ? <Sun size={14} /> : <Moon size={14} />}
+                  <span>{isDarkLocal ? 'Claro' : 'Escuro'}</span>
+                </button>
+                <button
+                  onClick={cycleFontSize}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs transition-colors"
+                  style={{ color: c.textSub, background: 'transparent' }}
+                  title="Ajustar fonte"
+                >
+                  <ALargeSmall size={14} />
+                  <span>{fontLabel}</span>
+                </button>
+                <button
+                  onClick={() => setShowPinSetup(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs transition-colors"
+                  style={{ color: currentUser?.pin_definido ? c.textSub : '#f59e0b', background: 'transparent' }}
+                  title="Configurar PIN"
+                >
+                  <Shield size={14} />
+                  <span>PIN</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Recolhido: apenas ícones empilhados
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={() => {}} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title={currentUser?.full_name}>
+                <User size={14} style={{ color: c.iconColor }} />
+              </button>
+              <button onClick={toggleDark} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title={isDarkLocal ? 'Modo claro' : 'Modo escuro'}>
+                {isDarkLocal ? <Sun size={14} style={{ color: c.iconColor }} /> : <Moon size={14} style={{ color: c.iconColor }} />}
+              </button>
+              <button onClick={cycleFontSize} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title="Ajustar fonte">
+                <ALargeSmall size={14} style={{ color: c.iconColor }} />
+              </button>
+              <button onClick={() => setShowPinSetup(true)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: c.hoverBg }} title="Configurar PIN">
+                <Shield size={14} style={{ color: currentUser?.pin_definido ? c.iconColor : '#f59e0b' }} />
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
+
+      <PinSetupDialog
+        isOpen={showPinSetup}
+        onClose={() => {
+          setShowPinSetup(false);
+          base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
+        }}
+        user={currentUser}
+      />
     </>
   );
 }
