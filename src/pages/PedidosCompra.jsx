@@ -103,8 +103,9 @@ export default function PedidosCompraPage() {
   const grupos = useMemo(() => {
     const map = {};
     filtrados.forEach(p => {
-      const data = p.data_prevista_entrega || p.data_emissao || p.created_date;
-      const key = data ? (p.data_prevista_entrega || p.data_emissao ? data : toLocalDate(data)) : 'sem-data';
+      // Agrupa sempre pela data de emissão do pedido, com fallback para created_date
+      const dataKey = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : null);
+      const key = dataKey || 'sem-data';
       if (!map[key]) map[key] = [];
       map[key].push(p);
     });
@@ -117,7 +118,6 @@ export default function PedidosCompraPage() {
         if (key !== 'sem-data') {
           const dataFmt = formatarSoData(key);
           if (key === hoje) label = 'Hoje';
-          else if (key > hoje) label = `${dataFmt} (previsto)`;
           else label = dataFmt;
         }
         return {
