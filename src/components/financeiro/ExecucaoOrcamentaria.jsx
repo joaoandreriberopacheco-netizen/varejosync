@@ -111,7 +111,8 @@ export default function ExecucaoOrcamentaria() {
     filtrados.forEach(l => {
       if (l.tipo === 'Transferência') { totalTransferencias += l.valor || 0; return; }
       if (l.status === 'Vencido') { vencidos += l.valor || 0; qtdVencidos++; }
-      if (l.status === 'Pago') {
+      const isPago = l.status === 'Pago' || !!l.data_pagamento;
+      if (isPago) {
         if (l.tipo === 'Receita') entrou += l.valor || 0;
         else if (l.tipo === 'Despesa') saiu += l.valor || 0;
       } else {
@@ -150,8 +151,9 @@ export default function ExecucaoOrcamentaria() {
       }
       const totais = { r: 0, d: 0 };
       items.forEach(l => {
-        if (l.tipo === 'Receita' && l.status === 'Pago') totais.r += l.valor || 0;
-        if (l.tipo === 'Despesa' && l.status === 'Pago') totais.d += l.valor || 0;
+        const isPago = l.status === 'Pago' || !!l.data_pagamento;
+        if (l.tipo === 'Receita' && isPago) totais.r += l.valor || 0;
+        if (l.tipo === 'Despesa' && isPago) totais.d += l.valor || 0;
       });
       return { k, label, items, totais: { r: roundToTwoDecimals(totais.r), d: roundToTwoDecimals(totais.d) } };
     });

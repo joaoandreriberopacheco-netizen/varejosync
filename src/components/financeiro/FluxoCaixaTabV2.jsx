@@ -397,6 +397,8 @@ export default function FluxoCaixaTabV2() {
   const kpis = useMemo(() => {
     let entrou = 0, saiu = 0;
     filtrados.forEach(l => {
+      const isPago = l.status === 'Pago' || !!l.data_pagamento;
+      if (!isPago) return;
       if (l.tipo === 'Receita') entrou += l.valor||0;
       else if (l.tipo === 'Despesa') saiu += l.valor||0;
     });
@@ -418,7 +420,7 @@ export default function FluxoCaixaTabV2() {
 
     // Calcula saldo acumulado de todos os lançamentos PAGOS até cada data (inclusive)
     // Usando todos os lançamentos (não só filtrados) para saldo real acumulado
-    const allPagos = lancs.filter(l => l.status === 'Pago' && (l.tipo === 'Receita' || l.tipo === 'Despesa'));
+    const allPagos = lancs.filter(l => (l.status === 'Pago' || !!l.data_pagamento) && (l.tipo === 'Receita' || l.tipo === 'Despesa'));
 
     return sorted.reverse().map(([k, items]) => {
       let label = 'Sem data';
@@ -429,8 +431,8 @@ export default function FluxoCaixaTabV2() {
       }
 
       // Entradas e saídas do dia
-      const entradaDia = items.filter(l => l.tipo === 'Receita' && l.status === 'Pago').reduce((s, l) => s + (l.valor || 0), 0);
-      const saidaDia   = items.filter(l => l.tipo === 'Despesa' && l.status === 'Pago').reduce((s, l) => s + (l.valor || 0), 0);
+      const entradaDia = items.filter(l => l.tipo === 'Receita' && (l.status === 'Pago' || !!l.data_pagamento)).reduce((s, l) => s + (l.valor || 0), 0);
+      const saidaDia   = items.filter(l => l.tipo === 'Despesa' && (l.status === 'Pago' || !!l.data_pagamento)).reduce((s, l) => s + (l.valor || 0), 0);
 
       // Saldo acumulado: soma todos pagos até esta data inclusive
       const saldoAcumulado = k === 'sem-data' ? null : allPagos.reduce((s, l) => {
