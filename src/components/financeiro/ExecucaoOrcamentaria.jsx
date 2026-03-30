@@ -226,18 +226,18 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
-      <div className="rounded-[28px] bg-white dark:bg-slate-900 shadow-sm p-4 space-y-4">
+      <div className="rounded-[28px] bg-white dark:bg-slate-900 shadow-md p-4 space-y-4">
         <div>
           <p className="text-xl font-medium text-gray-800 dark:text-gray-100 font-glacial">Financeiro</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Fluxo e contas em uma navegação mais limpa</p>
+          <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Fluxo e contas em uma navegação mais limpa</p>
         </div>
-        <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-2xl p-1">
+        <div className="flex gap-1 bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm">
           <button onClick={() => setAba('fluxo')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
+            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'fluxo' ? 'bg-slate-900 dark:bg-slate-700 text-white dark:text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 bg-transparent'}`}>
             Fluxo de Caixa
           </button>
           <button onClick={() => setAba('contas')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'contas' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-400'}`}>
+            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'contas' ? 'bg-slate-900 dark:bg-slate-700 text-white dark:text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 bg-transparent'}`}>
             Contas Abertas
           </button>
         </div>
@@ -250,7 +250,7 @@ export default function ExecucaoOrcamentaria() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="h-11 px-4 rounded-2xl bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-100 shadow-sm flex items-center gap-2"
+              className="h-11 px-4 rounded-2xl bg-slate-900 dark:bg-slate-900 text-white dark:text-gray-100 shadow-sm flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />
               <span className="text-sm font-medium">Imprimir</span>
@@ -263,7 +263,7 @@ export default function ExecucaoOrcamentaria() {
           {/* Alerta conciliação pendente */}
           {totalPend > 0 && !pendentes && (
             <button onClick={() => setPendentes(true)}
-              className="w-full flex items-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-xs text-left">
+              className="w-full flex items-center gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-gray-700/60 text-gray-800 dark:text-gray-300 text-xs text-left shadow-sm">
               <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
               <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
               <span className="font-semibold flex-none text-gray-500">Ver →</span>

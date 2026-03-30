@@ -6,7 +6,7 @@ function OptionCard({ icon: IconComponent, title, description, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-[24px] bg-gray-50 dark:bg-slate-800 px-4 py-4 text-left shadow-sm transition-all hover:bg-gray-100 dark:hover:bg-slate-700"
+      className="w-full rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 text-left shadow-md transition-all hover:bg-gray-50 dark:hover:bg-slate-700"
     >
       <div className="flex items-start gap-3">
         <div className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center flex-none">
@@ -37,14 +37,14 @@ export default function FluxoCaixaPrintDialog({ open, onOpenChange, onPrintExtra
 
         <div className="px-5 pb-4 space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-2xl bg-gray-50 dark:bg-slate-800 px-3 py-3 shadow-sm">
+            <div className="rounded-2xl bg-white dark:bg-slate-800 px-3 py-3 shadow-sm">
               <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
                 <CalendarDays className="w-3.5 h-3.5" />
                 <span className="text-[11px] uppercase tracking-wide">Período</span>
               </div>
               <p className="text-xs font-medium text-gray-800 dark:text-gray-100">{periodoLabel}</p>
             </div>
-            <div className="rounded-2xl bg-gray-50 dark:bg-slate-800 px-3 py-3 shadow-sm">
+            <div className="rounded-2xl bg-white dark:bg-slate-800 px-3 py-3 shadow-sm">
               <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
                 <Wallet className="w-3.5 h-3.5" />
                 <span className="text-[11px] uppercase tracking-wide">Contas</span>
