@@ -19,6 +19,7 @@ import ConciliacaoBancaria from './ConciliacaoBancaria';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -377,6 +378,7 @@ export default function FluxoCaixaTabV2() {
   const [showNovo, setShowNovo]       = useState(false);
   const [detalhe, setDetalhe]         = useState(null);
   const [gerandoExtrato, setGerandoExtrato] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
 
   useEffect(() => { load(); }, []);
@@ -476,7 +478,7 @@ export default function FluxoCaixaTabV2() {
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
 
-  const handleGerarExtrato = async () => {
+  const handleGerarExtrato = async (lancamentosParaImprimir = filtrados) => {
     setGerandoExtrato(true);
     try {
       const filtrosDesc = [
@@ -487,7 +489,7 @@ export default function FluxoCaixaTabV2() {
       ].filter(Boolean).join(' · ');
 
       const response = await base44.functions.invoke('gerarExtratoFluxoCaixa', {
-        lancamentos: filtrados,
+        lancamentos: lancamentosParaImprimir,
         filtros_desc: filtrosDesc,
         kpis,
         grupos: grupos.map(g => ({ label: g.label, entradaDia: g.entradaDia, saidaDia: g.saidaDia, saldoAcumulado: g.saldoAcumulado, items: g.items })),
@@ -512,7 +514,7 @@ export default function FluxoCaixaTabV2() {
     { tipo: 'Receita',       icon: ArrowDownLeft,  label: 'Receita',       action: () => { setNovoTipo('Receita'); setShowNovo(true); setFabOpen(false); } },
     { tipo: 'Despesa',       icon: ArrowUpRight,   label: 'Despesa',       action: () => { setNovoTipo('Despesa'); setShowNovo(true); setFabOpen(false); } },
     { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transferência', action: () => { setNovoTipo('Transferência'); setShowNovo(true); setFabOpen(false); } },
-    { tipo: 'Extrato',       icon: FileText,       label: gerandoExtrato ? 'Gerando...' : 'Extrato', action: () => { setFabOpen(false); handleGerarExtrato(); } },
+    { tipo: 'Extrato',       icon: FileText,       label: gerandoExtrato ? 'Gerando...' : 'Extrato', action: () => { setFabOpen(false); setShowPrintDialog(true); } },
   ];
 
   return (
@@ -622,6 +624,21 @@ export default function FluxoCaixaTabV2() {
       {/* Dialogs */}
       <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
       {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+      <FluxoCaixaPrintDialog
+        open={showPrintDialog}
+        onOpenChange={setShowPrintDialog}
+        periodoLabel={periodo === 'periodo' && cs && ce ? `${cs} até ${ce}` : (CHIPS.find(c => c.v === periodo)?.l || 'Período atual')}
+        contasSelecionadasLabel={contasSel.length ? `${contasSel.length} conta(s)` : 'Todas as contas'}
+        onPrintExtratoCompleto={() => {
+          setShowPrintDialog(false);
+          handleGerarExtrato(lancs.filter(l => l.status !== 'Cancelado'));
+        }}
+        onPrintExtratoFiltrado={() => {
+          setShowPrintDialog(false);
+          handleGerarExtrato(filtrados);
+        }}
+      />
+
       <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
         <DialogContent className="dark:bg-gray-800 dark:border-gray-700 max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">

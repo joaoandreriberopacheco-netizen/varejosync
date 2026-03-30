@@ -66,14 +66,16 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         }
       });
 
-      const totalReforcos = movs.filter(m => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
-      const totalSangrias = movs.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((s, m) => s + (m.valor || 0), 0);
-      // Despesas filtradas (apenas as que não são recolhimentos)
-      const totalDespesas = despesas.reduce((s, d) => s + (d.valor || 0), 0);
+      const movimentosAtivos = movs.filter(m => m.status_registro !== 'Cancelado');
+      const totalReforcos = movimentosAtivos.filter(m => m.tipo === 'Reforço').reduce((s, m) => s + (m.valor || 0), 0);
+      const totalSangrias = movimentosAtivos.filter(m => m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa').reduce((s, m) => s + (m.valor || 0), 0);
+      const despesasAtivas = despesas.filter(d => d.status !== 'Cancelado');
+      const totalDespesas = despesasAtivas.reduce((s, d) => s + (d.valor || 0), 0);
 
       const saldoInicial = turnoAtivo.saldo_inicial || 0;
-      const liquidez = saldoInicial + totalVendas + totalReforcos - totalSangrias - totalDespesas;
-      const totalFiado = fiados.reduce((s, f) => s + (f.valor || 0), 0);
+      const totalFiado = fiados.filter(f => f.status !== 'Cancelado').reduce((s, f) => s + (f.valor || 0), 0);
+      const totalLiquidoVendas = totalVendas - totalFiado;
+      const liquidez = saldoInicial + totalLiquidoVendas + totalReforcos - totalSangrias - totalDespesas;
 
       setCaixaData({
         saldoInicial,
@@ -83,15 +85,15 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
         reforcos: totalReforcos,
         sangrias: totalSangrias,
         despesas: totalDespesas,
-        despesasLista: despesas,
+        despesasLista: despesasAtivas,
         fiado: totalFiado,
         fiadoLista: fiados,
       });
       setVendasFinalizadas(vendas);
-      setMovimentos(movs);
+      setMovimentos(movimentosAtivos);
       
       // Auto-preencher dinheiro esperado
-      const dinheiroEsperado = liquidez - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
+      const dinheiroEsperado = liquidez - totalPix - totalCredito - totalDebito - totalVale;
       setRecebimentosDinheiro(formatarValorExibicao(dinheiroEsperado));
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
