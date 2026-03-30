@@ -141,16 +141,41 @@ export default function AprovacoesFinanceirasPage() {
           });
 
           const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
-          for (const l of lancamentos) {
-            await base44.entities.LancamentoFinanceiro.update(l.id, {
+
+          if (lancamentos.length === 0) {
+            await base44.entities.LancamentoFinanceiro.create({
               tipo: tipoLancamento,
+              descricao: `Compra - ${pedido.fornecedor_nome || pedido.numero}`,
+              terceiro_id: pedido.fornecedor_id,
+              terceiro_nome: pedido.fornecedor_nome,
+              valor: pedido.valor_total || 0,
+              valor_liquido: pedido.valor_total || 0,
+              data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
+              status: 'Em Aberto',
+              status_conciliacao: 'N/A',
               conta_financeira_id: contaSelecionada,
               conta_financeira_nome: contaSelecionadaNome,
+              referencia_id: pedido.id,
+              referencia_tipo: 'PedidoCompra',
+              referencia_numero: pedido.numero,
+              observacoes: notaAprovacao.trim(),
               is_custo_mercadoria: tipoLancamento === 'Despesa',
               pedido_compra_vinculado_id: pedido.id,
               pedido_compra_vinculado_numero: pedido.numero,
-              observacoes: (l.observacoes || '') + notaAprovacao,
             });
+          } else {
+            for (const l of lancamentos) {
+              await base44.entities.LancamentoFinanceiro.update(l.id, {
+                tipo: tipoLancamento,
+                status: 'Em Aberto',
+                conta_financeira_id: contaSelecionada,
+                conta_financeira_nome: contaSelecionadaNome,
+                is_custo_mercadoria: tipoLancamento === 'Despesa',
+                pedido_compra_vinculado_id: pedido.id,
+                pedido_compra_vinculado_numero: pedido.numero,
+                observacoes: (l.observacoes || '') + notaAprovacao,
+              });
+            }
           }
         }
       }
