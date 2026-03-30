@@ -31,6 +31,22 @@ export default function FluxoCaixaPrintDialog({
   setFilterState,
   contas,
 }) {
+  const safeFilterState = filterState || {
+    periodo: 'mes',
+    customStart: '',
+    customEnd: '',
+    contasSel: [],
+    tiposSel: [],
+    statusSel: [],
+    pendentes: false,
+    cmvOnly: false,
+  };
+
+  const updateFilterState = (updater) => {
+    if (!setFilterState) return;
+    setFilterState((prev) => updater(prev || safeFilterState));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[30px] border-0 bg-white dark:bg-slate-900 p-0 shadow-2xl overflow-hidden">
@@ -46,23 +62,23 @@ export default function FluxoCaixaPrintDialog({
 
         <div className="px-5 pb-4 space-y-4">
           <PrintDialogFilters
-            periodo={filterState.periodo}
-            setPeriodo={(value) => setFilterState((prev) => ({ ...prev, periodo: value }))}
-            customStart={filterState.customStart}
-            customEnd={filterState.customEnd}
-            setCustomStart={(value) => setFilterState((prev) => ({ ...prev, customStart: value }))}
-            setCustomEnd={(value) => setFilterState((prev) => ({ ...prev, customEnd: value }))}
-            contas={contas}
-            contasSel={filterState.contasSel}
-            setContasSel={(value) => setFilterState((prev) => ({ ...prev, contasSel: value }))}
-            tiposSel={filterState.tiposSel}
-            setTiposSel={(value) => setFilterState((prev) => ({ ...prev, tiposSel: value }))}
-            statusSel={filterState.statusSel}
-            setStatusSel={(value) => setFilterState((prev) => ({ ...prev, statusSel: value }))}
-            pendentes={filterState.pendentes}
-            setPendentes={(value) => setFilterState((prev) => ({ ...prev, pendentes: value }))}
-            cmvOnly={filterState.cmvOnly}
-            setCmvOnly={(value) => setFilterState((prev) => ({ ...prev, cmvOnly: value }))}
+            periodo={safeFilterState.periodo}
+            setPeriodo={(value) => updateFilterState((prev) => ({ ...prev, periodo: value }))}
+            customStart={safeFilterState.customStart}
+            customEnd={safeFilterState.customEnd}
+            setCustomStart={(value) => updateFilterState((prev) => ({ ...prev, customStart: value }))}
+            setCustomEnd={(value) => updateFilterState((prev) => ({ ...prev, customEnd: value }))}
+            contas={contas || []}
+            contasSel={safeFilterState.contasSel}
+            setContasSel={(value) => updateFilterState((prev) => ({ ...prev, contasSel: value }))}
+            tiposSel={safeFilterState.tiposSel}
+            setTiposSel={(value) => updateFilterState((prev) => ({ ...prev, tiposSel: value }))}
+            statusSel={safeFilterState.statusSel}
+            setStatusSel={(value) => updateFilterState((prev) => ({ ...prev, statusSel: value }))}
+            pendentes={safeFilterState.pendentes}
+            setPendentes={(value) => updateFilterState((prev) => ({ ...prev, pendentes: value }))}
+            cmvOnly={safeFilterState.cmvOnly}
+            setCmvOnly={(value) => updateFilterState((prev) => ({ ...prev, cmvOnly: value }))}
           />
 
           <OptionCard
