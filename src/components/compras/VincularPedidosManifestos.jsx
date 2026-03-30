@@ -184,13 +184,13 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input 
             placeholder="Buscar por Nº ou fornecedor..." 
-            className="pl-9 bg-gray-50 border-0 shadow-sm" 
+            className="h-11 pl-9 bg-white dark:bg-gray-800 border-0 shadow-sm rounded-2xl" 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 
           />
@@ -198,7 +198,7 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
         <Button 
           onClick={handleVincular} 
           disabled={selectedPedidos.length === 0}
-          className="bg-teal-600 hover:bg-teal-700 gap-2 shadow-sm"
+          className="h-11 bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 gap-2 shadow-sm rounded-2xl"
         >
           <CheckCircle className="w-4 h-4" />
           Criar Manifesto ({selectedPedidos.length})
@@ -211,18 +211,18 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
           <p className="text-gray-500">Nenhum pedido aguardando vinculação</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-3">
           {grupos.map(grupo => (
-            <div key={grupo.fornecedor_id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+            <div key={grupo.fornecedor_id} className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm">
+              <div className="p-3 bg-gray-50 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700/70">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center">
-                      <User className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <User className="w-4 h-4 text-gray-700 dark:text-gray-200" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">{grupo.fornecedor_nome}</h3>
-                      <p className="text-xs text-gray-500">{grupo.pedidos.length} pedido(s)</p>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white leading-tight">{grupo.fornecedor_nome}</h3>
+                      <p className="text-[11px] text-gray-500">{grupo.pedidos.length} pedido(s)</p>
                     </div>
                   </div>
                   <Button
@@ -236,7 +236,7 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
                         setSelectedPedidos(prev => [...new Set([...prev, ...grupo.pedidos.map(p => p.id)])]);
                       }
                     }}
-                    className="gap-2 border-0 shadow-sm"
+                    className="h-9 gap-2 border-0 shadow-sm rounded-2xl px-3"
                   >
                     {grupo.pedidos.every(p => selectedPedidos.includes(p.id)) ? 'Desmarcar Todos' : 'Selecionar Todos'}
                   </Button>
@@ -250,39 +250,39 @@ export default function VincularPedidosManifestos({ pedidosAguardando, onRefresh
                     <div
                       key={pedido.id}
                       onClick={() => togglePedido(pedido.id)}
-                      className={`p-4 cursor-pointer transition-all ${
+                      className={`p-3 cursor-pointer transition-all ${
                         isSelected 
-                          ? 'bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500' 
+                          ? 'bg-gray-100 dark:bg-gray-700/70 ring-1 ring-gray-300 dark:ring-gray-600' 
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }`}
                     >
-                      <div className="flex items-start gap-4">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      <div className="flex items-start gap-3">
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
                           isSelected 
-                            ? 'bg-teal-600 border-teal-600' 
+                            ? 'bg-gray-900 border-gray-900 dark:bg-gray-100 dark:border-gray-100' 
                             : 'border-gray-300 dark:border-gray-600'
                         }`}>
-                          {isSelected && <CheckCircle className="w-4 h-4 text-white" />}
+                          {isSelected && <CheckCircle className="w-3 h-3 text-white dark:text-gray-900" />}
                         </div>
 
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2.5">
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Número</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{pedido.numero}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Número</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{pedido.numero}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Criação</p>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Criação</p>
+                            <p className="text-xs text-gray-700 dark:text-gray-300">
                               {pedido.created_date ? format(parseISO(pedido.created_date), 'dd/MM/yyyy') : '-'}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Itens</p>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">{pedido.itens?.length || 0}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Itens</p>
+                            <p className="text-xs text-gray-700 dark:text-gray-300">{pedido.itens?.length || 0}</p>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Total</p>
-                            <p className="font-bold text-gray-900 dark:text-white">R$ {formatValor(pedido.valor_total)}</p>
+                          <div className="text-left md:text-right col-span-2 md:col-span-1">
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Total</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">R$ {formatValor(pedido.valor_total)}</p>
                           </div>
                         </div>
                       </div>

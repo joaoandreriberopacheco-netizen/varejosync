@@ -135,13 +135,13 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input 
             placeholder="Buscar manifesto..." 
-            className="pl-9 bg-gray-50 border-0 shadow-sm" 
+            className="h-11 pl-9 bg-white dark:bg-gray-800 border-0 shadow-sm rounded-2xl" 
             value={searchTerm} 
             onChange={e => setSearchTerm(e.target.value)} 
           />
@@ -149,7 +149,7 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
         <Button 
           onClick={handleVincular} 
           disabled={selectedManifestos.length === 0}
-          className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-sm"
+          className="h-11 bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 gap-2 shadow-sm rounded-2xl"
         >
           <Ship className="w-4 h-4" />
           Criar Supermanifesto ({selectedManifestos.length})
@@ -162,17 +162,17 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
           <p className="text-gray-500">Nenhum manifesto aguardando vinculação</p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {manifestosFiltrados.map(manifesto => {
             const isSelected = selectedManifestos.includes(manifesto.id);
             return (
               <div
                 key={manifesto.id}
                 onClick={() => toggleManifesto(manifesto.id)}
-                className={`p-5 rounded-xl cursor-pointer transition-all border ${
+                className={`p-3 rounded-3xl cursor-pointer transition-all shadow-sm ${
                   isSelected 
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-md' 
-                    : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                    ? 'bg-gray-100 dark:bg-gray-700/70 ring-1 ring-gray-300 dark:ring-gray-600 shadow-md' 
+                    : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/90'
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -184,22 +184,22 @@ export default function VincularManifestosSupermanifestos({ manifestosAguardando
                     {isSelected && <CheckCircle className="w-5 h-5 text-white" />}
                   </div>
 
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2.5">
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Número</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{manifesto.numero}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Número</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{manifesto.numero}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Fornecedor</p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{manifesto.fornecedor_nome}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Fornecedor</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">{manifesto.fornecedor_nome}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Pedido Principal</p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{manifesto.pedido_numero}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Pedido</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">{manifesto.pedido_numero}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Status</p>
-                      <Badge className="bg-gray-100 text-gray-700 border-0">
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-0.5">Status</p>
+                      <Badge className="bg-gray-100 text-gray-700 border-0 text-[11px]">
                         {manifesto.status}
                       </Badge>
                     </div>

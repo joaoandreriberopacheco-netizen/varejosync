@@ -70,20 +70,20 @@ export default function VolumetrizacaoManifestos() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Filtros - Glacial */}
-      <div className="relative w-full mb-6">
+      <div className="relative w-full mb-3">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input 
           placeholder="Buscar por número, pedido ou fornecedor..." 
-          className="h-12 pl-11 bg-white dark:bg-gray-800 border-0 ring-1 ring-gray-100 dark:ring-gray-700 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-600 rounded-xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
+          className="h-11 pl-11 bg-white dark:bg-gray-800 border-0 rounded-2xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
           value={searchTerm} 
           onChange={e => setSearchTerm(e.target.value)} 
         />
       </div>
 
       {/* Lista de Manifestos - Glacial */}
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {manifestosFiltrados.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-100 dark:ring-gray-700">
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center">
@@ -93,21 +93,21 @@ export default function VolumetrizacaoManifestos() {
           </div>
         ) : (
           manifestosFiltrados.map(m => (
-            <div key={m.id} className="group bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm hover:shadow-md ring-1 ring-gray-100 dark:ring-gray-700 transition-all duration-300">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div key={m.id} className="group bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 {/* Informações */}
                 <div className="flex items-start gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-500">
-                    <Package className="w-6 h-6 stroke-[1.5]" />
+                  <div className="w-9 h-9 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-600 dark:text-gray-300">
+                    <Package className="w-4 h-4 stroke-[1.5]" />
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="flex items-center gap-3 flex-wrap mb-2">
-                      <span className="text-lg font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{m.numero}</span>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{m.numero}</span>
                       <Badge className={`font-normal rounded-full px-3 ${getStatusBadge(m.status)}`}>
                         {m.status}
                       </Badge>
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1.5">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-gray-400 text-xs uppercase tracking-wider">Pedido</span>
                         <span className="font-medium text-gray-700 dark:text-gray-300">{m.pedido_numero}</span>
@@ -133,7 +133,7 @@ export default function VolumetrizacaoManifestos() {
                 <Button 
                   variant="outline" 
                   onClick={() => handleDiscriminarVolumes(m)}
-                  className="gap-2 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl h-11 px-6 w-full md:w-auto font-medium"
+                  className="gap-2 text-gray-600 dark:text-gray-300 border-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-2xl h-10 px-4 w-full md:w-auto font-medium shadow-sm"
                 >
                   <Edit className="w-4 h-4 text-gray-500" />
                   Discriminar Volumes
