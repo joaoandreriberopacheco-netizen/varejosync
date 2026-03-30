@@ -252,12 +252,12 @@ export default function ExtratoContaPage() {
   };
 
   const { inicio, fim } = getDataRange();
-  const movimentacoesFiltradas = todasMovimentacoes.filter(m => {
+  const movimentacoesNoPeriodo = todasMovimentacoes.filter(m => {
     const dataMovimento = new Date(getDataMovimento(m));
-    const dentroDoRange = isWithinInterval(dataMovimento, { start: inicio, end: fim });
-    
-    if (!dentroDoRange) return false;
-    
+    return isWithinInterval(dataMovimento, { start: inicio, end: fim });
+  });
+
+  const movimentacoesFiltradas = movimentacoesNoPeriodo.filter(m => {
     if (!searchTerm) return true;
     const termo = searchTerm.toLowerCase();
     return (
@@ -278,19 +278,31 @@ export default function ExtratoContaPage() {
   const diasOrdenados = Object.keys(movimentacoesPorDia).sort((a, b) => new Date(b) - new Date(a));
 
   // Usa o saldo_atual real da conta como ponto de referência
-  // e reconstrói os saldos por dia retroativamente
+  // e remove todo o efeito das movimentações futuras para chegar no saldo do período exibido
   const saldoReal = conta?.saldo_atual || 0;
 
-  // Calcula totais de todas as movimentações filtradas
-  const totalEntradasGeral = movimentacoesFiltradas
+  const movimentacoesAposPeriodo = todasMovimentacoes.filter(m => {
+    const dataMovimento = new Date(getDataMovimento(m));
+    return dataMovimento > fim && participaDoSaldo(m);
+  });
+
+  const totalEntradasAposPeriodo = movimentacoesAposPeriodo
+    .filter(m => m.tipo === 'Receita')
+    .reduce((sum, m) => sum + (m.valor || 0), 0);
+  const totalSaidasAposPeriodo = movimentacoesAposPeriodo
+    .filter(m => m.tipo === 'Despesa')
+    .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+  const saldoNoFimDoPeriodo = saldoReal - totalEntradasAposPeriodo + totalSaidasAposPeriodo;
+
+  const totalEntradasPeriodo = movimentacoesNoPeriodo
     .filter(m => participaDoSaldo(m) && m.tipo === 'Receita')
     .reduce((sum, m) => sum + (m.valor || 0), 0);
-  const totalSaidasGeral = movimentacoesFiltradas
+  const totalSaidasPeriodo = movimentacoesNoPeriodo
     .filter(m => participaDoSaldo(m) && m.tipo === 'Despesa')
     .reduce((sum, m) => sum + (m.valor || 0), 0);
 
-  // Saldo anterior ao período = saldo atual - resultado do período filtrado
-  let saldoAcumulado = saldoReal - totalEntradasGeral + totalSaidasGeral;
+  let saldoAcumulado = saldoNoFimDoPeriodo - totalEntradasPeriodo + totalSaidasPeriodo;
 
   const diasComSaldo = diasOrdenados.reverse().map(dia => {
     const saldoAnterior = saldoAcumulado;
