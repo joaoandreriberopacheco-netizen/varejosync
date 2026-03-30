@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Search, X, Wallet, BarChart3, Clock, ChevronDown,
-  ChevronLeft, ChevronRight, AlertTriangle, RefreshCw, SlidersHorizontal
+  ChevronLeft, ChevronRight, AlertTriangle, RefreshCw, SlidersHorizontal, Layers
 } from 'lucide-react';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -233,8 +233,43 @@ function TipoFiltro({ sel, onSel }) {
   );
 }
 
+function CmvFiltro({ cmvOnly, onToggle }) {
+  return (
+    <button
+      onClick={() => onToggle(!cmvOnly)}
+      className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${cmvOnly ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}
+    >
+      <Layers className="w-3 h-3" /> CMV
+    </button>
+  );
+}
+
+function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300">
+          <Clock className="w-3 h-3" /> Conciliar em lote
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
+        <p className="px-2 py-1 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Escolha a conta</p>
+        {contas.map(c => (
+          <button
+            key={c.id}
+            onClick={() => onOpenConciliacao?.(c)}
+            className="w-full text-left px-2 py-2 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+          >
+            {c.nome}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // ─── Export Principal ─────────────────────────────────────────────────────────
-export { PeriodoPicker, ContasFiltro, TipoFiltro, StatusFiltro };
+export { PeriodoPicker, ContasFiltro, TipoFiltro, StatusFiltro, CmvFiltro, ConciliacaoLoteFiltro };
 
 export default function FiltrosFluxoCaixa({
   search, onSearch,
@@ -243,6 +278,8 @@ export default function FiltrosFluxoCaixa({
   tiposSel, onTiposSel,
   statusSel, onStatusSel,
   pendentes, onPendentes,
+  cmvOnly, onCmvOnly,
+  onOpenConciliacao,
   totalFiltrados, hasActiveFilters, onLimparFiltros,
 }) {
   const [open, setOpen] = useState(false);
@@ -302,12 +339,14 @@ export default function FiltrosFluxoCaixa({
               <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
               <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
               <StatusFiltro sel={statusSel} onSel={onStatusSel} />
+              <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
               <button
                 onClick={() => onPendentes(!pendentes)}
                 className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${pendentes ? 'bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}
               >
                 <Clock className="w-3 h-3" /> Conciliação
               </button>
+              <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
             </div>
 
             <div className="flex gap-2 pt-2">

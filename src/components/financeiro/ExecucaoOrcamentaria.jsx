@@ -11,6 +11,8 @@ import FiltrosFluxoCaixa from './fluxo/FiltrosFluxoCaixa';
 import KpiFluxo from './fluxo/KpiFluxo';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import ContasAbertas from './ContasAbertas';
+import ConciliacaoBancaria from './ConciliacaoBancaria';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function parseDateKey(dateKey) {
@@ -64,10 +66,12 @@ export default function ExecucaoOrcamentaria() {
   const [tiposSel, setTiposSel] = useState([]);
   const [statusSel, setStatusSel] = useState([]);
   const [pendentes, setPendentes] = useState(false);
+  const [cmvOnly, setCmvOnly] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [showNovo, setShowNovo] = useState(false);
   const [detalhe, setDetalhe] = useState(null);
+  const [conciliacaoConta, setConciliacaoConta] = useState(null);
 
   useEffect(() => { load(); }, []);
 
@@ -95,6 +99,7 @@ export default function ExecucaoOrcamentaria() {
     if (tiposSel.length && !tiposSel.includes(l.tipo)) return false;
     if (statusSel.length && !statusSel.includes(l.status)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
+    if (cmvOnly && !l.is_custo_mercadoria) return false;
     if (search) {
       const q = search.toLowerCase();
       return (l.descricao || '').toLowerCase().includes(q) ||
@@ -104,7 +109,7 @@ export default function ExecucaoOrcamentaria() {
         (l.tags || []).some(t => t.toLowerCase().includes(q));
     }
     return true;
-  }), [lancs, ds, de, contasSel, tiposSel, statusSel, pendentes, search]);
+  }), [lancs, ds, de, contasSel, tiposSel, statusSel, pendentes, cmvOnly, search]);
 
   const kpis = useMemo(() => {
     let entrou = 0, saiu = 0, pEntrou = 0, pSaiu = 0, totalTransferencias = 0, vencidos = 0, qtdVencidos = 0;
@@ -160,7 +165,7 @@ export default function ExecucaoOrcamentaria() {
   }, [filtrados]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
-  const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || !!search;
+  const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;
 
   const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'contas'
 
@@ -211,9 +216,11 @@ export default function ExecucaoOrcamentaria() {
             tiposSel={tiposSel} onTiposSel={setTiposSel}
             statusSel={statusSel} onStatusSel={setStatusSel}
             pendentes={pendentes} onPendentes={setPendentes}
+            cmvOnly={cmvOnly} onCmvOnly={setCmvOnly}
+            onOpenConciliacao={setConciliacaoConta}
             totalFiltrados={filtrados.length}
             hasActiveFilters={hasActiveFilters}
-            onLimparFiltros={() => { setTiposSel([]); setContasSel([]); setStatusSel([]); setPendentes(false); setSearch(''); }}
+            onLimparFiltros={() => { setTiposSel([]); setContasSel([]); setStatusSel([]); setPendentes(false); setCmvOnly(false); setSearch(''); }}
           />
 
           {/* Lista */}
@@ -239,6 +246,26 @@ export default function ExecucaoOrcamentaria() {
           {/* Dialogs */}
           <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+          <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
+            <DialogContent className="dark:bg-gray-800 dark:border-gray-700 max-w-lg max-h-[85vh] flex flex-col">
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="text-gray-800 dark:text-gray-200">Conciliação em lote — {conciliacaoConta?.nome}</DialogTitle>
+              </DialogHeader>
+              <div className="flex-1 overflow-hidden">
+                {conciliacaoConta && (
+                  <ConciliacaoBancaria
+                    contaId={conciliacaoConta.id}
+                    contaNome={conciliacaoConta.nome}
+                    onClose={() => setConciliacaoConta(null)}
+                    onConciliado={() => {
+                      load();
+                      setConciliacaoConta(null);
+                    }}
+                  />
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
