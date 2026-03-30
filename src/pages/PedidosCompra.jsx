@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import enviarFinanceiroLote from '@/components/compras/enviarFinanceiroLote';
+import { enviarFinanceiroLote } from '@/functions/enviarFinanceiroLote';
 
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -105,13 +105,7 @@ export default function PedidosCompraPage() {
   };
 
   const handleEnviarFinanceiroLote = async () => {
-    const pedidosSelecionados = filtrados
-      .filter((p) => selecionadosIds.includes(p.id))
-      .map((pedido) => ({
-        ...pedido,
-        forma_pagamento_compra: formaPagamentoLote,
-        data_primeiro_vencimento: dataPrimeiroVencimentoLote,
-      }));
+    const pedidosSelecionados = filtrados.filter((p) => selecionadosIds.includes(p.id));
 
     if (!pedidosSelecionados.length) {
       toast.error('Selecione ao menos um pedido');
@@ -120,8 +114,11 @@ export default function PedidosCompraPage() {
 
     setEnviandoLote(true);
     try {
-      const currentUser = await base44.auth.me();
-      await enviarFinanceiroLote({ pedidos: pedidosSelecionados, currentUser });
+      await enviarFinanceiroLote({
+        pedidos: pedidosSelecionados,
+        formaPagamento: formaPagamentoLote,
+        dataPrimeiroVencimento: dataPrimeiroVencimentoLote,
+      });
       setSelecionadosIds([]);
       setModoSelecao(false);
       setShowEnvioDialog(false);
@@ -129,7 +126,7 @@ export default function PedidosCompraPage() {
       await loadData();
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao enviar pedidos em lote');
+      toast.error(error?.response?.data?.error || 'Erro ao enviar pedidos em lote');
     } finally {
       setEnviandoLote(false);
     }
