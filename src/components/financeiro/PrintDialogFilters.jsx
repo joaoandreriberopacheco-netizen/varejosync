@@ -1,0 +1,132 @@
+import React from 'react';
+import { CalendarDays, Clock, Filter, Layers, RefreshCw, Wallet } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PeriodoPicker } from './fluxo/FiltrosFluxoCaixa';
+
+function FilterChip({ active, icon: Icon, label, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 shadow-sm'}`}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </button>
+  );
+}
+
+function MultiSelectPopover({ icon: Icon, label, options, selected, onToggle, onClear, allLabel = 'Todos' }) {
+  const active = selected.length > 0;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 shadow-sm'}`}>
+          <Icon className="w-3.5 h-3.5" />
+          {active ? `${selected.length} selecionado(s)` : label}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2 rounded-3xl border-0 bg-white dark:bg-slate-900 shadow-xl" align="start">
+        <button onClick={onClear} className="w-full text-left px-3 py-2 rounded-2xl text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800">
+          {allLabel}
+        </button>
+        <div className="space-y-1 mt-1">
+          {options.map((option) => (
+            <label key={option.value} className="flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800">
+              <Checkbox checked={selected.includes(option.value)} onCheckedChange={() => onToggle(option.value)} className="w-4 h-4" />
+              <span className="text-xs text-gray-700 dark:text-gray-200">{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export default function PrintDialogFilters({
+  periodo,
+  setPeriodo,
+  customStart,
+  customEnd,
+  setCustomStart,
+  setCustomEnd,
+  contas,
+  contasSel,
+  setContasSel,
+  tiposSel,
+  setTiposSel,
+  statusSel,
+  setStatusSel,
+  pendentes,
+  setPendentes,
+  cmvOnly,
+  setCmvOnly,
+}) {
+  const toggleItem = (value, selected, setter) => {
+    setter(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
+  };
+
+  const contaOptions = contas.map((conta) => ({ value: conta.id, label: conta.nome }));
+  const tipoOptions = [
+    { value: 'Receita', label: 'Receita' },
+    { value: 'Despesa', label: 'Despesa' },
+    { value: 'Transferência', label: 'Transferência' },
+  ];
+  const statusOptions = [
+    { value: 'Em Aberto', label: 'Em Aberto' },
+    { value: 'Vencido', label: 'Vencido' },
+    { value: 'Pago', label: 'Pago' },
+    { value: 'Cancelado', label: 'Cancelado' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-[24px] bg-gray-50 dark:bg-slate-800/60 p-3">
+        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-2">
+          <CalendarDays className="w-4 h-4" />
+          <span className="text-[11px] uppercase tracking-wide">Período</span>
+        </div>
+        <PeriodoPicker
+          periodo={periodo}
+          onPeriodo={setPeriodo}
+          customStart={customStart}
+          customEnd={customEnd}
+          onCustom={(key, value) => key === 'start' ? setCustomStart(value) : setCustomEnd(value)}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <MultiSelectPopover
+          icon={Wallet}
+          label="Contas"
+          options={contaOptions}
+          selected={contasSel}
+          onToggle={(value) => toggleItem(value, contasSel, setContasSel)}
+          onClear={() => setContasSel([])}
+          allLabel="Todas as contas"
+        />
+        <MultiSelectPopover
+          icon={Filter}
+          label="Tipo"
+          options={tipoOptions}
+          selected={tiposSel}
+          onToggle={(value) => toggleItem(value, tiposSel, setTiposSel)}
+          onClear={() => setTiposSel([])}
+          allLabel="Todos os tipos"
+        />
+        <MultiSelectPopover
+          icon={RefreshCw}
+          label="Status"
+          options={statusOptions}
+          selected={statusSel}
+          onToggle={(value) => toggleItem(value, statusSel, setStatusSel)}
+          onClear={() => setStatusSel([])}
+          allLabel="Todos os status"
+        />
+        <FilterChip active={pendentes} icon={Clock} label="Pendentes" onClick={() => setPendentes(!pendentes)} />
+        <FilterChip active={cmvOnly} icon={Layers} label="CMV" onClick={() => setCmvOnly(!cmvOnly)} />
+      </div>
+    </div>
+  );
+}

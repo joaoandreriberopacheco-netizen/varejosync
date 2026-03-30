@@ -1,6 +1,7 @@
 import React from 'react';
-import { Printer, FileText, Filter, CalendarDays, Wallet } from 'lucide-react';
+import { Printer, FileText, Filter } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import PrintDialogFilters from '@/components/financeiro/PrintDialogFilters';
 
 function OptionCard({ icon: IconComponent, title, description, onClick }) {
   return (
@@ -21,7 +22,15 @@ function OptionCard({ icon: IconComponent, title, description, onClick }) {
   );
 }
 
-export default function FluxoCaixaPrintDialog({ open, onOpenChange, onPrintExtratoCompleto, onPrintExtratoFiltrado, contasSelecionadasLabel, periodoLabel }) {
+export default function FluxoCaixaPrintDialog({
+  open,
+  onOpenChange,
+  onPrintExtratoCompleto,
+  onPrintExtratoFiltrado,
+  filterState,
+  setFilterState,
+  contas,
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[30px] border-0 bg-white dark:bg-slate-900 p-0 shadow-2xl overflow-hidden">
@@ -35,35 +44,38 @@ export default function FluxoCaixaPrintDialog({ open, onOpenChange, onPrintExtra
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-5 pb-4 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-2xl bg-white dark:bg-slate-800 px-3 py-3 shadow-sm">
-              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-                <CalendarDays className="w-3.5 h-3.5" />
-                <span className="text-[11px] uppercase tracking-wide">Período</span>
-              </div>
-              <p className="text-xs font-medium text-gray-800 dark:text-gray-100">{periodoLabel}</p>
-            </div>
-            <div className="rounded-2xl bg-white dark:bg-slate-800 px-3 py-3 shadow-sm">
-              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
-                <Wallet className="w-3.5 h-3.5" />
-                <span className="text-[11px] uppercase tracking-wide">Contas</span>
-              </div>
-              <p className="text-xs font-medium text-gray-800 dark:text-gray-100">{contasSelecionadasLabel}</p>
-            </div>
-          </div>
+        <div className="px-5 pb-4 space-y-4">
+          <PrintDialogFilters
+            periodo={filterState.periodo}
+            setPeriodo={(value) => setFilterState((prev) => ({ ...prev, periodo: value }))}
+            customStart={filterState.customStart}
+            customEnd={filterState.customEnd}
+            setCustomStart={(value) => setFilterState((prev) => ({ ...prev, customStart: value }))}
+            setCustomEnd={(value) => setFilterState((prev) => ({ ...prev, customEnd: value }))}
+            contas={contas}
+            contasSel={filterState.contasSel}
+            setContasSel={(value) => setFilterState((prev) => ({ ...prev, contasSel: value }))}
+            tiposSel={filterState.tiposSel}
+            setTiposSel={(value) => setFilterState((prev) => ({ ...prev, tiposSel: value }))}
+            statusSel={filterState.statusSel}
+            setStatusSel={(value) => setFilterState((prev) => ({ ...prev, statusSel: value }))}
+            pendentes={filterState.pendentes}
+            setPendentes={(value) => setFilterState((prev) => ({ ...prev, pendentes: value }))}
+            cmvOnly={filterState.cmvOnly}
+            setCmvOnly={(value) => setFilterState((prev) => ({ ...prev, cmvOnly: value }))}
+          />
 
           <OptionCard
             icon={FileText}
             title="Extrato completo"
-            description="Gera um extrato geral, sem considerar a visualização filtrada da tela."
+            description="Gera um extrato geral, sem considerar os filtros próprios deste diálogo."
             onClick={onPrintExtratoCompleto}
           />
 
           <OptionCard
             icon={Filter}
-            title="Visualização atual"
-            description="Usa exatamente o que está sendo exibido agora na tela, com todo o conjunto de filtros ativos."
+            title="Extrato filtrado"
+            description="Usa os filtros definidos aqui no diálogo para gerar o extrato."
             onClick={onPrintExtratoFiltrado}
           />
         </div>

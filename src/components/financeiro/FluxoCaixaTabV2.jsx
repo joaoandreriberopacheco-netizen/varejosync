@@ -379,6 +379,16 @@ export default function FluxoCaixaTabV2() {
   const [detalhe, setDetalhe]         = useState(null);
   const [gerandoExtrato, setGerandoExtrato] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [printFilters, setPrintFilters] = useState({
+    periodo: 'mes',
+    customStart: '',
+    customEnd: '',
+    contasSel: [],
+    tiposSel: [],
+    statusSel: [],
+    pendentes: false,
+    cmvOnly: false,
+  });
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
 
   useEffect(() => { load(); }, []);
@@ -393,6 +403,10 @@ export default function FluxoCaixaTabV2() {
   };
 
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
+  const { s: printDs, e: printDe } = useMemo(
+    () => dateRange(printFilters.periodo, printFilters.customStart, printFilters.customEnd),
+    [printFilters]
+  );
 
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado') return false;
@@ -475,6 +489,23 @@ export default function FluxoCaixaTabV2() {
       return { k, label, items, entradaDia, saidaDia, saldoAcumulado };
     });
   }, [filtrados, lancs]);
+
+  const filtradosParaImpressao = useMemo(() => lancs.filter(l => {
+    if (!printFilters.statusSel.includes('Cancelado') && l.status === 'Cancelado') return false;
+
+    const dataAncora = l.status === 'Pago' ? (l.data_pagamento || l.data_vencimento) : l.data_vencimento;
+    const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
+
+    if (printDe && dataKey && dataKey > printDe) return false;
+    if (printDs && dataKey && dataKey < printDs) return false;
+    if (printFilters.contasSel.length && l.conta_financeira_id && !printFilters.contasSel.includes(l.conta_financeira_id)) return false;
+    if (printFilters.tiposSel.length && !printFilters.tiposSel.includes(l.tipo)) return false;
+    if (printFilters.statusSel.length && !printFilters.statusSel.includes(l.status)) return false;
+    if (printFilters.pendentes && l.status_conciliacao !== 'Pendente') return false;
+    if (printFilters.cmvOnly && !l.is_custo_mercadoria) return false;
+
+    return true;
+  }), [lancs, printFilters, printDs, printDe]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
 
@@ -627,15 +658,16 @@ export default function FluxoCaixaTabV2() {
       <FluxoCaixaPrintDialog
         open={showPrintDialog}
         onOpenChange={setShowPrintDialog}
-        periodoLabel={periodo === 'periodo' && cs && ce ? `${cs} até ${ce}` : (CHIPS.find(c => c.v === periodo)?.l || 'Período atual')}
-        contasSelecionadasLabel={contasSel.length ? `${contasSel.length} conta(s)` : 'Todas as contas'}
+        filterState={printFilters}
+        setFilterState={setPrintFilters}
+        contas={contas}
         onPrintExtratoCompleto={() => {
           setShowPrintDialog(false);
           handleGerarExtrato(lancs.filter(l => l.status !== 'Cancelado'));
         }}
         onPrintExtratoFiltrado={() => {
           setShowPrintDialog(false);
-          handleGerarExtrato(filtrados);
+          handleGerarExtrato(filtradosParaImpressao);
         }}
       />
 
