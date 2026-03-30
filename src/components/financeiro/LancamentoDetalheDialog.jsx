@@ -88,9 +88,12 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           conta_financeira_nome: conta?.nome,
         });
       }
-      // Atualizar saldo só pelo valor do lançamento atual (não em massa)
+      // Atualizar saldo pelo total realmente afetado em lote
       if (conta) {
-        const delta = isReceita ? lancamento.valor || 0 : -(lancamento.valor || 0);
+        const delta = alvos.reduce((sum, item) => {
+          const valor = item.valor || 0;
+          return sum + (item.tipo === 'Receita' ? valor : -valor);
+        }, 0);
         await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
       toast({ title: `${alvos.length} lançamento(s) marcados como pagos!`, className: 'bg-gray-100 text-gray-800' });
@@ -113,7 +116,11 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       }
       toast({ title: 'Pagamento registrado!', className: 'bg-gray-100 text-gray-800' });
     } else if (!isPagoLocal && isPagoOriginal) {
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, { ...payloadValor, status: 'Em Aberto' });
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, { ...payloadValor, status: 'Em Aberto', data_pagamento: null });
+      if (conta) {
+        const delta = isReceita ? -(valorNumerico || lancamento.valor || 0) : (valorNumerico || lancamento.valor || 0);
+        await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
+      }
       toast({ title: 'Marcado como em aberto', className: 'bg-gray-100 text-gray-800' });
     } else if (isPagoLocal && isPagoOriginal) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, {

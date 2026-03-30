@@ -334,6 +334,10 @@ export default function ContasAbertas() {
       let deltaConta = 0;
 
       for (const lancamento of lancamentosSelecionados) {
+        const contaAnteriorId = lancamento.conta_financeira_id;
+        const contaAnterior = contas.find((c) => c.id === contaAnteriorId);
+        const valor = lancamento.valor || 0;
+
         await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
           status: 'Pago',
           data_pagamento: dataPagamentoLote,
@@ -342,9 +346,17 @@ export default function ContasAbertas() {
           conta_financeira_nome: conta.nome,
         });
 
+        if (contaAnterior && contaAnterior.id !== conta.id) {
+          const deltaAnterior = lancamento.tipo === 'Receita' ? -valor : valor;
+          await base44.entities.ContasFinanceiras.update(contaAnterior.id, {
+            saldo_atual: (contaAnterior.saldo_atual || 0) + deltaAnterior,
+          });
+          contaAnterior.saldo_atual = (contaAnterior.saldo_atual || 0) + deltaAnterior;
+        }
+
         deltaConta += lancamento.tipo === 'Receita'
-          ? (lancamento.valor || 0)
-          : -(lancamento.valor || 0);
+          ? valor
+          : -valor;
       }
 
       await base44.entities.ContasFinanceiras.update(conta.id, {

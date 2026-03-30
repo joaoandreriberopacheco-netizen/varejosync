@@ -50,12 +50,10 @@ export default function ExtratoContaPage() {
   const loadExtrato = async (contaId) => {
     setIsLoading(true);
     try {
-      const [contaData, lancamentosData, movimentosData, vendasData, comprasData, contasData] = await Promise.all([
+      const [contaData, lancamentosData, movimentosData, contasData] = await Promise.all([
         base44.entities.ContasFinanceiras.filter({ id: contaId }),
         base44.entities.LancamentoFinanceiro.list(),
         base44.entities.MovimentosCaixa.list(),
-        base44.entities.PedidoVenda.list(),
-        base44.entities.PedidoCompra.list(),
         base44.entities.ContasFinanceiras.list()
       ]);
 
@@ -67,81 +65,15 @@ export default function ExtratoContaPage() {
         setConta(contaAtual);
         setContas(contasData);
         
-        // REGRA: Se é CAIXA GERAL → pega TUDO que não tem turno_caixa_id
-        // Se é outro caixa → pega apenas do turno específico
-        
-        let lancamentosFiltrados, vendasFiltradas, comprasFiltradas;
-        
+        let lancamentosFiltrados = [];
+
         if (isCaixaGeral) {
-          // CAIXA GERAL: TUDO que não tem conta específica vinculada
           lancamentosFiltrados = lancamentosData.filter(l => !l.conta_financeira_id);
-          
-          vendasFiltradas = vendasData
-            .filter(v => v.status !== 'Cancelado')
-            .map(v => ({
-              tipo: 'Receita',
-              descricao: `Venda ${v.numero || v.senha_atendimento || v.id.slice(0,8)}`,
-              valor: v.valor_total || 0,
-              created_date: v.created_date,
-              categoria: 'Venda de Produto',
-              status: v.status,
-              origem: 'venda',
-              referencia_numero: v.numero
-            }));
-          
-          comprasFiltradas = comprasData
-            .filter(c => c.status_aprovacao_financeira === 'aprovado')
-            .map(c => ({
-              tipo: 'Despesa',
-              descricao: `Compra ${c.numero} - ${c.fornecedor_nome || 'Fornecedor'}`,
-              valor: c.valor_total || 0,
-              created_date: c.created_date,
-              categoria: 'Compra de Mercadoria',
-              status: c.status,
-              origem: 'compra',
-              referencia_numero: c.numero
-            }));
         } else {
-          // CAIXA ESPECÍFICO: Apenas transações vinculadas ao turno desta conta
           lancamentosFiltrados = lancamentosData.filter(l => l.conta_financeira_id === contaId);
-          
-          // Buscar turnos desta conta para filtrar vendas corretamente
-          const turnosData = await base44.entities.TurnoCaixa.filter({ conta_caixa_pdv_id: contaId });
-          const turnosIds = turnosData.map(t => t.id);
-          
-          // Vendas: filtra APENAS por turno_caixa_id
-          vendasFiltradas = vendasData
-            .filter(v => 
-              v.status !== 'Cancelado' &&
-              v.turno_caixa_id &&
-              turnosIds.includes(v.turno_caixa_id)
-            )
-            .map(v => ({
-              tipo: 'Receita',
-              descricao: `Venda ${v.numero || v.senha_atendimento || v.id.slice(0,8)}`,
-              valor: v.valor_total || 0,
-              created_date: v.created_date,
-              categoria: 'Venda de Produto',
-              status: v.status,
-              origem: 'venda',
-              referencia_numero: v.numero
-            }));
-          
-          comprasFiltradas = comprasData
-            .filter(c => c.conta_pagamento_id === contaId)
-            .map(c => ({
-              tipo: 'Despesa',
-              descricao: `Compra ${c.numero} - ${c.fornecedor_nome || 'Fornecedor'}`,
-              valor: c.valor_total || 0,
-              created_date: c.created_date,
-              categoria: 'Compra de Mercadoria',
-              status: c.status,
-              origem: 'compra',
-              referencia_numero: c.numero
-            }));
         }
-        
-        setLancamentos([...lancamentosFiltrados, ...vendasFiltradas, ...comprasFiltradas]);
+
+        setLancamentos(lancamentosFiltrados);
         setMovimentosCaixa(movimentosData.filter(m => m.conta_id === contaId));
       }
     } catch (error) {
@@ -343,10 +275,10 @@ export default function ExtratoContaPage() {
 
   // Calcula totais de todas as movimentações filtradas
   const totalEntradasGeral = movimentacoesFiltradas
-    .filter(m => m.tipo === 'Receita' || m.tipo === 'Reforço')
+    .filter(m => (m.tipo === 'Receita' || m.tipo === 'Reforço') && m.status !== 'Cancelado')
     .reduce((sum, m) => sum + (m.valor || 0), 0);
   const totalSaidasGeral = movimentacoesFiltradas
-    .filter(m => m.tipo === 'Despesa' || m.tipo === 'Sangria')
+    .filter(m => (m.tipo === 'Despesa' || m.tipo === 'Sangria') && m.status !== 'Cancelado')
     .reduce((sum, m) => sum + (m.valor || 0), 0);
 
   // Saldo anterior ao período = saldo atual - resultado do período filtrado
@@ -357,11 +289,11 @@ export default function ExtratoContaPage() {
     const movimentacoesDia = movimentacoesPorDia[dia];
 
     const totalEntradas = movimentacoesDia
-      .filter(m => m.tipo === 'Receita' || m.tipo === 'Reforço')
+      .filter(m => (m.tipo === 'Receita' || m.tipo === 'Reforço') && m.status !== 'Cancelado')
       .reduce((sum, m) => sum + (m.valor || 0), 0);
 
     const totalSaidas = movimentacoesDia
-      .filter(m => m.tipo === 'Despesa' || m.tipo === 'Sangria')
+      .filter(m => (m.tipo === 'Despesa' || m.tipo === 'Sangria') && m.status !== 'Cancelado')
       .reduce((sum, m) => sum + (m.valor || 0), 0);
 
     saldoAcumulado = saldoAcumulado + totalEntradas - totalSaidas;
