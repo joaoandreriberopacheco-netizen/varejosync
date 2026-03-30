@@ -246,7 +246,7 @@ export default function ExecucaoOrcamentaria() {
           {/* Dialogs */}
           <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
-          <Dialog open={conciliacaoConta !== undefined && conciliacaoConta !== false} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
+          <Dialog open={conciliacaoConta !== false} onOpenChange={(open) => !open && setConciliacaoConta(false)}>
             <DialogContent className="dark:bg-gray-800 dark:border-gray-700 w-[calc(100vw-1rem)] max-w-3xl h-[85vh] p-0 flex flex-col overflow-hidden">
               <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-3">
                 <DialogTitle className="text-gray-800 dark:text-gray-200">Conciliação em lote — {conciliacaoConta?.nome || 'Todas as contas'}</DialogTitle>
@@ -255,10 +255,10 @@ export default function ExecucaoOrcamentaria() {
                 <ConciliacaoBancaria
                   contaId={conciliacaoConta?.id || null}
                   contaNome={conciliacaoConta?.nome || 'Todas as contas'}
-                  onClose={() => setConciliacaoConta(null)}
+                  onClose={() => setConciliacaoConta(false)}
                   onConciliado={() => {
                     load();
-                    setConciliacaoConta(null);
+                    setConciliacaoConta(false);
                   }}
                 />
               </div>
