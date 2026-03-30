@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { AlertCircle, CheckCircle, XCircle, Eye, DollarSign, ArrowUpRight, ArrowDownLeft, Clock, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, Eye, DollarSign, ArrowUpRight, ArrowDownLeft, Clock, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,7 @@ export default function AprovacoesFinanceirasPage() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [historico, setHistorico] = useState([]);
   const [loadingHistorico, setLoadingHistorico] = useState(false);
+  const [isProcessingApproval, setIsProcessingApproval] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -105,57 +106,63 @@ export default function AprovacoesFinanceirasPage() {
   };
 
   const handleAuthSuccess = async (authData) => {
+    setIsProcessingApproval(true);
+
     const pedidosParaAprovar = actionType === 'approve_batch'
       ? pendingTransactions.filter((item) => selectedPedidosIds.includes(item.id)).map((item) => item._pedido)
       : selectedTransaction ? [selectedTransaction._pedido] : [];
 
-    if (actionType === 'approve' || actionType === 'approve_batch') {
-      const agora = new Date().toISOString();
-      const nomeAprovador = authData.intervenienteName || authData.userName || 'Usuário';
-      const contaSelecionadaNome = contas.find(c => c.id === contaSelecionada)?.nome || '';
+    try {
+      if (actionType === 'approve' || actionType === 'approve_batch') {
+        const agora = new Date().toISOString();
+        const nomeAprovador = authData.intervenienteName || authData.userName || 'Usuário';
+        const contaSelecionadaNome = contas.find(c => c.id === contaSelecionada)?.nome || '';
 
-      for (const pedido of pedidosParaAprovar) {
-        const notaAprovacao = `\n[Aprovado: ${nomeAprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+        for (const pedido of pedidosParaAprovar) {
+          const notaAprovacao = `\n[Aprovado: ${nomeAprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
 
-        await base44.entities.PedidoCompra.update(pedido.id, {
-          status: 'Aprovado',
-          status_aprovacao_financeira: 'Aprovado Financeiramente',
-          conta_pagamento_id: contaSelecionada,
-          conta_pagamento_nome: contaSelecionadaNome,
-          data_aprovacao_financeira: agora,
-        });
-
-        await registrarTransicao({
-          pedidoId: pedido.id,
-          pedidoNumero: pedido.numero,
-          statusAnterior: 'Aguardando Liberação',
-          statusNovo: 'Aprovado',
-          responsavel: { id: authData.intervenienteId || authData.userId, nome: nomeAprovador, email: authData.intervenienteEmail || '' },
-          tipoAutenticacao: 'Interveniente',
-          codigoOperacao: authData.codigoOperacao || '',
-          observacao: `Aprovação financeira. Conta: ${contaSelecionadaNome || contaSelecionada}`,
-        });
-
-        const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
-        for (const l of lancamentos) {
-          await base44.entities.LancamentoFinanceiro.update(l.id, {
-            tipo: tipoLancamento,
-            conta_financeira_id: contaSelecionada,
-            conta_financeira_nome: contaSelecionadaNome,
-            is_custo_mercadoria: tipoLancamento === 'Despesa',
-            pedido_compra_vinculado_id: pedido.id,
-            pedido_compra_vinculado_numero: pedido.numero,
-            observacoes: (l.observacoes || '') + notaAprovacao,
+          await base44.entities.PedidoCompra.update(pedido.id, {
+            status: 'Aprovado',
+            status_aprovacao_financeira: 'Aprovado Financeiramente',
+            conta_pagamento_id: contaSelecionada,
+            conta_pagamento_nome: contaSelecionadaNome,
+            data_aprovacao_financeira: agora,
           });
+
+          await registrarTransicao({
+            pedidoId: pedido.id,
+            pedidoNumero: pedido.numero,
+            statusAnterior: 'Aguardando Liberação',
+            statusNovo: 'Aprovado',
+            responsavel: { id: authData.intervenienteId || authData.userId, nome: nomeAprovador, email: authData.intervenienteEmail || '' },
+            tipoAutenticacao: 'Interveniente',
+            codigoOperacao: authData.codigoOperacao || '',
+            observacao: `Aprovação financeira. Conta: ${contaSelecionadaNome || contaSelecionada}`,
+          });
+
+          const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
+          for (const l of lancamentos) {
+            await base44.entities.LancamentoFinanceiro.update(l.id, {
+              tipo: tipoLancamento,
+              conta_financeira_id: contaSelecionada,
+              conta_financeira_nome: contaSelecionadaNome,
+              is_custo_mercadoria: tipoLancamento === 'Despesa',
+              pedido_compra_vinculado_id: pedido.id,
+              pedido_compra_vinculado_numero: pedido.numero,
+              observacoes: (l.observacoes || '') + notaAprovacao,
+            });
+          }
         }
       }
-    }
 
-    loadData();
-    setSelectedTransaction(null);
-    setSelectedPedidosIds([]);
-    setModoSelecaoLote(false);
-    setIsAuthOpen(false);
+      await loadData();
+      setSelectedTransaction(null);
+      setSelectedPedidosIds([]);
+      setModoSelecaoLote(false);
+      setIsAuthOpen(false);
+    } finally {
+      setIsProcessingApproval(false);
+    }
   };
 
   const groupedTransactions = pendingTransactions.reduce((acc, t) => {
@@ -343,10 +350,24 @@ export default function AprovacoesFinanceirasPage() {
 
         <OperacaoAuthenticator
           isOpen={isAuthOpen}
-          onClose={() => setIsAuthOpen(false)}
+          onClose={() => !isProcessingApproval && setIsAuthOpen(false)}
           onSuccess={handleAuthSuccess}
           operationType={actionType === 'approve_batch' ? 'Aprovação em lote' : actionType === 'approve' ? 'Aprovação de Pagamento' : 'Rejeição de Pagamento'}
         />
+
+        {isProcessingApproval && (
+          <div className="fixed inset-0 z-[70] bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center px-6">
+            <div className="bg-white dark:bg-gray-800 shadow-xl rounded-3xl px-6 py-7 flex flex-col items-center gap-3 max-w-xs w-full text-center">
+              <div className="h-14 w-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Loader2 className="w-7 h-7 animate-spin text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-gray-900 dark:text-white font-glacial">Processando aprovação</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Aguarde para evitar confirmações acidentais.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* FAB Histórico */}
