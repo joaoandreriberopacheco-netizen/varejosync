@@ -279,7 +279,16 @@ export default function ExtratoContaPage() {
 
   // Usa o saldo_atual real da conta como ponto de referência
   // e remove todo o efeito das movimentações futuras para chegar no saldo do período exibido
-  const saldoReal = conta?.saldo_atual || 0;
+  const saldoReal = (() => {
+    const saldoInicial = Number(conta?.saldo_inicial || 0);
+    const totalEntradasValidas = todasMovimentacoes
+      .filter(m => participaDoSaldo(m) && m.tipo === 'Receita')
+      .reduce((sum, m) => sum + (m.valor || 0), 0);
+    const totalSaidasValidas = todasMovimentacoes
+      .filter(m => participaDoSaldo(m) && m.tipo === 'Despesa')
+      .reduce((sum, m) => sum + (m.valor || 0), 0);
+    return saldoInicial + totalEntradasValidas - totalSaidasValidas;
+  })();
 
   const movimentacoesAposPeriodo = todasMovimentacoes.filter(m => {
     const dataMovimento = new Date(getDataMovimento(m));

@@ -654,10 +654,7 @@ export default function PDVCaixa() {
         console.warn('Avisos pós-venda:', data.avisos);
       }
 
-      // Atualizar estado local do caixa
-      if (pagamentosDinheiro > 0 && contaCaixaPDV) {
-        setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: (prev.saldo_atual || 0) + pagamentosDinheiro }));
-      }
+      // Não altera saldo_atual localmente; o financeiro deve ser apurado pelos lançamentos válidos.
 
       // Buscar dados do cliente para o comprovante
       let cliente = null;
@@ -891,12 +888,6 @@ export default function PDVCaixa() {
         });
       }
 
-      // Debitar do Caixa PDV
-      const novoSaldo = (contaCaixaPDV?.saldo_atual || 0) - valorFloat;
-      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
-        saldo_atual: novoSaldo
-      });
-      setContaCaixaPDV(prev => ({ ...prev, saldo_atual: novoSaldo }));
 
       toast({
         title: "✓ Despesa registrada!",
@@ -980,15 +971,6 @@ export default function PDVCaixa() {
       // Nota: Não criamos lançamentos financeiros para sangrias
       // A MovimentosCaixa já reduz a conta, é redundante ter LancamentoFinanceiro
 
-      // Atualizar saldos
-      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
-        saldo_atual: contaCaixaPDV.saldo_atual - valorFloat
-      });
-      await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
-        saldo_atual: caixaGeral.saldo_atual + valorFloat
-      });
-
-      setContaCaixaPDV(prev => ({ ...prev, saldo_atual: prev.saldo_atual - valorFloat }));
       setMovimentoCriado(movimento);
       } else {
       // Reforço
@@ -1003,13 +985,6 @@ export default function PDVCaixa() {
         usuario_responsavel_nome: currentUser.full_name
       });
 
-      const novoSaldo = contaCaixaPDV.saldo_atual + valorFloat;
-
-      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, {
-        saldo_atual: novoSaldo
-      });
-
-      setContaCaixaPDV((prev) => ({ ...prev, saldo_atual: novoSaldo }));
       setMovimentoCriado(movimento);
 
       // Atualizar turno com movimento
@@ -1107,14 +1082,10 @@ export default function PDVCaixa() {
         despesas_ids: (caixaData.despesasLista || []).map(d => d.id)
       });
 
-      // Transferir dinheiro para Caixa Geral
+      // Registrar o recolhimento no fechamento sem manipular saldo_atual da conta
       const todasContas = await base44.entities.ContasFinanceiras.list();
       const caixaGeral = todasContas.find((c) => c.is_caixa_geral === true);
       if (caixaGeral && dinheiroContado > 0) {
-        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: 0 });
-        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
-          saldo_atual: caixaGeral.saldo_atual + dinheiroContado,
-        });
         await base44.entities.MovimentosCaixa.create({
           numero: `MCX-${String(Date.now()).slice(-5)}`,
           tipo: 'Sangria',

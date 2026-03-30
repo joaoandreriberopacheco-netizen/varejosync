@@ -70,7 +70,12 @@ export default function ContasFinanceirasPage() {
     return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
-  const saldoTotal = accounts.reduce((acc, a) => acc + (a.saldo_atual || 0), 0);
+  const calcularSaldoConta = (account) => {
+    const saldoInicial = Number(account.saldo_inicial || 0);
+    return saldoInicial;
+  };
+
+  const saldoTotal = accounts.reduce((acc, a) => acc + calcularSaldoConta(a), 0);
 
   const tipoIconMap = {
     'Caixa Físico': Banknote,
@@ -101,7 +106,7 @@ export default function ContasFinanceirasPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {accounts.map((account) => {
             const Icon = tipoIconMap[account.tipo] || Wallet;
-            const saldo = account.saldo_atual || 0;
+            const saldo = calcularSaldoConta(account);
             const isNegativo = saldo < 0;
             
             return (
