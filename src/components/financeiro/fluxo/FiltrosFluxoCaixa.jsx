@@ -163,7 +163,7 @@ function ContasFiltro({ contas, sel, onSel }) {
           <ChevronDown className="w-3 h-3 opacity-70" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2.5 border-0 shadow-xl rounded-3xl bg-white/98 dark:bg-slate-900/98" align="start">
+      <PopoverContent className="w-64 p-2.5 border-0 shadow-xl rounded-3xl bg-white dark:bg-slate-900" align="start">
         <div className="mb-2 px-2 pt-1">
           <p className="text-[11px] uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">Contas financeiras</p>
         </div>

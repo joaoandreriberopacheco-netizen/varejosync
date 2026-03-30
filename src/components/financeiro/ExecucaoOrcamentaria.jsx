@@ -4,7 +4,9 @@ import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } fro
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
-import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale } from 'lucide-react';
+import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale, Printer } from 'lucide-react';
+import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
+import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import FiltrosFluxoCaixa from './fluxo/FiltrosFluxoCaixa';
@@ -72,6 +74,7 @@ export default function ExecucaoOrcamentaria() {
   const [showNovo, setShowNovo] = useState(false);
   const [detalhe, setDetalhe] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -175,6 +178,51 @@ export default function ExecucaoOrcamentaria() {
 
   const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'contas'
 
+  const periodoLabel = useMemo(() => {
+    if (periodo === 'tudo') return 'Todo o período';
+    if (periodo === 'hoje') return 'Hoje';
+    if (periodo === 'ontem') return 'Ontem';
+    if (periodo === 'semana') return 'Esta semana';
+    if (periodo === 'mes') return 'Este mês';
+    if (periodo === 'periodo' && cs && ce) return `${formatarSoData(cs)} até ${formatarSoData(ce)}`;
+    return 'Período atual';
+  }, [periodo, cs, ce]);
+
+  const contasSelecionadasLabel = useMemo(() => {
+    if (contas.length && contasSel.length === contas.length) return 'Todas as contas';
+    if (contasSel.length === 1) {
+      return contas.find(conta => conta.id === contasSel[0])?.nome || '1 conta';
+    }
+    if (contasSel.length > 1) return `${contasSel.length} contas`;
+    return 'Nenhuma conta';
+  }, [contas, contasSel]);
+
+  const filtrosDesc = useMemo(() => {
+    const partes = [periodoLabel, contasSelecionadasLabel];
+    if (tiposSel.length) partes.push(`Tipos: ${tiposSel.join(', ')}`);
+    if (statusSel.length) partes.push(`Status: ${statusSel.join(', ')}`);
+    if (pendentes) partes.push('Conciliação pendente');
+    if (cmvOnly) partes.push('Somente CMV');
+    if (search) partes.push(`Busca: ${search}`);
+    return partes.join(' · ');
+  }, [periodoLabel, contasSelecionadasLabel, tiposSel, statusSel, pendentes, cmvOnly, search]);
+
+  const handlePrint = async () => {
+    const response = await gerarExtratoFluxoCaixa({
+      grupos,
+      filtros_desc: filtrosDesc,
+      kpis,
+    });
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ExtratoFluxoCaixa.pdf';
+    link.click();
+    window.URL.revokeObjectURL(url);
+    setShowPrintDialog(false);
+  };
+
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
@@ -199,6 +247,16 @@ export default function ExecucaoOrcamentaria() {
 
       {aba === 'fluxo' && (
         <>
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowPrintDialog(true)}
+              className="h-11 px-4 rounded-2xl bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-100 shadow-sm flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="text-sm font-medium">Imprimir</span>
+            </button>
+          </div>
+
           {/* KPIs */}
           <KpiFluxo kpis={kpis} />
 
@@ -252,6 +310,15 @@ export default function ExecucaoOrcamentaria() {
           {/* Dialogs */}
           <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+          <FluxoCaixaPrintDialog
+            open={showPrintDialog}
+            onOpenChange={setShowPrintDialog}
+            onPrintExtratoCompleto={handlePrint}
+            onPrintExtratoFiltrado={handlePrint}
+            contasSelecionadasLabel={contasSelecionadasLabel}
+            periodoLabel={periodoLabel}
+          />
+
           <Dialog open={conciliacaoConta !== false} onOpenChange={(open) => !open && setConciliacaoConta(false)}>
             <DialogContent className="dark:bg-gray-800 dark:border-gray-700 w-[calc(100vw-1rem)] max-w-3xl h-[85vh] p-0 flex flex-col overflow-hidden">
               <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-3">
