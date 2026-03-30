@@ -254,6 +254,12 @@ function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
       </PopoverTrigger>
       <PopoverContent className="w-56 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
         <p className="px-2 py-1 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Escolha a conta</p>
+        <button
+          onClick={() => onOpenConciliacao?.(null)}
+          className="w-full text-left px-2 py-2 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+        >
+          Todas as contas
+        </button>
         {contas.map(c => (
           <button
             key={c.id}

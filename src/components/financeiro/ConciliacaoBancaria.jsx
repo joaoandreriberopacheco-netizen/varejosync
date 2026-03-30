@@ -31,10 +31,14 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   const loadPendentes = async () => {
     setIsLoading(true);
     const [dados, todasContas] = await Promise.all([
-      base44.entities.LancamentoFinanceiro.filter({
-        conta_financeira_id: contaId,
-        status_conciliacao: 'Pendente'
-      }),
+      contaId
+        ? base44.entities.LancamentoFinanceiro.filter({
+            conta_financeira_id: contaId,
+            status_conciliacao: 'Pendente'
+          })
+        : base44.entities.LancamentoFinanceiro.filter({
+            status_conciliacao: 'Pendente'
+          }),
       base44.entities.ContasFinanceiras.list()
     ]);
     setLancamentos(dados.sort((a, b) => new Date(a.data_liquidacao_prevista) - new Date(b.data_liquidacao_prevista)));
@@ -73,6 +77,15 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
 
   const selecionadosData = lancamentos.filter(l => selecionados.includes(l.id));
   const totalSelecionado = selecionadosData.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0);
+  const todosIds = lancamentos.map(l => l.id);
+  const todosSelecionados = todosIds.length > 0 && todosIds.every(id => selecionados.includes(id));
+  const toggleSelecionarTodos = () => {
+    if (todosSelecionados) {
+      setSelecionados([]);
+    } else {
+      setSelecionados(todosIds);
+    }
+  };
 
   const abrirConciliacao = () => {
     if (selecionados.length === 0) {
@@ -172,9 +185,9 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header Info */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 mb-4 flex items-start gap-3 border border-gray-100 dark:border-gray-700">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
+    {/* Header Info */}
+    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 mb-4 flex items-start gap-3 border border-gray-100 dark:border-gray-700">
         <Info className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
         <div className="text-sm text-gray-600 dark:text-gray-300">
           <p className="font-medium mb-1 text-gray-700 dark:text-gray-200">Como conciliar</p>
@@ -182,8 +195,18 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         </div>
       </div>
 
+      <div className="flex items-center justify-between gap-3 mb-3 px-1">
+        <div>
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{contaNome || 'Todas as contas'}</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">{lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} pendente{lancamentos.length !== 1 ? 's' : ''}</p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={toggleSelecionarTodos} className="rounded-xl text-xs">
+          {todosSelecionados ? 'Limpar tudo' : 'Selecionar tudo'}
+        </Button>
+      </div>
+
       {/* Lista agrupada por data */}
-      <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-4">
         {grupos.map(([data, items]) => {
           const totalGrupo = items.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0);
           const idsDaData = items.map(l => l.id);

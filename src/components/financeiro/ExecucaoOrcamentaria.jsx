@@ -71,7 +71,7 @@ export default function ExecucaoOrcamentaria() {
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [showNovo, setShowNovo] = useState(false);
   const [detalhe, setDetalhe] = useState(null);
-  const [conciliacaoConta, setConciliacaoConta] = useState(null);
+  const [conciliacaoConta, setConciliacaoConta] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -246,23 +246,21 @@ export default function ExecucaoOrcamentaria() {
           {/* Dialogs */}
           <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
-          <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
-            <DialogContent className="dark:bg-gray-800 dark:border-gray-700 max-w-lg max-h-[85vh] flex flex-col">
-              <DialogHeader className="flex-shrink-0">
-                <DialogTitle className="text-gray-800 dark:text-gray-200">Conciliação em lote — {conciliacaoConta?.nome}</DialogTitle>
+          <Dialog open={conciliacaoConta !== undefined && conciliacaoConta !== false} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
+            <DialogContent className="dark:bg-gray-800 dark:border-gray-700 w-[calc(100vw-1rem)] max-w-3xl h-[85vh] p-0 flex flex-col overflow-hidden">
+              <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-3">
+                <DialogTitle className="text-gray-800 dark:text-gray-200">Conciliação em lote — {conciliacaoConta?.nome || 'Todas as contas'}</DialogTitle>
               </DialogHeader>
-              <div className="flex-1 overflow-hidden">
-                {conciliacaoConta && (
-                  <ConciliacaoBancaria
-                    contaId={conciliacaoConta.id}
-                    contaNome={conciliacaoConta.nome}
-                    onClose={() => setConciliacaoConta(null)}
-                    onConciliado={() => {
-                      load();
-                      setConciliacaoConta(null);
-                    }}
-                  />
-                )}
+              <div className="flex-1 min-h-0 overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
+                <ConciliacaoBancaria
+                  contaId={conciliacaoConta?.id || null}
+                  contaNome={conciliacaoConta?.nome || 'Todas as contas'}
+                  onClose={() => setConciliacaoConta(null)}
+                  onConciliado={() => {
+                    load();
+                    setConciliacaoConta(null);
+                  }}
+                />
               </div>
             </DialogContent>
           </Dialog>
