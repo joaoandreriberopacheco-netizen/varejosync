@@ -30,6 +30,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Nenhum pedido informado' }, { status: 400 });
     }
 
+    const contasFinanceiras = await base44.entities.ContasFinanceiras.list();
+    const contaPadrao = contasFinanceiras.find((conta) => conta.ativo && conta.is_caixa_geral)
+      || contasFinanceiras.find((conta) => conta.ativo);
+
+    if (!contaPadrao?.id) {
+      return Response.json({ error: 'Nenhuma conta financeira ativa foi encontrada para registrar o lançamento' }, { status: 400 });
+    }
+
     for (const pedido of pedidos) {
       const valorTotal = Number(pedido.valor_total) || 0;
       const formaAtual = formaPagamento || 'Parcelado';
@@ -43,6 +51,8 @@ Deno.serve(async (req) => {
         valor: valorTotal,
         status: 'Em Aberto',
         categoria: 'Compra de Mercadoria',
+        conta_financeira_id: pedido.conta_pagamento_id || contaPadrao.id,
+        conta_financeira_nome: pedido.conta_pagamento_nome || contaPadrao.nome,
         referencia_id: pedido.id,
         referencia_tipo: 'PedidoCompra',
         referencia_numero: pedido.numero,
