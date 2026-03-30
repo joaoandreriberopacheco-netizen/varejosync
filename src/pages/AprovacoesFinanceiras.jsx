@@ -22,7 +22,6 @@ export default function AprovacoesFinanceirasPage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
   const [contaSelecionada, setContaSelecionada] = useState('');
-  const [tipoLancamento, setTipoLancamento] = useState('Despesa');
   const [showHistorico, setShowHistorico] = useState(false);
   const [historico, setHistorico] = useState([]);
   const [loadingHistorico, setLoadingHistorico] = useState(false);
@@ -144,7 +143,7 @@ export default function AprovacoesFinanceirasPage() {
 
           if (lancamentos.length === 0) {
             await base44.entities.LancamentoFinanceiro.create({
-              tipo: tipoLancamento,
+              tipo: 'Despesa',
               descricao: `Compra - ${pedido.fornecedor_nome || pedido.numero}`,
               terceiro_id: pedido.fornecedor_id,
               terceiro_nome: pedido.fornecedor_nome,
@@ -159,18 +158,18 @@ export default function AprovacoesFinanceirasPage() {
               referencia_tipo: 'PedidoCompra',
               referencia_numero: pedido.numero,
               observacoes: notaAprovacao.trim(),
-              is_custo_mercadoria: tipoLancamento === 'Despesa',
+              is_custo_mercadoria: true,
               pedido_compra_vinculado_id: pedido.id,
               pedido_compra_vinculado_numero: pedido.numero,
             });
           } else {
             for (const l of lancamentos) {
               await base44.entities.LancamentoFinanceiro.update(l.id, {
-                tipo: tipoLancamento,
+                tipo: 'Despesa',
                 status: 'Em Aberto',
                 conta_financeira_id: contaSelecionada,
                 conta_financeira_nome: contaSelecionadaNome,
-                is_custo_mercadoria: tipoLancamento === 'Despesa',
+                is_custo_mercadoria: true,
                 pedido_compra_vinculado_id: pedido.id,
                 pedido_compra_vinculado_numero: pedido.numero,
                 observacoes: (l.observacoes || '') + notaAprovacao,
@@ -297,16 +296,10 @@ export default function AprovacoesFinanceirasPage() {
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(pedidosSelecionadosLote.reduce((acc, item) => acc + (item.valor || 0), 0))}</p>
             </div>
             <div className="space-y-4">
-              <div>
-                <Label className="text-xs text-gray-500 mb-2 block">Tipo de Lançamento</Label>
-                <div className="flex gap-2">
-                  <button onClick={() => setTipoLancamento('Despesa')} className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${tipoLancamento === 'Despesa' ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-                    <ArrowUpRight className="w-3.5 h-3.5" />D
-                  </button>
-                  <button onClick={() => setTipoLancamento('Receita')} className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${tipoLancamento === 'Receita' ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-                    <ArrowDownLeft className="w-3.5 h-3.5" />R
-                  </button>
-                </div>
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/60 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipo do lançamento</p>
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">Despesa CMV automática</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Pedidos aprovados no financeiro geram contas de compra como custo de mercadoria vendida.</p>
               </div>
               <div>
                 <Label>Conta para Pagamento</Label>
@@ -333,19 +326,10 @@ export default function AprovacoesFinanceirasPage() {
                 <p className="font-semibold text-lg">Aprovar Pagamento</p>
                 </DialogHeader>
               <div className="space-y-4 py-4">
-                <div>
-                  <Label className="text-xs text-gray-500 mb-2 block">Tipo de Lançamento</Label>
-                  <div className="flex gap-2">
-                    <button onClick={() => setTipoLancamento('Despesa')} className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${tipoLancamento === 'Despesa' ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-                      <ArrowUpRight className="w-3.5 h-3.5" />D
-                    </button>
-                    <button onClick={() => setTipoLancamento('Receita')} className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${tipoLancamento === 'Receita' ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
-                      <ArrowDownLeft className="w-3.5 h-3.5" />R
-                    </button>
-                    <span className="self-center text-xs text-gray-400 dark:text-gray-500">
-                      {tipoLancamento === 'Despesa' ? 'Saída financeira' : 'Entrada financeira'}
-                    </span>
-                  </div>
+                <div className="rounded-2xl bg-gray-50 dark:bg-gray-700/60 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipo do lançamento</p>
+                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">Despesa CMV automática</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Este pagamento de compra será salvo como custo de mercadoria vendida.</p>
                 </div>
                 <div>
                   <Label>Conta para Pagamento</Label>

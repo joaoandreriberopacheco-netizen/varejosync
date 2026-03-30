@@ -51,19 +51,20 @@ export default function LancamentosCompraPanel({ pedidoId }) {
     );
   }
 
-  const totalPago   = lancs.filter(l => l.status === 'Pago').reduce((s, l) => s + (l.valor || 0), 0);
-  const totalTotal  = lancs.reduce((s, l) => s + (l.valor || 0), 0);
-  const qtdPago     = lancs.filter(l => l.status === 'Pago').length;
+  const lancamentosCompra = lancs.filter(l => l.referencia_tipo === 'PedidoCompra' || l.pedido_compra_vinculado_id === pedidoId || l.is_custo_mercadoria);
+  const totalPago   = lancamentosCompra.filter(l => l.status === 'Pago' || !!l.data_pagamento).reduce((s, l) => s + (l.valor || 0), 0);
+  const totalTotal  = lancamentosCompra.reduce((s, l) => s + (l.valor || 0), 0);
+  const qtdPago     = lancamentosCompra.filter(l => l.status === 'Pago' || !!l.data_pagamento).length;
 
   return (
     <div className="space-y-3">
       {/* Resumo */}
       <div className="flex items-center justify-between px-1">
         <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-semibold">
-          Contas a Pagar · {lancs.length} parcela{lancs.length !== 1 ? 's' : ''}
+          Contas a Pagar · {lancamentosCompra.length} parcela{lancamentosCompra.length !== 1 ? 's' : ''}
         </p>
         <p className="text-[10px] text-gray-400 dark:text-gray-500">
-          {qtdPago}/{lancs.length} pago{qtdPago !== 1 ? 's' : ''}
+          {qtdPago}/{lancamentosCompra.length} pago{qtdPago !== 1 ? 's' : ''}
         </p>
       </div>
 
@@ -79,7 +80,7 @@ export default function LancamentosCompraPanel({ pedidoId }) {
 
       {/* Lista de parcelas */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/5">
-        {lancs
+        {lancamentosCompra
           .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
           .map(l => {
             const cfg = STATUS_CONFIG[l.status] || STATUS_CONFIG['Em Aberto'];
