@@ -100,30 +100,28 @@ export default function GestaoSupermanifestos() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Alerta de Pendências - Estilo Glacial */}
+    <div className="space-y-3">
       {manifestosAguardando.length > 0 && (
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-0 ring-1 ring-gray-100 dark:ring-gray-700">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-               <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <div className="px-4 py-3 bg-white dark:bg-gray-800 rounded-3xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
-            <div>
-              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Manifestos Aguardando Vinculação</h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                <span className="font-semibold text-blue-600 dark:text-blue-400">{manifestosAguardando.length} manifesto(s)</span> aguardando vinculação a supermanifestos.
+            <div className="min-w-0">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Manifestos aguardando vinculação</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="font-semibold text-blue-600 dark:text-blue-400">{manifestosAguardando.length}</span> item(ns) pendente(s).
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Sub-abas - Estilo Glacial */}
-      <Tabs defaultValue="vincular" className="space-y-6">
-        <TabsList className="flex w-full bg-transparent p-0 gap-4 mb-6">
+      <Tabs defaultValue="vincular" className="space-y-3">
+        <TabsList className="grid w-full grid-cols-[1fr_1fr_auto] bg-transparent p-0 gap-2 mb-1">
           <TabsTrigger 
             value="vincular" 
-            className="flex-1 rounded-xl py-3 bg-gray-50 dark:bg-gray-800/50 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-100 dark:data-[state=active]:ring-gray-700 text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
+            className="rounded-2xl h-12 px-3 bg-gray-100 dark:bg-gray-800/60 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
           >
             <Truck className="w-4 h-4" />
             <span className="hidden sm:inline">Vincular Manifestos</span>
@@ -136,7 +134,7 @@ export default function GestaoSupermanifestos() {
           </TabsTrigger>
           <TabsTrigger 
             value="lista" 
-            className="flex-1 rounded-xl py-3 bg-gray-50 dark:bg-gray-800/50 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-gray-100 dark:data-[state=active]:ring-gray-700 text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
+            className="rounded-2xl h-12 px-3 bg-gray-100 dark:bg-gray-800/60 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm text-gray-500 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 font-medium transition-all flex items-center justify-center gap-2"
           >
             <Package className="w-4 h-4" />
             <span className="hidden sm:inline">Visualizar Supermanifestos</span>
@@ -146,7 +144,7 @@ export default function GestaoSupermanifestos() {
           <Button
             variant="ghost"
             onClick={handleRecalcularTotais}
-            className="rounded-xl px-3 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+            className="h-12 rounded-2xl px-3 bg-gray-100 dark:bg-gray-800/60 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm"
             title="Forçar atualização dos totais"
           >
             <RefreshCw className="w-4 h-4" />
@@ -162,18 +160,18 @@ export default function GestaoSupermanifestos() {
 
         <TabsContent value="lista" className="outline-none mt-6">
           {/* Filtros - Glacial: Input limpo, sem bordas pesadas */}
-          <div className="relative w-full mb-6">
+          <div className="relative w-full mb-3">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input 
-              placeholder="Buscar por número ou transportadora..." 
-              className="h-12 pl-11 bg-white dark:bg-gray-800 border-0 ring-1 ring-gray-100 dark:ring-gray-700 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-600 rounded-xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
+              placeholder="Buscar número ou transportadora" 
+              className="h-11 pl-11 bg-white dark:bg-gray-800 border-0 rounded-2xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
               value={searchTerm} 
               onChange={e => setSearchTerm(e.target.value)} 
             />
           </div>
 
           {/* Lista de Supermanifestos - Glacial Cards */}
-          <div className="grid gap-4">
+          <div className="grid gap-3">
         {supermanifestosFiltrados.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl ring-1 ring-gray-100 dark:ring-gray-700">
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center">
@@ -183,12 +181,12 @@ export default function GestaoSupermanifestos() {
           </div>
         ) : (
           supermanifestosFiltrados.map(sm => (
-            <div key={sm.id} className="group bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm hover:shadow-md ring-1 ring-gray-100 dark:ring-gray-700 transition-all duration-300">
-              <div className="flex flex-col gap-5">
+            <div key={sm.id} className="group bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex flex-col gap-4">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1 min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/10 flex items-center justify-center flex-shrink-0 text-teal-600 dark:text-teal-400">
+                    <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-700 dark:text-gray-200">
                       <Package className="w-6 h-6 stroke-[1.5]" />
                     </div>
                     <div className="flex-1 min-w-0 pt-0.5">
@@ -207,7 +205,7 @@ export default function GestaoSupermanifestos() {
                 </div>
 
                 {/* Informações Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-6 pt-5 border-t border-gray-50 dark:border-gray-700/50">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
                   <div>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                       <Calendar className="w-3 h-3" />
