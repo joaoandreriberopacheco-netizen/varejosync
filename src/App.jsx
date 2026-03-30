@@ -22,7 +22,6 @@ import CaixasAtivos from '@/pages/CaixasAtivos';
 import SugestoesCompra from '@/pages/SugestoesCompra';
 import Cotacoes from '@/pages/Cotacoes';
 import PedidosCompra from '@/pages/PedidosCompra';
-import ContasFinanceiras from '@/pages/ContasFinanceiras';
 import AprovacoesFinanceiras from '@/pages/AprovacoesFinanceiras';
 import TemplatesCompra from '@/pages/TemplatesCompra';
 import PedidoCompraDetalhe from '@/pages/PedidoCompraDetalhe';
@@ -139,11 +138,6 @@ const AuthenticatedApp = () => {
       <Route path="/PedidosCompra" element={
         <LayoutWrapper currentPageName="PedidosCompra">
           <PedidosCompra />
-        </LayoutWrapper>
-      } />
-      <Route path="/ContasFinanceiras" element={
-        <LayoutWrapper currentPageName="ContasFinanceiras">
-          <ContasFinanceiras />
         </LayoutWrapper>
       } />
       <Route path="/AprovacoesFinanceiras" element={
