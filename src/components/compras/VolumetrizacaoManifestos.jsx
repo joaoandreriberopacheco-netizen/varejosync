@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Package, Edit, RefreshCw } from 'lucide-react';
+import { Search, Package, Edit, RefreshCw, Boxes } from 'lucide-react';
+import LoteVolumesGenericosDialog from '@/components/compras/LoteVolumesGenericosDialog';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
@@ -25,6 +26,7 @@ export default function VolumetrizacaoManifestos() {
   const [manifestos, setManifestos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showLoteDialog, setShowLoteDialog] = useState(false);
 
   useEffect(() => {
     loadManifestos();
@@ -72,14 +74,24 @@ export default function VolumetrizacaoManifestos() {
   return (
     <div className="space-y-3">
       {/* Filtros - Glacial */}
-      <div className="relative w-full mb-3">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input 
-          placeholder="Buscar por número, pedido ou fornecedor..." 
-          className="h-11 pl-11 bg-white dark:bg-gray-800 border-0 rounded-2xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
-          value={searchTerm} 
-          onChange={e => setSearchTerm(e.target.value)} 
-        />
+      <div className="flex flex-col md:flex-row gap-3 mb-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input 
+            placeholder="Buscar por número, pedido ou fornecedor..." 
+            className="h-11 pl-11 bg-white dark:bg-gray-800 border-0 rounded-2xl shadow-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400" 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
+        </div>
+        <Button
+          onClick={() => setShowLoteDialog(true)}
+          disabled={manifestosFiltrados.length === 0}
+          className="h-11 rounded-2xl bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 shadow-sm gap-2"
+        >
+          <Boxes className="w-4 h-4" />
+          Criar em lote
+        </Button>
       </div>
 
       {/* Lista de Manifestos - Glacial */}
@@ -143,6 +155,13 @@ export default function VolumetrizacaoManifestos() {
           ))
         )}
       </div>
+
+      <LoteVolumesGenericosDialog
+        isOpen={showLoteDialog}
+        onClose={() => setShowLoteDialog(false)}
+        manifestos={manifestosFiltrados}
+        onSuccess={loadManifestos}
+      />
     </div>
   );
 }
