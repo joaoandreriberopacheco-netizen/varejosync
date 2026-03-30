@@ -29,6 +29,14 @@ export default function EnvioFinanceiroLoteDialog({
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {quantidadeSelecionados} pedido(s) selecionado(s)
           </p>
+          <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/80 p-3 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Segurança do próximo passo
+            </p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              Nos próximos envios em lote, a confirmação poderá exigir identificação com foto e PIN.
+            </p>
+          </div>
 
           <div className="space-y-2">
             <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">

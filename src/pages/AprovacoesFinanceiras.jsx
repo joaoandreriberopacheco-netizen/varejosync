@@ -10,6 +10,7 @@ import PedidoCompraResumoDialog from '@/components/compras/PedidoCompraResumoDia
 import OperacaoAuthenticator from '@/components/auth/OperacaoAuthenticator';
 import { registrarTransicao } from '@/components/compras/transicaoHelper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { enviarFinanceiroLote } from '@/functions/enviarFinanceiroLote';
 
 export default function AprovacoesFinanceirasPage() {
   const [pendingTransactions, setPendingTransactions] = useState([]);
@@ -87,12 +88,19 @@ export default function AprovacoesFinanceirasPage() {
     if (actionType === 'approve') {
       const pedido = selectedTransaction._pedido;
       const agora = new Date().toISOString();
-      const notaAprovacao = `\n[Aprovado: ${authData.intervenienteName} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+      const nomeAprovador = authData.intervenienteName || authData.userName || 'Usuário';
+      const notaAprovacao = `\n[Aprovado: ${nomeAprovador} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}]`;
+
+      const lancamentosExistentes = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
+      if (lancamentosExistentes.length === 0) {
+        await enviarFinanceiroLote({ pedidos: [pedido] });
+      }
 
       await base44.entities.PedidoCompra.update(pedido.id, {
         status: 'Aprovado',
         status_aprovacao_financeira: 'Aprovado Financeiramente',
         conta_pagamento_id: contaSelecionada,
+        conta_pagamento_nome: contas.find(c => c.id === contaSelecionada)?.nome || '',
         data_aprovacao_financeira: agora,
       });
 
@@ -101,44 +109,22 @@ export default function AprovacoesFinanceirasPage() {
         pedidoNumero: pedido.numero,
         statusAnterior: 'Aguardando Liberação',
         statusNovo: 'Aprovado',
-        responsavel: { id: authData.intervenienteId, nome: authData.intervenienteName, email: authData.intervenienteEmail || '' },
+        responsavel: { id: authData.intervenienteId || authData.userId, nome: nomeAprovador, email: authData.intervenienteEmail || '' },
         tipoAutenticacao: 'Interveniente',
         codigoOperacao: authData.codigoOperacao || '',
         observacao: `Aprovação financeira. Conta: ${contas.find(c => c.id === contaSelecionada)?.nome || contaSelecionada}`,
       });
 
       const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedido.id });
-      if (lancamentos.length > 0) {
-        for (const l of lancamentos) {
-          await base44.entities.LancamentoFinanceiro.update(l.id, {
-            tipo: tipoLancamento,
-            conta_financeira_id: contaSelecionada,
-            is_custo_mercadoria: tipoLancamento === 'Despesa',
-            pedido_compra_vinculado_id: pedido.id,
-            pedido_compra_vinculado_numero: pedido.numero,
-            observacoes: (l.observacoes || '') + notaAprovacao,
-          });
-        }
-      } else {
-        const conta = contas.find(c => c.id === contaSelecionada);
-        await base44.entities.LancamentoFinanceiro.create({
+      for (const l of lancamentos) {
+        await base44.entities.LancamentoFinanceiro.update(l.id, {
           tipo: tipoLancamento,
-          descricao: `${tipoLancamento === 'Despesa' ? 'Compra de Mercadoria' : 'Receita de Compra'} - ${pedido.numero}`,
-          terceiro_id: pedido.fornecedor_id,
-          terceiro_nome: pedido.fornecedor_nome,
-          valor: pedido.valor_total,
-          data_vencimento: pedido.data_prevista_entrega || format(new Date(), 'yyyy-MM-dd'),
-          status: 'Em Aberto',
-          categoria: 'Compra de Mercadoria',
-          referencia_id: pedido.id,
-          referencia_tipo: 'PedidoCompra',
-          referencia_numero: pedido.numero,
           conta_financeira_id: contaSelecionada,
-          conta_financeira_nome: conta?.nome || '',
+          conta_financeira_nome: contas.find(c => c.id === contaSelecionada)?.nome || '',
           is_custo_mercadoria: tipoLancamento === 'Despesa',
           pedido_compra_vinculado_id: pedido.id,
           pedido_compra_vinculado_numero: pedido.numero,
-          observacoes: `Gerado na aprovação financeira.${notaAprovacao}`,
+          observacoes: (l.observacoes || '') + notaAprovacao,
         });
       }
     }

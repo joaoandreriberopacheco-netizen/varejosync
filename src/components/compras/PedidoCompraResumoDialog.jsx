@@ -18,6 +18,7 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
   if (!pedido) return null;
 
   const itens = pedido.itens || [];
+  const criadoPorNome = pedido.created_by_nickname || pedido.created_by_nome || pedido.responsavel_nome || pedido.created_by || '—';
   const subtotal = itens.reduce((acc, item) => acc + (Number(item.total) || 0), 0);
   const total = Number(pedido.valor_total) || 0;
   const diferenca = total - subtotal;
@@ -67,7 +68,7 @@ export default function PedidoCompraResumoDialog({ open, onOpenChange, pedido })
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Log</h3>
                 </div>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-3"><span className="text-gray-500 dark:text-gray-400">Criado por</span><span className="text-right text-gray-900 dark:text-gray-100">{pedido.created_by || '—'}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-gray-500 dark:text-gray-400">Criado por</span><span className="text-right text-gray-900 dark:text-gray-100 break-all">{criadoPorNome}</span></div>
                   <div className="flex justify-between gap-3"><span className="text-gray-500 dark:text-gray-400">Criado em</span><span className="text-right text-gray-900 dark:text-gray-100">{formatDate(pedido.created_date)}</span></div>
                   <div className="flex justify-between gap-3"><span className="text-gray-500 dark:text-gray-400">Atualizado em</span><span className="text-right text-gray-900 dark:text-gray-100">{formatDate(pedido.updated_date)}</span></div>
                 </div>
