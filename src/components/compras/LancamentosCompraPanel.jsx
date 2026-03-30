@@ -19,9 +19,17 @@ export default function LancamentosCompraPanel({ pedidoId }) {
   useEffect(() => {
     if (!pedidoId) return;
     setLoading(true);
-    base44.entities.LancamentoFinanceiro
-      .filter({ pedido_compra_vinculado_id: pedidoId })
-      .then(ls => { setLancs(ls); setLoading(false); })
+    Promise.all([
+      base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedidoId }),
+      base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedidoId, referencia_tipo: 'PedidoCompra' })
+    ])
+      .then(([porVinculo, porReferencia]) => {
+        const unicos = [...porVinculo, ...porReferencia].filter(
+          (item, index, arr) => arr.findIndex((x) => x.id === item.id) === index
+        );
+        setLancs(unicos);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [pedidoId]);
 
