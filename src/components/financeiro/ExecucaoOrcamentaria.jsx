@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function parseDateKey(dateKey) {
-  return new Date(`${dateKey}T12:00:00Z`);
+  return new Date(`${dateKey}T12:00:00-05:00`);
 }
 
 function dateRange(periodo, cs, ce) {
