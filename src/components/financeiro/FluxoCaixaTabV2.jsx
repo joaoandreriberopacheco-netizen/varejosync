@@ -15,8 +15,10 @@ import {
 } from 'lucide-react';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
+import ConciliacaoBancaria from './ConciliacaoBancaria';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -262,6 +264,30 @@ function ContasFiltro({ contas, sel, onSel }) {
   );
 }
 
+function ConciliacaoFiltro({ contas, onOpen }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex-none px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300">
+          Conciliar em lote
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2 dark:bg-gray-800 dark:border-gray-700" align="start">
+        <p className="px-2 py-1 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Escolha a conta</p>
+        {contas.map(c => (
+          <button
+            key={c.id}
+            onClick={() => onOpen(c)}
+            className="w-full text-left px-2 py-2 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+          >
+            {c.nome}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // ─── Lancamento Row ───────────────────────────────────────────────────────────
 function LancRow({ l, onClick }) {
   const isR = l.tipo === 'Receita';
@@ -351,6 +377,7 @@ export default function FluxoCaixaTabV2() {
   const [showNovo, setShowNovo]       = useState(false);
   const [detalhe, setDetalhe]         = useState(null);
   const [gerandoExtrato, setGerandoExtrato] = useState(false);
+  const [conciliacaoConta, setConciliacaoConta] = useState(null);
 
   useEffect(() => { load(); }, []);
 
@@ -552,6 +579,7 @@ export default function FluxoCaixaTabV2() {
                 ${pendentes ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>
               Não conciliados
             </button>
+            <ConciliacaoFiltro contas={contas} onOpen={setConciliacaoConta} />
           </div>
       </div>
 
@@ -594,6 +622,26 @@ export default function FluxoCaixaTabV2() {
       {/* Dialogs */}
       <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
       {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+      <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
+        <DialogContent className="dark:bg-gray-800 dark:border-gray-700 max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-gray-800 dark:text-gray-200">Conciliação em lote — {conciliacaoConta?.nome}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {conciliacaoConta && (
+              <ConciliacaoBancaria
+                contaId={conciliacaoConta.id}
+                contaNome={conciliacaoConta.nome}
+                onClose={() => setConciliacaoConta(null)}
+                onConciliado={() => {
+                  load();
+                  setConciliacaoConta(null);
+                }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

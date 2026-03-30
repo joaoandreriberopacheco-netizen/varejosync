@@ -19,6 +19,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   const [dialogConfirm, setDialogConfirm] = useState(false);
   const [valorConfirmado, setValorConfirmado] = useState('');
   const [dataEfetiva, setDataEfetiva] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [processing, setProcessing] = useState(false);
   const [contas, setContas] = useState([]);
   const [contaBancariaDestino, setContaBancariaDestino] = useState('');
   const { toast } = useToast();
@@ -83,11 +84,11 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   };
 
   const confirmarConciliacao = async () => {
+    setProcessing(true);
     const valorReal = parseFloat(valorConfirmado);
     const grupoId = `CONC-${Date.now()}`;
     const dataEfetivaISO = dataEfetiva;
 
-    // Marca todos selecionados como conciliados
     const atualizacoes = selecionadosData.map(l => {
       const status = Math.abs((l.valor_liquido || l.valor) - valorReal / selecionadosData.length) > 0.01
         ? 'Ajustado' : 'Conciliado';
@@ -101,7 +102,6 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
 
     await Promise.all(atualizacoes);
 
-    // Cria lançamento consolidado na conta bancária destino (se selecionada)
     if (contaBancariaDestino) {
       const contaDestino = contas.find(c => c.id === contaBancariaDestino);
       await base44.entities.LancamentoFinanceiro.create({
@@ -122,7 +122,6 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         observacoes: `Consolidação de ${selecionados.length} lançamentos de ${contaNome}`
       });
 
-      // Atualiza saldo da conta destino
       if (contaDestino) {
         await base44.entities.ContasFinanceiras.update(contaBancariaDestino, {
           saldo_atual: (contaDestino.saldo_atual || 0) + valorReal
@@ -140,6 +139,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
     setSelecionados([]);
     await loadPendentes();
     onConciliado?.();
+    setProcessing(false);
   };
 
   const getStatusData = (dataStr) => {
@@ -338,11 +338,11 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogConfirm(false)} className="dark:bg-gray-700 dark:border-gray-600">
+            <Button variant="outline" onClick={() => setDialogConfirm(false)} disabled={processing} className="dark:bg-gray-700 dark:border-gray-600">
               Cancelar
             </Button>
-            <Button onClick={confirmarConciliacao} className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-300 dark:text-gray-800">
-              Confirmar
+            <Button onClick={confirmarConciliacao} disabled={processing} className="bg-gray-800 hover:bg-gray-900 dark:bg-gray-300 dark:text-gray-800">
+              {processing ? 'Processando...' : 'Confirmar'}
             </Button>
           </DialogFooter>
         </DialogContent>
