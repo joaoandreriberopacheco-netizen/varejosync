@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, FileText, X, Download, FileBarChart2, Send } from 'lucide-react';
+import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, quantidadeSelecionados = 0, enviandoLote = false, grupos = [], kpis = {} }) {
+export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, grupos = [], kpis = {} }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState(false);
 
@@ -36,12 +36,18 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
 
   const actions = [
     {
+      icon: <CheckSquare className="w-5 h-5" />,
+      label: modoSelecao ? 'Cancelar seleção' : 'Selecionar pedidos',
+      onClick: () => { onToggleModoSelecao?.(); setIsExpanded(false); },
+      color: modoSelecao ? 'bg-gray-900 dark:bg-gray-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+    },
+    ...(modoSelecao ? [{
       icon: <Send className="w-5 h-5" />,
-      label: enviandoLote ? 'Enviando...' : `Financeiro${quantidadeSelecionados ? ` (${quantidadeSelecionados})` : ''}`,
+      label: enviandoLote ? 'Enviando...' : `Enviar ao financeiro${quantidadeSelecionados ? ` (${quantidadeSelecionados})` : ''}`,
       onClick: () => { onEnviarFinanceiroLote?.(); setIsExpanded(false); },
       color: 'bg-emerald-600 text-white',
       disabled: enviandoLote || quantidadeSelecionados === 0,
-    },
+    }] : []),
     {
       icon: <Plus className="w-5 h-5" />,
       label: 'Novo Pedido',

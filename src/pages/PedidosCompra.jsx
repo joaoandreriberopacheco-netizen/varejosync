@@ -8,6 +8,7 @@ import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
+import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -26,6 +27,10 @@ export default function PedidosCompraPage() {
   const [loading, setLoading] = useState(true);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
   const [enviandoLote, setEnviandoLote] = useState(false);
+  const [modoSelecao, setModoSelecao] = useState(false);
+  const [showEnvioDialog, setShowEnvioDialog] = useState(false);
+  const [formaPagamentoLote, setFormaPagamentoLote] = useState('Parcelado');
+  const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
 
   useEffect(() => {
     loadData();
@@ -86,8 +91,28 @@ export default function PedidosCompraPage() {
       : [...prev, pedido.id]);
   };
 
+  const handleToggleModoSelecao = () => {
+    setModoSelecao((prev) => !prev);
+    setSelecionadosIds([]);
+  };
+
+  const handleAbrirEnvioFinanceiroLote = () => {
+    if (!selecionadosIds.length) {
+      toast.error('Selecione ao menos um pedido');
+      return;
+    }
+    setShowEnvioDialog(true);
+  };
+
   const handleEnviarFinanceiroLote = async () => {
-    const pedidosSelecionados = filtrados.filter((p) => selecionadosIds.includes(p.id));
+    const pedidosSelecionados = filtrados
+      .filter((p) => selecionadosIds.includes(p.id))
+      .map((pedido) => ({
+        ...pedido,
+        forma_pagamento_compra: formaPagamentoLote,
+        data_primeiro_vencimento: dataPrimeiroVencimentoLote,
+      }));
+
     if (!pedidosSelecionados.length) {
       toast.error('Selecione ao menos um pedido');
       return;
@@ -98,6 +123,8 @@ export default function PedidosCompraPage() {
       const currentUser = await base44.auth.me();
       await enviarFinanceiroLote({ pedidos: pedidosSelecionados, currentUser });
       setSelecionadosIds([]);
+      setModoSelecao(false);
+      setShowEnvioDialog(false);
       toast.success(`${pedidosSelecionados.length} pedido(s) enviados ao financeiro`);
       await loadData();
     } catch (error) {
@@ -201,7 +228,7 @@ export default function PedidosCompraPage() {
         onDelete={loadData}
         selecionadosIds={selecionadosIds}
         onToggleSelecao={handleToggleSelecao}
-        modoSelecao={true}
+        modoSelecao={modoSelecao}
       />
 
 
@@ -217,7 +244,9 @@ export default function PedidosCompraPage() {
         onNovopedido={handleNovoPedido}
         onImportarNF={() => setShowImportador(true)}
         onDownloadTemplate={handleDownloadTemplate}
-        onEnviarFinanceiroLote={handleEnviarFinanceiroLote}
+        onEnviarFinanceiroLote={handleAbrirEnvioFinanceiroLote}
+        onToggleModoSelecao={handleToggleModoSelecao}
+        modoSelecao={modoSelecao}
         quantidadeSelecionados={selecionadosIds.length}
         enviandoLote={enviandoLote}
         grupos={grupos}
@@ -226,6 +255,18 @@ export default function PedidosCompraPage() {
           totalGeral: valorTotal,
           totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0)
         }}
+      />
+
+      <EnvioFinanceiroLoteDialog
+        open={showEnvioDialog}
+        onOpenChange={setShowEnvioDialog}
+        formaPagamento={formaPagamentoLote}
+        onFormaPagamentoChange={setFormaPagamentoLote}
+        dataPrimeiroVencimento={dataPrimeiroVencimentoLote}
+        onDataPrimeiroVencimentoChange={setDataPrimeiroVencimentoLote}
+        quantidadeSelecionados={selecionadosIds.length}
+        onConfirm={handleEnviarFinanceiroLote}
+        loading={enviandoLote}
       />
     </div>
   );

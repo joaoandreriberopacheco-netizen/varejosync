@@ -61,10 +61,14 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
         <div
           role="button"
           tabIndex={0}
-          onClick={() => onEdit(pedido)}
+          onClick={() => {
+            if (modoSelecao) return;
+            onEdit(pedido);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
+              if (modoSelecao) return;
               onEdit(pedido);
             }
           }}
