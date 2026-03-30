@@ -11,8 +11,11 @@ import {
   AlertTriangle, Calendar, CheckCircle2, FileText, SlidersHorizontal
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Checkbox } from '@/components/ui/checkbox';
+import { dataHoje } from '@/components/utils/dateUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
+import PagamentoLoteDialog from './PagamentoLoteDialog';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -90,7 +93,7 @@ function KpiAbertas({ kpis }) {
 // (ContasFiltro removido — seleção de conta apenas na efetivação)
 
 // ─── Linha de lançamento em aberto ────────────────────────────────────────────
-function ContaRow({ l, onPagar, onClick }) {
+function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecionado }) {
   const isR = l.tipo === 'Receita';
   const hStr = hojeStr();
   const vStr = getVencimento(l);
@@ -103,9 +106,14 @@ function ContaRow({ l, onPagar, onClick }) {
 
   return (
     <button
-      onClick={() => onClick(l)}
+      onClick={() => !emSelecao && onClick(l)}
       className={`w-full flex items-center gap-2.5 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left ${isPago ? 'opacity-60' : ''}`}
     >
+      {emSelecao && !isPago && (
+        <span className="flex-none pt-1">
+          <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado(l.id)} />
+        </span>
+      )}
       {/* Ícone tipo */}
       <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-8 h-8 flex items-center justify-center">
         {isR
@@ -155,7 +163,7 @@ function ContaRow({ l, onPagar, onClick }) {
 }
 
 // ─── Grupo por data de vencimento ─────────────────────────────────────────────
-function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isVencido }) {
+function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isVencido, emSelecao, selecionados, onToggleSelecionado }) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between px-1 py-1.5">
@@ -168,7 +176,17 @@ function GrupoContas({ label, items, onPagar, onRow, aReceberDia, aPagarDia, isV
         </div>
       </div>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-white/5">
-        {items.map(l => <ContaRow key={l.id} l={l} onPagar={onPagar} onClick={onRow} />)}
+        {items.map(l => (
+          <ContaRow
+            key={l.id}
+            l={l}
+            onPagar={onPagar}
+            onClick={onRow}
+            emSelecao={emSelecao}
+            selecionado={selecionados.includes(l.id)}
+            onToggleSelecionado={onToggleSelecionado}
+          />
+        ))}
       </div>
     </div>
   );
@@ -192,6 +210,12 @@ export default function ContasAbertas() {
   const [mostrarPagas, setMostrarPagas] = useState(false);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [modoSelecaoLote, setModoSelecaoLote] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showPagamentoLote, setShowPagamentoLote] = useState(false);
+  const [contaLoteId, setContaLoteId] = useState('');
+  const [dataPagamentoLote, setDataPagamentoLote] = useState(dataHoje());
+  const [processingLote, setProcessingLote] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -287,6 +311,49 @@ export default function ContasAbertas() {
   // Marcar como pago rapidamente (abre detalhe pre-configurado)
   const handlePagarRapido = (l) => setDetalhe(l);
 
+  const handleToggleSelecionado = (id) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
+  };
+
+  const lancamentosSelecionados = filtrados.filter((l) => selectedIds.includes(l.id) && l.status !== 'Pago');
+
+  const handleConfirmarPagamentoLote = async () => {
+    const conta = contas.find((c) => c.id === contaLoteId);
+    if (!conta || !dataPagamentoLote || lancamentosSelecionados.length === 0) return;
+
+    setProcessingLote(true);
+    try {
+      let deltaConta = 0;
+
+      for (const lancamento of lancamentosSelecionados) {
+        await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+          status: 'Pago',
+          data_pagamento: dataPagamentoLote,
+          status_conciliacao: 'Pendente',
+          conta_financeira_id: conta.id,
+          conta_financeira_nome: conta.nome,
+        });
+
+        deltaConta += lancamento.tipo === 'Receita'
+          ? (lancamento.valor || 0)
+          : -(lancamento.valor || 0);
+      }
+
+      await base44.entities.ContasFinanceiras.update(conta.id, {
+        saldo_atual: (conta.saldo_atual || 0) + deltaConta,
+      });
+
+      setShowPagamentoLote(false);
+      setModoSelecaoLote(false);
+      setSelectedIds([]);
+      setContaLoteId('');
+      setDataPagamentoLote(dataHoje());
+      await load();
+    } finally {
+      setProcessingLote(false);
+    }
+  };
+
   const handleGerarRelatorio = async () => {
     setGerandoRelatorio(true);
     try {
@@ -357,6 +424,15 @@ export default function ContasAbertas() {
         <div className="pt-2 px-1 flex items-center justify-between gap-2">
           <p className="text-[0.7rem] text-gray-500 dark:text-gray-400">{filtrados.length} lançamento{filtrados.length !== 1 ? 's' : ''}</p>
           <div className="flex flex-wrap justify-end gap-1.5">
+            <button
+              onClick={() => {
+                setModoSelecaoLote((prev) => !prev);
+                setSelectedIds([]);
+              }}
+              className={`px-2 py-1 rounded-full text-[10px] transition-colors ${modoSelecaoLote ? 'bg-slate-900 text-white dark:bg-slate-200 dark:text-slate-900' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300'}`}
+            >
+              {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
+            </button>
             <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300">{PERIODOS.find(p => p.v === periodo)?.l || 'Período'}</span>
             {tipoFiltro !== 'todos' && <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-300">{tipoFiltro === 'Receita' ? 'A Receber' : tipoFiltro === 'Despesa' ? 'A Pagar' : 'Compras'}</span>}
             {mostrarPagas && <span className="px-2 py-1 rounded-full text-[10px] bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">Pagas</span>}
@@ -433,6 +509,24 @@ export default function ContasAbertas() {
         </DrawerContent>
       </Drawer>
 
+      {modoSelecaoLote && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Pagamento em lote</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{lancamentosSelecionados.length} item(ns) selecionado(s)</p>
+            </div>
+            <button
+              onClick={() => setShowPagamentoLote(true)}
+              disabled={lancamentosSelecionados.length === 0}
+              className="px-4 h-10 rounded-2xl bg-emerald-600 text-white text-sm font-medium disabled:opacity-40"
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Lista */}
       {loading ? (
         <div className="space-y-2">
@@ -450,6 +544,9 @@ export default function ContasAbertas() {
               onPagar={handlePagarRapido} onRow={setDetalhe}
               aReceberDia={aReceberDia} aPagarDia={aPagarDia}
               isVencido={isVencido}
+              emSelecao={modoSelecaoLote}
+              selecionados={selectedIds}
+              onToggleSelecionado={handleToggleSelecionado}
             />
           ))}
         </div>
@@ -475,6 +572,18 @@ export default function ContasAbertas() {
       {/* Dialogs */}
       <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
       {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+      <PagamentoLoteDialog
+        open={showPagamentoLote}
+        onOpenChange={setShowPagamentoLote}
+        contas={contas}
+        contaId={contaLoteId}
+        setContaId={setContaLoteId}
+        dataPagamento={dataPagamentoLote}
+        setDataPagamento={setDataPagamentoLote}
+        selecionados={lancamentosSelecionados}
+        onConfirm={handleConfirmarPagamentoLote}
+        loading={processingLote}
+      />
     </div>
   );
 }
