@@ -56,14 +56,14 @@ export default function FluxoCaixaPrintDialog({ open, onOpenChange, onPrintExtra
           <OptionCard
             icon={FileText}
             title="Extrato completo"
-            description="Gera um extrato com toda a movimentação exibida no fluxo, ideal para conferência geral."
+            description="Gera um extrato geral, sem considerar a visualização filtrada da tela."
             onClick={onPrintExtratoCompleto}
           />
 
           <OptionCard
             icon={Filter}
-            title="Extrato com filtros atuais"
-            description="Mantém período, contas e demais filtros ativos exatamente como estão na tela."
+            title="Visualização atual"
+            description="Usa exatamente o que está sendo exibido agora na tela, com todo o conjunto de filtros ativos."
             onClick={onPrintExtratoFiltrado}
           />
         </div>
