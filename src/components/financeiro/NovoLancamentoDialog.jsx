@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, Paperclip, ShoppingCart } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
-import AnexosPanel from '@/components/anexos/AnexosPanel';
 import { Checkbox } from '@/components/ui/checkbox';
+import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 
 const TIPOS = [
   { value: 'Receita', label: 'Receita', icon: ArrowDownLeft },
@@ -45,6 +45,9 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const [step, setStep] = useState('valor');
   const [lancamentoCriado, setLancamentoCriado] = useState(null);
   const [isCustoMercadoria, setIsCustoMercadoria] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [confirmDialogMode, setConfirmDialogMode] = useState('processing');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pedidoCompraId, setPedidoCompraId] = useState('');
   const [pedidosCompra, setPedidosCompra] = useState([]);
   const { toast } = useToast();
@@ -72,6 +75,9 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setLancamentoCriado(null);
       setIsCustoMercadoria(false);
       setPedidoCompraId('');
+      setSaving(false);
+      setConfirmDialogMode('processing');
+      setShowConfirmDialog(false);
     }
   }, [open, tipoInicial, contaDefaultId]);
 
@@ -83,23 +89,32 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const gerarGrupoId = () => `grp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
   const handleSave = async () => {
+    if (saving) return;
     if (!valorNumerico || valorNumerico <= 0) { toast({ title: 'Informe o valor', variant: 'destructive' }); return; }
     if (tipo !== 'Transferência' && !descricao.trim()) { toast({ title: 'Informe a descrição', variant: 'destructive' }); return; }
     if (tipo === 'Transferência' && !contaId) { toast({ title: 'Selecione a conta', variant: 'destructive' }); return; }
     if (status === 'Pago' && !contaId) { toast({ title: 'Selecione a conta para registrar o pagamento', variant: 'destructive' }); return; }
 
+    setSaving(true);
+    setConfirmDialogMode('processing');
+    setShowConfirmDialog(true);
+
     const conta = contas.find(c => c.id === contaId);
     const pedidoCompra = pedidoCompraId ? pedidosCompra.find(p => p.id === pedidoCompraId) : null;
 
     if (tipo === 'Transferência') {
-      if (!contaDestinoId) { toast({ title: 'Selecione a conta destino', variant: 'destructive' }); return; }
+      if (!contaDestinoId) {
+        setSaving(false);
+        setShowConfirmDialog(false);
+        toast({ title: 'Selecione a conta destino', variant: 'destructive' });
+        return;
+      }
       const contaDest = contas.find(c => c.id === contaDestinoId);
       await base44.entities.LancamentoFinanceiro.create({ tipo: 'Despesa', descricao: `Transferência para ${contaDest?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaId, conta_financeira_nome: conta?.nome, referencia_tipo: 'Manual' });
       await base44.entities.LancamentoFinanceiro.create({ tipo: 'Receita', descricao: `Transferência de ${conta?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaDestinoId, conta_financeira_nome: contaDest?.nome, referencia_tipo: 'Manual' });
       await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta?.saldo_atual || 0) - valorNumerico });
       await base44.entities.ContasFinanceiras.update(contaDestinoId, { saldo_atual: (contas.find(c => c.id === contaDestinoId)?.saldo_atual || 0) + valorNumerico });
     } else if (isRecorrente && frequencia) {
-      // Gerar múltiplos lançamentos agrupados
       const grupoId = gerarGrupoId();
       const baseDate = new Date(`${data}T12:00:00Z`);
       const isPago = status === 'Pago';
@@ -126,7 +141,6 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           });
         }
       } else {
-        // Recorrência: gerar até dataFim ou 12 ocorrências como máximo
         const addFn = FREQS_MAP[frequencia] || FREQS_MAP['Mensal'];
         const limiteDate = dataFim ? new Date(dataFim) : addMonths(baseDate, 11);
         let i = 0;
@@ -159,7 +173,6 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
     } else {
-      // Lançamento único
       const isPago = status === 'Pago';
       const novoLancamento = await base44.entities.LancamentoFinanceiro.create({
         tipo, descricao, valor: valorNumerico,
@@ -176,17 +189,13 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         const delta = tipo === 'Receita' ? valorNumerico : -valorNumerico;
         await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
       }
-      // Para lançamento único, ir para step de anexos
-      toast({ title: 'Lançamento salvo!' });
-      onSaved?.(novoLancamento);
       setLancamentoCriado(novoLancamento);
-      setStep('anexos');
-      return;
     }
 
     toast({ title: 'Lançamento salvo!' });
     onSaved?.();
-    onClose();
+    setSaving(false);
+    setConfirmDialogMode('success');
   };
 
   return (
@@ -349,35 +358,43 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           )}
 
           <button onClick={handleSave}
-            className="w-full h-14 rounded-2xl bg-gray-500 dark:bg-white text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 mt-2">
+            disabled={saving}
+            className="w-full h-14 rounded-2xl bg-gray-500 dark:bg-white text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:pointer-events-none">
             <CheckCircle2 className="w-5 h-5" />
-            {isRecorrente && frequencia === 'Parcelado' ? `Criar ${parcelas} parcelas` : isRecorrente ? 'Criar Recorrência' : 'Confirmar Lançamento'}
+            {saving ? 'Processando...' : isRecorrente && frequencia === 'Parcelado' ? `Criar ${parcelas} parcelas` : isRecorrente ? 'Criar Recorrência' : 'Confirmar Lançamento'}
           </button>
         </div>
       )}
-      {step === 'anexos' && lancamentoCriado && (
-        <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4 space-y-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{lancamentoCriado.tipo} · {lancamentoCriado.descricao}</span>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">R$ {(lancamentoCriado.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-          </div>
-          <div className="flex items-center gap-2 px-1">
-            <Paperclip className="w-4 h-4 text-gray-400" />
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Anexar comprovante</p>
-            <span className="text-xs text-gray-400">(opcional)</span>
-          </div>
-          <AnexosPanel
-            referenciaId={lancamentoCriado.id}
-            referenciaTipo="LancamentoFinanceiro"
-            referenciaNumero={lancamentoCriado.descricao}
-          />
-          <button onClick={onClose}
-            className="w-full h-14 rounded-2xl bg-gray-500 dark:bg-white text-white dark:text-gray-900 text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2 mt-2">
-            <CheckCircle2 className="w-5 h-5" />
-            Concluir
-          </button>
-        </div>
-      )}
+      <LancamentoConfirmacaoDialog
+        open={showConfirmDialog}
+        mode={confirmDialogMode}
+        onCreateAnother={() => {
+          setShowConfirmDialog(false);
+          setConfirmDialogMode('processing');
+          setSaving(false);
+          setValorCents('0');
+          setDescricao('');
+          setData(dataHoje());
+          setCategoria('');
+          setCategoriaId('');
+          setContaId(contaDefaultId || '');
+          setContaDestinoId('');
+          setStatus('Em Aberto');
+          setTags([]);
+          setIsRecorrente(false);
+          setFrequencia('');
+          setParcelas(2);
+          setDataFim('');
+          setStep('valor');
+          setLancamentoCriado(null);
+          setIsCustoMercadoria(false);
+          setPedidoCompraId('');
+        }}
+        onFinish={() => {
+          setShowConfirmDialog(false);
+          onClose();
+        }}
+      />
     </div>
   );
 }
