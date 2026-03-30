@@ -215,11 +215,19 @@ export default function ExtratoContaPage() {
     }
   };
 
+  const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.created_date;
+  const participaDoSaldo = (mov) => {
+    if (mov.status === 'Cancelado') return false;
+    if (mov.origem === 'movimento') return false;
+    if (mov.tipo !== 'Receita' && mov.tipo !== 'Despesa') return false;
+    return mov.status === 'Pago' || !!mov.data_pagamento;
+  };
+
   // Combina e ordena movimentações
   const todasMovimentacoes = [
     ...lancamentos.map(l => ({ ...l, origem: 'lancamento' })),
     ...movimentosCaixa.map(m => ({ ...m, origem: 'movimento' }))
-  ].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+  ].sort((a, b) => new Date(getDataMovimento(a)) - new Date(getDataMovimento(b)));
 
   // Aplica filtro de período
   const getDataRange = () => {
@@ -245,7 +253,7 @@ export default function ExtratoContaPage() {
 
   const { inicio, fim } = getDataRange();
   const movimentacoesFiltradas = todasMovimentacoes.filter(m => {
-    const dataMovimento = new Date(m.created_date);
+    const dataMovimento = new Date(getDataMovimento(m));
     const dentroDoRange = isWithinInterval(dataMovimento, { start: inicio, end: fim });
     
     if (!dentroDoRange) return false;
@@ -261,7 +269,7 @@ export default function ExtratoContaPage() {
 
   // Agrupa por dia e calcula saldos
   const movimentacoesPorDia = movimentacoesFiltradas.reduce((acc, mov) => {
-    const dia = format(new Date(mov.created_date), 'yyyy-MM-dd');
+    const dia = format(new Date(getDataMovimento(mov)), 'yyyy-MM-dd');
     if (!acc[dia]) acc[dia] = [];
     acc[dia].push(mov);
     return acc;
@@ -275,10 +283,10 @@ export default function ExtratoContaPage() {
 
   // Calcula totais de todas as movimentações filtradas
   const totalEntradasGeral = movimentacoesFiltradas
-    .filter(m => (m.tipo === 'Receita' || m.tipo === 'Reforço') && m.status !== 'Cancelado')
+    .filter(m => participaDoSaldo(m) && m.tipo === 'Receita')
     .reduce((sum, m) => sum + (m.valor || 0), 0);
   const totalSaidasGeral = movimentacoesFiltradas
-    .filter(m => (m.tipo === 'Despesa' || m.tipo === 'Sangria') && m.status !== 'Cancelado')
+    .filter(m => participaDoSaldo(m) && m.tipo === 'Despesa')
     .reduce((sum, m) => sum + (m.valor || 0), 0);
 
   // Saldo anterior ao período = saldo atual - resultado do período filtrado
@@ -289,11 +297,11 @@ export default function ExtratoContaPage() {
     const movimentacoesDia = movimentacoesPorDia[dia];
 
     const totalEntradas = movimentacoesDia
-      .filter(m => (m.tipo === 'Receita' || m.tipo === 'Reforço') && m.status !== 'Cancelado')
+      .filter(m => participaDoSaldo(m) && m.tipo === 'Receita')
       .reduce((sum, m) => sum + (m.valor || 0), 0);
 
     const totalSaidas = movimentacoesDia
-      .filter(m => (m.tipo === 'Despesa' || m.tipo === 'Sangria') && m.status !== 'Cancelado')
+      .filter(m => participaDoSaldo(m) && m.tipo === 'Despesa')
       .reduce((sum, m) => sum + (m.valor || 0), 0);
 
     saldoAcumulado = saldoAcumulado + totalEntradas - totalSaidas;
@@ -315,7 +323,7 @@ export default function ExtratoContaPage() {
     const csvContent = [
       ['Data', 'Descrição', 'Tipo', 'Categoria', 'Valor', 'Saldo'],
       ...movimentacoesFiltradas.map(m => [
-        format(new Date(m.created_date), 'dd/MM/yyyy HH:mm'),
+        format(new Date(getDataMovimento(m)), 'dd/MM/yyyy HH:mm'),
         m.descricao || m.tipo,
         m.tipo,
         m.categoria || '-',
@@ -521,7 +529,7 @@ export default function ExtratoContaPage() {
                                 {mov.descricao || mov.tipo}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {format(new Date(mov.created_date), "HH:mm")}
+                                {format(new Date(getDataMovimento(mov)), "HH:mm")}
                                 {mov.categoria && ` • ${mov.categoria}`}
                               </p>
                             </div>
