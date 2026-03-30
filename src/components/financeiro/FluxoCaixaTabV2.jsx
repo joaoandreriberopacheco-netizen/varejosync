@@ -367,18 +367,20 @@ export default function FluxoCaixaTabV2() {
 
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado') return false;
-    // Lançamentos de fiado (Conta a Pagar) ficam exclusivamente nas Contas Abertas — não entram no fluxo de caixa
-    if (l.forma_pagamento === 'Conta a Pagar' || (l.tags && l.tags.includes('FIADO'))) return false;
 
-    // Lançamentos PAGOS: usa data_pagamento como âncora temporal (movimentação real de caixa)
-    // Lançamentos EM ABERTO/VENCIDO: usa data_vencimento como âncora (previsão — aparecem mas marcados)
+    const conciliavelAutomatico =
+      l.status_conciliacao === 'Pendente' ||
+      l.status_conciliacao === 'Conciliado' ||
+      l.status_conciliacao === 'Discrepância' ||
+      l.status_conciliacao === 'Ajustado';
+
+    if (!conciliavelAutomatico) return false;
+
     const isPago = l.status === 'Pago';
     const dataAncora = isPago ? (l.data_pagamento || l.data_vencimento) : l.data_vencimento;
     const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
 
-    // Lançamentos pagos sem data ficam sempre visíveis; Em Aberto sem vencimento não aparecem no fluxo
     if (!isPago && !dataKey) return false;
-
     if (ds && dataKey && dataKey < ds) return false;
     if (de && dataKey && dataKey > de) return false;
     if (contasSel.length && l.conta_financeira_id && !contasSel.includes(l.conta_financeira_id)) return false;
@@ -393,19 +395,12 @@ export default function FluxoCaixaTabV2() {
   }), [lancs, ds, de, contasSel, pendentes, search]);
 
   const kpis = useMemo(() => {
-    // "Entrou/Saiu" = apenas o que EFETIVAMENTE passou pelo caixa (status Pago)
-    // "Previsto" = Em Aberto/Vencido que aparecem no período como previsão
-    let entrou = 0, saiu = 0, pEntrou = 0, pSaiu = 0;
+    let entrou = 0, saiu = 0;
     filtrados.forEach(l => {
-      if (l.status === 'Pago') {
-        if (l.tipo === 'Receita') entrou += l.valor||0;
-        else if (l.tipo === 'Despesa') saiu += l.valor||0;
-      } else {
-        if (l.tipo === 'Receita') pEntrou += l.valor||0;
-        else if (l.tipo === 'Despesa') pSaiu += l.valor||0;
-      }
+      if (l.tipo === 'Receita') entrou += l.valor||0;
+      else if (l.tipo === 'Despesa') saiu += l.valor||0;
     });
-    return { entrou, saiu, saldo: entrou - saiu, pEntrou, pSaiu, saldoPrev: entrou + pEntrou - saiu - pSaiu };
+    return { entrou, saiu, saldo: entrou - saiu, pEntrou: 0, pSaiu: 0, saldoPrev: entrou - saiu };
   }, [filtrados]);
 
   const grupos = useMemo(() => {
@@ -508,15 +503,9 @@ export default function FluxoCaixaTabV2() {
         </div>
         <div className="bg-gray-900 dark:bg-gray-100 rounded-2xl shadow-sm p-3 flex items-center justify-between">
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Saldo Realizado</p>
+            <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-0.5">Saldo Conciliável</p>
             <p className={`text-base font-bold ${kpis.saldo < 0 ? 'text-red-400' : 'text-white dark:text-gray-900'}`}>{R(kpis.saldo)}</p>
           </div>
-          {(kpis.pEntrou > 0 || kpis.pSaiu > 0) && (
-            <div className="text-right">
-              <p className="text-[9px] text-gray-500 mb-0.5">+ Previsto</p>
-              <p className={`text-xs font-semibold ${kpis.saldoPrev < 0 ? 'text-red-400' : 'text-gray-400'}`}>{R(kpis.saldoPrev)}</p>
-            </div>
-          )}
         </div>
       </div>
 
