@@ -22,8 +22,16 @@ const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits:
 const hoje = () => new Date();
 const hojeStr = () => format(hoje(), 'yyyy-MM-dd');
 
+function parseVencimento(value) {
+  if (!value || typeof value !== 'string') return null;
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00` : value;
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function getVencimento(l) {
-  return l.data_vencimento ? format(new Date(l.data_vencimento + 'T12:00:00'), 'yyyy-MM-dd') : null;
+  const parsed = parseVencimento(l.data_vencimento);
+  return parsed ? format(parsed, 'yyyy-MM-dd') : null;
 }
 
 // ─── Chips de período ─────────────────────────────────────────────────────────
@@ -132,9 +140,9 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
         </span>
         <span className="block text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5 truncate">
           {vStr
-            ? isVencida ? <span className="text-red-400 dark:text-red-500">Venceu {format(new Date(vStr + 'T12:00:00'), 'dd MMM', { locale: ptBR })}</span>
+            ? isVencida ? <span className="text-red-400 dark:text-red-500">Venceu {format(parseVencimento(vStr), 'dd MMM', { locale: ptBR })}</span>
             : isHoje    ? <span className="text-gray-500 dark:text-gray-400">Vence hoje</span>
-            : format(new Date(vStr + 'T12:00:00'), 'dd MMM yyyy', { locale: ptBR })
+            : format(parseVencimento(vStr), 'dd MMM yyyy', { locale: ptBR })
             : '—'}
           {l.categoria ? ` · ${l.categoria}` : ''}
         </span>
@@ -241,7 +249,7 @@ export default function ContasAbertas() {
 
   const filtrados = useMemo(() => emAberto.filter(l => {
     const vStr = getVencimento(l);
-    const vDate = vStr ? new Date(vStr + 'T12:00:00') : null;
+    const vDate = parseVencimento(vStr);
 
     // Período
     if (periodo === 'vencidas') {
@@ -297,7 +305,7 @@ export default function ContasAbertas() {
         const isVencido = k !== 'sem-data' && k < hStr;
         let label = 'Sem vencimento';
         if (k !== 'sem-data') {
-          const d = new Date(k + 'T12:00:00');
+          const d = parseVencimento(k);
           label = k === hStr ? 'Hoje' : k === oStr ? 'Ontem' :
             isVencido ? `Venceu ${format(d, "dd 'de' MMMM", { locale: ptBR })}` :
             format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
