@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, FileText, X, Download, FileBarChart2 } from 'lucide-react';
+import { Plus, FileText, X, Download, FileBarChart2, Send } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, grupos = [], kpis = {} }) {
+export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, quantidadeSelecionados = 0, enviandoLote = false, grupos = [], kpis = {} }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState(false);
 
@@ -35,6 +35,13 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
   };
 
   const actions = [
+    {
+      icon: <Send className="w-5 h-5" />,
+      label: enviandoLote ? 'Enviando...' : `Financeiro${quantidadeSelecionados ? ` (${quantidadeSelecionados})` : ''}`,
+      onClick: () => { onEnviarFinanceiroLote?.(); setIsExpanded(false); },
+      color: 'bg-emerald-600 text-white',
+      disabled: enviandoLote || quantidadeSelecionados === 0,
+    },
     {
       icon: <Plus className="w-5 h-5" />,
       label: 'Novo Pedido',
@@ -92,7 +99,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
             onClick={action.onClick}
             disabled={action.disabled}
             title={action.label}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${action.color}`}
             style={{
               animation: `fadeSlideUp 0.18s ease both`,
               animationDelay: `${idx * 30}ms`,

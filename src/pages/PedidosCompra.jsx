@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
+import enviarFinanceiroLote from '@/components/compras/enviarFinanceiroLote';
 
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
@@ -22,6 +24,8 @@ export default function PedidosCompraPage() {
   const [dataFinal, setDataFinal] = useState('');
   const [showImportador, setShowImportador] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selecionadosIds, setSelecionadosIds] = useState([]);
+  const [enviandoLote, setEnviandoLote] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -74,6 +78,34 @@ export default function PedidosCompraPage() {
 
   const handleNovoPedido = () => {
     navigate('/PedidoCompraDetalhe?id=novo');
+  };
+
+  const handleToggleSelecao = (pedido) => {
+    setSelecionadosIds((prev) => prev.includes(pedido.id)
+      ? prev.filter((id) => id !== pedido.id)
+      : [...prev, pedido.id]);
+  };
+
+  const handleEnviarFinanceiroLote = async () => {
+    const pedidosSelecionados = filtrados.filter((p) => selecionadosIds.includes(p.id));
+    if (!pedidosSelecionados.length) {
+      toast.error('Selecione ao menos um pedido');
+      return;
+    }
+
+    setEnviandoLote(true);
+    try {
+      const currentUser = await base44.auth.me();
+      await enviarFinanceiroLote({ pedidos: pedidosSelecionados, currentUser });
+      setSelecionadosIds([]);
+      toast.success(`${pedidosSelecionados.length} pedido(s) enviados ao financeiro`);
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao enviar pedidos em lote');
+    } finally {
+      setEnviandoLote(false);
+    }
   };
 
   const todasTags = useMemo(() => {
@@ -167,6 +199,9 @@ export default function PedidosCompraPage() {
         loading={loading}
         onEdit={handleOpenPedido}
         onDelete={loadData}
+        selecionadosIds={selecionadosIds}
+        onToggleSelecao={handleToggleSelecao}
+        modoSelecao={true}
       />
 
 
@@ -182,6 +217,9 @@ export default function PedidosCompraPage() {
         onNovopedido={handleNovoPedido}
         onImportarNF={() => setShowImportador(true)}
         onDownloadTemplate={handleDownloadTemplate}
+        onEnviarFinanceiroLote={handleEnviarFinanceiroLote}
+        quantidadeSelecionados={selecionadosIds.length}
+        enviandoLote={enviandoLote}
         grupos={grupos}
         kpis={{
           totalPedidos: filtrados.length,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { ChevronRight, AlertCircle, Trash2 } from 'lucide-react';
+import { ChevronRight, AlertCircle, Trash2, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
   AlertDialog,
@@ -27,7 +27,7 @@ const statusColors = {
   'Cancelado':            'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
 };
 
-function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
+function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const isAtrasado = pedido.data_prevista_entrega && new Date(pedido.data_prevista_entrega + 'T12:00:00') < new Date();
@@ -44,6 +44,20 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
   return (
     <>
       <div className="w-full flex items-stretch group">
+        {modoSelecao && (
+          <button
+            type="button"
+            disabled={desabilitadoSelecao}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!desabilitadoSelecao) onToggleSelecao?.(pedido);
+            }}
+            className={`ml-2 self-center w-6 h-6 rounded-md flex items-center justify-center shadow-sm transition-colors ${selecionado ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-transparent'} ${desabilitadoSelecao ? 'opacity-40 cursor-not-allowed' : ''}`}
+            title={desabilitadoSelecao ? 'Já enviado ao financeiro' : 'Selecionar pedido'}
+          >
+            <Check className="w-3.5 h-3.5" />
+          </button>
+        )}
         <div
           role="button"
           tabIndex={0}
@@ -124,7 +138,7 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete }) {
   );
 }
 
-function GrupoDia({ label, pedidos, onEdit, onDelete }) {
+function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao }) {
   const [open, setOpen] = useState(true);
   const valorTotal = pedidos.reduce((acc, p) => acc + (p.valor_total || 0), 0);
 
@@ -147,6 +161,10 @@ function GrupoDia({ label, pedidos, onEdit, onDelete }) {
               pedido={p}
               onEdit={onEdit}
               onDelete={onDelete}
+              modoSelecao={modoSelecao}
+              selecionado={selecionadosIds.includes(p.id)}
+              desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
+              onToggleSelecao={onToggleSelecao}
             />
           ))}
         </div>
@@ -155,7 +173,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete }) {
   );
 }
 
-export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete }) {
+export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, selecionadosIds = [], onToggleSelecao, modoSelecao = false }) {
   if (loading) {
     return (
       <div className="space-y-2">
@@ -182,6 +200,9 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete }
           pedidos={pedidos}
           onEdit={onEdit}
           onDelete={onDelete}
+          selecionadosIds={selecionadosIds}
+          onToggleSelecao={onToggleSelecao}
+          modoSelecao={modoSelecao}
         />
       ))}
     </div>
