@@ -1,8 +1,8 @@
 import * as React from 'react';
-
-const { createContext, useState, useContext, useEffect } = React;
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
+
+const { createContext, useState, useContext, useEffect } = React;
 
 const AuthContext = createContext();
 
