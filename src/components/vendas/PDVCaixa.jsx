@@ -827,9 +827,6 @@ export default function PDVCaixa() {
           despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
         });
       }
-      const novoSaldo = (contaCaixaPDV?.saldo_atual || 0) - valorFloat;
-      await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: novoSaldo });
-      setContaCaixaPDV(prev => ({ ...prev, saldo_atual: novoSaldo }));
       setDespesaCriada({ ...lancamento, descricao: descricaoDespesa, valor: valorFloat, categoria: categoriaDespesa });
       setShowDespesaDialog(false);
       setShowComprovanteDespesa(true);
