@@ -1,19 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-// entities imported via base44 client
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import ProdutosAccessGuard from '@/components/guard/ProdutosAccessGuard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/components/utils';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -21,79 +10,23 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import {
-  PlusCircle,
-  Edit,
-  Download,
-  Upload,
-  Package,
-  DollarSign,
-  MoreHorizontal,
-  Archive,
-  Trash2,
-  Copy,
-  TrendingUp,
-  CheckCircle,
-  Loader2,
-  RefreshCw,
-  Columns,
-  Search,
-  Image as ImageIcon,
-  Sparkles,
-  Wand2,
-  SlidersHorizontal,
-  X,
-} from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CheckCircle, Loader2, RefreshCw, TrendingUp } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from '@/api/base44Client';
-import { roundToTwoDecimals, formatCurrency, parseFinancialValue } from '@/lib/financialUtils';
-
-
+import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
-import PullToRefreshWrapper from '@/components/ui/PullToRefreshWrapper';
 import ColumnSelector from '../components/produtos/ColumnSelector';
-import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import MassImageUploader from '../components/produtos/MassImageUploader';
-import TabelaDinamica from '../components/produtos/TabelaDinamica';
-import TreeGrid, { LevelControl } from '../components/produtos/treegrid/TreeGrid';
+import TreeGrid from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
 import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
-
-
-const isCadastroIncompleto = (produto) => {
-  const checks = {
-    semCategoria: !produto.categoria_nome,
-    semFornecedor: !produto.fornecedor_padrao_id,
-    semPrecoVenda: !produto.preco_venda_padrao || produto.preco_venda_padrao <= 0,
-    semCodigoBarras: !produto.codigo_barras,
-    semImagem: !produto.imagem_url
-  };
-  const totalIncompleto = Object.values(checks).filter(Boolean).length;
-  return { incompleto: totalIncompleto > 0, totalIncompleto, checks };
-};
-
-const getStockStatusIndicator = (produto) => {
-  if (!produto.ativo) {
-    return <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-xs"><div className="w-2 h-2 bg-gray-600 rounded-full" /> Inativo</div>;
-  }
-  const estoque = produto.estoque_atual || 0;
-  const minimo = produto.estoque_minimo || 0;
-
-  if (estoque <= 0) {
-    return <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 text-xs"><div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" /> Crítico</div>;
-  }
-  if (estoque <= minimo / 2) {
-    return <div className="flex items-center gap-1.5 text-red-500 dark:text-red-300 text-xs"><div className="w-2 h-2 bg-red-500 rounded-full" /> Crítico</div>;
-  }
-  if (estoque <= minimo) {
-    return <div className="flex items-center gap-1.5 text-orange-500 dark:text-orange-300 text-xs"><div className="w-2 h-2 bg-orange-500 rounded-full" /> Baixo</div>;
-  }
-  return <div className="flex items-center gap-1.5 text-green-500 dark:text-green-300 text-xs"><div className="w-2 h-2 bg-green-500 rounded-full" /> OK</div>;
-};
+import ProdutosHeader from '../components/produtos/ProdutosHeader';
+import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
+import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
+import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
 
 function ProdutosPageContent() {
   const [produtos, setProdutos] = useState([]);
@@ -113,6 +46,7 @@ function ProdutosPageContent() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState(null);
+  const [produtoSimilarBase, setProdutoSimilarBase] = useState(null);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null);
   const [visibleColumns, setVisibleColumns] = useState([
@@ -184,12 +118,20 @@ function ProdutosPageContent() {
   };
 
   const handleEdit = React.useCallback((produto) => {
+    setProdutoSimilarBase(null);
     setSelectedProduto(produto);
     setIsFormOpen(true);
   }, []);
 
   const handleAddNew = React.useCallback(() => {
+    setProdutoSimilarBase(null);
     setSelectedProduto(null);
+    setIsFormOpen(true);
+  }, []);
+
+  const handleCreateSimilar = React.useCallback((produto) => {
+    setSelectedProduto(null);
+    setProdutoSimilarBase(produto);
     setIsFormOpen(true);
   }, []);
 
@@ -1025,553 +967,60 @@ function ProdutosPageContent() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-white dark:bg-gray-900">
-      {/* Header - mobile-first compacto */}
-      <div className="flex-none bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 w-full min-w-0">
-        <div className="w-full min-w-0 px-3 py-2 space-y-2">
+      <ProdutosHeader
+        stats={stats}
+        filters={filters}
+        categorias={categorias}
+        fornecedores={fornecedores}
+        activeFilterCount={activeFilterCount}
+        isFilterOpen={isFilterOpen}
+        setIsFilterOpen={setIsFilterOpen}
+        handleFilterChange={handleFilterChange}
+        handleExportarCatalogo={handleExportarCatalogo}
+        handleBaixarTemplateUnificado={handleBaixarTemplateUnificado}
+        setIsMassImageUploaderOpen={setIsMassImageUploaderOpen}
+        handleAddNew={handleAddNew}
+        setFilters={setFilters}
+        formatarNumero={formatarNumero}
+      />
 
-          {/* Linha 1: título + KPIs + ações */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate font-glacial">Catálogo</h1>
-              <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">
-                <span>{stats.total} produtos</span>
-                <span>R$ {formatarNumero(stats.valorEstoqueAtivo || 0)}</span>
-                {stats.abaixoMinimo > 0 && <span className="text-red-500">{stats.abaixoMinimo} abaixo mín.</span>}
-              </div>
-            </div>
-
-            {/* Ações - ícones puros */}
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleExportarCatalogo} title="Exportar">
-                <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9" title="Importar">
-                    <Upload className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
-                  <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
-                    <Download className="w-4 h-4 mr-2" />Template
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
-                    <Link to={createPageUrl('ImportacaoProdutos')}>
-                      <Upload className="w-4 h-4 mr-2" />Importar CSV
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsMassImageUploaderOpen(true)} className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
-                    <ImageIcon className="w-4 h-4 mr-2" />Importar Imagens
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9" title="IA">
-                    <Sparkles className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
-                  <DropdownMenuItem asChild className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
-                    <Link to={createPageUrl('OtimizacaoEstoqueIA')}>
-                      <Sparkles className="w-4 h-4 mr-2 text-purple-500" />Otimizar Estoque
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="dark:text-gray-200 dark:hover:bg-gray-700 text-sm">
-                    <Link to={createPageUrl('EstimativaEmbalagensIA')}>
-                      <Wand2 className="w-4 h-4 mr-2 text-blue-500" />Estimar Embalagens
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button onClick={handleAddNew} variant="ghost" size="icon" className="h-9 w-9" title="Novo produto">
-                <PlusCircle className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Linha 2: Busca + filtros */}
-          <div className="flex gap-2 min-w-0">
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
-              <Input
-                placeholder="Buscar produto..."
-                className="border-none bg-gray-100 dark:bg-gray-800 h-10 text-sm pl-9 text-gray-700 dark:text-gray-200 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
-                value={filters.searchTerm}
-                onChange={e => handleFilterChange('searchTerm', e.target.value)}
-              />
-            </div>
-            {/* Botão filtros - mobile: abre drawer / desktop: inline */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-10 w-10 flex-shrink-0 rounded-xl relative md:hidden ${activeFilterCount > 0 ? 'bg-gray-200 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-800'}`}
-              onClick={() => setIsFilterOpen(v => !v)}
-            >
-              <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 text-[10px] rounded-full flex items-center justify-center font-bold">
-                  {activeFilterCount}
-                </span>
-              )}
-            </Button>
-          </div>
-
-          {/* Filtros expandíveis no mobile */}
-          {isFilterOpen && (
-            <div className="md:hidden space-y-2 pb-1">
-              <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
-                <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-10 text-sm w-full rounded-xl">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                  <SelectItem value="all" className="text-sm">Todas as categorias</SelectItem>
-                  {categorias.map(cat => <SelectItem key={cat} value={cat} className="text-sm">{cat}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={filters.fornecedorId === 'all' ? '' : filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
-                <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-10 text-sm w-full rounded-xl">
-                  <SelectValue placeholder="Fornecedor" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                  <SelectItem value="all" className="text-sm">Todos os fornecedores</SelectItem>
-                  {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="text-sm">{f.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={filters.statusEstoque === 'all' ? '' : filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
-                <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-10 text-sm w-full rounded-xl">
-                  <SelectValue placeholder="Status do estoque" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                  <SelectItem value="all" className="text-sm">Todos os status</SelectItem>
-                  <SelectItem value="ok" className="text-sm">OK</SelectItem>
-                  <SelectItem value="baixo" className="text-sm">Baixo</SelectItem>
-                  <SelectItem value="critico" className="text-sm">Crítico</SelectItem>
-                  <SelectItem value="inativo" className="text-sm">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Tag"
-                  className="bg-gray-100 dark:bg-gray-800 border-none h-10 text-sm rounded-xl flex-1"
-                  value={filters.tag || ''}
-                  onChange={e => handleFilterChange('tag', e.target.value)}
-                />
-                <Select value={filters.cadastroIncompleto === 'all' ? '' : filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
-                  <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-10 text-sm rounded-xl flex-1">
-                    <SelectValue placeholder="Cadastro" />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                    <SelectItem value="all" className="text-sm">Todos</SelectItem>
-                    <SelectItem value="incompleto" className="text-sm">Incompleto</SelectItem>
-                    <SelectItem value="completo" className="text-sm">Completo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={() => setFilters({ searchTerm: filters.searchTerm, categoria: 'all', fornecedorId: 'all', statusEstoque: 'all', tag: '', cadastroIncompleto: 'all' })}
-                  className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1"
-                >
-                  <X className="w-3 h-3" /> Limpar filtros
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Filtros inline - DESKTOP */}
-          <div className="hidden md:grid md:grid-cols-5 gap-2">
-            <Select value={filters.categoria === 'all' ? '' : filters.categoria} onValueChange={v => handleFilterChange('categoria', v)}>
-              <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-9 text-xs w-full rounded-lg">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                <SelectItem value="all" className="text-xs">Todas as categorias</SelectItem>
-                {categorias.map(cat => <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filters.fornecedorId === 'all' ? '' : filters.fornecedorId} onValueChange={v => handleFilterChange('fornecedorId', v)}>
-              <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-9 text-xs w-full rounded-lg">
-                <SelectValue placeholder="Fornecedor" />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                <SelectItem value="all" className="text-xs">Todos os fornecedores</SelectItem>
-                {fornecedores.map(f => <SelectItem key={f.id} value={f.id} className="text-xs">{f.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filters.statusEstoque === 'all' ? '' : filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
-              <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-9 text-xs w-full rounded-lg">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                <SelectItem value="all" className="text-xs">Todos os status</SelectItem>
-                <SelectItem value="ok" className="text-xs">OK</SelectItem>
-                <SelectItem value="baixo" className="text-xs">Baixo</SelectItem>
-                <SelectItem value="critico" className="text-xs">Crítico</SelectItem>
-                <SelectItem value="inativo" className="text-xs">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Tag"
-              className="bg-gray-100 dark:bg-gray-800 border-none h-9 text-xs rounded-lg"
-              value={filters.tag || ''}
-              onChange={e => handleFilterChange('tag', e.target.value)}
-            />
-            <Select value={filters.cadastroIncompleto === 'all' ? '' : filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
-              <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-none h-9 text-xs w-full rounded-lg">
-                <SelectValue placeholder="Cadastro" />
-              </SelectTrigger>
-              <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-                <SelectItem value="all" className="text-xs">Todos</SelectItem>
-                <SelectItem value="incompleto" className="text-xs">Incompleto</SelectItem>
-                <SelectItem value="completo" className="text-xs">Completo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Tabela - SCROLL INDEPENDENTE */}
       <div className="flex-1 overflow-hidden w-full min-w-0">
         <div className="h-full w-full min-w-0 px-3 md:px-4 pb-4">
           <div className="h-full flex flex-col">
-            {/* Painel de Comando Fixo — NÃO rola com a tabela */}
-            <div className="flex items-center justify-between py-2 flex-none flex-wrap gap-2">
-              <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-3">
-                <span>{filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''}</span>
-                {filteredProdutos.length > 0 && (
-                  <>
-                    <MassTagGenerator products={filteredProdutos} onComplete={loadData} />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
-                          {sortOrder === 'az' ? (
-                            <TrendingUp className="w-3.5 h-3.5 rotate-90" />
-                          ) : (
-                            <TrendingUp className="w-3.5 h-3.5 -rotate-90" />
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="dark:bg-gray-800 dark:border-gray-700">
-                        <DropdownMenuItem onClick={() => setSortOrder('az')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">A → Z</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSortOrder('za')} className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">Z → A</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </>
-                )}
-              </div>
-              <div className="hidden md:flex items-center gap-2 flex-wrap">
-                {/* Seletor de Nível — só aparece no Tree Grid */}
-                {viewMode === 'dinamica' && (
-                  <LevelControl level={treeLevel} onChange={setTreeLevel} />
-                )}
-                {/* Toggle Tabela Dinâmica / Plana */}
-                <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded p-0.5 gap-0.5">
-                  <button
-                    onClick={() => setViewMode('dinamica')}
-                    className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'dinamica' ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 shadow-sm font-medium' : 'text-gray-400 dark:text-gray-500'}`}
-                  >
-                    Tree Grid
-                  </button>
-                  <button
-                    onClick={() => setViewMode('plana')}
-                    className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'plana' ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 shadow-sm font-medium' : 'text-gray-400 dark:text-gray-500'}`}
-                  >
-                    Plana
-                  </button>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsColumnSelectorOpen(true)}
-                  className="h-7 px-2 text-xs dark:text-gray-300"
-                >
-                  <Columns className="w-3.5 h-3.5 text-gray-700 dark:text-gray-400" />
-                  <span className="ml-1.5 text-gray-700 dark:text-gray-300">Colunas</span>
-                </Button>
-              </div>
-            </div>
+            <ProdutosCommandBar
+              filteredProdutos={filteredProdutos}
+              loadData={loadData}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              treeLevel={treeLevel}
+              setTreeLevel={setTreeLevel}
+              setIsColumnSelectorOpen={setIsColumnSelectorOpen}
+            />
 
-            {/* Tabela - MOBILE/DESKTOP */}
             <div className="flex-1 overflow-hidden w-full min-w-0">
-              {/* MOBILE: Vista Hierárquica — scroll independente, header fixo */}
               <div className="md:hidden w-full h-full overflow-y-auto overflow-x-hidden">
-                <MobileHierarquica
-                  produtos={filteredProdutos}
-                  onEdit={handleEdit}
-                  onDelete={setProdutoParaExcluir}
-                  formatarNumero={formatarNumero}
-                />
+                <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} formatarNumero={formatarNumero} />
               </div>
 
-              {/* DESKTOP: Tree Grid Hierárquico */}
               {viewMode === 'dinamica' && (
                 <div className="hidden md:flex md:flex-col w-full h-full">
-                  <TreeGrid
-                    produtos={filteredProdutos}
-                    onEdit={handleEdit}
-                    onDelete={setProdutoParaExcluir}
-                    visibleColumns={visibleColumns}
-                    masterLevel={treeLevel}
-                  />
+                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} />
                 </div>
               )}
 
-              {/* DESKTOP: Tabela Plana (original) */}
-              <div className={`${viewMode === 'plana' ? 'hidden md:block' : 'hidden'} w-full h-full overflow-auto border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900`}>
-                <Table>
-                  <TableHeader className="bg-gray-50 sticky top-0 z-20 dark:bg-gray-800">
-                    <TableRow>
-                      <TableHead className="sticky left-0 z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 w-[50px] border-r border-gray-200 dark:border-gray-700 text-xs p-2">
-                        
-                      </TableHead>
-                      <TableHead className="sticky left-[50px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[60px] border-r border-gray-200 dark:border-gray-700 text-xs text-center">
-                        Img
-                      </TableHead>
-                      <TableHead className="sticky left-[110px] z-30 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 min-w-[220px] border-r border-gray-200 dark:border-gray-700 text-xs">
-                        Produto
-                      </TableHead>
-                      
-                      {visibleColumns.includes('status') && (
-                        <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300 text-xs">Status</TableHead>
-                      )}
-                      {visibleColumns.includes('cadastro') && (
-                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Cadastro</TableHead>
-                      )}
-                      {visibleColumns.includes('codigo_interno') && (
-                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Código</TableHead>
-                      )}
-                      {visibleColumns.includes('codigo_barras') && (
-                        <TableHead className="min-w-[130px] text-gray-700 dark:text-gray-300 text-xs">Cód. Barras</TableHead>
-                      )}
-                      {visibleColumns.includes('categoria') && (
-                        <TableHead className="min-w-[130px] text-gray-700 dark:text-gray-300 text-xs">Categoria</TableHead>
-                      )}
-                      {visibleColumns.includes('tags') && (
-                        <TableHead className="min-w-[130px] text-gray-700 dark:text-gray-300 text-xs">Tags</TableHead>
-                      )}
-                      {visibleColumns.includes('fornecedor') && (
-                        <TableHead className="min-w-[140px] text-gray-700 dark:text-gray-300 text-xs">Fornecedor</TableHead>
-                      )}
-                      {visibleColumns.includes('preco_venda') && (
-                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Preço Venda</TableHead>
-                      )}
-                      {visibleColumns.includes('preco_custo') && (
-                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Custo Total</TableHead>
-                      )}
-                      {visibleColumns.includes('margem') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Margem</TableHead>
-                      )}
-                      {visibleColumns.includes('valor_compra') && (
-                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Vl. Compra</TableHead>
-                      )}
-                      {visibleColumns.includes('frete') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Frete</TableHead>
-                      )}
-                      {visibleColumns.includes('imposto_1') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Imposto 1</TableHead>
-                      )}
-                      {visibleColumns.includes('imposto_2') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Imposto 2</TableHead>
-                      )}
-                      {visibleColumns.includes('desconto') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Desconto</TableHead>
-                      )}
-                      {visibleColumns.includes('outros_custos') && (
-                        <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300 text-xs">Outros</TableHead>
-                      )}
-                      {visibleColumns.includes('markup') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Markup %</TableHead>
-                      )}
-                      {visibleColumns.includes('estoque_atual') && (
-                        <TableHead className="min-w-[110px] text-gray-700 dark:text-gray-300 text-xs">Estoque</TableHead>
-                      )}
-                      {visibleColumns.includes('estoque_minimo') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Est. Mín</TableHead>
-                      )}
-                      {visibleColumns.includes('estoque_ideal') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Est. Ideal</TableHead>
-                      )}
-                      {visibleColumns.includes('estoque_maximo') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Est. Máx</TableHead>
-                      )}
-                      {visibleColumns.includes('tempo_reposicao') && (
-                        <TableHead className="min-w-[100px] text-gray-700 dark:text-gray-300 text-xs">Repos.</TableHead>
-                      )}
-                      {visibleColumns.includes('peso') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Peso</TableHead>
-                      )}
-                      {visibleColumns.includes('dimensoes') && (
-                        <TableHead className="min-w-[120px] text-gray-700 dark:text-gray-300 text-xs">Dimensões</TableHead>
-                      )}
-                      {visibleColumns.includes('tipo') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Tipo</TableHead>
-                      )}
-                      {visibleColumns.includes('unidade') && (
-                        <TableHead className="min-w-[70px] text-gray-700 dark:text-gray-300 text-xs">Unid.</TableHead>
-                      )}
-                      {visibleColumns.includes('unidades_pacote') && (
-                        <TableHead className="min-w-[90px] text-gray-700 dark:text-gray-300 text-xs">Un/Pct</TableHead>
-                      )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredProdutos.map(produto => {
-                      const custoReal = produto.preco_custo_calculado > 0
-                        ? produto.preco_custo_calculado
-                        : (produto.valor_compra || 0)
-                          + (produto.custo_frete_padrao || 0)
-                          + (produto.custo_imposto1_padrao || 0)
-                          + (produto.custo_imposto2_padrao || 0)
-                          + (produto.custo_outros_padrao || 0)
-                          - (produto.desconto_compra_padrao || 0);
-                      const margem = produto.preco_venda_padrao > 0 && custoReal > 0 ?
-                        ((produto.preco_venda_padrao - custoReal) / produto.preco_venda_padrao) * 100 : 0;
-                      const cadastroStatus = isCadastroIncompleto(produto);
-                      return (
-                        <TableRow key={produto.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                          <TableCell className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-1">
-                            <DropdownMenu modal={false}>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6">
-                                  <MoreHorizontal className="h-3.5 w-3.5 text-gray-700 dark:text-gray-400" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent 
-                            align="start" 
-                            className="z-50 dark:bg-gray-800 dark:border-gray-700" 
-                            sideOffset={5}
-                          >
-                                <DropdownMenuItem 
-                                  onClick={() => handleEdit(produto)}
-                                  className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs"
-                                >
-                                  <Edit className="mr-2 h-3.5 w-3.5"/>Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="dark:text-gray-200 dark:hover:bg-gray-700 text-xs">
-                                  <Copy className="mr-2 h-3.5 w-3.5"/>Duplicar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => setProdutoParaExcluir(produto)}
-                                  className="text-red-600 dark:text-red-400 dark:hover:bg-gray-700 text-xs"
-                                >
-                                  <Trash2 className="mr-2 h-3.5 w-3.5"/>
-                                  {produto.ativo ? 'Excluir / Inativar' : 'Reativar'}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                          <TableCell className="sticky left-[50px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 p-1 text-center">
-                            <div className="w-10 h-10 mx-auto bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center overflow-hidden">
-                              {produto.imagem_url ? (
-                                <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <Package className="w-5 h-5 text-gray-300" />
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="sticky left-[110px] z-10 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-                            <div className="font-medium text-sm text-gray-700 dark:text-gray-200 uppercase">{produto.nome}</div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400 uppercase">{produto.codigo_interno}</div>
-                          </TableCell>
-                          
-                          {visibleColumns.includes('codigo_interno') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_interno}</TableCell>
-                          )}
-                          {visibleColumns.includes('codigo_barras') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.codigo_barras || '-'}</TableCell>
-                          )}
-                          {visibleColumns.includes('categoria') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.categoria_nome || '-'}</TableCell>
-                          )}
-                          {visibleColumns.includes('tags') && (
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {(produto.tags || []).slice(0, 2).map(tag => (
-                                  <span key={tag} className="text-[10px] px-1 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
-                                    #{tag}
-                                  </span>
-                                ))}
-                              </div>
-                            </TableCell>
-                          )}
-                          {visibleColumns.includes('status') && (
-                            <TableCell>{getStockStatusIndicator(produto)}</TableCell>
-                          )}
-                          {visibleColumns.includes('cadastro') && (
-                            <TableCell>
-                              {cadastroStatus.incompleto ? (
-                                <div className="flex flex-col gap-0.5">
-                                  {cadastroStatus.checks.semCategoria && <span className="text-[10px] text-red-600 dark:text-red-400">Sem categoria</span>}
-                                  {cadastroStatus.checks.semFornecedor && <span className="text-[10px] text-red-600 dark:text-red-400">Sem fornecedor</span>}
-                                  {cadastroStatus.checks.semPrecoVenda && <span className="text-[10px] text-red-600 dark:text-red-400">Sem preço</span>}
-                                  {cadastroStatus.checks.semCodigoBarras && <span className="text-[10px] text-red-600 dark:text-red-400">Sem cód. barras</span>}
-                                  {cadastroStatus.checks.semImagem && <span className="text-[10px] text-red-600 dark:text-red-400">Sem imagem</span>}
-                                </div>
-                              ) : (
-                                <span className="text-xs text-green-600 dark:text-green-400">Completo</span>
-                              )}
-                            </TableCell>
-                          )}
-                          {visibleColumns.includes('fornecedor') && (
-                            <TableCell>
-                              {fornecedorMap[produto.fornecedor_padrao_id] ? (
-                                <div className="text-xs text-gray-700 dark:text-gray-300">{fornecedorMap[produto.fornecedor_padrao_id]}</div>
-                              ) : <span className="text-xs text-gray-600 dark:text-gray-400">N/A</span>}
-                            </TableCell>
-                          )}
-                          {visibleColumns.includes('preco_venda') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.preco_venda_padrao)}</TableCell>
-                          )}
-                          {visibleColumns.includes('margem') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(margem)}%</TableCell>
-                          )}
-                          {visibleColumns.includes('preco_custo') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.preco_custo_calculado)}</TableCell>
-                          )}
-                          {visibleColumns.includes('valor_compra') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">R$ {formatarNumero(produto.valor_compra)}</TableCell>
-                          )}
-                          {visibleColumns.includes('markup') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.preco_venda_percentual || 0}%</TableCell>
-                          )}
-                          {visibleColumns.includes('estoque_atual') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_atual)} {produto.unidade_principal}</TableCell>
-                          )}
-                          {visibleColumns.includes('estoque_minimo') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_minimo)}</TableCell>
-                          )}
-                          {visibleColumns.includes('estoque_ideal') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_ideal)}</TableCell>
-                          )}
-                          {visibleColumns.includes('estoque_maximo') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.estoque_maximo)}</TableCell>
-                          )}
-                          {visibleColumns.includes('tempo_reposicao') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tempo_reposicao_dias || 0}d</TableCell>
-                          )}
-                          {visibleColumns.includes('peso') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{formatarNumero(produto.peso_kg)}kg</TableCell>
-                          )}
-                          {visibleColumns.includes('dimensoes') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.dimensoes_cm || '-'}</TableCell>
-                          )}
-                          {visibleColumns.includes('tipo') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.tipo}</TableCell>
-                          )}
-                          {visibleColumns.includes('unidade') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidade_principal}</TableCell>
-                          )}
-                          {visibleColumns.includes('unidades_pacote') && (
-                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{produto.unidades_por_pacote || 1}</TableCell>
-                          )}
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              {viewMode === 'plana' && (
+                <ProdutosPlanaTable
+                  filteredProdutos={filteredProdutos}
+                  visibleColumns={visibleColumns}
+                  handleEdit={handleEdit}
+                  setProdutoParaExcluir={setProdutoParaExcluir}
+                  formatarNumero={formatarNumero}
+                  fornecedorMap={fornecedorMap}
+                  handleCreateSimilar={handleCreateSimilar}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -1582,8 +1031,9 @@ function ProdutosPageContent() {
         <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
           <ProdutoFormCompleto
             produto={selectedProduto}
+            produtoSimilarBase={produtoSimilarBase}
             onSave={handleSave}
-            onClose={() => setIsFormOpen(false)}
+            onClose={() => { setIsFormOpen(false); setProdutoSimilarBase(null); }}
           />
         </div>
       )}
