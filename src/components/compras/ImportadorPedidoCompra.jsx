@@ -19,6 +19,8 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   const [processingStatus, setProcessingStatus] = useState('');
   const [processingStep, setProcessingStep] = useState(1);
   const [productSearch, setProductSearch] = useState({});
+  const [discountType, setDiscountType] = useState('percentual');
+  const [discountValue, setDiscountValue] = useState('0');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -44,6 +46,23 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   };
 
   const progressWidth = useMemo(() => `${(processingStep / 5) * 100}%`, [processingStep]);
+
+  const discountNumber = parseFloat(discountValue) || 0;
+
+  const getDiscountedUnitPrice = (item) => {
+    const original = parseFloat(item.preco_unitario) || 0;
+    if (!discountNumber) return original;
+    if (discountType === 'percentual') {
+      return Math.max(0, original - (original * discountNumber / 100));
+    }
+    return Math.max(0, original - discountNumber);
+  };
+
+  const getDiscountPerItem = (item) => {
+    const original = parseFloat(item.preco_unitario) || 0;
+    const discounted = getDiscountedUnitPrice(item);
+    return Math.max(0, original - discounted);
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -201,9 +220,9 @@ Retorne JSON:
           produto_nome: produto.nome,
           quantidade: item.quantidade || 1,
           unidade_medida: produto.unidade_principal || 'UN',
-          custo_unitario: item.preco_unitario || 0,
-          valor_desconto_item: 0,
-          observacao_item: mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'
+          custo_unitario: getDiscountedUnitPrice(item),
+          valor_desconto_item: getDiscountPerItem(item),
+          observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • desconto ${discountType === 'percentual' ? `${discountNumber}%` : `R$ ${formatCurrency(discountNumber)}`}` : ''}`
         });
       }
 
@@ -287,6 +306,26 @@ Retorne JSON:
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 shadow-sm md:col-span-2">
+                <Label className="text-xs text-gray-500 mb-2 block">Desconto antes da importação</Label>
+                <div className="flex gap-2">
+                  <Select value={discountType} onValueChange={setDiscountType}>
+                    <SelectTrigger className="border-0 bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentual">%</SelectItem>
+                      <SelectItem value="valor">R$</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(e.target.value)}
+                    placeholder={discountType === 'percentual' ? '0,00%' : '0,00'}
+                    className="border-0 bg-white dark:bg-gray-900 shadow-sm text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 shadow-sm md:col-span-2">
                 <Label className="text-xs text-gray-500 mb-2 block">Fornecedor</Label>
                 <Select value={fornecedorInfo.id || 'new'} onValueChange={(value) => setFornecedorInfo(prev => ({ ...prev, id: value }))}>
                   <SelectTrigger className="border-0 bg-white dark:bg-gray-900 shadow-sm">
@@ -335,16 +374,23 @@ Retorne JSON:
                         value={productSearch[index] || ''}
                         onChange={(e) => setProductSearch((prev) => ({ ...prev, [index]: e.target.value }))}
                         placeholder="Buscar no catálogo"
-                        className="border-0 bg-gray-50 dark:bg-gray-900 shadow-sm"
+                        className="border-0 bg-white dark:bg-gray-950 shadow-sm text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       />
-                      <Select value={item.selected_product_id || 'none'} onValueChange={(value) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: value === 'none' ? '' : value, ignored: false } : current))}>
+                      <Select value={item.selected_product_id || 'none'} onValueChange={(value) => {
+                        const normalizedSearch = (productSearch[index] || '').trim().toLowerCase();
+                        const matchedProduct = produtos.find((produto) => (produto.nome || '').toLowerCase() === normalizedSearch);
+                        setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: value === 'none' ? '' : value, ignored: false } : current));
+                        if (matchedProduct && value === 'none') {
+                          setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: matchedProduct.id, ignored: false } : current));
+                        }
+                      }}>
                         <SelectTrigger className="border-0 bg-gray-50 dark:bg-gray-900 shadow-sm">
                           <SelectValue placeholder="Vincular produto" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Sem vínculo</SelectItem>
                           <SelectItem value="create_new">Criar novo produto</SelectItem>
-                          {getFilteredProducts(index).map(produto => (
+                          {getFilteredProducts(index).slice(0, 12).map(produto => (
                             <SelectItem key={produto.id} value={produto.id}>{produto.nome}</SelectItem>
                           ))}
                         </SelectContent>
