@@ -43,10 +43,17 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const getProdutoLabel = (p) => {
-    if (p.nome) return p.nome;
-    return [p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3, p.campo_hierarquico_4, p.campo_hierarquico_5]
-      .filter(Boolean).join(' ');
+    const partes = [p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3, p.campo_hierarquico_4, p.campo_hierarquico_5].filter(Boolean);
+    if (partes.length > 0) return partes.join(' ');
+    return p.nome || '';
   };
+
+  const getProdutoCatalogEntry = (p) => ({
+    id: p.id,
+    nome: getProdutoLabel(p),
+    marca: p.marca || '',
+    codigo: p.codigo_interno || '',
+  });
 
   const getSuggestedProduct = (item) => {
     if (!item.produto_id_match) return null;
@@ -98,44 +105,46 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
       setProcessingStep(2);
       setProcessingStatus('Lendo documento');
 
-      const prompt = mode === 'pdf'
-        ? `Analise este PDF de compra/orçamento de fornecedor.
-Extraia fornecedor e itens.
-Tente identificar o fornecedor nesta lista: ${JSON.stringify(fornecedores.map(f => ({ id: f.id, nome: f.nome, cnpj: f.cpf_cnpj })))}
-Para encontrar o produto correspondente, considere apenas similaridade de descrição/nome do item com a descrição/nome do produto.
-Ignore código, marca, embalagem e qualquer outro campo na hora de decidir o match.
-Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: getProdutoLabel(p) })))}
-Retorne JSON com fornecedor e itens.
-{
-  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "string ou vazio"},
-  "itens": [{
-    "descricao": "string",
-    "codigo": "string",
-    "marca": "string",
-    "quantidade": number,
-    "preco_unitario": number,
-    "produto_id_match": "string ou vazio",
-    "confianca": "alta|media|baixa"
-  }]
-}`
-        : `Analise esta imagem de lista de compra.
-Extraia todos os itens visíveis.
-Para encontrar o produto correspondente, considere apenas similaridade de descrição/nome do item com a descrição/nome do produto.
-Ignore código, marca, embalagem e qualquer outro campo na hora de decidir o match.
-Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: getProdutoLabel(p) })))}
+      const catalogoStr = JSON.stringify(produtos.map(getProdutoCatalogEntry));
+      const fornecedoresStr = JSON.stringify(fornecedores.map(f => ({ id: f.id, nome: f.nome, cnpj: f.cpf_cnpj })));
+
+      const promptBase = `Você é um especialista em materiais de construção e loja de materiais.
+
+Tarefa: analisar o documento e para CADA item identificado, encontrar o produto correspondente no catálogo abaixo.
+
+REGRAS OBRIGATÓRIAS DE MATCHING:
+1. Use correspondência SEMÂNTICA — ignore abreviações, acentos, maiúsculas/minúsculas e variações ortográficas.
+2. Exemplos de correspondência esperada:
+   - "CIM CPIV 50KG VOTO" → produto com "Cimento Portland CP IV 50kg Votorantim"
+   - "ARGAM AC III 20KG" → produto com "Argamassa Colante AC-III 20kg"
+   - "PLACA DRYWALL ST 12,5" → produto com "Placa Dry Wall Standard 12.5mm"
+3. Se houver dúvida entre dois produtos, escolha o que tiver MAIS campos coincidentes (tipo, gramatura, dimensão, marca).
+4. Prefira confiança "baixa" a deixar produto_id_match vazio — só deixe vazio se não existir NENHUM produto similar.
+5. O campo produto_id_match deve conter EXATAMENTE o id do produto do catálogo, sem alterações.
+
+Fornecedores cadastrados:
+${fornecedoresStr}
+
+CATÁLOGO DE PRODUTOS (id | nome completo | marca | código):
+${catalogoStr}
+
 Retorne JSON:
 {
-  "fornecedor": {"nome_identificado": "", "cnpj_identificado": "", "id_match": ""},
+  "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "id ou vazio"},
   "itens": [{
-    "descricao": "string",
-    "codigo": "",
-    "marca": "",
+    "descricao": "descrição original",
+    "codigo": "código no documento",
+    "marca": "marca se visível",
     "quantidade": number,
     "preco_unitario": number,
-    "produto_id_match": "string ou vazio",
+    "produto_id_match": "id exato do catálogo ou vazio",
     "confianca": "alta|media|baixa"
   }]
 }`;
+
+      const prompt = mode === 'pdf'
+        ? `Analise este PDF de orçamento/pedido de fornecedor.\n${promptBase}`
+        : `Analise esta imagem de lista de compra.\n${promptBase}`;
 
       setProcessingStep(3);
       setProcessingStatus('Identificando itens');
@@ -143,6 +152,7 @@ Retorne JSON:
       const aiRes = await base44.integrations.Core.InvokeLLM({
         prompt,
         file_urls: [fileUrl],
+        model: 'claude_sonnet_4_6',
         response_json_schema: {
           type: 'object',
           properties: {
@@ -187,7 +197,7 @@ Retorne JSON:
 
       setItems((result.itens || []).map(item => ({
         ...item,
-        selected_product_id: '',
+        selected_product_id: item.produto_id_match || '',
         ignored: false
       })));
       setProductSearch(Object.fromEntries((result.itens || []).map((item, index) => [index, item.descricao || ''])));
