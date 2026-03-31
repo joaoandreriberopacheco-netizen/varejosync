@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, X, Ban } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, Calendar, FileText, CheckCircle2, Clock, DollarSign, MoreHorizontal, Plus, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, X, Ban, Ticket } from 'lucide-react';
 import PedidoVendaForm from '@/components/vendas/PedidoVendaForm';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
+import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import { dataHoje, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
@@ -247,9 +248,10 @@ export default function VendasGestaoPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-2">Tipo</label>
-              <GlacialTabsList className="w-full">
+              <GlacialTabsList className="w-full" scrollable>
                 <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
                 <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
               </GlacialTabsList>
             </div>
 
@@ -267,6 +269,14 @@ export default function VendasGestaoPage() {
                       <SelectItem value="Em Edição">Em Edição</SelectItem>
                       <SelectItem value="Aguardando Caixa">Ag. Caixa</SelectItem>
                       <SelectItem value="Convertido">Convertido</SelectItem>
+                      <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    </>
+                  ) : activeTab === 'vales' ? (
+                    <>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Utilizado Parcialmente">Utilizado Parcialmente</SelectItem>
+                      <SelectItem value="Utilizado">Utilizado</SelectItem>
+                      <SelectItem value="Expirado">Expirado</SelectItem>
                       <SelectItem value="Cancelado">Cancelado</SelectItem>
                     </>
                   ) : (
@@ -578,6 +588,16 @@ export default function VendasGestaoPage() {
         )}
         </div>
         </div>
+        )}
+
+        {activeTab === 'vales' && (
+          <ValesTrocaTab
+            searchTerm={searchTerm}
+            statusFiltro={statusFiltro}
+            dataInicio={dataInicio}
+            dataFim={dataFim}
+            activeTab={activeTab}
+          />
         )}
       </div>
 
