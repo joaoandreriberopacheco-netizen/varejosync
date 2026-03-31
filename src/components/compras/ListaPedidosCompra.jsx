@@ -27,6 +27,14 @@ const statusColors = {
   'Cancelado':            'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
 };
 
+const getPedidoLedClass = (pedido) => {
+  if (!pedido.data_aprovacao_financeira) return 'bg-gray-300 dark:bg-gray-600';
+  if (pedido.status === 'Concluído') return 'bg-emerald-500 dark:bg-emerald-400';
+  if (pedido.status === 'Em Recepção') return 'bg-amber-400 dark:bg-amber-300';
+  if (pedido.status === 'Cancelado') return 'bg-gray-300 dark:bg-gray-600';
+  return 'bg-red-400 dark:bg-red-400';
+};
+
 function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -85,6 +93,7 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
               </span>
               <div className="min-w-0 space-y-1.5">
                 <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-2.5 h-2.5 rounded-full shadow-sm flex-none ${getPedidoLedClass(pedido)}`} />
                   <span className="text-[0.92rem] font-semibold text-gray-900 dark:text-white whitespace-nowrap leading-none">
                     {pedido.numero}
                   </span>
@@ -155,9 +164,12 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
               <div className="flex-1 min-w-0 space-y-3">
                 <div className="flex items-start justify-between gap-3 min-w-0">
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <span className="block text-[0.94rem] font-semibold text-gray-900 dark:text-white leading-none">
-                      {pedido.numero}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-2.5 h-2.5 rounded-full shadow-sm flex-none ${getPedidoLedClass(pedido)}`} />
+                      <span className="block text-[0.94rem] font-semibold text-gray-900 dark:text-white leading-none">
+                        {pedido.numero}
+                      </span>
+                    </div>
                     <span className="block text-[0.78rem] text-gray-500 dark:text-gray-400 leading-tight break-words">
                       {pedido.fornecedor_nome}
                     </span>
