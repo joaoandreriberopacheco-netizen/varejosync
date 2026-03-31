@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles, AlertCircle } from 'lucide-react';
+import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles, AlertCircle, Search, Wand2, CornerDownLeft } from 'lucide-react';
 
 export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComplete }) {
   const [mode, setMode] = useState('pdf');
@@ -40,6 +40,11 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   }, [isOpen]);
 
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const getSuggestedProduct = (item) => {
+    if (!item.produto_id_match) return null;
+    return produtos.find((produto) => produto.id === item.produto_id_match) || null;
+  };
 
   const getFilteredProducts = (index) => {
     const query = (productSearch[index] || '').trim().toLowerCase();
@@ -175,9 +180,10 @@ Retorne JSON:
 
       setItems((result.itens || []).map(item => ({
         ...item,
-        selected_product_id: item.produto_id_match || '',
+        selected_product_id: '',
         ignored: false
       })));
+      setProductSearch(Object.fromEntries((result.itens || []).map((item, index) => [index, item.descricao || ''])));
       setStep('review');
     } catch (error) {
       toast({ title: 'Erro na análise', description: error.message, variant: 'destructive' });
@@ -404,43 +410,89 @@ Retorne JSON:
                       </div>
                     </div>
                     <div className="space-y-2 relative">
-                      <Input
-                        value={productSearch[index] || ''}
-                        onChange={(e) => setProductSearch((prev) => ({ ...prev, [index]: e.target.value }))}
-                        placeholder="Buscar no catálogo"
-                        className="h-14 border-0 rounded-2xl bg-white dark:bg-gray-950 shadow-sm text-lg font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                      />
-                      {(productSearch[index] || '').trim() && (
-                        <div className="rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '', ignored: false } : current))}
-                            className="w-full px-4 py-3 text-left text-sm text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
-                          >
-                            Sem vínculo
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
-                            className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
-                          >
-                            Criar novo produto
-                          </button>
-                          {getFilteredProducts(index).slice(0, 8).map(produto => (
-                            <button
-                              key={produto.id}
+                      {getSuggestedProduct(item) && !item.selected_product_id && (
+                        <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2.5 shadow-sm flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                              <Wand2 className="w-3.5 h-3.5" />
+                              Sugerido pela IA
+                            </div>
+                            <p className="text-sm text-emerald-900 dark:text-emerald-100 truncate mt-0.5">{getSuggestedProduct(item)?.nome}</p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-none">
+                            <Button
                               type="button"
-                              onClick={() => {
-                                setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: produto.id, ignored: false } : current));
-                                setProductSearch((prev) => ({ ...prev, [index]: produto.nome }));
-                              }}
-                              className="w-full px-4 py-3 text-left text-sm md:text-base text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, produto_id_match: '', selected_product_id: '', ignored: false } : current))}
+                              className="h-8 rounded-xl border-0 shadow-sm"
                             >
-                              {produto.nome}
-                            </button>
-                          ))}
+                              Recusar
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => {
+                                const suggested = getSuggestedProduct(item);
+                                if (!suggested) return;
+                                setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: suggested.id, ignored: false } : current));
+                                setProductSearch((prev) => ({ ...prev, [index]: suggested.nome }));
+                              }}
+                              className="h-8 rounded-xl shadow-sm"
+                            >
+                              Aceitar
+                            </Button>
+                          </div>
                         </div>
                       )}
+                      <div className="relative">
+                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                        <Input
+                          value={productSearch[index] || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setProductSearch((prev) => ({ ...prev, [index]: value }));
+                            setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '' } : current));
+                          }}
+                          placeholder="Buscar no catálogo"
+                          className="h-14 pl-11 border-0 rounded-2xl bg-white dark:bg-gray-950 shadow-sm text-lg font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                        />
+                      </div>
+                      <div className="rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden max-h-72 overflow-y-auto">
+                        <button
+                          type="button"
+                          onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '', ignored: false } : current))}
+                          className="w-full px-4 py-3 text-left text-sm text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
+                        >
+                          Sem vínculo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
+                          className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                        >
+                          Criar novo produto
+                        </button>
+                        {getFilteredProducts(index).slice(0, 8).map(produto => (
+                          <button
+                            key={produto.id}
+                            type="button"
+                            onClick={() => {
+                              setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: produto.id, ignored: false } : current));
+                              setProductSearch((prev) => ({ ...prev, [index]: produto.nome }));
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm md:text-base text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                          >
+                            {produto.nome}
+                          </button>
+                        ))}
+                        {getFilteredProducts(index).length === 0 && (
+                          <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                            <CornerDownLeft className="w-4 h-4" />
+                            Nenhum item encontrado
+                          </div>
+                        )}
+                      </div>
                       <div className="h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center px-4 text-sm md:text-base text-gray-600 dark:text-gray-300">
                         {item.selected_product_id === 'create_new'
                           ? 'Criar novo produto'
@@ -449,9 +501,12 @@ Retorne JSON:
                             : 'Sem vínculo'}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-base text-gray-700 dark:text-gray-300">{item.quantidade || 1} × R$ {formatCurrency(item.preco_unitario)}</p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">R$ {formatCurrency((item.quantidade || 1) * (item.preco_unitario || 0))}</p>
+                    <div className="text-right space-y-1">
+                      {discountNumber > 0 && (
+                        <p className="text-sm text-gray-400 dark:text-gray-500 line-through">{item.quantidade || 1} × R$ {formatCurrency(item.preco_unitario)}</p>
+                      )}
+                      <p className="text-base text-gray-700 dark:text-gray-300">{item.quantidade || 1} × R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
                     </div>
                   </div>
                 ))}
