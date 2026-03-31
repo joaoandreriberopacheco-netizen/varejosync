@@ -34,9 +34,11 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
 
   const currentQuery = productSearch[index] || '';
   const suggestedProduct = getSuggestedProduct(item);
+  // Se já tem produto selecionado (inclusive sugestão da IA), considera como selecionado
   const selectedProduct = item.selected_product_id && item.selected_product_id !== 'create_new'
     ? produtos.find(p => p.id === item.selected_product_id)
     : null;
+  const isConfirmed = !!selectedProduct;
 
   const handleChange = (e) => {
     const value = e.target.value;
@@ -83,27 +85,38 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
   return (
     <>
       <div className="relative min-w-0" ref={containerRef}>
+        {/* Card de produto confirmado (IA ou manual) */}
+        {isConfirmed && !isFocused && (
+          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 flex-none" />
+            <span className="flex-1 text-sm font-medium text-emerald-800 dark:text-emerald-300 truncate">
+              {getProductLabel(selectedProduct)}
+            </span>
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={handleClear}
+              className="w-5 h-5 rounded-full flex items-center justify-center text-emerald-400 hover:text-emerald-700 flex-none"
+            >
+              <X className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={handleOpenNovoProduto}
+              className="w-6 h-6 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-500 flex-none"
+              title="Criar novo produto"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
+        {(!isConfirmed || isFocused) && (
         <div className={cn(
           "h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center gap-2 px-3 transition-all",
           isFocused && "ring-1 ring-gray-300 dark:ring-gray-600"
         )}>
-          <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-none" />
-
-          <input
-            ref={inputRef}
-            value={currentQuery}
-            onChange={handleChange}
-            onFocus={() => setIsFocused(true)}
-            onBlur={(e) => {
-              if (containerRef.current?.contains(e.relatedTarget)) return;
-              setIsFocused(false);
-            }}
-            placeholder="Buscar no catálogo..."
-            className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-          />
-
-          {/* Status inline */}
-          {!isFocused && !currentQuery && (
             <span className={cn(
               "text-xs truncate max-w-[130px] text-right",
               item.selected_product_id === 'create_new' ? 'text-gray-600 dark:text-gray-300' :
@@ -154,6 +167,7 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
             <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
+        )}
 
         {/* Dropdown catálogo */}
         {isFocused && (

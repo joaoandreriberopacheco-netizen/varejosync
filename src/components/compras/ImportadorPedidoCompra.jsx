@@ -199,7 +199,7 @@ Retorne JSON:
         selected_product_id: item.produto_id_match || '',
         ignored: false
       })));
-      setProductSearch(Object.fromEntries((result.itens || []).map((item, index) => [index, item.descricao || ''])));
+      setProductSearch({});
       setStep('review');
     } catch (error) {
       toast({ title: 'Erro na análise', description: error.message, variant: 'destructive' });
@@ -407,25 +407,42 @@ Retorne JSON:
               )}
             </div>
 
-            <div className="rounded-3xl bg-white dark:bg-gray-800/70 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/40">
-                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <Package className="w-4 h-4" />Itens identificados
-                </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 px-1">
+                <Package className="w-4 h-4" />
+                <span>{items.length} itens identificados</span>
               </div>
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {items.map((item, index) => (
-                  <div key={index} className={`p-4 grid gap-3 md:grid-cols-[36px_minmax(0,1.5fr)_minmax(280px,1fr)_140px] items-center ${item.ignored ? 'opacity-50' : ''}`}>
-                    <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
-                    <div className="min-w-0">
-                      <p className="text-base md:text-lg font-semibold text-gray-900 dark:text-white leading-tight">{item.descricao}</p>
-                      <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-500 dark:text-gray-400">
-                        {item.codigo ? <span>Cód: {item.codigo}</span> : null}
-                        {item.marca ? <span>{item.marca}</span> : null}
-                        {item.confianca ? <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><AlertCircle className="w-3 h-3" />{item.confianca}</span> : null}
+              {items.map((item, index) => (
+                <div key={index} className={`rounded-2xl transition-all ${
+                  item.ignored ? 'opacity-40' : ''
+                } ${
+                  index % 2 === 0 ? 'bg-white dark:bg-gray-800/60' : 'bg-gray-50/80 dark:bg-gray-900/60'
+                } shadow-sm`}>
+                  {/* Card inner padding */}
+                  <div className="p-4">
+                    {/* Linha superior: checkbox + descrição do doc + preço */}
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="pt-0.5 flex-none">
+                        <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{item.descricao}</p>
+                        <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-gray-400 dark:text-gray-500">
+                          {item.codigo ? <span>Cód: {item.codigo}</span> : null}
+                          {item.marca ? <span>{item.marca}</span> : null}
+                          {item.confianca ? <span className="text-emerald-600 dark:text-emerald-400">{item.confianca}</span> : null}
+                        </div>
+                      </div>
+                      <div className="text-right flex-none">
+                        {discountNumber > 0 && (
+                          <p className="text-xs text-gray-400 line-through">{item.quantidade || 1}× R$ {formatCurrency(item.preco_unitario)}</p>
+                        )}
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.quantidade || 1}× R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
+                        <p className="text-xs text-gray-500">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
                       </div>
                     </div>
-                    <div className="min-w-0">
+                    {/* Linha inferior: busca no catálogo (desktop: alinhada; mobile: full width) */}
+                    <div className="pl-7">
                       <ProductSearchInputPDV
                         item={item}
                         index={index}
@@ -436,16 +453,9 @@ Retorne JSON:
                         productSearch={productSearch}
                       />
                     </div>
-                    <div className="text-right space-y-1">
-                      {discountNumber > 0 && (
-                        <p className="text-sm text-gray-400 dark:text-gray-500 line-through">{item.quantidade || 1} × R$ {formatCurrency(item.preco_unitario)}</p>
-                      )}
-                      <p className="text-base text-gray-700 dark:text-gray-300">{item.quantidade || 1} × R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
-                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
