@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,9 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [fornecedorInfo, setFornecedorInfo] = useState({ id: '', nome: '', cnpj: '' });
+  const [processingStatus, setProcessingStatus] = useState('');
+  const [processingStep, setProcessingStep] = useState(1);
+  const [productSearch, setProductSearch] = useState({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,16 +37,29 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
 
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const getFilteredProducts = (index) => {
+    const query = (productSearch[index] || '').trim().toLowerCase();
+    if (!query) return produtos;
+    return produtos.filter((produto) => (produto.nome || '').toLowerCase().includes(query));
+  };
+
+  const progressWidth = useMemo(() => `${(processingStep / 5) * 100}%`, [processingStep]);
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     setStep('processing');
+    setProcessingStep(1);
+    setProcessingStatus('Carregando arquivo');
 
     try {
       const uploadRes = await base44.integrations.Core.UploadFile({ file });
       const fileUrl = uploadRes.file_url;
+
+      setProcessingStep(2);
+      setProcessingStatus('Lendo documento');
 
       const prompt = mode === 'pdf'
         ? `Analise este PDF de compra/orçamento de fornecedor.
@@ -84,6 +100,9 @@ Retorne JSON:
   }]
 }`;
 
+      setProcessingStep(3);
+      setProcessingStatus('Identificando itens');
+
       const aiRes = await base44.integrations.Core.InvokeLLM({
         prompt,
         file_urls: [fileUrl],
@@ -117,12 +136,18 @@ Retorne JSON:
         }
       });
 
+      setProcessingStep(4);
+      setProcessingStatus('Identificando fornecedor');
+
       const result = typeof aiRes === 'string' ? JSON.parse(aiRes) : aiRes;
       setFornecedorInfo({
         id: result.fornecedor?.id_match || 'new',
         nome: result.fornecedor?.nome_identificado || '',
         cnpj: result.fornecedor?.cnpj_identificado || ''
       });
+      setProcessingStep(5);
+      setProcessingStatus('Buscando correspondências no catálogo');
+
       setItems((result.itens || []).map(item => ({
         ...item,
         selected_product_id: item.produto_id_match || '',
@@ -248,10 +273,13 @@ Retorne JSON:
         )}
 
         {step === 'processing' && (
-          <div className="py-20 flex flex-col items-center justify-center text-center">
+          <div className="py-20 flex flex-col items-center justify-center text-center max-w-md mx-auto">
             <Loader2 className="w-12 h-12 animate-spin text-gray-700 dark:text-gray-300 mb-4" />
-            <p className="font-glacial text-xl text-gray-900 dark:text-white">Processando importação</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Isso pode levar alguns segundos.</p>
+            <p className="font-glacial text-xl text-gray-900 dark:text-white">{processingStatus}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Passo {processingStep} de 5</p>
+            <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shadow-sm">
+              <div className="h-full bg-gray-700 dark:bg-gray-300 transition-all duration-300" style={{ width: progressWidth }} />
+            </div>
           </div>
         )}
 
@@ -302,18 +330,26 @@ Retorne JSON:
                         {item.confianca ? <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><AlertCircle className="w-3 h-3" />{item.confianca}</span> : null}
                       </div>
                     </div>
-                    <Select value={item.selected_product_id || 'none'} onValueChange={(value) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: value === 'none' ? '' : value, ignored: false } : current))}>
-                      <SelectTrigger className="border-0 bg-gray-50 dark:bg-gray-900 shadow-sm">
-                        <SelectValue placeholder="Vincular produto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Sem vínculo</SelectItem>
-                        <SelectItem value="create_new">Criar novo produto</SelectItem>
-                        {produtos.slice(0, 100).map(produto => (
-                          <SelectItem key={produto.id} value={produto.id}>{produto.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Input
+                        value={productSearch[index] || ''}
+                        onChange={(e) => setProductSearch((prev) => ({ ...prev, [index]: e.target.value }))}
+                        placeholder="Buscar no catálogo"
+                        className="border-0 bg-gray-50 dark:bg-gray-900 shadow-sm"
+                      />
+                      <Select value={item.selected_product_id || 'none'} onValueChange={(value) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: value === 'none' ? '' : value, ignored: false } : current))}>
+                        <SelectTrigger className="border-0 bg-gray-50 dark:bg-gray-900 shadow-sm">
+                          <SelectValue placeholder="Vincular produto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sem vínculo</SelectItem>
+                          <SelectItem value="create_new">Criar novo produto</SelectItem>
+                          {getFilteredProducts(index).map(produto => (
+                            <SelectItem key={produto.id} value={produto.id}>{produto.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-700 dark:text-gray-300">{item.quantidade || 1} × R$ {formatCurrency(item.preco_unitario)}</p>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">R$ {formatCurrency((item.quantidade || 1) * (item.preco_unitario || 0))}</p>
