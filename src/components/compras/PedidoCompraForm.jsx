@@ -30,6 +30,7 @@ import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
 import LogsPedidoCompra from './LogsPedidoCompra';
 import PedidoCompraFAB from './PedidoCompraFAB.jsx';
+import ImportadorPedidoCompra from './ImportadorPedidoCompra.jsx';
 import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
@@ -109,6 +110,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [empresa, setEmpresa] = useState(null);
   const [isNovoFornecedorOpen, setIsNovoFornecedorOpen] = useState(false);
   const [novoFornecedor, setNovoFornecedor] = useState({ nome: '', email: '', telefone: '', endereco: '' });
+  const [isImportadorPedidoOpen, setIsImportadorPedidoOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -1122,6 +1124,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 onProductCreated={(novoProduto) => {
                   setProdutos(prev => [...prev, novoProduto]);
                 }}
+                onOpenImporter={() => setIsImportadorPedidoOpen(true)}
               />
             </TabsContent>
 
@@ -1313,6 +1316,20 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         }}
         itens={formData.itens || []}
         produtos={produtos}
+      />
+
+      <ImportadorPedidoCompra
+        isOpen={isImportadorPedidoOpen}
+        onClose={() => setIsImportadorPedidoOpen(false)}
+        onImportComplete={({ fornecedorId, fornecedorNome, items: importedItems }) => {
+          if (fornecedorId) {
+            handleChange('fornecedor_id', fornecedorId);
+          }
+          if (fornecedorNome) {
+            handleChange('fornecedor_nome', fornecedorNome);
+          }
+          importedItems.forEach((item) => handleAddItem(item));
+        }}
       />
 
 

@@ -17,7 +17,8 @@ export default function MobileProductSelector({
   formatCurrency,
   onOpenAdjustPrices,
   isLocked,
-  onProductCreated
+  onProductCreated,
+  onOpenImporter
 }) {
   const [view, setView] = useState('menu'); // 'menu' | 'discount-entry' | 'catalog' | 'cart' | 'edit'
   const [search, setSearch] = useState('');
@@ -334,6 +335,22 @@ export default function MobileProductSelector({
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 {items.length > 0 ? `${items.length} ${items.length === 1 ? 'item' : 'itens'}` : 'Nenhum item adicionado'}
               </div>
+            </div>
+            <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+          </button>
+
+          {/* Importar itens */}
+          <button
+            onClick={() => onOpenImporter?.()}
+            className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm active:scale-[0.98] transition-transform flex items-center gap-4"
+            disabled={isLocked}
+          >
+            <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center shadow-sm">
+              <Plus className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="font-medium text-gray-900 dark:text-white">Importar Itens</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">PDF ou foto direto no pedido</div>
             </div>
             <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
           </button>
