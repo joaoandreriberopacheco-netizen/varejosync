@@ -42,6 +42,12 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
 
   const formatCurrency = (value) => (parseFloat(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const getProdutoLabel = (p) => {
+    if (p.nome) return p.nome;
+    return [p.campo_hierarquico_1, p.campo_hierarquico_2, p.campo_hierarquico_3, p.campo_hierarquico_4, p.campo_hierarquico_5]
+      .filter(Boolean).join(' ');
+  };
+
   const getSuggestedProduct = (item) => {
     if (!item.produto_id_match) return null;
     return produtos.find((produto) => produto.id === item.produto_id_match) || null;
@@ -98,7 +104,7 @@ Extraia fornecedor e itens.
 Tente identificar o fornecedor nesta lista: ${JSON.stringify(fornecedores.map(f => ({ id: f.id, nome: f.nome, cnpj: f.cpf_cnpj })))}
 Para encontrar o produto correspondente, considere apenas similaridade de descrição/nome do item com a descrição/nome do produto.
 Ignore código, marca, embalagem e qualquer outro campo na hora de decidir o match.
-Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: p.nome })))}
+Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: getProdutoLabel(p) })))}
 Retorne JSON com fornecedor e itens.
 {
   "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "string ou vazio"},
@@ -116,7 +122,7 @@ Retorne JSON com fornecedor e itens.
 Extraia todos os itens visíveis.
 Para encontrar o produto correspondente, considere apenas similaridade de descrição/nome do item com a descrição/nome do produto.
 Ignore código, marca, embalagem e qualquer outro campo na hora de decidir o match.
-Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: p.nome })))}
+Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: getProdutoLabel(p) })))}
 Retorne JSON:
 {
   "fornecedor": {"nome_identificado": "", "cnpj_identificado": "", "id_match": ""},
