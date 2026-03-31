@@ -21,12 +21,14 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   const [productSearch, setProductSearch] = useState({});
   const [discountType, setDiscountType] = useState('percentual');
   const [discountValue, setDiscountValue] = useState('0');
+  const [selectedFile, setSelectedFile] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!isOpen) return;
     setStep('upload');
     setItems([]);
+    setSelectedFile(null);
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
     Promise.all([
       base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
@@ -41,8 +43,13 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
 
   const getFilteredProducts = (index) => {
     const query = (productSearch[index] || '').trim().toLowerCase();
-    if (!query) return produtos;
-    return produtos.filter((produto) => (produto.nome || '').toLowerCase().includes(query));
+    if (!query) {
+      return [...produtos].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    }
+
+    return [...produtos]
+      .filter((produto) => (produto.nome || '').toLowerCase().includes(query))
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   };
 
   const progressWidth = useMemo(() => `${(processingStep / 5) * 100}%`, [processingStep]);
@@ -64,9 +71,8 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
     return Math.max(0, original - discounted);
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processSelectedFile = async () => {
+    if (!selectedFile) return;
 
     setIsUploading(true);
     setStep('processing');
@@ -74,7 +80,7 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
     setProcessingStatus('Carregando arquivo');
 
     try {
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      const uploadRes = await base44.integrations.Core.UploadFile({ file: selectedFile });
       const fileUrl = uploadRes.file_url;
 
       setProcessingStep(2);
@@ -179,6 +185,14 @@ Retorne JSON:
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setStep('discount');
   };
 
   const handleConfirm = async () => {
@@ -291,6 +305,46 @@ Retorne JSON:
           </div>
         )}
 
+        {step === 'discount' && (
+          <div className="max-w-2xl mx-auto rounded-[2rem] bg-gray-50 dark:bg-gray-800/60 p-6 md:p-8 shadow-sm space-y-5">
+            <div className="space-y-1 text-center">
+              <p className="font-glacial text-2xl text-gray-900 dark:text-white">Desconto ou acréscimo</p>
+              <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Defina o ajuste antes de processar o arquivo.</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-[180px_1fr]">
+              <div className="rounded-3xl bg-white dark:bg-gray-900 p-3 shadow-sm">
+                <Label className="text-sm text-gray-700 dark:text-gray-200 mb-2 block">Tipo</Label>
+                <Select value={discountType} onValueChange={setDiscountType}>
+                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm text-base text-gray-950 dark:text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percentual">Desconto %</SelectItem>
+                    <SelectItem value="valor">Desconto R$</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-3xl bg-white dark:bg-gray-900 p-3 shadow-sm">
+                <Label className="text-sm text-gray-700 dark:text-gray-200 mb-2 block">Valor</Label>
+                <Input
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(e.target.value)}
+                  placeholder={discountType === 'percentual' ? '0,00%' : '0,00'}
+                  className="h-14 border-0 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm text-lg text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => { setSelectedFile(null); setStep('upload'); }} className="h-14 flex-1 rounded-2xl border-0 shadow-sm text-base">
+                <ArrowLeft className="w-5 h-5 mr-2" />Voltar
+              </Button>
+              <Button onClick={processSelectedFile} className="h-14 flex-1 rounded-2xl shadow-sm text-base">
+                <Check className="w-5 h-5 mr-2" />Processar arquivo
+              </Button>
+            </div>
+          </div>
+        )}
+
         {step === 'processing' && (
           <div className="py-20 flex flex-col items-center justify-center text-center max-w-md mx-auto">
             <Loader2 className="w-12 h-12 animate-spin text-gray-700 dark:text-gray-300 mb-4" />
@@ -305,30 +359,10 @@ Retorne JSON:
         {step === 'review' && (
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 shadow-sm md:col-span-2">
-                <Label className="text-xs text-gray-500 mb-2 block">Desconto antes da importação</Label>
-                <div className="flex gap-2">
-                  <Select value={discountType} onValueChange={setDiscountType}>
-                    <SelectTrigger className="border-0 bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentual">%</SelectItem>
-                      <SelectItem value="valor">R$</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    placeholder={discountType === 'percentual' ? '0,00%' : '0,00'}
-                    className="border-0 bg-white dark:bg-gray-900 shadow-sm text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                  />
-                </div>
-              </div>
-              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 p-4 shadow-sm md:col-span-2">
+              <div className="rounded-3xl bg-gray-50 dark:bg-gray-800/60 p-5 shadow-sm md:col-span-2">
                 <Label className="text-xs text-gray-500 mb-2 block">Fornecedor</Label>
                 <Select value={fornecedorInfo.id || 'new'} onValueChange={(value) => setFornecedorInfo(prev => ({ ...prev, id: value }))}>
-                  <SelectTrigger className="border-0 bg-white dark:bg-gray-900 shadow-sm">
+                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-white dark:bg-gray-900 shadow-sm text-base text-gray-950 dark:text-white">
                     <SelectValue placeholder="Selecionar fornecedor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -359,46 +393,65 @@ Retorne JSON:
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {items.map((item, index) => (
-                  <div key={index} className={`p-4 grid gap-3 md:grid-cols-[40px_1.4fr_1fr_120px] items-center ${item.ignored ? 'opacity-50' : ''}`}>
+                  <div key={index} className={`p-5 grid gap-4 md:grid-cols-[48px_1.4fr_1fr_140px] items-center ${item.ignored ? 'opacity-50' : ''}`}>
                     <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.descricao}</p>
-                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">{item.descricao}</p>
+                      <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-500 dark:text-gray-400">
                         {item.codigo ? <span>Cód: {item.codigo}</span> : null}
                         {item.marca ? <span>{item.marca}</span> : null}
                         {item.confianca ? <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><AlertCircle className="w-3 h-3" />{item.confianca}</span> : null}
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
                       <Input
                         value={productSearch[index] || ''}
                         onChange={(e) => setProductSearch((prev) => ({ ...prev, [index]: e.target.value }))}
                         placeholder="Buscar no catálogo"
-                        className="border-0 bg-white dark:bg-gray-950 shadow-sm text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                        className="h-14 border-0 rounded-2xl bg-white dark:bg-gray-950 shadow-sm text-lg font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
                       />
-                      <Select value={item.selected_product_id || 'none'} onValueChange={(value) => {
-                        const normalizedSearch = (productSearch[index] || '').trim().toLowerCase();
-                        const matchedProduct = produtos.find((produto) => (produto.nome || '').toLowerCase() === normalizedSearch);
-                        setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: value === 'none' ? '' : value, ignored: false } : current));
-                        if (matchedProduct && value === 'none') {
-                          setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: matchedProduct.id, ignored: false } : current));
-                        }
-                      }}>
-                        <SelectTrigger className="border-0 bg-gray-50 dark:bg-gray-900 shadow-sm">
-                          <SelectValue placeholder="Vincular produto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Sem vínculo</SelectItem>
-                          <SelectItem value="create_new">Criar novo produto</SelectItem>
-                          {getFilteredProducts(index).slice(0, 12).map(produto => (
-                            <SelectItem key={produto.id} value={produto.id}>{produto.nome}</SelectItem>
+                      {(productSearch[index] || '').trim() && (
+                        <div className="rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '', ignored: false } : current))}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
+                          >
+                            Sem vínculo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                          >
+                            Criar novo produto
+                          </button>
+                          {getFilteredProducts(index).slice(0, 8).map(produto => (
+                            <button
+                              key={produto.id}
+                              type="button"
+                              onClick={() => {
+                                setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: produto.id, ignored: false } : current));
+                                setProductSearch((prev) => ({ ...prev, [index]: produto.nome }));
+                              }}
+                              className="w-full px-4 py-3 text-left text-sm md:text-base text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                            >
+                              {produto.nome}
+                            </button>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </div>
+                      )}
+                      <div className="h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center px-4 text-sm md:text-base text-gray-600 dark:text-gray-300">
+                        {item.selected_product_id === 'create_new'
+                          ? 'Criar novo produto'
+                          : item.selected_product_id
+                            ? (produtos.find((produto) => produto.id === item.selected_product_id)?.nome || 'Produto vinculado')
+                            : 'Sem vínculo'}
+                      </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{item.quantidade || 1} × R$ {formatCurrency(item.preco_unitario)}</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">R$ {formatCurrency((item.quantidade || 1) * (item.preco_unitario || 0))}</p>
+                      <p className="text-base text-gray-700 dark:text-gray-300">{item.quantidade || 1} × R$ {formatCurrency(item.preco_unitario)}</p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">R$ {formatCurrency((item.quantidade || 1) * (item.preco_unitario || 0))}</p>
                     </div>
                   </div>
                 ))}
