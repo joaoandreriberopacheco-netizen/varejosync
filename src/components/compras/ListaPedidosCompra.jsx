@@ -76,23 +76,18 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
               onEdit(pedido);
             }
           }}
-          className="flex-1 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left min-w-0 cursor-pointer"
+          className="flex-1 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left min-w-0 cursor-pointer"
         >
-          <div className="hidden sm:grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_auto] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] gap-x-8 items-center min-w-0">
-            <div className="flex items-start gap-3 min-w-0">
-              <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-9 h-9 flex items-center justify-center shadow-sm mt-0.5">
+          <div className="hidden md:grid grid-cols-[minmax(0,1.2fr)_minmax(0,0.95fr)_auto] gap-x-6 items-center min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-10 h-10 flex items-center justify-center shadow-sm">
                 <span className="text-xs font-bold text-gray-600 dark:text-gray-300">#</span>
               </span>
-              <div className="min-w-0 space-y-2">
-                <div className="min-w-0">
-                  <span className="block text-[0.9rem] font-semibold text-gray-900 dark:text-white truncate leading-none">
+              <div className="min-w-0 space-y-1.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[0.92rem] font-semibold text-gray-900 dark:text-white whitespace-nowrap leading-none">
                     {pedido.numero}
                   </span>
-                  <span className="block mt-1 text-[0.74rem] text-gray-500 dark:text-gray-400 truncate">
-                    {pedido.fornecedor_nome}
-                  </span>
-                </div>
-                <div className="flex items-center flex-wrap gap-1.5">
                   <span className={`text-[0.6rem] px-2 py-1 rounded-md font-medium ${statusColors[pedido.status] || statusColors['Rascunho']}`}>
                     {pedido.status}
                   </span>
@@ -103,33 +98,34 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
                     </span>
                   )}
                 </div>
+                <span className="block text-[0.74rem] text-gray-500 dark:text-gray-400 truncate">
+                  {pedido.fornecedor_nome}
+                </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 min-w-0">
-              <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-600 dark:text-gray-300 min-w-0">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 min-w-0 text-[0.69rem]">
+              <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 min-w-0">
                 <Package2 className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
-                <span>{totalLinhas} itens</span>
-                <span className="text-gray-400 dark:text-gray-500">·</span>
-                <span>Qtd. {quantidadeItens}</span>
+                <span>{totalLinhas} itens · Qtd. {quantidadeItens}</span>
               </span>
-              <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-500 dark:text-gray-400 min-w-0">
+              <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 min-w-0">
                 <CalendarClock className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
                 <span>{pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : 'Sem previsão'}</span>
               </span>
-              <span className={`flex items-center gap-1.5 text-[0.68rem] min-w-0 ${temManifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+              <span className={`flex items-center gap-1.5 min-w-0 ${temManifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                 <Truck className={`w-3.5 h-3.5 flex-none ${temManifesto ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-400 dark:text-red-400'}`} />
-                <span>{temManifesto ? 'Manifesto vinculado' : 'Sem manifesto'}</span>
+                <span>{temManifesto ? 'Manifesto ok' : 'Sem manifesto'}</span>
               </span>
-              <span className={`flex items-center gap-1.5 text-[0.68rem] min-w-0 ${temSupermanifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+              <span className={`flex items-center gap-1.5 min-w-0 ${temSupermanifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
                 <Link2 className={`w-3.5 h-3.5 flex-none ${temSupermanifesto ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`} />
-                <span>{temSupermanifesto ? 'Supermanifesto vinculado' : 'Sem vínculo'}</span>
+                <span>{temSupermanifesto ? 'Super ok' : 'Sem vínculo'}</span>
               </span>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="flex flex-col items-end gap-2 min-w-[110px]">
-                <span className="text-[0.98rem] font-bold text-gray-900 dark:text-white whitespace-nowrap leading-none">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-end gap-1 min-w-[118px]">
+                <span className="text-[1rem] font-bold text-gray-900 dark:text-white whitespace-nowrap leading-none">
                   {R(pedido.valor_total)}
                 </span>
                 <span className="text-[0.68rem] text-gray-400 dark:text-gray-500 whitespace-nowrap">
@@ -150,53 +146,52 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
             </div>
           </div>
 
-          <div className="sm:hidden flex items-start gap-3 min-w-0">
-            <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-9 h-9 flex items-center justify-center shadow-sm mt-0.5">
-              <span className="text-xs font-bold text-gray-600 dark:text-gray-300">#</span>
-            </span>
+          <div className="md:hidden rounded-2xl bg-gray-50/70 dark:bg-white/[0.03] px-3 py-3 shadow-sm">
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="bg-white dark:bg-gray-700 rounded-xl flex-none w-10 h-10 flex items-center justify-center shadow-sm">
+                <span className="text-xs font-bold text-gray-600 dark:text-gray-300">#</span>
+              </span>
 
-            <div className="flex-1 min-w-0 space-y-3">
-              <div className="flex items-start justify-between gap-3 min-w-0">
-                <div className="min-w-0 flex-1">
-                  <span className="block text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none">
-                    {pedido.numero}
-                  </span>
-                  <span className="block mt-1 text-[0.78rem] text-gray-500 dark:text-gray-400 leading-tight break-words">
-                    {pedido.fornecedor_nome}
-                  </span>
+              <div className="flex-1 min-w-0 space-y-3">
+                <div className="flex items-start justify-between gap-3 min-w-0">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <span className="block text-[0.94rem] font-semibold text-gray-900 dark:text-white leading-none">
+                      {pedido.numero}
+                    </span>
+                    <span className="block text-[0.78rem] text-gray-500 dark:text-gray-400 leading-tight break-words">
+                      {pedido.fornecedor_nome}
+                    </span>
+                    <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
+                      <span className={`text-[0.6rem] px-2 py-1 rounded-md font-medium ${statusColors[pedido.status] || statusColors['Rascunho']}`}>
+                        {pedido.status}
+                      </span>
+                      {isAtrasado && pedido.status !== 'Concluído' && pedido.status !== 'Cancelado' && (
+                        <span className="text-[0.6rem] px-2 py-1 rounded-md bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-1">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          Atrasado
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 flex-none pl-2">
+                    <span className="text-[1.02rem] font-bold text-gray-900 dark:text-white whitespace-nowrap leading-none">
+                      {R(pedido.valor_total)}
+                    </span>
+                    <span className="text-[0.7rem] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                      {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1.5 flex-none pl-2">
-                  <span className="text-[1rem] font-bold text-gray-900 dark:text-white whitespace-nowrap leading-none">
-                    {R(pedido.valor_total)}
-                  </span>
-                  <span className="text-[0.7rem] text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                    {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
-                  </span>
-                </div>
-              </div>
 
-              <div className="flex items-center flex-wrap gap-1.5">
-                <span className={`text-[0.6rem] px-2 py-1 rounded-md font-medium ${statusColors[pedido.status] || statusColors['Rascunho']}`}>
-                  {pedido.status}
-                </span>
-                {isAtrasado && pedido.status !== 'Concluído' && pedido.status !== 'Cancelado' && (
-                  <span className="text-[0.6rem] px-2 py-1 rounded-md bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-1">
-                    <AlertCircle className="w-2.5 h-2.5" />
-                    Atrasado
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-[0.7rem]">
+                  <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 min-w-0">
+                    <Package2 className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
+                    <span className="leading-tight">{totalLinhas} itens · Qtd. {quantidadeItens}</span>
                   </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-2 text-[0.7rem]">
-                <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 min-w-0">
-                  <Package2 className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
-                  <span>{totalLinhas} itens · Qtd. {quantidadeItens}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 min-w-0">
-                  <CalendarClock className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
-                  <span>{pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : 'Sem previsão'}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                  <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 min-w-0 justify-start">
+                    <CalendarClock className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
+                    <span className="leading-tight">{pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : 'Sem previsão'}</span>
+                  </span>
                   <span className={`flex items-center gap-1.5 min-w-0 ${temManifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                     <Truck className={`w-3.5 h-3.5 flex-none ${temManifesto ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-400 dark:text-red-400'}`} />
                     <span className="leading-tight break-words">{temManifesto ? 'Manifesto ok' : 'Sem manifesto'}</span>
