@@ -1,8 +1,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Search, Plus, Wand2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import NovoProdutoRapidoDialog from '@/components/compras/NovoProdutoRapidoDialog';
 
-// Busca por todas as palavras da query em qualquer campo relevante do produto
 function matchesQuery(produto, query) {
   if (!query) return true;
   const searchable = [
@@ -16,7 +16,6 @@ function matchesQuery(produto, query) {
     produto.codigo_barras,
     produto.marca,
   ].filter(Boolean).join(' ').toLowerCase();
-
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   return words.every(w => searchable.includes(w));
 }
@@ -29,6 +28,7 @@ function getProductLabel(produto) {
 
 export default function ProductSearchInputPDV({ item, index, produtos, getSuggestedProduct, setItems, setProductSearch, productSearch }) {
   const [isFocused, setIsFocused] = useState(false);
+  const [showNovoProduto, setShowNovoProduto] = useState(false);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -50,19 +50,27 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
     setIsFocused(false);
   };
 
-  const handleCreateNew = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setItems(prev => prev.map((c, i) => i === index ? { ...c, selected_product_id: 'create_new', ignored: false } : c));
-    setProductSearch(prev => ({ ...prev, [index]: '' }));
-    setIsFocused(false);
-  };
-
   const handleClear = (e) => {
     e.preventDefault();
     setItems(prev => prev.map((c, i) => i === index ? { ...c, selected_product_id: '' } : c));
     setProductSearch(prev => ({ ...prev, [index]: '' }));
     setTimeout(() => inputRef.current?.focus(), 10);
+  };
+
+  const handleOpenNovoProduto = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFocused(false);
+    setShowNovoProduto(true);
+  };
+
+  const handleNovoProdutoSuccess = (novoProduto) => {
+    if (novoProduto) {
+      const label = getProductLabel(novoProduto);
+      setItems(prev => prev.map((c, i) => i === index ? { ...c, selected_product_id: novoProduto.id, ignored: false } : c));
+      setProductSearch(prev => ({ ...prev, [index]: label }));
+    }
+    setShowNovoProduto(false);
   };
 
   const visibleProducts = useMemo(() => {
@@ -73,106 +81,114 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
   }, [isFocused, currentQuery, produtos]);
 
   return (
-    <div className="relative min-w-0" ref={containerRef}>
-      <div className={cn(
-        "h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center gap-2 px-3 transition-all",
-        isFocused && "ring-1 ring-gray-300 dark:ring-gray-600"
-      )}>
-        <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-none" />
+    <>
+      <div className="relative min-w-0" ref={containerRef}>
+        <div className={cn(
+          "h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center gap-2 px-3 transition-all",
+          isFocused && "ring-1 ring-gray-300 dark:ring-gray-600"
+        )}>
+          <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-none" />
 
-        <input
-          ref={inputRef}
-          value={currentQuery}
-          onChange={handleChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={(e) => {
-            // Não fecha se o foco foi para dentro do container (dropdown, botões)
-            if (containerRef.current?.contains(e.relatedTarget)) return;
-            setIsFocused(false);
-          }}
-          placeholder="Buscar no catálogo..."
-          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-        />
+          <input
+            ref={inputRef}
+            value={currentQuery}
+            onChange={handleChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={(e) => {
+              if (containerRef.current?.contains(e.relatedTarget)) return;
+              setIsFocused(false);
+            }}
+            placeholder="Buscar no catálogo..."
+            className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+          />
 
-        {/* Status inline (sem foco, sem query) */}
-        {!isFocused && !currentQuery && (
-          <span className={cn(
-            "text-xs truncate max-w-[130px] text-right",
-            item.selected_product_id === 'create_new' ? 'text-gray-600 dark:text-gray-300' :
-            selectedProduct ? 'text-emerald-700 dark:text-emerald-400' :
-            suggestedProduct ? 'text-emerald-600 dark:text-emerald-400' :
-            'text-red-400 dark:text-red-500'
-          )}>
-            {item.selected_product_id === 'create_new' ? 'Criar novo' :
-             selectedProduct ? getProductLabel(selectedProduct) :
-             suggestedProduct ? `IA: ${getProductLabel(suggestedProduct)}` :
-             'Não encontrado'}
-          </span>
-        )}
+          {/* Status inline */}
+          {!isFocused && !currentQuery && (
+            <span className={cn(
+              "text-xs truncate max-w-[130px] text-right",
+              item.selected_product_id === 'create_new' ? 'text-gray-600 dark:text-gray-300' :
+              selectedProduct ? 'text-emerald-700 dark:text-emerald-400' :
+              suggestedProduct ? 'text-emerald-600 dark:text-emerald-400' :
+              'text-red-400 dark:text-red-500'
+            )}>
+              {item.selected_product_id === 'create_new' ? 'Criando...' :
+               selectedProduct ? getProductLabel(selectedProduct) :
+               suggestedProduct ? `IA: ${getProductLabel(suggestedProduct)}` :
+               'Não encontrado'}
+            </span>
+          )}
 
-        {/* Aceitar sugestão IA */}
-        {!isFocused && !currentQuery && suggestedProduct && !item.selected_product_id && (
+          {/* Aceitar sugestão IA */}
+          {!isFocused && !currentQuery && suggestedProduct && !item.selected_product_id && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => handleSelect(suggestedProduct.id, getProductLabel(suggestedProduct))}
+              className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-none"
+              title="Aceitar sugestão IA"
+            >
+              <Wand2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            </button>
+          )}
+
+          {/* Limpar */}
+          {(item.selected_product_id || currentQuery) && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={handleClear}
+              className="w-6 h-6 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-400 hover:text-gray-700 flex-none"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+
+          {/* Criar novo produto */}
           <button
             type="button"
             tabIndex={-1}
-            onClick={() => handleSelect(suggestedProduct.id, getProductLabel(suggestedProduct))}
-            className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-none"
-            title="Aceitar sugestão IA"
+            onMouseDown={handleOpenNovoProduto}
+            className="w-7 h-7 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex-none"
+            title="Criar novo produto"
           >
-            <Wand2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <Plus className="w-3.5 h-3.5" />
           </button>
-        )}
+        </div>
 
-        {/* Limpar */}
-        {(item.selected_product_id || currentQuery) && (
-          <button
-            type="button"
-            tabIndex={-1}
-            onMouseDown={handleClear}
-            className="w-6 h-6 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-400 hover:text-gray-700 flex-none"
-          >
-            <X className="w-3 h-3" />
-          </button>
+        {/* Dropdown catálogo */}
+        {isFocused && (
+          <div className="absolute z-30 w-full mt-1 rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden max-h-52 overflow-y-auto">
+            {visibleProducts.length > 0 ? (
+              visibleProducts.map(produto => (
+                <button
+                  key={produto.id}
+                  type="button"
+                  tabIndex={0}
+                  onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProductLabel(produto)); }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900 border-b border-gray-50 dark:border-gray-900 last:border-0"
+                >
+                  {getProductLabel(produto)}
+                </button>
+              ))
+            ) : currentQuery ? (
+              <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
+                Nenhum produto encontrado para "{currentQuery}"
+              </div>
+            ) : (
+              <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
+                Nenhum produto no catálogo
+              </div>
+            )}
+          </div>
         )}
-
-        {/* Criar novo produto */}
-        <button
-          type="button"
-          tabIndex={-1}
-          onMouseDown={handleCreateNew}
-          className="w-7 h-7 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex-none"
-          title="Criar novo produto"
-        >
-          <Plus className="w-3.5 h-3.5" />
-        </button>
       </div>
 
-      {/* Dropdown catálogo */}
-      {isFocused && (
-        <div className="absolute z-30 w-full mt-1 rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-          {visibleProducts.length > 0 ? (
-            visibleProducts.map(produto => (
-              <button
-                key={produto.id}
-                type="button"
-                tabIndex={0}
-                onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProductLabel(produto)); }}
-                className="w-full px-4 py-2.5 text-left text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900 border-b border-gray-50 dark:border-gray-900 last:border-0"
-              >
-                {getProductLabel(produto)}
-              </button>
-            ))
-          ) : currentQuery ? (
-            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
-              Nenhum produto encontrado para "{currentQuery}"
-            </div>
-          ) : (
-            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
-              Carregando catálogo...
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+      <NovoProdutoRapidoDialog
+        isOpen={showNovoProduto}
+        onClose={() => setShowNovoProduto(false)}
+        onSuccess={handleNovoProdutoSuccess}
+        nomeInicial={currentQuery}
+      />
+    </>
   );
 }
