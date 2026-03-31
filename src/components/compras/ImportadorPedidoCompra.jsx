@@ -49,7 +49,9 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
         ? `Analise este PDF de compra/orçamento de fornecedor.
 Extraia fornecedor e itens.
 Tente identificar o fornecedor nesta lista: ${JSON.stringify(fornecedores.map(f => ({ id: f.id, nome: f.nome, cnpj: f.cpf_cnpj })))}
-Tente identificar correspondência dos itens com esta lista de produtos: ${JSON.stringify(produtos.slice(0, 400).map(p => ({ id: p.id, nome: p.nome, codigo: p.codigo_interno })))}
+Para encontrar o produto correspondente, considere apenas similaridade de descrição/nome do item com a descrição/nome do produto.
+Ignore código, marca, embalagem e qualquer outro campo na hora de decidir o match.
+Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: p.nome })))}
 Retorne JSON com fornecedor e itens.
 {
   "fornecedor": {"nome_identificado": "string", "cnpj_identificado": "string", "id_match": "string ou vazio"},
@@ -64,7 +66,10 @@ Retorne JSON com fornecedor e itens.
   }]
 }`
         : `Analise esta imagem de lista de compra.
-Extraia todos os itens visíveis e tente identificar correspondência com esta lista de produtos: ${JSON.stringify(produtos.slice(0, 400).map(p => ({ id: p.id, nome: p.nome })))}
+Extraia todos os itens visíveis.
+Para encontrar o produto correspondente, considere apenas similaridade de descrição/nome do item com a descrição/nome do produto.
+Ignore código, marca, embalagem e qualquer outro campo na hora de decidir o match.
+Lista de produtos: ${JSON.stringify(produtos.map(p => ({ id: p.id, nome: p.nome })))}
 Retorne JSON:
 {
   "fornecedor": {"nome_identificado": "", "cnpj_identificado": "", "id_match": ""},
