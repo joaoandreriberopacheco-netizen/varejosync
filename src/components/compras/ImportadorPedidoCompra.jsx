@@ -409,97 +409,94 @@ Retorne JSON:
                         {item.confianca ? <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><AlertCircle className="w-3 h-3" />{item.confianca}</span> : null}
                       </div>
                     </div>
-                    <div className="space-y-2 relative">
-                      {getSuggestedProduct(item) && !item.selected_product_id && (
-                        <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2.5 shadow-sm flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                              <Wand2 className="w-3.5 h-3.5" />
-                              Sugerido pela IA
+                    <div className="space-y-2.5 relative">
+                      <div className="rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm overflow-hidden">
+                        <div className="relative flex items-center">
+                          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                          <Input
+                            value={productSearch[index] || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setProductSearch((prev) => ({ ...prev, [index]: value }));
+                              setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '' } : current));
+                            }}
+                            placeholder="Buscar ou vincular item"
+                            className="h-12 pl-11 pr-12 border-0 rounded-none bg-transparent shadow-none text-sm font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-gray-950 shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            title="Criar novo produto"
+                          >
+                            <span className="sr-only">Criar novo produto</span>
+                            <X className="w-4 h-4 rotate-45" />
+                          </button>
+                        </div>
+                        <div className="px-4 pb-3">
+                          {item.selected_product_id === 'create_new' ? (
+                            <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
+                              <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
+                              Novo produto será criado
                             </div>
-                            <p className="text-sm text-emerald-900 dark:text-emerald-100 truncate mt-0.5">{getSuggestedProduct(item)?.nome}</p>
-                          </div>
-                          <div className="flex items-center gap-2 flex-none">
-                            <Button
+                          ) : item.selected_product_id ? (
+                            <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                              Vinculado: {produtos.find((produto) => produto.id === item.selected_product_id)?.nome || 'Produto vinculado'}
+                            </div>
+                          ) : getSuggestedProduct(item) ? (
+                            <button
                               type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, produto_id_match: '', selected_product_id: '', ignored: false } : current))}
-                              className="h-8 rounded-xl border-0 shadow-sm"
-                            >
-                              Recusar
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
                               onClick={() => {
                                 const suggested = getSuggestedProduct(item);
                                 if (!suggested) return;
                                 setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: suggested.id, ignored: false } : current));
                                 setProductSearch((prev) => ({ ...prev, [index]: suggested.nome }));
                               }}
-                              className="h-8 rounded-xl shadow-sm"
+                              className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 hover:opacity-80"
                             >
-                              Aceitar
-                            </Button>
-                          </div>
+                              <Wand2 className="w-3.5 h-3.5" />
+                              Sugestão IA: {getSuggestedProduct(item)?.nome}
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                              <CornerDownLeft className="w-3.5 h-3.5" />
+                              Vínculo não encontrado
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {(productSearch[index] || '').trim() && !item.selected_product_id && (
+                        <div className="rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+                          <button
+                            type="button"
+                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '', ignored: false } : current))}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
+                          >
+                            Sem vínculo
+                          </button>
+                          {getFilteredProducts(index).slice(0, 8).map(produto => (
+                            <button
+                              key={produto.id}
+                              type="button"
+                              onClick={() => {
+                                setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: produto.id, ignored: false } : current));
+                                setProductSearch((prev) => ({ ...prev, [index]: produto.nome }));
+                              }}
+                              className="w-full px-4 py-3 text-left text-sm md:text-base text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                            >
+                              {produto.nome}
+                            </button>
+                          ))}
+                          {getFilteredProducts(index).length === 0 && (
+                            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                              <CornerDownLeft className="w-4 h-4" />
+                              Nenhum item encontrado
+                            </div>
+                          )}
                         </div>
                       )}
-                      <div className="relative">
-                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                        <Input
-                          value={productSearch[index] || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setProductSearch((prev) => ({ ...prev, [index]: value }));
-                            setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '' } : current));
-                          }}
-                          placeholder="Buscar no catálogo"
-                          className="h-14 pl-11 border-0 rounded-2xl bg-white dark:bg-gray-950 shadow-sm text-lg font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                        />
-                      </div>
-                      <div className="rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden max-h-72 overflow-y-auto">
-                        <button
-                          type="button"
-                          onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '', ignored: false } : current))}
-                          className="w-full px-4 py-3 text-left text-sm text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
-                        >
-                          Sem vínculo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
-                          className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
-                        >
-                          Criar novo produto
-                        </button>
-                        {getFilteredProducts(index).slice(0, 8).map(produto => (
-                          <button
-                            key={produto.id}
-                            type="button"
-                            onClick={() => {
-                              setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: produto.id, ignored: false } : current));
-                              setProductSearch((prev) => ({ ...prev, [index]: produto.nome }));
-                            }}
-                            className="w-full px-4 py-3 text-left text-sm md:text-base text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
-                          >
-                            {produto.nome}
-                          </button>
-                        ))}
-                        {getFilteredProducts(index).length === 0 && (
-                          <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
-                            <CornerDownLeft className="w-4 h-4" />
-                            Nenhum item encontrado
-                          </div>
-                        )}
-                      </div>
-                      <div className="h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center px-4 text-sm md:text-base text-gray-600 dark:text-gray-300">
-                        {item.selected_product_id === 'create_new'
-                          ? 'Criar novo produto'
-                          : item.selected_product_id
-                            ? (produtos.find((produto) => produto.id === item.selected_product_id)?.nome || 'Produto vinculado')
-                            : 'Sem vínculo'}
-                      </div>
                     </div>
                     <div className="text-right space-y-1">
                       {discountNumber > 0 && (
