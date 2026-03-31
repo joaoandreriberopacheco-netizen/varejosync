@@ -32,7 +32,7 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
     setSelectedFile(null);
     setFornecedorInfo({ id: '', nome: '', cnpj: '' });
     Promise.all([
-      base44.entities.Produto.filter({ tipo: 'Produto' }),
+      base44.entities.Produto.list(),
       base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] })
     ]).then(([prods, fns]) => {
       setProdutos(prods);
