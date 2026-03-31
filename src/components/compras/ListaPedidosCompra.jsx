@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { ChevronRight, AlertCircle, Trash2, Check } from 'lucide-react';
+import { ChevronRight, AlertCircle, Trash2, Check, Package2, CalendarClock, Link2, Truck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
   AlertDialog,
@@ -32,6 +32,10 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
   const [deleting, setDeleting] = useState(false);
   const isAtrasado = pedido.data_prevista_entrega && new Date(pedido.data_prevista_entrega + 'T12:00:00') < new Date();
   const isRascunho = pedido.status === 'Rascunho';
+  const quantidadeItens = Array.isArray(pedido.itens) ? pedido.itens.reduce((acc, item) => acc + (Number(item.quantidade) || 0), 0) : 0;
+  const totalLinhas = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
+  const temManifesto = !!pedido.manifesto_entrada_id;
+  const temSupermanifesto = !!pedido.supermanifesto_id;
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -74,17 +78,18 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
           }}
           className="flex-1 flex items-start gap-3 px-4 py-4 hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10 transition-colors text-left min-w-0 cursor-pointer"
         >
-          <span className="bg-gray-100 dark:bg-gray-700 rounded-lg flex-none w-8 h-8 flex items-center justify-center">
+          <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-9 h-9 flex items-center justify-center shadow-sm">
             <span className="text-xs font-bold text-gray-600 dark:text-gray-300">#</span>
           </span>
-          <span className="flex-1 min-w-0">
-            <span className="block text-[0.82rem] font-semibold text-gray-900 dark:text-white truncate">
+          <span className="flex-1 min-w-0 space-y-2">
+            <span className="block text-[0.84rem] font-semibold text-gray-900 dark:text-white truncate">
               {pedido.numero}
             </span>
-            <span className="text-[0.7rem] text-gray-500 dark:text-gray-400 truncate">
+            <span className="block text-[0.72rem] text-gray-500 dark:text-gray-400 truncate leading-none">
               {pedido.fornecedor_nome}
             </span>
-            <div className="flex items-center flex-wrap gap-1 mt-1">
+
+            <div className="flex items-center flex-wrap gap-1">
               <span className={`text-[0.6rem] px-2 py-1 rounded-md font-medium ${statusColors[pedido.status] || statusColors['Rascunho']}`}>
                 {pedido.status}
               </span>
@@ -95,16 +100,33 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
                 </span>
               )}
             </div>
+
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 pr-2">
+              <span className="flex items-center gap-1.5 text-[0.66rem] text-gray-500 dark:text-gray-400 min-w-0">
+                <Package2 className="w-3 h-3 flex-none" />
+                <span className="truncate">{totalLinhas} itens · {quantidadeItens}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-[0.66rem] text-gray-500 dark:text-gray-400 min-w-0">
+                <CalendarClock className="w-3 h-3 flex-none" />
+                <span className="truncate">{pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : 'Sem previsão'}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-[0.66rem] text-gray-500 dark:text-gray-400 min-w-0">
+                <Truck className="w-3 h-3 flex-none" />
+                <span className="truncate">{temManifesto ? 'Com manifesto' : 'Sem manifesto'}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-[0.66rem] text-gray-500 dark:text-gray-400 min-w-0">
+                <Link2 className="w-3 h-3 flex-none" />
+                <span className="truncate">{temSupermanifesto ? 'Em supermanifesto' : 'Sem vínculo'}</span>
+              </span>
+            </div>
           </span>
-          {/* Bloco direito — largura fixa para todos os rows, lixeira sobreposta */}
-          <span className="flex-none flex flex-col items-end gap-1 pl-1 w-20 relative">
-            <span className="text-[0.82rem] font-bold text-gray-900 dark:text-white whitespace-nowrap">
+          <span className="flex-none flex flex-col items-end justify-between gap-2 pl-1 min-h-[88px] w-24 relative">
+            <span className="text-[0.84rem] font-bold text-gray-900 dark:text-white whitespace-nowrap">
               {R(pedido.valor_total)}
             </span>
-            <span className="text-[0.68rem] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-              {pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : '—'}
+            <span className="text-[0.68rem] text-gray-400 dark:text-gray-500 whitespace-nowrap text-right">
+              {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
             </span>
-            {/* Lixeira sobreposta — não altera o layout */}
             {isRascunho && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
