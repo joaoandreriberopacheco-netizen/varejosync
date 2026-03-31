@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
-import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles, AlertCircle, Search, Wand2, CornerDownLeft } from 'lucide-react';
+import { Upload, Loader2, Check, X, ArrowLeft, Package, FileText, Camera, Sparkles, AlertCircle } from 'lucide-react';
+import ProductSearchInputPDV from '@/components/compras/ProductSearchInputPDV';
 
 export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComplete }) {
   const [mode, setMode] = useState('pdf');
@@ -410,51 +411,15 @@ Retorne JSON:
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <div className="h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center gap-2 px-3">
-                        <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-none" />
-                        <input
-                          value={productSearch[index] || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setProductSearch((prev) => ({ ...prev, [index]: value }));
-                            setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '' } : current));
-                          }}
-                          placeholder="Buscar ou vincular item"
-                          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                        />
-                        <div className="min-w-0 flex-1 text-xs truncate text-right">
-                          {item.selected_product_id === 'create_new' ? (
-                            <span className="text-gray-700 dark:text-gray-200">Novo produto</span>
-                          ) : item.selected_product_id ? (
-                            <span className="text-emerald-700 dark:text-emerald-400 truncate inline-block max-w-full">{produtos.find((produto) => produto.id === item.selected_product_id)?.nome || 'Produto vinculado'}</span>
-                          ) : getSuggestedProduct(item) ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const suggested = getSuggestedProduct(item);
-                                if (!suggested) return;
-                                setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: suggested.id, ignored: false } : current));
-                                setProductSearch((prev) => ({ ...prev, [index]: suggested.nome }));
-                              }}
-                              className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:opacity-80 max-w-full"
-                            >
-                              <Wand2 className="w-3.5 h-3.5 flex-none" />
-                              <span className="truncate">{getSuggestedProduct(item)?.nome}</span>
-                            </button>
-                          ) : (
-                            <span className="text-gray-400 dark:text-gray-500">Não encontrado</span>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
-                          className="w-7 h-7 rounded-full bg-white dark:bg-gray-950 shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex-none"
-                          title="Criar novo produto"
-                        >
-                          <span className="sr-only">Criar novo produto</span>
-                          <X className="w-3.5 h-3.5 rotate-45" />
-                        </button>
-                      </div>
+                      <ProductSearchInputPDV
+                        item={item}
+                        index={index}
+                        produtos={produtos}
+                        getSuggestedProduct={getSuggestedProduct}
+                        setItems={setItems}
+                        setProductSearch={setProductSearch}
+                        productSearch={productSearch}
+                      />
                     </div>
                     <div className="text-right space-y-1">
                       {discountNumber > 0 && (
