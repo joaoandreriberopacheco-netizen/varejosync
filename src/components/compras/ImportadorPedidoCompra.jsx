@@ -399,51 +399,34 @@ Retorne JSON:
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {items.map((item, index) => (
-                  <div key={index} className={`p-5 grid gap-4 md:grid-cols-[48px_1.4fr_1fr_140px] items-center ${item.ignored ? 'opacity-50' : ''}`}>
+                  <div key={index} className={`p-4 grid gap-3 md:grid-cols-[36px_minmax(0,1.5fr)_minmax(280px,1fr)_140px] items-center ${item.ignored ? 'opacity-50' : ''}`}>
                     <Checkbox checked={!item.ignored} onCheckedChange={(checked) => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, ignored: !checked } : current))} />
-                    <div>
-                      <p className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">{item.descricao}</p>
+                    <div className="min-w-0">
+                      <p className="text-base md:text-lg font-semibold text-gray-900 dark:text-white leading-tight">{item.descricao}</p>
                       <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-500 dark:text-gray-400">
                         {item.codigo ? <span>Cód: {item.codigo}</span> : null}
                         {item.marca ? <span>{item.marca}</span> : null}
                         {item.confianca ? <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><AlertCircle className="w-3 h-3" />{item.confianca}</span> : null}
                       </div>
                     </div>
-                    <div className="space-y-2.5 relative">
-                      <div className="rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm overflow-hidden">
-                        <div className="relative flex items-center">
-                          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                          <Input
-                            value={productSearch[index] || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setProductSearch((prev) => ({ ...prev, [index]: value }));
-                              setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '' } : current));
-                            }}
-                            placeholder="Buscar ou vincular item"
-                            className="h-12 pl-11 pr-12 border-0 rounded-none bg-transparent shadow-none text-sm font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-gray-950 shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            title="Criar novo produto"
-                          >
-                            <span className="sr-only">Criar novo produto</span>
-                            <X className="w-4 h-4 rotate-45" />
-                          </button>
-                        </div>
-                        <div className="px-4 pb-3">
+                    <div className="min-w-0">
+                      <div className="h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center gap-2 px-3">
+                        <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-none" />
+                        <input
+                          value={productSearch[index] || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setProductSearch((prev) => ({ ...prev, [index]: value }));
+                            setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '' } : current));
+                          }}
+                          placeholder="Buscar ou vincular item"
+                          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-medium text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                        />
+                        <div className="min-w-0 flex-1 text-xs truncate text-right">
                           {item.selected_product_id === 'create_new' ? (
-                            <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
-                              <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500" />
-                              Novo produto será criado
-                            </div>
+                            <span className="text-gray-700 dark:text-gray-200">Novo produto</span>
                           ) : item.selected_product_id ? (
-                            <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                              Vinculado: {produtos.find((produto) => produto.id === item.selected_product_id)?.nome || 'Produto vinculado'}
-                            </div>
+                            <span className="text-emerald-700 dark:text-emerald-400 truncate inline-block max-w-full">{produtos.find((produto) => produto.id === item.selected_product_id)?.nome || 'Produto vinculado'}</span>
                           ) : getSuggestedProduct(item) ? (
                             <button
                               type="button"
@@ -453,50 +436,25 @@ Retorne JSON:
                                 setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: suggested.id, ignored: false } : current));
                                 setProductSearch((prev) => ({ ...prev, [index]: suggested.nome }));
                               }}
-                              className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 hover:opacity-80"
+                              className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:opacity-80 max-w-full"
                             >
-                              <Wand2 className="w-3.5 h-3.5" />
-                              Sugestão IA: {getSuggestedProduct(item)?.nome}
+                              <Wand2 className="w-3.5 h-3.5 flex-none" />
+                              <span className="truncate">{getSuggestedProduct(item)?.nome}</span>
                             </button>
                           ) : (
-                            <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-                              <CornerDownLeft className="w-3.5 h-3.5" />
-                              Vínculo não encontrado
-                            </div>
+                            <span className="text-gray-400 dark:text-gray-500">Não encontrado</span>
                           )}
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: 'create_new', ignored: false } : current))}
+                          className="w-7 h-7 rounded-full bg-white dark:bg-gray-950 shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex-none"
+                          title="Criar novo produto"
+                        >
+                          <span className="sr-only">Criar novo produto</span>
+                          <X className="w-3.5 h-3.5 rotate-45" />
+                        </button>
                       </div>
-
-                      {(productSearch[index] || '').trim() && !item.selected_product_id && (
-                        <div className="rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-                          <button
-                            type="button"
-                            onClick={() => setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: '', ignored: false } : current))}
-                            className="w-full px-4 py-3 text-left text-sm text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
-                          >
-                            Sem vínculo
-                          </button>
-                          {getFilteredProducts(index).slice(0, 8).map(produto => (
-                            <button
-                              key={produto.id}
-                              type="button"
-                              onClick={() => {
-                                setItems(prev => prev.map((current, currentIndex) => currentIndex === index ? { ...current, selected_product_id: produto.id, ignored: false } : current));
-                                setProductSearch((prev) => ({ ...prev, [index]: produto.nome }));
-                              }}
-                              className="w-full px-4 py-3 text-left text-sm md:text-base text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
-                            >
-                              {produto.nome}
-                            </button>
-                          ))}
-                          {getFilteredProducts(index).length === 0 && (
-                            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
-                              <CornerDownLeft className="w-4 h-4" />
-                              Nenhum item encontrado
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                     <div className="text-right space-y-1">
                       {discountNumber > 0 && (
