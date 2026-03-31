@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2 } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
@@ -16,7 +16,7 @@ import CurrencyInput from './CurrencyInput';
 import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import { useToast } from "@/components/ui/use-toast";
 
-export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
+export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoSimilarBase }) {
   const gerarNomeCompleto = (data) => {
     const campos = [data.campo_hierarquico_1, data.campo_hierarquico_2, data.campo_hierarquico_3, data.campo_hierarquico_4, data.campo_hierarquico_5];
     return campos.map(c => (c || '').trim()).filter(Boolean).join(' ').trim();
@@ -46,6 +46,8 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [produtosSimilares, setProdutosSimilares] = useState([]);
+  const [similarSearch, setSimilarSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [tagInput, setTagInput] = useState('');
@@ -88,12 +90,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
 
   const loadDependencies = async () => {
     try {
-      const [catsResponse, fornResponse] = await Promise.all([
+      const [catsResponse, fornResponse, produtosResponse] = await Promise.all([
         base44.entities.Categoria.list(),
-        base44.entities.Terceiro.filter({ tipo: 'Fornecedor' })
+        base44.entities.Terceiro.filter({ tipo: 'Fornecedor' }),
+        base44.entities.Produto.list('-updated_date')
       ]);
       setCategorias(catsResponse || []);
       setFornecedores(fornResponse || []);
+      setProdutosSimilares((produtosResponse || []).filter(item => item?.id !== produto?.id));
     } catch (error) {
       console.error('Erro ao carregar dependências:', error);
     }
@@ -229,6 +233,47 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
     }));
   };
 
+  const applyProdutoSimilar = (produtoBase) => {
+    if (!produtoBase) return;
+
+    const nextData = {
+      ...produtoBase,
+      id: undefined,
+      codigo_interno: '',
+      codigo_barras: '',
+      created_date: undefined,
+      updated_date: undefined,
+      created_by: undefined,
+      estoque_atual: 0,
+      nome: produtoBase.nome || '',
+      tags: Array.isArray(produtoBase.tags) ? produtoBase.tags : [],
+      unidades_alternativas: Array.isArray(produtoBase.unidades_alternativas) ? produtoBase.unidades_alternativas : [],
+      ativo: produtoBase.ativo !== false,
+    };
+
+    setFormData(nextData);
+    setSimilarSearch(produtoBase.nome || '');
+    setTemAlteracoesNaoSalvas(true);
+    toast({
+      title: 'Produto similar aplicado',
+      description: 'Agora ajuste descrição, modelo, cor, tamanho e demais campos.',
+      className: 'bg-white border border-gray-300 dark:bg-gray-800 dark:text-gray-200',
+    });
+  };
+
+  useEffect(() => {
+    if (!produto?.id && produtoSimilarBase?.id) {
+      applyProdutoSimilar(produtoSimilarBase);
+    }
+  }, [produtoSimilarBase?.id]);
+
+  const produtosSimilaresFiltrados = useMemo(() => {
+    const query = similarSearch.trim().toLowerCase();
+    const base = [...produtosSimilares].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    if (!query) return base.slice(0, 8);
+    return base.filter(item => (item.nome || '').toLowerCase().includes(query)).slice(0, 8);
+  }, [produtosSimilares, similarSearch]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -242,6 +287,13 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
       }
 
       const categoria = categorias.find(c => c.id === formData.categoria_id);
+      const nomeNormalizado = (formData.nome || '').trim().toUpperCase();
+      const produtoOriginalId = produto?.id || null;
+      const produtoDuplicado = produtosSimilares.find(item => item.id !== produtoOriginalId && (item.nome || '').trim().toUpperCase() === nomeNormalizado);
+
+      if (produtoDuplicado) {
+        throw new Error('Já existe um produto com a mesma descrição. Ajuste modelo, cor, tamanho ou outro campo antes de salvar.');
+      }
 
       // Converte campos de texto para maiúsculas antes de salvar
       const produtoData = {
@@ -368,6 +420,34 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose }) {
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-8">
           {/* ABA DESCRITIVO */}
           <TabsContent value="descritivo" className="space-y-6 mt-0">
+            {!produto?.id && (
+              <div className="rounded-3xl bg-gray-50 dark:bg-gray-800/50 p-4 md:p-5 shadow-sm space-y-3">
+                <div className="flex items-center gap-2">
+                  <Copy className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                  <Label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Produto similar</Label>
+                </div>
+                <Input
+                  value={similarSearch}
+                  onChange={(e) => setSimilarSearch(e.target.value)}
+                  placeholder="Buscar produto irmão para usar como base"
+                  className="h-12 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-sm text-sm text-gray-900 dark:text-white"
+                />
+                <div className="space-y-2">
+                  {produtosSimilaresFiltrados.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => applyProdutoSimilar(item)}
+                      className="w-full rounded-2xl bg-white dark:bg-gray-900 px-4 py-3 text-left shadow-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-950"
+                    >
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.nome}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.marca || 'Sem marca'} • {item.categoria_nome || 'Sem categoria'}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Image Upload */}
             <div className="flex flex-col sm:flex-row gap-4 items-start p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="w-28 h-28 shrink-0 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
