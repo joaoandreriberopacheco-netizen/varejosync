@@ -107,17 +107,34 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
                 )}
               </div>
 
-              <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5">
+              <div className="hidden sm:flex items-center flex-wrap gap-x-4 gap-y-1.5">
                 <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-600 dark:text-gray-300 min-w-0">
                   <Package2 className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
                   <span className="truncate">{totalLinhas} itens</span>
                   <span className="text-gray-400 dark:text-gray-500">·</span>
                   <span className="truncate">Qtd. {quantidadeItens}</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-600 dark:text-gray-300 min-w-0">
-                  <Truck className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
-                  <span className="truncate">{temManifesto ? 'Com manifesto' : 'Sem manifesto'}</span>
+                <span className={`flex items-center gap-1.5 text-[0.68rem] min-w-0 ${temManifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                  <Truck className={`w-3.5 h-3.5 flex-none ${temManifesto ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-400 dark:text-red-400'}`} />
+                  <span className="truncate">{temManifesto ? 'Manifesto vinculado' : 'Sem manifesto'}</span>
                 </span>
+              </div>
+
+              <div className="sm:hidden grid grid-cols-1 gap-1.5">
+                <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-600 dark:text-gray-300 min-w-0">
+                  <Package2 className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
+                  <span className="truncate">{totalLinhas} itens · Qtd. {quantidadeItens}</span>
+                </span>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                  <span className={`flex items-center gap-1.5 text-[0.68rem] min-w-0 ${temManifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                    <Truck className={`w-3.5 h-3.5 flex-none ${temManifesto ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-400 dark:text-red-400'}`} />
+                    <span className="truncate">{temManifesto ? 'Manifesto ok' : 'Sem manifesto'}</span>
+                  </span>
+                  <span className={`flex items-center gap-1.5 text-[0.68rem] min-w-0 ${temSupermanifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <Link2 className={`w-3.5 h-3.5 flex-none ${temSupermanifesto ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                    <span className="truncate">{temSupermanifesto ? 'Super ok' : 'Sem vínculo'}</span>
+                  </span>
+                </div>
               </div>
             </span>
 
@@ -126,16 +143,26 @@ function PedidoRow({ pedido, statusNome, onEdit, onDelete, selecionado, desabili
                 {R(pedido.valor_total)}
               </span>
 
-              <div className="flex flex-col gap-1.5 w-full lg:items-end">
+              <div className="hidden sm:flex flex-col gap-1.5 w-full lg:items-end">
                 <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-500 dark:text-gray-400 min-w-0">
                   <CalendarClock className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
                   <span className="truncate">{pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : 'Sem previsão'}</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-500 dark:text-gray-400 min-w-0">
-                  <Link2 className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
-                  <span className="truncate">{temSupermanifesto ? 'Em supermanifesto' : 'Sem vínculo'}</span>
+                <span className={`flex items-center gap-1.5 text-[0.68rem] min-w-0 ${temSupermanifesto ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  <Link2 className={`w-3.5 h-3.5 flex-none ${temSupermanifesto ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                  <span className="truncate">{temSupermanifesto ? 'Supermanifesto vinculado' : 'Sem vínculo'}</span>
                 </span>
                 <span className="text-[0.68rem] text-gray-400 dark:text-gray-500 whitespace-nowrap lg:text-right pl-5 lg:pl-0">
+                  {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
+                </span>
+              </div>
+
+              <div className="sm:hidden flex flex-col gap-1 w-full">
+                <span className="flex items-center gap-1.5 text-[0.68rem] text-gray-500 dark:text-gray-400 min-w-0">
+                  <CalendarClock className="w-3.5 h-3.5 flex-none text-gray-400 dark:text-gray-500" />
+                  <span className="truncate">{pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : 'Sem previsão'}</span>
+                </span>
+                <span className="text-[0.68rem] text-gray-400 dark:text-gray-500 whitespace-nowrap pl-5">
                   {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
                 </span>
               </div>
