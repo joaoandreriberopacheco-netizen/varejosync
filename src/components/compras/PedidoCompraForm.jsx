@@ -1322,13 +1322,26 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
         isOpen={isImportadorPedidoOpen}
         onClose={() => setIsImportadorPedidoOpen(false)}
         onImportComplete={({ fornecedorId, fornecedorNome, items: importedItems }) => {
-          if (fornecedorId) {
-            handleChange('fornecedor_id', fornecedorId);
-          }
-          if (fornecedorNome) {
-            handleChange('fornecedor_nome', fornecedorNome);
-          }
-          importedItems.forEach((item) => handleAddItem(item));
+          setFormData(prev => {
+            const novosItens = importedItems.map(item => {
+              const qty = parseFloat(item.quantidade) || 1;
+              const cost = parseFloat(item.custo_unitario) || 0;
+              const desc = parseFloat(item.valor_desconto_item) || 0;
+              const custoFinal = cost - desc;
+              return {
+                ...item,
+                subtotal: qty * cost,
+                total: custoFinal * qty,
+                custo_final_unitario: custoFinal,
+              };
+            });
+            return {
+              ...prev,
+              fornecedor_id: fornecedorId || prev.fornecedor_id,
+              fornecedor_nome: fornecedorNome || prev.fornecedor_nome,
+              itens: [...prev.itens, ...novosItens],
+            };
+          });
         }}
       />
 
