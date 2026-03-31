@@ -2,17 +2,35 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Search, Plus, Wand2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Fuzzy word-based match: cada palavra da query deve estar em alguma parte do nome
-function matchesQuery(nome, query) {
+// Busca por todas as palavras da query em qualquer campo relevante do produto
+function matchesQuery(produto, query) {
   if (!query) return true;
+  const searchable = [
+    produto.nome,
+    produto.campo_hierarquico_1,
+    produto.campo_hierarquico_2,
+    produto.campo_hierarquico_3,
+    produto.campo_hierarquico_4,
+    produto.campo_hierarquico_5,
+    produto.codigo_interno,
+    produto.codigo_barras,
+    produto.marca,
+  ].filter(Boolean).join(' ').toLowerCase();
+
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  const n = nome.toLowerCase();
-  return words.every(w => n.includes(w));
+  return words.every(w => searchable.includes(w));
+}
+
+function getProductLabel(produto) {
+  if (produto.nome) return produto.nome;
+  return [produto.campo_hierarquico_1, produto.campo_hierarquico_2, produto.campo_hierarquico_3, produto.campo_hierarquico_4, produto.campo_hierarquico_5]
+    .filter(Boolean).join(' ');
 }
 
 export default function ProductSearchInputPDV({ item, index, produtos, getSuggestedProduct, setItems, setProductSearch, productSearch }) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef(null);
+  const containerRef = useRef(null);
 
   const currentQuery = productSearch[index] || '';
   const suggestedProduct = getSuggestedProduct(item);
@@ -32,34 +50,30 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
     setIsFocused(false);
   };
 
-  const handleCreateNew = () => {
+  const handleCreateNew = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setItems(prev => prev.map((c, i) => i === index ? { ...c, selected_product_id: 'create_new', ignored: false } : c));
     setProductSearch(prev => ({ ...prev, [index]: '' }));
     setIsFocused(false);
   };
 
-  const handleClear = () => {
+  const handleClear = (e) => {
+    e.preventDefault();
     setItems(prev => prev.map((c, i) => i === index ? { ...c, selected_product_id: '' } : c));
     setProductSearch(prev => ({ ...prev, [index]: '' }));
-    if (inputRef.current) inputRef.current.focus();
+    setTimeout(() => inputRef.current?.focus(), 10);
   };
 
-  // Quando focado: filtra por query se tiver texto, ou mostra os primeiros 8 do catálogo
   const visibleProducts = useMemo(() => {
     if (!isFocused) return [];
-    if (!currentQuery.trim()) {
-      return [...produtos].sort((a, b) => (a.nome || '').localeCompare(b.nome || '')).slice(0, 8);
-    }
-    return produtos
-      .filter(p => matchesQuery(p.nome || '', currentQuery))
-      .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
-      .slice(0, 8);
+    const sorted = [...produtos].sort((a, b) => getProductLabel(a).localeCompare(getProductLabel(b)));
+    if (!currentQuery.trim()) return sorted.slice(0, 8);
+    return sorted.filter(p => matchesQuery(p, currentQuery)).slice(0, 8);
   }, [isFocused, currentQuery, produtos]);
 
-  const showDropdown = isFocused;
-
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0" ref={containerRef}>
       <div className={cn(
         "h-12 rounded-2xl bg-gray-50 dark:bg-gray-900 shadow-sm flex items-center gap-2 px-3 transition-all",
         isFocused && "ring-1 ring-gray-300 dark:ring-gray-600"
@@ -71,32 +85,37 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
           value={currentQuery}
           onChange={handleChange}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+          onBlur={(e) => {
+            // Não fecha se o foco foi para dentro do container (dropdown, botões)
+            if (containerRef.current?.contains(e.relatedTarget)) return;
+            setIsFocused(false);
+          }}
           placeholder="Buscar no catálogo..."
           className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
 
-        {/* Status inline (quando não está digitando e há um estado definido) */}
+        {/* Status inline (sem foco, sem query) */}
         {!isFocused && !currentQuery && (
           <span className={cn(
-            "text-xs truncate max-w-[120px] text-right",
+            "text-xs truncate max-w-[130px] text-right",
             item.selected_product_id === 'create_new' ? 'text-gray-600 dark:text-gray-300' :
             selectedProduct ? 'text-emerald-700 dark:text-emerald-400' :
             suggestedProduct ? 'text-emerald-600 dark:text-emerald-400' :
             'text-red-400 dark:text-red-500'
           )}>
             {item.selected_product_id === 'create_new' ? 'Criar novo' :
-             selectedProduct ? selectedProduct.nome :
-             suggestedProduct ? `IA: ${suggestedProduct.nome}` :
+             selectedProduct ? getProductLabel(selectedProduct) :
+             suggestedProduct ? `IA: ${getProductLabel(suggestedProduct)}` :
              'Não encontrado'}
           </span>
         )}
 
-        {/* Aceitar sugestão IA rapidamente */}
+        {/* Aceitar sugestão IA */}
         {!isFocused && !currentQuery && suggestedProduct && !item.selected_product_id && (
           <button
             type="button"
-            onMouseDown={() => handleSelect(suggestedProduct.id, suggestedProduct.nome)}
+            tabIndex={-1}
+            onClick={() => handleSelect(suggestedProduct.id, getProductLabel(suggestedProduct))}
             className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center flex-none"
             title="Aceitar sugestão IA"
           >
@@ -104,10 +123,11 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
           </button>
         )}
 
-        {/* Limpar seleção */}
+        {/* Limpar */}
         {(item.selected_product_id || currentQuery) && (
           <button
             type="button"
+            tabIndex={-1}
             onMouseDown={handleClear}
             className="w-6 h-6 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-400 hover:text-gray-700 flex-none"
           >
@@ -115,9 +135,10 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
           </button>
         )}
 
-        {/* Criar novo */}
+        {/* Criar novo produto */}
         <button
           type="button"
+          tabIndex={-1}
           onMouseDown={handleCreateNew}
           className="w-7 h-7 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex-none"
           title="Criar novo produto"
@@ -126,23 +147,28 @@ export default function ProductSearchInputPDV({ item, index, produtos, getSugges
         </button>
       </div>
 
-      {/* Dropdown do catálogo */}
-      {showDropdown && (
+      {/* Dropdown catálogo */}
+      {isFocused && (
         <div className="absolute z-30 w-full mt-1 rounded-2xl bg-white dark:bg-gray-950 shadow-lg overflow-hidden max-h-52 overflow-y-auto">
           {visibleProducts.length > 0 ? (
             visibleProducts.map(produto => (
               <button
                 key={produto.id}
                 type="button"
-                onMouseDown={() => handleSelect(produto.id, produto.nome)}
+                tabIndex={0}
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(produto.id, getProductLabel(produto)); }}
                 className="w-full px-4 py-2.5 text-left text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900 border-b border-gray-50 dark:border-gray-900 last:border-0"
               >
-                {produto.nome}
+                {getProductLabel(produto)}
               </button>
             ))
-          ) : (
+          ) : currentQuery ? (
             <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
               Nenhum produto encontrado para "{currentQuery}"
+            </div>
+          ) : (
+            <div className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
+              Carregando catálogo...
             </div>
           )}
         </div>
