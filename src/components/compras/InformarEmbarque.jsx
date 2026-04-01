@@ -268,16 +268,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
       if (itensEmbarcados.length === 0) return toast.error('Informe quantidades maiores que zero');
 
-      // Volumes: texto descritivo resumido para campo legado
-      const volumesTexto = volumes.length > 0
-        ? volumes.map(v => `${v.quantidade}x ${v.descricao}`).join(', ')
-        : '';
-
-      let embarcadosAtualizados;
+      // Volumes: verifica se foi preenchido e salva normalmente
+       // (não precisa de conversão especial agora que a estrutura tá limpa)
+       let embarcadosAtualizados;
       if (isEdicao) {
         embarcadosAtualizados = (pedido.embarques_registrados || []).map(emb =>
           emb.id === embarqueExistente.id
-            ? { ...emb, data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : emb.data_embarque, eta: eta + 'T12:00:00.000Z', transportadora_id: transportadoraId, transportadora_nome: transportadora?.nome || '', volumes: volumesTexto, volumes_detalhados: volumes, peso_kg: totalPesoKg, observacoes, itens_embarcados: itensEmbarcados }
+            ? { ...emb, data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : emb.data_embarque, eta: eta + 'T12:00:00.000Z', transportadora_id: transportadoraId, transportadora_nome: transportadora?.nome || '', volumes_detalhados: volumes, peso_kg: totalPesoKg, observacoes, itens_embarcados: itensEmbarcados }
             : emb
         );
       } else {
@@ -287,7 +284,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
           eta: eta + 'T12:00:00.000Z',
           transportadora_id: transportadoraId,
           transportadora_nome: transportadora?.nome || '',
-          volumes: volumesTexto,
           volumes_detalhados: volumes,
           peso_kg: totalPesoKg,
           observacoes,
@@ -420,7 +416,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
               </button>
 
               {showItens && (
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
                   {(pedido.itens || []).map(item => {
                     const pedida = item.quantidade || 0;
                     const anterior = jaEmbarcado[item.produto_id] || 0;
@@ -430,42 +426,45 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                     const excede = emb > pendente;
 
                     return (
-                      <div
+                      <button
                         key={item.produto_id}
-                        className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${selecionado ? 'bg-gray-50 dark:bg-gray-800' : 'bg-gray-50/40 dark:bg-gray-900/40 opacity-60'}`}
+                        type="button"
+                        onClick={() => toggleItem(item.produto_id)}
+                        className={`text-left rounded-xl px-3 py-2 transition-all ${selecionado ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 opacity-60'}`}
                       >
-                        {/* Checkbox */}
-                        <button
-                          type="button"
-                          onClick={() => toggleItem(item.produto_id)}
-                          className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-gray-700 dark:bg-gray-300' : 'bg-gray-200 dark:bg-gray-600'}`}
-                        >
-                          {selecionado && <Check className="w-3 h-3 text-white dark:text-gray-900" />}
-                        </button>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{item.produto_nome}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                            Ped: {pedida} {item.unidade_medida}
-                            {anterior > 0 && <span className="ml-1.5">· já emb: {anterior}</span>}
-                            {excede && selecionado && <span className="ml-1.5 text-red-400">· excede!</span>}
-                          </p>
+                        <div className="flex items-start gap-2">
+                          {/* Checkbox pequeno */}
+                          <div className={`flex-shrink-0 w-4 h-4 rounded mt-0.5 flex items-center justify-center transition-colors ${selecionado ? 'bg-gray-700 dark:bg-gray-300' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                            {selecionado && <Check className="w-2 h-2 text-white dark:text-gray-900" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 leading-snug line-clamp-2">{item.produto_nome}</p>
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 space-y-0.5">
+                              <p>Ped: <span className="font-medium text-gray-700 dark:text-gray-300">{pedida}</span> {item.unidade_medida}</p>
+                              {anterior > 0 && <p>Emb: <span className="font-medium text-gray-700 dark:text-gray-300">{anterior}</span></p>}
+                            </div>
+                          </div>
                         </div>
-
-                        {/* Input quantidade */}
-                        <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
-                          <Input
-                            type="text"
-                            inputMode="decimal"
-                            disabled={!selecionado}
-                            value={qtdEmbarque[item.produto_id] ?? ''}
-                            onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                            className={`w-20 h-10 text-sm text-right rounded-xl border-0 shadow-sm px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-40 ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
-                          />
-                          <span className="text-[10px] text-gray-400">{item.unidade_medida}</span>
-                        </div>
-                      </div>
+                        {/* Input quantidade no canto inferior */}
+                        {selecionado && (
+                          <div className="flex items-center gap-1 mt-1.5 ml-6">
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={qtdEmbarque[item.produto_id] ?? ''}
+                              onChange={e => {
+                                e.stopPropagation();
+                                setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }));
+                              }}
+                              onClick={e => e.stopPropagation()}
+                              className={`w-14 h-8 text-xs text-right rounded-lg border-0 shadow-sm px-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${excede ? 'ring-1 ring-red-400' : ''}`}
+                              placeholder="0"
+                            />
+                            <span className="text-[9px] text-gray-400 font-medium">{item.unidade_medida}</span>
+                          </div>
+                        )}
+                        {excede && selecionado && <p className="text-[9px] text-red-400 mt-1 ml-6">excede!</p>}
+                      </button>
                     );
                   })}
                 </div>
