@@ -202,6 +202,10 @@ export default function RelatorioMargemVendas() {
   };
 
   const exportToPDF = () => {
+    if (!dateRange.from || !dateRange.to) {
+      alert('Selecione um período antes de exportar');
+      return;
+    }
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -324,7 +328,8 @@ export default function RelatorioMargemVendas() {
     // Footer
     pdf.setFontSize(6);
     pdf.setTextColor(150, 150, 150);
-    pdf.text(`Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | ${processedData.length} itens`, margin, pageHeight - 4);
+    const dataAtual = new Date();
+    pdf.text(`Gerado em ${format(dataAtual, 'dd/MM/yyyy HH:mm')} | ${processedData.length} itens`, margin, pageHeight - 4);
     
     pdf.save('relatorio_margem.pdf');
   };
