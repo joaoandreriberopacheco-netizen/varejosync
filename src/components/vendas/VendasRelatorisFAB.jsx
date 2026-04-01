@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Lightbulb, FileText, TrendingUp, DollarSign, X, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { createPageUrl } from '@/components/utils';
 
 const RELATORIOS = [
-  { icon: TrendingUp, label: 'Performance', description: 'Análise de desempenho de vendas' },
-  { icon: DollarSign, label: 'Margem', description: 'Margem de lucro por produto' },
-  { icon: FileText, label: 'Vendas', description: 'Relatório detalhado de vendas' },
+  { icon: TrendingUp, label: 'Performance', description: 'Análise de desempenho de vendas', page: 'RelatorioPerformance' },
+  { icon: DollarSign, label: 'Margem', description: 'Margem de lucro por produto', page: 'RelatorioMargem' },
+  { icon: FileText, label: 'Vendas', description: 'Relatório detalhado de vendas', page: 'Relatorios' },
 ];
 
 export default function VendasRelatorisFAB() {
@@ -64,10 +65,10 @@ export default function VendasRelatorisFAB() {
               return (
                 <a
                   key={idx}
-                  href={`#/Relatorios`}
+                  href={createPageUrl(rel.page)}
                   onClick={(e) => {
                     e.preventDefault();
-                    window.location.href = rel.label === 'Performance' ? `#/RelatorioPerformance` : rel.label === 'Margem' ? `#/RelatorioMargem` : `#/Relatorios`;
+                    window.location.href = createPageUrl(rel.page);
                     setShowDialog(false);
                   }}
                   className="flex items-start gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group cursor-pointer"
