@@ -575,24 +575,8 @@ export default function RelatorioMargemVendas() {
              <p className="text-[10px] md:text-xs text-green-600/70 dark:text-green-400/70 mt-1.5">Ganho s/ custo</p>
            </div>
 
-           {/* Auditoria: Receita Bruta */}
-           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
-             <AuditableMetricTooltip
-               label="RECEITA BRUTA"
-               value={formatMoney(totals.total_recebido)}
-               auditData={{
-                 'Receita Bruta': formatMoney(totals.total_recebido)
-               }}
-               formatMoney={formatMoney}
-             />
-             <AuditableMetricTooltip
-               label="DESCONTOS"
-               value={formatMoney(totals.total_desconto_venda)}
-               auditData={{
-                 'Total Descontos': formatMoney(totals.total_desconto_venda)
-               }}
-               formatMoney={formatMoney}
-             />
+           {/* Grid com outras métricas */}
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
              <AuditableMetricTooltip
                label="RECEITA LÍQUIDA"
                value={formatMoney(totals.receita_liquida)}
@@ -603,30 +587,16 @@ export default function RelatorioMargemVendas() {
                }}
                formatMoney={formatMoney}
              />
-           </div>
-
-           {/* Auditoria: Custos e Lucros */}
-           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
              <AuditableMetricTooltip
-               label="CUSTOS TOTAIS"
+               label="CUSTO"
                value={formatMoney(totals.custo_total)}
                auditData={{
-                 'Custo Mercadorias': formatMoney(totals.custo_total)
+                 'Custo Total': formatMoney(totals.custo_total)
                }}
                formatMoney={formatMoney}
              />
              <AuditableMetricTooltip
-               label="LUCRO BRUTO"
-               value={formatMoney(lucro_bruto)}
-               auditData={{
-                 'Receita Bruta': formatMoney(totals.total_recebido),
-                 'Menos Custos': `- ${formatMoney(totals.custo_total)}`,
-                 'Lucro Bruto': formatMoney(lucro_bruto)
-               }}
-               formatMoney={formatMoney}
-             />
-             <AuditableMetricTooltip
-               label="LUCRO LÍQUIDO"
+               label="LUCRO"
                value={formatMoney(totals.lucro_total)}
                auditData={{
                  'Receita Líquida': formatMoney(totals.receita_liquida),
@@ -635,17 +605,9 @@ export default function RelatorioMargemVendas() {
                }}
                formatMoney={formatMoney}
              />
-           </div>
-
-           {/* Grid com outras métricas (Margem) */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
              <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-               <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">MARGEM %</p>
+               <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">MARGEM</p>
                <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
-             </div>
-             <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-               <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">QTD TOTAL VENDIDA</p>
-               <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{totals.quantidade_vendida}</p>
              </div>
            </div>
          </div>
