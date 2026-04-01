@@ -75,19 +75,22 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
 
   const discountNumber = parseFloat(discountValue) || 0;
 
+  const isAcrescimo = discountType === 'acrescimo_percentual' || discountType === 'acrescimo_valor';
+
   const getDiscountedUnitPrice = (item) => {
     const original = parseFloat(item.preco_unitario) || 0;
     if (!discountNumber) return original;
-    if (discountType === 'percentual') {
-      return Math.max(0, original - (original * discountNumber / 100));
-    }
-    return Math.max(0, original - discountNumber);
+    if (discountType === 'percentual') return Math.max(0, original - (original * discountNumber / 100));
+    if (discountType === 'valor') return Math.max(0, original - discountNumber);
+    if (discountType === 'acrescimo_percentual') return original + (original * discountNumber / 100);
+    if (discountType === 'acrescimo_valor') return original + discountNumber;
+    return original;
   };
 
   const getDiscountPerItem = (item) => {
     const original = parseFloat(item.preco_unitario) || 0;
-    const discounted = getDiscountedUnitPrice(item);
-    return Math.max(0, original - discounted);
+    const adjusted = getDiscountedUnitPrice(item);
+    return isAcrescimo ? 0 : Math.max(0, original - adjusted);
   };
 
   const processSelectedFile = async () => {
@@ -330,7 +333,7 @@ Retorne JSON:
         {step === 'discount' && (
           <div className="max-w-2xl mx-auto rounded-[2rem] bg-gray-50 dark:bg-gray-800/60 p-6 md:p-8 shadow-sm space-y-5">
             <div className="space-y-1 text-center">
-              <p className="font-glacial text-2xl text-gray-900 dark:text-white">Desconto ou acréscimo</p>
+              <p className="font-glacial text-2xl text-gray-900 dark:text-white">{isAcrescimo ? 'Acréscimo nos preços' : 'Desconto nos preços'}</p>
               <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Defina o ajuste antes de processar o arquivo.</p>
             </div>
             <div className="grid gap-4 md:grid-cols-[180px_1fr]">
@@ -343,6 +346,8 @@ Retorne JSON:
                   <SelectContent>
                     <SelectItem value="percentual">Desconto %</SelectItem>
                     <SelectItem value="valor">Desconto R$</SelectItem>
+                    <SelectItem value="acrescimo_percentual">Acréscimo %</SelectItem>
+                    <SelectItem value="acrescimo_valor">Acréscimo R$</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -437,7 +442,10 @@ Retorne JSON:
                         {discountNumber > 0 && (
                           <p className="text-xs text-gray-400 line-through">{item.quantidade || 1}× R$ {formatCurrency(item.preco_unitario)}</p>
                         )}
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.quantidade || 1}× R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
+                        {discountNumber > 0 && isAcrescimo && (
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400">+{discountType === 'acrescimo_percentual' ? `${discountNumber}%` : `R$ ${formatCurrency(discountNumber)}`}</span>
+                        )}
+                        <p className={`text-sm font-semibold ${isAcrescimo ? 'text-amber-700 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>{item.quantidade || 1}× R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
                         <p className="text-xs text-gray-500">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
                       </div>
                     </div>
