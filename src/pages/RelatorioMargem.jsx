@@ -569,10 +569,10 @@ export default function RelatorioMargemVendas() {
         {/* Summary Cards - Markup Destacado */}
          <div className="px-3 md:px-6 py-2.5 md:py-6 space-y-2 md:space-y-3">
            {/* Markup Principal - Destaque */}
-           <div className="p-3 md:p-5 rounded-lg bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 border border-green-200/50 dark:border-green-700/30">
-             <p className="text-[10px] md:text-xs text-green-700 dark:text-green-400 font-bold uppercase mb-1.5">Markup</p>
-             <p className="text-2xl md:text-4xl font-bold text-green-600 dark:text-green-400">{formatPercent(totalMarkup)}</p>
-             <p className="text-[10px] md:text-xs text-green-600/70 dark:text-green-400/70 mt-1.5">Ganho s/ custo</p>
+           <div className="p-3 md:p-5 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+             <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase mb-1.5">Markup</p>
+             <p className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">{formatPercent(totalMarkup)}</p>
+             <p className="text-[10px] md:text-xs text-gray-600 dark:text-gray-300 mt-1.5">Ganho s/ custo</p>
            </div>
 
            {/* Grid com outras métricas */}

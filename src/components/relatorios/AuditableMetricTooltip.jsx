@@ -16,7 +16,7 @@ export default function AuditableMetricTooltip({ label, value, auditData, format
   return (
     <div className="relative">
       <div
-        className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 cursor-help"
+        className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 cursor-help hover:bg-gray-100 dark:hover:bg-gray-700/50 transition"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={() => setShowTooltip(!showTooltip)}
@@ -26,7 +26,7 @@ export default function AuditableMetricTooltip({ label, value, auditData, format
             <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">{label}</p>
             <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white truncate">{value}</p>
           </div>
-          <HelpCircle className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0 text-gray-400 dark:text-gray-500 mt-0.5" />
+          <div className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0 rounded-full border border-gray-300 dark:border-gray-600 mt-0.5" />
         </div>
       </div>
 
