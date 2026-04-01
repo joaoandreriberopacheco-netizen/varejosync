@@ -327,8 +327,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               onChange={e => setDataEntrada(e.target.value)}
               className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm"
             />
-            </div>
-            </DialogContent>
+          </div>
+          </DialogContent>
           </Dialog>
 
       {/* Dialog de Divergência - PDV Style */}
