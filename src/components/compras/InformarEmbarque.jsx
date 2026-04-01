@@ -249,7 +249,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   }, [volumes]);
 
   const handleSalvar = async () => {
-    const etaValida = eta && eta.length >= 10;
+    const etaValida = eta && eta.trim().length >= 10;
     if (!etaValida) {
       toast.error('Informe a ETA (chegada prevista)', { position: 'top-center' });
       return;
@@ -355,7 +355,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   <Calendar className="w-3 h-3 text-teal-500" />
                   <span className="text-teal-600 dark:text-teal-400">ETA *</span>
                 </Label>
-                <Input type="datetime-local" value={eta}
+                <Input type="date" value={eta}
                   onChange={e => setEta(e.target.value)}
                   className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm text-gray-900 dark:text-gray-100 h-10 text-xs ring-1 ring-teal-200 dark:ring-teal-800" />
               </div>
