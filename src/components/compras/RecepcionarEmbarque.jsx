@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff } from 'lucide-react';
 import { agora, formatarLogTime } from '@/components/utils/dateUtils';
 
 export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido }) {
@@ -31,6 +31,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const [showNovoProduct, setShowNovoProduct] = useState(false);
   const [novoProduto, setNovoProduto] = useState({ nome: '', hierarquico_1: '' });
   const [isSaving, setIsSaving] = useState(false);
+  const [showCodigoConferencia, setShowCodigoConferencia] = useState(false);
+  const [codigoConferencia, setCodigoConferencia] = useState('');
+  const [showCodigoDecrypt, setShowCodigoDecrypt] = useState(false);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -196,13 +199,19 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
     setShowModoDialog(true);
   };
 
+  const gerarCodigoConferencia = () => {
+    const codigo = 'CONF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    setCodigoConferencia(codigo);
+    setShowCodigoConferencia(true);
+    setShowCodigoDecrypt(false);
+  };
+
   const confirmarModo = (modo) => {
     setShowModoDialog(false);
     if (modo === 'simplificado') {
       // Continua na recepção simplificada
     } else if (modo === 'conferencia') {
-      // TODO: Integrar com conferência cega - redirecionar ou abrir modal
-      toast({ title: 'Conferência Cega', description: 'Funcionalidade em desenvolvimento' });
+      gerarCodigoConferencia();
     }
   };
 
@@ -319,23 +328,15 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm"
             />
           </div>
+          </div>
 
-          {/* Footer - PDV Style */}
+          {/* Footer - PDV Style - APENAS NO MODO LISTA, NÃO NO FORMULÁRIO */}
           <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700/50 px-6 py-4 flex gap-3 shadow-lg">
            <Button
-             variant="outline"
              onClick={onClose}
              className="flex-1 h-14 text-base font-semibold rounded-xl border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
            >
-             Cancelar
-           </Button>
-           <Button
-             onClick={iniciarRecepção}
-             disabled={isSaving}
-             className="flex-1 h-14 text-base font-semibold rounded-xl border-0 bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-2"
-           >
-             <Play className="w-5 h-5" />
-             Iniciar
+             Voltar
            </Button>
           </div>
         </DialogContent>
@@ -463,7 +464,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               onClick={() => confirmarModo('conferencia')}
               className="w-full text-left bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl p-4 transition-colors"
             >
-              <p className="font-semibold text-gray-900 dark:text-white">🔍 Conferência Cega</p>
+              <p className="font-semibold text-gray-900 dark:text-white"><Search className="w-4 h-4 inline mr-1" /> Conferência Cega</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Enviar para conferência com senha de acesso</p>
             </button>
           </div>
@@ -472,6 +473,56 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog Código Conferência Cega */}
+      <Dialog open={showCodigoConferencia} onOpenChange={setShowCodigoConferencia}>
+        <DialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden">
+          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-gray-200 dark:border-gray-700/50">
+            <h2 className="font-quicksand text-lg font-semibold text-gray-900 dark:text-white">Código Conferência Cega</h2>
+          </div>
+          <div className="px-6 py-8 space-y-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Compartilhe este código com o conferente para acessar a conferência cega em outro dispositivo.
+            </p>
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 text-center">
+              <div className="flex items-center justify-between gap-3 bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                <span className="text-2xl font-bold tracking-widest text-gray-900 dark:text-white font-mono">
+                  {showCodigoDecrypt ? codigoConferencia : '••••••••••••••'}
+                </span>
+                <button
+                  onClick={() => setShowCodigoDecrypt(!showCodigoDecrypt)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  {showCodigoDecrypt ? (
+                    <EyeOff className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <Eye className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(codigoConferencia);
+                toast({ title: 'Código copiado', className: 'bg-green-100 text-green-800' });
+              }}
+              className="w-full h-12 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+            >
+              <Copy className="w-4 h-4" />
+              Copiar Código
+            </button>
+            <button
+              onClick={() => {
+                setShowCodigoConferencia(false);
+                onClose();
+              }}
+              className="w-full h-12 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

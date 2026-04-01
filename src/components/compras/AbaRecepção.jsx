@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, ChevronRight, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Package, Play, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import RecepcionarEmbarque from './RecepcionarEmbarque';
 
@@ -109,15 +109,15 @@ export default function AbaRecepção({ pedido }) {
                 </span>
               </div>
 
-              {/* Ação */}
+              {/* Ação - Play Icon */}
               <div className="flex-shrink-0 pt-1">
                 {statusRecebimento === 'Pendente' ? (
                   <div className="w-12 h-12 rounded-xl bg-teal-600 dark:bg-teal-500 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
-                    <ChevronRight className="w-5 h-5 text-white" />
+                    <Play className="w-5 h-5 text-white fill-white" />
                   </div>
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                    <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <Play className="w-5 h-5 text-gray-600 dark:text-gray-400 fill-gray-600 dark:fill-gray-400" />
                   </div>
                 )}
               </div>
