@@ -29,35 +29,30 @@ const STATUS_CONFIG = {
 };
 
 function EmbarqueInfo({ pedido }) {
+  // Prioriza a data do embarque mais recente, depois data_despacho, depois data_chegada
   const ultimoEmbarque = (pedido.embarques_registrados || []).sort((a, b) => 
     new Date(b.data_embarque || 0) - new Date(a.data_embarque || 0)
   )[0];
 
-  const temEmbarque = !!ultimoEmbarque;
-  const eta = ultimoEmbarque?.eta;
-  const transportadora = ultimoEmbarque?.transportadora_nome || 'Não informado';
+  const dataDespacho = ultimoEmbarque?.data_embarque || pedido.data_despacho;
+  const dataChegada = ultimoEmbarque?.eta || pedido.data_chegada;
 
-  // Se tem ETA, mostra ETA
-  if (eta) {
+  if (dataChegada) {
     return (
       <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
         <MapPin className="w-3 h-3 flex-none" />
-        <span>ETA {formatarDataCurta(eta)}</span>
+        <span>ETA {formatarDataCurta(dataChegada)}</span>
       </span>
     );
   }
-
-  // Se tem embarque, mostra transportadora
-  if (temEmbarque) {
+  if (dataDespacho) {
     return (
       <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
         <Truck className="w-3 h-3 flex-none" />
-        <span>{transportadora}</span>
+        <span>Despachado {formatarDataCurta(dataDespacho)}</span>
       </span>
     );
   }
-
-  // Sem embarque
   return (
     <span className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
       <Truck className="w-3 h-3 flex-none" />
@@ -74,30 +69,6 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const totalLinhas = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
   const totalQtd = Array.isArray(pedido.itens) ? pedido.itens.reduce((a, i) => a + (Number(i.quantidade) || 0), 0) : 0;
   const cfg = STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
-
-  // Lógica de embarque e pendências
-  const ultimoEmbarque = (pedido.embarques_registrados || []).sort((a, b) => 
-    new Date(b.data_embarque || 0) - new Date(a.data_embarque || 0)
-  )[0];
-
-  // Calcula pendências: itens pedidos vs itens já embarcados
-  const temPendencias = pedido.itens?.some(item => {
-    const embarcado = (pedido.embarques_registrados || []).reduce((sum, emb) => {
-      const itemEmb = (emb.itens_embarcados || []).find(i => i.produto_id === item.produto_id);
-      return sum + (itemEmb?.quantidade_embarcada || 0);
-    }, 0);
-    return embarcado < (item.quantidade || 0);
-  }) || false;
-
-  // Calcula atraso: >20 dias do embarque
-  const atrasoAlto = ultimoEmbarque && pedido.status !== 'Concluído' && new Date() - new Date(ultimoEmbarque.data_embarque) > 20 * 24 * 60 * 60 * 1000;
-  const pisca = atrasoAlto && temPendencias;
-
-  // Cor do LED
-  let ledColor = 'bg-gray-300 dark:bg-gray-600';
-  if (temPendencias && !atrasoAlto) ledColor = 'bg-amber-400 dark:bg-amber-400';
-  if (atrasoAlto && !temPendencias) ledColor = 'bg-red-500 dark:bg-red-500';
-  if (pisca) ledColor = 'bg-gradient-to-r from-amber-400 to-red-500 dark:from-amber-400 dark:to-red-500';
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -138,11 +109,6 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               {/* Dot de status */}
               <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${cfg.dot}`} />
 
-              {/* LED indicador */}
-              {(temPendencias || atrasoAlto) && (
-                <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${ledColor} ${pisca ? 'animate-pulse' : ''}`} />
-              )}
-
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none">
@@ -155,11 +121,6 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                     <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold flex items-center gap-1">
                       <AlertCircle className="w-2.5 h-2.5" />
                       Atrasado
-                    </span>
-                  )}
-                  {temPendencias && (
-                    <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-semibold">
-                      Pendências
                     </span>
                   )}
                 </div>
