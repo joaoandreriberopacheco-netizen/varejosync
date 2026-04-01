@@ -19,92 +19,84 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
    const handleNext = () => setMonth(addMonths(month, 1));
   
   return (
-    <div className={`${isModal ? '' : 'absolute top-full left-0 mt-1'} bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700 ${isModal ? '' : 'p-4'}`}>
-      <div className={isModal ? 'flex flex-col md:flex-row gap-6 p-6' : ''}>
-       {/* Navigation */}
-       <div className="flex items-center justify-between mb-3 px-1">
-         <button onClick={handlePrevious} className="p-2 md:p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0">
-           <ChevronLeft className="w-5 md:w-6 h-5 md:h-6 text-gray-700 dark:text-gray-200" />
-         </button>
-         <span className="text-xs md:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide text-center flex-1 px-2">
-           {isMobile ? (
-             format(month, 'MMM yyyy', { locale: ptBR })
-           ) : (
-             <>
-               {format(month, 'MMM', { locale: ptBR })} / {format(addMonths(month, 1), 'MMM', { locale: ptBR })} {format(month, 'yyyy')}
-             </>
-           )}
-         </span>
-         <button onClick={handleNext} className="p-2 md:p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition flex-shrink-0">
-           <ChevronRight className="w-5 md:w-6 h-5 md:h-6 text-gray-700 dark:text-gray-200" />
-         </button>
-       </div>
-
+    <div className={`${isModal ? 'w-full' : 'absolute top-full left-0 mt-1 p-4'} rounded-2xl bg-white dark:bg-gray-800 shadow-xl z-50 border border-gray-200 dark:border-gray-700`}>
       <style>{`
-         .rdp { margin: 0; --rdp-cell-size: 32px; --rdp-accent-color: #1f2937; --rdp-background-color: #f0f9f0; pointer-events: auto !important; }
-         @media (max-width: 767px) {
-           .rdp { --rdp-cell-size: 36px; }
-         }
-         .rdp-caption { display: none; }
-         .rdp-head_cell { color: #6b7280; font-size: 11px; font-weight: 600; }
-         .rdp-cell { padding: 0; pointer-events: auto !important; }
-         .rdp-day { font-size: 12px; pointer-events: auto !important; cursor: pointer; }
-         @media (max-width: 767px) {
-           .rdp-day { font-size: 13px; }
-         }
-         .rdp-day_selected { background-color: #1f2937; color: white; font-weight: bold; }
-         .rdp-day_range_middle { background-color: #dcfce7; color: #1f2937; }
-         .rdp-day_disabled { color: #d1d5db; }
-         .dark .rdp-day_selected { background-color: white; color: #1f2937; }
-         .dark .rdp-day_range_middle { background-color: #134e4a; color: white; }
-         .dark .rdp-head_cell { color: #9ca3af; }
-       `}</style>
-      
-      {/* Calendar - Single on mobile, dual on desktop */}
-       <div className={isMobile ? 'flex flex-col' : 'flex'}>
-         <DayPicker
-           mode="range"
-           selected={{ from: dateRange.from, to: dateRange.to }}
-           onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-           month={month}
-           locale={ptBR}
-           showOutsideDays={false}
-         />
-         {!isMobile && (
-           <>
-             <div className="w-px bg-gray-200 dark:bg-gray-600 mx-1 self-stretch" />
-             <DayPicker
-               mode="range"
-               selected={{ from: dateRange.from, to: dateRange.to }}
-               onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-               month={addMonths(month, 1)}
-               locale={ptBR}
-               showOutsideDays={false}
-             />
-           </>
-         )}
-       </div>
+        .rdp { margin: 0; --rdp-cell-size: 34px; --rdp-accent-color: #1f2937; --rdp-background-color: #dcfce7; }
+        .rdp-caption { display: none; }
+        .rdp-months { display: flex; gap: 12px; }
+        .rdp-month { margin: 0; }
+        .rdp-table { width: 100%; border-collapse: collapse; }
+        .rdp-head_cell { color: #6b7280; font-size: 11px; font-weight: 600; padding: 0 0 10px; text-transform: uppercase; }
+        .rdp-cell { padding: 0; }
+        .rdp-day { width: 34px; height: 34px; font-size: 12px; border-radius: 10px; cursor: pointer; }
+        .rdp-day_selected { background-color: #1f2937; color: white; font-weight: 700; }
+        .rdp-day_range_middle { background-color: #dcfce7; color: #1f2937; border-radius: 0; }
+        .rdp-day_range_start { border-radius: 10px 0 0 10px; }
+        .rdp-day_range_end { border-radius: 0 10px 10px 0; }
+        .rdp-day_disabled { color: #d1d5db; }
+        .dark .rdp { --rdp-accent-color: #f8fafc; --rdp-background-color: #134e4a; }
+        .dark .rdp-head_cell { color: #9ca3af; }
+        .dark .rdp-day_selected { background-color: #f8fafc; color: #111827; }
+        .dark .rdp-day_range_middle { background-color: #134e4a; color: #f8fafc; }
+        @media (max-width: 767px) {
+          .rdp { --rdp-cell-size: 38px; }
+          .rdp-months { display: block; }
+          .rdp-day { width: 38px; height: 38px; font-size: 13px; }
+        }
+      `}</style>
 
-      {/* Info */}
-      <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 text-center">
-        {dateRange.from ? (
-          <p className="font-medium">{format(dateRange.from, 'dd/MM/yyyy')}{dateRange.to ? ` até ${format(dateRange.to, 'dd/MM/yyyy')}` : ''}</p>
-        ) : (
-          <p>Selecione o período</p>
-        )}
-      </div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <button onClick={handlePrevious} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition">
+            <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+          </button>
 
-      <button
-        onClick={onClose}
-        disabled={!dateRange.from || !dateRange.to}
-        className={`w-full py-2.5 md:py-2.5 mt-2 md:mt-3 rounded-lg font-semibold text-sm transition ${             
-          dateRange.from && dateRange.to
-            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90'
-            : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-        }`}
-      >
-        {dateRange.from && dateRange.to ? 'Pronto' : 'Selecione intervalo'}
-      </button>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
+              {isMobile
+                ? format(month, 'MMM yyyy', { locale: ptBR })
+                : `${format(month, 'MMM', { locale: ptBR })} / ${format(addMonths(month, 1), 'MMM', { locale: ptBR })} ${format(month, 'yyyy')}`}
+            </p>
+          </div>
+
+          <button onClick={handleNext} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition">
+            <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+          </button>
+        </div>
+
+        <div className={`overflow-x-auto ${isMobile ? '' : 'overflow-visible'}`}>
+          <div className="min-w-fit">
+            <DayPicker
+              mode="range"
+              selected={{ from: dateRange.from, to: dateRange.to }}
+              onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+              month={month}
+              numberOfMonths={isMobile ? 1 : 2}
+              locale={ptBR}
+              showOutsideDays={false}
+            />
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-3 text-center text-xs text-gray-600 dark:text-gray-400">
+          {dateRange.from ? (
+            <p className="font-medium">{format(dateRange.from, 'dd/MM/yyyy')}{dateRange.to ? ` até ${format(dateRange.to, 'dd/MM/yyyy')}` : ''}</p>
+          ) : (
+            <p>Selecione o período</p>
+          )}
+        </div>
+
+        <button
+          onClick={onClose}
+          disabled={!dateRange.from || !dateRange.to}
+          className={`w-full py-2.5 rounded-xl font-semibold text-sm transition ${
+            dateRange.from && dateRange.to
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          {dateRange.from && dateRange.to ? 'Pronto' : 'Selecione intervalo'}
+        </button>
       </div>
     </div>
   );

@@ -544,16 +544,14 @@ export default function RelatorioMargemVendas() {
 
         {/* Calendar Popup Modal */}
         {showCalendar && (
-          <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-black/40 md:bg-black/20 p-4">
-            <div className="w-full md:w-auto bg-white dark:bg-gray-900 rounded-t-3xl md:rounded-3xl shadow-2xl md:max-w-2xl overflow-hidden">
-              <div className="p-4 md:p-8">
-                <CalendarPopup
-                  dateRange={dateRange}
-                  setDateRange={setDateRange}
-                  onClose={() => setShowCalendar(false)}
-                  isModal={true}
-                />
-              </div>
+          <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-black/40 p-3 md:p-4">
+            <div className="w-full max-w-[720px] rounded-[28px] bg-white dark:bg-gray-900 p-3 md:p-5 shadow-2xl">
+              <CalendarPopup
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                onClose={() => setShowCalendar(false)}
+                isModal={true}
+              />
             </div>
           </div>
         )}
