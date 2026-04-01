@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown, FilterX, X, HelpCircle } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown, FilterX, X, HelpCircle, ChevronDown, Type, TrendingUp, DollarSign, Percent, Scale } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
-import SortSelector from '@/components/relatorios/SortSelector';
+
 import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
 
 export default function RelatorioMargemVendas() {
@@ -506,15 +506,7 @@ export default function RelatorioMargemVendas() {
                 </div>
               )}
 
-              {/* Sort Selector - Mobile Only */}
-              <div className="md:hidden">
-                <SortSelector
-                  sortField={sortField}
-                  setSortField={setSortField}
-                  sortOrder={sortOrder}
-                  setSortOrder={setSortOrder}
-                />
-              </div>
+
 
               {/* Group Toggle */}
               <div>
@@ -610,9 +602,60 @@ export default function RelatorioMargemVendas() {
                <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
              </div>
            </div>
-         </div>
+           </div>
 
-        {/* Table - Desktop Table / Mobile Cards */}
+           {/* Sort Control - Below KPIs */}
+           <div className="px-3 md:px-6 py-2.5 flex gap-2 items-center">
+            {/* Critério Selecionado - Icon Only */}
+            <div className="relative">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Critério de ordenação">
+                    {sortField === 'nome' && <Type className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
+                    {sortField === 'lucro_total' && <DollarSign className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
+                    {sortField === 'total_recebido' && <TrendingUp className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
+                    {sortField === 'markup_percentual' && <Percent className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
+                    {sortField === 'margem_percentual' && <Scale className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="dark:bg-gray-800 dark:border-gray-700">
+                  <DropdownMenuItem onClick={() => { setSortField('nome'); setSortOrder('asc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
+                    <Type className="w-4 h-4" />
+                    <span>Nome</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortField('lucro_total'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
+                    <span>Lucro</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortField('total_recebido'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Receita</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortField('markup_percentual'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
+                    <Percent className="w-4 h-4" />
+                    <span>Markup %</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSortField('margem_percentual'); setSortOrder('desc'); }} className="dark:hover:bg-gray-700 dark:text-gray-200 cursor-pointer flex items-center gap-2">
+                    <Scale className="w-4 h-4" />
+                    <span>Margem %</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Seta para Direção */}
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+              title="Alternar direção"
+            >
+              <ChevronDown className={`w-4 h-4 text-gray-700 dark:text-gray-300 transition ${
+                sortOrder === 'desc' ? 'rotate-180' : ''
+              }`} />
+            </button>
+           </div>
+
+           {/* Table - Desktop Table / Mobile Cards */}
         <div className="p-3 md:p-6" id="relatorio-table">
           {loading ? (
             <div className="flex items-center justify-center h-64">
