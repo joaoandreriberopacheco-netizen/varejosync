@@ -29,22 +29,27 @@ const STATUS_CONFIG = {
 };
 
 function EmbarqueInfo({ pedido }) {
-  const temDespacho = !!pedido.data_despacho;
-  const temChegada = !!pedido.data_chegada;
+  // Prioriza a data do embarque mais recente, depois data_despacho, depois data_chegada
+  const ultimoEmbarque = (pedido.embarques_registrados || []).sort((a, b) => 
+    new Date(b.data_embarque || 0) - new Date(a.data_embarque || 0)
+  )[0];
 
-  if (temChegada) {
+  const dataDespacho = ultimoEmbarque?.data_embarque || pedido.data_despacho;
+  const dataChegada = ultimoEmbarque?.eta || pedido.data_chegada;
+
+  if (dataChegada) {
     return (
       <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
         <MapPin className="w-3 h-3 flex-none" />
-        <span>Chegou {formatarDataCurta(pedido.data_chegada)}</span>
+        <span>ETA {formatarDataCurta(dataChegada)}</span>
       </span>
     );
   }
-  if (temDespacho) {
+  if (dataDespacho) {
     return (
       <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
         <Truck className="w-3 h-3 flex-none" />
-        <span>Despachado {formatarDataCurta(pedido.data_despacho)}</span>
+        <span>Despachado {formatarDataCurta(dataDespacho)}</span>
       </span>
     );
   }
