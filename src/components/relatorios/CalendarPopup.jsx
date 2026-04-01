@@ -5,14 +5,14 @@ import { format, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 
-export default function CalendarPopup({ dateRange, setDateRange, onClose }) {
+export default function CalendarPopup({ dateRange, setDateRange, onClose, isModal = false }) {
   const [month, setMonth] = useState(new Date());
   
   const handlePrevious = () => setMonth(subMonths(month, 1));
   const handleNext = () => setMonth(addMonths(month, 1));
   
   return (
-    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 z-50 border border-gray-200 dark:border-gray-700 min-w-max">
+    <div className={`${isModal ? '' : 'absolute top-full left-0 mt-1'} bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 z-50 border border-gray-200 dark:border-gray-700 ${isModal ? 'min-w-full' : 'min-w-max'}`}>
       {/* Navigation */}
       <div className="flex items-center justify-between mb-3">
         <button onClick={handlePrevious} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
