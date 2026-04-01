@@ -225,7 +225,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   // Cálculos automáticos
   const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
-    const itens = formData.itens.reduce((acc, item) => acc + (item.total || 0), 0);
+    const itens = (formData.itens || []).reduce((acc, item) => acc + (item.total || 0), 0);
     const frete = parseFloat(formData.valor_frete) || 0;
     const desconto = parseFloat(formData.valor_desconto) || 0;
     const total = itens + frete - desconto;
