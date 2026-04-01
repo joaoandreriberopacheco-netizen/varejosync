@@ -88,7 +88,7 @@ function TransportadoraSearch({ value, onSelect, transportadoras, onCreateNew, d
       </div>
 
       {showDropdown && (
-        <div className="absolute z-[700] left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="absolute z-[999] left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             <input
@@ -132,8 +132,16 @@ function TransportadoraSearch({ value, onSelect, transportadoras, onCreateNew, d
                 onKeyDown={e => e.key === 'Enter' && handleCreate()}
                 onClick={e => e.stopPropagation()}
               />
-              <button type="button" onClick={handleCreate}
-                className="text-xs text-white bg-teal-600 rounded-lg px-2.5 py-1.5 hover:bg-teal-700 transition-colors">
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCreate();
+                }}
+                className="text-xs text-white bg-teal-600 rounded-lg px-2.5 py-1.5 hover:bg-teal-700 transition-colors"
+              >
                 Criar
               </button>
               <button type="button" onClick={() => setCriando(false)}
@@ -240,12 +248,17 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     return `${fmtNum(volTotal)} volumes · ${fmtNum(pesoTotal)} kg`;
   }, [volumes]);
 
-  const handleSalvar = async (e) => {
-    e?.stopPropagation();
+  const handleSalvar = async () => {
     const etaValida = eta && eta.length >= 10;
-    if (!etaValida) { toast.error('Informe a ETA (chegada prevista)', { position: 'top-center' }); return; }
+    if (!etaValida) {
+      toast.error('Informe a ETA (chegada prevista)', { position: 'top-center' });
+      return;
+    }
     const algumSelecionado = Object.entries(itensSelecionados).some(([pid, sel]) => sel && parseFloat(qtdEmbarque[pid]) > 0);
-    if (!algumSelecionado) { toast.error('Selecione ao menos um item', { position: 'top-center' }); return; }
+    if (!algumSelecionado) {
+      toast.error('Selecione ao menos um item', { position: 'top-center' });
+      return;
+    }
 
     if (loading) return;
     setLoading(true);
@@ -411,7 +424,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
                     return (
                       <div key={item.produto_id}
-                        className={`grid grid-cols-[16px_minmax(0,1fr)_72px] items-center gap-2 rounded-lg px-2 py-1.5 transition-opacity ${!selecionado ? 'opacity-40' : ''}`}>
+                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 transition-opacity ${!selecionado ? 'opacity-40' : ''}`}>
                         <button
                           type="button"
                           onClick={() => toggleItem(item.produto_id, pedida)}
@@ -427,9 +440,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                             </svg>
                           )}
                         </button>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-2 overflow-hidden">
                           <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.produto_nome}</p>
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight truncate">
                             {fmtNum(pedida)} {item.unidade_medida}
                             {outrosEmb > 0 && <span className="ml-1 text-teal-500">· -{fmtNum(outrosEmb)}</span>}
                             {disponivel < pedida && disponivel > 0 && <span className="ml-1 text-amber-500">· disp:{fmtNum(disponivel)}</span>}
@@ -443,7 +456,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                           onChange={e => setQtdEmbarque(prev => ({
                             ...prev, [item.produto_id]: e.target.value.replace(',', '.')
                           }))}
-                          className={`w-[72px] h-7 text-xs text-right border-0 bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100 px-2 ${excede ? 'ring-1 ring-rose-400' : ''}`}
+                          className={`flex-shrink-0 w-16 min-w-16 h-7 text-xs text-right border-0 bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100 px-2 ${excede ? 'ring-1 ring-rose-400' : ''}`}
                         />
                       </div>
                     );
@@ -490,10 +503,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
             </Button>
             <Button
               type="button"
-              onClick={(e) => { e.stopPropagation(); handleSalvar(e); }}
+              onClick={handleSalvar}
               disabled={loading}
               size="sm"
-              className={`${isEdicao ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'} text-white border-0 shadow-sm min-w-[170px] disabled:opacity-100`}
+              className={`${isEdicao ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'} text-white border-0 shadow-sm min-w-[170px] disabled:pointer-events-none disabled:opacity-100`}
             >
               {loading
                 ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Processando...</>
