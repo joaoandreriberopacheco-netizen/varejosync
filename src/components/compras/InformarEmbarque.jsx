@@ -167,6 +167,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   const isEdicao = !!embarqueExistente;
   const [transportadoras, setTransportadoras] = useState([]);
   const [transportadoraId, setTransportadoraId] = useState('');
+  const [dataDespacho, setDataDespacho] = useState('');
   const [eta, setEta] = useState('');
   const [volumes, setVolumes] = useState([]);
   const [observacoes, setObservacoes] = useState('');
@@ -185,8 +186,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     if (!isOpen || !pedido) return;
     loadTransportadoras();
     if (isEdicao) {
-      setTransportadoraId(embarqueExistente.transportadora_id || '');
-      // ETA: pega só a data (YYYY-MM-DD)
+      setDataDespacho(embarqueExistente.data_embarque ? new Date(embarqueExistente.data_embarque).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
+        setTransportadoraId(embarqueExistente.transportadora_id || '');
+        // ETA: pega só a data (YYYY-MM-DD)
       const etaVal = embarqueExistente.eta
         ? new Date(embarqueExistente.eta).toISOString().slice(0, 10)
         : '';
@@ -203,6 +205,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       setQtdEmbarque(initQtd);
       setSelectedItems(initSel);
     } else {
+      setDataDespacho(new Date().toISOString().slice(0, 10));
       setTransportadoraId('');
       setEta('');
       setVolumes([]);
@@ -270,13 +273,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       if (isEdicao) {
         embarcadosAtualizados = (pedido.embarques_registrados || []).map(emb =>
           emb.id === embarqueExistente.id
-            ? { ...emb, eta: eta + 'T12:00:00.000Z', transportadora_id: transportadoraId, transportadora_nome: transportadora?.nome || '', volumes: volumesTexto, volumes_detalhados: volumes, peso_kg: totalPesoKg, observacoes, itens_embarcados: itensEmbarcados }
+            ? { ...emb, data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : emb.data_embarque, eta: eta + 'T12:00:00.000Z', transportadora_id: transportadoraId, transportadora_nome: transportadora?.nome || '', volumes: volumesTexto, volumes_detalhados: volumes, peso_kg: totalPesoKg, observacoes, itens_embarcados: itensEmbarcados }
             : emb
         );
       } else {
         const novoEmbarque = {
           id: `emb_${Date.now()}`,
-          data_embarque: new Date().toISOString(),
+          data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : new Date().toISOString(),
           eta: eta + 'T12:00:00.000Z',
           transportadora_id: transportadoraId,
           transportadora_nome: transportadora?.nome || '',
@@ -333,18 +336,32 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
           <div className="px-6 py-5 space-y-5 overflow-y-auto">
 
-            {/* ETA */}
-            <div className="space-y-1.5">
-              <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" />
-                ETA — Chegada Prevista <span className="text-red-400">*</span>
-              </label>
-              <Input
-                type="date"
-                value={eta}
-                onChange={e => setEta(e.target.value)}
-                className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100"
-              />
+            {/* Data Despacho + ETA lado a lado */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Data Despacho
+                </label>
+                <Input
+                  type="date"
+                  value={dataDespacho}
+                  onChange={e => setDataDespacho(e.target.value)}
+                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  ETA — Chegada <span className="text-red-400">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={eta}
+                  onChange={e => setEta(e.target.value)}
+                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100"
+                />
+              </div>
             </div>
 
             {/* Transportadora */}
