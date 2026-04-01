@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown, FilterX, X } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown, FilterX, X, HelpCircle } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -9,6 +9,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 import SortSelector from '@/components/relatorios/SortSelector';
+import AuditableMetricTooltip from '@/components/relatorios/AuditableMetricTooltip';
 
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
@@ -166,28 +167,35 @@ export default function RelatorioMargemVendas() {
   }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
 
   const totals = useMemo(() => {
-     if (!processedData.length) return { quantidade_vendida: 0, total_recebido: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 };
+    if (!processedData.length) return { quantidade_vendida: 0, total_recebido: 0, total_desconto_venda: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 };
 
-     if (groupByCategory) {
-       return processedData.reduce((acc, group) => ({
-         quantidade_vendida: acc.quantidade_vendida + (group.totals?.quantidade_vendida || 0),
-         total_recebido: acc.total_recebido + (group.totals?.total_recebido || 0),
-         receita_liquida: acc.receita_liquida + (group.totals?.receita_liquida || 0),
-         custo_total: acc.custo_total + (group.totals?.custo_total || 0),
-         lucro_total: acc.lucro_total + (group.totals?.lucro_total || 0)
-       }), { quantidade_vendida: 0, total_recebido: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
-     }
-     return processedData.reduce((acc, item) => ({
-       quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
-       total_recebido: acc.total_recebido + (item.total_recebido || 0),
-       receita_liquida: acc.receita_liquida + (item.receita_liquida || 0),
-       custo_total: acc.custo_total + (item.custo_total || 0),
-       lucro_total: acc.lucro_total + (item.lucro_total || 0)
-     }), { quantidade_vendida: 0, total_recebido: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
-   }, [processedData, groupByCategory]);
+    if (groupByCategory) {
+      return processedData.reduce((acc, group) => {
+        const desconto = group.items.reduce((d, item) => d + (item.total_desconto_venda || 0), 0);
+        return {
+          quantidade_vendida: acc.quantidade_vendida + (group.totals?.quantidade_vendida || 0),
+          total_recebido: acc.total_recebido + (group.totals?.total_recebido || 0),
+          total_desconto_venda: acc.total_desconto_venda + desconto,
+          receita_liquida: acc.receita_liquida + (group.totals?.receita_liquida || 0),
+          custo_total: acc.custo_total + (group.totals?.custo_total || 0),
+          lucro_total: acc.lucro_total + (group.totals?.lucro_total || 0)
+        };
+      }, { quantidade_vendida: 0, total_recebido: 0, total_desconto_venda: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
+    }
+    const desconto = processedData.reduce((d, item) => d + (item.total_desconto_venda || 0), 0);
+    return processedData.reduce((acc, item) => ({
+      quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
+      total_recebido: acc.total_recebido + (item.total_recebido || 0),
+      total_desconto_venda: desconto,
+      receita_liquida: acc.receita_liquida + (item.receita_liquida || 0),
+      custo_total: acc.custo_total + (item.custo_total || 0),
+      lucro_total: acc.lucro_total + (item.lucro_total || 0)
+    }), { quantidade_vendida: 0, total_recebido: 0, total_desconto_venda: desconto, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
+  }, [processedData, groupByCategory]);
 
   const totalMargem = totals.receita_liquida > 0 ? (totals.lucro_total / totals.receita_liquida) * 100 : 0;
-   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
+  const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
+  const lucro_bruto = totals.total_recebido - totals.custo_total;
 
   const formatMoney = (val) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatPercent = (val) => `${val.toFixed(2)}%`;
@@ -559,34 +567,88 @@ export default function RelatorioMargemVendas() {
         )}
 
         {/* Summary Cards - Markup Destacado */}
-        <div className="px-3 md:px-6 py-2.5 md:py-6 space-y-2 md:space-y-3">
-          {/* Markup Principal - Destaque */}
-          <div className="p-3 md:p-5 rounded-lg bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 border border-green-200/50 dark:border-green-700/30">
-            <p className="text-[10px] md:text-xs text-green-700 dark:text-green-400 font-bold uppercase mb-1.5">Markup</p>
-            <p className="text-2xl md:text-4xl font-bold text-green-600 dark:text-green-400">{formatPercent(totalMarkup)}</p>
-            <p className="text-[10px] md:text-xs text-green-600/70 dark:text-green-400/70 mt-1.5">Ganho s/ custo</p>
-          </div>
-          
-          {/* Grid com outras métricas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-            <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">RECEITA LÍQUIDA</p>
-              <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.receita_liquida)}</p>
-            </div>
-            <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">CUSTO</p>
-              <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.custo_total)}</p>
-            </div>
-            <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">LUCRO</p>
-              <p className="text-xs md:text-lg md:text-xl font-semibold text-green-600 dark:text-green-400">{formatMoney(totals.lucro_total)}</p>
-            </div>
-            <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">MARGEM</p>
-              <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
-            </div>
-          </div>
-        </div>
+         <div className="px-3 md:px-6 py-2.5 md:py-6 space-y-2 md:space-y-3">
+           {/* Markup Principal - Destaque */}
+           <div className="p-3 md:p-5 rounded-lg bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 border border-green-200/50 dark:border-green-700/30">
+             <p className="text-[10px] md:text-xs text-green-700 dark:text-green-400 font-bold uppercase mb-1.5">Markup</p>
+             <p className="text-2xl md:text-4xl font-bold text-green-600 dark:text-green-400">{formatPercent(totalMarkup)}</p>
+             <p className="text-[10px] md:text-xs text-green-600/70 dark:text-green-400/70 mt-1.5">Ganho s/ custo</p>
+           </div>
+
+           {/* Auditoria: Receita Bruta */}
+           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+             <AuditableMetricTooltip
+               label="RECEITA BRUTA"
+               value={formatMoney(totals.total_recebido)}
+               auditData={{
+                 'Receita Bruta': formatMoney(totals.total_recebido)
+               }}
+               formatMoney={formatMoney}
+             />
+             <AuditableMetricTooltip
+               label="DESCONTOS"
+               value={formatMoney(totals.total_desconto_venda)}
+               auditData={{
+                 'Total Descontos': formatMoney(totals.total_desconto_venda)
+               }}
+               formatMoney={formatMoney}
+             />
+             <AuditableMetricTooltip
+               label="RECEITA LÍQUIDA"
+               value={formatMoney(totals.receita_liquida)}
+               auditData={{
+                 'Receita Bruta': formatMoney(totals.total_recebido),
+                 'Menos Descontos': `- ${formatMoney(totals.total_desconto_venda)}`,
+                 'Receita Líquida': formatMoney(totals.receita_liquida)
+               }}
+               formatMoney={formatMoney}
+             />
+           </div>
+
+           {/* Auditoria: Custos e Lucros */}
+           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+             <AuditableMetricTooltip
+               label="CUSTOS TOTAIS"
+               value={formatMoney(totals.custo_total)}
+               auditData={{
+                 'Custo Mercadorias': formatMoney(totals.custo_total)
+               }}
+               formatMoney={formatMoney}
+             />
+             <AuditableMetricTooltip
+               label="LUCRO BRUTO"
+               value={formatMoney(lucro_bruto)}
+               auditData={{
+                 'Receita Bruta': formatMoney(totals.total_recebido),
+                 'Menos Custos': `- ${formatMoney(totals.custo_total)}`,
+                 'Lucro Bruto': formatMoney(lucro_bruto)
+               }}
+               formatMoney={formatMoney}
+             />
+             <AuditableMetricTooltip
+               label="LUCRO LÍQUIDO"
+               value={formatMoney(totals.lucro_total)}
+               auditData={{
+                 'Receita Líquida': formatMoney(totals.receita_liquida),
+                 'Menos Custos': `- ${formatMoney(totals.custo_total)}`,
+                 'Lucro Líquido': formatMoney(totals.lucro_total)
+               }}
+               formatMoney={formatMoney}
+             />
+           </div>
+
+           {/* Grid com outras métricas (Margem) */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+             <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+               <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">MARGEM %</p>
+               <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatPercent(totalMargem)}</p>
+             </div>
+             <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+               <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">QTD TOTAL VENDIDA</p>
+               <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{totals.quantidade_vendida}</p>
+             </div>
+           </div>
+         </div>
 
         {/* Table - Desktop Table / Mobile Cards */}
         <div className="p-3 md:p-6" id="relatorio-table">
