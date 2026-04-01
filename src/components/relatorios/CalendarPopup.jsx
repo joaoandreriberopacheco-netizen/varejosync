@@ -28,11 +28,11 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
       </div>
 
       <style>{`
-        .rdp { margin: 0; --rdp-cell-size: 28px; --rdp-accent-color: #1f2937; --rdp-background-color: #f0f9f0; }
+        .rdp { margin: 0; --rdp-cell-size: 28px; --rdp-accent-color: #1f2937; --rdp-background-color: #f0f9f0; pointer-events: auto !important; }
         .rdp-caption { display: none; }
         .rdp-head_cell { color: #6b7280; font-size: 11px; font-weight: 600; }
-        .rdp-cell { padding: 0; }
-        .rdp-day { font-size: 11px; }
+        .rdp-cell { padding: 0; pointer-events: auto !important; }
+        .rdp-day { font-size: 11px; pointer-events: auto !important; cursor: pointer; }
         .rdp-day_selected { background-color: #1f2937; color: white; font-weight: bold; }
         .rdp-day_range_middle { background-color: #dcfce7; color: #1f2937; }
         .rdp-day_disabled { color: #d1d5db; }
