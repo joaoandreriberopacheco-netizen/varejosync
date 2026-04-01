@@ -880,16 +880,16 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && <BannerStatusPedido pedido={pedido} isMobile={false} />}
       {/* Header compacto */}
-      <div className="flex-shrink-0 px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 relative">
+      <div className="flex-shrink-0 px-4 py-4 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 relative">
         <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400/60 via-teal-300/40 to-transparent rounded-t" />
-        <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-8 w-8">
-          <X className="w-4 h-4" />
+        <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-10 w-10">
+          <X className="w-5 h-5" />
         </Button>
         <div className="flex-1 flex items-center justify-between min-w-0">
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
             {pedido?.numero || 'Novo Pedido'}
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-4">
+          <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap ml-4">
             {formData.itens.length} item(s) • {formatCurrency(valorTotal)}
           </span>
         </div>
@@ -1005,9 +1005,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <div className="grid grid-cols-12 gap-x-6 gap-y-6">
                 {/* Fornecedor */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Fornecedor *</Label>
+                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Fornecedor *</Label>
                   <Select value={formData.fornecedor_id} onValueChange={handleFornecedorChange} disabled={isLocked}>
-                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white">
+                    <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white">
                       <SelectValue placeholder="Selecione o fornecedor..." />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999] max-h-[300px]">
@@ -1080,9 +1080,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
                 {/* Tags */}
                 <div className="col-span-12 lg:col-span-6">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Tags</Label>
+                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Tags</Label>
                   <Input 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400" 
                     placeholder="Ex: Urgente, Reposição..."
                     value={formData.tags?.join(', ') || ''} 
                     onChange={e => handleChange('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))} 
@@ -1091,10 +1091,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
                 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Data do Pedido</Label>
+                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Data do Pedido</Label>
                   <Input
                     type="date"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white"
                     value={formData.data_emissao || ''}
                     onChange={e => handleChange('data_emissao', e.target.value)}
                     disabled={isLocked}
@@ -1102,10 +1102,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 </div>
 
                 <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Previsão de Entrega</Label>
+                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Previsão de Entrega</Label>
                   <Input
                     type="date"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 text-sm shadow-sm rounded-xl text-gray-900 dark:text-white"
                     value={formData.data_prevista_entrega || ''}
                     onChange={e => handleChange('data_prevista_entrega', e.target.value)}
                     disabled={isLocked}
@@ -1114,11 +1114,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
                 {/* Observação em linha inteira */}
                 <div className="col-span-12">
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Observações</Label>
+                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Observações</Label>
                   <Textarea 
-                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none text-gray-900 dark:text-white placeholder:text-gray-400" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400" 
                     placeholder="Observações do pedido..."
-                    rows={2}
+                    rows={3}
                     value={formData.observacoes} 
                     onChange={e => handleChange('observacoes', e.target.value)} 
                     disabled={isLocked}
@@ -1151,9 +1151,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           <TabsContent value="pagamento" className="mt-0 space-y-8">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Forma de Pagamento *</Label>
+                <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Forma de Pagamento *</Label>
                 <Select value={formData.forma_pagamento_compra} onValueChange={v => handleChange('forma_pagamento_compra', v)}>
-                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm">
+                  <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
@@ -1164,12 +1164,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               </div>
               
               <div>
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">
+                <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">
                   {formData.forma_pagamento_compra === 'À Vista' ? 'Data de Pagamento' : 'Primeiro Vencimento'}
                 </Label>
                 <Input 
                   type="date" 
-                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm" 
+                  className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl"
                   value={formData.data_primeiro_vencimento} 
                   onChange={e => handleChange('data_primeiro_vencimento', e.target.value)} 
                   disabled={isLocked}
@@ -1180,22 +1180,22 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             {formData.forma_pagamento_compra === 'Parcelado' && (
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Número de Parcelas</Label>
+                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Número de Parcelas</Label>
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl"
                     value={formData.num_parcelas} 
                     onChange={e => handleChange('num_parcelas', parseInt(e.target.value) || 1)} 
                     disabled={isLocked}
                   />
                 </div>
                 <div>
-                  <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Intervalo entre Parcelas (dias)</Label>
+                  <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Intervalo entre Parcelas (dias)</Label>
                   <Input 
                     type="number" 
                     min="1"
-                    className="bg-gray-50 dark:bg-gray-800 border-0 h-11 shadow-sm" 
+                    className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl" 
                     value={formData.intervalo_parcelas_dias} 
                     onChange={e => handleChange('intervalo_parcelas_dias', parseInt(e.target.value) || 30)} 
                     disabled={isLocked}
@@ -1205,9 +1205,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             )}
 
             <div>
-              <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Observações de Pagamento</Label>
+              <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Observações de Pagamento</Label>
               <Textarea 
-                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none" 
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none rounded-xl" 
                 placeholder="Ex: Pagar via PIX, transferência, observações sobre o pagamento..."
                 rows={3}
                 value={formData.condicoes_pagamento} 
@@ -1373,53 +1373,53 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
            </DialogHeader>
            <div className="space-y-4">
              <div>
-               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Nome *</Label>
+               <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Nome *</Label>
                <Input
                  placeholder="Nome do fornecedor"
                  value={novoFornecedor.nome}
                  onChange={e => setNovoFornecedor({...novoFornecedor, nome: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
-               />
-             </div>
-             <div>
-               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Email</Label>
-               <Input
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 />
+                 </div>
+                 <div>
+                 <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Email</Label>
+                 <Input
                  placeholder="email@fornecedor.com"
                  value={novoFornecedor.email}
                  onChange={e => setNovoFornecedor({...novoFornecedor, email: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
-               />
-             </div>
-             <div>
-               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Telefone</Label>
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 />
+                 </div>
+                 <div>
+                 <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Telefone</Label>
                <Input
                  placeholder="(00) 00000-0000"
                  value={novoFornecedor.telefone}
                  onChange={e => setNovoFornecedor({...novoFornecedor, telefone: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
-               />
-             </div>
-             <div>
-               <Label className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Endereço</Label>
-               <Input
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 />
+                 </div>
+                 <div>
+                 <Label className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2 block">Endereço</Label>
+                 <Input
                  placeholder="Endereço completo"
                  value={novoFornecedor.endereco}
                  onChange={e => setNovoFornecedor({...novoFornecedor, endereco: e.target.value})}
-                 className="bg-gray-50 dark:bg-gray-800 border-0 h-10 shadow-sm text-gray-900 dark:text-white"
-               />
-             </div>
-           </div>
+                 className="bg-gray-50 dark:bg-gray-800 border-0 h-12 shadow-sm rounded-xl text-gray-900 dark:text-white"
+                 />
+                 </div>
+                 </div>
            <DialogFooter className="gap-2 flex justify-end">
              <Button
                variant="outline"
                onClick={() => setIsNovoFornecedorOpen(false)}
-               className="border-0 shadow-sm rounded-lg h-9"
-             >
+               className="border-0 shadow-sm rounded-xl h-12"
+               >
                Cancelar
-             </Button>
-             <Button
+               </Button>
+               <Button
                onClick={handleCreateFornecedor}
-               className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400 text-white rounded-lg h-9"
+               className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400 text-white rounded-xl h-12"
              >
                Criar
              </Button>
