@@ -80,8 +80,8 @@ export default function RelatorioMargemVendas() {
             vendas_count: 0,
             quantidade_vendida: 0,
             total_recebido: 0,
-            custo_unitario_cadastro: custoCalculado,
-            total_descontos: 0
+            total_descontos: 0,
+            custo_unitario_cadastro: custoCalculado
           };
         }
 
@@ -89,12 +89,15 @@ export default function RelatorioMargemVendas() {
         entry.vendas_count += 1;
         entry.quantidade_vendida += item.quantidade;
         entry.total_recebido += item.total;
+        // Proporcionar descontos do pedido por item
+        const descontoItem = (sale.valor_desconto || 0) * (item.total / (sale.valor_total || 1));
+        entry.total_descontos += descontoItem;
       });
     });
 
     let sorted = Object.values(reportMap).map(item => {
       const custo_total = item.custo_unitario_cadastro * item.quantidade_vendida;
-      const lucro_total = item.total_recebido - custo_total;
+      const lucro_total = (item.total_recebido - item.total_descontos) - custo_total;
       const valor_unitario_medio = item.total_recebido / item.quantidade_vendida;
       const margem_percentual = item.total_recebido > 0 ? (lucro_total / item.total_recebido) * 100 : 0;
       const markup_percentual = custo_total > 0 ? (lucro_total / custo_total) * 100 : 0;
