@@ -1,9 +1,30 @@
 import React, { useState } from 'react';
-import { Package, Play, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import RecepcionarEmbarque from './RecepcionarEmbarque';
 
 export default function AbaRecepção({ pedido }) {
+  const [movimentos, setMovimentos] = useState([]);
+  const [isLoadingMovimentos, setIsLoadingMovimentos] = useState(false);
+
+  useEffect(() => {
+    if (pedido?.id) loadMovimentos();
+  }, [pedido?.id]);
+
+  const loadMovimentos = async () => {
+    setIsLoadingMovimentos(true);
+    try {
+      const movs = await base44.entities.MovimentacaoEstoque.filter({
+        referencia_tipo: 'PedidoCompra',
+        referencia_id: pedido.id
+      }, '-created_date', 100);
+      setMovimentos(movs || []);
+    } catch (error) {
+      console.error('Erro ao carregar movimentos:', error);
+    } finally {
+      setIsLoadingMovimentos(false);
+    }
+  };
   const [selectedEmbarque, setSelectedEmbarque] = useState(null);
 
   const embarques = pedido?.embarques_registrados || [];
@@ -107,10 +128,24 @@ export default function AbaRecepção({ pedido }) {
                 }`}>
                   {getStatusLabel(statusRecebimento)}
                 </span>
-              </div>
 
-              {/* Ação - Play Icon */}
-              <div className="flex items-center justify-center">
+                {/* Movimentos de Estoque vinculados */}
+                {movimentos.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-2 flex items-center gap-1">
+                      <Warehouse className="w-3 h-3" /> Movimento de Estoque
+                    </p>
+                    {movimentos.map(mov => (
+                      <div key={mov.id} className="text-xs text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">{mov.quantidade}</span> un. -  {mov.produto_nome}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                </div>
+
+                {/* Ação - Play Icon */}
+                <div className="flex items-center justify-center">
                 {statusRecebimento === 'Pendente' ? (
                   <div className="w-12 h-12 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
                     <Play className="w-5 h-5 text-white fill-white" />

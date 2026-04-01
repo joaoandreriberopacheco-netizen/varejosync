@@ -941,11 +941,19 @@ function ProdutosPageContent() {
       return searchTermMatch && categoriaMatch && tagMatch && fornecedorMatch && statusMatch() && cadastroMatch();
     });
 
-    if (sortOrder === 'az') {
-      filtered = [...filtered].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-    } else if (sortOrder === 'za') {
-      filtered = [...filtered].sort((a, b) => (b.nome || '').localeCompare(a.nome || ''));
-    }
+    // Sort by creation date (newest first) by default, then alphabetically if sortOrder specified
+    filtered = [...filtered].sort((a, b) => {
+      // Default: sort by created_date descending (newest first)
+      if (!sortOrder || sortOrder === 'default') {
+        return new Date(b.created_date || 0) - new Date(a.created_date || 0);
+      }
+      if (sortOrder === 'az') {
+        return (a.nome || '').localeCompare(b.nome || '');
+      } else if (sortOrder === 'za') {
+        return (b.nome || '').localeCompare(a.nome || '');
+      }
+      return 0;
+    });
 
     return filtered;
   }, [produtos, filters, sortOrder]);
