@@ -9,8 +9,8 @@ import { ptBR } from 'date-fns/locale';
 // Calcula total embarcado por produto em TODOS os embarques
 function calcularTotalEmbarcado(embarques) {
   const map = {};
-  (embarques || []).forEach(emb => {
-    (emb.itens_embarcados || []).forEach(item => {
+  (embarques || []).forEach((emb) => {
+    (emb.itens_embarcados || []).forEach((item) => {
       map[item.produto_id] = (map[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
     });
   });
@@ -43,67 +43,68 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
             <Edit3 className="w-3.5 h-3.5 text-gray-400" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
           </Button>
         </div>
       </div>
 
       {/* Itens expandidos */}
-      {expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 space-y-2.5">
-          {(embarque.itens_embarcados || []).map(item => (
-            <div key={item.produto_id} className="flex items-start justify-between gap-3">
-              <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 leading-tight">{item.produto_nome}</span>
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap flex-shrink-0">
-                {item.quantidade_embarcada} / {item.quantidade_pedida} <span className="text-gray-400 font-normal">{item.unidade_medida}</span>
+      {expanded &&
+      <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 space-y-1.5">
+          {(embarque.itens_embarcados || []).map((item) =>
+        <div key={item.produto_id} className="flex items-center justify-between">
+              <span className="text-xs text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{item.produto_nome}</span>
+              <span className="text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                {item.quantidade_embarcada} / {item.quantidade_pedida} {item.unidade_medida}
               </span>
             </div>
-          ))}
-          {embarque.observacoes && (
-            <p className="text-xs text-gray-400 italic mt-1 pt-2 border-t border-gray-100 dark:border-gray-700">{embarque.observacoes}</p>
-          )}
+        )}
+          {embarque.observacoes &&
+        <p className="text-[10px] text-gray-400 italic mt-1 pt-1 border-t border-gray-100 dark:border-gray-700">{embarque.observacoes}</p>
+        }
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 function ItensOrfaos({ itens, onAcordo }) {
   if (!itens.length) return null;
   return (
-    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 overflow-hidden border border-dashed border-gray-200 dark:border-gray-700">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-        <span className="relative flex h-2 w-2 flex-shrink-0">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-50"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-400"></span>
+    <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-100 dark:border-amber-800/40">
+        {/* LED âmbar pulsante */}
+        <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+          <span className="bg-amber-600 rounded-full relative inline-flex h-2 w-2"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
         </span>
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Itens aguardando despacho</span>
-        <span className="ml-auto text-xs text-gray-400">{itens.length} produto(s)</span>
+        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Itens aguardando despacho</span>
+        <span className="ml-auto text-[10px] text-amber-500">{itens.length} produto(s)</span>
       </div>
-      <div className="px-4 py-3 space-y-2.5">
-        {itens.map(item => (
-          <div key={item.produto_id} className="flex items-start justify-between gap-3">
-            <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 leading-tight">{item.produto_nome}</span>
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap flex-shrink-0">
-              {item.qtd_pendente} <span className="text-gray-400 font-normal">{item.unidade_medida}</span> <span className="text-xs text-gray-400">pend.</span>
+      <div className="px-4 py-2 space-y-1.5">
+        {itens.map((item) =>
+        <div key={item.produto_id} className="flex items-center justify-between">
+            <span className="text-xs text-amber-700 dark:text-amber-300 truncate flex-1 mr-2">{item.produto_nome}</span>
+            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">
+              {item.qtd_pendente} {item.unidade_medida} pendente(s)
             </span>
           </div>
-        ))}
+        )}
       </div>
-      {onAcordo && (
-        <div className="px-4 pb-3">
-          <Button type="button" variant="ghost" size="sm" onClick={onAcordo}
-            className="w-full h-9 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
-            <Handshake className="w-4 h-4 mr-2" /> Registrar Acordo Financeiro
+      {onAcordo &&
+      <div className="px-4 pb-3">
+          <Button variant="ghost" size="sm" onClick={onAcordo}
+        className="w-full h-8 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl">
+            <Handshake className="w-3.5 h-3.5 mr-1" /> Registrar Acordo Financeiro
           </Button>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
@@ -116,12 +117,12 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
 
   // Itens órfãos: qty pedida - qty embarcada em todos os embarques
   const itensOrfaos = useMemo(() => {
-    return (pedido?.itens || [])
-      .map(item => ({
-        ...item,
-        qtd_pendente: Math.max(0, (item.quantidade || 0) - (totalEmbarcado[item.produto_id] || 0))
-      }))
-      .filter(item => item.qtd_pendente > 0);
+    return (pedido?.itens || []).
+    map((item) => ({
+      ...item,
+      qtd_pendente: Math.max(0, (item.quantidade || 0) - (totalEmbarcado[item.produto_id] || 0))
+    })).
+    filter((item) => item.qtd_pendente > 0);
   }, [pedido, totalEmbarcado]);
 
   const temOrfaos = itensOrfaos.length > 0;
@@ -152,108 +153,98 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 font-quicksand">
             Despachos
           </span>
-          {embarques.length > 0 && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+          {embarques.length > 0 &&
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
               {embarques.length} nível(is)
             </span>
-          )}
-          {temOrfaos && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">• pendências</span>
-          )}
-          {!temOrfaos && embarques.length > 0 && (
-            <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
-          )}
+          }
+          {/* LED âmbar se houver órfãos */}
+          {temOrfaos &&
+          <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+          }
+          {!temOrfaos && embarques.length > 0 &&
+          <CheckCircle2 className="w-3.5 h-3.5 text-teal-500" />
+          }
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Botão Nível Multimodal — sempre disponível quando já há embarques */}
-          {!semEmbarques && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleNovoEmbarque}
-              className="h-8 text-xs border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100"
-            >
+          {/* Botão Adicionar Nível Multimodal (global, sempre disponível quando há embarques) */}
+          {!semEmbarques && temOrfaos &&
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNovoEmbarque}
+            className="h-8 text-xs border-0 shadow-sm bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100">
+            
               <Layers className="w-3.5 h-3.5 mr-1" />
-              + Nível Multimodal
+              + Nível de Despacho
             </Button>
-          )}
-          {/* Botão Novo Despacho para pendências */}
-          {temOrfaos && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleNovoEmbarque}
-              className="h-8 text-xs bg-gray-800 dark:bg-white dark:text-gray-900 hover:bg-gray-700 text-white border-0 shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Novo Despacho
-            </Button>
-          )}
+          }
           {/* Botão Informar Primeiro Embarque */}
-          {semEmbarques && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleNovoEmbarque}
-              className="h-8 text-xs bg-teal-600 hover:bg-teal-700 text-white border-0 shadow-sm"
-            >
+          {semEmbarques &&
+          <Button
+            size="sm"
+            onClick={handleNovoEmbarque}
+            className="h-8 text-xs bg-teal-600 hover:bg-teal-700 text-white border-0 shadow-sm">
+            
               <Plus className="w-3.5 h-3.5 mr-1" />
               Informar Embarque
             </Button>
-          )}
+          }
         </div>
       </div>
 
       {/* Estado vazio */}
-      {semEmbarques && (
-        <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-center space-y-2">
+      {semEmbarques &&
+      <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-gray-50 dark:bg-gray-800/50 text-center space-y-2">
           <Clock className="w-8 h-8 text-gray-300 dark:text-gray-600" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum despacho registrado</p>
           <p className="text-xs text-gray-400 dark:text-gray-500">Use o botão acima para registrar o primeiro embarque</p>
         </div>
-      )}
+      }
 
       {/* Cards de embarques por nível */}
-      {embarques.map((emb, idx) => (
-        <EmbarqueCard
-          key={emb.id}
-          embarque={emb}
-          nivel={idx + 1}
-          pedido={pedido}
-          onEdit={handleEditarEmbarque}
-        />
-      ))}
+      {embarques.map((emb, idx) =>
+      <EmbarqueCard
+        key={emb.id}
+        embarque={emb}
+        nivel={idx + 1}
+        pedido={pedido}
+        onEdit={handleEditarEmbarque} />
+
+      )}
 
       {/* Itens órfãos — exibidos abaixo dos cards */}
       {!semEmbarques && <ItensOrfaos itens={itensOrfaos} onAcordo={temOrfaos ? () => setAcordoOpen(true) : undefined} />}
 
       {/* Todos despachados */}
-      {!semEmbarques && !temOrfaos && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-800">
-          <CheckCircle2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+      {!semEmbarques && !temOrfaos &&
+      <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
+          <CheckCircle2 className="w-4 h-4 text-teal-500 flex-shrink-0" />
+          <span className="text-xs font-medium text-teal-700 dark:text-teal-300">
             Todos os itens estão cobertos pelos embarques registrados.
           </span>
         </div>
-      )}
+      }
 
       <InformarEmbarque
         pedido={pedido}
         isOpen={embarqueOpen}
-        onClose={() => { setEmbarqueOpen(false); setEmbarqueEditando(null); }}
+        onClose={() => {setEmbarqueOpen(false);setEmbarqueEditando(null);}}
         onSuccess={handleSuccess}
-        embarqueExistente={embarqueEditando}
-      />
+        embarqueExistente={embarqueEditando} />
+      
 
       <AcordoFinanceiroOrfaoDialog
         isOpen={acordoOpen}
         onClose={() => setAcordoOpen(false)}
         pedido={pedido}
         itensOrfaos={itensOrfaos}
-        onSuccess={() => { setAcordoOpen(false); onPedidoUpdated?.(); }}
-      />
-    </div>
-  );
+        onSuccess={() => {setAcordoOpen(false);onPedidoUpdated?.();}} />
+      
+    </div>);
+
 }
