@@ -1390,15 +1390,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
            pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
            onSave={handleInitiateSave}
            isSaving={isSaving}
-           isDisabled={true}
-           mostrarEnviarFinanceiro={false}
-           onOpenAnexos={() => setIsAnexosOpen(true)}
-           mostrarSolicitarEdicao={!!pedido?.id && isLocked}
-           onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
-         />
-       )}
+           isDisabled={isSaving}
+           />
+           )}
 
-       <AnexosPedidoCompra
+           <AnexosPedidoCompra
          pedidoId={pedido?.id}
          pedidoNumero={pedido?.numero}
          isOpen={isAnexosOpen}
