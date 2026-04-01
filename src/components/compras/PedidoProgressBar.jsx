@@ -10,18 +10,23 @@ function getProgressDetails(pedido) {
 
   const status = pedido.status || '';
 
-  // Problemas — vermelho sempre tem prioridade
-  if (pedido.tem_divergencias || status === 'Pend\u00eancia' || status === 'Devolvido' || isAtrasado)
+  // Problemas — vermelho tem prioridade
+  if (pedido.tem_divergencias || status === 'Pendência' || status === 'Devolvido' || isAtrasado)
     return { filled: 2, active: 'rose' };
 
-  // Fluxo normal — 1 seg por etapa
-  if (status === 'Cancelado')                 return { filled: 0, active: null };
-  if (status === 'Rascunho')                  return { filled: 1, active: 'teal-light' };
-  if (status === 'Aguardando Libera\u00e7\u00e3o')       return { filled: 2, active: 'teal-light' };
-  if (status === 'Aprovado')                  return { filled: 3, active: 'teal-mid' };
-  if (status === 'Despachado')                return { filled: 4, active: 'teal' };
-  if (status === 'Em Recep\u00e7\u00e3o')               return { filled: 4, active: 'teal' };
-  if (status === 'Conclu\u00eddo')                    return { filled: 5, active: 'teal-full' };
+  if (status === 'Cancelado')              return { filled: 0, active: null };
+  if (status === 'Rascunho')               return { filled: 1, active: 'teal-light' };
+  if (status === 'Aguardando Liberação')   return { filled: 2, active: 'teal-light' };
+  if (status === 'Aprovado')               return { filled: 3, active: 'teal-mid' };
+
+  // "Em Trânsito" é status legado equivalente a Despachado
+  if (status === 'Despachado' || status === 'Em Trânsito')
+    return { filled: 4, active: 'teal' };
+  if (status === 'Em Recepção')            return { filled: 4, active: 'teal' };
+  if (status === 'Concluído')              return { filled: 5, active: 'teal-full' };
+
+  // Fallback: se tem data_aprovacao_financeira assume pelo menos "Aprovado"
+  if (pedido.data_aprovacao_financeira)    return { filled: 3, active: 'teal-mid' };
 
   return { filled: 1, active: 'teal-light' };
 }
@@ -34,7 +39,6 @@ const PALETTE = {
   'rose':       ['#fda4af', '#fb7185', '#f43f5e', '#e11d48', '#be123c'],
 };
 
-// Altura cresce da esquerda para direita — efeito medidor 3D
 const HEIGHTS = [4, 6, 8, 10, 13];
 
 export default function PedidoProgressBar({ pedido }) {
