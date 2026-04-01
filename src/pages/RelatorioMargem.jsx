@@ -20,6 +20,7 @@ export default function RelatorioMargemVendas() {
   const [sortField, setSortField] = useState('lucro_total');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   
   useEffect(() => {
     loadData();
@@ -454,13 +455,14 @@ export default function RelatorioMargemVendas() {
                 </div>
 
                 {/* Calendário Personalizado */}
-                <div className="relative">
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Customizado</label>
-                  <CalendarPopup
-                    dateRange={dateRange}
-                    setDateRange={setDateRange}
-                    onClose={() => {}}
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Customizado</label>
+                  <button
+                    onClick={() => setShowCalendar(true)}
+                    className="w-full px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    {dateRange.from ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'}` : 'Selecionar período'}
+                  </button>
                 </div>
               </div>
 
@@ -525,6 +527,19 @@ export default function RelatorioMargemVendas() {
             </div>
           </DrawerContent>
         </Drawer>
+
+        {/* Calendar Popup Modal */}
+        {showCalendar && (
+          <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 md:bg-black/20">
+            <div className="w-full md:w-auto bg-white dark:bg-gray-900 rounded-t-3xl md:rounded-3xl p-4 md:p-6 shadow-2xl md:max-w-md">
+              <CalendarPopup
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                onClose={() => setShowCalendar(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Summary Cards - Markup Destacado */}
         <div className="px-3 md:px-6 py-2.5 md:py-6 space-y-2 md:space-y-3">
