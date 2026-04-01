@@ -20,9 +20,13 @@ function getProgressDetails(pedido) {
   if (status === 'Aprovado')               return { filled: 3, active: 'teal-mid' };
 
   // "Em Trânsito" é status legado equivalente a Despachado
-  if (status === 'Despachado' || status === 'Em Trânsito')
+  if (status === 'Despachado' || status === 'Em Trânsito') {
+    // Embarque parcial → LED âmbar
+    if (pedido.status_embarque === 'Parcial') return { filled: 4, active: 'amber' };
     return { filled: 4, active: 'teal' };
-  if (status === 'Em Recepção')            return { filled: 4, active: 'teal' };
+  }
+  if (status === 'Em Recepção' || status === 'Em Conferência')
+                                           return { filled: 4, active: 'teal' };
   if (status === 'Concluído')              return { filled: 5, active: 'teal-full' };
 
   // Fallback: se tem data_aprovacao_financeira assume pelo menos "Aprovado"
@@ -37,6 +41,7 @@ const PALETTE = {
   'teal':       ['#2dd4bf', '#14b8a6', '#0d9488', '#0f766e', '#115e59'],
   'teal-full':  ['#5eead4', '#2dd4bf', '#14b8a6', '#0d9488', '#0f766e'],
   'rose':       ['#fda4af', '#fb7185', '#f43f5e', '#e11d48', '#be123c'],
+  'amber':      ['#fde68a', '#fbbf24', '#f59e0b', '#d97706', '#b45309'],
 };
 
 const HEIGHTS = [4, 6, 8, 10, 13];
