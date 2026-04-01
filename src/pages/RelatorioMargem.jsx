@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
+import SortSelector from '@/components/relatorios/SortSelector';
 
 export default function RelatorioMargemVendas() {
   const [sales, setSales] = useState([]);
@@ -496,6 +497,16 @@ export default function RelatorioMargemVendas() {
                   />
                 </div>
               )}
+
+              {/* Sort Selector - Mobile Only */}
+              <div className="md:hidden">
+                <SortSelector
+                  sortField={sortField}
+                  setSortField={setSortField}
+                  sortOrder={sortOrder}
+                  setSortOrder={setSortOrder}
+                />
+              </div>
 
               {/* Group Toggle */}
               <div>
