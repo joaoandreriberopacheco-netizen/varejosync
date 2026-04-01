@@ -195,6 +195,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   };
 
   const temDivergencias = itens.some(i => i.divergencia_tipo !== 'Nenhuma');
+  const isReadOnly = embarque?.status_recebimento_embarque && embarque.status_recebimento_embarque !== 'Pendente';
 
   const iniciarRecepção = () => {
     setShowModoDialog(true);
@@ -228,6 +229,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               </div>
               <div>
                 <h2 className="font-quicksand text-lg font-semibold text-gray-900 dark:text-white">Receber Embarque</h2>
+                {isReadOnly && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Somente leitura</p>
+                )}
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
@@ -283,7 +287,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                         step="0.01"
                         value={item.quantidade_recebida || ''}
                         onChange={e => handleQuantidadeChange(idx, e.target.value)}
-                        className="h-14 text-lg bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm font-semibold text-gray-900 dark:text-white text-center placeholder:text-gray-400"
+                        disabled={isReadOnly}
+                        className="h-14 text-lg bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm font-semibold text-gray-900 dark:text-white text-center placeholder:text-gray-400 disabled:opacity-60 disabled:cursor-not-allowed"
                         placeholder="0"
                       />
                     </div>
@@ -291,8 +296,10 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                     {/* Botão Divergência */}
                     <Button
                       onClick={() => abrirDivergencia(idx)}
+                      disabled={isReadOnly}
                       variant={hasDivergencia ? 'default' : 'outline'}
                       className={`w-full h-12 text-sm font-semibold rounded-xl transition-colors ${
+                        isReadOnly ? 'opacity-60 cursor-not-allowed' :
                         hasDivergencia
                           ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-0'
                           : 'border-0 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -328,28 +335,37 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
                 type="date"
                 value={dataEntrada}
                 onChange={e => setDataEntrada(e.target.value)}
-                className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm text-gray-900 dark:text-white placeholder:text-gray-500"
+                disabled={isReadOnly}
+                className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm text-gray-900 dark:text-white placeholder:text-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
               />
-            </div>
+              </div>
 
-            {/* Botão Concluir */}
-            <Button
-              onClick={handleConfirmarRecebimento}
-              disabled={isSaving}
-              className="w-full h-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  Concluir Recebimento
-                </>
+              {/* Botão Concluir */}
+              {!isReadOnly && (
+              <Button
+                onClick={handleConfirmarRecebimento}
+                disabled={isSaving}
+                className="w-full h-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    Concluir Recebimento
+                  </>
+                )}
+              </Button>
               )}
-            </Button>
+              {isReadOnly && (
+              <div className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl text-center">
+                <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">✓ Recebimento concluído</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Visualizando dados registrados</p>
+              </div>
+              )}
           </div>
           </DialogContent>
           </Dialog>
