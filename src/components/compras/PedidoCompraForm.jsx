@@ -37,6 +37,7 @@ import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
+import AbaRecepção from './AbaRecepção.jsx';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -979,6 +980,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
               { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'Pgto', disabled: false },
               { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'Log', disabled: false },
+              { value: 'recepcao',     icon: <Package className="w-4 h-4 flex-shrink-0" />, short: 'Rec', disabled: !pedido?.id },
               { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'Pend', disabled: !pedido?.id },
               { value: 'logs',         icon: <History className="w-4 h-4 flex-shrink-0" />, short: 'Logs', disabled: !pedido?.id },
             ].map(tab => (
@@ -1246,6 +1248,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-sm text-gray-400">Salve o pedido primeiro para registrar embarques.</p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ABA: RECEPÇÃO */}
+          <TabsContent value="recepcao" className="mt-0">
+            {pedido?.id ? (
+              <AbaRecepção pedido={pedido} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-sm text-gray-400">Salve o pedido primeiro para registrar recebimentos.</p>
               </div>
             )}
           </TabsContent>

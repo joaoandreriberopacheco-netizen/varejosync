@@ -51,6 +51,18 @@
       "default": "Nenhum",
       "description": "Indica se o despacho foi total ou parcial. Parcial acende LED \u00e2mbar."
     },
+    "status_recebimento_geral": {
+      "type": "string",
+      "enum": [
+        "Nenhum",
+        "Pendente",
+        "Recebido Parcial",
+        "Conclu\u00eddo com Diverg\u00eancia",
+        "Conclu\u00eddo OK"
+      ],
+      "default": "Nenhum",
+      "description": "Status geral do recebimento do Pedido de Compra (agrega status dos embarques)."
+    },
     "embarques_registrados": {
       "type": "array",
       "description": "Hist\u00f3rico de embarques registrados para este pedido",
@@ -83,6 +95,17 @@
           "observacoes": {
             "type": "string"
           },
+          "status_recebimento_embarque": {
+            "type": "string",
+            "enum": [
+              "Pendente",
+              "Recebido Parcial",
+              "Recebido OK",
+              "Com Diverg\u00eancia"
+            ],
+            "default": "Pendente",
+            "description": "Status de recebimento deste embarque espec\u00edfico"
+          },
           "itens_embarcados": {
             "type": "array",
             "items": {
@@ -100,8 +123,36 @@
                 "quantidade_embarcada": {
                   "type": "number"
                 },
+                "quantidade_recebida": {
+                  "type": "number",
+                  "description": "Quantidade efetivamente recebida para este item do embarque"
+                },
                 "unidade_medida": {
                   "type": "string"
+                },
+                "divergencia_tipo": {
+                  "type": "string",
+                  "enum": [
+                    "Nenhuma",
+                    "Quantidade A Menor",
+                    "Produto Diferente - Aceite",
+                    "Produto Diferente - Rejeitado",
+                    "Produto Novo Recebido"
+                  ],
+                  "default": "Nenhuma",
+                  "description": "Tipo de diverg\u00eancia (se houver)"
+                },
+                "produto_id_recebido_diferente": {
+                  "type": "string",
+                  "description": "ID do produto REALMENTE recebido se for diferente do esperado"
+                },
+                "produto_nome_recebido_diferente": {
+                  "type": "string",
+                  "description": "Nome do produto REALMENTE recebido se for diferente do esperado"
+                },
+                "acordo_financeiro_lancamento_id": {
+                  "type": "string",
+                  "description": "ID do Lan\u00e7amentoFinanceiro de ajuste vinculado a este item"
                 }
               }
             }
