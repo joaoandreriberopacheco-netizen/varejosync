@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { agora, formatarLogTime } from '@/components/utils/dateUtils';
 
 export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido }) {
@@ -34,6 +34,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const [showCodigoConferencia, setShowCodigoConferencia] = useState(false);
   const [codigoConferencia, setCodigoConferencia] = useState('');
   const [showCodigoDecrypt, setShowCodigoDecrypt] = useState(false);
+  const [isLoadingState, setIsLoadingState] = useState(false);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -318,15 +319,37 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             </div>
           </div>
 
-          {/* Data de Entrada */}
-          <div>
-            <Label className="text-xs text-gray-600 dark:text-gray-400 font-semibold block mb-2">Data de Entrada</Label>
-            <Input
-              type="date"
-              value={dataEntrada}
-              onChange={e => setDataEntrada(e.target.value)}
-              className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm"
-            />
+          {/* Footer com Data e Botão */}
+          <div className="border-t border-gray-200 dark:border-gray-700/50 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-6 space-y-4">
+            {/* Data de Entrada */}
+            <div>
+              <Label className="text-xs text-gray-700 dark:text-gray-300 font-semibold block mb-2">Data de Entrada</Label>
+              <Input
+                type="date"
+                value={dataEntrada}
+                onChange={e => setDataEntrada(e.target.value)}
+                className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm text-gray-900 dark:text-white placeholder:text-gray-500"
+              />
+            </div>
+
+            {/* Botão Concluir */}
+            <Button
+              onClick={handleConfirmarRecebimento}
+              disabled={isSaving}
+              className="w-full h-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Concluir Recebimento
+                </>
+              )}
+            </Button>
           </div>
           </DialogContent>
           </Dialog>
