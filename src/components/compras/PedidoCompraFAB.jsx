@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, FileText, Paperclip, Compass, X, Send, Wrench } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
-import AnexosPanel from '@/components/anexos/AnexosPanel';
+import AnexosModal from '@/components/anexos/AnexosModal';
+import { listarAnexos } from '@/functions/listarAnexos';
 
 // Raio em px — aumentado para não sair da tela
 const RADIUS = 72;
@@ -18,8 +19,51 @@ export default function PedidoCompraFAB({
   mostrarSolicitarEdicao,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showAnexosPanel, setShowAnexosPanel] = useState(false);
+  const [showAnexosModal, setShowAnexosModal] = useState(false);
+  const [anexos, setAnexos] = useState([]);
+  const [anexoLoading, setAnexoLoading] = useState(false);
+  const [anexoUploading, setAnexoUploading] = useState(false);
   const { toast } = useToast();
+
+  const carregarAnexos = async () => {
+    if (!pedido?.id) return;
+    setAnexoLoading(true);
+    const res = await listarAnexos({ referencia_tipo: 'PedidoCompra', referencia_id: pedido.id });
+    setAnexos(res.data?.anexos || []);
+    setAnexoLoading(false);
+  };
+
+  const handleAnexoUpload = async (file, tipoSelecionado, e) => {
+    setAnexoUploading(true);
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    const base64 = btoa(binary);
+    await base44.functions.invoke('uploadAnexoDrive', {
+      file_base64: base64,
+      file_name: file.name,
+      file_type: file.type || 'application/octet-stream',
+      file_size: file.size,
+      referencia_tipo: 'PedidoCompra',
+      referencia_id: pedido.id,
+      referencia_numero: pedido.numero,
+      tipo_documento: tipoSelecionado,
+    });
+    await carregarAnexos();
+    setAnexoUploading(false);
+    if (e) e.target.value = '';
+  };
+
+  const handleAnexoDelete = async (anexo) => {
+    const { deletarAnexo } = await import('@/functions/deletarAnexo');
+    await deletarAnexo({ anexo_id: anexo.id, drive_file_id: anexo.drive_file_id });
+    setAnexos(prev => prev.filter(a => a.id !== anexo.id));
+  };
+
+  useEffect(() => {
+    if (showAnexosModal) carregarAnexos();
+  }, [showAnexosModal]);
 
   const handlePrintPDF = async () => {
     if (!pedido?.id) {
@@ -63,7 +107,7 @@ export default function PedidoCompraFAB({
     {
       icon: <Paperclip className="w-5 h-5" />,
       label: 'Anexos',
-      onClick: () => { setShowAnexosPanel(true); setIsExpanded(false); },
+      onClick: () => { setShowAnexosModal(true); setIsExpanded(false); },
       disabled: !pedido?.id,
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
     },
@@ -139,19 +183,16 @@ export default function PedidoCompraFAB({
         }
       `}</style>
 
-      {/* AnexosPanel */}
-      {pedido?.id && (
-        <div className="relative">
-          {showAnexosPanel && (
-            <AnexosPanel
-              referenciaId={pedido.id}
-              referenciaTipo="PedidoCompra"
-              referenciaNomero={pedido.numero}
-              inline={false}
-            />
-          )}
-        </div>
-      )}
+      {/* AnexosModal */}
+      <AnexosModal
+        isOpen={showAnexosModal}
+        onClose={() => setShowAnexosModal(false)}
+        anexos={anexos}
+        onUpload={handleAnexoUpload}
+        onDelete={handleAnexoDelete}
+        uploading={anexoUploading}
+        referenciaNomero={pedido?.numero}
+      />
     </>
   );
 }
