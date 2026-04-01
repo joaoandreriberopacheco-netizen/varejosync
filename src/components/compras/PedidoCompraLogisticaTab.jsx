@@ -54,17 +54,17 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
 
       {/* Itens expandidos */}
       {expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 space-y-1.5">
+        <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-3 space-y-2.5">
           {(embarque.itens_embarcados || []).map(item => (
-            <div key={item.produto_id} className="flex items-center justify-between">
-              <span className="text-xs text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{item.produto_nome}</span>
-              <span className="text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                {item.quantidade_embarcada} / {item.quantidade_pedida} {item.unidade_medida}
+            <div key={item.produto_id} className="flex items-start justify-between gap-3">
+              <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 leading-tight">{item.produto_nome}</span>
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap flex-shrink-0">
+                {item.quantidade_embarcada} / {item.quantidade_pedida} <span className="text-gray-400 font-normal">{item.unidade_medida}</span>
               </span>
             </div>
           ))}
           {embarque.observacoes && (
-            <p className="text-[10px] text-gray-400 italic mt-1 pt-1 border-t border-gray-100 dark:border-gray-700">{embarque.observacoes}</p>
+            <p className="text-xs text-gray-400 italic mt-1 pt-2 border-t border-gray-100 dark:border-gray-700">{embarque.observacoes}</p>
           )}
         </div>
       )}
@@ -75,22 +75,21 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
 function ItensOrfaos({ itens, onAcordo }) {
   if (!itens.length) return null;
   return (
-    <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-100 dark:border-amber-800/40">
-        {/* LED âmbar pulsante */}
-        <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 overflow-hidden border border-dashed border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+        <span className="relative flex h-2 w-2 flex-shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-50"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-400"></span>
         </span>
-        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Itens aguardando despacho</span>
-        <span className="ml-auto text-[10px] text-amber-500">{itens.length} produto(s)</span>
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Itens aguardando despacho</span>
+        <span className="ml-auto text-xs text-gray-400">{itens.length} produto(s)</span>
       </div>
-      <div className="px-4 py-2 space-y-1.5">
+      <div className="px-4 py-3 space-y-2.5">
         {itens.map(item => (
-          <div key={item.produto_id} className="flex items-center justify-between">
-            <span className="text-xs text-amber-700 dark:text-amber-300 truncate flex-1 mr-2">{item.produto_nome}</span>
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">
-              {item.qtd_pendente} {item.unidade_medida} pendente(s)
+          <div key={item.produto_id} className="flex items-start justify-between gap-3">
+            <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 leading-tight">{item.produto_nome}</span>
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 whitespace-nowrap flex-shrink-0">
+              {item.qtd_pendente} <span className="text-gray-400 font-normal">{item.unidade_medida}</span> <span className="text-xs text-gray-400">pend.</span>
             </span>
           </div>
         ))}
@@ -98,8 +97,8 @@ function ItensOrfaos({ itens, onAcordo }) {
       {onAcordo && (
         <div className="px-4 pb-3">
           <Button type="button" variant="ghost" size="sm" onClick={onAcordo}
-            className="w-full h-8 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl">
-            <Handshake className="w-3.5 h-3.5 mr-1" /> Registrar Acordo Financeiro
+            className="w-full h-9 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+            <Handshake className="w-4 h-4 mr-2" /> Registrar Acordo Financeiro
           </Button>
         </div>
       )}
@@ -158,15 +157,11 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
               {embarques.length} nível(is)
             </span>
           )}
-          {/* LED âmbar se houver órfãos */}
           {temOrfaos && (
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-            </span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">• pendências</span>
           )}
           {!temOrfaos && embarques.length > 0 && (
-            <CheckCircle2 className="w-3.5 h-3.5 text-teal-500" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
           )}
         </div>
 
@@ -190,7 +185,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
               type="button"
               size="sm"
               onClick={handleNovoEmbarque}
-              className="h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm"
+              className="h-8 text-xs bg-gray-800 dark:bg-white dark:text-gray-900 hover:bg-gray-700 text-white border-0 shadow-sm"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
               Novo Despacho
@@ -236,9 +231,9 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
 
       {/* Todos despachados */}
       {!semEmbarques && !temOrfaos && (
-        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
-          <CheckCircle2 className="w-4 h-4 text-teal-500 flex-shrink-0" />
-          <span className="text-xs font-medium text-teal-700 dark:text-teal-300">
+        <div className="flex items-center gap-2 rounded-2xl px-4 py-3 bg-gray-50 dark:bg-gray-800">
+          <CheckCircle2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             Todos os itens estão cobertos pelos embarques registrados.
           </span>
         </div>

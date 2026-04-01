@@ -8,7 +8,7 @@ const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits:
 
 const STATUS_CONFIG = {
   'Em Aberto': { icon: Clock,         color: 'text-gray-400', bg: 'bg-gray-100 dark:bg-gray-700',  label: 'Em Aberto' },
-  'Pago':      { icon: CheckCircle2,  color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20', label: 'Pago' },
+  'Pago':      { icon: CheckCircle2,  color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-700',  label: 'Pago' },
   'Vencido':   { icon: AlertTriangle, color: 'text-red-400',  bg: 'bg-red-50 dark:bg-red-900/20',  label: 'Vencido' },
 };
 
@@ -72,7 +72,7 @@ export default function LancamentosCompraPanel({ pedidoId }) {
       {totalTotal > 0 && (
         <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-green-400 dark:bg-green-500 rounded-full transition-all"
+            className="h-full bg-gray-400 dark:bg-gray-500 rounded-full transition-all"
             style={{ width: `${Math.min((totalPago / totalTotal) * 100, 100)}%` }}
           />
         </div>
@@ -106,11 +106,11 @@ export default function LancamentosCompraPanel({ pedidoId }) {
 
                 {/* Valor + comprovante */}
                 <div className="flex-none flex flex-col items-end gap-0.5">
-                  <span className={`text-[0.82rem] font-bold ${l.status === 'Pago' ? 'text-green-600 dark:text-green-400' : l.status === 'Vencido' ? 'text-red-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                  <span className={`text-sm font-bold ${l.status === 'Pago' ? 'text-gray-600 dark:text-gray-300' : l.status === 'Vencido' ? 'text-red-400' : 'text-gray-700 dark:text-gray-200'}`}>
                     {R(l.valor)}
                   </span>
                   {l.status === 'Pago' && (
-                    <span className="text-[0.6rem] bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded px-1.5 py-0.5 font-medium flex items-center gap-0.5">
+                    <span className="text-[0.6rem] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded px-1.5 py-0.5 font-medium flex items-center gap-0.5">
                       <CheckCircle2 className="w-2.5 h-2.5" /> Pago
                     </span>
                   )}
@@ -125,7 +125,7 @@ export default function LancamentosCompraPanel({ pedidoId }) {
         <span className="text-xs text-gray-400 dark:text-gray-500">Total</span>
         <div className="flex items-center gap-3">
           {totalPago > 0 && (
-            <span className="text-xs text-green-600 dark:text-green-400 font-medium">{R(totalPago)} pago</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{R(totalPago)} pago</span>
           )}
           <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{R(totalTotal)}</span>
         </div>
