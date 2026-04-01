@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown } from 'lucide-react';
+import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown, FilterX, X } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 
@@ -18,8 +19,7 @@ export default function RelatorioMargemVendas() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortField, setSortField] = useState('lucro_total');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTagPopup, setShowTagPopup] = useState(false);
+  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   
   useEffect(() => {
     loadData();
@@ -28,7 +28,7 @@ export default function RelatorioMargemVendas() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load all products to get current costs and details
+      // Load all products to get CURRENT costs
       const prods = await base44.entities.Produto.list();
       setProducts(prods);
 
@@ -62,7 +62,7 @@ export default function RelatorioMargemVendas() {
         const product = prodMap[prodId];
         if (!product) return;
 
-        // Calcular custo real: prioriza preco_custo_calculado, senão calcula manualmente
+        // IMPORTANTE: Usar SEMPRE o custo ATUAL do produto, nunca do momento da venda
         const custoCalculado = product.preco_custo_calculado || (
           (product.valor_compra || 0) +
           (product.custo_frete_padrao || 0) +
@@ -336,7 +336,12 @@ export default function RelatorioMargemVendas() {
     return Array.from(tags).sort();
   }, [products]);
 
-
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setSelectedTags([]);
+    setGroupByCategory(false);
+    setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -374,103 +379,107 @@ export default function RelatorioMargemVendas() {
             </div>
           </div>
 
-          {/* Search Bar + Filters - compactado no mobile */}
-          <div className="mt-3 md:mt-4 flex items-center gap-1.5 overflow-x-auto pb-1">
-            {/* Date Picker */}
-            <div className="relative z-50 flex-shrink-0">
+          {/* Filter Button - PDV Style */}
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={() => setShowFilterDrawer(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs md:text-sm font-medium"
+              title="Filtros"
+            >
+              <FilterX className="w-4 h-4" />
+              Filtros
+            </button>
+            {(searchTerm || selectedTags.length > 0 || groupByCategory) && (
               <button
-                onClick={() => { setShowDatePicker(!showDatePicker); setShowTagPopup(false); }}
-                className="p-1.5 md:p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                title="Período"
+                onClick={handleClearFilters}
+                className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                title="Limpar filtros"
               >
-                <Calendar className="w-3.5 md:w-4 h-3.5 md:h-4" />
+                <X className="w-4 h-4" />
               </button>
-              {showDatePicker && (
+            )}
+          </div>
+        </div>
+
+        {/* Filter Drawer - PDV Style */}
+        <Drawer open={showFilterDrawer} onOpenChange={setShowFilterDrawer}>
+          <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-6">
+            <DrawerHeader className="px-0 pb-4 text-left">
+              <DrawerTitle className="font-glacial text-gray-900 dark:text-white text-lg">Filtros e Configurações</DrawerTitle>
+            </DrawerHeader>
+
+            <div className="space-y-4">
+              {/* Período */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Período</label>
                 <CalendarPopup
                   dateRange={dateRange}
                   setDateRange={setDateRange}
-                  onClose={() => setShowDatePicker(false)}
+                  onClose={() => {}}
                 />
-              )}
-            </div>
-            
-            {/* Tag Filter */}
-            {allTags.length > 0 && (
-              <div className="relative flex-shrink-0">
-                <button
-                  onClick={() => { setShowTagPopup(!showTagPopup); setShowDatePicker(false); }}
-                  className={`px-1.5 md:px-2 py-1.5 md:py-2 rounded text-xs md:text-sm font-medium transition flex-shrink-0 ${selectedTags.length > 0 ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                  title="Tags"
-                >
-                  {selectedTags.length > 0 ? selectedTags.length : '🏷'}
-                </button>
-                {showTagPopup && (
+              </div>
+
+              {/* Search */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Buscar Produto</label>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Produto ou código..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  />
+                </div>
+              </div>
+
+              {/* Tags */}
+              {allTags.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Tags</label>
                   <TagSearchPopup
                     allTags={allTags}
                     selectedTags={selectedTags}
                     setSelectedTags={setSelectedTags}
-                    onClose={() => setShowTagPopup(false)}
+                    onClose={() => {}}
                   />
-                )}
+                </div>
+              )}
+
+              {/* Group Toggle */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Exibição</label>
+                <button
+                  onClick={() => setGroupByCategory(!groupByCategory)}
+                  className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium transition ${
+                    groupByCategory
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {groupByCategory ? '✓ Agrupar por Categoria' : 'Agrupar por Categoria'}
+                </button>
               </div>
-            )}
-            
-            {/* Group Toggle */}
-            <button
-              onClick={() => setGroupByCategory(!groupByCategory)}
-              className={`flex-shrink-0 px-1.5 md:px-3 py-1.5 md:py-2 rounded text-xs md:text-sm font-medium transition ${
-                groupByCategory
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-              title="Agrupar"
-            >
-              ⊕
-            </button>
 
-            {/* Search - oculto no mobile extra pequeno */}
-            <div className="relative flex-1 hidden sm:block">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Procurar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 md:py-2 bg-gray-50 dark:bg-gray-800 rounded text-xs md:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
-              />
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleClearFilters}
+                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                  Limpar
+                </button>
+                <button
+                  onClick={() => setShowFilterDrawer(false)}
+                  className="flex-1 px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 transition"
+                >
+                  Aplicar
+                </button>
+              </div>
             </div>
-
-            {/* Mobile Sort Button */}
-            <div className="md:hidden flex-shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="p-1.5 md:p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Ordenar">
-                    <ArrowUpDown className="w-3.5 md:w-4 h-3.5 md:h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700 text-xs md:text-sm">
-                  {[
-                    { label: 'Produto', field: 'nome' },
-                    { label: 'Qnt', field: 'quantidade_vendida' },
-                    { label: 'Receita', field: 'total_recebido' },
-                    { label: 'Lucro', field: 'lucro_total' },
-                  ].map(opt => (
-                    <DropdownMenuItem
-                      key={opt.field}
-                      onClick={() => {
-                        if (sortField === opt.field) setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                        else { setSortField(opt.field); setSortOrder('desc'); }
-                      }}
-                      className={`dark:text-gray-200 cursor-pointer ${sortField === opt.field ? 'font-semibold' : ''}`}
-                    >
-                      {opt.label} {sortField === opt.field && (sortOrder === 'asc' ? '↑' : '↓')}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
+          </DrawerContent>
+        </Drawer>
 
         {/* Summary Cards - Markup Destacado */}
         <div className="px-3 md:px-6 py-2.5 md:py-6 space-y-2 md:space-y-3">
@@ -628,6 +637,7 @@ export default function RelatorioMargemVendas() {
                               <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
                               <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
                               <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
+                              <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.markup_percentual)}</td>
                               <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</td>
                             </tr>
                           ))}
@@ -652,7 +662,6 @@ export default function RelatorioMargemVendas() {
                           <td className="py-3 px-4 text-sm text-right text-gray-900 dark:text-white">{formatMoney(row.total_recebido)}</td>
                           <td className="py-3 px-4 text-sm text-right text-gray-600 dark:text-gray-400">{formatMoney(row.custo_total)}</td>
                           <td className="py-3 px-4 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatMoney(row.lucro_total)}</td>
-                          <td className="py-3 px-4 text-sm text-center font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
                           <td className="py-3 px-4 text-sm text-center font-semibold text-green-600 dark:text-green-400">{formatPercent(row.markup_percentual)}</td>
                           <td className="py-3 px-4 text-sm text-center font-semibold text-gray-900 dark:text-white">{formatPercent(row.margem_percentual)}</td>
                           </tr>
