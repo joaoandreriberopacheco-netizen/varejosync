@@ -160,11 +160,16 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         statusRecebimento_geral = 'Recebido Parcial';
       }
 
+      // Gerar resumo de divergências para o log
+      const divergenciasCount = itens.filter(i => i.divergencia_tipo !== 'Nenhuma').length;
+      const divergenciasDesc = divergenciasCount > 0 ? ` | ${divergenciasCount} divergência(s)` : '';
+      const resumoItens = itens.map(i => `${i.produto_nome}: ${i.quantidade_recebida}/${i.quantidade_embarcada}`).join('; ');
+
       await base44.entities.PedidoCompra.update(pedido.id, {
         embarques_registrados: embarquesAtualizados,
         status_recebimento_geral: statusRecebimento_geral,
         tem_divergencias: temComDivergencia,
-        historico: (pedido.historico || '') + `\n[Recebimento Embarque: ${novoEmbarque.id} | Status: ${statusRecebimento} | ${formatarLogTime()}]`
+        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens} | ${formatarLogTime()}]`
       });
 
       // Gerar movimentações de estoque
