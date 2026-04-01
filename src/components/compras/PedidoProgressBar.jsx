@@ -8,22 +8,21 @@ function getProgressDetails(pedido) {
     ? parseISO(pedido.data_prevista_entrega + 'T00:00:00')
     : null;
   const isAtrasado = dataPrevista && differenceInDays(today, dataPrevista) > 0;
-  const isProximo  = dataPrevista && !isAtrasado && differenceInDays(dataPrevista, today) <= 5;
 
-  if (pedido.status === 'Cancelado')  return { filled: 0, active: null };
-  if (pedido.status === 'Rascunho')   return { filled: 1, active: 'teal-light' };
+  if (pedido.status === 'Cancelado')            return { filled: 0, active: null };
+  if (pedido.status === 'Rascunho')             return { filled: 1, active: 'teal-light' };
+  if (pedido.status === 'Aguardando Liberação') return { filled: 2, active: 'teal-light' };
 
+  // Problemas: alerta vermelho
   if (pedido.tem_divergencias || pedido.status === 'Pendência' || pedido.status === 'Devolvido' || isAtrasado)
     return { filled: 2, active: 'rose' };
 
-  if (pedido.status === 'Aguardando Liberação' || isProximo)
-    return { filled: 3, active: 'teal-mid' };
+  if (pedido.status === 'Aprovado')             return { filled: 3, active: 'teal-mid' };
+  if (pedido.status === 'Despachado')           return { filled: 4, active: 'teal' };
+  if (pedido.status === 'Em Recepção')          return { filled: 4, active: 'teal' };
+  if (pedido.status === 'Concluído')            return { filled: 5, active: 'teal-full' };
 
-  if (pedido.status === 'Concluído')
-    return { filled: 5, active: 'teal-full' };
-
-  // Aprovado / Despachado / Em Recepção
-  return { filled: 4, active: 'teal' };
+  return { filled: 2, active: 'teal-light' };
 }
 
 const SEGMENT_COLORS = {
