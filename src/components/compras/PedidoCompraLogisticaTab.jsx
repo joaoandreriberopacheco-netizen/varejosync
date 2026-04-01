@@ -79,7 +79,7 @@ function ItensOrfaos({ itens, onAcordo }) {
       <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-100 dark:border-amber-800/40">
         {/* LED âmbar pulsante */}
         <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-          <span className="bg-amber-600 rounded-full relative inline-flex h-2 w-2"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-400"></span>
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
         </span>
         <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Itens aguardando despacho</span>
