@@ -20,6 +20,7 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
   const [processingStatus, setProcessingStatus] = useState('');
   const [processingStep, setProcessingStep] = useState(1);
   const [productSearch, setProductSearch] = useState({});
+  const [adjustMode, setAdjustMode] = useState('desconto'); // 'desconto' | 'acrescimo'
   const [discountType, setDiscountType] = useState('percentual');
   const [discountValue, setDiscountValue] = useState('0');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -75,15 +76,15 @@ export default function ImportadorPedidoCompra({ isOpen, onClose, onImportComple
 
   const discountNumber = parseFloat(discountValue) || 0;
 
-  const isAcrescimo = discountType === 'acrescimo_percentual' || discountType === 'acrescimo_valor';
+  const isAcrescimo = adjustMode === 'acrescimo';
+  // Sync adjustMode → discountType (always percentage for now)
+  const effectiveDiscountType = isAcrescimo ? 'acrescimo_percentual' : 'percentual';
 
   const getDiscountedUnitPrice = (item) => {
     const original = parseFloat(item.preco_unitario) || 0;
     if (!discountNumber) return original;
-    if (discountType === 'percentual') return Math.max(0, original - (original * discountNumber / 100));
-    if (discountType === 'valor') return Math.max(0, original - discountNumber);
-    if (discountType === 'acrescimo_percentual') return original + (original * discountNumber / 100);
-    if (discountType === 'acrescimo_valor') return original + discountNumber;
+    if (effectiveDiscountType === 'percentual') return Math.max(0, original - (original * discountNumber / 100));
+    if (effectiveDiscountType === 'acrescimo_percentual') return original + (original * discountNumber / 100);
     return original;
   };
 
@@ -261,7 +262,7 @@ Retorne JSON:
           unidade_medida: produto.unidade_principal || 'UN',
           custo_unitario: getDiscountedUnitPrice(item),
           valor_desconto_item: getDiscountPerItem(item),
-          observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • desconto ${discountType === 'percentual' ? `${discountNumber}%` : `R$ ${formatCurrency(discountNumber)}`}` : ''}`
+          observacao_item: `${mode === 'pdf' ? 'Importado via PDF' : 'Importado via foto'}${discountNumber ? ` • ${isAcrescimo ? 'acréscimo' : 'desconto'} ${discountNumber}%` : ''}`
         });
       }
 
@@ -331,43 +332,94 @@ Retorne JSON:
         )}
 
         {step === 'discount' && (
-          <div className="max-w-2xl mx-auto rounded-[2rem] bg-gray-50 dark:bg-gray-800/60 p-6 md:p-8 shadow-sm space-y-5">
-            <div className="space-y-1 text-center">
-              <p className="font-glacial text-2xl text-gray-900 dark:text-white">{isAcrescimo ? 'Acréscimo nos preços' : 'Desconto nos preços'}</p>
-              <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Defina o ajuste antes de processar o arquivo.</p>
+          <div className="flex flex-col h-[calc(100vh-80px)]">
+            {/* Tab switcher */}
+            <div className="rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 flex gap-1 mb-6">
+              <button
+                onClick={() => setAdjustMode('desconto')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${
+                  adjustMode === 'desconto'
+                    ? 'bg-white dark:bg-gray-900 shadow-sm text-emerald-700 dark:text-emerald-400'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12 L14 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                Desconto
+              </button>
+              <button
+                onClick={() => setAdjustMode('acrescimo')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all ${
+                  adjustMode === 'acrescimo'
+                    ? 'bg-white dark:bg-gray-900 shadow-sm text-amber-700 dark:text-amber-400'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12 L14 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" transform="rotate(180 8 8)"/></svg>
+                Acréscimo
+              </button>
             </div>
-            <div className="grid gap-4 md:grid-cols-[180px_1fr]">
-              <div className="rounded-3xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                <Label className="text-sm text-gray-700 dark:text-gray-200 mb-2 block">Tipo</Label>
-                <Select value={discountType} onValueChange={setDiscountType}>
-                  <SelectTrigger className="h-14 border-0 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm text-base text-gray-950 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentual">Desconto %</SelectItem>
-                    <SelectItem value="valor">Desconto R$</SelectItem>
-                    <SelectItem value="acrescimo_percentual">Acréscimo %</SelectItem>
-                    <SelectItem value="acrescimo_valor">Acréscimo R$</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="rounded-3xl bg-white dark:bg-gray-900 p-3 shadow-sm">
-                <Label className="text-sm text-gray-700 dark:text-gray-200 mb-2 block">Valor</Label>
-                <Input
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(e.target.value)}
-                  placeholder={discountType === 'percentual' ? '0,00%' : '0,00'}
-                  className="h-14 border-0 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-sm text-lg text-gray-950 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                />
+
+            {/* Spinner central */}
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 shadow-sm w-full max-w-xl py-10 flex flex-col items-center gap-2">
+                <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-4">
+                  {adjustMode === 'desconto' ? 'Desconto sobre todos os itens' : 'Acréscimo sobre todos os itens'}
+                </p>
+                <div className="flex items-center gap-6">
+                  {/* Botão menos */}
+                  <button
+                    onClick={() => setDiscountValue(v => String(Math.max(0, (parseFloat(v) || 0) - 1)))}
+                    className="w-10 h-1 rounded-full flex items-center justify-center"
+                    style={{ background: adjustMode === 'desconto' ? '#16a34a' : '#d97706', minHeight: 4 }}
+                  />
+                  {/* Número grande + setas */}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={discountValue}
+                      onChange={e => setDiscountValue(e.target.value)}
+                      className="w-28 text-center text-6xl font-light bg-transparent border-none outline-none text-gray-800 dark:text-gray-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <div className="flex flex-col items-center gap-0.5">
+                      <button
+                        onClick={() => setDiscountValue(v => String((parseFloat(v) || 0) + 1))}
+                        className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1"
+                      >
+                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 7L6 2L11 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                      <button
+                        onClick={() => setDiscountValue(v => String(Math.max(0, (parseFloat(v) || 0) - 1)))}
+                        className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1"
+                      >
+                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                    </div>
+                    <span className="text-3xl text-gray-400 font-light">%</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => { setSelectedFile(null); setStep('upload'); }} className="h-14 flex-1 rounded-2xl border-0 shadow-sm text-base">
-                <ArrowLeft className="w-5 h-5 mr-2" />Voltar
-              </Button>
-              <Button onClick={processSelectedFile} className="h-14 flex-1 rounded-2xl shadow-sm text-base">
-                <Check className="w-5 h-5 mr-2" />Processar arquivo
-              </Button>
+
+            {/* Barra de ação */}
+            <div className="flex items-center justify-between gap-4 py-4">
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                {discountNumber === 0
+                  ? 'Sem desc./acrés.'
+                  : isAcrescimo
+                  ? `+${discountNumber}% nos preços`
+                  : `-${discountNumber}% nos preços`}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => { setSelectedFile(null); setStep('upload'); }} className="h-12 px-5 rounded-2xl border-0 shadow-sm">
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <Button onClick={processSelectedFile} className="h-12 px-8 rounded-2xl shadow-sm bg-gray-900 dark:bg-white dark:text-gray-900 text-white gap-2">
+                  Buscar Itens
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -443,7 +495,7 @@ Retorne JSON:
                           <p className="text-xs text-gray-400 line-through">{item.quantidade || 1}× R$ {formatCurrency(item.preco_unitario)}</p>
                         )}
                         {discountNumber > 0 && isAcrescimo && (
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400">+{discountType === 'acrescimo_percentual' ? `${discountNumber}%` : `R$ ${formatCurrency(discountNumber)}`}</span>
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400">+{discountNumber}%</span>
                         )}
                         <p className={`text-sm font-semibold ${isAcrescimo ? 'text-amber-700 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>{item.quantidade || 1}× R$ {formatCurrency(getDiscountedUnitPrice(item))}</p>
                         <p className="text-xs text-gray-500">= R$ {formatCurrency((item.quantidade || 1) * getDiscountedUnitPrice(item))}</p>
