@@ -222,7 +222,6 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                     {/* Step: PIN */}
                     {step === 'pin' && (
                         <div className="w-full space-y-4">
-                            {/* Mini preview da foto */}
                             <div className="w-full h-24 rounded-xl overflow-hidden relative">
                                 <img src={photoData} alt="Evidência" className="w-full h-full object-cover opacity-70" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -231,7 +230,6 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                 </button>
                             </div>
 
-                            {/* Dots */}
                             <div className="flex justify-center gap-3 py-2">
                                 {dots.map((filled, i) => (
                                     <div key={i} className={`w-3 h-3 rounded-full transition-all duration-150 ${
@@ -240,36 +238,19 @@ export default function OperacaoAuthenticator({ isOpen, onClose, onSuccess, oper
                                 ))}
                             </div>
 
-                            {/* Input oculto */}
-                            <input
-                                ref={inputRef}
-                                type="password"
-                                inputMode="numeric"
-                                value={pin}
-                                onChange={e => { setError(''); setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); }}
-                                onKeyDown={e => e.key === 'Enter' && pin.length === 6 && handlePinSubmit()}
-                                className="absolute opacity-0 w-0 h-0"
-                                maxLength={6}
-                            />
-
-                            {/* Teclado numérico */}
-                            <div className="grid grid-cols-3 gap-2 px-2">
-                                {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((key, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => {
-                                            if (key === '⌫') setPin(p => p.slice(0, -1));
-                                            else if (key !== '') { const next = (pin + key).slice(0, 6); setPin(next); setError(''); }
-                                        }}
-                                        className={`h-12 rounded-xl text-lg font-medium transition-all active:scale-95 ${
-                                            key === '' ? 'pointer-events-none'
-                                            : key === '⌫' ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 text-sm'
-                                            : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                                        }`}
-                                    >
-                                        {key}
-                                    </button>
-                                ))}
+                            <div className="px-2">
+                                <input
+                                    ref={inputRef}
+                                    type="password"
+                                    inputMode="numeric"
+                                    value={pin}
+                                    onChange={e => { setError(''); setPin(e.target.value.replace(/\D/g, '').slice(0, 6)); }}
+                                    onKeyDown={e => e.key === 'Enter' && pin.length === 6 && handlePinSubmit()}
+                                    className="w-full h-14 rounded-2xl bg-gray-50 dark:bg-gray-800 border-0 text-center text-2xl tracking-[0.6em] font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                                    maxLength={6}
+                                    placeholder="••••••"
+                                    autoComplete="one-time-code"
+                                />
                             </div>
 
                             {error && (
