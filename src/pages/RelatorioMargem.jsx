@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import TagSearchPopup from '@/components/relatorios/TagSearchPopup';
 
 export default function RelatorioMargemVendas() {
@@ -449,13 +448,22 @@ export default function RelatorioMargemVendas() {
                 </div>
 
                 {/* Calendário Personalizado */}
-                <div className="mb-2">
+                <div className="mb-2 space-y-2">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Customizado</label>
-                  <CalendarPopup
-                    dateRange={dateRange}
-                    setDateRange={setDateRange}
-                    onClose={() => {}}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={dateRange.from ? format(dateRange.from, 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setDateRange({ ...dateRange, from: new Date(e.target.value) })}
+                      className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                    />
+                    <input
+                      type="date"
+                      value={dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : ''}
+                      onChange={(e) => setDateRange({ ...dateRange, to: new Date(e.target.value) })}
+                      className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+                    />
+                  </div>
                 </div>
               </div>
 
