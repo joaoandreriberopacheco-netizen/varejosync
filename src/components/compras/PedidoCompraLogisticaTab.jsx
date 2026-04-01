@@ -171,17 +171,29 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Botão Adicionar Nível Multimodal (global, sempre disponível quando há embarques) */}
-          {!semEmbarques && temOrfaos && (
+          {/* Botão Nível Multimodal — sempre disponível quando já há embarques */}
+          {!semEmbarques && (
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleNovoEmbarque}
-              className="h-8 text-xs border-0 shadow-sm bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100"
+              className="h-8 text-xs border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100"
             >
               <Layers className="w-3.5 h-3.5 mr-1" />
-              + Nível de Despacho
+              + Nível Multimodal
+            </Button>
+          )}
+          {/* Botão Novo Despacho para pendências */}
+          {temOrfaos && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleNovoEmbarque}
+              className="h-8 text-xs bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Novo Despacho
             </Button>
           )}
           {/* Botão Informar Primeiro Embarque */}
