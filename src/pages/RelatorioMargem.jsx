@@ -449,12 +449,14 @@ export default function RelatorioMargemVendas() {
                 </div>
 
                 {/* Calendário Personalizado */}
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Customizado</label>
-                <CalendarPopup
-                  dateRange={dateRange}
-                  setDateRange={setDateRange}
-                  onClose={() => {}}
-                />
+                <div className="mb-2">
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Customizado</label>
+                  <CalendarPopup
+                    dateRange={dateRange}
+                    setDateRange={setDateRange}
+                    onClose={() => {}}
+                  />
+                </div>
               </div>
 
               {/* Search */}
