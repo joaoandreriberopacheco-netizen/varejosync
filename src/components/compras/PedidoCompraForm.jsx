@@ -1315,13 +1315,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             const novosItens = importedItems.map(item => {
               const qty = parseFloat(item.quantidade) || 1;
               const cost = parseFloat(item.custo_unitario) || 0;
-              const desc = parseFloat(item.valor_desconto_item) || 0;
-              const custoFinal = cost - desc;
+              // Note: desconto já foi aplicado na importação, então custo_unitario já é o final
               return {
                 ...item,
                 subtotal: qty * cost,
-                total: custoFinal * qty,
-                custo_final_unitario: custoFinal,
+                total: qty * cost,
+                custo_final_unitario: cost,
               };
             });
             return {
