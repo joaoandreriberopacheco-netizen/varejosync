@@ -32,11 +32,23 @@ function calcularStatusEmbarque(itens, totalEmbarcado) {
 }
 
 // ─── TransportadoraSearch ────────────────────────────────────────────────────
-function TransportadoraSearch({ value, onSelect, transportadoras, onCreateNew }) {
+function TransportadoraSearch({ value, onSelect, transportadoras, onCreateNew, disabled }) {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [criando, setCriando] = useState(false);
   const [nomeNova, setNomeNova] = useState('');
+
+  useEffect(() => {
+    if (!showDropdown) return;
+    const handleOutside = (event) => {
+      if (!event.target.closest('[data-transportadora-search]')) {
+        setShowDropdown(false);
+        setCriando(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [showDropdown]);
 
   const selected = transportadoras.find(t => t.id === value);
 
@@ -56,14 +68,17 @@ function TransportadoraSearch({ value, onSelect, transportadoras, onCreateNew })
       setCriando(false);
       setNomeNova('');
       setQuery('');
-    } catch { toast.error('Erro ao criar transportadora'); }
+      toast.success('Transportadora criada');
+    } catch (error) {
+      toast.error(error?.message || 'Erro ao criar transportadora');
+    }
   };
 
   return (
-    <div className="relative">
+    <div className="relative" data-transportadora-search>
       <div
-        className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 h-11 shadow-sm cursor-pointer"
-        onClick={() => setShowDropdown(v => !v)}
+        className={`flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 h-11 shadow-sm ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+        onClick={() => !disabled && setShowDropdown(v => !v)}
       >
         <Truck className="w-4 h-4 text-gray-400 flex-shrink-0" />
         <span className={`flex-1 text-sm truncate ${selected ? 'text-gray-800 dark:text-gray-200' : 'text-gray-400'}`}>
@@ -232,6 +247,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     const algumSelecionado = Object.entries(itensSelecionados).some(([pid, sel]) => sel && parseFloat(qtdEmbarque[pid]) > 0);
     if (!algumSelecionado) { toast.error('Selecione ao menos um item', { position: 'top-center' }); return; }
 
+    if (loading) return;
     setLoading(true);
     try {
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
@@ -342,6 +358,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                 onSelect={setTransportadoraId}
                 transportadoras={transportadoras}
                 onCreateNew={nova => setTransportadoras(prev => [...prev, nova])}
+                disabled={loading}
               />
             </div>
 
@@ -394,7 +411,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
                     return (
                       <div key={item.produto_id}
-                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 transition-opacity ${!selecionado ? 'opacity-40' : ''}`}>
+                        className={`grid grid-cols-[16px_minmax(0,1fr)_72px] items-center gap-2 rounded-lg px-2 py-1.5 transition-opacity ${!selecionado ? 'opacity-40' : ''}`}>
                         <button
                           type="button"
                           onClick={() => toggleItem(item.produto_id, pedida)}
@@ -421,12 +438,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                         <Input
                           type="text"
                           inputMode="decimal"
-                          disabled={!selecionado}
+                          disabled={!selecionado || loading}
                           value={selecionado ? (qtdEmbarque[item.produto_id] ?? '') : '—'}
                           onChange={e => setQtdEmbarque(prev => ({
                             ...prev, [item.produto_id]: e.target.value.replace(',', '.')
                           }))}
-                          className={`flex-shrink-0 w-20 h-7 text-xs text-right border-0 bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100 ${excede ? 'ring-1 ring-rose-400' : ''}`}
+                          className={`w-[72px] h-7 text-xs text-right border-0 bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100 px-2 ${excede ? 'ring-1 ring-rose-400' : ''}`}
                         />
                       </div>
                     );
@@ -476,10 +493,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
               onClick={(e) => { e.stopPropagation(); handleSalvar(e); }}
               disabled={loading}
               size="sm"
-              className={`${isEdicao ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'} text-white border-0 shadow-sm min-w-[140px]`}
+              className={`${isEdicao ? 'bg-amber-500 hover:bg-amber-600' : 'bg-teal-600 hover:bg-teal-700'} text-white border-0 shadow-sm min-w-[170px] disabled:opacity-100`}
             >
               {loading
-                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Salvando...</>
+                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Processando...</>
                 : isEdicao ? 'Salvar Edição' : 'Registrar Embarque'
               }
             </Button>
