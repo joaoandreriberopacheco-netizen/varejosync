@@ -15,15 +15,15 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
     <div className={`${isModal ? '' : 'absolute top-full left-0 mt-1'} bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700 ${isModal ? '' : 'p-4'}`}>
       <div className={isModal ? 'flex flex-col md:flex-row gap-6 p-6' : ''}>
       {/* Navigation */}
-      <div className="flex items-center justify-between mb-3">
-        <button onClick={handlePrevious} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
-          <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+      <div className="flex items-center justify-between mb-4 -mx-2 px-2">
+        <button onClick={handlePrevious} className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+          <ChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-200" />
         </button>
         <span className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
           {format(month, 'MMM', { locale: ptBR })} / {format(addMonths(month, 1), 'MMM', { locale: ptBR })} {format(month, 'yyyy')}
         </span>
-        <button onClick={handleNext} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
-          <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+        <button onClick={handleNext} className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+          <ChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-200" />
         </button>
       </div>
 

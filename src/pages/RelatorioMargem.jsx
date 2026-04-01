@@ -54,65 +54,66 @@ export default function RelatorioMargemVendas() {
     const reportMap = {};
 
     sales.forEach(sale => {
-      const saleDate = new Date(sale.created_date);
-      if (dateRange?.from && saleDate < dateRange.from) return;
-      if (dateRange?.to && saleDate > new Date(dateRange.to.getTime() + 86400000)) return;
+       const saleDate = new Date(sale.created_date);
+       if (dateRange?.from && saleDate < dateRange.from) return;
+       if (dateRange?.to && saleDate > new Date(dateRange.to.getTime() + 86400000)) return;
 
-      sale.itens?.forEach(item => {
-        const prodId = item.produto_id;
-        const product = prodMap[prodId];
-        if (!product) return;
+       sale.itens?.forEach(item => {
+         const prodId = item.produto_id;
+         const product = prodMap[prodId];
+         if (!product) return;
 
-        // IMPORTANTE: Usar SEMPRE o custo ATUAL do produto, nunca do momento da venda
-        const custoCalculado = product.preco_custo_calculado || (
-          (product.valor_compra || 0) +
-          (product.custo_frete_padrao || 0) +
-          (product.custo_imposto1_padrao || 0) +
-          (product.custo_imposto2_padrao || 0) +
-          (product.custo_outros_padrao || 0) -
-          (product.desconto_compra_padrao || 0)
-        );
+         // IMPORTANTE: Usar SEMPRE o custo ATUAL do produto, nunca do momento da venda
+         const custoCalculado = product.preco_custo_calculado || (
+           (product.valor_compra || 0) +
+           (product.custo_frete_padrao || 0) +
+           (product.custo_imposto1_padrao || 0) +
+           (product.custo_imposto2_padrao || 0) +
+           (product.custo_outros_padrao || 0) -
+           (product.desconto_compra_padrao || 0)
+         );
 
-        if (!reportMap[prodId]) {
-          reportMap[prodId] = {
-            codigo_interno: product.codigo_interno,
-            nome: product.nome,
-            categoria: product.categoria_nome,
-            vendas_count: 0,
-            quantidade_vendida: 0,
-            total_recebido: 0,
-            total_descontos: 0,
-            custo_unitario_cadastro: custoCalculado
-          };
-        }
+         if (!reportMap[prodId]) {
+           reportMap[prodId] = {
+             codigo_interno: product.codigo_interno,
+             nome: product.nome,
+             categoria: product.categoria_nome,
+             vendas_count: 0,
+             quantidade_vendida: 0,
+             total_recebido: 0,
+             total_desconto_venda: 0,
+             custo_unitario_cadastro: custoCalculado
+           };
+         }
 
-        const entry = reportMap[prodId];
-        entry.vendas_count += 1;
-        entry.quantidade_vendida += item.quantidade;
-        entry.total_recebido += item.total;
-        // Proporcionar descontos do pedido por item
-        const descontoItem = (sale.valor_desconto || 0) * (item.total / (sale.valor_total || 1));
-        entry.total_descontos += descontoItem;
-      });
-    });
+         const entry = reportMap[prodId];
+         entry.vendas_count += 1;
+         entry.quantidade_vendida += item.quantidade;
+         entry.total_recebido += item.total;
+         // Registrar o desconto do pedido (para cada venda, não proporcional por item neste cálculo)
+         entry.total_desconto_venda += (sale.valor_desconto || 0) / (sale.itens?.length || 1);
+       });
+     });
 
     let sorted = Object.values(reportMap).map(item => {
-      const custo_total = item.custo_unitario_cadastro * item.quantidade_vendida;
-      const lucro_total = (item.total_recebido - item.total_descontos) - custo_total;
-      const valor_unitario_medio = item.total_recebido / item.quantidade_vendida;
-      const margem_percentual = item.total_recebido > 0 ? (lucro_total / item.total_recebido) * 100 : 0;
-      const markup_percentual = custo_total > 0 ? (lucro_total / custo_total) * 100 : 0;
-      const lucro_marginal = lucro_total / item.quantidade_vendida;
+       const custo_total = item.custo_unitario_cadastro * item.quantidade_vendida;
+       const receita_liquida = item.total_recebido - item.total_desconto_venda;
+       const lucro_total = receita_liquida - custo_total;
+       const valor_unitario_medio = item.total_recebido / item.quantidade_vendida;
+       const margem_percentual = receita_liquida > 0 ? (lucro_total / receita_liquida) * 100 : 0;
+       const markup_percentual = custo_total > 0 ? (lucro_total / custo_total) * 100 : 0;
+       const lucro_marginal = lucro_total / item.quantidade_vendida;
 
       return {
-        ...item,
-        custo_total,
-        lucro_total,
-        valor_unitario_medio,
-        margem_percentual,
-        markup_percentual,
-        lucro_marginal
-      };
+         ...item,
+         custo_total,
+         receita_liquida,
+         lucro_total,
+         valor_unitario_medio,
+         margem_percentual,
+         markup_percentual,
+         lucro_marginal
+       };
     });
 
     // Sort first
@@ -164,26 +165,28 @@ export default function RelatorioMargemVendas() {
   }, [sales, products, dateRange, searchTerm, sortField, sortOrder, selectedTags, groupByCategory]);
 
   const totals = useMemo(() => {
-    if (!processedData.length) return { quantidade_vendida: 0, total_recebido: 0, custo_total: 0, lucro_total: 0 };
-    
-    if (groupByCategory) {
-      return processedData.reduce((acc, group) => ({
-        quantidade_vendida: acc.quantidade_vendida + (group.totals?.quantidade_vendida || 0),
-        total_recebido: acc.total_recebido + (group.totals?.total_recebido || 0),
-        custo_total: acc.custo_total + (group.totals?.custo_total || 0),
-        lucro_total: acc.lucro_total + (group.totals?.lucro_total || 0)
-      }), { quantidade_vendida: 0, total_recebido: 0, custo_total: 0, lucro_total: 0 });
-    }
-    return processedData.reduce((acc, item) => ({
-      quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
-      total_recebido: acc.total_recebido + (item.total_recebido || 0),
-      custo_total: acc.custo_total + (item.custo_total || 0),
-      lucro_total: acc.lucro_total + (item.lucro_total || 0)
-    }), { quantidade_vendida: 0, total_recebido: 0, custo_total: 0, lucro_total: 0 });
-  }, [processedData, groupByCategory]);
+     if (!processedData.length) return { quantidade_vendida: 0, total_recebido: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 };
 
-  const totalMargem = totals.total_recebido > 0 ? (totals.lucro_total / totals.total_recebido) * 100 : 0;
-  const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
+     if (groupByCategory) {
+       return processedData.reduce((acc, group) => ({
+         quantidade_vendida: acc.quantidade_vendida + (group.totals?.quantidade_vendida || 0),
+         total_recebido: acc.total_recebido + (group.totals?.total_recebido || 0),
+         receita_liquida: acc.receita_liquida + (group.totals?.receita_liquida || 0),
+         custo_total: acc.custo_total + (group.totals?.custo_total || 0),
+         lucro_total: acc.lucro_total + (group.totals?.lucro_total || 0)
+       }), { quantidade_vendida: 0, total_recebido: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
+     }
+     return processedData.reduce((acc, item) => ({
+       quantidade_vendida: acc.quantidade_vendida + (item.quantidade_vendida || 0),
+       total_recebido: acc.total_recebido + (item.total_recebido || 0),
+       receita_liquida: acc.receita_liquida + (item.receita_liquida || 0),
+       custo_total: acc.custo_total + (item.custo_total || 0),
+       lucro_total: acc.lucro_total + (item.lucro_total || 0)
+     }), { quantidade_vendida: 0, total_recebido: 0, receita_liquida: 0, custo_total: 0, lucro_total: 0 });
+   }, [processedData, groupByCategory]);
+
+  const totalMargem = totals.receita_liquida > 0 ? (totals.lucro_total / totals.receita_liquida) * 100 : 0;
+   const totalMarkup = totals.custo_total > 0 ? (totals.lucro_total / totals.custo_total) * 100 : 0;
 
   const formatMoney = (val) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatPercent = (val) => `${val.toFixed(2)}%`;
@@ -230,9 +233,9 @@ export default function RelatorioMargemVendas() {
     pdf.roundedRect(margin, yPos, pageWidth - 2 * margin, 10, 1, 1, 'F');
     
     pdf.setFont(undefined, 'normal');
-    pdf.setFontSize(7.5);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`Receita: R$ ${(totals.total_recebido || 0).toFixed(2).replace('.', ',')}  |  Custo: R$ ${(totals.custo_total || 0).toFixed(2).replace('.', ',')}`, margin + 1.5, yPos + 2.5);
+     pdf.setFontSize(7.5);
+     pdf.setTextColor(100, 100, 100);
+     pdf.text(`Receita Líquida: R$ ${(totals.receita_liquida || 0).toFixed(2).replace('.', ',')}  |  Custo: R$ ${(totals.custo_total || 0).toFixed(2).replace('.', ',')}`, margin + 1.5, yPos + 2.5);
     
     pdf.setTextColor(34, 139, 34);
     pdf.setFont(undefined, 'bold');
@@ -412,12 +415,12 @@ export default function RelatorioMargemVendas() {
 
         {/* Filter Drawer - PDV Style */}
         <Drawer open={showFilterDrawer} onOpenChange={setShowFilterDrawer}>
-          <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-6">
-            <DrawerHeader className="px-0 pb-4 text-left">
+          <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-6 max-h-[85vh] flex flex-col">
+            <DrawerHeader className="px-0 pb-3 text-left sticky top-0 bg-white dark:bg-gray-900 z-10 border-b border-gray-200 dark:border-gray-800">
               <DrawerTitle className="font-glacial text-gray-900 dark:text-white text-lg">Filtros e Configurações</DrawerTitle>
             </DrawerHeader>
 
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto">
               {/* Período */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Período</label>
@@ -556,8 +559,8 @@ export default function RelatorioMargemVendas() {
           {/* Grid com outras métricas */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
             <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">RECEITA</p>
-              <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.total_recebido)}</p>
+              <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">RECEITA LÍQUIDA</p>
+              <p className="text-xs md:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{formatMoney(totals.receita_liquida)}</p>
             </div>
             <div className="p-2.5 md:p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <p className="text-[9px] md:text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">CUSTO</p>
