@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Truck, ChevronDown, ChevronUp, Edit3, Plus, Layers, Package, AlertTriangle, CheckCircle2, Clock, Handshake } from 'lucide-react';
+import { Truck, ChevronDown, ChevronUp, Edit3, Plus, Layers, Package, AlertTriangle, CheckCircle2, Clock, Handshake, Ship } from 'lucide-react';
 import AcordoFinanceiroOrfaoDialog from './AcordoFinanceiroOrfaoDialog';
 import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
@@ -170,34 +170,46 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Nível Multimodal — sempre que já há embarques */}
+          {/* Nível Multimodal — sempre que já há embarques (ação secundária) */}
           {!semEmbarques && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleNovoEmbarque}
-              className="h-8 text-xs border-0 shadow-sm bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100">
-              <Layers className="w-3.5 h-3.5 mr-1" />
-              + Nível Multimodal
+              className="h-8 px-3 text-xs border-0 shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <div className="flex items-center gap-1">
+                <Truck className="w-3.5 h-3.5" />
+                <Ship className="w-3.5 h-3.5" />
+              </div>
+              Multimodal
             </Button>
           )}
-          {/* Novo Despacho — quando há órfãos */}
+          {/* Novo Despacho — quando há órfãos (ação secundária quando há órfãos) */}
           {temOrfaos && (
             <Button
               size="sm"
+              variant="outline"
               onClick={handleNovoEmbarque}
-              className="h-8 text-xs bg-gray-800 hover:bg-gray-900 dark:bg-white dark:text-gray-900 text-white border-0 shadow-sm">
+              className="h-8 px-3 text-xs border-0 shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
               <Plus className="w-3.5 h-3.5 mr-1" />
-              + Novo Despacho
+              Novo Despacho
             </Button>
           )}
-          {/* Primeiro Embarque */}
+          {/* Primeiro Embarque — AÇÃO PRINCIPAL (preto/branco) */}
           {semEmbarques && (
             <Button
               size="sm"
               onClick={handleNovoEmbarque}
-              className="h-8 text-xs bg-gray-800 hover:bg-gray-900 dark:bg-white dark:text-gray-900 text-white border-0 shadow-sm">
-              <Plus className="w-3.5 h-3.5 mr-1" />
+              className="h-8 px-3 text-xs bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white border-0 shadow-sm font-semibold">
+              Informar Embarque
+            </Button>
+          )}
+          {/* Quando há órfãos, mostrar botão Informar Embarque como primário também */}
+          {!semEmbarques && temOrfaos && (
+            <Button
+              size="sm"
+              onClick={handleNovoEmbarque}
+              className="h-8 px-3 text-xs bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white border-0 shadow-sm font-semibold">
               Informar Embarque
             </Button>
           )}

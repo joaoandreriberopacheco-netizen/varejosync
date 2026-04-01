@@ -464,7 +464,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                               disabled={!selecionado}
                               value={qtdEmbarque[item.produto_id] ?? ''}
                               onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                              className={`w-16 h-9 text-sm text-right rounded-lg border-0 shadow-sm px-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-40 placeholder:text-gray-300 ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
+                              className={`w-14 h-8 text-xs text-right rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-40 placeholder:text-gray-300 px-2 border-0 shadow-sm ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
                               placeholder="0"
                             />
                             <span className="text-[9px] text-gray-400 uppercase">{item.unidade_medida}</span>
