@@ -258,10 +258,13 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     return `${fmtNum(volTotal)} volumes · ${fmtNum(pesoTotal)} kg`;
   }, [volumes]);
 
-  const handleSalvar = async () => {
-    if (!eta) return toast.error('Informe a ETA (chegada prevista)');
+  const handleSalvar = async (e) => {
+    e?.stopPropagation();
+    // Aceita tanto datetime-local completo quanto só a data
+    const etaValida = eta && eta.length >= 10;
+    if (!etaValida) { toast.error('Informe a ETA (chegada prevista)', { position: 'top-center' }); return; }
     const algumSelecionado = Object.entries(itensSelecionados).some(([pid, sel]) => sel && parseFloat(qtdEmbarque[pid]) > 0);
-    if (!algumSelecionado) return toast.error('Selecione ao menos um item');
+    if (!algumSelecionado) { toast.error('Selecione ao menos um item', { position: 'top-center' }); return; }
 
     setLoading(true);
     try {
@@ -280,7 +283,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       const embarqueData = {
         id: isEdicao ? embarqueExistente.id : `emb_${Date.now()}`,
         data_embarque: dataDespacho ? new Date(dataDespacho).toISOString() : new Date().toISOString(),
-        eta: new Date(eta).toISOString(),
+        eta: eta.length === 10 ? new Date(eta + 'T00:00').toISOString() : new Date(eta).toISOString(),
         transportadora_id: transportadoraId || null,
         transportadora_nome: transportadora?.nome || '',
         volumes_lista: volumes,
@@ -447,24 +450,24 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                             </svg>
                           )}
                         </button>
-                        <div className="flex-1 min-w-0 overflow-hidden">
-                          <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate leading-tight">{item.produto_nome}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.produto_nome}</p>
                           <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
                             {fmtNum(pedida)} {item.unidade_medida}
                             {outrosEmb > 0 && <span className="ml-1 text-teal-500">· -{fmtNum(outrosEmb)}</span>}
                             {disponivel < pedida && disponivel > 0 && <span className="ml-1 text-amber-500">· disp:{fmtNum(disponivel)}</span>}
                           </p>
                         </div>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          disabled={!selecionado}
-                          value={selecionado ? (qtdEmbarque[item.produto_id] ?? '') : '—'}
-                          onChange={e => setQtdEmbarque(prev => ({
-                            ...prev, [item.produto_id]: e.target.value.replace(',', '.')
-                          }))}
-                          className={`w-24 h-7 text-xs text-right border-0 bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100 ${excede ? 'ring-1 ring-rose-400' : ''}`}
-                        />
+                         <Input
+                           type="text"
+                           inputMode="decimal"
+                           disabled={!selecionado}
+                           value={selecionado ? (qtdEmbarque[item.produto_id] ?? '') : '—'}
+                           onChange={e => setQtdEmbarque(prev => ({
+                             ...prev, [item.produto_id]: e.target.value.replace(',', '.')
+                           }))}
+                           className={`flex-shrink-0 w-20 h-7 text-xs text-right border-0 bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100 ${excede ? 'ring-1 ring-rose-400' : ''}`}
+                         />
                       </div>
                     );
                   })}
@@ -510,7 +513,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
             </Button>
             <Button
               type="button"
-              onClick={handleSalvar}
+              onClick={(e) => { e.stopPropagation(); handleSalvar(e); }}
               disabled={loading}
               size="sm"
               className={`${isEdicao
