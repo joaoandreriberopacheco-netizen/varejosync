@@ -10,28 +10,28 @@ export default function BannerStatusPedido({ pedido, isMobile = false }) {
 
   const isAprovado = ['Aprovado', 'Despachado', 'Em Recepção', 'Concluído'].includes(pedido.status);
   const isAguardando = pedido.status === 'Aguardando Liberação' ||
-    pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira';
+  pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira';
 
   if (!isAprovado && !isAguardando) return null;
 
-  const baseClass = isMobile
-    ? 'px-3 py-2 border-b'
-    : 'px-4 py-2.5 border-b flex-shrink-0';
+  const baseClass = isMobile ?
+  'px-3 py-2 border-b' :
+  'px-4 py-2.5 border-b flex-shrink-0';
 
   if (isAprovado) {
     return (
-      <div className={`${baseClass} bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800`}>
+      <div className="bg-slate-50 px-4 py-2.5 border-b flex-shrink-0 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800">
         <div className="flex items-start gap-2">
           <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
           <div className={`text-xs text-emerald-800 dark:text-emerald-200`}>
             <span className="font-medium">Aprovado Financeiramente.</span>{' '}
-            {isMobile
-              ? 'Pedido liberado para logística. Edição bloqueada.'
-              : 'Pedido liberado para logística. Para editar, um admin deve reabrir o pedido.'}
+            {isMobile ?
+            'Pedido liberado para logística. Edição bloqueada.' :
+            'Pedido liberado para logística. Para editar, um admin deve reabrir o pedido.'}
           </div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -40,11 +40,11 @@ export default function BannerStatusPedido({ pedido, isMobile = false }) {
         <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
         <div className="text-xs text-yellow-800 dark:text-yellow-200">
           <span className="font-medium">Apenas Visualização.</span>{' '}
-          {isMobile
-            ? 'Pedido aguardando aprovação financeira. Edição bloqueada.'
-            : 'Este pedido está aguardando aprovação financeira. Para editar, um admin deve reabrir o pedido.'}
+          {isMobile ?
+          'Pedido aguardando aprovação financeira. Edição bloqueada.' :
+          'Este pedido está aguardando aprovação financeira. Para editar, um admin deve reabrir o pedido.'}
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
