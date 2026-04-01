@@ -36,6 +36,7 @@ import BannerStatusPedido from './BannerStatusPedido.jsx';
 import AnexosPedidoCompra from './AnexosPedidoCompra.jsx';
 import SolicitarEdicaoPDV from './SolicitarEdicaoPDV.jsx';
 import LancamentosCompraPanel from './LancamentosCompraPanel.jsx';
+import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 
 export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
@@ -113,6 +114,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const [isNovoFornecedorOpen, setIsNovoFornecedorOpen] = useState(false);
   const [novoFornecedor, setNovoFornecedor] = useState({ nome: '', email: '', telefone: '', endereco: '' });
   const [isImportadorPedidoOpen, setIsImportadorPedidoOpen] = useState(false);
+  const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -1232,65 +1234,18 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             </TabsContent>
 
           {/* ABA: LOGÍSTICA */}
-          <TabsContent value="logistica" className="mt-0 space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Transportadora</Label>
-                <Input
-                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400"
-                  placeholder="Nome da transportadora..."
-                  value={formData.transportadora_nome || ''}
-                  onChange={e => handleChange('transportadora_nome', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Nº Rastreio / Conhecimento</Label>
-                <Input
-                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400"
-                  placeholder="Ex: BR1234567890, CT-001..."
-                  value={formData.numero_rastreio || ''}
-                  onChange={e => handleChange('numero_rastreio', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Data de Despacho</Label>
-                <Input
-                  type="date"
-                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
-                  value={formData.data_despacho ? formData.data_despacho.substring(0, 10) : ''}
-                  onChange={e => handleChange('data_despacho', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Data de Chegada / Recebimento</Label>
-                <Input
-                  type="date"
-                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
-                  value={formData.data_chegada ? formData.data_chegada.substring(0, 10) : ''}
-                  onChange={e => handleChange('data_chegada', e.target.value)}
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Volumes / Descrição da Carga</Label>
-              <Textarea
-                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none text-gray-900 dark:text-white placeholder:text-gray-400"
-                placeholder="Ex: 3 caixas, 1 pallet, aprox. 120kg..."
-                rows={3}
-                value={formData.descricao_volumes || ''}
-                onChange={e => handleChange('descricao_volumes', e.target.value)}
+          <TabsContent value="logistica" className="mt-0">
+            {pedido?.id ? (
+              <PedidoCompraLogisticaTab
+                pedido={pedidoLogistica || pedido}
+                onPedidoUpdated={async () => {
+                  const atualizado = await base44.entities.PedidoCompra.filter({ id: pedido.id });
+                  if (atualizado?.[0]) setPedidoLogistica(atualizado[0]);
+                }}
               />
-            </div>
-            {formData.data_despacho && (
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center gap-3">
-                <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Embarque informado</p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                    Despachado em {format(new Date(formData.data_despacho), 'dd/MM/yyyy')}
-                    {formData.data_chegada ? ` • Chegada prevista: ${format(new Date(formData.data_chegada), 'dd/MM/yyyy')}` : ''}
-                  </p>
-                </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-sm text-gray-400">Salve o pedido primeiro para registrar embarques.</p>
               </div>
             )}
           </TabsContent>

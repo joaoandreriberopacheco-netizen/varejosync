@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Truck, Package, Calendar, PlusCircle, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Calcula quanto já foi embarcado por produto em embarques anteriores
-function calcularJaEmbarcado(pedido) {
+// Calcula quanto já foi embarcado por produto, excluindo um embarque específico
+function calcularJaEmbarcadoSemEste(pedido, excluirId) {
   const map = {};
   (pedido?.embarques_registrados || []).forEach(emb => {
+    if (emb.id === excluirId) return;
     (emb.itens_embarcados || []).forEach(item => {
       map[item.produto_id] = (map[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
     });
@@ -19,23 +20,24 @@ function calcularJaEmbarcado(pedido) {
   return map;
 }
 
-// Retorna status_embarque calculado
-function calcularStatusEmbarque(itens, jaEmbarcado, novasQtds) {
+function calcularStatusEmbarque(itens, jaEmbarcadoFinal) {
   let totalPedido = 0;
   let totalEmbarcado = 0;
   itens.forEach(item => {
     const pedida = item.quantidade || 0;
-    const anterior = jaEmbarcado[item.produto_id] || 0;
-    const nova = parseFloat(novasQtds[item.produto_id]) || 0;
+    const emb = jaEmbarcadoFinal[item.produto_id] || 0;
     totalPedido += pedida;
-    totalEmbarcado += Math.min(anterior + nova, pedida);
+    totalEmbarcado += Math.min(emb, pedida);
   });
   if (totalEmbarcado <= 0) return 'Nenhum';
   if (totalEmbarcado >= totalPedido) return 'Total';
   return 'Parcial';
 }
 
-export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess }) {
+// embarqueExistente: se fornecido, modo edição
+export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, embarqueExistente }) {
+  const isEdicao = !!embarqueExistente;
+
   const [transportadoras, setTransportadoras] = useState([]);
   const [transportadoraId, setTransportadoraId] = useState('');
   const [eta, setEta] = useState('');
@@ -44,28 +46,49 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
   const [showItens, setShowItens] = useState(true);
-  // qtdEmbarque: { [produto_id]: string }
   const [qtdEmbarque, setQtdEmbarque] = useState({});
 
-  const jaEmbarcado = useMemo(() => calcularJaEmbarcado(pedido), [pedido]);
+  // Quantidades já embarcadas em OUTROS embarques (excluindo o atual em modo edição)
+  const jaEmbarcadoSemEste = useMemo(
+    () => calcularJaEmbarcadoSemEste(pedido, embarqueExistente?.id),
+    [pedido, embarqueExistente]
+  );
 
   useEffect(() => {
     if (isOpen && pedido) {
       loadTransportadoras();
-      setTransportadoraId('');
-      setEta('');
-      setVolumes('');
-      setPesoKg('');
-      setObservacoes('');
-      // Pré-preenche com a diferença pendente de cada item
-      const initial = {};
-      (pedido.itens || []).forEach(item => {
-        const pendente = (item.quantidade || 0) - (jaEmbarcado[item.produto_id] || 0);
-        initial[item.produto_id] = pendente > 0 ? String(pendente) : '0';
-      });
-      setQtdEmbarque(initial);
+
+      if (isEdicao && embarqueExistente) {
+        // Modo edição: pré-preenche com dados do embarque existente
+        setTransportadoraId(embarqueExistente.transportadora_id || '');
+        setEta(embarqueExistente.eta || '');
+        setVolumes(embarqueExistente.volumes || '');
+        setPesoKg(embarqueExistente.peso_kg ? String(embarqueExistente.peso_kg) : '');
+        setObservacoes(embarqueExistente.observacoes || '');
+
+        const initial = {};
+        (pedido.itens || []).forEach(item => {
+          const itemEmb = (embarqueExistente.itens_embarcados || []).find(i => i.produto_id === item.produto_id);
+          initial[item.produto_id] = itemEmb ? String(itemEmb.quantidade_embarcada) : '0';
+        });
+        setQtdEmbarque(initial);
+      } else {
+        // Modo criação: pré-preenche com itens pendentes (órfãos)
+        setTransportadoraId('');
+        setEta('');
+        setVolumes('');
+        setPesoKg('');
+        setObservacoes('');
+
+        const initial = {};
+        (pedido.itens || []).forEach(item => {
+          const pendente = (item.quantidade || 0) - (jaEmbarcadoSemEste[item.produto_id] || 0);
+          initial[item.produto_id] = pendente > 0 ? String(pendente) : '0';
+        });
+        setQtdEmbarque(initial);
+      }
     }
-  }, [isOpen, pedido]);
+  }, [isOpen, pedido, embarqueExistente]);
 
   const loadTransportadoras = async () => {
     try {
@@ -76,10 +99,16 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
     }
   };
 
-  const statusEmbarquePreview = useMemo(() =>
-    calcularStatusEmbarque(pedido?.itens || [], jaEmbarcado, qtdEmbarque),
-    [pedido, jaEmbarcado, qtdEmbarque]
-  );
+  // Preview do status considerando qtds deste embarque + outros
+  const statusPreview = useMemo(() => {
+    const totalFinal = {};
+    (pedido?.itens || []).forEach(item => {
+      const outros = jaEmbarcadoSemEste[item.produto_id] || 0;
+      const este = parseFloat(qtdEmbarque[item.produto_id]) || 0;
+      totalFinal[item.produto_id] = outros + este;
+    });
+    return calcularStatusEmbarque(pedido?.itens || [], totalFinal);
+  }, [pedido, jaEmbarcadoSemEste, qtdEmbarque]);
 
   const handleSalvar = async () => {
     if (!transportadoraId) return toast.error('Selecione a transportadora');
@@ -101,9 +130,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           unidade_medida: item.unidade_medida
         }));
 
-      const novoEmbarque = {
-        id: `emb_${Date.now()}`,
-        data_embarque: new Date().toISOString(),
+      const embarqueData = {
+        id: isEdicao ? embarqueExistente.id : `emb_${Date.now()}`,
+        data_embarque: isEdicao ? embarqueExistente.data_embarque : new Date().toISOString(),
         eta,
         transportadora_id: transportadoraId,
         transportadora_nome: transportadora?.nome || '',
@@ -113,27 +142,40 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         itens_embarcados: itensEmbarcados
       };
 
-      const embarcadosAtualizados = [...(pedido.embarques_registrados || []), novoEmbarque];
+      let embarcadosAtualizados;
+      if (isEdicao) {
+        // Substitui o embarque existente
+        embarcadosAtualizados = (pedido.embarques_registrados || []).map(e =>
+          e.id === embarqueExistente.id ? embarqueData : e
+        );
+      } else {
+        embarcadosAtualizados = [...(pedido.embarques_registrados || []), embarqueData];
+      }
 
-      // Recalcula status_embarque com todos os embarques incluindo o novo
-      const todosJaEmbarcado = calcularJaEmbarcado({ embarques_registrados: embarcadosAtualizados });
-      const novoStatusEmbarque = calcularStatusEmbarque(pedido.itens || [], todosJaEmbarcado, {});
+      // Recalcula status_embarque com todos os embarques
+      const todosJaEmbarcado = {};
+      embarcadosAtualizados.forEach(emb => {
+        (emb.itens_embarcados || []).forEach(item => {
+          todosJaEmbarcado[item.produto_id] = (todosJaEmbarcado[item.produto_id] || 0) + item.quantidade_embarcada;
+        });
+      });
+      const novoStatusEmbarque = calcularStatusEmbarque(pedido.itens || [], todosJaEmbarcado);
 
       await base44.entities.PedidoCompra.update(pedido.id, {
         status: 'Despachado',
-        data_despacho: new Date().toISOString(),
+        data_despacho: pedido.data_despacho || new Date().toISOString(),
         status_embarque: novoStatusEmbarque,
         embarques_registrados: embarcadosAtualizados
       });
 
       toast.success(novoStatusEmbarque === 'Total'
-        ? 'Embarque total registrado — pedido despachado!'
-        : 'Embarque parcial registrado — LED âmbar ativo até completar o despacho.');
+        ? 'Embarque total registrado — todos os itens despachados!'
+        : 'Embarque parcial registrado — LED âmbar ativo, há itens pendentes.');
 
       onSuccess?.();
       onClose();
     } catch (err) {
-      toast.error('Erro ao registrar embarque: ' + (err.message || 'Erro desconhecido'));
+      toast.error('Erro ao salvar embarque: ' + (err.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -145,9 +187,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-quicksand">
-            <Truck className="w-4 h-4 text-teal-600" />
-            Informar Embarque — {pedido.numero}
+          <DialogTitle className="flex items-center gap-2 font-quicksand text-gray-900 dark:text-white">
+            {isEdicao ? <Edit3 className="w-4 h-4 text-amber-500" /> : <Truck className="w-4 h-4 text-teal-600" />}
+            {isEdicao ? 'Editar Embarque' : 'Informar Embarque'} — {pedido.numero}
           </DialogTitle>
         </DialogHeader>
 
@@ -156,10 +198,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           <div className="space-y-1.5">
             <Label className="text-xs text-gray-500">Transportadora *</Label>
             <Select value={transportadoraId} onValueChange={setTransportadoraId}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-gray-800 border-0 shadow-lg z-[9999]">
                 {transportadoras.map(t => (
                   <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                 ))}
@@ -172,18 +214,23 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
             <Label className="text-xs text-gray-500 flex items-center gap-1">
               <Calendar className="w-3 h-3" /> ETA — Chegada Prevista *
             </Label>
-            <Input type="datetime-local" value={eta} onChange={e => setEta(e.target.value)} />
+            <Input type="datetime-local" value={eta} onChange={e => setEta(e.target.value)}
+              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm" />
           </div>
 
           {/* Volumes e Peso */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">Volumes / Descritivo</Label>
-              <Input placeholder="Ex: 10 pallets, 3 caixas..." value={volumes} onChange={e => setVolumes(e.target.value)} />
+              <Input placeholder="Ex: 10 pallets, 3 caixas..."
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+                value={volumes} onChange={e => setVolumes(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">Peso bruto (kg)</Label>
-              <Input type="text" inputMode="decimal" placeholder="0,00" value={pesoKg} onChange={e => setPesoKg(e.target.value.replace(',', '.'))} />
+              <Input type="text" inputMode="decimal" placeholder="0,00"
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+                value={pesoKg} onChange={e => setPesoKg(e.target.value.replace(',', '.'))} />
             </div>
           </div>
 
@@ -192,31 +239,33 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
             <button
               type="button"
               onClick={() => setShowItens(!showItens)}
-              className="flex items-center justify-between w-full text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              className="flex items-center justify-between w-full text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               <span className="flex items-center gap-1">
                 <Package className="w-3 h-3" /> Itens deste embarque
+                <span className="text-[10px] text-gray-400 ml-1">(zere para tornar órfão)</span>
               </span>
               {showItens ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
 
             {showItens && (
-              <div className="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-2 space-y-2">
+              <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-2 space-y-2">
                 {(pedido.itens || []).map(item => {
                   const pedida = item.quantidade || 0;
-                  const anterior = jaEmbarcado[item.produto_id] || 0;
-                  const pendente = Math.max(0, pedida - anterior);
+                  const outrosEmb = jaEmbarcadoSemEste[item.produto_id] || 0;
+                  const disponivel = Math.max(0, pedida - outrosEmb);
                   const emb = parseFloat(qtdEmbarque[item.produto_id]) || 0;
-                  const excede = emb > pendente;
+                  const excede = emb > disponivel;
+                  const isOrfao = emb === 0;
 
                   return (
-                    <div key={item.produto_id} className="flex items-center gap-2">
+                    <div key={item.produto_id} className={`flex items-center gap-2 rounded-lg px-2 py-1 transition-colors ${isOrfao ? 'opacity-40' : ''}`}>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{item.produto_nome}</p>
                         <p className="text-[10px] text-gray-400">
                           Pedido: {pedida} {item.unidade_medida}
-                          {anterior > 0 && <span className="ml-1 text-teal-500">· Já emb: {anterior}</span>}
-                          {pendente < pedida && <span className="ml-1 text-amber-500">· Pendente: {pendente}</span>}
+                          {outrosEmb > 0 && <span className="ml-1 text-teal-500">· Outros emb: {outrosEmb}</span>}
+                          {disponivel < pedida && disponivel > 0 && <span className="ml-1 text-amber-500">· Disponível: {disponivel}</span>}
                         </p>
                       </div>
                       <div className="w-20">
@@ -225,7 +274,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                           inputMode="decimal"
                           value={qtdEmbarque[item.produto_id] ?? ''}
                           onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                          className={`h-7 text-xs text-right ${excede ? 'border-rose-400' : ''}`}
+                          className={`h-7 text-xs text-right border-0 bg-white dark:bg-gray-700 shadow-sm ${excede ? 'ring-1 ring-rose-400' : ''} ${isOrfao ? 'text-gray-400' : ''}`}
                         />
                       </div>
                     </div>
@@ -237,31 +286,35 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
           {/* Preview do status */}
           <div className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium ${
-            statusEmbarquePreview === 'Total'
+            statusPreview === 'Total'
               ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300'
-              : statusEmbarquePreview === 'Parcial'
+              : statusPreview === 'Parcial'
               ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
           }`}>
-            {statusEmbarquePreview === 'Total' && <CheckCircle2 className="w-3.5 h-3.5" />}
-            {statusEmbarquePreview === 'Parcial' && <AlertTriangle className="w-3.5 h-3.5" />}
-            {statusEmbarquePreview === 'Nenhum' && <Package className="w-3.5 h-3.5" />}
-            {statusEmbarquePreview === 'Total' && 'Embarque total — todos os itens despachados'}
-            {statusEmbarquePreview === 'Parcial' && 'Embarque parcial — LED âmbar até completar o despacho'}
-            {statusEmbarquePreview === 'Nenhum' && 'Informe as quantidades a embarcar'}
+            {statusPreview === 'Total' && <CheckCircle2 className="w-3.5 h-3.5" />}
+            {statusPreview === 'Parcial' && <AlertTriangle className="w-3.5 h-3.5" />}
+            {statusPreview === 'Nenhum' && <Package className="w-3.5 h-3.5" />}
+            {statusPreview === 'Total' && 'Embarque total — todos os itens cobertos'}
+            {statusPreview === 'Parcial' && 'Embarque parcial — haverá itens órfãos aguardando despacho'}
+            {statusPreview === 'Nenhum' && 'Informe as quantidades a embarcar'}
           </div>
 
           {/* Observações */}
           <div className="space-y-1.5">
             <Label className="text-xs text-gray-500">Observações</Label>
-            <Input placeholder="Observações sobre este embarque..." value={observacoes} onChange={e => setObservacoes(e.target.value)} />
+            <Input placeholder="Observações sobre este embarque..."
+              className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+              value={observacoes} onChange={e => setObservacoes(e.target.value)} />
           </div>
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} disabled={loading} size="sm">Cancelar</Button>
-          <Button onClick={handleSalvar} disabled={loading} size="sm" className="bg-teal-600 hover:bg-teal-700">
-            {loading ? 'Salvando...' : 'Registrar Embarque'}
+          <Button variant="outline" onClick={onClose} disabled={loading} size="sm"
+            className="border-0 shadow-sm">Cancelar</Button>
+          <Button onClick={handleSalvar} disabled={loading} size="sm"
+            className={isEdicao ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}>
+            {loading ? 'Salvando...' : isEdicao ? 'Salvar Edição' : 'Registrar Embarque'}
           </Button>
         </DialogFooter>
       </DialogContent>
