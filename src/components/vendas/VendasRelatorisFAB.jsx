@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
-import { Brain, FileText, TrendingUp, DollarSign, X } from 'lucide-react';
-import { createPageUrl } from '@/components/utils';
+import { Lightbulb, FileText, TrendingUp, DollarSign, X, ExternalLink } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const RELATORIOS = [
-  { icon: TrendingUp, label: 'Performance', page: 'RelatorioPerformance', color: 'bg-blue-600 text-white' },
-  { icon: DollarSign, label: 'Margem', page: 'RelatorioMargem', color: 'bg-green-600 text-white' },
-  { icon: FileText, label: 'Vendas', page: 'Relatorios', color: 'bg-indigo-600 text-white' },
+  { icon: TrendingUp, label: 'Performance', description: 'Análise de desempenho de vendas' },
+  { icon: DollarSign, label: 'Margem', description: 'Margem de lucro por produto' },
+  { icon: FileText, label: 'Vendas', description: 'Relatório detalhado de vendas' },
 ];
 
 export default function VendasRelatorisFAB() {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const handleNavigation = (page) => {
-    window.location.href = createPageUrl(page);
-    setIsExpanded(false);
-  };
+  const [showDialog, setShowDialog] = useState(false);
 
   return (
     <>
@@ -36,29 +32,60 @@ export default function VendasRelatorisFAB() {
           } text-white`}
           title="Relatórios de Vendas"
         >
-          {isExpanded ? <X className="w-6 h-6" /> : <Brain className="w-6 h-6" />}
+          {isExpanded ? <X className="w-6 h-6" /> : <Lightbulb className="w-6 h-6" />}
         </button>
 
-        {/* Botões filhos */}
-        {isExpanded && RELATORIOS.map((rel, idx) => {
-          const Icon = rel.icon;
-          return (
-            <button
-              key={idx}
-              onClick={() => handleNavigation(rel.page)}
-              title={rel.label}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all flex-shrink-0 ${rel.color}`}
-              style={{
-                animation: `fadeSlideUp 0.18s ease both`,
-                animationDelay: `${idx * 30}ms`,
-              }}
-            >
-              <Icon className="w-5 h-5" />
-              {rel.label}
-            </button>
-          );
-        })}
+        {/* Botão único para abrir dialog */}
+        {isExpanded && (
+          <button
+            onClick={() => { setShowDialog(true); setIsExpanded(false); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all flex-shrink-0 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+            style={{
+              animation: `fadeSlideUp 0.18s ease both`,
+              animationDelay: `0ms`,
+            }}
+            title="Ver relatórios"
+          >
+            <FileText className="w-5 h-5" />
+            Relatórios
+          </button>
+        )}
       </div>
+
+      {/* Dialog de Relatórios */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-0">
+          <DialogHeader>
+            <DialogTitle className="font-glacial text-gray-900 dark:text-white">Relatórios de Vendas</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {RELATORIOS.map((rel, idx) => {
+              const Icon = rel.icon;
+              return (
+                <a
+                  key={idx}
+                  href={`#/Relatorios`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = rel.label === 'Performance' ? `#/RelatorioPerformance` : rel.label === 'Margem' ? `#/RelatorioMargem` : `#/Relatorios`;
+                    setShowDialog(false);
+                  }}
+                  className="flex items-start gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-300 dark:group-hover:bg-gray-600 transition-colors">
+                    <Icon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 dark:text-white text-sm">{rel.label}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{rel.description}</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                </a>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         @keyframes fadeSlideUp {
