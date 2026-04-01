@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Truck, ChevronDown, ChevronUp, Edit3, Plus, Layers, Package, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { Truck, ChevronDown, ChevronUp, Edit3, Plus, Layers, Package, AlertTriangle, CheckCircle2, Clock, Handshake } from 'lucide-react';
+import AcordoFinanceiroOrfaoDialog from './AcordoFinanceiroOrfaoDialog';
 import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -71,7 +72,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
   );
 }
 
-function ItensOrfaos({ itens }) {
+function ItensOrfaos({ itens, onAcordo }) {
   if (!itens.length) return null;
   return (
     <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 overflow-hidden">
@@ -94,13 +95,22 @@ function ItensOrfaos({ itens }) {
           </div>
         ))}
       </div>
+      {onAcordo && (
+        <div className="px-4 pb-3">
+          <Button variant="ghost" size="sm" onClick={onAcordo}
+            className="w-full h-8 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl">
+            <Handshake className="w-3.5 h-3.5 mr-1" /> Registrar Acordo Financeiro
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
   const [embarqueOpen, setEmbarqueOpen] = useState(false);
-  const [embarqueEditando, setEmbarqueEditando] = useState(null); // null = novo
+  const [embarqueEditando, setEmbarqueEditando] = useState(null);
+  const [acordoOpen, setAcordoOpen] = useState(false);
 
   const embarques = pedido?.embarques_registrados || [];
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarques), [embarques]);
@@ -208,7 +218,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
       ))}
 
       {/* Itens órfãos — exibidos abaixo dos cards */}
-      {!semEmbarques && <ItensOrfaos itens={itensOrfaos} />}
+      {!semEmbarques && <ItensOrfaos itens={itensOrfaos} onAcordo={temOrfaos ? () => setAcordoOpen(true) : undefined} />}
 
       {/* Todos despachados */}
       {!semEmbarques && !temOrfaos && (
@@ -226,6 +236,14 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
         onClose={() => { setEmbarqueOpen(false); setEmbarqueEditando(null); }}
         onSuccess={handleSuccess}
         embarqueExistente={embarqueEditando}
+      />
+
+      <AcordoFinanceiroOrfaoDialog
+        isOpen={acordoOpen}
+        onClose={() => setAcordoOpen(false)}
+        pedido={pedido}
+        itensOrfaos={itensOrfaos}
+        onSuccess={() => { setAcordoOpen(false); onPedidoUpdated?.(); }}
       />
     </div>
   );
