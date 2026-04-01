@@ -43,10 +43,10 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
             <Edit3 className="w-3.5 h-3.5 text-gray-400" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
           </Button>
         </div>
@@ -97,7 +97,7 @@ function ItensOrfaos({ itens, onAcordo }) {
       </div>
       {onAcordo && (
         <div className="px-4 pb-3">
-          <Button variant="ghost" size="sm" onClick={onAcordo}
+          <Button type="button" variant="ghost" size="sm" onClick={onAcordo}
             className="w-full h-8 text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-dashed border-amber-300 dark:border-amber-700 rounded-xl">
             <Handshake className="w-3.5 h-3.5 mr-1" /> Registrar Acordo Financeiro
           </Button>
@@ -174,6 +174,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
           {/* Botão Adicionar Nível Multimodal (global, sempre disponível quando há embarques) */}
           {!semEmbarques && temOrfaos && (
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={handleNovoEmbarque}
@@ -186,6 +187,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
           {/* Botão Informar Primeiro Embarque */}
           {semEmbarques && (
             <Button
+              type="button"
               size="sm"
               onClick={handleNovoEmbarque}
               className="h-8 text-xs bg-teal-600 hover:bg-teal-700 text-white border-0 shadow-sm"
