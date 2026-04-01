@@ -33,10 +33,15 @@ export default function AbaRecepção({ pedido }) {
 
   if (embarques.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Package className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Nenhum embarque registrado. Adicione embarques na aba Logística.
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+          <Package className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+        </div>
+        <p className="text-base text-gray-600 dark:text-gray-400 font-medium mb-1">
+          Nenhum embarque registrado
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-500">
+          Adicione embarques na aba Logística para iniciar a recepção.
         </p>
       </div>
     );
@@ -51,75 +56,73 @@ export default function AbaRecepção({ pedido }) {
         const qtdItens = embarque.itens_embarcados?.length || 0;
 
         return (
-          <div
+          <button
             key={embarque.id || idx}
-            className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
             onClick={() => setSelectedEmbarque(embarque)}
+            className="w-full text-left bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl p-5 transition-all duration-200 shadow-sm hover:shadow-md"
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                {/* Cabeçalho */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+                    <Package className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                     Embarque #{embarque.id?.slice(-6) || idx + 1}
                   </h3>
+                  <div className="flex-1" />
                   {getStatusIcon(statusRecebimento)}
                 </div>
 
-                <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                  <div className="flex justify-between">
-                    <span>Transportadora:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{embarque.transportadora_nome || '-'}</span>
+                {/* Info grid - 2 colunas */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">Transportadora</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{embarque.transportadora_nome || '-'}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Despacho:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{dataEmbarque}</span>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">Despacho</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{dataEmbarque}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span>ETA:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{eta}</span>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">ETA</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{eta}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Itens:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{qtdItens} produto(s)</span>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-0.5">Itens</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{qtdItens} produto(s)</p>
                   </div>
                 </div>
 
-                <div className="mt-2">
-                  <span className="inline-block px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                    {getStatusLabel(statusRecebimento)}
-                  </span>
-                </div>
+                {/* Status badge */}
+                <span className={`inline-block px-3 py-1.5 text-xs font-semibold rounded-full ${
+                  statusRecebimento === 'Pendente'
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : statusRecebimento === 'Recebido OK'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                    : statusRecebimento === 'Com Divergência'
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                }`}>
+                  {getStatusLabel(statusRecebimento)}
+                </span>
               </div>
 
-              <div className="flex-shrink-0">
+              {/* Ação */}
+              <div className="flex-shrink-0 pt-1">
                 {statusRecebimento === 'Pendente' ? (
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedEmbarque(embarque);
-                    }}
-                    className="bg-teal-600 hover:bg-teal-700 text-white h-9"
-                  >
-                    Receber
-                  </Button>
+                  <div className="w-12 h-12 rounded-xl bg-teal-600 dark:bg-teal-500 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
+                    <ChevronRight className="w-5 h-5 text-white" />
+                  </div>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedEmbarque(embarque);
-                    }}
-                    className="border-0 h-9"
-                  >
-                    Editar
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
+                  <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </div>
                 )}
               </div>
             </div>
-          </div>
+          </button>
         );
       })}
 

@@ -190,78 +190,98 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-0 rounded-2xl">
-          <DialogHeader className="sticky top-0 bg-white dark:bg-gray-900 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <DialogTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-teal-600" />
-              Receber Embarque
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 p-4">
-            {/* Info do embarque */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Transportadora:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{embarque?.transportadora_nome || '-'}</span>
+        <DialogContent className="max-w-4xl max-h-[100vh] bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="sticky top-0 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                <Package className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">ETA:</span>
-                <span className="font-medium text-gray-900 dark:text-white">
+              <div>
+                <h2 className="font-quicksand text-lg font-semibold text-gray-900 dark:text-white">Receber Embarque</h2>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            {/* Info do embarque - Grid de 2 colunas */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Transportadora</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{embarque?.transportadora_nome || '-'}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">ETA Prevista</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   {embarque?.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-'}
-                </span>
+                </p>
               </div>
             </div>
 
-            {/* Itens */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Itens do Embarque</h3>
+            {/* Itens - PDV Style */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 px-1">Itens do Embarque</h3>
+              </div>
               {itens.map((item, idx) => {
                 const hasDivergencia = item.divergencia_tipo !== 'Nenhuma';
                 return (
-                  <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
+                  <div key={idx} className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 space-y-4 shadow-sm">
+                    {/* Produto */}
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <p className="text-base font-semibold text-gray-900 dark:text-white leading-snug">
                           {item.produto_nome}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Embarcado: {item.quantidade_embarcada} {item.unidade_medida}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Embarcado: <span className="font-medium text-gray-900 dark:text-white">{item.quantidade_embarcada} {item.unidade_medida}</span>
                         </p>
                       </div>
                       {hasDivergencia && (
-                        <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-5 h-5 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-1" />
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Quantidade Recebida</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.quantidade_recebida || ''}
-                          onChange={e => handleQuantidadeChange(idx, e.target.value)}
-                          className="h-9 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
-                        />
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => abrirDivergencia(idx)}
-                        className="h-9 text-xs mt-6 border-gray-300 dark:border-gray-600"
-                      >
-                        {hasDivergencia ? '⚠ Divergência' : 'Divergência'}
-                      </Button>
+                    {/* Quantidade Recebida */}
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400 font-semibold block mb-2">Quantidade Recebida</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.quantidade_recebida || ''}
+                        onChange={e => handleQuantidadeChange(idx, e.target.value)}
+                        className="h-14 text-lg bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm font-semibold text-gray-900 dark:text-white text-center placeholder:text-gray-400"
+                        placeholder="0"
+                      />
                     </div>
 
+                    {/* Botão Divergência */}
+                    <Button
+                      onClick={() => abrirDivergencia(idx)}
+                      variant={hasDivergencia ? 'default' : 'outline'}
+                      className={`w-full h-12 text-sm font-semibold rounded-xl transition-colors ${
+                        hasDivergencia
+                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-0'
+                          : 'border-0 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      {hasDivergencia ? 'Divergência Registrada' : 'Registrar Divergência'}
+                    </Button>
+
+                    {/* Aviso de divergência */}
                     {hasDivergencia && (
-                      <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
-                        {item.divergencia_tipo === 'Quantidade A Menor' && 'Quantidade menor que embarcada'}
-                        {item.divergencia_tipo === 'Produto Diferente - Aceite' && `Aceito: ${item.produto_nome_recebido_diferente}`}
-                        {item.divergencia_tipo === 'Produto Diferente - Rejeitado' && 'Produto diferente rejeitado'}
-                        {item.divergencia_tipo === 'Produto Novo Recebido' && 'Novo produto recebido'}
+                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-3">
+                        <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                          {item.divergencia_tipo === 'Quantidade A Menor' && '⚠ Quantidade menor que embarcada'}
+                          {item.divergencia_tipo === 'Produto Diferente - Aceite' && `✓ Aceito: ${item.produto_nome_recebido_diferente}`}
+                          {item.divergencia_tipo === 'Produto Diferente - Rejeitado' && '✗ Produto rejeitado'}
+                          {item.divergencia_tipo === 'Produto Novo Recebido' && '✓ Novo produto'}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -270,127 +290,131 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             </div>
           </div>
 
-          <DialogFooter className="border-t border-gray-200 dark:border-gray-700 pt-4 gap-2">
-            <Button variant="outline" onClick={onClose} className="border-0 shadow-sm">
+          {/* Footer - PDV Style */}
+          <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700/50 px-6 py-4 flex gap-3 shadow-lg">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="flex-1 h-14 text-base font-semibold rounded-xl border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
               Cancelar
             </Button>
             <Button
               onClick={handleConfirmarRecebimento}
               disabled={isSaving}
-              className="bg-teal-600 hover:bg-teal-700 text-white"
+              className={`flex-1 h-14 text-base font-semibold rounded-xl border-0 ${
+                temDivergencias
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                  : 'bg-teal-600 hover:bg-teal-700 text-white'
+              }`}
             >
-              {isSaving ? 'Salvando...' : temDivergencias ? 'Confirmar com Divergências' : 'Confirmar Recebimento'}
+              {isSaving ? '⏳ Salvando...' : temDivergencias ? '⚠ Confirmar com Divergências' : '✓ Confirmar Recebimento'}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Divergência */}
+      {/* Dialog de Divergência - PDV Style */}
       <Dialog open={showDivergenciaDialog} onOpenChange={setShowDivergenciaDialog}>
-        <DialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Registrar Divergência</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-gray-200 dark:border-gray-700/50">
+            <h2 className="font-quicksand text-lg font-semibold text-gray-900 dark:text-white">Registrar Divergência</h2>
+          </div>
 
-          {selectedItemIndex !== null && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {itens[selectedItemIndex]?.produto_nome}
-              </p>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Tipo de Divergência</Label>
-                <Select defaultValue="Quantidade A Menor">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-800">
-                    <SelectItem value="Quantidade A Menor">Quantidade Menor</SelectItem>
-                    <SelectItem value="Produto Diferente">Produto Trocado</SelectItem>
-                    <SelectItem value="Rejeitado">Rejeitar Totalmente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Buscar produto diferente */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Se Produto Diferente, Buscar Produto Correto</Label>
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar produto..."
-                    value={searchProduto}
-                    onChange={e => setSearchProduto(e.target.value)}
-                    className="pl-8 bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
-                  />
+          <div className="px-6 py-6 space-y-4">
+            {selectedItemIndex !== null && (
+              <>
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Produto</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-white">
+                    {itens[selectedItemIndex]?.produto_nome}
+                  </p>
                 </div>
 
-                {filteredProdutos.length > 0 && (
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg max-h-40 overflow-y-auto">
-                    {filteredProdutos.map(p => (
-                      <button
-                        key={p.id}
-                        onClick={() => handleAceitarTroca(p.id, p.nome)}
-                        className="w-full text-left p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700 last:border-0"
-                      >
-                        {p.nome}
-                      </button>
-                    ))}
+                {/* Buscar produto diferente */}
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400 font-semibold block mb-2">Buscar Produto Correto</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder="Nome ou código..."
+                        value={searchProduto}
+                        onChange={e => setSearchProduto(e.target.value)}
+                        className="pl-10 h-11 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm"
+                      />
+                    </div>
                   </div>
-                )}
+
+                  {filteredProdutos.length > 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                      {filteredProdutos.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => handleAceitarTroca(p.id, p.nome)}
+                          className="w-full text-left px-4 py-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 border-b border-gray-200 dark:border-gray-700 last:border-0 transition-colors"
+                        >
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{p.nome}</p>
+                          {p.codigo_interno && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{p.codigo_interno}</p>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowNovoProduct(!showNovoProduct)}
+                    className="w-full h-11 text-sm font-semibold border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Novo Produto
+                  </Button>
+
+                  {showNovoProduct && (
+                    <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                      <Input
+                        placeholder="Nome do produto"
+                        value={novoProduto.nome}
+                        onChange={e => setNovoProduto({...novoProduto, nome: e.target.value})}
+                        className="h-11 bg-white dark:bg-gray-900 border-0 rounded-lg text-sm shadow-sm"
+                      />
+                      <Input
+                        placeholder="Categoria"
+                        value={novoProduto.hierarquico_1}
+                        onChange={e => setNovoProduto({...novoProduto, hierarquico_1: e.target.value})}
+                        className="h-11 bg-white dark:bg-gray-900 border-0 rounded-lg text-sm shadow-sm"
+                      />
+                      <Button
+                        onClick={handleNovoProduct}
+                        className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-sm font-semibold text-white rounded-lg"
+                      >
+                        Criar e Aceitar
+                      </Button>
+                    </div>
+                  )}
+                </div>
 
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowNovoProduct(!showNovoProduct)}
-                  className="w-full text-xs"
+                  onClick={handleRejeitar}
+                  className="w-full h-11 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-0 font-semibold text-sm rounded-xl hover:bg-red-200 dark:hover:bg-red-900/50"
                 >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Criar Novo Produto
+                  Rejeitar Produto
                 </Button>
+              </>
+            )}
+          </div>
 
-                {showNovoProduct && (
-                  <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <Input
-                      placeholder="Nome do produto"
-                      value={novoProduto.nome}
-                      onChange={e => setNovoProduto({...novoProduto, nome: e.target.value})}
-                      className="text-sm h-9 bg-white dark:bg-gray-900 border-0 rounded"
-                    />
-                    <Input
-                      placeholder="Categoria"
-                      value={novoProduto.hierarquico_1}
-                      onChange={e => setNovoProduto({...novoProduto, hierarquico_1: e.target.value})}
-                      className="text-sm h-9 bg-white dark:bg-gray-900 border-0 rounded"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={handleNovoProduct}
-                      className="w-full h-9 bg-teal-600 hover:bg-teal-700 text-xs text-white"
-                    >
-                      Criar e Aceitar
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleRejeitar}
-                className="w-full"
-              >
-                Rejeitar Produto
-              </Button>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDivergenciaDialog(false)} className="border-0">
+          {/* Footer */}
+          <div className="border-t border-gray-200 dark:border-gray-700/50 px-6 py-4">
+            <Button
+              onClick={() => setShowDivergenciaDialog(false)}
+              className="w-full h-11 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
               Fechar
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </>
