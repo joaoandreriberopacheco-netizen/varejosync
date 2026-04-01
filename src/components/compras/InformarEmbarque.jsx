@@ -11,8 +11,8 @@ import { toast } from 'sonner';
 // Calcula quanto já foi embarcado por produto em embarques anteriores
 function calcularJaEmbarcado(pedido) {
   const map = {};
-  (pedido?.embarques_registrados || []).forEach(emb => {
-    (emb.itens_embarcados || []).forEach(item => {
+  (pedido?.embarques_registrados || []).forEach((emb) => {
+    (emb.itens_embarcados || []).forEach((item) => {
       map[item.produto_id] = (map[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
     });
   });
@@ -23,7 +23,7 @@ function calcularJaEmbarcado(pedido) {
 function calcularStatusEmbarque(itens, jaEmbarcado, novasQtds) {
   let totalPedido = 0;
   let totalEmbarcado = 0;
-  itens.forEach(item => {
+  itens.forEach((item) => {
     const pedida = item.quantidade || 0;
     const anterior = jaEmbarcado[item.produto_id] || 0;
     const nova = parseFloat(novasQtds[item.produto_id]) || 0;
@@ -59,7 +59,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
       setObservacoes('');
       // Pré-preenche com a diferença pendente de cada item
       const initial = {};
-      (pedido.itens || []).forEach(item => {
+      (pedido.itens || []).forEach((item) => {
         const pendente = (item.quantidade || 0) - (jaEmbarcado[item.produto_id] || 0);
         initial[item.produto_id] = pendente > 0 ? String(pendente) : '0';
       });
@@ -77,29 +77,29 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   };
 
   const statusEmbarquePreview = useMemo(() =>
-    calcularStatusEmbarque(pedido?.itens || [], jaEmbarcado, qtdEmbarque),
-    [pedido, jaEmbarcado, qtdEmbarque]
+  calcularStatusEmbarque(pedido?.itens || [], jaEmbarcado, qtdEmbarque),
+  [pedido, jaEmbarcado, qtdEmbarque]
   );
 
   const handleSalvar = async () => {
     if (!transportadoraId) return toast.error('Selecione a transportadora');
     if (!eta) return toast.error('Informe a ETA (chegada prevista)');
 
-    const algumEmbarcado = Object.values(qtdEmbarque).some(v => parseFloat(v) > 0);
+    const algumEmbarcado = Object.values(qtdEmbarque).some((v) => parseFloat(v) > 0);
     if (!algumEmbarcado) return toast.error('Informe a quantidade embarcada de ao menos um item');
 
     setLoading(true);
     try {
-      const transportadora = transportadoras.find(t => t.id === transportadoraId);
-      const itensEmbarcados = (pedido.itens || [])
-        .filter(item => parseFloat(qtdEmbarque[item.produto_id]) > 0)
-        .map(item => ({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_pedida: item.quantidade,
-          quantidade_embarcada: parseFloat(qtdEmbarque[item.produto_id]) || 0,
-          unidade_medida: item.unidade_medida
-        }));
+      const transportadora = transportadoras.find((t) => t.id === transportadoraId);
+      const itensEmbarcados = (pedido.itens || []).
+      filter((item) => parseFloat(qtdEmbarque[item.produto_id]) > 0).
+      map((item) => ({
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        quantidade_pedida: item.quantidade,
+        quantidade_embarcada: parseFloat(qtdEmbarque[item.produto_id]) || 0,
+        unidade_medida: item.unidade_medida
+      }));
 
       const novoEmbarque = {
         id: `emb_${Date.now()}`,
@@ -126,9 +126,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
         embarques_registrados: embarcadosAtualizados
       });
 
-      toast.success(novoStatusEmbarque === 'Total'
-        ? 'Embarque total registrado — pedido despachado!'
-        : 'Embarque parcial registrado — LED âmbar ativo até completar o despacho.');
+      toast.success(novoStatusEmbarque === 'Total' ?
+      'Embarque total registrado — pedido despachado!' :
+      'Embarque parcial registrado — LED âmbar ativo até completar o despacho.');
 
       onSuccess?.();
       onClose();
@@ -160,9 +160,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                {transportadoras.map(t => (
-                  <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                ))}
+                {transportadoras.map((t) =>
+                <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -172,18 +172,18 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
             <Label className="text-xs text-gray-500 flex items-center gap-1">
               <Calendar className="w-3 h-3" /> ETA — Chegada Prevista *
             </Label>
-            <Input type="datetime-local" value={eta} onChange={e => setEta(e.target.value)} />
+            <Input type="datetime-local" value={eta} onChange={(e) => setEta(e.target.value)} />
           </div>
 
           {/* Volumes e Peso */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">Volumes / Descritivo</Label>
-              <Input placeholder="Ex: 10 pallets, 3 caixas..." value={volumes} onChange={e => setVolumes(e.target.value)} />
+              <Input placeholder="Ex: 10 pallets, 3 caixas..." value={volumes} onChange={(e) => setVolumes(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-gray-500">Peso bruto (kg)</Label>
-              <Input type="text" inputMode="decimal" placeholder="0,00" value={pesoKg} onChange={e => setPesoKg(e.target.value.replace(',', '.'))} />
+              <Input type="text" inputMode="decimal" placeholder="0,00" value={pesoKg} onChange={(e) => setPesoKg(e.target.value.replace(',', '.'))} />
             </div>
           </div>
 
@@ -192,25 +192,25 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
             <button
               type="button"
               onClick={() => setShowItens(!showItens)}
-              className="flex items-center justify-between w-full text-xs text-gray-500 hover:text-gray-700 transition-colors"
-            >
+              className="flex items-center justify-between w-full text-xs text-gray-500 hover:text-gray-700 transition-colors">
+              
               <span className="flex items-center gap-1">
                 <Package className="w-3 h-3" /> Itens deste embarque
               </span>
               {showItens ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
 
-            {showItens && (
-              <div className="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-2 space-y-2">
-                {(pedido.itens || []).map(item => {
-                  const pedida = item.quantidade || 0;
-                  const anterior = jaEmbarcado[item.produto_id] || 0;
-                  const pendente = Math.max(0, pedida - anterior);
-                  const emb = parseFloat(qtdEmbarque[item.produto_id]) || 0;
-                  const excede = emb > pendente;
+            {showItens &&
+            <div className="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-2 space-y-2">
+                {(pedido.itens || []).map((item) => {
+                const pedida = item.quantidade || 0;
+                const anterior = jaEmbarcado[item.produto_id] || 0;
+                const pendente = Math.max(0, pedida - anterior);
+                const emb = parseFloat(qtdEmbarque[item.produto_id]) || 0;
+                const excede = emb > pendente;
 
-                  return (
-                    <div key={item.produto_id} className="flex items-center gap-2">
+                return (
+                  <div key={item.produto_id} className="flex items-center gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{item.produto_nome}</p>
                         <p className="text-[10px] text-gray-400">
@@ -221,28 +221,28 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                       </div>
                       <div className="w-20">
                         <Input
-                          type="text"
-                          inputMode="decimal"
-                          value={qtdEmbarque[item.produto_id] ?? ''}
-                          onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                          className={`h-7 text-xs text-right ${excede ? 'border-rose-400' : ''}`}
-                        />
+                        type="text"
+                        inputMode="decimal"
+                        value={qtdEmbarque[item.produto_id] ?? ''}
+                        onChange={(e) => setQtdEmbarque((prev) => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))} className="flex h-10  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-7 text-xs text-right " />
+
+                      
                       </div>
-                    </div>
-                  );
-                })}
+                    </div>);
+
+              })}
               </div>
-            )}
+            }
           </div>
 
           {/* Preview do status */}
           <div className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium ${
-            statusEmbarquePreview === 'Total'
-              ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300'
-              : statusEmbarquePreview === 'Parcial'
-              ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-          }`}>
+          statusEmbarquePreview === 'Total' ?
+          'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300' :
+          statusEmbarquePreview === 'Parcial' ?
+          'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' :
+          'bg-gray-100 dark:bg-gray-800 text-gray-500'}`
+          }>
             {statusEmbarquePreview === 'Total' && <CheckCircle2 className="w-3.5 h-3.5" />}
             {statusEmbarquePreview === 'Parcial' && <AlertTriangle className="w-3.5 h-3.5" />}
             {statusEmbarquePreview === 'Nenhum' && <Package className="w-3.5 h-3.5" />}
@@ -254,7 +254,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           {/* Observações */}
           <div className="space-y-1.5">
             <Label className="text-xs text-gray-500">Observações</Label>
-            <Input placeholder="Observações sobre este embarque..." value={observacoes} onChange={e => setObservacoes(e.target.value)} />
+            <Input placeholder="Observações sobre este embarque..." value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
           </div>
         </div>
 
@@ -265,6 +265,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>);
+
 }
