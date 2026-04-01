@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
 import RecepcionarEmbarque from './RecepcionarEmbarque';
 
 export default function AbaRecepção({ pedido }) {
@@ -12,6 +13,7 @@ export default function AbaRecepção({ pedido }) {
   }, [pedido?.id]);
 
   const loadMovimentos = async () => {
+    if (!pedido?.id) return;
     setIsLoadingMovimentos(true);
     try {
       const movs = await base44.entities.MovimentacaoEstoque.filter({
