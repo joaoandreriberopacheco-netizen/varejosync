@@ -40,6 +40,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const draftKey = useMemo(() => pedido?.id ? `pedido-compra-draft:${pedido.id}` : 'pedido-compra-draft:novo', [pedido?.id]);
   const isRestoringDraftRef = useRef(false);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState(null);
   const [formData, setFormData] = useState(pedido || {
     fornecedor_id: '',
     fornecedor_nome: '',
@@ -131,11 +133,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     try {
       const parsedDraft = JSON.parse(savedDraft);
       if (!parsedDraft?.data) return;
-      isRestoringDraftRef.current = true;
-      setFormData(parsedDraft.data);
-      setHistory([parsedDraft.data]);
-      setHistoryIndex(0);
-      setDraftRestored(true);
+      // Mostrar dialog em vez de restaurar automaticamente
+      setPendingDraft(parsedDraft);
+      setShowDraftDialog(true);
     } catch {
       localStorage.removeItem(draftKey);
     }
@@ -935,11 +935,48 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
       </div>
 
-      {draftRestored && !pedido?.id && (
-        <div className="mx-3 mt-2 rounded-2xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800 shadow-sm dark:bg-emerald-900/30 dark:text-emerald-100">
-          Rascunho local recuperado automaticamente.
-        </div>
-      )}
+      {/* Dialog de rascunho */}
+      <AlertDialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
+        <AlertDialogContent className="max-w-sm rounded-2xl bg-white dark:bg-gray-900 border-0 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-gray-900 dark:text-white">Rascunho encontrado</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-500 dark:text-gray-400">
+              Existe um rascunho salvo localmente
+              {pendingDraft?.data?.fornecedor_nome ? ` para ${pendingDraft.data.fornecedor_nome}` : ''}
+              {pendingDraft?.savedAt ? ` (${new Date(pendingDraft.savedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})` : ''}.
+              Deseja continuar de onde parou?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel
+              className="border-0 shadow-sm rounded-xl h-10 text-gray-600 dark:text-gray-300"
+              onClick={() => {
+                localStorage.removeItem(draftKey);
+                setPendingDraft(null);
+                setShowDraftDialog(false);
+              }}
+            >
+              Começar do zero
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 rounded-xl h-10"
+              onClick={() => {
+                if (pendingDraft?.data) {
+                  isRestoringDraftRef.current = true;
+                  setFormData(pendingDraft.data);
+                  setHistory([pendingDraft.data]);
+                  setHistoryIndex(0);
+                  setDraftRestored(true);
+                }
+                setPendingDraft(null);
+                setShowDraftDialog(false);
+              }}
+            >
+              Continuar rascunho
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Timeline */}
       <div className="px-2 pt-2 pb-1">
