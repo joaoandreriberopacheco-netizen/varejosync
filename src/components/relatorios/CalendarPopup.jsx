@@ -12,8 +12,8 @@ export default function CalendarPopup({ dateRange, setDateRange, onClose, isModa
   const handleNext = () => setMonth(addMonths(month, 1));
   
   return (
-    <div className={`${isModal ? '' : 'absolute top-full left-0 mt-1'} bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700`}>
-      <div className={isModal ? 'flex flex-col md:flex-row gap-6' : 'p-4'}>
+    <div className={`${isModal ? '' : 'absolute top-full left-0 mt-1'} bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 border border-gray-200 dark:border-gray-700 ${isModal ? '' : 'p-4'}`}>
+      <div className={isModal ? 'flex flex-col md:flex-row gap-6 p-6' : ''}>
       {/* Navigation */}
       <div className="flex items-center justify-between mb-3">
         <button onClick={handlePrevious} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
