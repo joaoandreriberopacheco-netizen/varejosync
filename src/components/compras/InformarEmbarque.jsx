@@ -269,15 +269,17 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       if (itensEmbarcados.length === 0) return toast.error('Informe quantidades maiores que zero');
 
       // Volumes: texto descritivo resumido para campo legado
+      // Volumes: salvar no campo volumes_detalhados (estruturado) + volumes (legado texto)
       const volumesTexto = volumes.length > 0
-        ? volumes.map(v => `${v.quantidade}x ${v.descricao}`).join(', ')
+        ? volumes.map(v => `${v.quantidade}x ${v.descricao || 'sem descrição'}`).join(', ')
         : '';
+      const volumesDetalhados = volumes.length > 0 ? volumes : [];
 
       let embarcadosAtualizados;
       if (isEdicao) {
         embarcadosAtualizados = (pedido.embarques_registrados || []).map(emb =>
           emb.id === embarqueExistente.id
-            ? { ...emb, data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : emb.data_embarque, eta: eta + 'T12:00:00.000Z', transportadora_id: transportadoraId, transportadora_nome: transportadora?.nome || '', volumes: volumesTexto, volumes_detalhados: volumes, peso_kg: totalPesoKg, observacoes, itens_embarcados: itensEmbarcados }
+            ? { ...emb, data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : emb.data_embarque, eta: eta + 'T12:00:00.000Z', transportadora_id: transportadoraId, transportadora_nome: transportadora?.nome || '', volumes: volumesTexto, volumes_detalhados: volumesDetalhados, peso_kg: totalPesoKg, observacoes, itens_embarcados: itensEmbarcados }
             : emb
         );
       } else {
@@ -288,7 +290,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
           transportadora_id: transportadoraId,
           transportadora_nome: transportadora?.nome || '',
           volumes: volumesTexto,
-          volumes_detalhados: volumes,
+          volumes_detalhados: volumesDetalhados,
           peso_kg: totalPesoKg,
           observacoes,
           itens_embarcados: itensEmbarcados
@@ -432,38 +434,41 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                     return (
                       <div
                         key={item.produto_id}
-                        className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${selecionado ? 'bg-gray-50 dark:bg-gray-800' : 'bg-gray-50/40 dark:bg-gray-900/40 opacity-60'}`}
+                        className={`flex flex-col gap-2.5 rounded-xl px-4 py-3 transition-colors ${selecionado ? 'bg-gray-50 dark:bg-gray-800' : 'bg-gray-50/40 dark:bg-gray-900/40 opacity-60'}`}
                       >
-                        {/* Checkbox */}
-                        <button
-                          type="button"
-                          onClick={() => toggleItem(item.produto_id)}
-                          className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-gray-700 dark:bg-gray-300' : 'bg-gray-200 dark:bg-gray-600'}`}
-                        >
-                          {selecionado && <Check className="w-3 h-3 text-white dark:text-gray-900" />}
-                        </button>
+                        {/* Linha superior: Checkbox + Produto */}
+                        <div className="flex items-start gap-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleItem(item.produto_id)}
+                            className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-colors mt-0.5 ${selecionado ? 'bg-gray-700 dark:bg-gray-300' : 'bg-gray-200 dark:bg-gray-600'}`}
+                          >
+                            {selecionado && <Check className="w-3 h-3 text-white dark:text-gray-900" />}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{item.produto_nome}</p>
+                          </div>
+                        </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{item.produto_nome}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                            Ped: {pedida} {item.unidade_medida}
+                        {/* Linha inferior: Infos + Input */}
+                        <div className="flex items-center justify-between gap-3 pl-8">
+                          <p className="text-xs text-gray-400 dark:text-gray-500 flex-1">
+                            Ped: <span className="font-medium">{pedida}</span> {item.unidade_medida}
                             {anterior > 0 && <span className="ml-1.5">· já emb: {anterior}</span>}
                             {excede && selecionado && <span className="ml-1.5 text-red-400">· excede!</span>}
                           </p>
-                        </div>
-
-                        {/* Input quantidade */}
-                        <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
-                          <Input
-                            type="text"
-                            inputMode="decimal"
-                            disabled={!selecionado}
-                            value={qtdEmbarque[item.produto_id] ?? ''}
-                            onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
-                            className={`w-20 h-10 text-sm text-right rounded-xl border-0 shadow-sm px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-40 ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
-                          />
-                          <span className="text-[10px] text-gray-400">{item.unidade_medida}</span>
+                          <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              disabled={!selecionado}
+                              value={qtdEmbarque[item.produto_id] ?? ''}
+                              onChange={e => setQtdEmbarque(prev => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))}
+                              className={`w-16 h-9 text-sm text-right rounded-lg border-0 shadow-sm px-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-40 placeholder:text-gray-300 ${excede && selecionado ? 'ring-1 ring-red-400' : ''}`}
+                              placeholder="0"
+                            />
+                            <span className="text-[9px] text-gray-400 uppercase">{item.unidade_medida}</span>
+                          </div>
                         </div>
                       </div>
                     );
