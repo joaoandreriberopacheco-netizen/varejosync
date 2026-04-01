@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { CheckCircle, AlertTriangle, Package, Search, Plus, X } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play } from 'lucide-react';
 import { agora, formatarLogTime } from '@/components/utils/dateUtils';
 
 export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido }) {
@@ -19,7 +19,12 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       quantidade_recebida: item.quantidade_recebida ?? item.quantidade_embarcada
     })) || []
   );
+  const [dataEntrada, setDataEntrada] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [showDivergenciaDialog, setShowDivergenciaDialog] = useState(false);
+  const [showModoDialog, setShowModoDialog] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState(null);
   const [produtos, setProdutos] = useState([]);
   const [searchProduto, setSearchProduto] = useState('');
@@ -187,6 +192,20 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
 
   const temDivergencias = itens.some(i => i.divergencia_tipo !== 'Nenhuma');
 
+  const iniciarRecepção = () => {
+    setShowModoDialog(true);
+  };
+
+  const confirmarModo = (modo) => {
+    setShowModoDialog(false);
+    if (modo === 'simplificado') {
+      // Continua na recepção simplificada
+    } else if (modo === 'conferencia') {
+      // TODO: Integrar com conferência cega - redirecionar ou abrir modal
+      toast({ title: 'Conferência Cega', description: 'Funcionalidade em desenvolvimento' });
+    }
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -290,26 +309,34 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             </div>
           </div>
 
+          {/* Data de Entrada */}
+          <div>
+            <Label className="text-xs text-gray-600 dark:text-gray-400 font-semibold block mb-2">Data de Entrada</Label>
+            <Input
+              type="date"
+              value={dataEntrada}
+              onChange={e => setDataEntrada(e.target.value)}
+              className="h-12 bg-white dark:bg-gray-900 border-0 rounded-xl shadow-sm text-sm"
+            />
+          </div>
+
           {/* Footer - PDV Style */}
           <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700/50 px-6 py-4 flex gap-3 shadow-lg">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="flex-1 h-14 text-base font-semibold rounded-xl border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConfirmarRecebimento}
-              disabled={isSaving}
-              className={`flex-1 h-14 text-base font-semibold rounded-xl border-0 ${
-                temDivergencias
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                  : 'bg-teal-600 hover:bg-teal-700 text-white'
-              }`}
-            >
-              {isSaving ? '⏳ Salvando...' : temDivergencias ? '⚠ Confirmar com Divergências' : '✓ Confirmar Recebimento'}
-            </Button>
+           <Button
+             variant="outline"
+             onClick={onClose}
+             className="flex-1 h-14 text-base font-semibold rounded-xl border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
+           >
+             Cancelar
+           </Button>
+           <Button
+             onClick={iniciarRecepção}
+             disabled={isSaving}
+             className="flex-1 h-14 text-base font-semibold rounded-xl border-0 bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-2"
+           >
+             <Play className="w-5 h-5" />
+             Iniciar
+           </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -417,6 +444,34 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Seleção de Modo */}
+      <AlertDialog open={showModoDialog} onOpenChange={setShowModoDialog}>
+        <AlertDialogContent className="max-w-lg bg-white dark:bg-gray-900 border-0 rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">Como deseja proceder?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-4">
+            <button
+              onClick={() => confirmarModo('simplificado')}
+              className="w-full text-left bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl p-4 transition-colors"
+            >
+              <p className="font-semibold text-gray-900 dark:text-white">✓ Recepção Simplificada</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Confirmar recebimento direto (modelo atual)</p>
+            </button>
+            <button
+              onClick={() => confirmarModo('conferencia')}
+              className="w-full text-left bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl p-4 transition-colors"
+            >
+              <p className="font-semibold text-gray-900 dark:text-white">🔍 Conferência Cega</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Enviar para conferência com senha de acesso</p>
+            </button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl font-semibold">Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
