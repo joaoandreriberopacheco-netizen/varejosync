@@ -1347,7 +1347,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
              handleChange('status', 'Aguardando Liberação');
              setTimeout(() => handleInitiateSave(), 100);
            }}
-           onOpenAnexos={() => setIsAnexosOpen(true)}
            mostrarSolicitarEdicao={false}
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
          />

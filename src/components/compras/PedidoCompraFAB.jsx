@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Save, FileText, Paperclip, Compass, X, Send, Wrench } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import AnexosPanel from '@/components/anexos/AnexosPanel';
 
 // Raio em px — aumentado para não sair da tela
 const RADIUS = 72;
@@ -13,11 +14,11 @@ export default function PedidoCompraFAB({
   isDisabled,
   onEnviarFinanceiro,
   mostrarEnviarFinanceiro,
-  onOpenAnexos,
   onSolicitarEdicao,
   mostrarSolicitarEdicao,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showAnexosPanel, setShowAnexosPanel] = useState(false);
   const { toast } = useToast();
 
   const handlePrintPDF = async () => {
@@ -62,7 +63,7 @@ export default function PedidoCompraFAB({
     {
       icon: <Paperclip className="w-5 h-5" />,
       label: 'Anexos',
-      onClick: () => { onOpenAnexos?.(); setIsExpanded(false); },
+      onClick: () => { setShowAnexosPanel(true); setIsExpanded(false); },
       disabled: !pedido?.id,
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
     },
@@ -137,6 +138,20 @@ export default function PedidoCompraFAB({
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
+
+      {/* AnexosPanel */}
+      {pedido?.id && (
+        <div className="relative">
+          {showAnexosPanel && (
+            <AnexosPanel
+              referenciaId={pedido.id}
+              referenciaTipo="PedidoCompra"
+              referenciaNomero={pedido.numero}
+              inline={false}
+            />
+          )}
+        </div>
+      )}
     </>
   );
 }
