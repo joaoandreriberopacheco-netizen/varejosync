@@ -224,7 +224,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
                         type="text"
                         inputMode="decimal"
                         value={qtdEmbarque[item.produto_id] ?? ''}
-                        onChange={(e) => setQtdEmbarque((prev) => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))} className="flex h-10  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-7 text-xs text-right " />
+                        onChange={(e) => setQtdEmbarque((prev) => ({ ...prev, [item.produto_id]: e.target.value.replace(',', '.') }))} className="flex h-10 w-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-7 text-xs text-right " />
 
                       
                       </div>
