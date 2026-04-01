@@ -110,13 +110,13 @@ export default function AbaRecepção({ pedido }) {
               </div>
 
               {/* Ação - Play Icon */}
-              <div className="flex-shrink-0 pt-1">
+              <div className="flex items-center justify-center">
                 {statusRecebimento === 'Pendente' ? (
-                  <div className="w-12 h-12 rounded-xl bg-teal-600 dark:bg-teal-500 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center shadow-md hover:shadow-lg transition-shadow">
                     <Play className="w-5 h-5 text-white fill-white" />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                     <Play className="w-5 h-5 text-gray-600 dark:text-gray-400 fill-gray-600 dark:fill-gray-400" />
                   </div>
                 )}

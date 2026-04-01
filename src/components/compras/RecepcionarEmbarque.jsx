@@ -329,18 +329,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             />
           </div>
           </div>
-
-          {/* Footer - PDV Style - APENAS NO MODO LISTA, NÃO NO FORMULÁRIO */}
-          <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700/50 px-6 py-4 flex gap-3 shadow-lg">
-           <Button
-             onClick={onClose}
-             className="flex-1 h-14 text-base font-semibold rounded-xl border-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
-           >
-             Voltar
-           </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+          </Dialog>
 
       {/* Dialog de Divergência - PDV Style */}
       <Dialog open={showDivergenciaDialog} onOpenChange={setShowDivergenciaDialog}>
