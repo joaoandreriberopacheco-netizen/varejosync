@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PedidoProgressBar from '@/components/compras/PedidoProgressBar';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
 import { ChevronDown, AlertCircle, Trash2, Check, Package2, CalendarClock, Truck, MapPin } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -147,6 +148,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </span>
             <EmbarqueInfo pedido={pedido} />
           </div>
+          <PedidoProgressBar pedido={pedido} />
         </div>
 
         {/* Botão delete hover (rascunho) */}

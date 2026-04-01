@@ -80,7 +80,7 @@ export default function FiltrosCompras({
             value={search}
             onChange={e => onSearch(e.target.value)}
             placeholder="Buscar número, fornecedor..."
-            className="w-full pl-10 pr-4 h-12 bg-white dark:bg-slate-800 border-0 text-gray-700 dark:text-gray-100 placeholder:text-gray-400 rounded-2xl outline-none shadow-sm text-sm"
+            className="w-full pl-10 pr-4 h-12 bg-white dark:bg-slate-800 border-0 text-gray-700 dark:text-gray-100 placeholder:text-gray-400 rounded-2xl outline-none shadow-sm text-sm focus:ring-2 focus:ring-teal-300 dark:focus:ring-teal-600 transition-shadow"
           />
         </div>
         <button
@@ -90,7 +90,7 @@ export default function FiltrosCompras({
         >
           <SlidersHorizontal className="w-5 h-5" />
           {hasActiveFilters && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-900 dark:bg-white rounded-full text-[10px] text-white dark:text-gray-900 flex items-center justify-center">•</span>
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-teal-500 dark:bg-teal-400 rounded-full text-[10px] text-white flex items-center justify-center">•</span>
           )}
         </button>
       </div>
@@ -107,7 +107,7 @@ export default function FiltrosCompras({
             </span>
           ))}
           {tagsSel.map(tag => (
-            <span key={tag} className="inline-flex items-center gap-1 text-xs bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 px-2 py-1 rounded-full">
+            <span key={tag} className="inline-flex items-center gap-1 text-xs bg-teal-600 dark:bg-teal-700 text-white px-2 py-1 rounded-full">
               <Tag className="w-2.5 h-2.5" />
               {tag}
               <button onClick={() => toggleTag(tag)} className="hover:opacity-70 transition-opacity">
@@ -207,7 +207,7 @@ export default function FiltrosCompras({
               </button>
               <button
                 onClick={() => setShowFilters(false)}
-                className="flex-1 h-11 rounded-2xl bg-slate-900 dark:bg-slate-200 text-sm text-white dark:text-slate-900"
+                className="flex-1 h-11 rounded-2xl bg-teal-600 dark:bg-teal-500 text-sm text-white"
               >
                 Aplicar
               </button>
