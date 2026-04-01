@@ -35,7 +35,8 @@ function calcularStatusEmbarque(itens, jaEmbarcado, novasQtds) {
   return 'Parcial';
 }
 
-export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess }) {
+export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, embarqueExistente }) {
+  const isEdicao = !!embarqueExistente;
   const [transportadoras, setTransportadoras] = useState([]);
   const [transportadoraId, setTransportadoraId] = useState('');
   const [eta, setEta] = useState('');
@@ -44,28 +45,55 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
   const [showItens, setShowItens] = useState(true);
-  // qtdEmbarque: { [produto_id]: string }
   const [qtdEmbarque, setQtdEmbarque] = useState({});
 
-  const jaEmbarcado = useMemo(() => calcularJaEmbarcado(pedido), [pedido]);
+  // jaEmbarcado exclui o embarque sendo editado
+  const jaEmbarcado = useMemo(() => {
+    const map = {};
+    (pedido?.embarques_registrados || []).forEach((emb) => {
+      if (isEdicao && emb.id === embarqueExistente.id) return; // exclui o atual na edição
+      (emb.itens_embarcados || []).forEach((item) => {
+        map[item.produto_id] = (map[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
+      });
+    });
+    return map;
+  }, [pedido, embarqueExistente]);
 
   useEffect(() => {
     if (isOpen && pedido) {
       loadTransportadoras();
-      setTransportadoraId('');
-      setEta('');
-      setVolumes('');
-      setPesoKg('');
-      setObservacoes('');
-      // Pré-preenche com a diferença pendente de cada item
-      const initial = {};
-      (pedido.itens || []).forEach((item) => {
-        const pendente = (item.quantidade || 0) - (jaEmbarcado[item.produto_id] || 0);
-        initial[item.produto_id] = pendente > 0 ? String(pendente) : '0';
-      });
-      setQtdEmbarque(initial);
+      if (isEdicao) {
+        // Pré-preenche com os dados do embarque existente
+        setTransportadoraId(embarqueExistente.transportadora_id || '');
+        // Converte data ISO para datetime-local
+        const etaVal = embarqueExistente.eta
+          ? new Date(embarqueExistente.eta).toISOString().slice(0, 16)
+          : '';
+        setEta(etaVal);
+        setVolumes(embarqueExistente.volumes || '');
+        setPesoKg(embarqueExistente.peso_kg ? String(embarqueExistente.peso_kg) : '');
+        setObservacoes(embarqueExistente.observacoes || '');
+        const initial = {};
+        (pedido.itens || []).forEach((item) => {
+          const embItem = (embarqueExistente.itens_embarcados || []).find(i => i.produto_id === item.produto_id);
+          initial[item.produto_id] = embItem ? String(embItem.quantidade_embarcada) : '0';
+        });
+        setQtdEmbarque(initial);
+      } else {
+        setTransportadoraId('');
+        setEta('');
+        setVolumes('');
+        setPesoKg('');
+        setObservacoes('');
+        const initial = {};
+        (pedido.itens || []).forEach((item) => {
+          const pendente = (item.quantidade || 0) - (jaEmbarcado[item.produto_id] || 0);
+          initial[item.produto_id] = pendente > 0 ? String(pendente) : '0';
+        });
+        setQtdEmbarque(initial);
+      }
     }
-  }, [isOpen, pedido]);
+  }, [isOpen, pedido, embarqueExistente]);
 
   const loadTransportadoras = async () => {
     try {
@@ -91,49 +119,54 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
     setLoading(true);
     try {
       const transportadora = transportadoras.find((t) => t.id === transportadoraId);
-      const itensEmbarcados = (pedido.itens || []).
-      filter((item) => parseFloat(qtdEmbarque[item.produto_id]) > 0).
-      map((item) => ({
-        produto_id: item.produto_id,
-        produto_nome: item.produto_nome,
-        quantidade_pedida: item.quantidade,
-        quantidade_embarcada: parseFloat(qtdEmbarque[item.produto_id]) || 0,
-        unidade_medida: item.unidade_medida
-      }));
+      const itensEmbarcados = (pedido.itens || [])
+        .filter((item) => parseFloat(qtdEmbarque[item.produto_id]) > 0)
+        .map((item) => ({
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          quantidade_pedida: item.quantidade,
+          quantidade_embarcada: parseFloat(qtdEmbarque[item.produto_id]) || 0,
+          unidade_medida: item.unidade_medida
+        }));
 
-      const novoEmbarque = {
-        id: `emb_${Date.now()}`,
-        data_embarque: new Date().toISOString(),
-        eta,
-        transportadora_id: transportadoraId,
-        transportadora_nome: transportadora?.nome || '',
-        volumes,
-        peso_kg: parseFloat(pesoKg) || 0,
-        observacoes,
-        itens_embarcados: itensEmbarcados
-      };
+      let embarcadosAtualizados;
+      if (isEdicao) {
+        // Atualiza o embarque existente mantendo id e data original
+        embarcadosAtualizados = (pedido.embarques_registrados || []).map((emb) =>
+          emb.id === embarqueExistente.id
+            ? { ...emb, eta, transportadora_id: transportadoraId, transportadora_nome: transportadora?.nome || '', volumes, peso_kg: parseFloat(pesoKg) || 0, observacoes, itens_embarcados: itensEmbarcados }
+            : emb
+        );
+      } else {
+        const novoEmbarque = {
+          id: `emb_${Date.now()}`,
+          data_embarque: new Date().toISOString(),
+          eta,
+          transportadora_id: transportadoraId,
+          transportadora_nome: transportadora?.nome || '',
+          volumes,
+          peso_kg: parseFloat(pesoKg) || 0,
+          observacoes,
+          itens_embarcados: itensEmbarcados
+        };
+        embarcadosAtualizados = [...(pedido.embarques_registrados || []), novoEmbarque];
+      }
 
-      const embarcadosAtualizados = [...(pedido.embarques_registrados || []), novoEmbarque];
-
-      // Recalcula status_embarque com todos os embarques incluindo o novo
       const todosJaEmbarcado = calcularJaEmbarcado({ embarques_registrados: embarcadosAtualizados });
       const novoStatusEmbarque = calcularStatusEmbarque(pedido.itens || [], todosJaEmbarcado, {});
 
       await base44.entities.PedidoCompra.update(pedido.id, {
         status: 'Despachado',
-        data_despacho: new Date().toISOString(),
+        data_despacho: pedido.data_despacho || new Date().toISOString(),
         status_embarque: novoStatusEmbarque,
         embarques_registrados: embarcadosAtualizados
       });
 
-      toast.success(novoStatusEmbarque === 'Total' ?
-      'Embarque total registrado — pedido despachado!' :
-      'Embarque parcial registrado — LED âmbar ativo até completar o despacho.');
-
+      toast.success(isEdicao ? 'Embarque atualizado com sucesso!' : novoStatusEmbarque === 'Total' ? 'Embarque total registrado!' : 'Embarque parcial registrado.');
       onSuccess?.();
       onClose();
     } catch (err) {
-      toast.error('Erro ao registrar embarque: ' + (err.message || 'Erro desconhecido'));
+      toast.error('Erro ao salvar embarque: ' + (err.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -146,8 +179,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-quicksand">
-            <Truck className="w-4 h-4 text-teal-600" />
-            Informar Embarque — {pedido.numero}
+            <Truck className="w-4 h-4 text-gray-500" />
+            {isEdicao ? 'Editar Embarque' : 'Informar Embarque'} — {pedido.numero}
           </DialogTitle>
         </DialogHeader>
 
@@ -260,8 +293,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess })
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading} size="sm">Cancelar</Button>
-          <Button onClick={handleSalvar} disabled={loading} size="sm" className="bg-teal-600 hover:bg-teal-700">
-            {loading ? 'Salvando...' : 'Registrar Embarque'}
+          <Button onClick={handleSalvar} disabled={loading} size="sm" className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white">
+            {loading ? 'Salvando...' : isEdicao ? 'Salvar Edição' : 'Registrar Embarque'}
           </Button>
         </DialogFooter>
       </DialogContent>

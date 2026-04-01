@@ -20,7 +20,7 @@ const STATUS_CONFIG = {
   'Rascunho':             { dot: 'bg-gray-300 dark:bg-gray-600',     pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
   'Aguardando Liberação': { dot: 'bg-amber-400 dark:bg-amber-400',    pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
   'Aprovado':             { dot: 'bg-emerald-400 dark:bg-emerald-400',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Despachado':           { dot: 'bg-blue-400 dark:bg-blue-400',      pill: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+  'Despachado':           { dot: 'bg-gray-400 dark:bg-gray-500',      pill: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' },
   'Em Recepção':          { dot: 'bg-violet-400 dark:bg-violet-400',  pill: 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
   'Pendência':            { dot: 'bg-orange-400 dark:bg-orange-400',  pill: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' },
   'Devolvido':            { dot: 'bg-rose-400 dark:bg-rose-400',      pill: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
@@ -42,7 +42,7 @@ function EmbarqueInfo({ pedido }) {
   }
   if (temDespacho) {
     return (
-      <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+      <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
         <Truck className="w-3 h-3 flex-none" />
         <span>Despachado {formatarDataCurta(pedido.data_despacho)}</span>
       </span>
