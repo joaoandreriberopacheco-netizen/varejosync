@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PedidoProgressBar from '@/components/compras/PedidoProgressBar';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { ChevronDown, AlertCircle, Trash2, Check, Package2, CalendarClock, Truck, MapPin } from 'lucide-react';
+import { ChevronDown, AlertCircle, Trash2, Check, Package2, CalendarClock, Truck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
   AlertDialog,
@@ -28,47 +28,85 @@ const STATUS_CONFIG = {
   'Cancelado':            { dot: 'bg-gray-300 dark:bg-gray-600',      pill: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
 };
 
-function EmbarqueInfo({ pedido }) {
-  // Prioriza a data do embarque mais recente, depois data_despacho, depois data_chegada
-  const ultimoEmbarque = (pedido.embarques_registrados || []).sort((a, b) => 
-    new Date(b.data_embarque || 0) - new Date(a.data_embarque || 0)
-  )[0];
+// Adiciona animação de piscar ao CSS global
+if (typeof document !== 'undefined' && !document.getElementById('blink-animation')) {
+  const style = document.createElement('style');
+  style.id = 'blink-animation';
+  style.innerHTML = `
+    @keyframes blink-red-amber {
+      0%, 100% { background-color: rgb(239, 68, 68); }
+      50% { background-color: rgb(217, 119, 6); }
+    }
+    .animate-blink-led {
+      animation: blink-red-amber 1s infinite;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
-  const dataDespacho = ultimoEmbarque?.data_embarque || pedido.data_despacho;
-  const dataChegada = ultimoEmbarque?.eta || pedido.data_chegada;
-
-  if (dataChegada) {
-    return (
-      <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-        <MapPin className="w-3 h-3 flex-none" />
-        <span>ETA {formatarDataCurta(dataChegada)}</span>
-      </span>
-    );
-  }
-  if (dataDespacho) {
-    return (
-      <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-        <Truck className="w-3 h-3 flex-none" />
-        <span>Despachado {formatarDataCurta(dataDespacho)}</span>
-      </span>
-    );
-  }
+function ETAInfo({ pedido }) {
+  // Mostra ETA se informado, senão "Sem previsão"
+  const ultimoEmbarque = (pedido.embarques_registrados || [])[0];
+  const eta = ultimoEmbarque?.eta;
+  
   return (
-    <span className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
-      <Truck className="w-3 h-3 flex-none" />
-      <span>Sem embarque</span>
+    <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+      <CalendarClock className="w-3 h-3 flex-none" />
+      <span>{eta ? formatarDataCurta(eta) : 'Sem previsão'}</span>
     </span>
   );
+}
+
+function TransportadoraInfo({ pedido }) {
+  // Se tem embarque registrado, mostra transportadora (ou "Não informado" se vazia); senão "Sem embarque"
+  const ultimoEmbarque = (pedido.embarques_registrados || [])[0];
+  
+  if (!ultimoEmbarque) {
+    return (
+      <span className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
+        <Truck className="w-3 h-3 flex-none" />
+        <span>Sem embarque</span>
+      </span>
+    );
+  }
+  
+  return (
+    <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+      <Truck className="w-3 h-3 flex-none" />
+      <span>{ultimoEmbarque.transportadora_nome || 'Não informado'}</span>
+    </span>
+  );
+}
+
+function getLEDStatus(pedido) {
+  // Calcula estado do LED e tags associadas
+  const dataAprovacao = pedido.data_aprovacao_financeira ? new Date(pedido.data_aprovacao_financeira) : null;
+  const diasAposAprovacao = dataAprovacao ? Math.floor((new Date() - dataAprovacao) / (1000 * 60 * 60 * 24)) : null;
+  
+  const temItenOorfao = pedido.tem_divergencias || false;
+  const isPagamentoAutorizado = pedido.status_aprovacao_financeira === 'Aprovado';
+  const isConcluido = pedido.status === 'Concluído';
+  
+  // Vermelho: não concluído e 20+ dias após aprovação
+  const isVermelho = !isConcluido && diasAposAprovacao !== null && diasAposAprovacao >= 20;
+  
+  // Âmbar: pagamento autorizado + itens órfãos
+  const isAmbar = isPagamentoAutorizado && temItenOorfao;
+  
+  // Pisca: ambos são verdadeiros
+  const isPisca = isVermelho && isAmbar;
+  
+  return { isVermelho, isAmbar, isPisca };
 }
 
 function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const isAtrasado = pedido.data_prevista_entrega && new Date(pedido.data_prevista_entrega + 'T12:00:00') < new Date();
   const totalLinhas = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
   const totalQtd = Array.isArray(pedido.itens) ? pedido.itens.reduce((a, i) => a + (Number(i.quantidade) || 0), 0) : 0;
   const cfg = STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
+  const { isVermelho, isAmbar, isPisca } = useMemo(() => getLEDStatus(pedido), [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias]);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -106,8 +144,13 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 </div>
               )}
 
-              {/* Dot de status */}
-              <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${cfg.dot}`} />
+              {/* LED com lógica de status */}
+              <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${
+                isPisca ? 'animate-blink-led' :
+                isVermelho ? 'bg-red-500 dark:bg-red-500' :
+                isAmbar ? 'bg-amber-400 dark:bg-amber-400' :
+                cfg.dot
+              }`} />
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -117,10 +160,9 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {pedido.status}
                   </span>
-                  {isAtrasado && pedido.status !== 'Concluído' && pedido.status !== 'Cancelado' && (
-                    <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold flex items-center gap-1">
-                      <AlertCircle className="w-2.5 h-2.5" />
-                      Atrasado
+                  {isAmbar && (
+                    <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold">
+                      Pendências
                     </span>
                   )}
                 </div>
@@ -147,11 +189,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <Package2 className="w-3 h-3 flex-none" />
               <span>{totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}{totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : ''}</span>
             </span>
-            <span className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
-              <CalendarClock className="w-3 h-3 flex-none" />
-              <span>{pedido.data_prevista_entrega ? formatarDataCurta(pedido.data_prevista_entrega) : 'Sem previsão'}</span>
-            </span>
-            <EmbarqueInfo pedido={pedido} />
+            <ETAInfo pedido={pedido} />
+            <TransportadoraInfo pedido={pedido} />
           </div>
           <PedidoProgressBar pedido={pedido} />
         </div>
