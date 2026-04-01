@@ -193,7 +193,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         ? new Date(embarqueExistente.eta).toISOString().slice(0, 10)
         : '';
       setEta(etaVal);
-      setVolumes(embarqueExistente.volumes_detalhados || []);
+      // Carrega volumes — verifica ambos campos (retrocompatibilidade)
+      const volsCarregados = (embarqueExistente.volumes_detalhados && Array.isArray(embarqueExistente.volumes_detalhados) && embarqueExistente.volumes_detalhados.length > 0)
+        ? embarqueExistente.volumes_detalhados
+        : [];
+      setVolumes(volsCarregados);
       setObservacoes(embarqueExistente.observacoes || '');
       const initQtd = {};
       const initSel = {};
@@ -389,11 +393,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
               >
                 <Boxes className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 {volumes.length > 0 ? (
-                  <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 text-left">
-                    {totalVolumesQtd} vol · {totalPesoKg > 0 ? `${totalPesoKg.toFixed(1)} kg` : '—'}
-                    <span className="text-xs text-gray-400 ml-2">({volumes.length} tipo{volumes.length > 1 ? 's' : ''})</span>
-                  </span>
-                ) : (
+                   <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 text-left">
+                     {totalVolumesQtd.toLocaleString('pt-BR')} vol · {totalPesoKg > 0 ? `${totalPesoKg.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg` : '—'}
+                     <span className="text-xs text-gray-400 ml-2">({volumes.length} tipo{volumes.length > 1 ? 's' : ''})</span>
+                   </span>
+                 ) : (
                   <span className="text-sm text-gray-400 flex-1 text-left">Clicar para gerenciar volumes...</span>
                 )}
                 <ChevronDown className="w-4 h-4 text-gray-400" />
