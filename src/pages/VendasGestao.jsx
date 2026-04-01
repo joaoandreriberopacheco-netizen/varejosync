@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -630,6 +631,9 @@ export default function VendasGestaoPage() {
           />
         )
       )}
+
+      {/* FAB Relatórios */}
+      <VendasRelatorisFAB />
     </div>
   );
 }
