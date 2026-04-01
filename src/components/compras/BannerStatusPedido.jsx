@@ -20,7 +20,7 @@ export default function BannerStatusPedido({ pedido, isMobile = false }) {
 
   if (isAprovado) {
     return (
-      <div className="bg-slate-50 px-4 py-2.5 border-b flex-shrink-0 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800">
+      <div className="bg-slate-50 px-4 py-2.5 opacity-100 border-b flex-shrink-0 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800">
         <div className="flex items-start gap-2">
           <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
           <div className={`text-xs text-emerald-800 dark:text-emerald-200`}>
