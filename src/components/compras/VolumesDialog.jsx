@@ -1,4 +1,11 @@
 import React, { useState } from 'react';
+
+function fmtNum(val) {
+  const n = parseFloat(val);
+  if (isNaN(n)) return val;
+  if (Math.abs(n) < 1000) return n % 1 === 0 ? String(n) : n.toFixed(1);
+  return n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+}
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog.jsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,10 +103,10 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
               <div key={idx} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2">
                 <Package className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{v.quantidade}× {v.descricao}</span>
+                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">{fmtNum(v.quantidade)}× {v.descricao}</span>
                   <span className="text-[10px] text-gray-400 ml-2">
-                    {v.peso_unitario_kg > 0 && `${v.peso_unitario_kg} kg/un · `}
-                    <span className="text-gray-600 dark:text-gray-300 font-medium">{v.peso_total_kg > 0 ? `${v.peso_total_kg} kg total` : '—'}</span>
+                    {v.peso_unitario_kg > 0 && `${fmtNum(v.peso_unitario_kg)} kg/un · `}
+                    <span className="text-gray-600 dark:text-gray-300 font-medium">{v.peso_total_kg > 0 ? `${fmtNum(v.peso_total_kg)} kg total` : '—'}</span>
                   </span>
                 </div>
                 <button onClick={() => handleRemove(idx)} className="p-1 text-gray-300 hover:text-rose-400 transition-colors">
@@ -111,7 +118,7 @@ export default function VolumesDialog({ isOpen, onClose, volumes, onChange }) {
             <div className="flex justify-between items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl mt-1">
               <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Total</span>
               <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
-                {totalVolumes} volumes · {pesoTotalGeral.toFixed(1)} kg
+                {fmtNum(totalVolumes)} volumes · {fmtNum(pesoTotalGeral.toFixed(1))} kg
               </span>
             </div>
           </div>
