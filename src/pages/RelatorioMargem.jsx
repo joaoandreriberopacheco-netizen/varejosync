@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Printer, Loader2, ArrowLeft, Search, Calendar, ArrowUpDown, FilterX, X } from 'lucide-react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -415,6 +415,41 @@ export default function RelatorioMargemVendas() {
               {/* Período */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Período</label>
+                
+                {/* Atalhos Rápidos */}
+                <div className="grid grid-cols-3 gap-1.5 mb-3">
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: today, to: today });
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      const thirtyDaysAgo = subDays(today, 30);
+                      setDateRange({ from: thirtyDaysAgo, to: today });
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    30 dias
+                  </button>
+                  <button
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: startOfMonth(today), to: endOfMonth(today) });
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    Mês atual
+                  </button>
+                </div>
+
+                {/* Calendário Personalizado */}
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Customizado</label>
                 <CalendarPopup
                   dateRange={dateRange}
                   setDateRange={setDateRange}
