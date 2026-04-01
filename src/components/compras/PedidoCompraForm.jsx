@@ -878,7 +878,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       {/* Alerta de Bloqueio Desktop */}
       {isLocked && <BannerStatusPedido pedido={pedido} isMobile={false} />}
       {/* Header compacto */}
-      <div className="flex-shrink-0 px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800">
+      <div className="flex-shrink-0 px-3 py-2 flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 relative">
+        <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-400/60 via-teal-300/40 to-transparent rounded-t" />
         <Button variant="ghost" size="icon" onClick={handleCloseWithProtection} className="h-8 w-8">
           <X className="w-4 h-4" />
         </Button>
@@ -983,7 +984,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 key={tab.value}
                 value={tab.value}
                 disabled={tab.disabled}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-gray-700 dark:data-[state=active]:border-gray-300 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white rounded-none py-2 px-1 text-gray-400 dark:text-gray-500 disabled:opacity-30 transition-colors min-w-0"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent data-[state=active]:border-teal-500 dark:data-[state=active]:border-teal-400 data-[state=active]:text-teal-600 dark:data-[state=active]:text-teal-300 rounded-none py-2 px-1 text-gray-400 dark:text-gray-500 disabled:opacity-30 transition-colors min-w-0"
               >
                 {tab.icon}
                 <span className="text-[9px] font-semibold tracking-wider hidden xs:block" style={{display: 'none'}}>{tab.short}</span>
@@ -1052,7 +1053,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         <SelectItem 
                           key={f.id} 
                           value={f.id}
-                          className={idx === selectedFornecedorIndex ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}
+                          className={idx === selectedFornecedorIndex ? 'bg-teal-50 dark:bg-teal-900/20' : ''}
                         >
                           {f.nome}
                         </SelectItem>
@@ -1467,7 +1468,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
              </Button>
              <Button
                onClick={handleCreateFornecedor}
-               className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 rounded-lg h-9"
+               className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400 text-white rounded-lg h-9"
              >
                Criar
              </Button>
