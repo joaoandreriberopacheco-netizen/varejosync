@@ -97,7 +97,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       (f.codigo_interno && f.codigo_interno.toLowerCase().includes(lower))
     );
   }, [fornecedores, searchFornecedor]);
-  const [supermanifesto, setSupermanifesto] = useState(null);
   const [contas, setContas] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -216,16 +215,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       const transportadoras = transportadoraData.filter(t => (t.tipo === 'Fornecedor' || t.tipo === 'Ambos') && t.ativo);
       setFornecedores(prev => transportadoras); // Reutiliza a lista
 
-      // Carregar supermanifesto se existir (via manifesto_entrada)
-      if (pedido?.manifesto_entrada_id) {
-        const manifestoEntrada = await base44.entities.ManifestoEntrada.filter({ id: pedido.manifesto_entrada_id });
-        if (manifestoEntrada && manifestoEntrada.length > 0 && manifestoEntrada[0].supermanifesto_id) {
-          const manifestoData = await base44.entities.Supermanifesto.filter({ id: manifestoEntrada[0].supermanifesto_id });
-          if (manifestoData && manifestoData.length > 0) {
-            setSupermanifesto(manifestoData[0]);
-          }
-        }
-      }
+
     };
     loadDependencies();
   }, [pedido]);
@@ -672,7 +662,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     pedido.status_aprovacao_financeira === 'Rejeitado'
   );
 
-  const isLogisticaEnabled = pedido && pedido.status_aprovacao_financeira === 'Aprovado';
+  const isLogisticaEnabled = true;
 
   const canReopen = currentUser?.role === 'admin' && isLocked;
 
@@ -832,10 +822,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             status_aprovacao_financeira: 'Aguardando Aprovação Financeira'
           });
           
-          // 3. Criar Tarefa para o Comprador
+          // 3. Criar Tarefa de Recebimento
           await base44.entities.Tarefa.create({
-            titulo: `Aguardando Manifesto/NF - ${currentPO.numero}`,
-            tipo: 'Aguardando Manifesto/NF',
+            titulo: `Recebimento de Mercadoria - ${currentPO.numero}`,
+            tipo: 'Recebimento de Mercadoria',
             status: 'Pendente',
             prioridade: 'Alta',
             responsavel_id: currentUser.id,
@@ -844,7 +834,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
             referencia_id: currentPO.id,
             referencia_numero: currentPO.numero,
             valor_pendente: valorTotal,
-            descricao: `Aguardando recebimento de NF/Manifesto do fornecedor ${formData.fornecedor_nome} para programar a recepção.`,
+            descricao: `Aguardando recebimento da mercadoria do fornecedor ${formData.fornecedor_nome}. Informe despacho e chegada na aba Logística do pedido.`,
             data_vencimento: format(new Date(formData.data_prevista_entrega || new Date()), 'yyyy-MM-dd')
           });
 
@@ -882,18 +872,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
 
 
-
-  const reloadSupermanifesto = async () => {
-    if (formData.manifesto_entrada_id) {
-      const manifestoEntrada = await base44.entities.ManifestoEntrada.filter({ id: formData.manifesto_entrada_id });
-      if (manifestoEntrada && manifestoEntrada.length > 0 && manifestoEntrada[0].supermanifesto_id) {
-        const manifestoData = await base44.entities.Supermanifesto.filter({ id: manifestoEntrada[0].supermanifesto_id });
-        if (manifestoData && manifestoData.length > 0) {
-          setSupermanifesto(manifestoData[0]);
-        }
-      }
-    }
-  };
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-gray-900 dark:text-gray-200 overflow-hidden">
@@ -997,7 +975,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               { value: 'dados-gerais', icon: <FileText className="w-4 h-4 flex-shrink-0" />, short: 'Geral', disabled: false },
               { value: 'itens',        icon: <ShoppingCart className="w-4 h-4 flex-shrink-0" />, short: 'Itens', disabled: false },
               { value: 'pagamento',    icon: <DollarSign className="w-4 h-4 flex-shrink-0" />, short: 'Pgto', disabled: false },
-              { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'Log', disabled: !isLogisticaEnabled && !!pedido },
+              { value: 'logistica',    icon: <Ship className="w-4 h-4 flex-shrink-0" />, short: 'Log', disabled: false },
               { value: 'pendencias',   icon: <AlertCircle className="w-4 h-4 flex-shrink-0" />, short: 'Pend', disabled: !pedido?.id },
               { value: 'logs',         icon: <History className="w-4 h-4 flex-shrink-0" />, short: 'Logs', disabled: !pedido?.id },
             ].map(tab => (
@@ -1252,61 +1230,65 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
             </TabsContent>
 
-          {/* ABA: LOGÍSTICA - APENAS VISUALIZAÇÃO */}
-          <TabsContent value="logistica" className="mt-0 space-y-8">
-            {!pedido ? (
-              <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-xl shadow-sm border-0">
-                <div className="flex items-start gap-3">
-                  <Ship className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Tela de Aeroporto</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Salve o pedido primeiro. Informações logísticas aparecerão aqui após vinculação no Hub Logístico.
-                    </p>
-                  </div>
-                </div>
+          {/* ABA: LOGÍSTICA */}
+          <TabsContent value="logistica" className="mt-0 space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Transportadora</Label>
+                <Input
+                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400"
+                  placeholder="Nome da transportadora..."
+                  value={formData.transportadora_nome || ''}
+                  onChange={e => handleChange('transportadora_nome', e.target.value)}
+                />
               </div>
-            ) : supermanifesto ? (
-              <div className="space-y-6">
-                <div className="p-5 bg-teal-50 dark:bg-teal-900/20 rounded-xl shadow-sm border-0">
-                  <h4 className="font-medium text-teal-900 dark:text-teal-200 mb-4 flex items-center gap-2">
-                    <Ship className="w-5 h-5" />
-                    Informações de Transporte
-                  </h4>
-                  <div className="grid grid-cols-2 gap-6 text-sm">
-                    <div>
-                      <p className="text-xs text-teal-700 dark:text-teal-300">Supermanifesto</p>
-                      <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.numero}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-teal-700 dark:text-teal-300">Transportadora</p>
-                      <p className="font-medium text-teal-900 dark:text-teal-100">{supermanifesto.transportadora_nome}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-teal-700 dark:text-teal-300">ETA</p>
-                      <p className="font-medium text-teal-900 dark:text-teal-100">
-                        {supermanifesto.eta ? format(new Date(supermanifesto.eta), 'dd/MM/yyyy HH:mm') : 'Não informado'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-teal-700 dark:text-teal-300">Status</p>
-                      <Badge className="bg-teal-100 text-teal-800 border-0">
-                        {supermanifesto.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Nº Rastreio / Conhecimento</Label>
+                <Input
+                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400"
+                  placeholder="Ex: BR1234567890, CT-001..."
+                  value={formData.numero_rastreio || ''}
+                  onChange={e => handleChange('numero_rastreio', e.target.value)}
+                />
               </div>
-            ) : (
-              <div className="p-5 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">Aguardando Vinculação</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Este pedido ainda não foi vinculado a um supermanifesto. Acesse o <strong>Hub Logístico</strong> na aba "Logística" do Módulo de Compras para realizar a vinculação.
-                    </p>
-                  </div>
+              <div>
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Data de Despacho</Label>
+                <Input
+                  type="date"
+                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
+                  value={formData.data_despacho ? formData.data_despacho.substring(0, 10) : ''}
+                  onChange={e => handleChange('data_despacho', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Data de Chegada / Recebimento</Label>
+                <Input
+                  type="date"
+                  className="bg-gray-50 dark:bg-gray-800 border-0 h-11 text-sm shadow-sm text-gray-900 dark:text-white"
+                  value={formData.data_chegada ? formData.data_chegada.substring(0, 10) : ''}
+                  onChange={e => handleChange('data_chegada', e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold mb-2 block">Volumes / Descrição da Carga</Label>
+              <Textarea
+                className="bg-gray-50 dark:bg-gray-800 border-0 shadow-sm resize-none text-gray-900 dark:text-white placeholder:text-gray-400"
+                placeholder="Ex: 3 caixas, 1 pallet, aprox. 120kg..."
+                rows={3}
+                value={formData.descricao_volumes || ''}
+                onChange={e => handleChange('descricao_volumes', e.target.value)}
+              />
+            </div>
+            {formData.data_despacho && (
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center gap-3">
+                <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Embarque informado</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    Despachado em {format(new Date(formData.data_despacho), 'dd/MM/yyyy')}
+                    {formData.data_chegada ? ` • Chegada prevista: ${format(new Date(formData.data_chegada), 'dd/MM/yyyy')}` : ''}
+                  </p>
                 </div>
               </div>
             )}

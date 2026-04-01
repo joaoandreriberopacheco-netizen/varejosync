@@ -190,8 +190,6 @@ export const ALL_MENU_ITEMS = [
       p?.estoque?.compras?.sugestoes ||
       p?.estoque?.compras?.cotacoes ||
       p?.estoque?.compras?.pedidos ||
-      p?.estoque?.compras?.hub_logistico?.manifestos ||
-      p?.estoque?.compras?.hub_logistico?.supermanifestos ||
       p?.estoque?.compras?.hub_logistico?.conferencia ||
       p?.estoque?.logistica,
     submenu: [
@@ -213,18 +211,7 @@ export const ALL_MENU_ITEMS = [
         icon: PackageSearch,
         permissaoCheck: (p) => p?.estoque?.compras?.pedidos === true
       },
-      {
-        name: 'Manifestos',
-        page: 'GestaoManifestosPage',
-        icon: Ship,
-        permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.manifestos === true || p?.estoque?.logistica === true
-      },
-      {
-        name: 'Supermanifestos',
-        page: 'GestaoSupermanifestosPage',
-        icon: Layers,
-        permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.supermanifestos === true || p?.estoque?.logistica === true
-      },
+
       {
         name: 'Conferência de Entrada',
         page: 'ConferenciaEntrada',
