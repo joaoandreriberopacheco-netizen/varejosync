@@ -320,15 +320,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
   return ReactDOM.createPortal(
     <>
-      {/* Backdrop com blur sutil — formulário principal visível ao fundo */}
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[300] bg-black/25 backdrop-blur-[2px]"
+        className="fixed inset-0 z-[400] bg-black/25 backdrop-blur-[2px]"
         onClick={onClose}
       />
 
       {/* Painel central */}
-      <div className="fixed inset-0 z-[301] flex items-center justify-center pointer-events-none p-4">
-        <div className="pointer-events-auto w-full max-w-lg max-h-[92vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="fixed inset-0 z-[401] flex items-center justify-center p-4" onClick={e => e.stopPropagation()}>
+        <div className="w-full max-w-lg max-h-[92vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
 
           {/* Header */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
@@ -430,7 +430,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
                     return (
                       <div key={item.produto_id}
-                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 transition-opacity ${!selecionado ? 'opacity-40' : ''}`}>
+                            className={`flex items-center gap-2 rounded-lg px-2 py-1.5 transition-opacity ${!selecionado ? 'opacity-40' : ''}`}>
                         {/* Checkbox */}
                         <button
                           type="button"
@@ -447,12 +447,12 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                             </svg>
                           )}
                         </button>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{item.produto_nome}</p>
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                            Pedido: {fmtNum(pedida)} {item.unidade_medida}
-                            {outrosEmb > 0 && <span className="ml-1 text-teal-500">· Outros: {fmtNum(outrosEmb)}</span>}
-                            {disponivel < pedida && disponivel > 0 && <span className="ml-1 text-amber-500">· Disp: {fmtNum(disponivel)}</span>}
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate leading-tight">{item.produto_nome}</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
+                            {fmtNum(pedida)} {item.unidade_medida}
+                            {outrosEmb > 0 && <span className="ml-1 text-teal-500">· -{fmtNum(outrosEmb)}</span>}
+                            {disponivel < pedida && disponivel > 0 && <span className="ml-1 text-amber-500">· disp:{fmtNum(disponivel)}</span>}
                           </p>
                         </div>
                         <Input
@@ -527,7 +527,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         </div>
       </div>
 
-      {/* VolumesDialog via portal já interno ao Dialog */}
       <VolumesDialog
         isOpen={showVolumesDialog}
         onClose={() => setShowVolumesDialog(false)}
