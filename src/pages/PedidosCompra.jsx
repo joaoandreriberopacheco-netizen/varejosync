@@ -198,12 +198,14 @@ export default function PedidosCompraPage() {
   };
 
   const pedidosVisiveisLista = useMemo(() => {
+    const concluidosSelecionados = statusSel.includes('Concluído');
+
     return filtrados.filter((pedido) => {
-      if (pedido.status === 'Concluído') return true;
+      if (pedido.status === 'Concluído') return concluidosSelecionados;
       const statusPermitido = ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
       return statusPermitido && calcularValorPendentePedido(pedido) > 0;
     });
-  }, [filtrados]);
+  }, [filtrados, statusSel]);
 
   const pedidosVisiveisPendentes = useMemo(() => {
     return pedidosVisiveisLista.filter((pedido) => pedido.status !== 'Concluído');
