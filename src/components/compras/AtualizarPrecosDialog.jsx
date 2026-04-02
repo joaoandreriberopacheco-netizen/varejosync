@@ -33,16 +33,21 @@ const calcMarkup = (custo, preco) => custo > 0 ? ((preco / custo) - 1) * 100 : 0
 const COST_FIELDS = ['valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'];
 
 const sanitizeTwoDecimalInput = (value) => {
-  const cleaned = String(value).replace(/[^0-9,.-]/g, '');
+  const raw = String(value ?? '');
+  const cleaned = raw.replace(/[^0-9,.-]/g, '');
   const isNegative = cleaned.includes('-');
   const unsigned = cleaned.replace(/-/g, '');
-  const lastSeparatorIndex = Math.max(unsigned.lastIndexOf(','), unsigned.lastIndexOf('.'));
+  const hasComma = unsigned.includes(',');
+  const hasDot = unsigned.includes('.');
 
-  if (lastSeparatorIndex >= 0) {
-    const integerPart = unsigned.slice(0, lastSeparatorIndex).replace(/[,.]/g, '');
-    const decimalPart = unsigned.slice(lastSeparatorIndex + 1).replace(/[,.]/g, '');
+  const separator = hasComma ? ',' : hasDot ? '.' : null;
+
+  if (separator) {
+    const parts = unsigned.split(separator);
+    const integerPart = (parts.shift() || '').replace(/[,.]/g, '');
+    const decimalPart = parts.join('').replace(/[,.]/g, '');
     const normalizedInteger = integerPart.replace(/^0+(?=\d)/, '') || '0';
-    return `${isNegative ? '-' : ''}${normalizedInteger},${decimalPart.slice(0, 2)}`;
+    return `${isNegative ? '-' : ''}${normalizedInteger}${separator}${decimalPart.slice(0, 2)}`;
   }
 
   const normalizedInteger = unsigned.replace(/[,.]/g, '').replace(/^0+(?=\d)/, '') || '0';
@@ -513,7 +518,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                             type="button"
                             onClick={() => {
                               const rawInput = inputs[`${item.produto_id}_desconto_pct`];
-                              const currentTyped = Math.round((parseFloat(String(rawInput).replace(',', '.')) || 0) * 100) / 100;
+                              const currentTyped = Math.round((parse(String(rawInput)) || 0) * 100) / 100;
                               const currentState = costs[item.produto_id]?.desconto_pct || 0;
                               const baseValue = currentTyped || currentState;
                               const flipped = baseValue === 0
