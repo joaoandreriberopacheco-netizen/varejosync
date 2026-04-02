@@ -344,8 +344,13 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         <button
                           type="button"
                           onClick={() => {
-                            const pct = costs[item.produto_id]?.desconto_pct || 0;
-                            const flipped = -pct;
+                            const rawInput = inputs[`${item.produto_id}_desconto_pct`];
+                            const currentTyped = parseFloat(String(rawInput).replace(',', '.')) || 0;
+                            const currentState = costs[item.produto_id]?.desconto_pct || 0;
+                            const baseValue = currentTyped || currentState;
+                            const flipped = baseValue === 0
+                              ? (currentState < 0 ? 1 : -1)
+                              : -baseValue;
                             setInputs(p => ({ ...p, [`${item.produto_id}_desconto_pct`]: String(Math.round(flipped * 100) / 100) }));
                             handleDescontoPctBlurDirect(item.produto_id, flipped);
                           }}
@@ -489,8 +494,13 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           <button
                             type="button"
                             onClick={() => {
-                              const pct = costs[item.produto_id]?.desconto_pct || 0;
-                              const flipped = -pct;
+                              const rawInput = inputs[`${item.produto_id}_desconto_pct`];
+                              const currentTyped = parseFloat(String(rawInput).replace(',', '.')) || 0;
+                              const currentState = costs[item.produto_id]?.desconto_pct || 0;
+                              const baseValue = currentTyped || currentState;
+                              const flipped = baseValue === 0
+                                ? (currentState < 0 ? 1 : -1)
+                                : -baseValue;
                               setInputs(p => ({ ...p, [`${item.produto_id}_desconto_pct`]: String(Math.round(flipped * 100) / 100) }));
                               handleDescontoPctBlurDirect(item.produto_id, flipped);
                             }}
