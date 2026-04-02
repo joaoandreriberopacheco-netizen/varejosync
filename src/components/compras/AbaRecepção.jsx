@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Package, Play, AlertTriangle, CheckCircle, Clock, Warehouse } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
@@ -7,10 +7,29 @@ import RecepcionarEmbarque from './RecepcionarEmbarque';
 export default function AbaRecepção({ pedido }) {
   const [movimentos, setMovimentos] = useState([]);
   const [isLoadingMovimentos, setIsLoadingMovimentos] = useState(false);
+  const [pedidoAtual, setPedidoAtual] = useState(pedido);
+
+  useEffect(() => {
+    setPedidoAtual(pedido);
+  }, [pedido]);
 
   useEffect(() => {
     if (pedido?.id) loadMovimentos();
   }, [pedido?.id]);
+
+  useEffect(() => {
+    if (!pedido?.id) return;
+    const unsubscribe = base44.entities.PedidoCompra.subscribe((event) => {
+      if (event.id === pedido.id && event.type === 'update') {
+        setPedidoAtual(event.data);
+      }
+    });
+    return unsubscribe;
+  }, [pedido?.id]);
+
+  useEffect(() => {
+    setSelectedEmbarque(null);
+  }, [pedidoAtual?.embarques_registrados]);
 
   const loadMovimentos = async () => {
     if (!pedido?.id) return;
@@ -29,7 +48,19 @@ export default function AbaRecepção({ pedido }) {
   };
   const [selectedEmbarque, setSelectedEmbarque] = useState(null);
 
-  const embarques = pedido?.embarques_registrados || [];
+  const embarques = useMemo(() => {
+    const raw = pedidoAtual?.embarques_registrados;
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, [pedidoAtual?.embarques_registrados]);
 
   const getStatusIcon = (status) => {
     switch (status) {
