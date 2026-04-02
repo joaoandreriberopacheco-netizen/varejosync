@@ -172,6 +172,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens} | ${formatarLogTime()}]`
       });
 
+      await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
+
       // Gerar movimentações de estoque
       for (const item of itens) {
         if (item.quantidade_recebida > 0) {

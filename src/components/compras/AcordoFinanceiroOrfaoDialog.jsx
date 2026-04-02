@@ -71,6 +71,7 @@ export default function AcordoFinanceiroOrfaoDialog({ isOpen, onClose, pedido, i
         });
       }
 
+      await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
       toast.success('Acordo financeiro registrado com sucesso!');
       onSuccess?.();
       onClose();
