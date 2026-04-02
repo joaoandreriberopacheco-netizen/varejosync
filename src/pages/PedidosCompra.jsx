@@ -196,16 +196,27 @@ export default function PedidosCompraPage() {
     }, 0);
   };
 
-  const pedidosAprovadosPendentes = useMemo(() => {
+  const pedidosVisiveisPendentes = useMemo(() => {
     return filtrados.filter((pedido) => {
-      const aprovado = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado';
-      return aprovado && calcularValorPendentePedido(pedido) > 0;
+      const statusPermitido = ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
+      return statusPermitido && calcularValorPendentePedido(pedido) > 0;
+    });
+  }, [filtrados]);
+
+  const pedidosPagosPendentes = useMemo(() => {
+    return filtrados.filter((pedido) => {
+      const pago = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado';
+      return pago && calcularValorPendentePedido(pedido) > 0;
     });
   }, [filtrados]);
 
   const valorTotal = useMemo(() => {
-    return pedidosAprovadosPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
-  }, [pedidosAprovadosPendentes]);
+    return pedidosVisiveisPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
+  }, [pedidosVisiveisPendentes]);
+
+  const valorPagoNaoEntregue = useMemo(() => {
+    return pedidosPagosPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
+  }, [pedidosPagosPendentes]);
 
   const grupos = useMemo(() => {
     const normalizeTransportadora = (pedido) => {
@@ -257,7 +268,7 @@ export default function PedidosCompraPage() {
     };
 
     const map = {};
-    pedidosAprovadosPendentes.forEach((pedido) => {
+    pedidosVisiveisPendentes.forEach((pedido) => {
       const meta = getGroupMeta(pedido);
       if (!map[meta.key]) {
         map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
@@ -276,7 +287,7 @@ export default function PedidosCompraPage() {
           return compareValues(valorA, valorB);
         })
       }));
-  }, [pedidosAprovadosPendentes, groupBy, sortOrder]);
+  }, [pedidosVisiveisPendentes, groupBy, sortOrder]);
 
   const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal;
 
@@ -284,9 +295,10 @@ export default function PedidosCompraPage() {
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header */}
       <div className="pb-3 mb-1 flex items-start justify-between gap-3">
-        <div>
+        <div className="space-y-1.5">
           <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Pedidos de Compra</p>
-          <p className="text-xs text-gray-400">{pedidosAprovadosPendentes.length} pedidos aprovados com saldo pendente · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xs text-gray-400">{pedidosVisiveisPendentes.length} pedidos com saldo pendente · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">Pago e ainda não entregue no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
         <PedidosCompraOrganizer
           groupBy={groupBy}
@@ -346,9 +358,10 @@ export default function PedidosCompraPage() {
         enviandoLote={enviandoLote}
         grupos={grupos}
         kpis={{
-          totalPedidos: filtrados.length,
+          totalPedidos: pedidosVisiveisPendentes.length,
           totalGeral: valorTotal,
-          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0)
+          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0),
+          totalPagoNaoEntregue: valorPagoNaoEntregue
         }}
       />
 
