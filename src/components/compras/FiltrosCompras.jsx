@@ -6,11 +6,12 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 
 const STATUS_OPTIONS = [
+  { codigo: '__nao_concluido__',    label: 'Ocultar concluídos',    cor: 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' },
   { codigo: 'Rascunho',             label: 'Rascunho',              cor: 'bg-gray-100 text-gray-700' },
   { codigo: 'Aguardando Liberação', label: 'Aguardando Liberação',  cor: 'bg-yellow-100 text-yellow-800' },
   { codigo: 'Aprovado',             label: 'Aprovado',              cor: 'bg-green-100 text-green-800' },
   { codigo: 'Despachado',           label: 'Despachado',            cor: 'bg-blue-100 text-blue-800' },
-  { codigo: 'Em Recepção',          label: 'Em Recepção',           cor: 'bg-indigo-100 text-indigo-800' },
+  { codigo: 'Em Trânsito',          label: 'Em Trânsito',           cor: 'bg-sky-100 text-sky-800' },
   { codigo: 'Pendência',            label: 'Pendência',             cor: 'bg-orange-100 text-orange-800' },
   { codigo: 'Devolvido',            label: 'Devolvido',             cor: 'bg-rose-100 text-rose-800' },
   { codigo: 'Concluído',            label: 'Concluído',             cor: 'bg-emerald-100 text-emerald-800' },

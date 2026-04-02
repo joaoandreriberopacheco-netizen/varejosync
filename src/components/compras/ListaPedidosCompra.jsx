@@ -21,7 +21,8 @@ const STATUS_CONFIG = {
   'Aguardando Liberação': { dot: 'bg-amber-400 dark:bg-amber-400',    pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
   'Aprovado':             { dot: 'bg-emerald-400 dark:bg-emerald-400',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Despachado':           { dot: 'bg-gray-400 dark:bg-gray-500',      pill: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' },
-  'Em Recepção':          { dot: 'bg-violet-400 dark:bg-violet-400',  pill: 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400' },
+  'Em Trânsito':          { dot: 'bg-sky-400 dark:bg-sky-400',        pill: 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400' },
+  'Entregue':             { dot: 'bg-emerald-500 dark:bg-emerald-500',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Pendência':            { dot: 'bg-orange-400 dark:bg-orange-400',  pill: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' },
   'Devolvido':            { dot: 'bg-rose-400 dark:bg-rose-400',      pill: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
   'Concluído':            { dot: 'bg-emerald-500 dark:bg-emerald-500',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
@@ -79,24 +80,20 @@ function TransportadoraInfo({ pedido }) {
 }
 
 function getLEDStatus(pedido) {
-  // Calcula estado do LED e tags associadas
   const dataAprovacao = pedido.data_aprovacao_financeira ? new Date(pedido.data_aprovacao_financeira) : null;
   const diasAposAprovacao = dataAprovacao ? Math.floor((new Date() - dataAprovacao) / (1000 * 60 * 60 * 24)) : null;
-  
-  const temItenOorfao = pedido.tem_divergencias || false;
+
+  const semPendencias = !pedido.tem_divergencias;
+  const statusFinalizado = pedido.status === 'Entregue' || pedido.status === 'Concluído';
+  const cicloEncerrado = semPendencias && statusFinalizado;
   const isPagamentoAutorizado = pedido.status_aprovacao_financeira === 'Aprovado';
-  const isConcluido = pedido.status === 'Concluído';
-  
-  // Vermelho: não concluído e 20+ dias após aprovação
-  const isVermelho = !isConcluido && diasAposAprovacao !== null && diasAposAprovacao >= 20;
-  
-  // Âmbar: pagamento autorizado + itens órfãos
-  const isAmbar = isPagamentoAutorizado && temItenOorfao;
-  
-  // Pisca: ambos são verdadeiros
+
+  const isVermelho = !cicloEncerrado && diasAposAprovacao !== null && diasAposAprovacao >= 20;
+  const isAmbar = isPagamentoAutorizado && pedido.tem_divergencias;
   const isPisca = isVermelho && isAmbar;
-  
-  return { isVermelho, isAmbar, isPisca };
+  const isVerde = cicloEncerrado;
+
+  return { isVermelho, isAmbar, isPisca, isVerde };
 }
 
 function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
@@ -106,7 +103,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const totalLinhas = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
   const totalQtd = Array.isArray(pedido.itens) ? pedido.itens.reduce((a, i) => a + (Number(i.quantidade) || 0), 0) : 0;
   const cfg = STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
-  const { isVermelho, isAmbar, isPisca } = useMemo(() => getLEDStatus(pedido), [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias]);
+  const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => getLEDStatus(pedido), [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias]);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -147,6 +144,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               {/* LED com lógica de status */}
               <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${
                 isPisca ? 'animate-blink-led' :
+                isVerde ? 'bg-emerald-500 dark:bg-emerald-400' :
                 isVermelho ? 'bg-red-500 dark:bg-red-500' :
                 isAmbar ? 'bg-amber-400 dark:bg-amber-400' :
                 cfg.dot

@@ -19,7 +19,7 @@ export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');
-  const [statusSel, setStatusSel] = useState([]);
+  const [statusSel, setStatusSel] = useState(['__nao_concluido__']);
   const [fornecedorSel, setFornecedorSel] = useState([]);
   const [tagsSel, setTagsSel] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
@@ -156,8 +156,12 @@ export default function PedidosCompraPage() {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
       const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
+      const ocultarConcluidos = statusSel.includes('__nao_concluido__');
+      const statusExplicitos = statusSel.filter(status => status !== '__nao_concluido__');
+
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
-      if (statusSel.length > 0 && !statusSel.includes(p.status)) return false;
+      if (ocultarConcluidos && p.status === 'Concluído') return false;
+      if (statusExplicitos.length > 0 && !statusExplicitos.includes(p.status)) return false;
       if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
       if (tagsSel.length > 0 && !tagsSel.some(t => (p.tags || []).includes(t))) return false;
       if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
@@ -223,7 +227,7 @@ export default function PedidosCompraPage() {
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
-          setStatusSel([]);
+          setStatusSel(['__nao_concluido__']);
           setFornecedorSel([]);
           setTagsSel([]);
           setDataInicial('');
