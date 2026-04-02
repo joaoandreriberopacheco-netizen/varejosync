@@ -236,7 +236,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
 function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao }) {
   const [open, setOpen] = useState(true);
-  const valorTotal = pedidos.reduce((acc, p) => acc + ((p.valor_pendente_entrega ?? p.valor_total) || 0), 0);
+  const valorTotal = pedidos.reduce((acc, p) => {
+    const valorPedido = p.valor_pendente_entrega ?? p.valor_total ?? 0;
+    return acc + valorPedido;
+  }, 0);
 
   return (
     <div className="w-full space-y-2">
