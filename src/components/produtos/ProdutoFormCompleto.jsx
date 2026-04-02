@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy } from 'lucide-react';
+import { Package, DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, TrendingDown, Undo2, Redo2, Copy, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
@@ -53,6 +53,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [tagInput, setTagInput] = useState('');
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
+  const [historicoOrder, setHistoricoOrder] = useState('desc');
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
   
@@ -345,6 +346,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     const rounded = Math.round(numero * 100) / 100;
     return rounded.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
+
+  const movimentacoesOrdenadas = useMemo(() => {
+    const items = [...movimentacoes];
+    return items.sort((a, b) => {
+      const dateA = new Date(a.created_date).getTime();
+      const dateB = new Date(b.created_date).getTime();
+      return historicoOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  }, [movimentacoes, historicoOrder]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-900">
@@ -907,96 +917,93 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
           {/* ABA HISTÓRICO */}
           <TabsContent value="historico" className="space-y-4 mt-0">
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-gray-50 dark:bg-[#1f2432] px-4 py-3 shadow-sm">
+              <div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Histórico do produto</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Visual PDV com documento, pedido e cliente</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setHistoricoOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                className="h-10 rounded-xl bg-white dark:bg-[#151a26] px-3 shadow-sm text-gray-700 dark:text-gray-200"
+              >
+                {historicoOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                <span className="ml-2 hidden sm:inline">{historicoOrder === 'asc' ? 'Mais antigo' : 'Mais recente'}</span>
+              </Button>
+            </div>
+
             {loadingMovimentacoes ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
               </div>
-            ) : movimentacoes.length === 0 ? (
+            ) : movimentacoesOrdenadas.length === 0 ? (
               <div className="text-center py-12">
                 <History className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma movimentação registrada</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-gray-300 dark:border-gray-600">
-                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Data</th>
-                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Hora</th>
-                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Tipo</th>
-                      <th className="text-left p-2 text-gray-600 dark:text-gray-400 font-medium">Comprovante</th>
-                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Qtd</th>
-                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Preço Un.</th>
-                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Total</th>
-                      <th className="text-right p-2 text-gray-600 dark:text-gray-400 font-medium">Estoque</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(() => {
-                      // Calcular evolução do estoque (do mais antigo para o mais recente)
-                      const movsOrdenadas = [...movimentacoes].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
-                      let saldoAtual = produto?.estoque_atual || 0;
-                      
-                      // Calcular saldo inicial (antes de todas as movimentações)
-                      let saldoInicial = saldoAtual;
-                      movsOrdenadas.forEach(mov => {
-                        if (mov.tipo === 'Entrada') {
-                          saldoInicial -= mov.quantidade;
-                        } else {
-                          saldoInicial += mov.quantidade;
-                        }
-                      });
-                      
-                      // Agora calcular para cada linha
-                      let saldoCorrente = saldoInicial;
-                      
-                      return movsOrdenadas.map((mov, idx) => {
-                        const isEntrada = mov.tipo === 'Entrada';
-                        const total = mov.quantidade * (mov.custo_unitario || 0);
-                        
-                        // Aplicar a movimentação
-                        if (isEntrada) {
-                          saldoCorrente += mov.quantidade;
-                        } else {
-                          saldoCorrente -= mov.quantidade;
-                        }
-                        
-                        const saldoAposMovimento = saldoCorrente;
-                        
-                        return (
-                          <tr key={mov.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <td className="p-2 text-gray-700 dark:text-gray-300">
-                              {format(new Date(mov.created_date), 'dd/MM/yyyy')}
-                            </td>
-                            <td className="p-2 text-gray-700 dark:text-gray-300">
-                              {format(new Date(mov.created_date), 'HH:mm')}
-                            </td>
-                            <td className="p-2">
-                              <Badge className={`text-[10px] ${isEntrada ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                {mov.motivo}
-                              </Badge>
-                            </td>
-                            <td className="p-2 text-gray-600 dark:text-gray-400 font-mono text-[10px]">
-                              {mov.documento_referencia || '-'}
-                            </td>
-                            <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                              {isEntrada ? '+' : '-'}{mov.quantidade}
-                            </td>
-                            <td className="p-2 text-right text-gray-700 dark:text-gray-300 tabular-nums">
-                              {mov.custo_unitario > 0 ? `R$ ${mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
-                            </td>
-                            <td className={`p-2 text-right font-semibold tabular-nums ${isEntrada ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                              {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
-                            </td>
-                            <td className="p-2 text-right font-bold text-gray-800 dark:text-gray-200 tabular-nums">
-                              {saldoAposMovimento}
-                            </td>
-                          </tr>
-                        );
-                      });
-                    })()}
-                  </tbody>
-                </table>
+              <div className="space-y-3">
+                {movimentacoesOrdenadas.map((mov) => {
+                  const isEntrada = mov.tipo === 'Entrada';
+                  const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
+                  const documento = mov.referencia_numero || mov.documento_referencia || mov.referencia_id || '-';
+                  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '-';
+                  const origem = mov.referencia_tipo || mov.motivo || mov.tipo;
+
+                  return (
+                    <div key={mov.id} className="rounded-2xl bg-[#f8fafc] dark:bg-[#151a26] shadow-sm overflow-hidden">
+                      <div className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3 border-b border-gray-200/70 dark:border-white/5">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge className={`text-[10px] rounded-full border-0 ${isEntrada ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                              {origem}
+                            </Badge>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {format(new Date(mov.created_date), 'dd/MM/yyyy')} • {format(new Date(mov.created_date), 'HH:mm')}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                            {documento}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                            Cliente: {clienteNome}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-lg font-bold tabular-nums ${isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {isEntrada ? '+' : '-'}{mov.quantidade}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400">Qtd</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 py-3 text-xs">
+                        <div>
+                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Preço un.</p>
+                          <p className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums">
+                            {mov.custo_unitario > 0 ? `R$ ${mov.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Total</p>
+                          <p className={`font-semibold tabular-nums ${isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Responsável</p>
+                          <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{mov.usuario_responsavel || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Tipo</p>
+                          <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{mov.tipo}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
