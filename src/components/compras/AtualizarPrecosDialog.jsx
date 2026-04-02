@@ -261,23 +261,26 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={`${isMobile ? '!max-w-[100vw] !w-[100vw] h-[100vh] !rounded-none p-0' : '!max-w-[95vw]'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader className={isMobile ? 'px-4 pt-4 pb-3' : ''}>
-          <DialogTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <DialogTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+            <DollarSign className="w-5 h-5 text-gray-800 dark:text-gray-200" />
             Revisar Preços de Venda
           </DialogTitle>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
             {qtdComDiferenca > 0
               ? `${qtdComDiferenca} produto(s) com alteração de custo detectada. Revise e selecione quais preços deseja atualizar.`
               : 'Nenhuma alteração de custo detectada. Você pode revisar os preços atuais dos produtos.'}
+          </p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+            Ao salvar, os valores selecionados serão aplicados imediatamente no cadastro do produto.
           </p>
         </DialogHeader>
 
         <div className={isMobile ? 'mt-2' : 'mt-4'}>
           <div className={`flex items-center justify-between mb-3 ${isMobile ? 'px-4' : ''}`}>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
               {itensCalc.length} produto(s) no pedido
               {qtdComDiferenca > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded text-[10px] font-medium">
+                <span className="ml-2 px-2 py-0.5 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded text-[10px] font-semibold">
                   {qtdComDiferenca} com alteração
                 </span>
               )}
@@ -434,7 +437,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
           ) : (
             <div className="rounded-lg overflow-hidden shadow-sm">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+                <thead className="bg-gray-100 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200">
                   <tr>
                     <th className="w-8 p-2"></th>
                     <th className="text-left p-2 min-w-[200px]">Produto</th>
@@ -451,7 +454,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                 </thead>
                 <tbody>
                   {itensCalc.map(item => (
-                    <tr key={item.produto_id} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <tr key={item.produto_id} className="border-b border-gray-100 dark:border-gray-800/70 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="p-2 text-center">
                         {item.temDiferenca && (
                           <Checkbox checked={selecionados[item.produto_id] || false} onCheckedChange={() => handleToggle(item.produto_id)} />
@@ -508,7 +511,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                             onChange={(e) => setInp(item.produto_id, 'desconto_pct', e.target.value)}
                             onFocus={(e) => e.target.select()}
                             onBlur={() => handleDescontoPctBlur(item.produto_id)}
-                            className={`h-8 text-center text-sm border-0 shadow-sm flex-1 min-w-0 ${
+                            className={`h-8 text-center text-sm font-medium border-0 shadow-sm flex-1 min-w-0 ${
                               (costs[item.produto_id]?.desconto_pct || 0) < 0
                                 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
                                 : (costs[item.produto_id]?.desconto_pct || 0) > 0
@@ -527,7 +530,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                             onChange={(e) => setInp(item.produto_id, field, e.target.value)}
                             onFocus={(e) => e.target.select()}
                             onBlur={() => handleCostBlur(item.produto_id, field)}
-                            className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+                            className="h-8 text-center text-sm text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 border-0 shadow-sm"
                           />
                         </td>
                       ))}
@@ -551,7 +554,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, 'preco', e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handlePrecoBlur(item.produto_id)}
-                          className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-none font-bold"
+                          className="h-8 text-center text-sm text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 border-0 shadow-none font-bold"
                         />
                       </td>
                     </tr>
