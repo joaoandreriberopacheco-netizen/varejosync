@@ -33,14 +33,19 @@ const calcMarkup = (custo, preco) => custo > 0 ? ((preco / custo) - 1) * 100 : 0
 const COST_FIELDS = ['valor_compra', 'custo_frete_padrao', 'custo_imposto1_padrao', 'custo_imposto2_padrao', 'custo_outros_padrao'];
 
 const sanitizeTwoDecimalInput = (value) => {
-  const cleaned = String(value).replace(/[^0-9,.-]/g, '').replace('.', ',');
-  const isNegative = cleaned.startsWith('-');
+  const cleaned = String(value).replace(/[^0-9,.-]/g, '');
+  const isNegative = cleaned.includes('-');
   const unsigned = cleaned.replace(/-/g, '');
-  const [integerPart = '', decimalPart] = unsigned.split(',');
-  const normalizedInteger = integerPart.replace(/^0+(?=\d)/, '') || '0';
-  if (decimalPart !== undefined) {
+  const lastSeparatorIndex = Math.max(unsigned.lastIndexOf(','), unsigned.lastIndexOf('.'));
+
+  if (lastSeparatorIndex >= 0) {
+    const integerPart = unsigned.slice(0, lastSeparatorIndex).replace(/[,.]/g, '');
+    const decimalPart = unsigned.slice(lastSeparatorIndex + 1).replace(/[,.]/g, '');
+    const normalizedInteger = integerPart.replace(/^0+(?=\d)/, '') || '0';
     return `${isNegative ? '-' : ''}${normalizedInteger},${decimalPart.slice(0, 2)}`;
   }
+
+  const normalizedInteger = unsigned.replace(/[,.]/g, '').replace(/^0+(?=\d)/, '') || '0';
   return `${isNegative ? '-' : ''}${normalizedInteger}`;
 };
 
@@ -382,7 +387,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                         type="text"
                         inputMode="decimal"
                         value={inp(item.produto_id, 'desconto_pct')}
-                        onChange={(e) => setInp(item.produto_id, 'desconto_pct', e.target.value)}
+                        onChange={(e) => setInp(item.produto_id, 'desconto_pct', sanitizeTwoDecimalInput(e.target.value))}
                         onFocus={(e) => e.target.select()}
                         onBlur={() => handleDescontoPctBlur(item.produto_id)}
                         className={`h-11 text-base font-medium border-0 shadow-none rounded-xl ${
