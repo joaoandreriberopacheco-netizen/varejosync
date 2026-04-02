@@ -123,23 +123,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       // Se o pedido não tem data_emissao, usa a created_date como fallback
       const dataEmissao = pedido.data_emissao ||
         (pedido.created_date ? format(new Date(pedido.created_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
-      setFormData(prev => {
-        const pedidoComData = {
-          ...pedido,
-          data_emissao: dataEmissao,
-          embarques_registrados: pedido.embarques_registrados ?? prev?.embarques_registrados ?? [],
-          status_embarque: pedido.status_embarque ?? prev?.status_embarque,
-          status_recebimento_geral: pedido.status_recebimento_geral ?? prev?.status_recebimento_geral,
-          data_despacho: pedido.data_despacho ?? prev?.data_despacho,
-          data_chegada: pedido.data_chegada ?? prev?.data_chegada,
-          tem_divergencias: pedido.tem_divergencias ?? prev?.tem_divergencias,
-          conferencia_id: pedido.conferencia_id ?? prev?.conferencia_id,
-          manifesto_entrada_id: pedido.manifesto_entrada_id ?? prev?.manifesto_entrada_id,
-        };
-        setHistory([pedidoComData]);
-        setHistoryIndex(0);
-        return pedidoComData;
-      });
+      const pedidoComData = {
+        ...pedido,
+        data_emissao: dataEmissao,
+      };
+      setFormData(pedidoComData);
+      setPedidoLogistica(pedidoComData);
+      setHistory([pedidoComData]);
+      setHistoryIndex(0);
       return;
     }
 
@@ -207,6 +198,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [pedido?.id, formData]);
+
+  useEffect(() => {
+    setPedidoLogistica(pedido || null);
+  }, [pedido]);
 
   useEffect(() => {
     const loadDependencies = async () => {
@@ -1269,7 +1264,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           {/* ABA: RECEPÇÃO */}
           <TabsContent value="recepcao" className="mt-0">
             {pedido?.id ? (
-              <AbaRecepção pedido={pedido} />
+              <AbaRecepção pedido={pedidoLogistica || pedido} />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-sm text-gray-400">Salve o pedido primeiro para registrar recebimentos.</p>

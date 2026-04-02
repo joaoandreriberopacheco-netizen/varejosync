@@ -66,7 +66,10 @@ export default function PedidoCompraDetalhe() {
       setPedido(saved);
     } else if (pedido?.id) {
       const updated = await base44.entities.PedidoCompra.filter({ id: pedido.id });
-      if (updated?.[0]) setPedido(updated[0]);
+      if (updated?.[0]) {
+        setPedido(updated[0]);
+        saved = updated[0];
+      }
     }
 
     return saved;
