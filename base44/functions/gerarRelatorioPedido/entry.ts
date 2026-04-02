@@ -65,6 +65,12 @@ Deno.serve(async (req) => {
       ? await base44.asServiceRole.entities.Terceiro.get(pedido.fornecedor_id).catch(() => null)
       : null;
 
+    const produtosIds = [...new Set((pedido.itens || []).map((item) => item.produto_id).filter(Boolean))];
+    const produtos = await Promise.all(
+      produtosIds.map((id) => base44.asServiceRole.entities.Produto.get(id).catch(() => null))
+    );
+    const produtosMap = Object.fromEntries(produtos.filter(Boolean).map((produto) => [produto.id, produto]));
+
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const usableWidth = page.width - (page.marginX * 2);
     let y = page.marginTop;
@@ -202,8 +208,8 @@ Deno.serve(async (req) => {
 
     const tableColumns = {
       produto: page.marginX,
-      qtd: page.marginX + 102,
-      unit: page.marginX + 122,
+      qtd: page.marginX + 132,
+      unit: page.marginX + 146,
       total: page.marginX + usableWidth,
     };
 
@@ -218,10 +224,16 @@ Deno.serve(async (req) => {
     y += 13;
 
     (pedido.itens || []).forEach((item) => {
+      const produto = item.produto_id ? produtosMap[item.produto_id] : null;
       const nome = item.produto_nome || '-';
-      const nomeLines = doc.splitTextToSize(safe(nome), 96);
+      const nomeLines = doc.splitTextToSize(safe(nome), 86);
       const infoExtra = `${item.unidade_medida || 'UN'}${item.fator_conversao ? ` | fator ${item.fator_conversao}` : ''}`;
-      const rowHeight = Math.max(14, 8 + (nomeLines.length * 4.4));
+      const custoAumentado = Number(produto?.preco_custo_calculado) || 0;
+      const custoAcessorios = (Number(produto?.custo_frete_padrao) || 0) + (Number(produto?.custo_imposto1_padrao) || 0) + (Number(produto?.custo_imposto2_padrao) || 0) + (Number(produto?.custo_outros_padrao) || 0);
+      const valorVenda = Number(produto?.preco_venda_padrao) || 0;
+      const detalheFinanceiro = `C. aum.: ${fmtCur(custoAumentado)}  |  Acess.: ${fmtCur(custoAcessorios)}  |  Venda: ${fmtCur(valorVenda)}`;
+      const detalheLines = doc.splitTextToSize(safe(detalheFinanceiro), 126);
+      const rowHeight = Math.max(18, 12 + (nomeLines.length * 4.2) + (detalheLines.length * 3.4));
       ensurePage(rowHeight + 3);
 
       doc.setFillColor(250, 250, 250);
@@ -229,10 +241,13 @@ Deno.serve(async (req) => {
 
       setText(9, 'bold', [17, 24, 39]);
       nomeLines.forEach((line, index) => {
-        drawText(line, tableColumns.produto + 3, y + 5 + (index * 4.4));
+        drawText(line, tableColumns.produto + 3, y + 5 + (index * 4.2));
       });
-      setText(8, 'normal', [107, 114, 128]);
-      drawText(infoExtra, tableColumns.produto + 3, y + rowHeight - 3.5);
+      setText(7, 'normal', [107, 114, 128]);
+      detalheLines.forEach((line, index) => {
+        drawText(line, tableColumns.produto + 3, y + 8 + (nomeLines.length * 4.2) + (index * 3.4));
+      });
+      drawText(infoExtra, tableColumns.produto + 3, y + rowHeight - 3.2);
 
       setText(9, 'bold', [17, 24, 39]);
       drawText(String(item.quantidade || 0), tableColumns.qtd, y + 6);
