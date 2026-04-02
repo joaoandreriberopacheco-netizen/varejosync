@@ -47,9 +47,20 @@ export default function FiltrosCompras({
   const toggleStatus = (codigo) => {
     if (statusSel.includes(codigo)) {
       onStatusSel(statusSel.filter(s => s !== codigo));
-    } else {
-      onStatusSel([...statusSel, codigo]);
+      return;
     }
+
+    if (codigo === 'Concluído') {
+      onStatusSel([...statusSel.filter(s => s !== '__nao_concluido__'), codigo]);
+      return;
+    }
+
+    if (codigo === '__nao_concluido__') {
+      onStatusSel(statusSel.filter(s => s !== 'Concluído').concat(codigo));
+      return;
+    }
+
+    onStatusSel([...statusSel, codigo]);
   };
 
   const toggleFornecedor = (id) => {

@@ -161,9 +161,10 @@ export default function PedidosCompraPage() {
       const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
       const ocultarConcluidos = statusSel.includes('__nao_concluido__');
       const statusExplicitos = statusSel.filter(status => status !== '__nao_concluido__');
+      const concluidosSelecionados = statusExplicitos.includes('Concluído');
 
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
-      if (ocultarConcluidos && p.status === 'Concluído') return false;
+      if (ocultarConcluidos && !concluidosSelecionados && p.status === 'Concluído') return false;
       if (statusExplicitos.length > 0 && !statusExplicitos.includes(p.status)) return false;
       if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
       if (tagsSel.length > 0 && !tagsSel.some(t => (p.tags || []).includes(t))) return false;
@@ -289,7 +290,7 @@ export default function PedidosCompraPage() {
       }));
   }, [pedidosVisiveisPendentes, groupBy, sortOrder]);
 
-  const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal;
+  const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || statusSel.some(status => status !== '__nao_concluido__');
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
