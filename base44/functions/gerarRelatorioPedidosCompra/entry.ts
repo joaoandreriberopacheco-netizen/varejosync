@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       version = 'compacta',
       filtros_desc = 'Pedidos filtrados na tela',
       kpis = {},
+      grupos = [],
     } = payload;
 
     const produtoIds = [...new Set(
@@ -126,6 +127,34 @@ Deno.serve(async (req) => {
       y += 24;
     };
 
+    const drawGroupSummary = () => {
+      if (!Array.isArray(grupos) || grupos.length === 0) return;
+      ensureSpace(20);
+      doc.setTextColor(75, 85, 99);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('Agrupamentos do relatório', margin, y);
+      y += 5;
+
+      grupos.forEach((grupo, index) => {
+        const totalGrupo = (grupo.pedidos || []).reduce((acc, pedido) => acc + (Number(pedido.valor_pendente_entrega ?? pedido.valor_total) || 0), 0);
+        ensureSpace(8);
+        if (index % 2 === 0) {
+          doc.setFillColor(250, 250, 250);
+          doc.roundedRect(margin, y - 1.5, contentWidth, 6.5, 2, 2, 'F');
+        }
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(31, 41, 55);
+        doc.text(safe(grupo.label || '-'), margin + 3, y + 2.5);
+        doc.text(`${(grupo.pedidos || []).length} pedidos`, margin + 122, y + 2.5);
+        doc.text(moeda(totalGrupo), margin + contentWidth - 3, y + 2.5, { align: 'right' });
+        y += 7;
+      });
+
+      y += 4;
+    };
+
     const drawPedidoHeader = (pedido) => {
       ensureSpace(30);
       doc.setFillColor(245, 245, 245);
@@ -181,10 +210,15 @@ Deno.serve(async (req) => {
 
     const drawCompacto = (pedido) => {
       drawPedidoHeader(pedido);
+      const embarque = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados[0] : null;
       const observacao = pedido.observacoes || pedido.historico || '-';
-      doc.setFontSize(8.5);
+      doc.setFontSize(8);
       doc.setTextColor(107, 114, 128);
-      y = addWrappedText(doc, observacao, margin + 2, y, contentWidth - 4, 4.5) + 3;
+      doc.text(`Transportadora: ${safe(embarque?.transportadora_nome || 'Sem transportador')}`, margin + 2, y);
+      doc.text(`ETA: ${safe(embarque?.eta ? data(embarque.eta) : 'Sem ETA')}`, margin + 78, y);
+      doc.text(`Itens: ${Array.isArray(pedido.itens) ? pedido.itens.length : 0}`, margin + 134, y);
+      y += 5;
+      y = addWrappedText(doc, observacao, margin + 2, y, contentWidth - 4, 4) + 4;
     };
 
     const drawExpandido = (pedido) => {
@@ -198,24 +232,31 @@ Deno.serve(async (req) => {
       doc.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
       doc.setTextColor(75, 85, 99);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.text('ITEM', margin + 3, y + 5);
-      doc.text('QTD', margin + 88, y + 5);
-      doc.text('CUSTO', margin + 104, y + 5);
-      doc.text('CALC.', margin + 128, y + 5);
-      doc.text('VENDA', margin + 152, y + 5);
-      doc.text('MKP', margin + 176, y + 5);
+      doc.setFontSize(5.8);
+      doc.text('DESCRICAO', margin + 2, y + 5);
+      doc.text('LIQ.', margin + 58, y + 5);
+      doc.text('FRETE', margin + 74, y + 5);
+      doc.text('OUTROS', margin + 90, y + 5);
+      doc.text('CALC.', margin + 108, y + 5);
+      doc.text('VLR UN.', margin + 126, y + 5);
+      doc.text('TOTAL', margin + 145, y + 5);
+      doc.text('VENDA', margin + 164, y + 5);
+      doc.text('MKP', margin + 184, y + 5);
       y += 10;
 
       itens.forEach((item, index) => {
         const produto = produtosMap[item.produto_id] || {};
-        const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
-        const precoVenda = Number(produto.preco_venda_padrao) || 0;
-        const markup = Number(produto.preco_venda_percentual) || 0;
         const quantidade = Number(item.quantidade) || 0;
-        const custoPedido = Number(item.custo_unitario) || 0;
-        subtotalCompra += quantidade * custoCalculado;
-        subtotalVenda += quantidade * precoVenda;
+        const precoCompraLiquido = Number(item.custo_unitario) || Number(produto.valor_compra) || 0;
+        const custoFrete = Number(produto.custo_frete_padrao) || 0;
+        const outrosCustos = (Number(produto.custo_imposto1_padrao) || 0) + (Number(produto.custo_imposto2_padrao) || 0) + (Number(produto.custo_outros_padrao) || 0);
+        const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
+        const valorUnitarioVenda = Number(produto.preco_venda_padrao) || 0;
+        const valorCompraTotal = quantidade * precoCompraLiquido;
+        const markup = precoCompraLiquido > 0 ? ((valorUnitarioVenda - precoCompraLiquido) / precoCompraLiquido) * 100 : 0;
+
+        subtotalCompra += valorCompraTotal;
+        subtotalVenda += quantidade * valorUnitarioVenda;
 
         ensureSpace(8);
         if (index % 2 === 0) {
@@ -225,14 +266,17 @@ Deno.serve(async (req) => {
 
         doc.setTextColor(31, 41, 55);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.8);
-        const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), 80)[0];
-        doc.text(nomeItem, margin + 3, y + 3.5);
-        doc.text(String(quantidade), margin + 88, y + 3.5);
-        doc.text(moeda(custoPedido), margin + 104, y + 3.5);
-        doc.text(moeda(custoCalculado), margin + 128, y + 3.5);
-        doc.text(moeda(precoVenda), margin + 152, y + 3.5);
-        doc.text(percentual(markup), margin + 176, y + 3.5);
+        doc.setFontSize(5.6);
+        const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), 54)[0];
+        doc.text(nomeItem, margin + 2, y + 3.5);
+        doc.text(moeda(precoCompraLiquido), margin + 58, y + 3.5);
+        doc.text(moeda(custoFrete), margin + 74, y + 3.5);
+        doc.text(moeda(outrosCustos), margin + 90, y + 3.5);
+        doc.text(moeda(custoCalculado), margin + 108, y + 3.5);
+        doc.text(moeda(precoCompraLiquido), margin + 126, y + 3.5);
+        doc.text(moeda(valorCompraTotal), margin + 145, y + 3.5);
+        doc.text(moeda(valorUnitarioVenda), margin + 164, y + 3.5);
+        doc.text(percentual(markup), margin + 184, y + 3.5);
         y += 8;
       });
 
@@ -242,17 +286,18 @@ Deno.serve(async (req) => {
       doc.setTextColor(22, 101, 52);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
-      doc.text(`Total custo: ${moeda(subtotalCompra)}`, margin + 4, y + 5.5);
-      doc.text(`Total venda: ${moeda(subtotalVenda)}`, margin + 70, y + 5.5);
-      doc.text(`Margem bruta: ${moeda(subtotalVenda - subtotalCompra)}`, margin + 132, y + 5.5);
+      doc.text(`Compra total: ${moeda(subtotalCompra)}`, margin + 4, y + 5.5);
+      doc.text(`Venda total: ${moeda(subtotalVenda)}`, margin + 72, y + 5.5);
+      doc.text(`Margem bruta: ${moeda(subtotalVenda - subtotalCompra)}`, margin + 136, y + 5.5);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
-      doc.text('Observação: visão compacta por pedido para leitura rápida.', margin + 4, y + 10.5);
+      doc.text('Formato expandido com leitura condensada por item.', margin + 4, y + 10.5);
       y += 18;
     };
 
     drawHeader();
     drawKpis();
+    drawGroupSummary();
 
     pedidos.forEach((pedido) => {
       if (version === 'expandida') {

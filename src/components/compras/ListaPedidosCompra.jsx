@@ -234,7 +234,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   );
 }
 
-function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao }) {
+function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '' }) {
   const [open, setOpen] = useState(true);
   const valorTotal = pedidos.reduce((acc, p) => {
     const valorPedido = p.valor_pendente_entrega ?? p.valor_total ?? 0;
@@ -242,7 +242,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
   }, 0);
 
   return (
-    <div className="w-full space-y-2">
+    <div className={`w-full space-y-2 ${className}`}>
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-1 py-1 group">
         <p className="text-[0.62rem] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
           {label}
@@ -292,18 +292,27 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
 
   return (
     <div className="space-y-5">
-      {grupos.map(({ key, label, pedidos }) => (
-        <GrupoDia
-          key={key}
-          label={label}
-          pedidos={pedidos}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          selecionadosIds={selecionadosIds}
-          onToggleSelecao={onToggleSelecao}
-          modoSelecao={modoSelecao}
-        />
-      ))}
+      {grupos.map(({ key, label, pedidos }, index) => {
+        const previousLabel = grupos[index - 1]?.label || '';
+        const isSpecialTransition = (
+          (previousLabel.includes('Sem transportador') && label.includes('Sem ETA')) ||
+          (previousLabel.includes('Sem ETA') && label.includes('Sem transportador'))
+        );
+
+        return (
+          <GrupoDia
+            key={key}
+            label={label}
+            pedidos={pedidos}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            selecionadosIds={selecionadosIds}
+            onToggleSelecao={onToggleSelecao}
+            modoSelecao={modoSelecao}
+            className={index > 0 ? (isSpecialTransition ? 'pt-5' : 'pt-3') : ''}
+          />
+        );
+      })}
     </div>
   );
 }
