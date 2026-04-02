@@ -268,8 +268,8 @@ Deno.serve(async (req) => {
           ['Status de recebimento', embarque.status_recebimento_embarque || 'Pendente'],
           ['Volumes', embarque.volumes || '-'],
         ];
-        drawCard(page.marginX, y, usableWidth, 16 + (linhas.length * 10), `Embarque ${index + 1}`, linhas);
-        y += 16 + (linhas.length * 10) + 5;
+        const embarqueHeight = drawCard(page.marginX, y, usableWidth, `Embarque ${index + 1}`, linhas);
+        y += embarqueHeight + 5;
       });
     }
 

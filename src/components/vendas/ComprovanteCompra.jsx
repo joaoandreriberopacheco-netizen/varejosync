@@ -504,12 +504,14 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
     setGerando(true);
     try {
       const pdf = await gerarPDF();
-      if (!pdf) return;
+      if (!pdf) {
+        toast.error('Não foi possível montar o PDF');
+        return;
+      }
 
       const fileName = `pedido-${pedido?.numero || 'comprovante'}.pdf`;
       const pdfBlob = pdf.output('blob');
 
-      // Tenta Web Share API com arquivo PDF (mobile nativo)
       if (navigator.share && navigator.canShare) {
         const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
         if (navigator.canShare({ files: [file] })) {
@@ -518,8 +520,8 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
         }
       }
 
-      // Fallback: download
       pdf.save(fileName);
+      toast.success('PDF gerado com sucesso');
     } catch (e) {
       if (e.name !== 'AbortError') toast.error('Erro ao gerar PDF');
     } finally {
@@ -576,7 +578,7 @@ export default function ComprovanteCompra({ pedido, open, onClose }) {
             className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 text-white h-9 text-xs gap-1.5 rounded-xl px-4"
           >
             {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
-            {gerando ? 'Gerando...' : 'Compartilhar'}
+            {gerando ? 'Gerando...' : 'PDF'}
           </Button>
         </div>
       </div>
