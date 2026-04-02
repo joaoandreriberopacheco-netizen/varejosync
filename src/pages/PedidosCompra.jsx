@@ -34,7 +34,7 @@ export default function PedidosCompraPage() {
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [formaPagamentoLote, setFormaPagamentoLote] = useState('Parcelado');
   const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
-  const [groupBy, setGroupBy] = useState('data_pedido');
+  const [groupBy, setGroupBy] = useState('eta_transportadora');
   const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
@@ -173,9 +173,39 @@ export default function PedidosCompraPage() {
     });
   }, [pedidos, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal]);
 
-  const valorTotal = useMemo(() => {
-    return filtrados.reduce((acc, p) => acc + (p.valor_total || 0), 0);
+  const calcularValorPendentePedido = (pedido) => {
+    const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+    const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+
+    const recebidosPorProduto = embarques.reduce((acc, embarque) => {
+      const itensEmbarcados = Array.isArray(embarque.itens_embarcados) ? embarque.itens_embarcados : [];
+      itensEmbarcados.forEach((item) => {
+        const produtoId = item.produto_id;
+        if (!produtoId) return;
+        acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || 0);
+      });
+      return acc;
+    }, {});
+
+    return itens.reduce((acc, item) => {
+      const quantidade = Number(item.quantidade) || 0;
+      const recebida = recebidosPorProduto[item.produto_id] || 0;
+      const pendente = Math.max(0, quantidade - recebida);
+      const custoUnitario = Number(item.custo_unitario) || 0;
+      return acc + (pendente * custoUnitario);
+    }, 0);
+  };
+
+  const pedidosAprovadosPendentes = useMemo(() => {
+    return filtrados.filter((pedido) => {
+      const aprovado = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado';
+      return aprovado && calcularValorPendentePedido(pedido) > 0;
+    });
   }, [filtrados]);
+
+  const valorTotal = useMemo(() => {
+    return pedidosAprovadosPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
+  }, [pedidosAprovadosPendentes]);
 
   const grupos = useMemo(() => {
     const normalizeTransportadora = (pedido) => {
@@ -227,12 +257,12 @@ export default function PedidosCompraPage() {
     };
 
     const map = {};
-    filtrados.forEach((pedido) => {
+    pedidosAprovadosPendentes.forEach((pedido) => {
       const meta = getGroupMeta(pedido);
       if (!map[meta.key]) {
         map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
       }
-      map[meta.key].pedidos.push(pedido);
+      map[meta.key].pedidos.push({ ...pedido, valor_pendente_entrega: calcularValorPendentePedido(pedido) });
     });
 
     return Object.values(map)
@@ -246,7 +276,7 @@ export default function PedidosCompraPage() {
           return compareValues(valorA, valorB);
         })
       }));
-  }, [filtrados, groupBy, sortOrder]);
+  }, [pedidosAprovadosPendentes, groupBy, sortOrder]);
 
   const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal;
 
@@ -256,7 +286,7 @@ export default function PedidosCompraPage() {
       <div className="pb-3 mb-1 flex items-start justify-between gap-3">
         <div>
           <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Pedidos de Compra</p>
-          <p className="text-xs text-gray-400">{filtrados.length} pedidos · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xs text-gray-400">{pedidosAprovadosPendentes.length} pedidos aprovados com saldo pendente · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
         <PedidosCompraOrganizer
           groupBy={groupBy}

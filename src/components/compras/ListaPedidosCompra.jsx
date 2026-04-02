@@ -181,7 +181,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             {/* Valor + data */}
             <div className="flex-none text-right">
               <p className="text-[0.95rem] font-bold text-gray-900 dark:text-white leading-none">
-                {R(pedido.valor_total)}
+                {R(pedido.valor_pendente_entrega ?? pedido.valor_total)}
               </p>
               <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1">
                 {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
@@ -236,7 +236,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
 function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao }) {
   const [open, setOpen] = useState(true);
-  const valorTotal = pedidos.reduce((acc, p) => acc + (p.valor_total || 0), 0);
+  const valorTotal = pedidos.reduce((acc, p) => acc + ((p.valor_pendente_entrega ?? p.valor_total) || 0), 0);
 
   return (
     <div className="w-full space-y-2">
