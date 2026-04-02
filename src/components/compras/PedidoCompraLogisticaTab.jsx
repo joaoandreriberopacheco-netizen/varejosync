@@ -172,8 +172,10 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
+            variant="outline"
             onClick={handleNovoEmbarque}
-            className="h-8 px-3 text-xs bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white border-0 shadow-sm font-semibold">
+            className="h-8 px-3 text-xs border-0 shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <Plus className="w-3.5 h-3.5 mr-1" />
             Informar Embarque
           </Button>
         </div>
