@@ -160,7 +160,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none">
+                  <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.08em]">
                     {pedido.numero}
                   </span>
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
@@ -219,7 +219,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           <AlertDialogHeader>
             <AlertDialogTitle className="dark:text-white">Excluir rascunho?</AlertDialogTitle>
             <AlertDialogDescription className="dark:text-gray-400">
-              O pedido <strong>{pedido.numero}</strong> será excluído permanentemente.
+              O pedido <strong className="font-mono tracking-[0.08em]">{pedido.numero}</strong> será excluído permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

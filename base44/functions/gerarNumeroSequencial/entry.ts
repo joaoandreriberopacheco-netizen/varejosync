@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-function gerarCodigoAleatorio(tamanho = 5) {
+function gerarBloco(tamanho = 3) {
   const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let resultado = '';
   const array = new Uint32Array(tamanho);
@@ -11,6 +11,10 @@ function gerarCodigoAleatorio(tamanho = 5) {
   }
 
   return resultado;
+}
+
+function gerarCodigoAleatorio() {
+  return `${gerarBloco(3)}-${gerarBloco(3)}`;
 }
 
 Deno.serve(async (req) => {
@@ -43,7 +47,7 @@ Deno.serve(async (req) => {
     );
 
     for (let tentativa = 0; tentativa < 50; tentativa++) {
-      const numero = gerarCodigoAleatorio(5);
+      const numero = gerarCodigoAleatorio();
       if (!existentes.has(numero)) {
         return Response.json({ numero });
       }
