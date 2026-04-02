@@ -366,7 +366,8 @@ export default function PedidosCompraPage() {
         modoSelecao={modoSelecao}
         quantidadeSelecionados={selecionadosIds.length}
         enviandoLote={enviandoLote}
-        grupos={grupos}
+        pedidos={filtrados}
+        filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Fornecedores: ${fornecedorSel.length || 0} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'}`}
         kpis={{
           totalPedidos: pedidosVisiveisPendentes.length,
           totalGeral: valorTotal,

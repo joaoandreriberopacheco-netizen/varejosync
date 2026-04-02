@@ -1,36 +1,37 @@
 import React, { useState } from 'react';
-import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpreadsheet } from 'lucide-react';
+import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 
-export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, grupos = [], kpis = {} }) {
+export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {} }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [gerando, setGerando] = useState(false);
+  const [gerando, setGerando] = useState('');
 
-  const handleGerarRelatorio = async () => {
-    setGerando(true);
+  const handleGerarRelatorio = async (version) => {
+    setGerando(version);
     try {
-      const resposta = await base44.functions.invoke('gerarRelatorioPedidosCompra', {
-        grupos,
-        filtros_desc: 'Todos os pedidos',
-        kpis
+      const resposta = await gerarRelatorioPedidosCompra({
+        pedidos,
+        version,
+        filtros_desc: filtrosDesc,
+        kpis,
       });
-      
+
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `RelatorioCompras_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.download = `RelatorioCompras_${version}_${new Date().toISOString().slice(0, 10)}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-      
-      toast.success('Relatório gerado com sucesso');
+
+      toast.success(`Relatório ${version} gerado com sucesso`);
       setIsExpanded(false);
     } catch (error) {
       toast.error('Erro ao gerar relatório');
       console.error(error);
     } finally {
-      setGerando(false);
+      setGerando('');
     }
   };
 
@@ -68,10 +69,17 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     },
     {
       icon: <FileBarChart2 className="w-5 h-5" />,
-      label: 'Relatório',
-      onClick: handleGerarRelatorio,
+      label: 'PDF compacto',
+      onClick: () => handleGerarRelatorio('compacta'),
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
-      disabled: gerando,
+      disabled: !!gerando,
+    },
+    {
+      icon: <FileSpreadsheet className="w-5 h-5" />,
+      label: 'PDF expandido',
+      onClick: () => handleGerarRelatorio('expandida'),
+      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+      disabled: !!gerando,
     },
   ];
 

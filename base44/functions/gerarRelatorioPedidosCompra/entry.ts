@@ -1,153 +1,212 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
-import { jsPDF } from 'npm:jspdf@2.5.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { jsPDF } from 'npm:jspdf@2.5.2';
 
-const safe = (s) => (s || '').replace(/[\u0080-\uFFFF]/g, (c) => {
-  const map = { 'ã':'a','â':'a','á':'a','à':'a','ä':'a','Ã':'A','Â':'A','Á':'A','À':'A','é':'e','ê':'e','è':'e','É':'E','Ê':'E','í':'i','Í':'I','ó':'o','ô':'o','õ':'o','Ó':'O','Ô':'O','Õ':'O','ú':'u','Ú':'U','ü':'u','ç':'c','Ç':'C','ñ':'n','–':'-','—':'-','"':'"','"':'"',};
-  return map[c] || '?';
-});
-
-const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-const fmtDate = (s) => {
-  if (!s) return '-';
-  const d = new Date(s + (s.length === 10 ? 'T12:00:00' : ''));
+const moeda = (valor = 0) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const percentual = (valor = 0) => `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+const data = (valor) => {
+  if (!valor) return '-';
+  const d = new Date(valor);
+  if (Number.isNaN(d.getTime())) return String(valor);
   return d.toLocaleDateString('pt-BR');
 };
 
-const STATUS_CORES = {
-  'Rascunho': [240, 240, 240],
-  'Aguardando Liberação': [255, 250, 205],
-  'Aprovado': [200, 255, 200],
-  'Despachado': [200, 220, 255],
-  'Em Recepção': [220, 200, 255],
-  'Pendência': [255, 220, 150],
-  'Devolvido': [255, 200, 200],
-  'Concluído': [180, 255, 180],
-  'Cancelado': [255, 180, 180],
+const custoCalculadoProduto = (produto = {}) => {
+  return (Number(produto.valor_compra) || 0)
+    + (Number(produto.custo_frete_padrao) || 0)
+    + (Number(produto.custo_imposto1_padrao) || 0)
+    + (Number(produto.custo_imposto2_padrao) || 0)
+    + (Number(produto.custo_outros_padrao) || 0)
+    - (Number(produto.desconto_compra_padrao) || 0);
+};
+
+const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
+  const lines = doc.splitTextToSize(String(text || '-'), maxWidth);
+  doc.text(lines, x, y);
+  return y + (lines.length * lineHeight);
 };
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { grupos = [], filtros_desc = '', kpis = {} } = await req.json();
-
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const W = doc.internal.pageSize.getWidth();
-    const M = 12;
-    let y = 12;
-
-    const line = (color = [220,220,220]) => { doc.setDrawColor(...color); doc.line(M, y, W - M, y); y += 2.5; };
-    const newPage = () => { doc.addPage(); y = 12; };
-    const checkY = (h) => { if (y + h > 275) newPage(); };
-
-    // Header
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(safe('PEDIDOS DE COMPRA'), M, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(safe(new Date().toLocaleString('pt-BR')), W - M, y, { align: 'right' });
-    y += 8;
-    line();
-
-    // Filtros
-    if (filtros_desc) {
-      doc.setFontSize(8);
-      doc.text(safe(`Filtros: ${filtros_desc}`), M, y);
-      y += 4;
-      line();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // KPIs resumo
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text(safe(`Total de Pedidos: ${kpis.totalPedidos || 0}`), M, y);
-    doc.text(safe(`Total em Aberto: ${fmt(kpis.totalEmAberto || 0)}`), W / 2, y);
-    y += 5;
-    doc.text(safe(`Total Geral: ${fmt(kpis.totalGeral || 0)}`), M, y);
-    y += 4;
-    line();
+    const payload = await req.json();
+    const {
+      pedidos = [],
+      version = 'compacta',
+      filtros_desc = 'Pedidos filtrados na tela',
+      kpis = {},
+    } = payload;
 
-    // Headers de coluna
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    const colNum = M;
-    const colForn = M + 25;
-    const colStatus = M + 85;
-    const colData = M + 115;
-    const colValor = W - M;
+    const produtoIds = [...new Set(
+      pedidos.flatMap((pedido) => Array.isArray(pedido.itens) ? pedido.itens.map((item) => item.produto_id).filter(Boolean) : [])
+    )];
 
-    doc.text('PEDIDO', colNum, y);
-    doc.text('FORNECEDOR', colForn, y);
-    doc.text('STATUS', colStatus, y);
-    doc.text('DATA', colData, y);
-    doc.text('VALOR', colValor, y, { align: 'right' });
-    y += 2.5;
-    line([180,180,180]);
+    const produtos = produtoIds.length
+      ? await base44.asServiceRole.entities.Produto.list()
+      : [];
 
-    // Grupos cronológicos
-    for (const grupo of grupos) {
-      checkY(10);
+    const produtosMap = Object.fromEntries((produtos || []).map((produto) => [produto.id, produto]));
 
-      // Header do grupo (data/label)
-      doc.setFillColor(240, 240, 240);
-      doc.rect(M, y - 1, W - 2*M, 5, 'F');
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 12;
+    const contentWidth = pageWidth - (margin * 2);
+    let y = 16;
+
+    const ensureSpace = (needed = 24) => {
+      if (y + needed > pageHeight - 12) {
+        doc.addPage();
+        y = 16;
+      }
+    };
+
+    const drawHeader = () => {
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(margin, y, contentWidth, 26, 4, 4, 'F');
+      doc.setTextColor(31, 41, 55);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(60, 60, 60);
-      doc.text(safe(grupo.label?.toUpperCase() || 'SEM DATA'), M + 1, y + 3);
-      y += 6;
+      doc.setFontSize(16);
+      doc.text(version === 'expandida' ? 'Relatório Expandido de Compras' : 'Relatório Compacto de Compras', margin + 6, y + 8);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(107, 114, 128);
+      doc.text(filtros_desc, margin + 6, y + 14);
+      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin + 6, y + 19);
+      y += 32;
+    };
 
-      // Pedidos do grupo
-      for (const pedido of (grupo.pedidos || [])) {
-        checkY(6);
-        
-        const statusCor = STATUS_CORES[pedido.status] || [240, 240, 240];
-        doc.setFillColor(...statusCor);
-        doc.rect(colStatus - 1, y - 2.5, 25, 5, 'F');
+    const drawKpis = () => {
+      const cards = [
+        { label: 'Pedidos', value: String(kpis.totalPedidos || pedidos.length || 0) },
+        { label: 'Total pendente', value: moeda(kpis.totalGeral || 0) },
+        { label: 'Em aberto', value: moeda(kpis.totalEmAberto || 0) },
+        { label: 'Pago não entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
+      ];
+
+      const gap = 4;
+      const cardWidth = (contentWidth - (gap * 3)) / 4;
+      cards.forEach((card, index) => {
+        const x = margin + ((cardWidth + gap) * index);
+        doc.setFillColor(250, 250, 250);
+        doc.roundedRect(x, y, cardWidth, 18, 3, 3, 'F');
+        doc.setTextColor(107, 114, 128);
+        doc.setFontSize(8);
+        doc.text(card.label, x + 4, y + 6);
+        doc.setTextColor(17, 24, 39);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(String(card.value), x + 4, y + 13);
+      });
+      doc.setFont('helvetica', 'normal');
+      y += 24;
+    };
+
+    const drawPedidoHeader = (pedido) => {
+      ensureSpace(30);
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F');
+      doc.setTextColor(17, 24, 39);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(`${pedido.numero || 'Sem número'} · ${pedido.fornecedor_nome || 'Sem fornecedor'}`, margin + 5, y + 7);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(75, 85, 99);
+      doc.text(`Emissão: ${data(pedido.data_emissao || pedido.created_date)}`, margin + 5, y + 13);
+      doc.text(`Entrega: ${data(pedido.data_prevista_entrega)}`, margin + 58, y + 13);
+      doc.text(`Status: ${pedido.status || '-'}`, margin + 105, y + 13);
+      doc.text(`Total: ${moeda(pedido.valor_total)}`, margin + 155, y + 13);
+      y += 26;
+    };
+
+    const drawCompacto = (pedido) => {
+      drawPedidoHeader(pedido);
+      const observacao = pedido.observacoes || pedido.historico || '-';
+      doc.setFontSize(8.5);
+      doc.setTextColor(107, 114, 128);
+      y = addWrappedText(doc, observacao, margin + 2, y, contentWidth - 4, 4.5) + 3;
+    };
+
+    const drawExpandido = (pedido) => {
+      drawPedidoHeader(pedido);
+      const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+      let subtotalCompra = 0;
+      let subtotalVenda = 0;
+
+      itens.forEach((item, index) => {
+        const produto = produtosMap[item.produto_id] || {};
+        const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
+        const precoVenda = Number(produto.preco_venda_padrao) || 0;
+        const markup = Number(produto.preco_venda_percentual) || 0;
+        const quantidade = Number(item.quantidade) || 0;
+        const custoPedido = Number(item.custo_unitario) || 0;
+        const valorCompra = Number(produto.valor_compra) || custoPedido;
+        subtotalCompra += quantidade * custoCalculado;
+        subtotalVenda += quantidade * precoVenda;
+
+        ensureSpace(44);
+        doc.setFillColor(index % 2 === 0 ? 251 : 247, index % 2 === 0 ? 251 : 247, index % 2 === 0 ? 251 : 247);
+        doc.roundedRect(margin, y, contentWidth, 36, 3, 3, 'F');
+
+        doc.setTextColor(17, 24, 39);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.text(item.produto_nome || produto.nome || 'Item sem nome', margin + 4, y + 6);
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7.5);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(107, 114, 128);
+        doc.text(`Qtd ${quantidade} ${item.unidade_medida || produto.unidade_principal || 'UN'}`, margin + 4, y + 11);
+        doc.text(`Custo pedido ${moeda(custoPedido)}`, margin + 45, y + 11);
+        doc.text(`Valor compra ${moeda(valorCompra)}`, margin + 92, y + 11);
+        doc.text(`Custo calc. ${moeda(custoCalculado)}`, margin + 142, y + 11);
 
-        doc.text(safe(pedido.numero?.slice(-8) || '-'), colNum, y);
-        doc.text(safe((pedido.fornecedor_nome || '-').slice(0, 18)), colForn, y);
-        doc.text(safe(pedido.status || '-'), colStatus, y);
-        doc.text(safe(fmtDate(pedido.data_prevista_entrega || pedido.created_date)), colData, y);
-        doc.setFont('helvetica', 'bold');
-        doc.text(safe(fmt(pedido.valor_total || 0)), colValor, y, { align: 'right' });
+        doc.text(`Frete ${moeda(produto.custo_frete_padrao || 0)}`, margin + 4, y + 17);
+        doc.text(`Imp.1 ${moeda(produto.custo_imposto1_padrao || 0)}`, margin + 45, y + 17);
+        doc.text(`Imp.2 ${moeda(produto.custo_imposto2_padrao || 0)}`, margin + 92, y + 17);
+        doc.text(`Outros ${moeda(produto.custo_outros_padrao || 0)}`, margin + 142, y + 17);
 
-        y += 5;
+        doc.text(`Desconto ${moeda(produto.desconto_compra_padrao || 0)}`, margin + 4, y + 23);
+        doc.text(`Preço venda ${moeda(precoVenda)}`, margin + 45, y + 23);
+        doc.text(`Markup ${percentual(markup)}`, margin + 92, y + 23);
+        doc.text(`Total venda ${moeda(quantidade * precoVenda)}`, margin + 142, y + 23);
+
+        y += 40;
+      });
+
+      ensureSpace(20);
+      doc.setFillColor(240, 253, 244);
+      doc.roundedRect(margin, y, contentWidth, 16, 3, 3, 'F');
+      doc.setTextColor(22, 101, 52);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text(`Total comercial estimado (custo): ${moeda(subtotalCompra)}`, margin + 4, y + 6.5);
+      doc.text(`Total comercial estimado (venda): ${moeda(subtotalVenda)}`, margin + 4, y + 12);
+      y += 20;
+    };
+
+    drawHeader();
+    drawKpis();
+
+    pedidos.forEach((pedido) => {
+      if (version === 'expandida') {
+        drawExpandido(pedido);
+      } else {
+        drawCompacto(pedido);
       }
-
-      y += 2;
-    }
-
-    // Rodapé
-    checkY(12);
-    y += 2;
-    line();
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text(safe(`Total Pedidos: ${kpis.totalPedidos || 0}`), M, y);
-    y += 5;
-    doc.text(safe(`Total Geral: ${fmt(kpis.totalGeral || 0)}`), M, y);
-    y += 5;
-    doc.text(safe(`Valor em Aberto: ${fmt(kpis.totalEmAberto || 0)}`), M, y);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(160, 160, 160);
-    doc.text('Não é documento fiscal', W / 2, 290, { align: 'center' });
+    });
 
     const pdfBytes = doc.output('arraybuffer');
     return new Response(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename=RelatorioPedidosCompra.pdf',
+        'Content-Disposition': `attachment; filename="relatorio-pedidos-${version}.pdf"`,
       },
     });
   } catch (error) {
