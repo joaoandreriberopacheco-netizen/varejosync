@@ -480,7 +480,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           onChange={(e) => setInp(item.produto_id, 'valor_compra', e.target.value)}
                           onFocus={(e) => e.target.select()}
                           onBlur={() => handleCostBlur(item.produto_id, 'valor_compra')}
-                          className="h-8 text-center text-sm bg-gray-50 dark:bg-gray-800 border-0 shadow-sm"
+                          className="h-8 text-center text-sm text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 border-0 shadow-sm"
                         />
                       </td>
                       {/* Desconto/Acréscimo % com toggle */}
@@ -516,7 +516,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                                 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
                                 : (costs[item.produto_id]?.desconto_pct || 0) > 0
                                 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                                : 'bg-gray-50 dark:bg-gray-800'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                             }`}
                           />
                         </div>
