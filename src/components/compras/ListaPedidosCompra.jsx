@@ -18,7 +18,7 @@ const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits:
 
 const STATUS_CONFIG = {
   'Rascunho':             { dot: 'bg-gray-300 dark:bg-gray-600',     pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
-  'Aguardando Liberação': { dot: 'bg-emerald-300 dark:bg-emerald-500/80', pill: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' },
+  'Aguardando Liberação': { dot: 'bg-slate-300 dark:bg-slate-500', pill: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' },
   'Aprovado':             { dot: 'bg-emerald-400 dark:bg-emerald-400',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Despachado':           { dot: 'bg-cyan-400 dark:bg-cyan-400',      pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Em Trânsito':          { dot: 'bg-sky-400 dark:bg-sky-400',        pill: 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400' },
