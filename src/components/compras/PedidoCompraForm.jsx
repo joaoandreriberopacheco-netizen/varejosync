@@ -1250,8 +1250,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
               <PedidoCompraLogisticaTab
                 pedido={pedidoLogistica || pedido}
                 onPedidoUpdated={async () => {
-                  const atualizado = await base44.entities.PedidoCompra.filter({ id: pedido.id });
-                  if (atualizado?.[0]) setPedidoLogistica(atualizado[0]);
+                  const pedidoId = (pedidoLogistica || pedido)?.id;
+                  if (!pedidoId) return;
+                  const atualizado = await base44.entities.PedidoCompra.filter({ id: pedidoId });
+                  if (atualizado?.[0]) {
+                    setPedidoLogistica(atualizado[0]);
+                    setFormData(prev => ({ ...prev, ...atualizado[0] }));
+                  }
                 }}
               />
             ) : (

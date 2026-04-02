@@ -199,7 +199,7 @@ export default function AbaRecepção({ pedido }) {
           isOpen={!!selectedEmbarque}
           onClose={() => setSelectedEmbarque(null)}
           embarque={selectedEmbarque}
-          pedido={pedido}
+          pedido={pedidoAtual || pedido}
           onRecebido={() => window.location.reload()}
         />
       )}
