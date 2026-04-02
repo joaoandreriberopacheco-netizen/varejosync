@@ -191,8 +191,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         }
       }
 
+      const recebimentoNumero = `REC-${String(embarque?.id || '').slice(-6) || String(Date.now()).slice(-6)}`;
       toast({ title: 'Recebimento concluído', className: 'bg-green-100 text-green-800' });
-      onRecebido?.();
+      onRecebido?.({ recebimentoNumero });
       onClose();
     } catch (error) {
       toast({ title: 'Erro ao confirmar', description: error.message, variant: 'destructive' });

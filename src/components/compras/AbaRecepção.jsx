@@ -8,6 +8,7 @@ export default function AbaRecepção({ pedido }) {
   const [movimentos, setMovimentos] = useState([]);
   const [isLoadingMovimentos, setIsLoadingMovimentos] = useState(false);
   const [pedidoAtual, setPedidoAtual] = useState(pedido);
+  const [recebimentoSucesso, setRecebimentoSucesso] = useState(null);
 
   useEffect(() => {
     setPedidoAtual(pedido);
@@ -200,8 +201,41 @@ export default function AbaRecepção({ pedido }) {
           onClose={() => setSelectedEmbarque(null)}
           embarque={selectedEmbarque}
           pedido={pedidoAtual || pedido}
-          onRecebido={() => window.location.reload()}
+          onRecebido={async ({ recebimentoNumero } = {}) => {
+            const pedidoId = (pedidoAtual || pedido)?.id;
+            if (pedidoId) {
+              const atualizado = await base44.entities.PedidoCompra.filter({ id: pedidoId });
+              if (atualizado?.[0]) {
+                setPedidoAtual(atualizado[0]);
+              }
+            }
+            loadMovimentos();
+            setRecebimentoSucesso({
+              recebimentoNumero: recebimentoNumero || `REC-${(selectedEmbarque?.id || '').slice(-6)}`,
+            });
+          }}
         />
+      )}
+
+      {recebimentoSucesso && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-gray-900 shadow-xl p-6 text-center space-y-4">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
+              <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recebimento concluído com sucesso</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Número do recebimento</p>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">{recebimentoSucesso.recebimentoNumero}</p>
+            </div>
+            <Button
+              onClick={() => setRecebimentoSucesso(null)}
+              className="w-full h-11 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 rounded-xl"
+            >
+              Fechar
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
