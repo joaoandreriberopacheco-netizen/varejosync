@@ -1,6 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
+const safe = (texto) => String(texto || '').replace(/[\u0080-\uFFFF]/g, (c) => {
+  const map = {
+    'á':'a','à':'a','â':'a','ã':'a','ä':'a',
+    'Á':'A','À':'A','Â':'A','Ã':'A','Ä':'A',
+    'é':'e','è':'e','ê':'e','ë':'e',
+    'É':'E','È':'E','Ê':'E','Ë':'E',
+    'í':'i','ì':'i','î':'i','ï':'i',
+    'Í':'I','Ì':'I','Î':'I','Ï':'I',
+    'ó':'o','ò':'o','ô':'o','õ':'o','ö':'o',
+    'Ó':'O','Ò':'O','Ô':'O','Õ':'O','Ö':'O',
+    'ú':'u','ù':'u','û':'u','ü':'u',
+    'Ú':'U','Ù':'U','Û':'U','Ü':'U',
+    'ç':'c','Ç':'C','ñ':'n','Ñ':'N',
+    'ª':'a','º':'o','°':'o',
+    '–':'-','—':'-','…':'...','•':'-','→':'->',
+    '“':'"','”':'"','‘':"'",'’':"'"
+  };
+  return map[c] || '?';
+});
+
 const moeda = (valor = 0) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const percentual = (valor = 0) => `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 const data = (valor) => {
@@ -20,7 +40,7 @@ const custoCalculadoProduto = (produto = {}) => {
 };
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
-  const lines = doc.splitTextToSize(String(text || '-'), maxWidth);
+  const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
   doc.text(lines, x, y);
   return y + (lines.length * lineHeight);
 };
@@ -71,11 +91,11 @@ Deno.serve(async (req) => {
       doc.setTextColor(31, 41, 55);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text(version === 'expandida' ? 'Relatório Expandido de Compras' : 'Relatório Compacto de Compras', margin + 6, y + 8);
+      doc.text(safe(version === 'expandida' ? 'Relatório Expandido de Compras' : 'Relatório Compacto de Compras'), margin + 6, y + 8);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(107, 114, 128);
-      doc.text(filtros_desc, margin + 6, y + 14);
+      doc.text(safe(filtros_desc), margin + 6, y + 14);
       doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin + 6, y + 19);
       y += 32;
     };
@@ -100,7 +120,7 @@ Deno.serve(async (req) => {
         doc.setTextColor(17, 24, 39);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
-        doc.text(String(card.value), x + 4, y + 13);
+        doc.text(safe(String(card.value)), x + 4, y + 13);
       });
       doc.setFont('helvetica', 'normal');
       y += 24;
@@ -113,10 +133,10 @@ Deno.serve(async (req) => {
       doc.setTextColor(17, 24, 39);
       doc.setFont('courier', 'bold');
       doc.setFontSize(11);
-      doc.text(String(pedido.numero || 'Sem número'), margin + 5, y + 7);
+      doc.text(safe(String(pedido.numero || 'Sem número')), margin + 5, y + 7);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.5);
-      doc.text(String(pedido.fornecedor_nome || 'Sem fornecedor'), margin + 40, y + 7);
+      doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 40, y + 7);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
       doc.setTextColor(75, 85, 99);
@@ -136,10 +156,10 @@ Deno.serve(async (req) => {
       doc.setTextColor(17, 24, 39);
       doc.setFont('courier', 'bold');
       doc.setFontSize(11);
-      doc.text(String(pedido.numero || 'Sem número'), margin + 9, y + 8);
+      doc.text(safe(String(pedido.numero || 'Sem número')), margin + 9, y + 8);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.5);
-      doc.text(String(pedido.fornecedor_nome || 'Sem fornecedor'), margin + 9, y + 14);
+      doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 9, y + 14);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(107, 114, 128);
@@ -206,7 +226,7 @@ Deno.serve(async (req) => {
         doc.setTextColor(31, 41, 55);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(6.8);
-        const nomeItem = doc.splitTextToSize(String(item.produto_nome || produto.nome || 'Item sem nome'), 80)[0];
+        const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), 80)[0];
         doc.text(nomeItem, margin + 3, y + 3.5);
         doc.text(String(quantidade), margin + 88, y + 3.5);
         doc.text(moeda(custoPedido), margin + 104, y + 3.5);
