@@ -123,10 +123,23 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       // Se o pedido não tem data_emissao, usa a created_date como fallback
       const dataEmissao = pedido.data_emissao ||
         (pedido.created_date ? format(new Date(pedido.created_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
-      const pedidoComData = { ...pedido, data_emissao: dataEmissao };
-      setFormData(pedidoComData);
-      setHistory([pedidoComData]);
-      setHistoryIndex(0);
+      setFormData(prev => {
+        const pedidoComData = {
+          ...pedido,
+          data_emissao: dataEmissao,
+          embarques_registrados: pedido.embarques_registrados ?? prev?.embarques_registrados ?? [],
+          status_embarque: pedido.status_embarque ?? prev?.status_embarque,
+          status_recebimento_geral: pedido.status_recebimento_geral ?? prev?.status_recebimento_geral,
+          data_despacho: pedido.data_despacho ?? prev?.data_despacho,
+          data_chegada: pedido.data_chegada ?? prev?.data_chegada,
+          tem_divergencias: pedido.tem_divergencias ?? prev?.tem_divergencias,
+          conferencia_id: pedido.conferencia_id ?? prev?.conferencia_id,
+          manifesto_entrada_id: pedido.manifesto_entrada_id ?? prev?.manifesto_entrada_id,
+        };
+        setHistory([pedidoComData]);
+        setHistoryIndex(0);
+        return pedidoComData;
+      });
       return;
     }
 
