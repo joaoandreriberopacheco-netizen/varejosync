@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 import { format } from 'npm:date-fns';
 import { ptBR } from 'npm:date-fns/locale';
@@ -6,21 +6,42 @@ import { ptBR } from 'npm:date-fns/locale';
 const safe = (t) => {
   if (!t) return '';
   return String(t)
-    .replace(/[àáâãä]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
-    .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/[ç]/g,'c')
-    .replace(/[ÀÁÂÃÄ]/g,'A').replace(/[ÈÉÊË]/g,'E').replace(/[ÌÍÎÏ]/g,'I')
-    .replace(/[ÒÓÔÕÖ]/g,'O').replace(/[ÙÚÛÜ]/g,'U').replace(/[Ç]/g,'C');
+    .replace(/[àáâãä]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i')
+    .replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u').replace(/[ç]/g, 'c')
+    .replace(/[ÀÁÂÃÄ]/g, 'A').replace(/[ÈÉÊË]/g, 'E').replace(/[ÌÍÎÏ]/g, 'I')
+    .replace(/[ÒÓÔÕÖ]/g, 'O').replace(/[ÙÚÛÜ]/g, 'U').replace(/[Ç]/g, 'C');
 };
 
-const fmtDate = (d) => { if (!d) return '-'; try { return format(new Date(d), 'dd/MM/yyyy', { locale: ptBR }); } catch { return '-'; } };
-const fmtCur = (v) => { const n = parseFloat(v)||0; return 'R$ '+n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+const fmtDate = (d) => {
+  if (!d) return '-';
+  try {
+    return format(new Date(d), 'dd/MM/yyyy', { locale: ptBR });
+  } catch {
+    return '-';
+  }
+};
 
-// ── Layout constants ─────────────────────────────────────────────────────────
-const ML  = 14;   // margem esquerda mm
-const MR  = 14;   // margem direita mm
-const PW  = 210 - ML - MR;  // largura útil = 182mm
-const FS  = 10;   // font size pt (Courier New 10pt ≈ typewriter feel)
-const LH  = 5.0;  // line height mm
+const fmtDateTime = (d) => {
+  if (!d) return '-';
+  try {
+    return format(new Date(d), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+  } catch {
+    return '-';
+  }
+};
+
+const fmtCur = (v) => {
+  const n = parseFloat(v) || 0;
+  return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+const page = {
+  width: 210,
+  height: 297,
+  marginX: 12,
+  marginTop: 12,
+  marginBottom: 12,
+};
 
 Deno.serve(async (req) => {
   try {
@@ -33,229 +54,245 @@ Deno.serve(async (req) => {
 
     const pedidos = await base44.asServiceRole.entities.PedidoCompra.filter({ id: pedido_id });
     if (!pedidos?.length) return Response.json({ error: 'Pedido nao encontrado' }, { status: 404 });
-    const pedido = pedidos[0];
 
+    const pedido = pedidos[0];
     const fornecedor = pedido.fornecedor_id
       ? await base44.asServiceRole.entities.Terceiro.get(pedido.fornecedor_id).catch(() => null)
       : null;
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(FS);
+    const usableWidth = page.width - (page.marginX * 2);
+    let y = page.marginTop;
 
-    let y = 16;
-
-    const checkPage = (extra = 0) => {
-      if (y + extra > 277) { doc.addPage(); doc.setFont('courier','normal'); doc.setFontSize(FS); y = 16; }
+    const ensurePage = (neededHeight = 0) => {
+      if (y + neededHeight > page.height - page.marginBottom) {
+        doc.addPage();
+        y = page.marginTop;
+      }
     };
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-    const line = (txt, x = ML) => { checkPage(); doc.text(safe(txt), x, y); y += LH; };
-
-    const hline = () => {
-      checkPage();
-      doc.setDrawColor(180,180,180);
-      doc.line(ML, y - 1, ML + PW, y - 1);
-      y += 1.5;
+    const setText = (size = 10, weight = 'normal', color = [31, 41, 55]) => {
+      doc.setFont('helvetica', weight);
+      doc.setFontSize(size);
+      doc.setTextColor(color[0], color[1], color[2]);
     };
 
-    const boldLine = (txt, x = ML) => {
-      doc.setFont('courier','bold');
-      checkPage();
-      doc.text(safe(txt), x, y);
-      doc.setFont('courier','normal');
-      y += LH;
+    const drawText = (text, x, yy, options = {}) => {
+      doc.text(safe(text || ''), x, yy, options);
     };
 
-    // Linha com label à esquerda e valor à direita, nome com wrap
-    const row = (label, valor = '') => {
-      const labelLines = doc.splitTextToSize(safe(label), PW - 42);
-      checkPage(labelLines.length * LH);
-      const startY = y;
-      labelLines.forEach((l, i) => doc.text(l, ML, startY + i * LH));
-      if (valor) doc.text(safe(valor), ML + PW, startY, { align: 'right' });
-      y = startY + labelLines.length * LH;
+    const drawMutedLabel = (label, x, yy) => {
+      setText(8, 'normal', [107, 114, 128]);
+      drawText(label, x, yy);
     };
 
-    // ── Cabeçalho ────────────────────────────────────────────────────────────
-    doc.setFont('courier','bold');
-    doc.setFontSize(12);
-    doc.text('PEDIDO DE COMPRA', ML + PW / 2, y, { align: 'center' }); y += LH + 1;
-    doc.setFontSize(10);
-    doc.text(safe(pedido.numero || 'N/A'), ML + PW / 2, y, { align: 'center' }); y += LH;
-    doc.setFont('courier','normal');
-    doc.setFontSize(FS);
-    hline();
+    const drawValue = (value, x, yy, options = {}) => {
+      setText(10, 'bold', [17, 24, 39]);
+      drawText(value, x, yy, options);
+    };
 
-    // ── Dados Gerais ─────────────────────────────────────────────────────────
-    boldLine('DADOS GERAIS');
-    hline();
+    const drawPill = (text, x, yy, width) => {
+      doc.setFillColor(243, 244, 246);
+      doc.roundedRect(x, yy, width, 9, 4, 4, 'F');
+      setText(8, 'bold', [55, 65, 81]);
+      drawText(text, x + width / 2, yy + 5.8, { align: 'center' });
+    };
 
-    // Tabela 2 colunas: labels à esquerda, valores recuados
-    const dadosGerais = [
-      ['Fornecedor',         safe(fornecedor?.nome || pedido.fornecedor_nome || '-')],
-      ['Status',             safe(pedido.status || '-')],
-      ['Status Financeiro',  safe(pedido.status_aprovacao_financeira || 'Pendente')],
-      ['Criado em',          fmtDate(pedido.created_date) + '  por ' + safe(pedido.created_by || user.email)],
-      ['Prev. Entrega',      fmtDate(pedido.data_prevista_entrega)],
-    ];
-    if (pedido.tags?.length) dadosGerais.push(['Tags', safe(pedido.tags.join(', '))]);
+    const drawCard = (x, yy, width, height, title, rows) => {
+      ensurePage(height + 4);
+      doc.setFillColor(249, 250, 251);
+      doc.roundedRect(x, yy, width, height, 5, 5, 'F');
+      setText(9, 'bold', [31, 41, 55]);
+      drawText(title, x + 4, yy + 6);
+      let innerY = yy + 12;
+      rows.forEach(([label, value]) => {
+        drawMutedLabel(label, x + 4, innerY);
+        setText(9, 'bold', [17, 24, 39]);
+        const lines = doc.splitTextToSize(safe(value || '-'), width - 8);
+        lines.forEach((line, index) => {
+          drawText(line, x + 4, innerY + 4.5 + (index * 4.4));
+        });
+        innerY += Math.max(10, 6 + (lines.length * 4.4));
+      });
+    };
 
-    // Calcular largura da coluna label
-    const LABEL_W = 44; // mm
-    dadosGerais.forEach(([lbl, val]) => {
-      const valLines = doc.splitTextToSize(safe(val), PW - LABEL_W - 2);
-      checkPage(valLines.length * LH);
-      const rowY = y;
-      doc.setFont('courier','bold');
-      doc.text(safe(lbl), ML, rowY);
-      doc.setFont('courier','normal');
-      valLines.forEach((l, i) => doc.text(l, ML + LABEL_W, rowY + i * LH));
-      y = rowY + valLines.length * LH;
-    });
+    const drawSectionTitle = (title) => {
+      ensurePage(10);
+      setText(11, 'bold', [17, 24, 39]);
+      drawText(title, page.marginX, y);
+      y += 4;
+      doc.setDrawColor(229, 231, 235);
+      doc.line(page.marginX, y, page.marginX + usableWidth, y);
+      y += 6;
+    };
 
-    y += 1;
-    hline();
+    const drawWrappedTextBlock = (title, content) => {
+      const lines = doc.splitTextToSize(safe(content || '-'), usableWidth - 8);
+      const blockHeight = 14 + (lines.length * 4.5);
+      ensurePage(blockHeight + 2);
+      doc.setFillColor(249, 250, 251);
+      doc.roundedRect(page.marginX, y, usableWidth, blockHeight, 5, 5, 'F');
+      setText(9, 'bold', [31, 41, 55]);
+      drawText(title, page.marginX + 4, y + 6);
+      setText(9, 'normal', [55, 65, 81]);
+      lines.forEach((line, index) => {
+        drawText(line, page.marginX + 4, y + 12 + (index * 4.5));
+      });
+      y += blockHeight + 5;
+    };
 
-    // ── Itens ────────────────────────────────────────────────────────────────
-    boldLine('ITENS DO PEDIDO');
-    hline();
+    const subtotalItens = (pedido.itens || []).reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+    const frete = Number(pedido.valor_frete) || 0;
+    const desconto = Number(pedido.valor_desconto) || 0;
+    const totalPedido = Number(pedido.valor_total) || subtotalItens + frete - desconto;
+    const quantidadeItens = (pedido.itens || []).reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0);
+    const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+    const criador = pedido.created_by_nome || pedido.created_by_nickname || pedido.created_by || user.email || '-';
 
-    // Cabeçalho da tabela de itens
-    const C_QTD  = ML + 112;
-    const C_UNIT = ML + 138;
-    const C_DISC = ML + 158;
-    const C_TOT  = ML + PW;
-    const NOME_W = 108;
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, page.width, page.height, 'F');
 
-    doc.setFont('courier','bold');
-    doc.text('PRODUTO',   ML,     y);
-    doc.text('QTD',       C_QTD,  y);
-    doc.text('UNIT',      C_UNIT, y);
-    doc.text('DESC',      C_DISC, y);
-    doc.text('TOTAL',     C_TOT,  y, { align: 'right' });
-    doc.setFont('courier','normal');
-    y += LH;
-    hline();
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(page.marginX, y, usableWidth, 28, 7, 7, 'F');
+    setText(8, 'bold', [107, 114, 128]);
+    drawText('PEDIDO DE COMPRA', page.marginX + 5, y + 7);
+    setText(20, 'bold', [17, 24, 39]);
+    drawText(pedido.numero || 'Sem numero', page.marginX + 5, y + 17);
+    setText(9, 'normal', [75, 85, 99]);
+    drawText(fornecedor?.nome || pedido.fornecedor_nome || 'Fornecedor nao informado', page.marginX + 5, y + 24);
+
+    drawPill(safe(pedido.status || 'Sem status'), page.marginX + usableWidth - 42, y + 5, 37);
+    y += 34;
+
+    const colGap = 4;
+    const colWidth = (usableWidth - colGap) / 2;
+
+    drawCard(page.marginX, y, colWidth, 40, 'Resumo Executivo', [
+      ['Fornecedor', fornecedor?.nome || pedido.fornecedor_nome || '-'],
+      ['Emissao', fmtDate(pedido.data_emissao || pedido.created_date)],
+      ['Entrega prevista', fmtDate(pedido.data_prevista_entrega)],
+    ]);
+
+    drawCard(page.marginX + colWidth + colGap, y, colWidth, 40, 'Central Financeira', [
+      ['Total do pedido', fmtCur(totalPedido)],
+      ['Status financeiro', pedido.status_aprovacao_financeira || 'Pendente'],
+      ['Conta vinculada', pedido.conta_pagamento_id || '-'],
+    ]);
+    y += 45;
+
+    drawCard(page.marginX, y, colWidth, 34, 'Rastreabilidade', [
+      ['Criado por', criador],
+      ['Criado em', fmtDateTime(pedido.created_date)],
+    ]);
+
+    drawCard(page.marginX + colWidth + colGap, y, colWidth, 34, 'Operacao', [
+      ['Itens', `${pedido.itens?.length || 0} produtos / ${quantidadeItens} unidades`],
+      ['Embarques', `${embarques.length} registrado(s)`],
+    ]);
+    y += 39;
+
+    drawSectionTitle('Itens do Pedido');
+
+    const tableColumns = {
+      produto: page.marginX,
+      qtd: page.marginX + 102,
+      unit: page.marginX + 122,
+      total: page.marginX + usableWidth,
+    };
+
+    ensurePage(12);
+    doc.setFillColor(243, 244, 246);
+    doc.roundedRect(page.marginX, y, usableWidth, 10, 4, 4, 'F');
+    setText(8, 'bold', [55, 65, 81]);
+    drawText('PRODUTO', tableColumns.produto + 3, y + 6.3);
+    drawText('QTD', tableColumns.qtd, y + 6.3);
+    drawText('UNIT.', tableColumns.unit, y + 6.3);
+    drawText('TOTAL', tableColumns.total - 3, y + 6.3, { align: 'right' });
+    y += 13;
 
     (pedido.itens || []).forEach((item) => {
-      const nomeLines = doc.splitTextToSize(safe(item.produto_nome || '-'), NOME_W);
-      checkPage(nomeLines.length * LH + 1);
-      const rowY = y;
-      nomeLines.forEach((l, i) => doc.text(l, ML, rowY + i * LH));
-      doc.text(String(item.quantidade || 0),                    C_QTD,  rowY);
-      doc.text(fmtCur(item.custo_unitario || 0),                C_UNIT, rowY);
-      doc.text(item.valor_desconto_item > 0 ? fmtCur(item.valor_desconto_item) : '-', C_DISC, rowY);
-      doc.text(fmtCur(item.total || 0),                         C_TOT,  rowY, { align: 'right' });
-      y = rowY + nomeLines.length * LH;
+      const nome = item.produto_nome || '-';
+      const nomeLines = doc.splitTextToSize(safe(nome), 96);
+      const infoExtra = `${item.unidade_medida || 'UN'}${item.fator_conversao ? ` | fator ${item.fator_conversao}` : ''}`;
+      const rowHeight = Math.max(14, 8 + (nomeLines.length * 4.4));
+      ensurePage(rowHeight + 3);
+
+      doc.setFillColor(250, 250, 250);
+      doc.roundedRect(page.marginX, y, usableWidth, rowHeight, 4, 4, 'F');
+
+      setText(9, 'bold', [17, 24, 39]);
+      nomeLines.forEach((line, index) => {
+        drawText(line, tableColumns.produto + 3, y + 5 + (index * 4.4));
+      });
+      setText(8, 'normal', [107, 114, 128]);
+      drawText(infoExtra, tableColumns.produto + 3, y + rowHeight - 3.5);
+
+      setText(9, 'bold', [17, 24, 39]);
+      drawText(String(item.quantidade || 0), tableColumns.qtd, y + 6);
+      drawText(fmtCur(item.custo_unitario || 0), tableColumns.unit, y + 6);
+      drawText(fmtCur(item.total || 0), tableColumns.total - 3, y + 6, { align: 'right' });
+      y += rowHeight + 3;
     });
 
-    y += 1;
-    hline();
+    drawSectionTitle('Fechamento');
+    drawCard(page.marginX, y, colWidth, 34, 'Totais', [
+      ['Subtotal', fmtCur(subtotalItens)],
+      ['Frete', fmtCur(frete)],
+      ['Desconto', fmtCur(desconto)],
+      ['Total final', fmtCur(totalPedido)],
+    ]);
 
-    // Totais
-    const totalItens = (pedido.itens || []).reduce((s, i) => s + (i.total || 0), 0);
-    const frete      = parseFloat(pedido.valor_frete)   || 0;
-    const desconto   = parseFloat(pedido.valor_desconto) || 0;
+    drawCard(page.marginX + colWidth + colGap, y, colWidth, 34, 'Fluxo do Pedido', [
+      ['Status embarque', pedido.status_embarque || 'Nenhum'],
+      ['Recebimento geral', pedido.status_recebimento_geral || 'Nenhum'],
+      ['Conferencia', pedido.status_conferencia_pedido || 'Nao iniciada'],
+    ]);
+    y += 39;
 
-    row('Subtotal Itens',    fmtCur(totalItens));
-    if (frete)   row('(+) Frete',     fmtCur(frete));
-    if (desconto) row('(-) Desconto', fmtCur(desconto));
-
-    doc.setFont('courier','bold');
-    row('TOTAL DO PEDIDO', fmtCur(pedido.valor_total || totalItens + frete - desconto));
-    doc.setFont('courier','normal');
-    y += 1;
-    hline();
-
-    // ── Financeiro ───────────────────────────────────────────────────────────
-    boldLine('FINANCEIRO');
-    hline();
-
-    const dadosFin = [
-      ['Forma de Pgto',   safe(pedido.forma_pagamento_compra || pedido.forma_pagamento || '-')],
-      ['1o Vencimento',   fmtDate(pedido.data_primeiro_vencimento || pedido.primeiro_vencimento)],
-    ];
-    if ((pedido.num_parcelas || 0) > 1) dadosFin.push(['Parcelas', `${pedido.num_parcelas}x a cada ${pedido.intervalo_parcelas_dias || 30} dias`]);
-    if (pedido.data_aprovacao_financeira) dadosFin.push(['Aprovado em', fmtDate(pedido.data_aprovacao_financeira)]);
-    if (pedido.motivo_rejeicao_financeira) {
-      dadosFin.push(['Rejeitado em', fmtDate(pedido.data_rejeicao_financeira)]);
-      dadosFin.push(['Motivo Rejeicao', safe(pedido.motivo_rejeicao_financeira)]);
+    drawSectionTitle('Painel Logistico');
+    if (embarques.length === 0) {
+      drawWrappedTextBlock('Embarques', 'Nenhum embarque registrado ate o momento.');
+    } else {
+      embarques.forEach((embarque, index) => {
+        const linhas = [
+          ['Transporte', embarque.transportadora_nome || '-'],
+          ['Despacho', fmtDateTime(embarque.data_embarque)],
+          ['ETA', fmtDateTime(embarque.eta)],
+          ['Status de recebimento', embarque.status_recebimento_embarque || 'Pendente'],
+          ['Volumes', embarque.volumes || '-'],
+        ];
+        drawCard(page.marginX, y, usableWidth, 16 + (linhas.length * 10), `Embarque ${index + 1}`, linhas);
+        y += 16 + (linhas.length * 10) + 5;
+      });
     }
-    dadosFin.forEach(([lbl, val]) => {
-      const valLines = doc.splitTextToSize(safe(val), PW - LABEL_W - 2);
-      checkPage(valLines.length * LH);
-      const rowY = y;
-      doc.setFont('courier','bold');
-      doc.text(safe(lbl), ML, rowY);
-      doc.setFont('courier','normal');
-      valLines.forEach((l, i) => doc.text(l, ML + LABEL_W, rowY + i * LH));
-      y = rowY + valLines.length * LH;
-    });
-    y += 1;
-    hline();
 
-    // ── Logística ────────────────────────────────────────────────────────────
-    boldLine('LOGISTICA');
-    hline();
-
-    const dadosLog = [
-      ['NF Emitida',       pedido.nfe_emitida       ? 'Sim'      : 'Pendente'],
-      ['Manifesto Conf.',  pedido.manifesto_conferido ? 'Sim'    : 'Pendente'],
-      ['Conferencia',      pedido.conferencia_id      ? 'Realizada' : 'Pendente'],
-    ];
-    if (pedido.data_despacho) dadosLog.push(['Despachado em',   fmtDate(pedido.data_despacho)]);
-    if (pedido.data_chegada)  dadosLog.push(['Chegada em',      fmtDate(pedido.data_chegada)]);
-    if (pedido.tem_divergencias) dadosLog.push(['ATENCAO', 'Divergencias na conferencia']);
-
-    dadosLog.forEach(([lbl, val]) => {
-      checkPage();
-      const rowY = y;
-      doc.setFont('courier','bold');
-      doc.text(safe(lbl), ML, rowY);
-      doc.setFont('courier','normal');
-      doc.text(safe(val), ML + LABEL_W, rowY);
-      y = rowY + LH;
-    });
-    y += 1;
-    hline();
-
-    // ── Observações ──────────────────────────────────────────────────────────
     if (pedido.observacoes) {
-      boldLine('OBSERVACOES');
-      hline();
-      const obsLines = doc.splitTextToSize(safe(pedido.observacoes), PW);
-      obsLines.forEach(l => line(l));
-      y += 1;
-      hline();
+      drawSectionTitle('Observacoes');
+      drawWrappedTextBlock('Anotacoes do pedido', pedido.observacoes);
     }
 
-    // ── Conclusão ────────────────────────────────────────────────────────────
-    if (pedido.data_conclusao) {
-      boldLine('CONCLUSAO');
-      hline();
-      checkPage(); doc.setFont('courier','bold'); doc.text('Concluido em', ML, y); doc.setFont('courier','normal'); doc.text(fmtDate(pedido.data_conclusao), ML + LABEL_W, y); y += LH;
-      y += 1; hline();
+    if (pedido.historico) {
+      drawSectionTitle('Historico consolidado');
+      drawWrappedTextBlock('Eventos registrados', pedido.historico);
     }
 
-    // ── Assinaturas ──────────────────────────────────────────────────────────
-    checkPage(24);
-    y += 6;
-    doc.line(ML, y, ML + 60, y);
-    doc.line(ML + 88, y, ML + 88 + 60, y);
-    y += LH;
-    doc.text('Responsavel pela Compra', ML, y);
-    doc.text('Gestor / Financeiro',     ML + 88, y);
-    y += LH;
-    doc.text('Data: ___/___/______', ML, y);
-    doc.text('Data: ___/___/______', ML + 88, y);
+    ensurePage(28);
+    y += 8;
+    doc.setDrawColor(209, 213, 219);
+    doc.line(page.marginX, y, page.marginX + 70, y);
+    doc.line(page.marginX + usableWidth - 70, y, page.marginX + usableWidth, y);
+    setText(8, 'normal', [107, 114, 128]);
+    drawText('Responsavel pela compra', page.marginX, y + 5);
+    drawText('Gestor / Financeiro', page.marginX + usableWidth - 70, y + 5);
+    drawText('Data: ____/____/________', page.marginX, y + 10);
+    drawText('Data: ____/____/________', page.marginX + usableWidth - 70, y + 10);
 
     const pdfBytes = doc.output('arraybuffer');
     return new Response(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename=pedido_${safe(pedido.numero||'compra')}.pdf`,
+        'Content-Disposition': `attachment; filename=pedido_${safe(pedido.numero || 'compra')}.pdf`,
       },
     });
   } catch (error) {
