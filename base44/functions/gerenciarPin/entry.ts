@@ -4,7 +4,7 @@ async function hashPin(pin) {
   const msgBuffer = new TextEncoder().encode(pin);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 Deno.serve(async (req) => {
@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
         if (!pin_atual) {
           return Response.json({ error: 'Informe o PIN atual para alterá-lo.' }, { status: 400 });
         }
+
         const hashAtual = await hashPin(pin_atual);
         if (hashAtual !== user.pin_hash) {
           return Response.json({ error: 'PIN atual incorreto.' }, { status: 400 });
@@ -37,7 +38,10 @@ Deno.serve(async (req) => {
       }
 
       const novoHash = await hashPin(pin);
-      await base44.asServiceRole.entities.User.update(user.id, { pin_hash: novoHash, pin_definido: true });
+      await base44.asServiceRole.entities.User.update(user.id, {
+        pin_hash: novoHash,
+        pin_definido: true,
+      });
 
       return Response.json({ sucesso: true, mensagem: 'PIN definido com sucesso.' });
     }
@@ -54,9 +58,7 @@ Deno.serve(async (req) => {
       }
 
       const hash = await hashPin(pin);
-      const valido = hash === user.pin_hash;
-
-      if (!valido) {
+      if (hash !== user.pin_hash) {
         return Response.json({ error: 'PIN incorreto.' }, { status: 400 });
       }
 
@@ -67,12 +69,15 @@ Deno.serve(async (req) => {
       const pinTemp = String(Math.floor(100000 + Math.random() * 900000));
       const hashTemp = await hashPin(pinTemp);
 
-      await base44.asServiceRole.entities.User.update(user.id, { pin_hash: hashTemp, pin_definido: true });
+      await base44.asServiceRole.entities.User.update(user.id, {
+        pin_hash: hashTemp,
+        pin_definido: true,
+      });
 
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: user.email,
         subject: 'Seu novo PIN de segurança — P38 ERP',
-        body: `Olá, ${user.full_name}!\n\nSeu PIN de segurança foi redefinido.\n\nNovo PIN temporário: ${pinTemp}\n\nAcesse o sistema e redefina para um PIN de sua preferência em: Perfil → Meu PIN.\n\nPor segurança, este PIN é de uso pessoal. Não compartilhe com ninguém.\n\n— Equipe P38 ERP`
+        body: `Olá, ${user.full_name}!\n\nSeu PIN de segurança foi redefinido.\n\nNovo PIN temporário: ${pinTemp}\n\nAcesse o sistema e redefina para um PIN de sua preferência em: Perfil → Meu PIN.\n\nPor segurança, este PIN é de uso pessoal. Não compartilhe com ninguém.\n\n— Equipe P38 ERP`,
       });
 
       return Response.json({ sucesso: true, mensagem: `PIN temporário enviado para ${user.email}.` });
@@ -89,14 +94,14 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Informe target_user_id ou target_email.' }, { status: 400 });
       }
 
-      let targetUsers;
+      let targetUsers = [];
       if (target_user_id) {
         targetUsers = await base44.asServiceRole.entities.User.filter({ id: target_user_id });
       } else {
         targetUsers = await base44.asServiceRole.entities.User.filter({ email: target_email });
       }
 
-      if (!targetUsers || targetUsers.length === 0) {
+      if (!targetUsers.length) {
         return Response.json({ error: 'Usuário não encontrado.' }, { status: 404 });
       }
 
@@ -106,13 +111,13 @@ Deno.serve(async (req) => {
 
       await base44.asServiceRole.entities.User.update(targetUser.id, {
         pin_hash: hashTemp,
-        pin_definido: true
+        pin_definido: true,
       });
 
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: targetUser.email,
         subject: 'Seu PIN foi redefinido pelo administrador — P38 ERP',
-        body: `Olá, ${targetUser.full_name}!\n\nSeu PIN de segurança foi redefinido pelo administrador.\n\nNovo PIN temporário: ${pinTemp}\n\nAcesse o sistema e redefina para um PIN de sua preferência em: Perfil → Meu PIN.\n\nPor segurança, este PIN é de uso pessoal. Não compartilhe com ninguém.\n\n— Equipe P38 ERP`
+        body: `Olá, ${targetUser.full_name}!\n\nSeu PIN de segurança foi redefinido pelo administrador.\n\nNovo PIN temporário: ${pinTemp}\n\nAcesse o sistema e redefina para um PIN de sua preferência em: Perfil → Meu PIN.\n\nPor segurança, este PIN é de uso pessoal. Não compartilhe com ninguém.\n\n— Equipe P38 ERP`,
       });
 
       return Response.json({ sucesso: true, mensagem: `PIN temporário enviado para ${targetUser.email}.` });
