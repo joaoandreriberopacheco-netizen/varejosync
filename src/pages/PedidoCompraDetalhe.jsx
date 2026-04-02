@@ -55,7 +55,7 @@ export default function PedidoCompraDetalhe() {
       const { id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
         const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
-        newPedido.numero = resp?.data?.numero || `PC-${String(Date.now()).slice(-5)}`;
+        newPedido.numero = resp?.data?.numero;
       }
       saved = await base44.entities.PedidoCompra.create(newPedido);
     }

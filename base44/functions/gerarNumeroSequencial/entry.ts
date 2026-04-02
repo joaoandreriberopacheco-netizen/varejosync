@@ -1,9 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-/**
- * Gera números sequenciais únicos com proteção contra race condition.
- * Uso: { tipo: 'PV' } → 'PV-00001'
- */
+function gerarCodigoAleatorio(tamanho = 5) {
+  const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let resultado = '';
+  const array = new Uint32Array(tamanho);
+  crypto.getRandomValues(array);
+
+  for (let i = 0; i < tamanho; i++) {
+    resultado += caracteres[array[i] % caracteres.length];
+  }
+
+  return resultado;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -14,56 +23,33 @@ Deno.serve(async (req) => {
     if (!tipo) return Response.json({ error: 'Parâmetro "tipo" obrigatório.' }, { status: 400 });
 
     const prefixMap = {
-      PV:  { entity: 'PedidoVenda',      field: 'numero',  prefix: 'PV'  },
-      DT:  { entity: 'DevolucaoTroca',   field: 'numero',  prefix: 'DT'  },
-      VC:  { entity: 'ValeCompra',       field: 'codigo',  prefix: 'VC'  },
-      TC:  { entity: 'TurnoCaixa',       field: 'numero',  prefix: 'TC'  },
-      MCX: { entity: 'MovimentosCaixa',  field: 'numero',  prefix: 'MCX' },
-      PC:  { entity: 'PedidoCompra',     field: 'numero',  prefix: 'PC'  },
-      CI:  { entity: 'ConsumoInterno',   field: 'numero',  prefix: 'CI'  },
+      PV: { entity: 'PedidoVenda', field: 'numero' },
+      DT: { entity: 'DevolucaoTroca', field: 'numero' },
+      VC: { entity: 'ValeCompra', field: 'codigo' },
+      TC: { entity: 'TurnoCaixa', field: 'numero' },
+      MCX: { entity: 'MovimentosCaixa', field: 'numero' },
+      PC: { entity: 'PedidoCompra', field: 'numero' },
+      CI: { entity: 'ConsumoInterno', field: 'numero' },
     };
 
     const config = prefixMap[tipo];
     if (!config) return Response.json({ error: `Tipo "${tipo}" não suportado.` }, { status: 400 });
 
-    // Retry loop: tenta até 10 vezes para resolver race conditions
-    for (let tentativa = 0; tentativa < 10; tentativa++) {
-      // Pequeno jitter aleatório para reduzir colisões em picos de concorrência
-      if (tentativa > 0) {
-        await new Promise(r => setTimeout(r, 50 + Math.random() * 100 * tentativa));
+    const registros = await base44.asServiceRole.entities[config.entity].list();
+    const existentes = new Set(
+      registros
+        .map((registro) => String(registro?.[config.field] || '').trim().toUpperCase())
+        .filter(Boolean)
+    );
+
+    for (let tentativa = 0; tentativa < 50; tentativa++) {
+      const numero = gerarCodigoAleatorio(5);
+      if (!existentes.has(numero)) {
+        return Response.json({ numero });
       }
-
-      // Busca todos os registros e acha o maior número existente
-      const registros = await base44.asServiceRole.entities[config.entity].list();
-      const regex = new RegExp(`^${config.prefix}-?(\\d+)$`);
-      let maxNum = 0;
-      for (const r of registros) {
-        const val = r[config.field] || '';
-        const match = val.match(regex);
-        if (match) {
-          const n = parseInt(match[1], 10);
-          if (n > maxNum) maxNum = n;
-        }
-      }
-
-      const proximo = maxNum + 1;
-      const numero = `${config.prefix}-${String(proximo).padStart(5, '0')}`;
-
-      // Verificação de unicidade: confirma que o número ainda não existe
-      const jaExiste = registros.some(r => r[config.field] === numero);
-      if (!jaExiste) {
-        return Response.json({ numero, proximo });
-      }
-
-      // Se já existe (outro processo criou no mesmo instante), tenta novamente
-      console.warn(`[gerarNumeroSequencial] Colisão detectada para ${numero}, tentativa ${tentativa + 1}`);
     }
 
-    // Fallback: usa timestamp para garantir unicidade em último caso
-    const fallback = `${tipo}-T${Date.now()}`;
-    console.error(`[gerarNumeroSequencial] Fallback ativado após 10 tentativas: ${fallback}`);
-    return Response.json({ numero: fallback, proximo: -1 });
-
+    return Response.json({ error: 'Não foi possível gerar um identificador único.' }, { status: 500 });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

@@ -333,20 +333,35 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Gerar número do pedido — mesmo padrão do formulário (PC-00001)
-    let numeroPedido = 'PC-00001';
-    try {
-      const todos = await base44.asServiceRole.entities.PedidoCompra.list();
-      let maxNum = 0;
-      for (const p of todos) {
-        const m = (p.numero || '').match(/^PC-(\d+)$/);
-        if (m) {
-          const n = parseInt(m[1], 10);
-          if (n > maxNum) maxNum = n;
-        }
+    const numerosExistentes = new Set(
+      (await base44.asServiceRole.entities.PedidoCompra.list())
+        .map((p) => String(p.numero || '').trim().toUpperCase())
+        .filter(Boolean)
+    );
+
+    const gerarCodigoAleatorio = (tamanho = 5) => {
+      const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let resultado = '';
+      const array = new Uint32Array(tamanho);
+      crypto.getRandomValues(array);
+      for (let i = 0; i < tamanho; i++) {
+        resultado += caracteres[array[i] % caracteres.length];
       }
-      numeroPedido = `PC-${String(maxNum + 1).padStart(5, '0')}`;
-    } catch (_) { /* usa padrão */ }
+      return resultado;
+    };
+
+    let numeroPedido = '';
+    for (let tentativa = 0; tentativa < 50; tentativa++) {
+      const candidato = gerarCodigoAleatorio(5);
+      if (!numerosExistentes.has(candidato)) {
+        numeroPedido = candidato;
+        break;
+      }
+    }
+
+    if (!numeroPedido) {
+      return Response.json({ error: 'Não foi possível gerar um identificador único para o pedido.' }, { status: 500 });
+    }
 
     const valorTotal = itens.reduce((s, i) => s + i.total, 0);
 

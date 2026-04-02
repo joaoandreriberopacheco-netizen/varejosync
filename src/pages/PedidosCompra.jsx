@@ -67,9 +67,8 @@ export default function PedidosCompraPage() {
     } else {
       const { id, ...newPedido } = sanitizedData;
       if (!newPedido.numero) {
-        // Usar gerarNumeroSequencial para garantir sequência única e uniforme (PC-00001)
         const resp = await base44.functions.invoke('gerarNumeroSequencial', { tipo: 'PC' });
-        newPedido.numero = resp?.data?.numero || `PC-${String(pedidos.length + 1).padStart(5, '0')}`;
+        newPedido.numero = resp?.data?.numero;
       }
       await base44.entities.PedidoCompra.create(newPedido);
     }
