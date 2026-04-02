@@ -197,12 +197,17 @@ export default function PedidosCompraPage() {
     }, 0);
   };
 
-  const pedidosVisiveisPendentes = useMemo(() => {
+  const pedidosVisiveisLista = useMemo(() => {
     return filtrados.filter((pedido) => {
+      if (pedido.status === 'Concluído') return true;
       const statusPermitido = ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
       return statusPermitido && calcularValorPendentePedido(pedido) > 0;
     });
   }, [filtrados]);
+
+  const pedidosVisiveisPendentes = useMemo(() => {
+    return pedidosVisiveisLista.filter((pedido) => pedido.status !== 'Concluído');
+  }, [pedidosVisiveisLista]);
 
   const pedidosPagosPendentes = useMemo(() => {
     return filtrados.filter((pedido) => {
@@ -269,12 +274,15 @@ export default function PedidosCompraPage() {
     };
 
     const map = {};
-    pedidosVisiveisPendentes.forEach((pedido) => {
+    pedidosVisiveisLista.forEach((pedido) => {
       const meta = getGroupMeta(pedido);
       if (!map[meta.key]) {
         map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
       }
-      map[meta.key].pedidos.push({ ...pedido, valor_pendente_entrega: calcularValorPendentePedido(pedido) });
+      map[meta.key].pedidos.push({
+        ...pedido,
+        valor_pendente_entrega: pedido.status === 'Concluído' ? 0 : calcularValorPendentePedido(pedido)
+      });
     });
 
     return Object.values(map)
@@ -288,7 +296,7 @@ export default function PedidosCompraPage() {
           return compareValues(valorA, valorB);
         })
       }));
-  }, [pedidosVisiveisPendentes, groupBy, sortOrder]);
+  }, [pedidosVisiveisLista, groupBy, sortOrder]);
 
   const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || statusSel.some(status => status !== '__nao_concluido__');
 
