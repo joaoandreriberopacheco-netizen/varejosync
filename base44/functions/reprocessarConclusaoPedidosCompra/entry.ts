@@ -47,33 +47,70 @@ function calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos) {
   });
 }
 
+function extrairItensOrfaosPrimeiroEmbarque(pedido) {
+  const primeiroEmbarque = (pedido.embarques_registrados || [])[0];
+  if (!primeiroEmbarque) return [];
+
+  return (primeiroEmbarque.itens_embarcados || []).filter((item) => {
+    const quantidadeEmbarcada = normalizarNumero(item.quantidade_embarcada);
+    const quantidadeRecebida = normalizarNumero(item.quantidade_recebida);
+    const temFalta = quantidadeRecebida < quantidadeEmbarcada;
+    const temDivergencia = item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma';
+    return temFalta || temDivergencia;
+  });
+}
+
+function extrairItensOrfaosDoRecebimento(pedido) {
+  const itensPedido = new Map((pedido.itens || []).map((item) => [item.produto_id, normalizarNumero(item.quantidade_base || item.quantidade)]));
+  const recebidos = new Map();
+
+  for (const embarque of pedido.embarques_registrados || []) {
+    for (const item of embarque.itens_embarcados || []) {
+      const produtoId = item.produto_id;
+      if (!produtoId) continue;
+      recebidos.set(produtoId, normalizarNumero(recebidos.get(produtoId)) + normalizarNumero(item.quantidade_recebida));
+    }
+  }
+
+  return Array.from(itensPedido.entries()).filter(([produtoId, quantidadePedida]) => {
+    return normalizarNumero(recebidos.get(produtoId)) < quantidadePedida;
+  });
+}
+
 function calcularStatus(pedido, lancamentos) {
   const resumoItens = calcularResumoItensPedido(pedido);
   const itensComPendencia = resumoItens.filter((item) => item.quantidade_recebida < item.quantidade_pedida);
-  const temPendenciaFisica = itensComPendencia.length > 0;
+  const itensOrfaosPrimeiroEmbarque = extrairItensOrfaosPrimeiroEmbarque(pedido);
+  const itensOrfaosRecebimento = extrairItensOrfaosDoRecebimento(pedido);
+  const temEmbarqueInformado = (pedido.embarques_registrados || []).length > 0;
+  const haItensOrfaos = itensOrfaosPrimeiroEmbarque.length > 0 || itensOrfaosRecebimento.length > 0;
+  const temPendenciaReal = temEmbarqueInformado && haItensOrfaos;
   const temDivergencia = (pedido.embarques_registrados || []).some((embarque) =>
     (embarque.itens_embarcados || []).some((item) => item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma')
   );
-  const pendenciaResolvidaFinanceiramente = temPendenciaFisica && calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos);
+  const pendenciaResolvidaFinanceiramente = temPendenciaReal && calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos);
 
   let status = pedido.status;
   let statusRecebimento = 'Pendente';
 
-  if (!temPendenciaFisica) {
+  if (!temPendenciaReal && itensComPendencia.length === 0) {
     status = 'Concluído';
     statusRecebimento = temDivergencia ? 'Concluído com Divergência' : 'Concluído OK';
   } else if (pendenciaResolvidaFinanceiramente) {
     status = 'Concluído';
     statusRecebimento = 'Concluído com Divergência';
-  } else if ((pedido.embarques_registrados || []).length > 0) {
-    status = temDivergencia ? 'Pendência' : 'Em Conferência';
+  } else if (temPendenciaReal) {
+    status = 'Pendência';
     statusRecebimento = 'Recebido Parcial';
+  } else if (temEmbarqueInformado) {
+    status = 'Em Conferência';
+    statusRecebimento = 'Pendente';
   }
 
   return {
     status,
     status_recebimento_geral: statusRecebimento,
-    tem_divergencias: temDivergencia || (temPendenciaFisica && !pendenciaResolvidaFinanceiramente),
+    tem_divergencias: temDivergencia || (temPendenciaReal && !pendenciaResolvidaFinanceiramente),
   };
 }
 

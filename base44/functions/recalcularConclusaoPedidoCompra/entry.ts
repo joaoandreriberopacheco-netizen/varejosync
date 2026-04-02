@@ -40,9 +40,37 @@ function calcularResumoItensPedido(pedido) {
   return Array.from(resumo.values());
 }
 
-function calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos) {
-  const textoPedido = String(pedido.numero || '').toLowerCase();
+function extrairItensOrfaosPrimeiroEmbarque(pedido) {
+  const primeiroEmbarque = (pedido.embarques_registrados || [])[0];
+  if (!primeiroEmbarque) return [];
 
+  return (primeiroEmbarque.itens_embarcados || []).filter((item) => {
+    const quantidadeEmbarcada = normalizarNumero(item.quantidade_embarcada);
+    const quantidadeRecebida = normalizarNumero(item.quantidade_recebida);
+    const temFalta = quantidadeRecebida < quantidadeEmbarcada;
+    const temDivergencia = item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma';
+    return temFalta || temDivergencia;
+  });
+}
+
+function extrairItensOrfaosDoRecebimento(pedido) {
+  const itensPedido = new Map((pedido.itens || []).map((item) => [item.produto_id, normalizarNumero(item.quantidade_base || item.quantidade)]));
+  const recebidos = new Map();
+
+  for (const embarque of pedido.embarques_registrados || []) {
+    for (const item of embarque.itens_embarcados || []) {
+      const produtoId = item.produto_id;
+      if (!produtoId) continue;
+      recebidos.set(produtoId, normalizarNumero(recebidos.get(produtoId)) + normalizarNumero(item.quantidade_recebida));
+    }
+  }
+
+  return Array.from(itensPedido.entries()).filter(([produtoId, quantidadePedida]) => {
+    return normalizarNumero(recebidos.get(produtoId)) < quantidadePedida;
+  });
+}
+
+function calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos) {
   return lancamentos.some((lancamento) => {
     const observacoes = String(lancamento.observacoes || '').toLowerCase();
     const descricao = String(lancamento.descricao || '').toLowerCase();
@@ -50,7 +78,7 @@ function calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos) {
     const mencionaOrfaos = observacoes.includes('itens órfãos') || observacoes.includes('itens orfaos') || descricao.includes('não entregues') || descricao.includes('nao entregues');
     const emAbertoOuPago = ['Em Aberto', 'Pago'].includes(lancamento.status);
 
-    return vinculado && mencionaOrfaos && emAbertoOuPago && (observacoes.includes(textoPedido) || descricao.includes(textoPedido) || true);
+    return vinculado && mencionaOrfaos && emAbertoOuPago;
   });
 }
 
@@ -79,24 +107,31 @@ Deno.serve(async (req) => {
     const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedido.id });
     const resumoItens = calcularResumoItensPedido(pedido);
     const itensComPendencia = resumoItens.filter((item) => item.quantidade_recebida < item.quantidade_pedida);
-    const temPendenciaFisica = itensComPendencia.length > 0;
+    const itensOrfaosPrimeiroEmbarque = extrairItensOrfaosPrimeiroEmbarque(pedido);
+    const itensOrfaosRecebimento = extrairItensOrfaosDoRecebimento(pedido);
+    const temEmbarqueInformado = (pedido.embarques_registrados || []).length > 0;
+    const haItensOrfaos = itensOrfaosPrimeiroEmbarque.length > 0 || itensOrfaosRecebimento.length > 0;
+    const temPendenciaReal = temEmbarqueInformado && haItensOrfaos;
     const temDivergencia = (pedido.embarques_registrados || []).some((embarque) =>
       (embarque.itens_embarcados || []).some((item) => item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma')
     );
-    const pendenciaResolvidaFinanceiramente = temPendenciaFisica && calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos);
+    const pendenciaResolvidaFinanceiramente = temPendenciaReal && calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos);
 
     let statusRecebimentoGeral = 'Pendente';
     let statusPedido = pedido.status;
 
-    if (!temPendenciaFisica) {
+    if (!temPendenciaReal && itensComPendencia.length === 0) {
       statusRecebimentoGeral = temDivergencia ? 'Concluído com Divergência' : 'Concluído OK';
       statusPedido = STATUS_PEDIDO_CONCLUIDO;
     } else if (pendenciaResolvidaFinanceiramente) {
       statusRecebimentoGeral = 'Concluído com Divergência';
       statusPedido = STATUS_PEDIDO_CONCLUIDO;
-    } else if ((pedido.embarques_registrados || []).length > 0) {
+    } else if (temPendenciaReal) {
       statusRecebimentoGeral = 'Recebido Parcial';
-      statusPedido = temDivergencia ? STATUS_PEDIDO_PENDENCIA : STATUS_PEDIDO_EM_CONFERENCIA;
+      statusPedido = STATUS_PEDIDO_PENDENCIA;
+    } else if (temEmbarqueInformado) {
+      statusRecebimentoGeral = 'Pendente';
+      statusPedido = STATUS_PEDIDO_EM_CONFERENCIA;
     }
 
     const resumoPendencias = itensComPendencia.map((item) => ({
@@ -110,7 +145,7 @@ Deno.serve(async (req) => {
     await base44.entities.PedidoCompra.update(pedido.id, {
       status: statusPedido,
       status_recebimento_geral: statusRecebimentoGeral,
-      tem_divergencias: temDivergencia || (temPendenciaFisica && !pendenciaResolvidaFinanceiramente),
+      tem_divergencias: temDivergencia || (temPendenciaReal && !pendenciaResolvidaFinanceiramente),
       historico: `${pedido.historico || ''}\n[RECALCULO CONCLUSAO | status=${statusPedido} | recebimento=${statusRecebimentoGeral} | pendencias=${resumoPendencias.length}]`,
     });
 

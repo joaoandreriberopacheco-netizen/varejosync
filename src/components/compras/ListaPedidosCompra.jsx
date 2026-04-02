@@ -45,37 +45,45 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
   document.head.appendChild(style);
 }
 
-function ETAInfo({ pedido }) {
-  // Mostra ETA se informado, senão "Sem previsão"
-  const ultimoEmbarque = (pedido.embarques_registrados || [])[0];
-  const eta = ultimoEmbarque?.eta;
-  
-  return (
-    <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-      <CalendarClock className="w-3 h-3 flex-none" />
-      <span>{eta ? formatarDataCurta(eta) : 'Sem previsão'}</span>
-    </span>
-  );
-}
+function EmbarquesInfo({ pedido }) {
+  const embarques = pedido.embarques_registrados || [];
+  const primeiroEmbarque = embarques[0];
+  const segundoEmbarque = embarques[1];
 
-function TransportadoraInfo({ pedido }) {
-  // Se tem embarque registrado, mostra transportadora (ou "Não informado" se vazia); senão "Sem embarque"
-  const ultimoEmbarque = (pedido.embarques_registrados || [])[0];
-  
-  if (!ultimoEmbarque) {
+  if (!primeiroEmbarque) {
     return (
-      <span className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
+      <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
         <Truck className="w-3 h-3 flex-none" />
         <span>Sem embarque</span>
-      </span>
+      </div>
     );
   }
-  
+
   return (
-    <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-      <Truck className="w-3 h-3 flex-none" />
-      <span>{ultimoEmbarque.transportadora_nome || 'Não informado'}</span>
-    </span>
+    <div className="flex flex-col gap-1 text-[0.7rem]">
+      <div className="flex items-center gap-4 flex-wrap text-gray-500 dark:text-gray-400">
+        <span className="flex items-center gap-1.5">
+          <Truck className="w-3 h-3 flex-none" />
+          <span>{primeiroEmbarque.transportadora_nome || 'Não informado'}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CalendarClock className="w-3 h-3 flex-none" />
+          <span>{primeiroEmbarque.eta ? formatarDataCurta(primeiroEmbarque.eta) : 'Sem previsão'}</span>
+        </span>
+      </div>
+      {segundoEmbarque && (
+        <div className="flex items-center gap-4 flex-wrap text-gray-500 dark:text-gray-400">
+          <span className="flex items-center gap-1.5">
+            <Truck className="w-3 h-3 flex-none" />
+            <span>{segundoEmbarque.transportadora_nome || 'Não informado'}</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CalendarClock className="w-3 h-3 flex-none" />
+            <span>{segundoEmbarque.eta ? formatarDataCurta(segundoEmbarque.eta) : 'Sem previsão'}</span>
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -182,13 +190,14 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           </div>
 
           {/* Linha de metadados */}
-          <div className="mt-3 flex items-center gap-4 flex-wrap text-[0.7rem]">
-            <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-              <Package2 className="w-3 h-3 flex-none" />
-              <span>{totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}{totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : ''}</span>
-            </span>
-            <ETAInfo pedido={pedido} />
-            <TransportadoraInfo pedido={pedido} />
+          <div className="mt-3 flex flex-col gap-2 text-[0.7rem]">
+            <div className="flex items-center gap-4 flex-wrap">
+              <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                <Package2 className="w-3 h-3 flex-none" />
+                <span>{totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}{totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : ''}</span>
+              </span>
+            </div>
+            <EmbarquesInfo pedido={pedido} />
           </div>
           <PedidoProgressBar pedido={pedido} />
         </div>
