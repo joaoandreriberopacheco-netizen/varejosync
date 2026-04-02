@@ -227,7 +227,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[100vh] bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl w-[calc(100vw-1rem)] md:w-full h-[calc(100vh-1rem)] md:h-[90vh] bg-white dark:bg-gray-900 border-0 rounded-3xl p-0 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="sticky top-0 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-5 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 space-y-6">
             {/* Info do embarque - Grid de 2 colunas */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
@@ -334,7 +334,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
           </div>
 
           {/* Footer com Data e Botão */}
-          <div className="border-t border-gray-200 dark:border-gray-700/50 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-6 space-y-4">
+          <div className="shrink-0 border-t border-gray-200 dark:border-gray-700/50 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800/80 px-6 py-6 space-y-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             {/* Data de Entrada */}
             <div>
               <Label className="text-xs text-gray-700 dark:text-gray-300 font-semibold block mb-2">Data de Entrada</Label>
