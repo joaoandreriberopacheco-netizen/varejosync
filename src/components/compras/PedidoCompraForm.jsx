@@ -653,7 +653,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   const isAprovado = pedido && (
     pedido.status === 'Aprovado' ||
     pedido.status === 'Despachado' ||
-    pedido.status === 'Em Recepção' ||
+    pedido.status === 'Em Trânsito' ||
+    pedido.status === 'Entregue' ||
     pedido.status === 'Concluído'
   );
 

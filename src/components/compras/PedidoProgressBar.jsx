@@ -19,15 +19,12 @@ function getProgressDetails(pedido) {
   if (status === 'Aguardando Liberação')   return { filled: 2, active: 'teal-light' };
   if (status === 'Aprovado')               return { filled: 3, active: 'teal-mid' };
 
-  // "Em Trânsito" é status legado equivalente a Despachado
   if (status === 'Despachado' || status === 'Em Trânsito') {
-    // Embarque parcial → LED âmbar
     if (pedido.status_embarque === 'Parcial') return { filled: 4, active: 'amber' };
     return { filled: 4, active: 'teal' };
   }
-  if (status === 'Em Recepção' || status === 'Em Conferência')
-                                           return { filled: 4, active: 'teal' };
-  if (status === 'Concluído')              return { filled: 5, active: 'teal-full' };
+  if (status === 'Entregue' || status === 'Concluído')
+                                           return { filled: 5, active: 'teal-full' };
 
   // Fallback: se tem data_aprovacao_financeira assume pelo menos "Aprovado"
   if (pedido.data_aprovacao_financeira)    return { filled: 3, active: 'teal-mid' };

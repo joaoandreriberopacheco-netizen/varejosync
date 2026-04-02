@@ -27,27 +27,24 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
   }, [dataAprovacao, currentStatus]);
 
   const stages = [
-    { key: 'Rascunho',            label: 'Rascunho',       icon: FileText    },
-    { key: 'Aguardando Liberação', label: 'Ag. Liberação', icon: Clock       },
-    { key: 'Aprovado',            label: 'Aprovado',       icon: CheckCircle },
-    { key: 'Em Trânsito',         label: 'Em Trânsito',    icon: Truck       },
-    { key: 'Em Recepção',         label: 'Em Recepção',    icon: Package     },
-    { key: 'Pendência',           label: 'Pendência',      icon: AlertCircle },
-    { key: 'Concluído',           label: 'Concluído',      icon: Flag        },
+    { key: 'Rascunho',             label: 'Rascunho',       icon: FileText    },
+    { key: 'Aguardando Liberação', label: 'Ag. Liberação',  icon: Clock       },
+    { key: 'Aprovado',             label: 'Aprovado',       icon: CheckCircle },
+    { key: 'Em Trânsito',          label: 'Em Trânsito',    icon: Truck       },
+    { key: 'Concluído',            label: 'Concluído',      icon: Flag        },
   ];
 
   const getStageIndex = (status) => {
     const map = {
-      'Rascunho':            0,
-      'Devolvido':           0, // volta ao início visualmente
-      'Aguardando Liberação':1,
-      'Aprovado':            2,
-      'Despachado':          3, // legado — mesmo índice de Em Trânsito
-      'Em Trânsito':         3,
-      'Em Recepção':         4,
-      'Pendência':           5,
-      'Concluído':           6,
-      'Cancelado':           -1,
+      'Rascunho':             0,
+      'Devolvido':            0,
+      'Aguardando Liberação': 1,
+      'Aprovado':             2,
+      'Despachado':           3,
+      'Em Trânsito':          3,
+      'Entregue':             4,
+      'Concluído':            4,
+      'Cancelado':            -1,
     };
     return map[status] ?? 0;
   };
