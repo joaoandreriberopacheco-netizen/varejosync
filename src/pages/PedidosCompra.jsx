@@ -10,6 +10,7 @@ import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
+import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
 
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
@@ -33,6 +34,8 @@ export default function PedidosCompraPage() {
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [formaPagamentoLote, setFormaPagamentoLote] = useState('Parcelado');
   const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
+  const [groupBy, setGroupBy] = useState('data_pedido');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
     loadData();
@@ -175,45 +178,92 @@ export default function PedidosCompraPage() {
   }, [filtrados]);
 
   const grupos = useMemo(() => {
-    const map = {};
-    filtrados.forEach(p => {
-      // Agrupa sempre pela data de emissão do pedido, com fallback para created_date
-      const dataKey = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : null);
+    const normalizeTransportadora = (pedido) => {
+      const primeiroEmbarque = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados[0] : null;
+      return primeiroEmbarque?.transportadora_nome?.trim() || 'Sem transportadora';
+    };
+
+    const normalizeEta = (pedido) => {
+      const primeiroEmbarque = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados[0] : null;
+      return primeiroEmbarque?.eta ? toLocalDate(primeiroEmbarque.eta) : 'sem-eta';
+    };
+
+    const getGroupMeta = (pedido) => {
+      if (groupBy === 'fornecedor') {
+        const fornecedor = pedido.fornecedor_nome?.trim() || 'Sem fornecedor';
+        return { key: `fornecedor:${fornecedor}`, label: fornecedor, orderValue: fornecedor.toLowerCase() };
+      }
+
+      if (groupBy === 'status') {
+        const status = pedido.status || 'Sem status';
+        return { key: `status:${status}`, label: status, orderValue: status.toLowerCase() };
+      }
+
+      if (groupBy === 'eta_transportadora') {
+        const eta = normalizeEta(pedido);
+        const transportadora = normalizeTransportadora(pedido);
+        const semDados = eta === 'sem-eta' && transportadora === 'Sem transportadora';
+        return {
+          key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
+          label: semDados ? 'Sem ETA / Sem transportadora' : `${eta === 'sem-eta' ? 'Sem ETA' : formatarSoData(eta)} · ${transportadora}`,
+          orderValue: `${eta}|${transportadora.toLowerCase()}`,
+        };
+      }
+
+      const dataKey = pedido.data_emissao || (pedido.created_date ? toLocalDate(pedido.created_date) : null);
       const key = dataKey || 'sem-data';
-      if (!map[key]) map[key] = [];
-      map[key].push(p);
+      const hoje = dataHoje();
+      let label = 'Sem data';
+      if (key !== 'sem-data') {
+        const dataFmt = formatarSoData(key);
+        label = key === hoje ? 'Hoje' : dataFmt;
+      }
+      return { key: `data_pedido:${key}`, label, orderValue: key };
+    };
+
+    const compareValues = (a, b) => {
+      if (sortOrder === 'asc') return String(a).localeCompare(String(b), 'pt-BR');
+      return String(b).localeCompare(String(a), 'pt-BR');
+    };
+
+    const map = {};
+    filtrados.forEach((pedido) => {
+      const meta = getGroupMeta(pedido);
+      if (!map[meta.key]) {
+        map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
+      }
+      map[meta.key].pedidos.push(pedido);
     });
 
-    return Object.entries(map)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, pedidos]) => {
-        const hoje = dataHoje();
-        let label = 'Sem data';
-        if (key !== 'sem-data') {
-          const dataFmt = formatarSoData(key);
-          if (key === hoje) label = 'Hoje';
-          else label = dataFmt;
-        }
-        return {
-          key,
-          label,
-          pedidos: pedidos.sort((a, b) => {
-            const dataA = a.data_emissao || a.created_date || '';
-            const dataB = b.data_emissao || b.created_date || '';
-            return String(dataB).localeCompare(String(dataA));
-          })
-        };
-      });
-  }, [filtrados]);
+    return Object.values(map)
+      .sort((a, b) => compareValues(a.orderValue, b.orderValue))
+      .map((grupo) => ({
+        key: grupo.key,
+        label: grupo.label,
+        pedidos: grupo.pedidos.sort((a, b) => {
+          const valorA = a.data_emissao || a.created_date || '';
+          const valorB = b.data_emissao || b.created_date || '';
+          return compareValues(valorA, valorB);
+        })
+      }));
+  }, [filtrados, groupBy, sortOrder]);
 
   const hasActiveFilters = search || statusSel.length > 0 || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal;
 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header */}
-      <div className="pb-3 mb-1">
-        <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Pedidos de Compra</p>
-        <p className="text-xs text-gray-400">{filtrados.length} pedidos · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+      <div className="pb-3 mb-1 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Pedidos de Compra</p>
+          <p className="text-xs text-gray-400">{filtrados.length} pedidos · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+        </div>
+        <PedidosCompraOrganizer
+          groupBy={groupBy}
+          sortOrder={sortOrder}
+          onGroupByChange={setGroupBy}
+          onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
+        />
       </div>
 
       {/* Filtros */}
