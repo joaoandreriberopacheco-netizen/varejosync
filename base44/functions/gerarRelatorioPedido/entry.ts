@@ -35,6 +35,11 @@ const fmtCur = (v) => {
   return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
+const calcTextHeight = (doc, value, width, baseHeight = 10, lineHeight = 4.4) => {
+  const lines = doc.splitTextToSize(safe(value || '-'), width);
+  return Math.max(baseHeight, 6 + (lines.length * lineHeight));
+};
+
 const page = {
   width: 210,
   height: 297,
@@ -98,10 +103,11 @@ Deno.serve(async (req) => {
       drawText(text, x + width / 2, yy + 5.8, { align: 'center' });
     };
 
-    const drawCard = (x, yy, width, height, title, rows) => {
-      ensurePage(height + 4);
+    const drawCard = (x, yy, width, title, rows) => {
+      const dynamicHeight = rows.reduce((sum, [, value]) => sum + calcTextHeight(doc, value, width - 8), 0) + 12;
+      ensurePage(dynamicHeight + 4);
       doc.setFillColor(249, 250, 251);
-      doc.roundedRect(x, yy, width, height, 5, 5, 'F');
+      doc.roundedRect(x, yy, width, dynamicHeight, 5, 5, 'F');
       setText(9, 'bold', [31, 41, 55]);
       drawText(title, x + 4, yy + 6);
       let innerY = yy + 12;
@@ -112,8 +118,9 @@ Deno.serve(async (req) => {
         lines.forEach((line, index) => {
           drawText(line, x + 4, innerY + 4.5 + (index * 4.4));
         });
-        innerY += Math.max(10, 6 + (lines.length * 4.4));
+        innerY += calcTextHeight(doc, value, width - 8);
       });
+      return dynamicHeight;
     };
 
     const drawSectionTitle = (title) => {
@@ -142,9 +149,9 @@ Deno.serve(async (req) => {
     };
 
     const subtotalItens = (pedido.itens || []).reduce((sum, item) => sum + (Number(item.total) || 0), 0);
-    const frete = Number(pedido.valor_frete) || 0;
+    const frete = 0;
     const desconto = Number(pedido.valor_desconto) || 0;
-    const totalPedido = Number(pedido.valor_total) || subtotalItens + frete - desconto;
+    const totalPedido = Number(pedido.valor_total) || subtotalItens - desconto;
     const quantidadeItens = (pedido.itens || []).reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0);
     const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
     const criador = pedido.created_by_nome || pedido.created_by_nickname || pedido.created_by || user.email || '-';
@@ -167,29 +174,29 @@ Deno.serve(async (req) => {
     const colGap = 4;
     const colWidth = (usableWidth - colGap) / 2;
 
-    drawCard(page.marginX, y, colWidth, 40, 'Resumo Executivo', [
+    const resumoHeight = drawCard(page.marginX, y, colWidth, 'Resumo Executivo', [
       ['Fornecedor', fornecedor?.nome || pedido.fornecedor_nome || '-'],
       ['Emissao', fmtDate(pedido.data_emissao || pedido.created_date)],
       ['Entrega prevista', fmtDate(pedido.data_prevista_entrega)],
     ]);
 
-    drawCard(page.marginX + colWidth + colGap, y, colWidth, 40, 'Central Financeira', [
+    const financeiraHeight = drawCard(page.marginX + colWidth + colGap, y, colWidth, 'Central Financeira', [
       ['Total do pedido', fmtCur(totalPedido)],
       ['Status financeiro', pedido.status_aprovacao_financeira || 'Pendente'],
       ['Conta vinculada', pedido.conta_pagamento_id || '-'],
     ]);
-    y += 45;
+    y += Math.max(resumoHeight, financeiraHeight) + 5;
 
-    drawCard(page.marginX, y, colWidth, 34, 'Rastreabilidade', [
+    const rastreioHeight = drawCard(page.marginX, y, colWidth, 'Rastreabilidade', [
       ['Criado por', criador],
       ['Criado em', fmtDateTime(pedido.created_date)],
     ]);
 
-    drawCard(page.marginX + colWidth + colGap, y, colWidth, 34, 'Operacao', [
+    const operacaoHeight = drawCard(page.marginX + colWidth + colGap, y, colWidth, 'Operacao', [
       ['Itens', `${pedido.itens?.length || 0} produtos / ${quantidadeItens} unidades`],
       ['Embarques', `${embarques.length} registrado(s)`],
     ]);
-    y += 39;
+    y += Math.max(rastreioHeight, operacaoHeight) + 5;
 
     drawSectionTitle('Itens do Pedido');
 
@@ -235,19 +242,19 @@ Deno.serve(async (req) => {
     });
 
     drawSectionTitle('Fechamento');
-    drawCard(page.marginX, y, colWidth, 34, 'Totais', [
+    const totaisHeight = drawCard(page.marginX, y, colWidth, 'Totais', [
       ['Subtotal', fmtCur(subtotalItens)],
-      ['Frete', fmtCur(frete)],
+      ['Frete', 'Ja embutido no custo dos produtos'],
       ['Desconto', fmtCur(desconto)],
       ['Total final', fmtCur(totalPedido)],
     ]);
 
-    drawCard(page.marginX + colWidth + colGap, y, colWidth, 34, 'Fluxo do Pedido', [
+    const fluxoHeight = drawCard(page.marginX + colWidth + colGap, y, colWidth, 'Fluxo do Pedido', [
       ['Status embarque', pedido.status_embarque || 'Nenhum'],
       ['Recebimento geral', pedido.status_recebimento_geral || 'Nenhum'],
       ['Conferencia', pedido.status_conferencia_pedido || 'Nao iniciada'],
     ]);
-    y += 39;
+    y += Math.max(totaisHeight, fluxoHeight) + 5;
 
     drawSectionTitle('Painel Logistico');
     if (embarques.length === 0) {

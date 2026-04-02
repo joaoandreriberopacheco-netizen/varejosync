@@ -224,6 +224,11 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
   const itens = pedido.itens || [];
   const font = "'Barlow Condensed', 'Arial Narrow', sans-serif";
   const nomeFantasia = (dadosEmpresa?.nome_fantasia || dadosEmpresa?.razao_social || 'EMPRESA').toUpperCase();
+  const razaoSocial = (dadosEmpresa?.nome_fantasia && dadosEmpresa?.razao_social)
+    ? dadosEmpresa.razao_social
+    : null;
+  const empresaEndereco = [dadosEmpresa?.endereco, dadosEmpresa?.numero].filter(Boolean).join(', ');
+  const empresaCidade = [dadosEmpresa?.bairro, dadosEmpresa?.cidade, dadosEmpresa?.estado].filter(Boolean).join(' - ');
 
   return (
     <div
@@ -235,33 +240,34 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
       }}
     >
       {/* ── Cabeçalho empresa + título ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '6mm', borderBottom: '2px solid #111', marginBottom: '6mm' }}>
-        <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '6mm', borderBottom: '2px solid #111', marginBottom: '6mm', gap: '10mm' }}>
+        <div style={{ maxWidth: '100mm' }}>
           {dadosEmpresa?.logo_url && (
             <img src={dadosEmpresa.logo_url} alt="Logo"
               style={{ maxWidth: '55mm', maxHeight: '18mm', filter: 'grayscale(100%) contrast(200%)', display: 'block', marginBottom: '3mm' }}
             />
           )}
           <div style={{ fontSize: '22px', fontWeight: '600', letterSpacing: '-0.5px', lineHeight: 1.1 }}>{nomeFantasia}</div>
-          {dadosEmpresa?.razao_social && dadosEmpresa?.nome_fantasia && (
-            <div style={{ fontSize: '10px', color: '#666', marginTop: '1mm' }}>{dadosEmpresa.razao_social}</div>
+          {razaoSocial && (
+            <div style={{ fontSize: '10px', color: '#666', marginTop: '1mm' }}>{razaoSocial}</div>
           )}
           <div style={{ fontSize: '10px', color: '#777', marginTop: '2mm', lineHeight: 1.6 }}>
             {dadosEmpresa?.cnpj && <div>CNPJ: {dadosEmpresa.cnpj}</div>}
-            {dadosEmpresa?.endereco && <div>{dadosEmpresa.endereco}{dadosEmpresa.numero ? ', ' + dadosEmpresa.numero : ''}{dadosEmpresa.bairro ? ' — ' + dadosEmpresa.bairro : ''}</div>}
-            {dadosEmpresa?.cidade && <div>{[dadosEmpresa.cidade, dadosEmpresa.estado].filter(Boolean).join(' - ')}{dadosEmpresa.cep ? '  CEP: ' + dadosEmpresa.cep : ''}</div>}
+            {empresaEndereco && <div>{empresaEndereco}</div>}
+            {empresaCidade && <div>{empresaCidade}{dadosEmpresa?.cep ? '  CEP: ' + dadosEmpresa.cep : ''}</div>}
             {dadosEmpresa?.telefone && <div>Tel: {dadosEmpresa.telefone}</div>}
             {dadosEmpresa?.email && <div>{dadosEmpresa.email}</div>}
           </div>
         </div>
         <div style={{ textAlign: 'right', minWidth: '60mm' }}>
-          <div style={{ fontSize: '24px', fontWeight: '400', letterSpacing: '1px', lineHeight: 1 }}>CUPOM DE VENDA</div>
+          <div style={{ fontSize: '24px', fontWeight: '400', letterSpacing: '1px', lineHeight: 1 }}>PEDIDO DE VENDA</div>
           <div style={{ width: '100%', height: '1.5px', background: '#111', margin: '3mm 0' }}></div>
           <div style={{ fontSize: '12px', color: '#333', lineHeight: 1.8 }}>
             <div><b>Nº:</b> {pedido.numero || 'S/N'}</div>
             <div><b>Data:</b> {fmtDtTZ(pedido.created_date || new Date())}</div>
             {pedido.vendedor_nome && <div><b>Vendedor:</b> {pedido.vendedor_nome}</div>}
             {pedido.metodo_entrega && <div><b>Entrega:</b> {pedido.metodo_entrega}</div>}
+            {pedido.status && <div><b>Status:</b> {pedido.status}</div>}
           </div>
         </div>
       </div>
@@ -315,19 +321,25 @@ function CupomA4({ pedido, dadosEmpresa, dadosCliente }) {
 
       {/* ── Totais + Pagamentos lado a lado ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10mm', marginBottom: '8mm', alignItems: 'flex-start' }}>
-        {pedido.pagamentos && pedido.pagamentos.length > 0 && (
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '2mm', fontWeight: '600' }}>Formas de Pagamento</div>
-            <div style={{ background: '#f5f5f5', borderRadius: '2mm', padding: '3mm' }}>
-              {pedido.pagamentos.map((pag, idx) => (
-                <div key={idx} style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', padding: '1.5mm 0', borderBottom: idx < pedido.pagamentos.length - 1 ? '0.5px solid #e0e0e0' : 'none' }}>
-                  <span>{pag.forma_pagamento}{pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}</span>
-                  <span style={{ fontWeight: '500' }}>R$ {fmtV(pag.valor)}</span>
-                </div>
-              ))}
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '9px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '2mm', fontWeight: '600' }}>Dinâmica do Pedido</div>
+          <div style={{ background: '#f5f5f5', borderRadius: '2mm', padding: '3mm' }}>
+            <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', padding: '1.5mm 0', borderBottom: '0.5px solid #e0e0e0' }}>
+              <span>Tipo</span>
+              <span style={{ fontWeight: '500' }}>{pedido.tipo || 'Pedido'}</span>
             </div>
+            <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', padding: '1.5mm 0', borderBottom: pedido.pagamentos?.length ? '0.5px solid #e0e0e0' : 'none' }}>
+              <span>Entrega</span>
+              <span style={{ fontWeight: '500' }}>{pedido.metodo_entrega || 'Não informado'}</span>
+            </div>
+            {pedido.pagamentos && pedido.pagamentos.map((pag, idx) => (
+              <div key={idx} style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', padding: '1.5mm 0', borderBottom: idx < pedido.pagamentos.length - 1 ? '0.5px solid #e0e0e0' : 'none' }}>
+                <span>{pag.forma_pagamento}{pag.parcelas > 1 ? ` (${pag.parcelas}x)` : ''}</span>
+                <span style={{ fontWeight: '500' }}>R$ {fmtV(pag.valor)}</span>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
         <div style={{ minWidth: '90mm' }}>
           {pedido.subtotal > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', marginBottom: '1.5mm', padding: '0 2mm' }}>
