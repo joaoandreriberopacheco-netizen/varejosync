@@ -134,8 +134,9 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
   // Ao sair do campo desconto %
   const handleDescontoPctBlur = (produtoId) => {
     const raw = inputs[`${produtoId}_desconto_pct`];
-    const pct = parseFloat(raw) || 0;
-    handleDescontoPctBlurDirect(produtoId, pct);
+    const normalized = String(raw).replace(',', '.');
+    const pct = parseFloat(normalized) || 0;
+    handleDescontoPctBlurDirect(produtoId, Math.round(pct * 100) / 100);
   };
 
   // Versão direta (usada pelo toggle)
@@ -345,7 +346,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                           type="button"
                           onClick={() => {
                             const rawInput = inputs[`${item.produto_id}_desconto_pct`];
-                            const currentTyped = parseFloat(String(rawInput).replace(',', '.')) || 0;
+                            const currentTyped = Math.round((parseFloat(String(rawInput).replace(',', '.')) || 0) * 100) / 100;
                             const currentState = costs[item.produto_id]?.desconto_pct || 0;
                             const baseValue = currentTyped || currentState;
                             const flipped = baseValue === 0
@@ -495,7 +496,7 @@ export default function AtualizarPrecosDialog({ isOpen, onClose, itens, produtos
                             type="button"
                             onClick={() => {
                               const rawInput = inputs[`${item.produto_id}_desconto_pct`];
-                              const currentTyped = parseFloat(String(rawInput).replace(',', '.')) || 0;
+                              const currentTyped = Math.round((parseFloat(String(rawInput).replace(',', '.')) || 0) * 100) / 100;
                               const currentState = costs[item.produto_id]?.desconto_pct || 0;
                               const baseValue = currentTyped || currentState;
                               const flipped = baseValue === 0
