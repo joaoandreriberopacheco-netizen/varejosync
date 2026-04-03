@@ -33,6 +33,21 @@ const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   return y + (lines.length * lineHeight);
 };
 
+const STATUS_PDF_COLORS = {
+  'Rascunho': { dot: [209, 213, 219], pillBg: [243, 244, 246], pillText: [107, 114, 128] },
+  'Aguardando Liberação': { dot: [203, 213, 225], pillBg: [241, 245, 249], pillText: [71, 85, 105] },
+  'Aprovado': { dot: [52, 211, 153], pillBg: [236, 253, 245], pillText: [4, 120, 87] },
+  'Despachado': { dot: [34, 211, 238], pillBg: [236, 254, 255], pillText: [14, 116, 144] },
+  'Em Trânsito': { dot: [56, 189, 248], pillBg: [240, 249, 255], pillText: [3, 105, 161] },
+  'Entregue': { dot: [16, 185, 129], pillBg: [236, 253, 245], pillText: [4, 120, 87] },
+  'Pendência': { dot: [251, 146, 60], pillBg: [255, 247, 237], pillText: [194, 65, 12] },
+  'Devolvido': { dot: [251, 113, 133], pillBg: [255, 241, 242], pillText: [190, 24, 93] },
+  'Concluído': { dot: [16, 185, 129], pillBg: [236, 253, 245], pillText: [4, 120, 87] },
+  'Cancelado': { dot: [209, 213, 219], pillBg: [243, 244, 246], pillText: [156, 163, 175] },
+};
+
+const getStatusPdfColors = (status) => STATUS_PDF_COLORS[status] || STATUS_PDF_COLORS['Rascunho'];
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -180,24 +195,30 @@ Deno.serve(async (req) => {
 
     const drawPedidoHeaderExpandido = (pedido) => {
       ensureSpace(34);
+      const statusColors = getStatusPdfColors(pedido.status);
       doc.setFillColor(...colors.panel);
       doc.roundedRect(margin, y, contentWidth, 28, 4, 4, 'F');
-      doc.setFillColor(...colors.accent);
+      doc.setFillColor(...statusColors.dot);
       doc.circle(margin + 5, y + 6.5, 1.3, 'F');
-      doc.setTextColor(17, 24, 39);
+      doc.setTextColor(...colors.text);
       doc.setFont('courier', 'bold');
       doc.setFontSize(11);
       doc.text(safe(String(pedido.numero || 'Sem número')), margin + 9, y + 8);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.5);
       doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 9, y + 14);
+      doc.setFillColor(...statusColors.pillBg);
+      doc.roundedRect(margin + 9, y + 17, 33, 6.2, 3, 3, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.1);
+      doc.setTextColor(...statusColors.pillText);
+      doc.text(safe(pedido.status || '-'), margin + 12, y + 21.2);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
-      doc.setTextColor(107, 114, 128);
-      doc.text(`Status ${pedido.status || '-'}`, margin + 9, y + 20);
+      doc.setTextColor(...colors.muted);
       doc.text(`Emissão ${data(pedido.data_emissao || pedido.created_date)}`, margin + 48, y + 20);
       doc.text(`Entrega ${data(pedido.data_prevista_entrega)}`, margin + 92, y + 20);
-      doc.setTextColor(17, 24, 39);
+      doc.setTextColor(...colors.text);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.text(moeda(pedido.valor_total), margin + contentWidth - 4, y + 10, { align: 'right' });
@@ -205,7 +226,7 @@ Deno.serve(async (req) => {
       const totalQtd = Array.isArray(pedido.itens) ? pedido.itens.reduce((acc, item) => acc + (Number(item.quantidade) || 0), 0) : 0;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
-      doc.setTextColor(107, 114, 128);
+      doc.setTextColor(...colors.muted);
       doc.text(`${totalLinhas} itens · ${totalQtd.toLocaleString('pt-BR')} un.`, margin + contentWidth - 4, y + 16, { align: 'right' });
       y += 32;
     };
@@ -283,9 +304,10 @@ Deno.serve(async (req) => {
       });
 
       ensureSpace(18);
-      doc.setFillColor(...colors.accentSoft);
+      const statusColors = getStatusPdfColors(pedido.status);
+      doc.setFillColor(...statusColors.pillBg);
       doc.roundedRect(margin, y, contentWidth, 14, 3, 3, 'F');
-      doc.setTextColor(...colors.accentText);
+      doc.setTextColor(...statusColors.pillText);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.text(`Compra total: ${moeda(subtotalCompra)}`, margin + 4, y + 5.5);
@@ -293,7 +315,7 @@ Deno.serve(async (req) => {
       doc.text(`Margem bruta: ${moeda(subtotalVenda - subtotalCompra)}`, margin + 136, y + 5.5);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
-      doc.text('Formato expandido com leitura condensada por item.', margin + 4, y + 10.5);
+      doc.text(`Leitura expandida no padrão visual de ${safe(pedido.status || 'rascunho')}.`, margin + 4, y + 10.5);
       y += 18;
     };
 
