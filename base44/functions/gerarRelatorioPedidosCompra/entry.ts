@@ -1,25 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
-const safe = (texto) => String(texto || '').replace(/[\u0080-\uFFFF]/g, (c) => {
-  const map = {
-    'á':'a','à':'a','â':'a','ã':'a','ä':'a',
-    'Á':'A','À':'A','Â':'A','Ã':'A','Ä':'A',
-    'é':'e','è':'e','ê':'e','ë':'e',
-    'É':'E','È':'E','Ê':'E','Ë':'E',
-    'í':'i','ì':'i','î':'i','ï':'i',
-    'Í':'I','Ì':'I','Î':'I','Ï':'I',
-    'ó':'o','ò':'o','ô':'o','õ':'o','ö':'o',
-    'Ó':'O','Ò':'O','Ô':'O','Õ':'O','Ö':'O',
-    'ú':'u','ù':'u','û':'u','ü':'u',
-    'Ú':'U','Ù':'U','Û':'U','Ü':'U',
-    'ç':'c','Ç':'C','ñ':'n','Ñ':'N',
-    'ª':'a','º':'o','°':'o',
-    '–':'-','—':'-','…':'...','•':'-','→':'->',
-    '“':'"','”':'"','‘':"'",'’':"'"
-  };
-  return map[c] || '?';
-});
+const safe = (texto) => String(texto || '')
+  .normalize('NFKC')
+  .replace(/[\u2013\u2014]/g, '-')
+  .replace(/[\u2018\u2019]/g, "'")
+  .replace(/[\u201C\u201D]/g, '"')
+  .replace(/…/g, '...')
+  .replace(/•/g, '-');
 
 const moeda = (valor = 0) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const percentual = (valor = 0) => `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
@@ -76,7 +64,19 @@ Deno.serve(async (req) => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 12;
+    const tableMargin = 18;
     const contentWidth = pageWidth - (margin * 2);
+    const tableWidth = pageWidth - (tableMargin * 2);
+    const colors = {
+      text: [31, 41, 55],
+      muted: [107, 114, 128],
+      panel: [248, 250, 252],
+      panelSoft: [243, 244, 246],
+      rowAlt: [249, 250, 251],
+      accent: [45, 212, 191],
+      accentSoft: [240, 253, 250],
+      accentText: [15, 118, 110],
+    };
     let y = 16;
 
     const ensureSpace = (needed = 24) => {
@@ -87,17 +87,19 @@ Deno.serve(async (req) => {
     };
 
     const drawHeader = () => {
-      doc.setFillColor(248, 250, 252);
+      doc.setFillColor(...colors.panel);
       doc.roundedRect(margin, y, contentWidth, 26, 4, 4, 'F');
-      doc.setTextColor(31, 41, 55);
+      doc.setFillColor(...colors.accent);
+      doc.roundedRect(margin + 5, y + 5, 2.4, 10, 1.2, 1.2, 'F');
+      doc.setTextColor(...colors.text);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text(safe(version === 'expandida' ? 'Relatório Expandido de Compras' : 'Relatório Compacto de Compras'), margin + 6, y + 8);
+      doc.text(safe(version === 'expandida' ? 'Relatório expandido de compras' : 'Relatório compacto de compras'), margin + 10, y + 8);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      doc.setTextColor(107, 114, 128);
-      doc.text(safe(filtros_desc), margin + 6, y + 14);
-      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin + 6, y + 19);
+      doc.setTextColor(...colors.muted);
+      doc.text(safe(filtros_desc), margin + 10, y + 14);
+      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin + 10, y + 19);
       y += 32;
     };
 
@@ -178,9 +180,9 @@ Deno.serve(async (req) => {
 
     const drawPedidoHeaderExpandido = (pedido) => {
       ensureSpace(34);
-      doc.setFillColor(250, 250, 250);
+      doc.setFillColor(...colors.panel);
       doc.roundedRect(margin, y, contentWidth, 28, 4, 4, 'F');
-      doc.setFillColor(34, 197, 94);
+      doc.setFillColor(...colors.accent);
       doc.circle(margin + 5, y + 6.5, 1.3, 'F');
       doc.setTextColor(17, 24, 39);
       doc.setFont('courier', 'bold');
@@ -228,20 +230,20 @@ Deno.serve(async (req) => {
       let subtotalVenda = 0;
 
       ensureSpace(12);
-      doc.setFillColor(243, 244, 246);
-      doc.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
-      doc.setTextColor(75, 85, 99);
+      doc.setFillColor(...colors.panelSoft);
+      doc.roundedRect(tableMargin, y, tableWidth, 8, 2, 2, 'F');
+      doc.setTextColor(...colors.muted);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(5.8);
-      doc.text('DESCRICAO', margin + 2, y + 5);
-      doc.text('LIQ.', margin + 58, y + 5);
-      doc.text('FRETE', margin + 74, y + 5);
-      doc.text('OUTROS', margin + 90, y + 5);
-      doc.text('CALC.', margin + 108, y + 5);
-      doc.text('VLR UN.', margin + 126, y + 5);
-      doc.text('TOTAL', margin + 145, y + 5);
-      doc.text('VENDA', margin + 164, y + 5);
-      doc.text('MKP', margin + 184, y + 5);
+      doc.text('DESCRIÇÃO', tableMargin + 2, y + 5);
+      doc.text('LÍQ.', tableMargin + 54, y + 5);
+      doc.text('FRETE', tableMargin + 69, y + 5);
+      doc.text('OUTROS', tableMargin + 84, y + 5);
+      doc.text('CUSTO', tableMargin + 101, y + 5);
+      doc.text('VLR UN.', tableMargin + 118, y + 5);
+      doc.text('TOTAL', tableMargin + 136, y + 5);
+      doc.text('VENDA', tableMargin + 154, y + 5);
+      doc.text('MARKUP', tableMargin + 171, y + 5);
       y += 10;
 
       itens.forEach((item, index) => {
@@ -260,30 +262,30 @@ Deno.serve(async (req) => {
 
         ensureSpace(8);
         if (index % 2 === 0) {
-          doc.setFillColor(250, 250, 250);
-          doc.roundedRect(margin, y - 1, contentWidth, 7, 1.5, 1.5, 'F');
+          doc.setFillColor(...colors.rowAlt);
+          doc.roundedRect(tableMargin, y - 1, tableWidth, 7, 1.5, 1.5, 'F');
         }
 
-        doc.setTextColor(31, 41, 55);
+        doc.setTextColor(...colors.text);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(5.6);
-        const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), 54)[0];
-        doc.text(nomeItem, margin + 2, y + 3.5);
-        doc.text(moeda(precoCompraLiquido), margin + 58, y + 3.5);
-        doc.text(moeda(custoFrete), margin + 74, y + 3.5);
-        doc.text(moeda(outrosCustos), margin + 90, y + 3.5);
-        doc.text(moeda(custoCalculado), margin + 108, y + 3.5);
-        doc.text(moeda(precoCompraLiquido), margin + 126, y + 3.5);
-        doc.text(moeda(valorCompraTotal), margin + 145, y + 3.5);
-        doc.text(moeda(valorUnitarioVenda), margin + 164, y + 3.5);
-        doc.text(percentual(markup), margin + 184, y + 3.5);
+        const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), 50)[0];
+        doc.text(nomeItem, tableMargin + 2, y + 3.5);
+        doc.text(moeda(precoCompraLiquido), tableMargin + 54, y + 3.5);
+        doc.text(moeda(custoFrete), tableMargin + 69, y + 3.5);
+        doc.text(moeda(outrosCustos), tableMargin + 84, y + 3.5);
+        doc.text(moeda(custoCalculado), tableMargin + 101, y + 3.5);
+        doc.text(moeda(precoCompraLiquido), tableMargin + 118, y + 3.5);
+        doc.text(moeda(valorCompraTotal), tableMargin + 136, y + 3.5);
+        doc.text(moeda(valorUnitarioVenda), tableMargin + 154, y + 3.5);
+        doc.text(percentual(markup), tableMargin + 171, y + 3.5);
         y += 8;
       });
 
       ensureSpace(18);
-      doc.setFillColor(240, 253, 244);
+      doc.setFillColor(...colors.accentSoft);
       doc.roundedRect(margin, y, contentWidth, 14, 3, 3, 'F');
-      doc.setTextColor(22, 101, 52);
+      doc.setTextColor(...colors.accentText);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.text(`Compra total: ${moeda(subtotalCompra)}`, margin + 4, y + 5.5);
