@@ -374,6 +374,7 @@ export default function PedidosCompraPage() {
           totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0),
           totalPagoNaoEntregue: valorPagoNaoEntregue
         }}
+        grupos={grupos}
       />
 
       <EnvioFinanceiroLoteDialog

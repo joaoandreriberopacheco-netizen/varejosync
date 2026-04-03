@@ -3,7 +3,7 @@ import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpre
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 
-export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {} }) {
+export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDownloadTemplate, onEnviarFinanceiroLote, onToggleModoSelecao, modoSelecao = false, quantidadeSelecionados = 0, enviandoLote = false, pedidos = [], filtrosDesc = 'Pedidos filtrados na tela', kpis = {}, grupos = [] }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [gerando, setGerando] = useState('');
 
@@ -15,6 +15,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
         version,
         filtros_desc: filtrosDesc,
         kpis,
+        grupos,
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });

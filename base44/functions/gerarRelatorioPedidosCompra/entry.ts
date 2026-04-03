@@ -1,13 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
-const safe = (texto) => String(texto || '')
-  .normalize('NFKC')
-  .replace(/[\u2013\u2014]/g, '-')
-  .replace(/[\u2018\u2019]/g, "'")
-  .replace(/[\u201C\u201D]/g, '"')
-  .replace(/…/g, '...')
-  .replace(/•/g, '-');
+const safe = (texto) => {
+  if (texto === null || texto === undefined) return '';
+  return String(texto)
+    .normalize('NFC')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/…/g, '...')
+    .replace(/•/g, '-');
+};
 
 const moeda = (valor = 0) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const percentual = (valor = 0) => `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
@@ -150,7 +153,7 @@ Deno.serve(async (req) => {
       doc.setTextColor(75, 85, 99);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
-      doc.text('Agrupamentos do relatório', margin, y);
+      doc.text('Agrupamento aplicado na tela', margin, y);
       y += 5;
 
       grupos.forEach((grupo, index) => {
@@ -323,13 +326,32 @@ Deno.serve(async (req) => {
     drawKpis();
     drawGroupSummary();
 
-    pedidos.forEach((pedido) => {
-      if (version === 'expandida') {
-        drawExpandido(pedido);
-      } else {
-        drawCompacto(pedido);
-      }
-    });
+    if (Array.isArray(grupos) && grupos.length > 0) {
+      grupos.forEach((grupo) => {
+        ensureSpace(14);
+        doc.setTextColor(...colors.muted);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.text(safe(grupo.label || '-'), margin, y);
+        y += 4;
+
+        (grupo.pedidos || []).forEach((pedido) => {
+          if (version === 'expandida') {
+            drawExpandido(pedido);
+          } else {
+            drawCompacto(pedido);
+          }
+        });
+      });
+    } else {
+      pedidos.forEach((pedido) => {
+        if (version === 'expandida') {
+          drawExpandido(pedido);
+        } else {
+          drawCompacto(pedido);
+        }
+      });
+    }
 
     const pdfBytes = doc.output('arraybuffer');
     return new Response(pdfBytes, {
