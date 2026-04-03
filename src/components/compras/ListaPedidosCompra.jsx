@@ -160,10 +160,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.08em]">
+                  <span className="text-[0.82rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.08em] inline-block origin-center scale-y-[1.18]">
                     {pedido.numero}
                   </span>
-                  <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
+                  <span className={`text-[0.58rem] px-2 py-0.5 rounded-full font-semibold tracking-wide inline-flex items-center scale-y-[1.08] ${cfg.pill}`}>
                     {pedido.status}
                   </span>
                   {isAmbar && (
@@ -172,7 +172,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                     </span>
                   )}
                 </div>
-                <p className="text-[0.75rem] text-gray-500 dark:text-gray-400 mt-1 truncate">
+                <p className="text-[0.72rem] text-gray-500 dark:text-gray-400 mt-1 truncate inline-block origin-left scale-y-[1.12]">
                   {pedido.fornecedor_nome || '—'}
                 </p>
               </div>
@@ -180,7 +180,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
             {/* Valor + data */}
             <div className="flex-none text-right">
-              <p className="text-[0.95rem] font-bold text-gray-900 dark:text-white leading-none">
+              <p className="text-[0.88rem] font-bold text-gray-900 dark:text-white leading-none inline-block origin-right scale-y-[1.18]">
                 {R(pedido.valor_pendente_entrega ?? pedido.valor_total)}
               </p>
               <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1">
