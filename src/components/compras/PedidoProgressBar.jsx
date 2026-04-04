@@ -3,18 +3,18 @@ import React from 'react';
 function getProgressDetails(pedido) {
   const statusPedido = pedido.status || '';
   const embarque = pedido._embarque || {};
-  const statusBase = pedido._display_status || embarque.status_recebimento || embarque.status || statusPedido;
+  const statusBase = pedido._display_status || statusPedido;
   const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
   const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
-  const necessidadeSemItens = embarque.tipo === 'Necessidade' && !temItensAssociados;
+  const temTransporte = !!(embarque.transportadora_id || embarque.transportadora_nome || embarque.data_embarque || embarque.eta);
+  const necessidadeSemItens = embarque.tipo === 'Necessidade' && !temItensAssociados && !temTransporte;
 
-  if (statusBase === 'Recebido OK' || statusBase === 'Concluído') return { filled: 5, active: 'teal-full' };
-  if (statusBase === 'Rascunho') return { filled: 1, active: 'teal-light' };
-  if (statusBase === 'Aguardando Aprovação Financeira' || statusBase === 'Aguardando Liberação') return { filled: 2, active: 'teal-light' };
   if (necessidadeSemItens) return { filled: 3, active: 'rose' };
-  if (statusBase === 'Aprovado' || statusBase === 'Pendente' || statusBase === 'Aguardando Embarque' || statusBase === 'Original') return { filled: 3, active: 'teal-mid' };
-  if (statusBase === 'Despachado' || statusBase === 'Em Trânsito' || statusBase === 'Recebido Parcial') return { filled: 4, active: 'teal' };
-  if (pedido.data_aprovacao_financeira) return { filled: 3, active: 'teal-mid' };
+  if (statusBase === 'Concluído') return { filled: 5, active: 'teal-full' };
+  if (statusBase === 'Despachado') return { filled: 4, active: 'teal' };
+  if (statusBase === 'Aprovado') return { filled: 3, active: 'teal-mid' };
+  if (statusBase === 'Aguardando Aprovação Financeira' || statusBase === 'Aguardando Liberação') return { filled: 2, active: 'teal-light' };
+  if (statusBase === 'Rascunho') return { filled: 1, active: 'teal-light' };
 
   return { filled: 1, active: 'teal-light' };
 }

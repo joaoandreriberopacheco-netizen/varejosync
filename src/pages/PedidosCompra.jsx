@@ -38,13 +38,28 @@ const getDisplayEmbarqueOrdinal = (embarque) => `#${String(getEmbarqueSuffixInde
 const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens) && embarque.itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
 const getBorrowedStatus = (pedido, embarque) => {
-  if (!embarque) return pedido?.status || 'Pendente';
-  if (embarque.status !== 'Pendente' || hasLinkedItems(embarque)) {
-    return embarque.status_recebimento === 'Recebido OK' || embarque.status === 'Concluído'
-      ? 'Concluído'
-      : embarque.status_recebimento || embarque.status || pedido?.status || 'Pendente';
+  if (!embarque) return pedido?.status || 'Rascunho';
+
+  const temTransporte = !!(embarque.transportadora_id || embarque.transportadora_nome || embarque.data_embarque || embarque.eta);
+  const statusRecebimento = embarque.status_recebimento;
+
+  if (statusRecebimento === 'Recebido OK' || embarque.status === 'Concluído') {
+    return 'Concluído';
   }
-  return pedido?.status || embarque.status || 'Pendente';
+
+  if (temTransporte || statusRecebimento === 'Recebido Parcial') {
+    return 'Despachado';
+  }
+
+  if (pedido?.status === 'Aguardando Aprovação Financeira' || pedido?.status === 'Aguardando Liberação') {
+    return 'Aguardando Aprovação Financeira';
+  }
+
+  if (pedido?.status === 'Aprovado') {
+    return 'Aprovado';
+  }
+
+  return 'Rascunho';
 };
 
 const getEmbarqueDisplayDate = (pedido) => pedido?.data_aprovacao_financeira || pedido?.data_emissao || pedido?.created_date;
@@ -154,7 +169,9 @@ export default function PedidosCompraPage() {
           const pedido = pedidoMap.get(embarque.pedido_compra_id);
           if (!pedido) return null;
 
-          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && (!embarque?.status || embarque?.status === 'Pendente');
+          const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+          const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
+          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados;
           if (embarqueDormindo) return null;
 
           return {
@@ -281,7 +298,7 @@ export default function PedidosCompraPage() {
 
   const cardsFonte = useMemo(() => embarques, [embarques]);
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque', 'Original', 'Pendente', 'Despachado'];
+  const STATUS_EMBARQUE_VIRTUAIS = ['Despachado', 'Concluído'];
 
   const filtrados = useMemo(() => {
     return cardsFonte.filter((p) => {
