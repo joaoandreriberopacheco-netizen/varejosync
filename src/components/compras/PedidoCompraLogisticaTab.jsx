@@ -21,7 +21,10 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
   const [expanded, setExpanded] = useState(false);
   const dataEmb = embarque.data_embarque ? new Date(embarque.data_embarque) : null;
   const eta = embarque.eta ? new Date(embarque.eta) : null;
-  const totalItens = (embarque.itens_embarcados || []).reduce((s, i) => s + (i.quantidade_embarcada || 0), 0);
+  const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+  const totalItens = itensEmbarque.reduce((s, i) => s + (i.quantidade_embarcada || 0), 0);
+  const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
+  const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
 
   return (
     <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
@@ -32,13 +35,14 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-            {embarque.transportadora_nome || 'Transportadora não informada'}
+            {codigoExibicao} • {embarque.transportadora_nome || 'Transportadora não informada'}
           </p>
           <p className="text-[10px] text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
             {dataEmb && <span>Emb: {format(dataEmb, 'dd/MM/yy')}</span>}
             {eta && <span className="text-teal-500">ETA: {format(eta, 'dd/MM/yy HH:mm', { locale: ptBR })}</span>}
             {embarque.volumes && <span>{embarque.volumes}</span>}
             {embarque.peso_kg > 0 && <span>{embarque.peso_kg} kg</span>}
+            <span>{statusRecebimento}</span>
             <span className="text-gray-500">{totalItens} un. embarcadas</span>
           </p>
         </div>
@@ -55,7 +59,7 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
       {/* Itens expandidos */}
       {expanded &&
       <div className="border-t border-gray-100 dark:border-gray-700 px-4 py-2 space-y-1.5">
-          {(embarque.itens_embarcados || []).map((item) =>
+          {itensEmbarque.map((item) =>
         <div key={item.produto_id} className="flex items-center justify-between">
               <span className="text-xs text-gray-600 dark:text-gray-400 truncate flex-1 mr-2">{item.produto_nome}</span>
               <span className="text-xs font-medium text-gray-800 dark:text-gray-200 whitespace-nowrap">
@@ -117,7 +121,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
   const percentualPendente = Number(pedido?.percentual_pendente || Math.max(0, 100 - percentualEmbarcado));
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarques), [embarques]);
 
-  // Itens órfãos: qty pedida - qty embarcada em todos os embarques
+  // Itens órfãos: qty pedida - qty embarcada em todos os embarques reais
   const itensOrfaos = useMemo(() => {
     return (pedido?.itens || []).
     map((item) => ({

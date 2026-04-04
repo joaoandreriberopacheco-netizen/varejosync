@@ -124,7 +124,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const handleConfirmarRecebimento = async () => {
     setIsSaving(true);
     try {
-      const novoEmbarque = { ...embarque, itens_embarcados: itens };
+      const novoEmbarque = { ...embarque, itens: itens, itens_embarcados: itens };
       const temDivergencia = itens.some(i => i.divergencia_tipo !== 'Nenhuma');
       const todosRecebidos = itens.every(i => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0));
       
@@ -138,8 +138,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       novoEmbarque.status_recebimento_embarque = statusRecebimento;
       novoEmbarque.status = todosRecebidos ? 'Concluído' : 'Despachado';
 
-      const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
-      const outrosEmbarques = embarques.filter(e => e.id !== embarque.id && e.tipo !== 'Necessidade');
+      const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : []);
+      const outrosEmbarques = embarques.filter(e => e.id !== embarque.id);
 
       const itensOrfaos = itens.map((item) => {
         const saldo = Math.max(0, Number(item.quantidade_embarcada || 0) - Number(item.quantidade_recebida || 0));
@@ -155,9 +155,14 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         };
       }).filter(Boolean);
 
+      const proximaLetra = String.fromCharCode(65 + outrosEmbarques.length + 1);
       const embarqueOrfao = itensOrfaos.length > 0 ? {
-        id: `nec_${Date.now()}`,
+        pedido_compra_id: pedido.id,
+        pedido_compra_numero: pedido.numero,
+        fornecedor_id: pedido.fornecedor_id,
+        fornecedor_nome: pedido.fornecedor_nome,
         numero: String(outrosEmbarques.length + 1).padStart(2, '0'),
+        codigo_exibicao: `${pedido.numero}-${proximaLetra}`,
         tipo: 'Necessidade',
         status: 'Pendente',
         data_embarque: null,
@@ -168,7 +173,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         volumes_detalhados: [],
         peso_kg: 0,
         observacoes: 'Gerado automaticamente por saldo não recebido do embarque original.',
+        status_recebimento: 'Pendente',
         status_recebimento_embarque: 'Pendente',
+        itens: itensOrfaos,
         itens_embarcados: itensOrfaos
       } : null;
 
@@ -177,6 +184,19 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         novoEmbarque,
         ...(embarqueOrfao ? [embarqueOrfao] : [])
       ].sort((a, b) => String(a.numero || '').localeCompare(String(b.numero || '')));
+
+      if (embarque.id) {
+        await base44.entities.Embarque.update(embarque.id, {
+          status: novoEmbarque.status,
+          status_recebimento: statusRecebimento,
+          itens,
+          observacoes: novoEmbarque.observacoes,
+        });
+      }
+
+      if (embarqueOrfao) {
+        await base44.entities.Embarque.create(embarqueOrfao);
+      }
 
       // Calcular status geral de recebimento
       const temComDivergencia = embarquesAtualizados.some(e => e.status_recebimento_embarque === 'Com Divergência');
@@ -198,10 +218,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       const resumoItens = itens.map(i => `${i.produto_nome}: ${i.quantidade_recebida}/${i.quantidade_embarcada}`).join('; ');
 
       await base44.entities.PedidoCompra.update(pedido.id, {
-        embarques_registrados: embarquesAtualizados,
         status_recebimento_geral: statusRecebimento_geral,
         tem_divergencias: temComDivergencia,
-        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | embarque órfão gerado automaticamente' : ''} | ${formatarLogTime()}]`
+        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`
       });
 
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });

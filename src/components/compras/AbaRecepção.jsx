@@ -109,7 +109,9 @@ export default function AbaRecepção({ pedido }) {
         const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
         const dataEmbarque = embarque.data_embarque ? new Date(embarque.data_embarque).toLocaleDateString('pt-BR') : '-';
         const eta = embarque.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-';
-        const qtdItens = embarque.itens_embarcados?.length || 0;
+        const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+        const qtdItens = itensEmbarque.length || 0;
+        const codigoExibicao = embarque.codigo_exibicao || `${pedidoAtual?.numero || pedido?.numero || '-----'}-${String.fromCharCode(65 + idx)}`;
 
         return (
           <button
@@ -125,7 +127,7 @@ export default function AbaRecepção({ pedido }) {
                     <Package className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                   </div>
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                    Embarque #{embarque.id?.slice(-6) || idx + 1}
+                    Embarque {codigoExibicao}
                   </h3>
                   <div className="flex-1" />
                   {getStatusIcon(statusRecebimento)}
