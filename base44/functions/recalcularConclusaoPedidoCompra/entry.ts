@@ -4,6 +4,42 @@ const STATUS_PEDIDO_CONCLUIDO = 'Concluído';
 const STATUS_PEDIDO_PENDENCIA = 'Pendência';
 const STATUS_PEDIDO_EM_CONFERENCIA = 'Em Conferência';
 
+function calcularPercentualPorStatus(pedido) {
+  const itensPedido = new Map((pedido.itens || []).map((item) => [item.produto_id, Number(item.quantidade) || 0]));
+  const totalPedido = Array.from(itensPedido.values()).reduce((acc, qtd) => acc + qtd, 0);
+  if (!totalPedido) return { percentual_despachado: 0, percentual_concluido: 0, percentual_pendente: 100 };
+
+  const despachadoMap = {};
+  const concluidoMap = {};
+
+  for (const embarque of pedido.embarques_registrados || []) {
+    if (embarque.tipo === 'Necessidade') continue;
+    for (const item of embarque.itens_embarcados || []) {
+      const qtdEmbarcada = Number(item.quantidade_embarcada) || 0;
+      const qtdRecebida = Number(item.quantidade_recebida) || 0;
+      despachadoMap[item.produto_id] = Math.max(despachadoMap[item.produto_id] || 0, qtdEmbarcada);
+      concluidoMap[item.produto_id] = Math.max(concluidoMap[item.produto_id] || 0, qtdRecebida);
+    }
+  }
+
+  let totalDespachado = 0;
+  let totalConcluido = 0;
+  for (const [produtoId, qtdPedido] of itensPedido.entries()) {
+    totalDespachado += Math.min(qtdPedido, despachadoMap[produtoId] || 0);
+    totalConcluido += Math.min(qtdPedido, concluidoMap[produtoId] || 0);
+  }
+
+  const percentualDespachado = Number(((totalDespachado / totalPedido) * 100).toFixed(2));
+  const percentualConcluido = Number(((totalConcluido / totalPedido) * 100).toFixed(2));
+  const percentualPendente = Number(Math.max(0, (100 - percentualDespachado)).toFixed(2));
+
+  return {
+    percentual_despachado: percentualDespachado,
+    percentual_concluido: percentualConcluido,
+    percentual_pendente: percentualPendente,
+  };
+}
+
 function normalizarNumero(valor) {
   return Number(valor) || 0;
 }
@@ -142,10 +178,16 @@ Deno.serve(async (req) => {
       quantidade_pendente: Math.max(0, item.quantidade_pedida - item.quantidade_recebida),
     }));
 
+    const percentuais = calcularPercentualPorStatus(pedido);
+
     await base44.entities.PedidoCompra.update(pedido.id, {
       status: statusPedido,
       status_recebimento_geral: statusRecebimentoGeral,
       tem_divergencias: temDivergencia || (temPendenciaReal && !pendenciaResolvidaFinanceiramente),
+      percentual_valor_embarcado: percentuais.percentual_despachado,
+      percentual_despachado: percentuais.percentual_despachado,
+      percentual_concluido: percentuais.percentual_concluido,
+      percentual_pendente: percentuais.percentual_pendente,
       historico: `${pedido.historico || ''}\n[RECALCULO CONCLUSAO | status=${statusPedido} | recebimento=${statusRecebimentoGeral} | pendencias=${resumoPendencias.length}]`,
     });
 

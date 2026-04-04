@@ -112,7 +112,9 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
   const [acordoOpen, setAcordoOpen] = useState(false);
 
   const embarques = pedido?.embarques_registrados || [];
-  const percentualEmbarcado = Number(pedido?.percentual_valor_embarcado || 0);
+  const percentualEmbarcado = Number(pedido?.percentual_valor_embarcado || pedido?.percentual_despachado || 0);
+  const percentualConcluido = Number(pedido?.percentual_concluido || 0);
+  const percentualPendente = Number(pedido?.percentual_pendente || Math.max(0, 100 - percentualEmbarcado));
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarques), [embarques]);
 
   // Itens órfãos: qty pedida - qty embarcada em todos os embarques
@@ -150,9 +152,10 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Dashboard de embarques</p>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex items-center gap-2 flex-wrap">
               <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{percentualEmbarcado.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">valor embarcado</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">despachado</span>
+              <span className="text-sm text-emerald-600 dark:text-emerald-400">{percentualConcluido.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}% concluído</span>
             </div>
           </div>
           <div className="text-right">
@@ -160,8 +163,10 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
             <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{pedido?.status_embarque || 'Nenhum'}</p>
           </div>
         </div>
-        <div className="mt-3 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-          <div className="h-full rounded-full bg-gray-900 dark:bg-white transition-all" style={{ width: `${Math.max(0, Math.min(100, percentualEmbarcado))}%` }} />
+        <div className="mt-3 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex">
+          <div className="h-full bg-emerald-500 transition-all" style={{ width: `${Math.max(0, Math.min(100, percentualConcluido))}%` }} />
+          <div className="h-full bg-cyan-500 transition-all" style={{ width: `${Math.max(0, Math.min(100, percentualEmbarcado - percentualConcluido))}%` }} />
+          <div className="h-full bg-gray-300 dark:bg-gray-600 transition-all" style={{ width: `${Math.max(0, Math.min(100, percentualPendente))}%` }} />
         </div>
       </div>
 

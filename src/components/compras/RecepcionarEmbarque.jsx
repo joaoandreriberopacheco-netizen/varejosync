@@ -124,12 +124,9 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const handleConfirmarRecebimento = async () => {
     setIsSaving(true);
     try {
-      // Atualizar embarque no pedido
       const novoEmbarque = { ...embarque, itens_embarcados: itens };
-      
-      // Determinar status do embarque
       const temDivergencia = itens.some(i => i.divergencia_tipo !== 'Nenhuma');
-      const todosRecebidos = itens.every(i => i.quantidade_recebida > 0);
+      const todosRecebidos = itens.every(i => Number(i.quantidade_recebida || 0) >= Number(i.quantidade_embarcada || 0));
       
       let statusRecebimento = 'Recebido OK';
       if (temDivergencia) {
@@ -139,12 +136,47 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
       }
       
       novoEmbarque.status_recebimento_embarque = statusRecebimento;
+      novoEmbarque.status = todosRecebidos ? 'Concluído' : 'Despachado';
 
-      // Atualizar pedido
-      const embarques = pedido.embarques_registrados || [];
-      const embarquesAtualizados = embarques.map(e => 
-        e.id === embarque.id ? novoEmbarque : e
-      );
+      const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+      const outrosEmbarques = embarques.filter(e => e.id !== embarque.id && e.tipo !== 'Necessidade');
+
+      const itensOrfaos = itens.map((item) => {
+        const saldo = Math.max(0, Number(item.quantidade_embarcada || 0) - Number(item.quantidade_recebida || 0));
+        if (!saldo) return null;
+        return {
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          quantidade_pedida: saldo,
+          quantidade_embarcada: saldo,
+          quantidade_recebida: 0,
+          unidade_medida: item.unidade_medida,
+          divergencia_tipo: 'Nenhuma'
+        };
+      }).filter(Boolean);
+
+      const embarqueOrfao = itensOrfaos.length > 0 ? {
+        id: `nec_${Date.now()}`,
+        numero: String(outrosEmbarques.length + 1).padStart(2, '0'),
+        tipo: 'Necessidade',
+        status: 'Pendente',
+        data_embarque: null,
+        eta: null,
+        transportadora_id: '',
+        transportadora_nome: '',
+        volumes: '',
+        volumes_detalhados: [],
+        peso_kg: 0,
+        observacoes: 'Gerado automaticamente por saldo não recebido do embarque original.',
+        status_recebimento_embarque: 'Pendente',
+        itens_embarcados: itensOrfaos
+      } : null;
+
+      const embarquesAtualizados = [
+        ...outrosEmbarques,
+        novoEmbarque,
+        ...(embarqueOrfao ? [embarqueOrfao] : [])
+      ];
 
       // Calcular status geral de recebimento
       const temComDivergencia = embarquesAtualizados.some(e => e.status_recebimento_embarque === 'Com Divergência');
