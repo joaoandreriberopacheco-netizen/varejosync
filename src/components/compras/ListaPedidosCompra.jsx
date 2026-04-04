@@ -152,11 +152,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const { isVermelho, isAmbar, isPisca, isVerde, isCyan, hasActiveDivergence } = useMemo(() => {
     if (isVirtualCard) {
       return {
-        isVerde: ['Recebido OK', 'Concluído'].includes(displayStatus),
+        isVerde: displayStatus === 'Concluído',
         isAmbar: displayStatus === 'Recebido Parcial',
         isVermelho: displayStatus === 'Com Divergência',
         isPisca: false,
-        isCyan: false,
+        isCyan: displayStatus === 'Despachado',
         hasActiveDivergence: displayStatus === 'Com Divergência',
       };
     }

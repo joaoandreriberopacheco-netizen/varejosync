@@ -10,8 +10,8 @@ function getProgressDetails(pedido) {
 
   const status = pedido.status || '';
 
-  // Status de recebimento: Recebido OK = completo (verde)
-  if (status === 'Recebido OK')
+  // Status virtuais/finais do card
+  if (status === 'Recebido OK' || status === 'Concluído')
     return { filled: 5, active: 'teal-full' };
 
   // Problemas — vermelho tem prioridade

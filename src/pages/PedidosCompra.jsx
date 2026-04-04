@@ -388,8 +388,8 @@ export default function PedidosCompraPage() {
         _display_itens = itensOrfaos;
         _display_valor = itensOrfaos.reduce((acc, i) => acc + (i.quantidade * (Number(i.custo_unitario) || 0)), 0);
       } else if (embarque) {
-        // Card virtual de embarque representa a parte efetivamente despachada do pedido
-        if (pedido.status === 'Concluído') {
+        // Card virtual de embarque representa o estado do próprio embarque no front
+        if (pedido.status === 'Concluído' || ['Recebido OK', 'Concluído'].includes(embarque.status_recebimento_embarque)) {
           _display_status = 'Concluído';
         } else {
           _display_status = 'Despachado';
