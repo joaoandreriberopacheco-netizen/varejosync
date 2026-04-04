@@ -10,14 +10,15 @@ function getProgressDetails(pedido) {
 
   const statusPedido = pedido.status || '';
   const statusEmbarque = pedido._display_status || pedido._embarque?.status_recebimento || pedido._embarque?.status || '';
+  const statusBase = pedido._display_status || statusEmbarque || statusPedido;
 
-  if (statusEmbarque === 'Recebido OK' || statusEmbarque === 'Concluído') return { filled: 5, active: 'teal-full' };
-  if (statusEmbarque === 'Com Divergência' || pedido.tem_divergencias || isAtrasado) return { filled: 2, active: 'rose' };
-  if (statusPedido === 'Rascunho') return { filled: 1, active: 'teal-light' };
-  if (statusPedido === 'Aguardando Aprovação Financeira' || statusPedido === 'Aguardando Liberação') return { filled: 2, active: 'teal-light' };
-  if (statusPedido === 'Aprovado' && !statusEmbarque) return { filled: 3, active: 'teal-mid' };
-  if (statusEmbarque === 'Pendente' || statusEmbarque === 'Aguardando Embarque' || statusEmbarque === 'Original') return { filled: 3, active: 'teal-mid' };
-  if (statusEmbarque === 'Despachado' || statusEmbarque === 'Em Trânsito' || statusEmbarque === 'Recebido Parcial') return { filled: 4, active: statusEmbarque === 'Recebido Parcial' ? 'amber' : 'teal' };
+  if (statusBase === 'Recebido OK' || statusBase === 'Concluído') return { filled: 5, active: 'teal-full' };
+  if (statusBase === 'Com Divergência' || pedido.tem_divergencias || isAtrasado) return { filled: 2, active: 'rose' };
+  if (statusBase === 'Rascunho') return { filled: 1, active: 'teal-light' };
+  if (statusBase === 'Aguardando Aprovação Financeira' || statusBase === 'Aguardando Liberação') return { filled: 2, active: 'teal-light' };
+  if (statusBase === 'Aprovado') return { filled: 3, active: 'teal-mid' };
+  if (statusBase === 'Pendente' || statusBase === 'Aguardando Embarque' || statusBase === 'Original') return { filled: 3, active: 'teal-mid' };
+  if (statusBase === 'Despachado' || statusBase === 'Em Trânsito' || statusBase === 'Recebido Parcial') return { filled: 4, active: statusBase === 'Recebido Parcial' ? 'amber' : 'teal' };
   if (pedido.data_aprovacao_financeira) return { filled: 3, active: 'teal-mid' };
 
   return { filled: 1, active: 'teal-light' };

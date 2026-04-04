@@ -59,14 +59,14 @@ function EmbarquesInfo({ pedido }) {
     <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-gray-500 dark:text-gray-400">
       <span className="flex items-center gap-1.5">
         <Truck className="w-3 h-3 flex-none" />
-        <span>{embarque?.transportadora_nome || 'Aguardando associação'}</span>
+        <span>{embarque?.transportadora_nome || 'Sem transportadora'}</span>
       </span>
       <span className="flex items-center gap-1.5">
         <CalendarClock className="w-3 h-3 flex-none" />
         <span>{embarque?.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
       </span>
       <span className="text-gray-400 dark:text-gray-500">
-        #{embarque?.numero || 'A'}
+        {pedido._display_ordinal || '#01'}
       </span>
     </div>
   );
@@ -187,23 +187,22 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.08em]">
-                    {pedido._embarque?.numero ? `EMB ${pedido._embarque.numero}` : pedido.numero}
+                    {pedido._display_code || pedido.numero}
+                  </span>
+                  <span className="text-[0.8rem] font-semibold text-gray-600 dark:text-gray-300 truncate max-w-[180px]">
+                    {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                   </span>
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {displayStatus}
                   </span>
-                  {/* Badge de pendências só aparece no card pai com divergências ATIVAS */}
                   {hasActiveDivergence && !pedido._display_status && (
                     <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold">
                       Pendências
                     </span>
                   )}
                 </div>
-                <p className="text-[0.75rem] text-gray-500 dark:text-gray-400 mt-1 truncate">
-                  {pedido.fornecedor_nome || '—'}
-                </p>
                 <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1 truncate">
-                  Pedido {pedido.numero} · {pedido._embarque?.tipo || 'Embarque'}
+                  {pedido._embarque?.tipo || 'Embarque'}
                 </p>
               </div>
             </div>
@@ -214,7 +213,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 {R(valorExibido)}
               </p>
               <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1">
-                {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
+                {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
           </div>

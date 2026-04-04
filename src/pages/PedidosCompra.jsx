@@ -15,6 +15,57 @@ import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer'
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const getEmbarqueSuffixIndex = (embarque) => {
+  const numero = String(embarque?.numero || '').trim();
+  const match = numero.match(/(\d+)$/);
+  if (match) return Math.max(0, Number(match[1]) - 1);
+  const letter = numero.replace(/[^A-Za-z]/g, '').toUpperCase();
+  const idx = LETTERS.indexOf(letter);
+  return idx >= 0 ? idx : 0;
+};
+
+const getEmbarqueSuffix = (embarque) => LETTERS[getEmbarqueSuffixIndex(embarque)] || 'A';
+
+const getDisplayEmbarqueCode = (pedido, embarque) => {
+  const baseCode = pedido?.numero || '';
+  return `${baseCode} - ${getEmbarqueSuffix(embarque)}`;
+};
+
+const getDisplayEmbarqueOrdinal = (embarque) => `#${String(getEmbarqueSuffixIndex(embarque) + 1).padStart(2, '0')}`;
+
+const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens) && embarque.itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
+
+const getBorrowedStatus = (pedido, embarque) => {
+  if (!embarque) return pedido?.status || 'Pendente';
+  if (embarque.status !== 'Pendente' || hasLinkedItems(embarque)) {
+    return embarque.status_recebimento === 'Recebido OK' || embarque.status === 'Concluído'
+      ? 'Concluído'
+      : embarque.status_recebimento || embarque.status || pedido?.status || 'Pendente';
+  }
+  return pedido?.status || embarque.status || 'Pendente';
+};
+
+const getEmbarqueDisplayDate = (pedido) => pedido?.data_aprovacao_financeira || pedido?.data_emissao || pedido?.created_date;
+
+const buildDisplayItensFromEmbarque = (pedido, embarque) => {
+  return (embarque?.itens || []).map((item) => {
+    const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
+    const quantidade = Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
+    return {
+      produto_id: item.produto_id,
+      produto_nome: item.produto_nome,
+      quantidade,
+      custo_unitario: Number(pedidoItem?.custo_unitario) || 0,
+    };
+  });
+};
+
+const getDisplayValorEmbarque = (pedido, embarque) => {
+  return buildDisplayItensFromEmbarque(pedido, embarque).reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
+};
+
 export default function PedidosCompraPage() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
@@ -107,19 +158,13 @@ export default function PedidosCompraPage() {
             ...pedido,
             _virtual_key: `${pedido.id}_${embarque.id}`,
             _embarque: embarque,
-            _display_status: embarque.status_recebimento === 'Recebido OK' || embarque.status === 'Concluído'
-              ? 'Concluído'
-              : embarque.status_recebimento || embarque.status || 'Pendente',
-            _display_valor: (embarque.itens || []).reduce((acc, item) => {
-              const custoUnitario = Number((pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0;
-              return acc + ((Number(item.quantidade_embarcada) || 0) * custoUnitario);
-            }, 0),
-            _display_itens: (embarque.itens || []).map((item) => ({
-              produto_id: item.produto_id,
-              produto_nome: item.produto_nome,
-              quantidade: Number(item.quantidade_embarcada) || 0,
-              custo_unitario: Number((pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0,
-            })),
+            _display_code: getDisplayEmbarqueCode(pedido, embarque),
+            _display_ordinal: getEmbarqueDisplayOrdinal(embarque),
+            _display_status: getBorrowedStatus(pedido, embarque),
+            _display_valor: getDisplayValorEmbarque(pedido, embarque),
+            _display_itens: buildDisplayItensFromEmbarque(pedido, embarque),
+            _display_date: getEmbarqueDisplayDate(pedido),
+            _display_fornecedor: pedido.fornecedor_nome || '—',
           };
         })
         .filter(Boolean);
