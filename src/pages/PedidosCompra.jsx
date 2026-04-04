@@ -302,6 +302,9 @@ export default function PedidosCompraPage() {
   const STATUS_VIRTUAL_CONCLUIDOS = ['Recebido OK', 'Concluído'];
 
   const grupos = useMemo(() => {
+    const statusExplicitos = statusSel.filter(s => s !== '__nao_concluido__');
+    const statusPaiSel = statusExplicitos.filter(s => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
+
     const getGroupMeta = (pedido, embarque) => {
       if (groupBy === 'fornecedor') {
         const fornecedor = pedido.fornecedor_nome?.trim() || 'Sem fornecedor';
