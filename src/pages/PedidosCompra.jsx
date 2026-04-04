@@ -293,27 +293,23 @@ export default function PedidosCompraPage() {
     const virtualEntries = [];
     pedidosVisiveisLista.forEach((pedido) => {
       const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
-      const embarqueOriginal = embarques.find((emb) => emb.tipo === 'Original') || {
-        id: `orig_${pedido.id}`,
-        numero: '00',
-        tipo: 'Original',
-        status: 'Pendente',
-        eta: null,
-        transportadora_nome: '',
-        itens_embarcados: (pedido.itens || []).map((item) => ({
-          produto_id: item.produto_id,
-          produto_nome: item.produto_nome,
-          quantidade_pedida: item.quantidade,
-          quantidade_embarcada: 0,
-          quantidade_recebida: 0,
-          unidade_medida: item.unidade_medida
-        }))
-      };
+      const embarqueOriginal = embarques.find((emb) => emb.tipo === 'Original') || null;
+      const embarquesVisiveis = embarques.filter((emb) => emb.tipo !== 'Original');
 
-      const matchStatusExplicito = !statusExplicitos.length || statusExplicitos.includes('Original') || statusPaiSel.includes(pedido.status) || statusExplicitos.includes(embarqueOriginal.status);
-      if (matchStatusExplicito) {
-        virtualEntries.push({ pedido, embarque: embarqueOriginal, virtualKey: `${pedido.id}_original` });
+      if (!embarquesVisiveis.length && embarqueOriginal) {
+        const matchStatusOriginal = !statusExplicitos.length || statusExplicitos.includes('Original') || statusPaiSel.includes(pedido.status) || statusExplicitos.includes(embarqueOriginal.status);
+        if (matchStatusOriginal) {
+          virtualEntries.push({ pedido, embarque: embarqueOriginal, virtualKey: `${pedido.id}_original` });
+        }
+        return;
       }
+
+      embarquesVisiveis.forEach((embarque, index) => {
+        const matchStatusExplicito = !statusExplicitos.length || statusPaiSel.includes(pedido.status) || statusExplicitos.includes(embarque.status) || statusExplicitos.includes(embarque.status_recebimento_embarque) || (statusExplicitos.includes('Aguardando Embarque') && !embarque.transportadora_nome && !embarque.eta);
+        if (matchStatusExplicito) {
+          virtualEntries.push({ pedido, embarque, virtualKey: `${pedido.id}_${embarque.id || index}` });
+        }
+      });
     });
 
     const map = {};
@@ -371,15 +367,31 @@ export default function PedidosCompraPage() {
       }));
       const valorOriginal = itensOriginais.reduce((acc, item) => acc + (item.quantidade * item.custo_unitario), 0);
 
+      const isOriginalCard = embarque?.tipo === 'Original';
+      const itensDoEmbarque = (embarque?.itens_embarcados || []).map((item) => ({
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        quantidade: Number(item.quantidade_embarcada || item.quantidade_pedida) || 0,
+        custo_unitario: Number((pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0,
+      }));
+      const valorDoEmbarque = itensDoEmbarque.reduce((acc, item) => acc + (item.quantidade * item.custo_unitario), 0);
+      const statusDoCard = isOriginalCard
+        ? statusOriginal
+        : (pedido.status === 'Concluído'
+          ? 'Concluído'
+          : (embarque?.status_recebimento_embarque === 'Recebido OK' || embarque?.status === 'Concluído'
+            ? 'Concluído'
+            : embarque?.status_recebimento_embarque || embarque?.status || statusOriginal));
+
       map[meta.key].pedidos.push({
         ...pedido,
         _virtual_key: virtualKey,
         _embarque: embarque,
         _is_orfao: false,
-        _display_status: statusOriginal,
-        _display_valor: valorOriginal,
-        _display_itens: itensOriginais,
-        _is_virtual_concluido: STATUS_VIRTUAL_CONCLUIDOS.includes(statusOriginal),
+        _display_status: statusDoCard,
+        _display_valor: isOriginalCard ? valorOriginal : valorDoEmbarque,
+        _display_itens: isOriginalCard ? itensOriginais : itensDoEmbarque,
+        _is_virtual_concluido: STATUS_VIRTUAL_CONCLUIDOS.includes(statusDoCard),
         valor_pendente_entrega: pedido.status === 'Concluído' ? 0 : calcularValorPendentePedido(pedido)
       });
     });
