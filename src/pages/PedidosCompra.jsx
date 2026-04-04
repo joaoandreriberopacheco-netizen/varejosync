@@ -154,6 +154,9 @@ export default function PedidosCompraPage() {
           const pedido = pedidoMap.get(embarque.pedido_compra_id);
           if (!pedido) return null;
 
+          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && (!embarque?.status || embarque?.status === 'Pendente');
+          if (embarqueDormindo) return null;
+
           return {
             ...pedido,
             _virtual_key: `${pedido.id}_${embarque.id}`,

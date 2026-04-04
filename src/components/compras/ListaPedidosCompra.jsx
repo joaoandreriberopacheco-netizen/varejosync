@@ -54,6 +54,9 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
 
 function EmbarquesInfo({ pedido }) {
   const embarque = pedido._embarque;
+  const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && (!embarque?.status || embarque?.status === 'Pendente');
+
+  if (embarqueDormindo) return null;
 
   return (
     <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-gray-500 dark:text-gray-400">
