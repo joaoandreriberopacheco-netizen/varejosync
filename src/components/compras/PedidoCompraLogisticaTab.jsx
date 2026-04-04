@@ -12,7 +12,7 @@ import { ptBR } from 'date-fns/locale';
 function calcularTotalEmbarcado(embarques) {
   const map = {};
   (embarques || []).forEach((emb) => {
-    (emb.itens_embarcados || []).forEach((item) => {
+    (emb.itens_embarcados || emb.itens || []).forEach((item) => {
       map[item.produto_id] = (map[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
     });
   });

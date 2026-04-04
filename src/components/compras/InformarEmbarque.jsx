@@ -331,7 +331,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
 
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
 
-      toast.success(isEdicao ? 'Embarque atualizado!' : statusPreview === 'Total' ? 'Embarque total registrado!' : 'Embarque parcial registrado.');
+      toast.success(isEdicao ? 'Despacho atualizado com sucesso!' : 'Despacho efetuado com sucesso!');
       onSuccess?.();
       onClose();
     } catch (err) {
