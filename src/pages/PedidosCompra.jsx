@@ -159,7 +159,7 @@ export default function PedidosCompraPage() {
             _virtual_key: `${pedido.id}_${embarque.id}`,
             _embarque: embarque,
             _display_code: getDisplayEmbarqueCode(pedido, embarque),
-            _display_ordinal: getEmbarqueDisplayOrdinal(embarque),
+            _display_ordinal: getDisplayEmbarqueOrdinal(embarque),
             _display_status: getBorrowedStatus(pedido, embarque),
             _display_valor: getDisplayValorEmbarque(pedido, embarque),
             _display_itens: buildDisplayItensFromEmbarque(pedido, embarque),
