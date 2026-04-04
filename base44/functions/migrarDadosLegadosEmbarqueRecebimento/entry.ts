@@ -63,31 +63,33 @@ function mergeLegacyIntoOriginal(original, pedido, movimentos) {
   };
 }
 
-function buildLegacyShipment(pedido, originalAnterior) {
-  const temDadosLegados = Boolean(pedido.data_despacho || pedido.data_chegada || pedido.data_prevista_entrega);
+function buildLegacyShipment(pedido, originalAnterior, embarquesAtuais) {
+  const candidatos = (embarquesAtuais || []).filter((emb) => emb.tipo === 'Embarque');
+  const melhorCandidato = candidatos.find((emb) => emb.transportadora_nome || emb.transportadora_id || emb.eta || emb.data_embarque);
+  const temDadosLegados = Boolean(melhorCandidato || pedido.data_despacho || pedido.data_chegada || pedido.data_prevista_entrega);
   if (!temDadosLegados) return null;
 
-  const itens = (originalAnterior?.itens_embarcados || []).map((item) => ({
+  const itens = (melhorCandidato?.itens_embarcados || originalAnterior?.itens_embarcados || []).map((item) => ({
     ...item,
-    quantidade_recebida: 0,
+    quantidade_recebida: toNumber(item.quantidade_recebida),
   })).filter((item) => toNumber(item.quantidade_embarcada) > 0);
 
   if (!itens.length) return null;
 
   return {
-    id: `emb_leg_${pedido.id}`,
-    numero: '01',
+    id: melhorCandidato?.id || `emb_leg_${pedido.id}`,
+    numero: melhorCandidato?.numero || '01',
     tipo: 'Embarque',
-    status: pedido.data_despacho ? 'Despachado' : 'Pendente',
-    data_embarque: pedido.data_despacho || null,
-    eta: pedido.data_chegada || (pedido.data_prevista_entrega ? `${pedido.data_prevista_entrega}T12:00:00.000Z` : null),
-    transportadora_id: '',
-    transportadora_nome: '',
-    volumes: '',
-    volumes_detalhados: [],
-    peso_kg: 0,
-    observacoes: 'Embarque legado reconstruído automaticamente a partir dos campos antigos do pedido.',
-    status_recebimento_embarque: 'Pendente',
+    status: melhorCandidato?.status || (pedido.data_despacho ? 'Despachado' : 'Pendente'),
+    data_embarque: melhorCandidato?.data_embarque || pedido.data_despacho || null,
+    eta: melhorCandidato?.eta || pedido.data_chegada || (pedido.data_prevista_entrega ? `${pedido.data_prevista_entrega}T12:00:00.000Z` : null),
+    transportadora_id: melhorCandidato?.transportadora_id || '',
+    transportadora_nome: melhorCandidato?.transportadora_nome || '',
+    volumes: melhorCandidato?.volumes || '',
+    volumes_detalhados: melhorCandidato?.volumes_detalhados || [],
+    peso_kg: toNumber(melhorCandidato?.peso_kg),
+    observacoes: melhorCandidato?.observacoes || 'Embarque legado reconstruído automaticamente a partir dos campos antigos do pedido.',
+    status_recebimento_embarque: melhorCandidato?.status_recebimento_embarque || 'Pendente',
     itens_embarcados: itens
   };
 }
@@ -168,7 +170,7 @@ Deno.serve(async (req) => {
 
       const originalBase = originalAtual || buildOriginalShipment(pedido);
       const original = mergeLegacyIntoOriginal(originalBase, pedido, movimentos);
-      const embarqueLegado = buildLegacyShipment(pedido, original);
+      const embarqueLegado = buildLegacyShipment(pedido, original, embarquesAtuais);
       const outros = embarqueLegado ? [embarqueLegado, ...outrosExistentes] : outrosExistentes;
       const necessidade = buildNeedShipmentFromSaldo(original, embarquesAtuais);
       const embarquesFinal = [original, ...outros, ...(necessidade ? [necessidade] : [])];
