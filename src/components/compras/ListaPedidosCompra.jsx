@@ -175,7 +175,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {displayStatus}
                   </span>
-                  {isAmbar && (
+                  {/* Badge de pendências só aparece no card pai (sem status virtual de embarque específico) */}
+                  {isAmbar && !pedido._display_status && (
                     <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold">
                       Pendências
                     </span>
