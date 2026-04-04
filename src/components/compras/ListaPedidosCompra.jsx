@@ -222,7 +222,12 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
             <EmbarquesInfo pedido={pedido} />
           </div>
-          <PedidoProgressBar pedido={pedido} />
+          <PedidoProgressBar
+            pedido={isVirtualCard
+              ? { ...pedido, status: displayStatus, tem_divergencias: false, status_embarque: undefined }
+              : pedido
+            }
+          />
         </div>
 
         {/* Botão delete hover (rascunho) */}

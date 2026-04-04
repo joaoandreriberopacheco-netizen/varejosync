@@ -154,6 +154,8 @@ export default function PedidosCompraPage() {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [pedidos]);
 
+  const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque'];
+
   const filtrados = useMemo(() => {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
@@ -161,10 +163,30 @@ export default function PedidosCompraPage() {
       const ocultarConcluidos = statusSel.includes('__nao_concluido__');
       const statusExplicitos = statusSel.filter(status => status !== '__nao_concluido__');
       const concluidosSelecionados = statusExplicitos.includes('Concluído');
+      const statusPaiSel = statusExplicitos.filter(s => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
+      const statusEmbSel  = statusExplicitos.filter(s => STATUS_EMBARQUE_VIRTUAIS.includes(s));
 
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
       if (ocultarConcluidos && !concluidosSelecionados && p.status === 'Concluído') return false;
-      if (statusExplicitos.length > 0 && !statusExplicitos.includes(p.status)) return false;
+
+      // Filtro de status: combina status do pedido pai e status virtual de embarque (OR entre os selecionados)
+      if (statusExplicitos.length > 0) {
+        const matchPai = statusPaiSel.includes(p.status);
+        const embarques = Array.isArray(p.embarques_registrados) ? p.embarques_registrados : [];
+        const matchEmbarque = statusEmbSel.some(s => {
+          if (s === 'Aguardando Embarque') {
+            // pedido com itens que não foram embarcados
+            const qtdEmb = embarques.reduce((acc, emb) => {
+              (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
+              return acc;
+            }, {});
+            return (p.itens || []).some(i => (Number(i.quantidade) || 0) - (qtdEmb[i.produto_id] || 0) > 0);
+          }
+          return embarques.some(emb => emb.status_recebimento_embarque === s);
+        });
+        if (!matchPai && !matchEmbarque) return false;
+      }
+
       if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
       if (tagsSel.length > 0 && !tagsSel.some(t => (p.tags || []).includes(t))) return false;
       if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;

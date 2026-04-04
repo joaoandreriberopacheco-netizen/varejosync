@@ -16,6 +16,11 @@ const STATUS_OPTIONS = [
   { codigo: 'Devolvido',            label: 'Devolvido',             cor: 'bg-rose-100 text-rose-800' },
   { codigo: 'Concluído',            label: 'Concluído',             cor: 'bg-emerald-100 text-emerald-800' },
   { codigo: 'Cancelado',            label: 'Cancelado',             cor: 'bg-red-100 text-red-800' },
+  // Status virtuais de embarque
+  { codigo: 'Aguardando Embarque',  label: '↳ Ag. Embarque',        cor: 'bg-orange-50 text-orange-700' },
+  { codigo: 'Recebido OK',          label: '↳ Recebido OK',         cor: 'bg-emerald-100 text-emerald-800' },
+  { codigo: 'Recebido Parcial',     label: '↳ Recebido Parcial',    cor: 'bg-amber-100 text-amber-800' },
+  { codigo: 'Com Divergência',      label: '↳ Com Divergência',     cor: 'bg-rose-100 text-rose-800' },
 ];
 
 export default function FiltrosCompras({ 
