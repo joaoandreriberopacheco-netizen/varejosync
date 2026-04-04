@@ -262,14 +262,17 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   );
 }
 
-function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '' }) {
+function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
   const [open, setOpen] = useState(true);
-  const valorTotal = pedidos.reduce((acc, p) => {
-    const valorPedido = p.status === 'Pendência'
-      ? (p.valor_pendente_entrega ?? p.valor_total ?? 0)
-      : (p.valor_total ?? 0);
-    return acc + valorPedido;
-  }, 0);
+  // Soma apenas _display_valor para cards virtuais (embarques + órfãos), ou usa _total_eta se disponível
+  const valorTotal = _total_eta > 0
+    ? _total_eta
+    : pedidos.reduce((acc, p) => {
+        const valorPedido = p._display_valor ?? (p.status === 'Pendência'
+          ? (p.valor_pendente_entrega ?? p.valor_total ?? 0)
+          : (p.valor_total ?? 0));
+        return acc + valorPedido;
+      }, 0);
 
   return (
     <div className={`w-full space-y-2 ${className}`}>
@@ -322,7 +325,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
 
   return (
     <div className="space-y-5">
-      {grupos.map(({ key, label, pedidos }, index) => {
+      {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
         const isSpecialTransition = (
           (previousLabel.includes('Sem transportador') && label.includes('Sem ETA')) ||
@@ -340,6 +343,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
             onToggleSelecao={onToggleSelecao}
             modoSelecao={modoSelecao}
             className={index > 0 ? (isSpecialTransition ? 'pt-5' : 'pt-3') : ''}
+            _total_eta={_total_eta}
           />
         );
       })}

@@ -244,7 +244,9 @@ export default function PedidosCompraPage() {
                 (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
                 return acc;
               }, {});
-              return (pedido.itens || []).some(i => (Number(i.quantidade) || 0) - (qtdEmb[i.produto_id] || 0) > 0) && pedido.status === 'Pendência';
+              // Tem itens órfãos E status pai é Pendência
+              const temOrfaos = (pedido.itens || []).some(i => (Number(i.quantidade) || 0) - (qtdEmb[i.produto_id] || 0) > 0);
+              return temOrfaos && pedido.status === 'Pendência';
             }
             return embarques.some(emb => emb.status_recebimento_embarque === s);
           });
@@ -398,17 +400,26 @@ export default function PedidosCompraPage() {
       });
     });
 
-    return Object.values(map)
+    const gruposComTotal = Object.values(map)
       .sort((a, b) => compareValues(a.orderValue, b.orderValue))
-      .map((grupo) => ({
-        key: grupo.key,
-        label: grupo.label,
-        pedidos: grupo.pedidos.sort((a, b) => {
-            const valorA = a.data_emissao || a.created_date || '';
-            const valorB = b.data_emissao || b.created_date || '';
-            return compareValues(valorA, valorB);
-          })
-      }));
+      .map((grupo) => {
+        const pedidosSort = grupo.pedidos.sort((a, b) => {
+          const valorA = a.data_emissao || a.created_date || '';
+          const valorB = b.data_emissao || b.created_date || '';
+          return compareValues(valorA, valorB);
+        });
+        // Soma apenas _display_valor (valor do card virtual), não valor_pendente_entrega
+        const totalETA = groupBy === 'eta_transportadora'
+          ? pedidosSort.reduce((acc, p) => acc + (p._display_valor || 0), 0)
+          : 0;
+        return {
+          key: grupo.key,
+          label: grupo.label,
+          pedidos: pedidosSort,
+          _total_eta: totalETA
+        };
+      });
+    return gruposComTotal;
   }, [pedidosVisiveisLista, groupBy, sortOrder, statusSel]);
 
   const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || statusSel.some(status => status !== '__nao_concluido__');
