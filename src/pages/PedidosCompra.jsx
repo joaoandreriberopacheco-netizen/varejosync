@@ -327,7 +327,7 @@ export default function PedidosCompraPage() {
       let _display_itens = null;
 
       if (_is_orfao) {
-        _display_status = 'Aguardando Embarque';
+        _display_status = 'Pendência';
         const qtdEmbarcadaPorProduto = (pedido.embarques_registrados || []).reduce((acc, emb) => {
           (emb.itens_embarcados || []).forEach(ie => {
             acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0);

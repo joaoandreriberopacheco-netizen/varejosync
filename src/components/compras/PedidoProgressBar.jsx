@@ -10,6 +10,10 @@ function getProgressDetails(pedido) {
 
   const status = pedido.status || '';
 
+  // Status de recebimento: Recebido OK = completo (verde)
+  if (status === 'Recebido OK')
+    return { filled: 5, active: 'teal-full' };
+
   // Problemas — vermelho tem prioridade
   if (pedido.tem_divergencias || status === 'Pendência' || status === 'Devolvido' || isAtrasado)
     return { filled: 2, active: 'rose' };
