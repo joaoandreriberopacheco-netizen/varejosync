@@ -440,60 +440,57 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     //  MOBILE: card com alma
     // ════════════════════════════════════════════════════════════════════════
+    const ITEM_ML = M + 8;  // margem esquerda dos itens (indentado)
+    const ITEM_MR = M + 8;  // margem direita dos itens (espelhada)
+    const ITEM_CW = CW - 16; // largura interna dos itens
+
     const drawMobileCard = (pedido) => {
       const itens = pedido.itens || [];
       let totCusto = 0, totVenda = 0;
       const sc = getStatusColors(pedido.status);
 
-      ensureSpace(36);
+      ensureSpace(22);
 
-      // ── Cabeçalho do card ──────────────────────────────────────────────
-      // Fundo cinza suave
-      doc.setFillColor(...C.soft);
-      doc.roundedRect(M, y, CW, 24, 3, 3, 'F');
-
-      // Barra colorida de status (esquerda)
+      // ── Cabeçalho do pedido (compacto) ────────────────────────────────
+      // Barra de status fina na esquerda
       doc.setFillColor(...sc.dot);
-      doc.roundedRect(M, y, 2.5, 24, 1.5, 1.5, 'F');
+      doc.rect(M, y, 2, 18, 'F');
 
-      // Número do pedido — topo esquerda
+      // Número + status pill na mesma linha
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(6);
+      doc.setFontSize(5.5);
       doc.setTextColor(...C.muted);
-      doc.text(safe(pedido.numero || '-'), M + 5, y + 5);
+      doc.text(safe(pedido.numero || '-'), M + 5, y + 4.5);
 
-      // Status pill — topo direita
+      // Status pill direita
       doc.setFillColor(...sc.pillBg);
-      doc.roundedRect(M + CW - 28, y + 1.5, 26, 5.5, 2.5, 2.5, 'F');
-      doc.setFontSize(5);
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.roundedRect(M + CW - 25, y + 1, 23, 5, 2.5, 2.5, 'F');
+      doc.setFontSize(4.8);
       doc.setTextColor(...sc.pillText);
-      doc.text(safe(pedido.status || '-'), M + CW - 15, y + 5.3, { align: 'center' });
+      doc.text(safe(pedido.status || '-'), M + CW - 13.5, y + 4.5, { align: 'center' });
 
-      // Fornecedor — nome em destaque
+      // Fornecedor
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(8.5);
+      doc.setFontSize(7.5);
       doc.setTextColor(...C.dark);
-      const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 10)[0];
-      doc.text(fornLine, M + 5, y + 12);
+      const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 30)[0];
+      doc.text(fornLine, M + 5, y + 10);
 
-      // Valor total — direita em destaque
+      // Valor total pedido — destaque teal
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(8);
+      doc.setFontSize(7.5);
       doc.setTextColor(...C.tealDark);
-      doc.text(moeda(pedido.valor_total), M + CW, y + 12, { align: 'right' });
+      doc.text(moeda(pedido.valor_total), M + CW, y + 10, { align: 'right' });
 
-      // Datas
+      // Datas compactas
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(5.2);
+      doc.setFontSize(4.8);
       doc.setTextColor(...C.muted);
-      doc.text(`Emissao: ${dataFmt(pedido.data_emissao || pedido.created_date)}`, M + 5, y + 17.5);
-      doc.text(`Entrega: ${dataFmt(pedido.data_prevista_entrega)}`, M + 5, y + 21.5);
-      doc.text(`${itens.length} item(ns)`, M + CW, y + 21.5, { align: 'right' });
+      doc.text(`Emissao: ${dataFmt(pedido.data_emissao || pedido.created_date)}  |  Entrega: ${dataFmt(pedido.data_prevista_entrega)}  |  ${itens.length} item(ns)`, M + 5, y + 15.5);
 
-      y += 27;
+      y += 21;
 
-      // ── Itens do pedido ────────────────────────────────────────────────
+      // ── Itens (com indentação maior) ──────────────────────────────────
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = Number(item.quantidade) || 0;
@@ -505,65 +502,57 @@ Deno.serve(async (req) => {
         totCusto += tCusto;
         totVenda += tVenda;
 
-        ensureSpace(16);
+        ensureSpace(14);
 
-        // fundo alternado
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(M, y, CW, 14, 2, 2, 'F');
+          doc.roundedRect(ITEM_ML - 2, y, ITEM_CW + 4, 12, 1.5, 1.5, 'F');
         }
 
-        // Nome
+        // Nome do produto
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(5.8);
+        doc.setTextColor(...C.text);
+        const nomeProd = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), ITEM_CW - 22)[0];
+        doc.text(nomeProd, ITEM_ML, y + 4.5);
+
+        // Venda total — direita
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(6);
-        doc.setTextColor(...C.text);
-        const nomeProd = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), CW - 25)[0];
-        doc.text(nomeProd, M + 2, y + 4.5);
-
-        // Venda total — direita alinhada verticalmente ao centro
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(6.5);
         doc.setTextColor(...C.tealDark);
-        doc.text(moeda(tVenda), M + CW, y + 4.5, { align: 'right' });
+        doc.text(moeda(tVenda), ITEM_ML + ITEM_CW, y + 4.5, { align: 'right' });
 
         // Detalhe: qtd · custo · markup
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(5);
+        doc.setFontSize(4.6);
         doc.setTextColor(...C.muted);
-        doc.text(`${qtd.toLocaleString('pt-BR')} un  |  custo ${moeda(custo)}  |  mk ${percentual(mk)}`, M + 2, y + 9.5);
+        doc.text(`${qtd.toLocaleString('pt-BR')} un  |  custo ${moeda(custo)}  |  mk ${percentual(mk)}`, ITEM_ML, y + 9);
 
-        // Custo total linha
-        doc.setFontSize(4.8);
-        doc.text(`custo total ${moeda(tCusto)}`, M + 2, y + 13.5);
-
-        y += 16;
+        y += 13;
       });
 
-      // ── Rodapé do card: totais ─────────────────────────────────────────
-      ensureSpace(20);
+      // ── Rodapé totais (indentado igual) ───────────────────────────────
+      ensureSpace(16);
       doc.setFillColor(...C.dark);
-      doc.roundedRect(M, y, CW, 17, 2.5, 2.5, 'F');
+      doc.roundedRect(ITEM_ML - 2, y, ITEM_CW + 4, 13, 2, 2, 'F');
 
-      // Labels
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(5.2);
+      doc.setFontSize(4.8);
       doc.setTextColor(...C.mutedLight);
-      doc.text('Custo total', M + 3, y + 5);
-      doc.text('Venda total', M + 3, y + 9.5);
-      doc.text('Margem bruta', M + 3, y + 14);
+      doc.text('Custo', ITEM_ML, y + 4.5);
+      doc.text('Venda', ITEM_ML, y + 8.5);
+      doc.text('Margem', ITEM_ML, y + 12.5);
 
-      // Valores
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(6.5);
+      doc.setFontSize(6);
       doc.setTextColor(...C.white);
-      doc.text(moeda(totCusto), M + CW, y + 5, { align: 'right' });
-      doc.text(moeda(totVenda), M + CW, y + 9.5, { align: 'right' });
-
+      doc.text(moeda(totCusto), ITEM_ML + ITEM_CW, y + 4.5, { align: 'right' });
+      doc.text(moeda(totVenda), ITEM_ML + ITEM_CW, y + 8.5, { align: 'right' });
       const margem = totVenda - totCusto;
       doc.setTextColor(margem >= 0 ? 52 : 252, margem >= 0 ? 211 : 100, margem >= 0 ? 153 : 100);
-      doc.text(moeda(margem), M + CW, y + 14, { align: 'right' });
+      doc.text(moeda(margem), ITEM_ML + ITEM_CW, y + 12.5, { align: 'right' });
 
-      y += 22;
+      y += 17;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -580,20 +569,23 @@ Deno.serve(async (req) => {
     };
 
     const renderGrupo = (grupo) => {
-      ensureSpace(14);
+      ensureSpace(16);
       if (isMobile) {
-        // Separador de grupo estilo mobile
+        // Separador de grupo: fundo escuro full-width, tipografia forte
+        doc.setFillColor(...C.dark);
+        doc.rect(0, y, pageW, 10, 'F');
+        // linha teal à esquerda
         doc.setFillColor(...C.teal);
-        doc.rect(M, y, 2.5, 7, 'F');
+        doc.rect(0, y, 3, 10, 'F');
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(7);
-        doc.setTextColor(...C.dark);
-        doc.text(safe(grupo.label || '-'), M + 6, y + 5);
+        doc.setTextColor(...C.white);
+        doc.text(safe(grupo.label || '-'), M + 2, y + 6.8);
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(5.2);
-        doc.setTextColor(...C.muted);
-        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + CW, y + 5, { align: 'right' });
-        y += 11;
+        doc.setFontSize(5);
+        doc.setTextColor(...C.mutedLight);
+        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + CW, y + 6.8, { align: 'right' });
+        y += 14;
       } else {
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(8.5);
