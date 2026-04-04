@@ -89,6 +89,13 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
       disabled: !!gerando,
     },
+    {
+      icon: <Smartphone className="w-5 h-5" />,
+      label: 'Mobile com alma',
+      onClick: () => handleGerarRelatorio('mobile_com_alma'),
+      color: 'bg-gray-900 dark:bg-gray-600 text-white',
+      disabled: !!gerando,
+    },
   ];
 
   return (
