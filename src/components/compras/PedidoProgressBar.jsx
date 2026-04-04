@@ -10,7 +10,7 @@ function getProgressDetails(pedido) {
   const quantidadePendente = pedido._quantidade_pendente ?? 0;
   const necessidadeSemItens = embarque.tipo === 'Necessidade' && !temTransporte && (!temItensAssociados || quantidadePendente > 0);
 
-  if (necessidadeSemItens) return { filled: 3, active: 'rose' };
+  if (necessidadeSemItens || statusBase === 'Aguardando') return { filled: 3, active: 'rose' };
   if (statusBase === 'Concluído') return { filled: 5, active: 'teal-full' };
   if (statusBase === 'Despachado') return { filled: 4, active: 'teal' };
   if (statusBase === 'Aprovado') return { filled: 3, active: 'teal-mid' };

@@ -18,6 +18,7 @@ const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits:
 
 const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
+  'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
   'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aprovado': { dot: 'bg-emerald-400 dark:bg-emerald-400', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
@@ -64,6 +65,11 @@ function EmbarquesInfo({ pedido }) {
       <span className="text-gray-400 dark:text-gray-500">
         {pedido._display_ordinal || '#01'}
       </span>
+      {pedido._display_status === 'Aguardando' && (pedido._quantidade_pendente ?? 0) > 0 && (
+        <span className="text-red-500 dark:text-red-400 font-medium">
+          {pedido._quantidade_pendente} un. faltando embarcar
+        </span>
+      )}
     </div>
   );
 }

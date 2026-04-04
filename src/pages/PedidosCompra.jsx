@@ -37,17 +37,34 @@ const getDisplayEmbarqueOrdinal = (embarque) => `#${String(getEmbarqueSuffixInde
 
 const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens) && embarque.itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
+const getQuantidadePendenteNecessidade = (pedido, embarque) => {
+  if (embarque?.tipo !== 'Necessidade') return 0;
+
+  return (pedido.itens || []).reduce((acc, item) => {
+    const quantidade = Number(item.quantidade) || 0;
+    const quantidadeVinculada = Number(item.quantidade_vinculada) || 0;
+    return acc + Math.max(0, quantidade - quantidadeVinculada);
+  }, 0);
+};
+
 const getBorrowedStatus = (pedido, embarque) => {
   if (!embarque) return pedido?.status || 'Rascunho';
 
   const temTransporte = !!(embarque.transportadora_id || embarque.transportadora_nome || embarque.data_embarque || embarque.eta);
   const statusRecebimento = embarque.status_recebimento;
+  const temItensAssociados = hasLinkedItems(embarque);
+  const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
+  const precisaPreenchimento = embarque.tipo === 'Necessidade' && !temTransporte && !temItensAssociados && quantidadePendente > 0;
 
   if (statusRecebimento === 'Recebido OK' || embarque.status === 'Concluído') {
     return 'Concluído';
   }
 
-  if (temTransporte || statusRecebimento === 'Recebido Parcial') {
+  if (precisaPreenchimento) {
+    return 'Aguardando';
+  }
+
+  if (temItensAssociados || temTransporte || statusRecebimento === 'Recebido Parcial') {
     return 'Despachado';
   }
 
@@ -79,16 +96,6 @@ const buildDisplayItensFromEmbarque = (pedido, embarque) => {
 
 const getDisplayValorEmbarque = (pedido, embarque) => {
   return buildDisplayItensFromEmbarque(pedido, embarque).reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
-};
-
-const getQuantidadePendenteNecessidade = (pedido, embarque) => {
-  if (embarque?.tipo !== 'Necessidade') return 0;
-
-  return (pedido.itens || []).reduce((acc, item) => {
-    const quantidade = Number(item.quantidade) || 0;
-    const quantidadeVinculada = Number(item.quantidade_vinculada) || 0;
-    return acc + Math.max(0, quantidade - quantidadeVinculada);
-  }, 0);
 };
 
 export default function PedidosCompraPage() {
@@ -181,7 +188,8 @@ export default function PedidosCompraPage() {
 
           const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
           const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
-          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados;
+          const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
+          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0;
           if (embarqueDormindo) return null;
 
           return {
@@ -309,7 +317,7 @@ export default function PedidosCompraPage() {
 
   const cardsFonte = useMemo(() => embarques, [embarques]);
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado', 'Despachado', 'Concluído'];
+  const STATUS_EMBARQUE_VIRTUAIS = ['Rascunho', 'Aguardando', 'Aguardando Aprovação Financeira', 'Aprovado', 'Despachado', 'Concluído'];
 
   const filtrados = useMemo(() => {
     return cardsFonte.filter((p) => {

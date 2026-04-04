@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Truck, ChevronDown, ChevronUp, Edit3, Plus, Layers, Package, AlertTriangle, CheckCircle2, Clock, Handshake, Ship } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Truck, ChevronDown, ChevronUp, Edit3, Plus, CheckCircle2, Clock, Handshake, Trash2 } from 'lucide-react';
 import AcordoFinanceiroOrfaoDialog from './AcordoFinanceiroOrfaoDialog';
 import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
@@ -17,8 +19,10 @@ function calcularTotalEmbarcado(embarques) {
   return map;
 }
 
-function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
+function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const parseValidDate = (value) => {
     if (!value) return null;
     const parsed = new Date(value);
@@ -30,6 +34,14 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
   const totalItens = itensEmbarque.reduce((s, i) => s + (i.quantidade_embarcada || 0), 0);
   const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
   const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
+  const podeExcluir = !['Recebido OK', 'Recebido Parcial', 'Concluído', 'Concluído OK', 'Concluído com Divergência'].includes(statusRecebimento);
+  const handleDelete = async () => {
+    setDeleting(true);
+    await base44.entities.Embarque.delete(embarque.id);
+    setDeleting(false);
+    setShowDeleteConfirm(false);
+    onDelete?.();
+  };
 
   return (
     <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
@@ -52,6 +64,11 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
+          {podeExcluir && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowDeleteConfirm(true)}>
+              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
             <Edit3 className="w-3.5 h-3.5 text-gray-400" />
           </Button>
@@ -77,6 +94,23 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
         }
         </div>
       }
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent className="rounded-2xl border-0 shadow-2xl dark:bg-gray-900 max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="dark:text-white">Excluir embarque?</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-400">
+              O embarque <strong>{codigoExibicao}</strong> será removido da logística deste pedido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl border-0 shadow-sm dark:bg-gray-800 dark:text-gray-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="rounded-xl bg-red-600 hover:bg-red-700 text-white">
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>);
 
 }
@@ -233,7 +267,8 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
         embarque={emb}
         nivel={idx + 1}
         pedido={pedido}
-        onEdit={handleEditarEmbarque} />
+        onEdit={handleEditarEmbarque}
+        onDelete={handleSuccess} />
 
       )}
 
