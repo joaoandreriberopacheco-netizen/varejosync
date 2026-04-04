@@ -270,8 +270,6 @@ export default function PedidosCompraPage() {
 
       if (groupBy === 'eta_transportadora' && embarques.length > 0) {
         embarques.forEach((emb, idx) => {
-          // Oculta embarques já recebidos com sucesso — o card órfão cobre o pendente
-          if (emb.status_recebimento_embarque === 'Recebido OK') return;
           virtualEntries.push({ pedido, embarque: emb, virtualKey: `${pedido.id}_emb_${emb.id || idx}` });
         });
         // Para Pendência: adiciona card extra para itens órfãos (não embarcados)

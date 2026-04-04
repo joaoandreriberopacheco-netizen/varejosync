@@ -100,12 +100,6 @@ const STATUS_PDF_COLORS = {
   'Devolvido':             { dot: [251,113,133], pillBg: [255,241,242], pillText: [190,24,93]   },
   'Concluido':             { dot: [16,185,129],  pillBg: [236,253,245], pillText: [4,120,87]    },
   'Cancelado':             { dot: [209,213,219], pillBg: [243,244,246], pillText: [156,163,175] },
-  // Status virtuais de embarques
-  'Aguardando Embarque':   { dot: [251,146,60],  pillBg: [255,247,237], pillText: [194,65,12]   },
-  'Pendente':              { dot: [203,213,225], pillBg: [241,245,249], pillText: [71,85,105]   },
-  'Recebido OK':           { dot: [16,185,129],  pillBg: [236,253,245], pillText: [4,120,87]    },
-  'Recebido Parcial':      { dot: [251,191,36],  pillBg: [255,251,235], pillText: [146,64,14]   },
-  'Com Divergencia':       { dot: [251,113,133], pillBg: [255,241,242], pillText: [190,24,93]   },
 };
 
 const getStatusColors = (status) => {
@@ -368,30 +362,28 @@ Deno.serve(async (req) => {
     //  DESKTOP: layout compacto
     // ════════════════════════════════════════════════════════════════════════
     const drawCompacto = (pedido) => {
-      const displayStatus = pedido._display_status || pedido.status;
-      const isVirtual = !!pedido._display_itens;
-      const itensEfetivos = pedido._display_itens || (() => {
-        const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
-        return isPendencia
-          ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
-          : (pedido.itens || []);
-      })();
-      const valorDisplay = pedido._display_valor ?? (() => {
-        return itensEfetivos.reduce((a, i) => {
-          const cu = Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0;
-          const qtd = Number(i.quantidade) || 0;
-          return a + qtd * cu;
-        }, 0);
-      })();
-      const sc = getStatusColors(displayStatus);
-      const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0] || null;
-
-      drawPedidoHeaderCompacto({ ...pedido, status: displayStatus, valor_total: valorDisplay });
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      // Ajustar valor total no cabeçalho compacto para Pendência
+      const pedidoParaHeader = isPendencia ? {
+        ...pedido,
+        valor_total: (pedido.itens || [])
+          .filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
+          .reduce((a, i) => {
+            const cu = Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0;
+            const qtdPend = (Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0);
+            return a + qtdPend * cu;
+          }, 0)
+      } : pedido;
+      drawPedidoHeaderCompacto(pedidoParaHeader);
+      const embarque = (pedido.embarques_registrados || [])[0] || null;
+      const itensEfetivos = isPendencia
+        ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
+        : (pedido.itens || []);
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);
       doc.text(`Transportadora: ${safe(embarque?.transportadora_nome || 'Sem transportador')}`, M + 2, y);
       doc.text(`ETA: ${safe(embarque?.eta ? dataFmt(embarque.eta) : 'Sem ETA')}`, M + 78, y);
-      doc.text(`Itens${isVirtual ? ' (parcial)' : ''}: ${itensEfetivos.length}`, M + 134, y);
+      doc.text(`Itens${isPendencia ? ' pend.' : ''}: ${itensEfetivos.length}`, M + 134, y);
       y += 5;
       y = addWrappedText(doc, pedido.observacoes || pedido.historico || '-', M + 2, y, CW - 4, 4) + 4;
     };
@@ -400,28 +392,22 @@ Deno.serve(async (req) => {
     //  DESKTOP: layout expandido
     // ════════════════════════════════════════════════════════════════════════
     const drawExpandido = (pedido) => {
-      const displayStatus = pedido._display_status || pedido.status;
-      const isVirtual = !!pedido._display_itens;
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       let itens;
-      if (isVirtual) {
-        itens = (pedido._display_itens || []).map((item) => ({ ...item, _qtdEfetiva: Number(item.quantidade) || 0 }));
+      if (isPendencia) {
+        itens = (pedido.itens || [])
+          .map((item) => ({
+            ...item,
+            _qtdEfetiva: Math.max(0, (Number(item.quantidade) || 0) - (Number(item.quantidade_vinculada) || 0))
+          }))
+          .filter((i) => i._qtdEfetiva > 0);
       } else {
-        const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
-        if (isPendencia) {
-          itens = (pedido.itens || [])
-            .map((item) => ({
-              ...item,
-              _qtdEfetiva: Math.max(0, (Number(item.quantidade) || 0) - (Number(item.quantidade_vinculada) || 0))
-            }))
-            .filter((i) => i._qtdEfetiva > 0);
-        } else {
-          itens = (pedido.itens || []).map((item) => ({ ...item, _qtdEfetiva: Number(item.quantidade) || 0 }));
-        }
+        itens = (pedido.itens || []).map((item) => ({ ...item, _qtdEfetiva: Number(item.quantidade) || 0 }));
       }
 
       // Cabeçalho com valor ajustado
       ensureSpace(34);
-      const sc = getStatusColors(displayStatus);
+      const sc = getStatusColors(pedido.status);
       doc.setFillColor(...C.panel);
       doc.roundedRect(M, y, CW, 28, 4, 4, 'F');
       doc.setFillColor(...sc.dot);
@@ -436,7 +422,7 @@ Deno.serve(async (req) => {
       doc.roundedRect(M + 9, y + 17, 33, 6.2, 3, 3, 'F');
       doc.setFontSize(7.1);
       doc.setTextColor(...sc.pillText);
-      doc.text(safe(displayStatus || '-'), M + 12, y + 21.2);
+      doc.text(safe(pedido.status || '-'), M + 12, y + 21.2);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.muted);
@@ -445,13 +431,15 @@ Deno.serve(async (req) => {
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(10);
       doc.setTextColor(...C.text);
-      const valorExp = pedido._display_valor ?? itens.reduce((a, i) => a + i._qtdEfetiva * (Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0), 0);
+      const valorExp = isPendencia
+        ? itens.reduce((a, i) => a + i._qtdEfetiva * (Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0), 0)
+        : (pedido.valor_total || 0);
       doc.text(moeda(valorExp), M + CW - 4, y + 10, { align: 'right' });
       const totalQtdExp = itens.reduce((a, i) => a + i._qtdEfetiva, 0);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...C.muted);
-      doc.text(`${itens.length} itens${isVirtual ? ' (parcial)' : ''} - ${totalQtdExp.toLocaleString('pt-BR')} un.`, M + CW - 4, y + 16, { align: 'right' });
+      doc.text(`${itens.length} itens${isPendencia ? ' pend.' : ''} - ${totalQtdExp.toLocaleString('pt-BR')} un.`, M + CW - 4, y + 16, { align: 'right' });
       y += 32;
 
       let totCusto = 0, totVenda = 0;
@@ -545,25 +533,21 @@ Deno.serve(async (req) => {
     const fmtQtd = (n) => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     const drawMobileCard = (pedido) => {
-      const displayStatus = pedido._display_status || pedido.status;
-      const sc = getStatusColors(displayStatus);
-      const isVirtual = !!pedido._display_itens;
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      const sc = getStatusColors(pedido.status);
 
+      // Para Pendência: filtrar apenas itens com quantidade pendente
+      let itensBrutos = pedido.itens || [];
       let itens;
-      if (isVirtual) {
-        itens = (pedido._display_itens || []).map((item) => ({ ...item, _qtdMostrada: Number(item.quantidade) || 0 }));
+      if (isPendencia) {
+        itens = itensBrutos
+          .map((item) => {
+            const qtdPendente = (Number(item.quantidade) || 0) - (Number(item.quantidade_vinculada) || 0);
+            return { ...item, _qtdMostrada: qtdPendente, _isPendente: qtdPendente > 0 };
+          })
+          .filter((i) => i._isPendente);
       } else {
-        const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
-        if (isPendencia) {
-          itens = (pedido.itens || [])
-            .map((item) => {
-              const qtdPendente = (Number(item.quantidade) || 0) - (Number(item.quantidade_vinculada) || 0);
-              return { ...item, _qtdMostrada: qtdPendente, _isPendente: qtdPendente > 0 };
-            })
-            .filter((i) => i._isPendente);
-        } else {
-          itens = (pedido.itens || []).map((item) => ({ ...item, _qtdMostrada: Number(item.quantidade) || 0 }));
-        }
+        itens = itensBrutos.map((item) => ({ ...item, _qtdMostrada: Number(item.quantidade) || 0 }));
       }
 
       ensureSpace(32);
@@ -587,7 +571,7 @@ Deno.serve(async (req) => {
       doc.roundedRect(M + CW - 30, y + 2, 28, 7, 3.5, 3.5, 'F');
       doc.setFontSize(6);
       doc.setTextColor(...sc.pillText);
-      doc.text(safe(displayStatus || '-'), M + CW - 16, y + 6.8, { align: 'center' });
+      doc.text(safe(pedido.status || '-'), M + CW - 16, y + 6.8, { align: 'center' });
 
       // Fornecedor
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
@@ -596,22 +580,22 @@ Deno.serve(async (req) => {
       const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 8)[0];
       doc.text(fornLine, M + 3, y + 15);
 
-      // Valor
+      // Valor (pendente para Pendencia, total para outros)
       doc.setFontSize(8.5);
-      const valorHeader = pedido._display_valor != null
-        ? moeda(pedido._display_valor)
-        : moeda(itens.reduce((a, i) => {
+      const valorHeader = isPendencia
+        ? moeda(itens.reduce((a, i) => {
             const prod = produtosMap[i.produto_id] || {};
             const cu = Number(i.custo_unitario) || Number(prod.valor_compra) || 0;
             return a + (i._qtdMostrada * cu);
-          }, 0));
+          }, 0))
+        : moeda(pedido.valor_total);
       doc.text(valorHeader, M + CW - 2, y + 15, { align: 'right' });
 
       // Datas + contagem
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(6);
       doc.setTextColor(...SLATE500);
-      const countLabel = isVirtual ? `${itens.length} item(ns) (parcial)` : `${itens.length} item(ns)`;
+      const countLabel = isPendencia ? `${itens.length} item(ns) pendente(s)` : `${itens.length} item(ns)`;
       doc.text(
         `${dataFmt(pedido.data_emissao || pedido.created_date)}  -  ${dataFmt(pedido.data_prevista_entrega)}  ·  ${countLabel}`,
         M + 3, y + 21.5
