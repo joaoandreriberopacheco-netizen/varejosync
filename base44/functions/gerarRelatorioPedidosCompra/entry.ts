@@ -362,13 +362,28 @@ Deno.serve(async (req) => {
     //  DESKTOP: layout compacto
     // ════════════════════════════════════════════════════════════════════════
     const drawCompacto = (pedido) => {
-      drawPedidoHeaderCompacto(pedido);
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      // Ajustar valor total no cabeçalho compacto para Pendência
+      const pedidoParaHeader = isPendencia ? {
+        ...pedido,
+        valor_total: (pedido.itens || [])
+          .filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
+          .reduce((a, i) => {
+            const cu = Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0;
+            const qtdPend = (Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0);
+            return a + qtdPend * cu;
+          }, 0)
+      } : pedido;
+      drawPedidoHeaderCompacto(pedidoParaHeader);
       const embarque = (pedido.embarques_registrados || [])[0] || null;
+      const itensEfetivos = isPendencia
+        ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
+        : (pedido.itens || []);
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);
       doc.text(`Transportadora: ${safe(embarque?.transportadora_nome || 'Sem transportador')}`, M + 2, y);
       doc.text(`ETA: ${safe(embarque?.eta ? dataFmt(embarque.eta) : 'Sem ETA')}`, M + 78, y);
-      doc.text(`Itens: ${(pedido.itens || []).length}`, M + 134, y);
+      doc.text(`Itens${isPendencia ? ' pend.' : ''}: ${itensEfetivos.length}`, M + 134, y);
       y += 5;
       y = addWrappedText(doc, pedido.observacoes || pedido.historico || '-', M + 2, y, CW - 4, 4) + 4;
     };
@@ -377,8 +392,56 @@ Deno.serve(async (req) => {
     //  DESKTOP: layout expandido
     // ════════════════════════════════════════════════════════════════════════
     const drawExpandido = (pedido) => {
-      drawPedidoHeaderExpandido(pedido);
-      const itens = pedido.itens || [];
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      let itens;
+      if (isPendencia) {
+        itens = (pedido.itens || [])
+          .map((item) => ({
+            ...item,
+            _qtdEfetiva: Math.max(0, (Number(item.quantidade) || 0) - (Number(item.quantidade_vinculada) || 0))
+          }))
+          .filter((i) => i._qtdEfetiva > 0);
+      } else {
+        itens = (pedido.itens || []).map((item) => ({ ...item, _qtdEfetiva: Number(item.quantidade) || 0 }));
+      }
+
+      // Cabeçalho com valor ajustado
+      ensureSpace(34);
+      const sc = getStatusColors(pedido.status);
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, y, CW, 28, 4, 4, 'F');
+      doc.setFillColor(...sc.dot);
+      doc.circle(M + 5, y + 6.5, 1.3, 'F');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(11);
+      doc.setTextColor(...C.text);
+      doc.text(safe(pedido.numero || 'Sem numero'), M + 9, y + 8);
+      doc.setFontSize(9.5);
+      doc.text(safe(pedido.fornecedor_nome || 'Sem fornecedor'), M + 9, y + 14);
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M + 9, y + 17, 33, 6.2, 3, 3, 'F');
+      doc.setFontSize(7.1);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(pedido.status || '-'), M + 12, y + 21.2);
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(7.5);
+      doc.setTextColor(...C.muted);
+      doc.text(`Emissao ${dataFmt(pedido.data_emissao || pedido.created_date)}`, M + 48, y + 20);
+      doc.text(`Entrega ${dataFmt(pedido.data_prevista_entrega)}`, M + 92, y + 20);
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(10);
+      doc.setTextColor(...C.text);
+      const valorExp = isPendencia
+        ? itens.reduce((a, i) => a + i._qtdEfetiva * (Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0), 0)
+        : (pedido.valor_total || 0);
+      doc.text(moeda(valorExp), M + CW - 4, y + 10, { align: 'right' });
+      const totalQtdExp = itens.reduce((a, i) => a + i._qtdEfetiva, 0);
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(7.5);
+      doc.setTextColor(...C.muted);
+      doc.text(`${itens.length} itens${isPendencia ? ' pend.' : ''} - ${totalQtdExp.toLocaleString('pt-BR')} un.`, M + CW - 4, y + 16, { align: 'right' });
+      y += 32;
+
       let totCusto = 0, totVenda = 0;
 
       ensureSpace(12);
@@ -394,7 +457,7 @@ Deno.serve(async (req) => {
 
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
-        const qtd = Number(item.quantidade) || 0;
+        const qtd = item._qtdEfetiva;
         const liq = Number(item.custo_unitario) || Number(prod.valor_compra) || 0;
         const frete = Number(prod.custo_frete_padrao) || 0;
         const outros = (Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0);
@@ -428,7 +491,6 @@ Deno.serve(async (req) => {
       });
 
       ensureSpace(16);
-      const sc = getStatusColors(pedido.status);
       doc.setFillColor(...sc.pillBg);
       doc.roundedRect(M, y, CW, 14, 3, 3, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
@@ -592,10 +654,10 @@ Deno.serve(async (req) => {
         // Linhas extras do nome (se houver quebra)
         if (nomeLinhas.length > 1) {
           for (let nl = 1; nl < nomeLinhas.length; nl++) {
-            doc.text(nomeLinhas[nl], NOME_X, y + 6 + nl * 7);
+            doc.text(nomeLinhas[nl], NOME_X, y + 6 + nl * 4.5);
           }
         }
-        const nomeExtraH = Math.max(0, (nomeLinhas.length - 1) * 7);
+        const nomeExtraH = Math.max(0, (nomeLinhas.length - 1) * 4.5);
 
         // Total do item (custo) — right aligned, bold
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
