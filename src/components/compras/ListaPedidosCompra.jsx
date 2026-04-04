@@ -108,8 +108,20 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const totalLinhas = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
-  const totalQtd = Array.isArray(pedido.itens) ? pedido.itens.reduce((a, i) => a + (Number(i.quantidade) || 0), 0) : 0;
+  const isPendencia = pedido.status === 'Pendência';
+  const itensPendentes = isPendencia
+    ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
+    : (pedido.itens || []);
+  const totalLinhas = itensPendentes.length;
+  const totalQtd = itensPendentes.reduce((a, i) => {
+    const qtd = isPendencia
+      ? (Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)
+      : (Number(i.quantidade) || 0);
+    return a + qtd;
+  }, 0);
+  const valorExibido = isPendencia
+    ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
+    : pedido.valor_total;
   const cfg = STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
   const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => getLEDStatus(pedido), [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias]);
 
@@ -131,7 +143,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
+        className="group relative bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
       >
         {/* Seleção overlay */}
         {modoSelecao && selecionado && (
@@ -181,7 +193,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             {/* Valor + data */}
             <div className="flex-none text-right">
               <p className="text-[0.95rem] font-bold text-gray-900 dark:text-white leading-none">
-                {R(pedido.valor_pendente_entrega ?? pedido.valor_total)}
+                {R(valorExibido)}
               </p>
               <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1">
                 {pedido.data_emissao ? formatarDataCurta(pedido.data_emissao) : '—'}
@@ -237,7 +249,9 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '' }) {
   const [open, setOpen] = useState(true);
   const valorTotal = pedidos.reduce((acc, p) => {
-    const valorPedido = p.valor_pendente_entrega ?? p.valor_total ?? 0;
+    const valorPedido = p.status === 'Pendência'
+      ? (p.valor_pendente_entrega ?? p.valor_total ?? 0)
+      : (p.valor_total ?? 0);
     return acc + valorPedido;
   }, 0);
 
