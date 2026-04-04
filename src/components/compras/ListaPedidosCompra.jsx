@@ -53,17 +53,6 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
 }
 
 function EmbarquesInfo({ pedido }) {
-  // Card órfão: sem embarque vinculado, não herda do pedido pai
-  if (pedido._is_orfao) {
-    return (
-      <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
-        <Truck className="w-3 h-3 flex-none" />
-        <span>Aguardando despacho</span>
-      </div>
-    );
-  }
-
-  // Card de embarque específico: usa _embarque (nunca o [0] do pedido)
   const embarque = pedido._embarque;
 
   if (!embarque) {
@@ -85,51 +74,36 @@ function EmbarquesInfo({ pedido }) {
         <CalendarClock className="w-3 h-3 flex-none" />
         <span>{embarque.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
       </span>
+      <span className="text-gray-400 dark:text-gray-500">
+        #{embarque.numero || '01'}
+      </span>
     </div>
   );
 }
 
 // ⭐ FASE 2+: Lógica centralizada de LED + divergência
 function getLEDStatus(pedido) {
-  const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
-  const qtdEmb = embarques.reduce((acc, emb) => {
-    (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
-    return acc;
-  }, {});
-  const todasEntregasOK = embarques.every(e => ['Recebido OK', 'Concluído'].includes(e.status_recebimento_embarque));
-  const todosItensEmb = (pedido.itens || []).every(i => qtdEmb[i.produto_id] >= (Number(i.quantidade) || 0));
-  const cicloResolvido = embarques.length > 0 && todasEntregasOK && todosItensEmb;
+  const embarque = pedido._embarque;
+  const statusRecebimento = embarque?.status_recebimento;
+  const statusOperacional = embarque?.status;
 
-  // 1️⃣ Ciclo RESOLVIDO: LED VERDE, sem divergências ativas
-  if (cicloResolvido) return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true, isCyan: false, hasActiveDivergence: false };
-
-  // 2️⃣ DESPACHADO / EM TRÂNSITO: existe logística cadastrada e o ciclo ainda não foi concluído = LED AZUL/CYAN
-  const hasLogisticaAtiva = embarques.some(e => e.transportadora_nome || e.transportadora_id || e.eta || e.data_embarque);
-  const hasRecebimentoParcial = embarques.some(e => ['Recebido Parcial'].includes(e.status_recebimento_embarque));
-  const hasDivergenciaEmbarque = embarques.some(e => e.status_recebimento_embarque === 'Com Divergência');
-
-  if (hasLogisticaAtiva && !hasDivergenciaEmbarque && !cicloResolvido) {
-    return {
-      isVermelho: false,
-      isAmbar: hasRecebimentoParcial,
-      isPisca: false,
-      isVerde: false,
-      isCyan: true,
-      hasActiveDivergence: false,
-    };
+  if (statusRecebimento === 'Recebido OK' || statusOperacional === 'Concluído') {
+    return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true, isCyan: false, hasActiveDivergence: false };
   }
 
-  // 3️⃣ Divergência NÃO-RESOLVIDA
-  const dataAprovacao = pedido.data_aprovacao_financeira ? new Date(pedido.data_aprovacao_financeira) : null;
-  const diasAposAprovacao = dataAprovacao ? Math.floor((new Date() - dataAprovacao) / (1000 * 60 * 60 * 24)) : null;
-  const isPagamentoAutorizado = pedido.status_aprovacao_financeira === 'Aprovado';
-  const hasActiveDivergence = pedido.tem_divergencias && !cicloResolvido;
+  if (statusRecebimento === 'Com Divergência') {
+    return { isVermelho: true, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: true };
+  }
 
-  const isVermelho = hasActiveDivergence && diasAposAprovacao !== null && diasAposAprovacao >= 20;
-  const isAmbar = isPagamentoAutorizado && hasActiveDivergence;
-  const isPisca = isVermelho && isAmbar;
+  if (statusRecebimento === 'Recebido Parcial') {
+    return { isVermelho: false, isAmbar: true, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
+  }
 
-  return { isVermelho, isAmbar, isPisca, isVerde: false, isCyan: false, hasActiveDivergence };
+  if (embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque) {
+    return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: true, hasActiveDivergence: false };
+  }
+
+  return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
 }
 
 function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
@@ -228,9 +202,9 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 <p className="text-[0.75rem] text-gray-500 dark:text-gray-400 mt-1 truncate">
                   {pedido.fornecedor_nome || '—'}
                 </p>
-                {pedido._embarque?.tipo === 'Original' && (
+                {pedido._embarque && (
                   <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1 truncate">
-                    Embarque original vinculado ao pedido
+                    Embarque {pedido._embarque.numero || '01'} vinculado ao pedido
                   </p>
                 )}
               </div>
