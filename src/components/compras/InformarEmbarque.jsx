@@ -36,6 +36,27 @@ function calcularStatusEmbarque(itens, jaEmbarcado, qtdEmbarque, selectedItems) 
   return 'Parcial';
 }
 
+function calcularPercentualValorEmbarcado(pedido, embarquesAtualizados) {
+  const custoPorProduto = Object.fromEntries((pedido.itens || []).map((item) => [item.produto_id, Number(item.custo_unitario) || 0]));
+  const valorTotalPedido = Number(pedido.valor_total) || (pedido.itens || []).reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
+  if (!valorTotalPedido) return 0;
+
+  const qtdPorProduto = {};
+  (embarquesAtualizados || []).forEach((emb) => {
+    if (emb.status === 'Pendente') return;
+    (emb.itens_embarcados || []).forEach((item) => {
+      qtdPorProduto[item.produto_id] = (qtdPorProduto[item.produto_id] || 0) + (Number(item.quantidade_embarcada) || 0);
+    });
+  });
+
+  const valorEmbarcado = (pedido.itens || []).reduce((acc, item) => {
+    const qtd = Math.min(Number(item.quantidade) || 0, qtdPorProduto[item.produto_id] || 0);
+    return acc + (qtd * (custoPorProduto[item.produto_id] || 0));
+  }, 0);
+
+  return Math.min(100, Number(((valorEmbarcado / valorTotalPedido) * 100).toFixed(2)));
+}
+
 // ── TransportadoraSearch ──────────────────────────────────────────────────────
 
 function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova }) {
@@ -285,6 +306,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
       } else {
         const novoEmbarque = {
           id: `emb_${Date.now()}`,
+          numero: String((pedido.embarques_registrados || []).length + 1).padStart(2, '0'),
+          tipo: 'Embarque',
+          status: 'Despachado',
           data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : new Date().toISOString(),
           eta: eta + 'T12:00:00.000Z',
           transportadora_id: transportadoraId,
@@ -298,20 +322,56 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         embarcadosAtualizados = [...(pedido.embarques_registrados || []), novoEmbarque];
       }
 
-      // Recalcula status_embarque
       const todosMap = {};
       embarcadosAtualizados.forEach(emb => {
         (emb.itens_embarcados || []).forEach(item => {
           todosMap[item.produto_id] = (todosMap[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
         });
       });
+
+      const itensOrfaos = (pedido.itens || []).map((item) => {
+        const embarcado = todosMap[item.produto_id] || 0;
+        const saldo = Math.max(0, (item.quantidade || 0) - embarcado);
+        return saldo > 0 ? {
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          quantidade_pedida: item.quantidade,
+          quantidade_embarcada: saldo,
+          unidade_medida: item.unidade_medida
+        } : null;
+      }).filter(Boolean);
+
+      const embarquesSemNecessidade = embarcadosAtualizados.filter((emb) => emb.tipo !== 'Necessidade');
+      const listaFinalEmbarques = itensOrfaos.length > 0
+        ? [...embarquesSemNecessidade, {
+            id: `nec_${Date.now()}`,
+            numero: String(embarquesSemNecessidade.length + 1).padStart(2, '0'),
+            tipo: 'Necessidade',
+            status: 'Pendente',
+            transportadora_id: '',
+            transportadora_nome: '',
+            volumes: '',
+            volumes_detalhados: [],
+            peso_kg: 0,
+            observacoes: 'Saldo pendente aguardando novo despacho.',
+            status_recebimento_embarque: 'Pendente',
+            itens_embarcados: itensOrfaos
+          }]
+        : embarquesSemNecessidade;
+
       const novoStatusEmbarque = calcularStatusEmbarque(pedido.itens || [], todosMap, {}, Object.fromEntries((pedido.itens || []).map(i => [i.produto_id, true])));
+      const percentualValorEmbarcado = calcularPercentualValorEmbarcado(pedido, listaFinalEmbarques);
+      const proximaEta = listaFinalEmbarques
+        .filter((emb) => emb.status !== 'Concluído' && emb.eta)
+        .map((emb) => emb.eta)
+        .sort()[0];
 
       await base44.entities.PedidoCompra.update(pedido.id, {
-        status: 'Despachado',
         data_despacho: pedido.data_despacho || new Date().toISOString(),
         status_embarque: novoStatusEmbarque,
-        embarques_registrados: embarcadosAtualizados
+        percentual_valor_embarcado: percentualValorEmbarcado,
+        data_prevista_entrega: proximaEta ? proximaEta.slice(0, 10) : pedido.data_prevista_entrega,
+        embarques_registrados: listaFinalEmbarques
       });
 
       toast.success(isEdicao ? 'Embarque atualizado!' : novoStatusEmbarque === 'Total' ? 'Embarque total registrado!' : 'Embarque parcial registrado.');

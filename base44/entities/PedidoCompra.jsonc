@@ -22,24 +22,17 @@
     "data_prevista_entrega": {
       "type": "string",
       "format": "date",
-      "description": "Data prevista para entrega"
+      "description": "Pr\u00f3xima ETA consolidada do pedido, calculada a partir dos embarques ativos"
     },
     "status": {
       "type": "string",
       "enum": [
         "Rascunho",
-        "Aguardando Libera\u00e7\u00e3o",
-        "Aprovado",
-        "Despachado",
-        "Em Recep\u00e7\u00e3o",
-        "Em Confer\u00eancia",
-        "Pend\u00eancia",
-        "Devolvido",
-        "Conclu\u00eddo",
-        "Cancelado"
+        "Aguardando Aprova\u00e7\u00e3o Financeira",
+        "Aprovado"
       ],
       "default": "Rascunho",
-      "description": "Status principal do pedido"
+      "description": "Status principal simplificado do pedido"
     },
     "status_embarque": {
       "type": "string",
@@ -49,7 +42,12 @@
         "Total"
       ],
       "default": "Nenhum",
-      "description": "Indica se o despacho foi total ou parcial. Parcial acende LED \u00e2mbar."
+      "description": "Percentual log\u00edstico agregado do pedido com base nos embarques"
+    },
+    "percentual_valor_embarcado": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual do valor total do pedido j\u00e1 coberto por embarques despachados/conclu\u00eddos"
     },
     "status_recebimento_geral": {
       "type": "string",
@@ -61,16 +59,39 @@
         "Conclu\u00eddo OK"
       ],
       "default": "Nenhum",
-      "description": "Status geral do recebimento do Pedido de Compra (agrega status dos embarques)."
+      "description": "Status geral do recebimento do pedido, agregado a partir dos embarques"
     },
     "embarques_registrados": {
       "type": "array",
-      "description": "Hist\u00f3rico de embarques registrados para este pedido",
+      "description": "Hist\u00f3rico operacional de embarques e necessidades de embarque deste pedido",
       "items": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
+          },
+          "numero": {
+            "type": "string",
+            "description": "N\u00famero sequencial interno do embarque dentro do pedido"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "Embarque",
+              "Necessidade"
+            ],
+            "default": "Embarque",
+            "description": "Necessidade representa saldo \u00f3rf\u00e3o aguardando despacho"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Pendente",
+              "Despachado",
+              "Conclu\u00eddo"
+            ],
+            "default": "Pendente",
+            "description": "Status operacional do embarque"
           },
           "data_embarque": {
             "type": "string",
@@ -89,6 +110,23 @@
           "volumes": {
             "type": "string"
           },
+          "volumes_detalhados": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "descricao": {
+                  "type": "string"
+                },
+                "quantidade": {
+                  "type": "number"
+                },
+                "peso_total_kg": {
+                  "type": "number"
+                }
+              }
+            }
+          },
           "peso_kg": {
             "type": "number"
           },
@@ -103,8 +141,7 @@
               "Recebido OK",
               "Com Diverg\u00eancia"
             ],
-            "default": "Pendente",
-            "description": "Status de recebimento deste embarque espec\u00edfico"
+            "default": "Pendente"
           },
           "itens_embarcados": {
             "type": "array",
@@ -124,8 +161,7 @@
                   "type": "number"
                 },
                 "quantidade_recebida": {
-                  "type": "number",
-                  "description": "Quantidade efetivamente recebida para este item do embarque"
+                  "type": "number"
                 },
                 "unidade_medida": {
                   "type": "string"
@@ -139,20 +175,16 @@
                     "Produto Diferente - Rejeitado",
                     "Produto Novo Recebido"
                   ],
-                  "default": "Nenhuma",
-                  "description": "Tipo de diverg\u00eancia (se houver)"
+                  "default": "Nenhuma"
                 },
                 "produto_id_recebido_diferente": {
-                  "type": "string",
-                  "description": "ID do produto REALMENTE recebido se for diferente do esperado"
+                  "type": "string"
                 },
                 "produto_nome_recebido_diferente": {
-                  "type": "string",
-                  "description": "Nome do produto REALMENTE recebido se for diferente do esperado"
+                  "type": "string"
                 },
                 "acordo_financeiro_lancamento_id": {
-                  "type": "string",
-                  "description": "ID do Lan\u00e7amentoFinanceiro de ajuste vinculado a este item"
+                  "type": "string"
                 }
               }
             }

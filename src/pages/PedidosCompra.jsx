@@ -245,7 +245,7 @@ export default function PedidosCompraPage() {
 
       if (pedido.status === 'Concluído') return concluidosSelecionados;
 
-      const statusPermitido = ['Rascunho', 'Aguardando Liberação', 'Aprovado', 'Pendência', 'Despachado', 'Em Recepção', 'Em Conferência'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
+      const statusPermitido = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
       if (!(statusPermitido && calcularValorPendentePedido(pedido) > 0)) return false;
 
       // Quando groupBy=eta_transportadora, filtra também por status dos embarques virtuais
@@ -531,7 +531,7 @@ export default function PedidosCompraPage() {
         kpis={{
           totalPedidos: pedidosVisiveisPendentes.length,
           totalGeral: valorTotal,
-          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0),
+          totalEmAberto: filtrados.filter(p => ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(p.status)).reduce((acc, p) => acc + (p.valor_total || 0), 0),
           totalPagoNaoEntregue: valorPagoNaoEntregue
         }}
         grupos={grupos}

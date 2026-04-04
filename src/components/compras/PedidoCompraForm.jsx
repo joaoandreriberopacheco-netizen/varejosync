@@ -52,6 +52,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     data_prevista_entrega: '',
     prazo_entrega_dias: 0,
     status: 'Rascunho',
+    percentual_valor_embarcado: 0,
     itens: [],
     valor_itens: 0,
     valor_frete: 0,
@@ -658,17 +659,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     setIsReopenAuthOpen(false);
   };
 
-  const isAprovado = pedido && (
-    pedido.status === 'Aprovado' ||
-    pedido.status === 'Despachado' ||
-    pedido.status === 'Em Trânsito' ||
-    pedido.status === 'Entregue' ||
-    pedido.status === 'Concluído'
-  );
+  const isAprovado = pedido && pedido.status === 'Aprovado';
 
   const isLocked = pedido && (
-    pedido.status === 'Enviado' ||
-    pedido.status === 'Aguardando Liberação' ||
+    pedido.status === 'Aguardando Aprovação Financeira' ||
     pedido.status_aprovacao_financeira === 'Aguardando Aprovação Financeira' ||
     pedido.status_aprovacao_financeira === 'Aprovado' || 
     pedido.status_aprovacao_financeira === 'Rejeitado'
@@ -779,7 +773,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
       });
       
       // Verificar se mudou para "Aguardando Liberação" APÓS salvar
-      const mudouParaAguardando = statusNovo === 'Aguardando Liberação' && statusAnterior !== 'Aguardando Liberação';
+      const mudouParaAguardando = statusNovo === 'Aguardando Aprovação Financeira' && statusAnterior !== 'Aguardando Aprovação Financeira';
 
       if (mudouParaAguardando && pedidoId) {
         // Buscar o pedido atualizado para ter certeza que tem todos os dados
@@ -1358,7 +1352,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
            isDisabled={!formData.fornecedor_id || formData.itens.length === 0}
            mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
            onEnviarFinanceiro={() => {
-             handleChange('status', 'Aguardando Liberação');
+             handleChange('status', 'Aguardando Aprovação Financeira');
              setTimeout(() => handleInitiateSave(), 100);
            }}
            mostrarSolicitarEdicao={false}

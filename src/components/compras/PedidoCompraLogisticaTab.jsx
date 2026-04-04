@@ -112,6 +112,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
   const [acordoOpen, setAcordoOpen] = useState(false);
 
   const embarques = pedido?.embarques_registrados || [];
+  const percentualEmbarcado = Number(pedido?.percentual_valor_embarcado || 0);
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarques), [embarques]);
 
   // Itens órfãos: qty pedida - qty embarcada em todos os embarques
@@ -145,6 +146,25 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/60 px-4 py-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-[0.18em] text-gray-400">Dashboard de embarques</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{percentualEmbarcado.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">valor embarcado</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-400">Status agregado</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{pedido?.status_embarque || 'Nenhum'}</p>
+          </div>
+        </div>
+        <div className="mt-3 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div className="h-full rounded-full bg-gray-900 dark:bg-white transition-all" style={{ width: `${Math.max(0, Math.min(100, percentualEmbarcado))}%` }} />
+        </div>
+      </div>
+
       {/* Header da aba com status e botões de ação */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
