@@ -126,7 +126,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => {
     if (isVirtualCard) {
       return {
-        isVerde: displayStatus === 'Recebido OK',
+        isVerde: ['Recebido OK', 'Concluído'].includes(displayStatus),
         isAmbar: displayStatus === 'Recebido Parcial',
         isVermelho: displayStatus === 'Com Divergência',
         isPisca: false,

@@ -276,7 +276,7 @@ export default function PedidosCompraPage() {
     return pedidosPagosPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
   }, [pedidosPagosPendentes]);
 
-  const STATUS_VIRTUAL_CONCLUIDOS = ['Recebido OK'];
+  const STATUS_VIRTUAL_CONCLUIDOS = ['Recebido OK', 'Concluído'];
 
   const grupos = useMemo(() => {
     const getGroupMeta = (pedido, embarque) => {
@@ -373,7 +373,12 @@ export default function PedidosCompraPage() {
         _display_itens = itensOrfaos;
         _display_valor = itensOrfaos.reduce((acc, i) => acc + (i.quantidade * (Number(i.custo_unitario) || 0)), 0);
       } else if (embarque) {
-        _display_status = embarque.status_recebimento_embarque || 'Pendente';
+        // Se pedido pai está Concluído, o card virtual do embarque também é Concluído (mesmo com divergência resolvida)
+        if (pedido.status === 'Concluído') {
+          _display_status = 'Concluído';
+        } else {
+          _display_status = embarque.status_recebimento_embarque || 'Pendente';
+        }
         const custoPorProduto = (pedido.itens || []).reduce((acc, i) => {
           acc[i.produto_id] = Number(i.custo_unitario) || 0;
           return acc;
