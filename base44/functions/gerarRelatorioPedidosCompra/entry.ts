@@ -1,43 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
-const INTER_REGULAR_URL = 'https://raw.githubusercontent.com/rsms/inter/master/docs/font-files/Inter-Regular.woff2';
-const INTER_BOLD_URL = 'https://raw.githubusercontent.com/rsms/inter/master/docs/font-files/Inter-SemiBold.woff2';
-const fontCache = { regular: null, bold: null };
-
-const arrayBufferToBase64 = (buffer) => {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-  return btoa(binary);
-};
-
-const loadFontBase64 = async (url, cacheKey) => {
-  if (fontCache[cacheKey]) return fontCache[cacheKey];
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Erro ao carregar fonte ${cacheKey}`);
-  const buffer = await response.arrayBuffer();
-  const base64 = arrayBufferToBase64(buffer);
-  fontCache[cacheKey] = base64;
-  return base64;
-};
-
-const registerPdfFonts = async (doc) => {
-  const [regularBase64, boldBase64] = await Promise.all([
-    loadFontBase64(INTER_REGULAR_URL, 'regular'),
-    loadFontBase64(INTER_BOLD_URL, 'bold'),
-  ]);
-
-  doc.addFileToVFS('Inter-Regular.woff2', regularBase64);
-  doc.addFont('Inter-Regular.woff2', 'Inter', 'normal');
-  doc.addFileToVFS('Inter-SemiBold.woff2', boldBase64);
-  doc.addFont('Inter-SemiBold.woff2', 'Inter', 'bold');
-  doc.setFont('Inter', 'normal');
-};
+const PDF_FONT_FAMILY = 'helvetica';
+const PDF_FONT_BOLD = 'bold';
+const PDF_FONT_NORMAL = 'normal';
 
 const safe = (texto) => {
   if (texto === null || texto === undefined) return '';
@@ -117,7 +83,7 @@ Deno.serve(async (req) => {
     const produtosMap = Object.fromEntries((produtos || []).map((produto) => [produto.id, produto]));
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    await registerPdfFonts(doc);
+    doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 12;
@@ -149,10 +115,10 @@ Deno.serve(async (req) => {
       doc.setFillColor(...colors.accent);
       doc.roundedRect(margin + 5, y + 5, 2.4, 10, 1.2, 1.2, 'F');
       doc.setTextColor(...colors.text);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(16);
       doc.text(safe(version === 'expandida' ? 'Relatório expandido de compras' : 'Relatório compacto de compras'), margin + 10, y + 8);
-      doc.setFont('Inter', 'normal');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(9);
       doc.setTextColor(...colors.muted);
       doc.text(safe(filtros_desc), margin + 10, y + 14);
@@ -178,11 +144,11 @@ Deno.serve(async (req) => {
         doc.setFontSize(8);
         doc.text(card.label, x + 4, y + 6);
         doc.setTextColor(17, 24, 39);
-        doc.setFont('Inter', 'bold');
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(10);
         doc.text(safe(String(card.value)), x + 4, y + 13);
       });
-      doc.setFont('Inter', 'normal');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       y += 24;
     };
 
@@ -190,7 +156,7 @@ Deno.serve(async (req) => {
       if (!Array.isArray(grupos) || grupos.length === 0) return;
       ensureSpace(20);
       doc.setTextColor(75, 85, 99);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(9);
       doc.text('Agrupamento aplicado na tela', margin, y);
       y += 5;
@@ -202,7 +168,7 @@ Deno.serve(async (req) => {
           doc.setFillColor(250, 250, 250);
           doc.roundedRect(margin, y - 1.5, contentWidth, 6.5, 2, 2, 'F');
         }
-        doc.setFont('Inter', 'normal');
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(7.5);
         doc.setTextColor(31, 41, 55);
         doc.text(safe(grupo.label || '-'), margin + 3, y + 2.5);
@@ -219,13 +185,13 @@ Deno.serve(async (req) => {
       doc.setFillColor(245, 245, 245);
       doc.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F');
       doc.setTextColor(17, 24, 39);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(11);
       doc.text(safe(String(pedido.numero || 'Sem número')), margin + 5, y + 7);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(9.5);
       doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 40, y + 7);
-      doc.setFont('Inter', 'normal');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(8.5);
       doc.setTextColor(75, 85, 99);
       doc.text(`Emissão: ${data(pedido.data_emissao || pedido.created_date)}`, margin + 5, y + 13);
@@ -243,30 +209,30 @@ Deno.serve(async (req) => {
       doc.setFillColor(...statusColors.dot);
       doc.circle(margin + 5, y + 6.5, 1.3, 'F');
       doc.setTextColor(...colors.text);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(11);
       doc.text(safe(String(pedido.numero || 'Sem número')), margin + 9, y + 8);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(9.5);
       doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 9, y + 14);
       doc.setFillColor(...statusColors.pillBg);
       doc.roundedRect(margin + 9, y + 17, 33, 6.2, 3, 3, 'F');
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(7.1);
       doc.setTextColor(...statusColors.pillText);
       doc.text(safe(pedido.status || '-'), margin + 12, y + 21.2);
-      doc.setFont('Inter', 'normal');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...colors.muted);
       doc.text(`Emissão ${data(pedido.data_emissao || pedido.created_date)}`, margin + 48, y + 20);
       doc.text(`Entrega ${data(pedido.data_prevista_entrega)}`, margin + 92, y + 20);
       doc.setTextColor(...colors.text);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(10);
       doc.text(moeda(pedido.valor_total), margin + contentWidth - 4, y + 10, { align: 'right' });
       const totalLinhas = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
       const totalQtd = Array.isArray(pedido.itens) ? pedido.itens.reduce((acc, item) => acc + (Number(item.quantidade) || 0), 0) : 0;
-      doc.setFont('Inter', 'normal');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
       doc.setTextColor(...colors.muted);
       doc.text(`${totalLinhas} itens · ${totalQtd.toLocaleString('pt-BR')} un.`, margin + contentWidth - 4, y + 16, { align: 'right' });
@@ -296,7 +262,7 @@ Deno.serve(async (req) => {
       doc.setFillColor(...colors.panelSoft);
       doc.roundedRect(tableMargin, y, tableWidth, 8, 2, 2, 'F');
       doc.setTextColor(...colors.muted);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(5.8);
       doc.text('DESCRIÇÃO', tableMargin + 2, y + 5);
       doc.text('LÍQ.', tableMargin + 54, y + 5);
@@ -330,7 +296,7 @@ Deno.serve(async (req) => {
         }
 
         doc.setTextColor(...colors.text);
-        doc.setFont('Inter', 'normal');
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(5.6);
         const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), 50)[0];
         doc.text(nomeItem, tableMargin + 2, y + 3.5);
@@ -350,12 +316,12 @@ Deno.serve(async (req) => {
       doc.setFillColor(...statusColors.pillBg);
       doc.roundedRect(margin, y, contentWidth, 14, 3, 3, 'F');
       doc.setTextColor(...statusColors.pillText);
-      doc.setFont('Inter', 'bold');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(8);
       doc.text(`Compra total: ${moeda(subtotalCompra)}`, margin + 4, y + 5.5);
       doc.text(`Venda total: ${moeda(subtotalVenda)}`, margin + 72, y + 5.5);
       doc.text(`Margem bruta: ${moeda(subtotalVenda - subtotalCompra)}`, margin + 136, y + 5.5);
-      doc.setFont('Inter', 'normal');
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7);
       doc.text(`Leitura expandida no padrão visual de ${safe(pedido.status || 'rascunho')}.`, margin + 4, y + 10.5);
       y += 18;
@@ -369,7 +335,7 @@ Deno.serve(async (req) => {
       grupos.forEach((grupo) => {
         ensureSpace(14);
         doc.setTextColor(...colors.muted);
-        doc.setFont('Inter', 'bold');
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(8.5);
         doc.text(safe(grupo.label || '-'), margin, y);
         y += 4;
