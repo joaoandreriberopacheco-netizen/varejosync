@@ -176,7 +176,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         ...outrosEmbarques,
         novoEmbarque,
         ...(embarqueOrfao ? [embarqueOrfao] : [])
-      ];
+      ].sort((a, b) => String(a.numero || '').localeCompare(String(b.numero || '')));
 
       // Calcular status geral de recebimento
       const temComDivergencia = embarquesAtualizados.some(e => e.status_recebimento_embarque === 'Com Divergência');
@@ -201,7 +201,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         embarques_registrados: embarquesAtualizados,
         status_recebimento_geral: statusRecebimento_geral,
         tem_divergencias: temComDivergencia,
-        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens} | ${formatarLogTime()}]`
+        historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | embarque órfão gerado automaticamente' : ''} | ${formatarLogTime()}]`
       });
 
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
