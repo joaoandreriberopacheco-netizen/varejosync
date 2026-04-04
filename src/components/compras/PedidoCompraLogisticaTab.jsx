@@ -111,7 +111,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
 
-  const embarques = pedido?.embarques_registrados || [];
+  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
   const percentualEmbarcado = Number(pedido?.percentual_valor_embarcado || pedido?.percentual_despachado || 0);
   const percentualConcluido = Number(pedido?.percentual_concluido || 0);
   const percentualPendente = Number(pedido?.percentual_pendente || Math.max(0, 100 - percentualEmbarcado));

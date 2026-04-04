@@ -50,6 +50,7 @@ export default function AbaRecepção({ pedido }) {
   const [selectedEmbarque, setSelectedEmbarque] = useState(null);
 
   const embarques = useMemo(() => {
+    if (Array.isArray(pedidoAtual?._embarques)) return pedidoAtual._embarques.filter(Boolean);
     const raw = pedidoAtual?.embarques_registrados;
     if (Array.isArray(raw)) return raw.filter(Boolean);
     if (typeof raw === 'string') {
@@ -61,7 +62,7 @@ export default function AbaRecepção({ pedido }) {
       }
     }
     return [];
-  }, [pedidoAtual?.embarques_registrados]);
+  }, [pedidoAtual?._embarques, pedidoAtual?.embarques_registrados]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -105,7 +106,7 @@ export default function AbaRecepção({ pedido }) {
   return (
     <div className="space-y-3">
       {embarques.map((embarque, idx) => {
-        const statusRecebimento = embarque.status_recebimento_embarque || 'Pendente';
+        const statusRecebimento = embarque.status_recebimento || embarque.status_recebimento_embarque || 'Pendente';
         const dataEmbarque = embarque.data_embarque ? new Date(embarque.data_embarque).toLocaleDateString('pt-BR') : '-';
         const eta = embarque.eta ? new Date(embarque.eta).toLocaleDateString('pt-BR') : '-';
         const qtdItens = embarque.itens_embarcados?.length || 0;
@@ -204,9 +205,12 @@ export default function AbaRecepção({ pedido }) {
           onRecebido={async ({ recebimentoNumero } = {}) => {
             const pedidoId = (pedidoAtual || pedido)?.id;
             if (pedidoId) {
-              const atualizado = await base44.entities.PedidoCompra.filter({ id: pedidoId });
+              const [atualizado, embarquesAtualizados] = await Promise.all([
+                base44.entities.PedidoCompra.filter({ id: pedidoId }),
+                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
+              ]);
               if (atualizado?.[0]) {
-                setPedidoAtual(atualizado[0]);
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
               }
             }
             loadMovimentos();

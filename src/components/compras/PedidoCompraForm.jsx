@@ -1246,10 +1246,14 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                 onPedidoUpdated={async () => {
                   const pedidoId = (pedidoLogistica || pedido)?.id;
                   if (!pedidoId) return;
-                  const atualizado = await base44.entities.PedidoCompra.filter({ id: pedidoId });
+                  const [atualizado, embarquesAtualizados] = await Promise.all([
+                    base44.entities.PedidoCompra.filter({ id: pedidoId }),
+                    base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
+                  ]);
                   if (atualizado?.[0]) {
-                    setPedidoLogistica(atualizado[0]);
-                    setFormData(prev => ({ ...prev, ...atualizado[0] }));
+                    const pedidoCompleto = { ...atualizado[0], _embarques: embarquesAtualizados || [] };
+                    setPedidoLogistica(pedidoCompleto);
+                    setFormData(prev => ({ ...prev, ...pedidoCompleto }));
                   }
                 }}
               />
