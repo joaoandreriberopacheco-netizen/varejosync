@@ -272,13 +272,29 @@ export default function PedidosCompraPage() {
         embarques.forEach((emb, idx) => {
           virtualEntries.push({ pedido, embarque: emb, virtualKey: `${pedido.id}_emb_${emb.id || idx}` });
         });
+        // Para Pendência: adiciona card extra para itens órfãos (não embarcados)
+        if (pedido.status === 'Pendência') {
+          const qtdEmbarcadaPorProduto = embarques.reduce((acc, emb) => {
+            (emb.itens_embarcados || []).forEach(ie => {
+              acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0);
+            });
+            return acc;
+          }, {});
+          const temOrfaos = (pedido.itens || []).some(i => {
+            const embarcada = qtdEmbarcadaPorProduto[i.produto_id] || 0;
+            return (Number(i.quantidade) || 0) - embarcada > 0;
+          });
+          if (temOrfaos) {
+            virtualEntries.push({ pedido, embarque: null, virtualKey: `${pedido.id}_orfaos`, _is_orfao: true });
+          }
+        }
       } else {
         virtualEntries.push({ pedido, embarque: embarques[0] || null, virtualKey: pedido.id });
       }
     });
 
     const map = {};
-    virtualEntries.forEach(({ pedido, embarque, virtualKey }) => {
+    virtualEntries.forEach(({ pedido, embarque, virtualKey, _is_orfao }) => {
       const meta = getGroupMeta(pedido, embarque);
       if (!map[meta.key]) {
         map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
@@ -287,6 +303,7 @@ export default function PedidosCompraPage() {
         ...pedido,
         _virtual_key: virtualKey,
         _embarque: embarque,
+        _is_orfao: _is_orfao || false,
         valor_pendente_entrega: pedido.status === 'Concluído' ? 0 : calcularValorPendentePedido(pedido)
       });
     });
