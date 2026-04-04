@@ -109,8 +109,9 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Usa campos de display virtual se disponíveis (cards de embarque específico ou órfãos)
+  const isVirtualCard = !!pedido._display_status;
   const displayStatus = pedido._display_status || pedido.status;
+
   const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
     ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
     : (pedido.itens || []));
@@ -120,7 +121,19 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
     ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
     : pedido.valor_total);
   const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
-  const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => getLEDStatus(pedido), [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias]);
+
+  // LED: cards virtuais refletem seu próprio status; cards pai usam lógica original
+  const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => {
+    if (isVirtualCard) {
+      return {
+        isVerde: displayStatus === 'Recebido OK',
+        isAmbar: displayStatus === 'Recebido Parcial',
+        isVermelho: displayStatus === 'Com Divergência',
+        isPisca: false,
+      };
+    }
+    return getLEDStatus(pedido);
+  }, [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias, displayStatus, isVirtualCard]);
 
   const handleDelete = async () => {
     setDeleting(true);
