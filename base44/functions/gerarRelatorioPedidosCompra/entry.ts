@@ -13,8 +13,7 @@ const arrayBufferToBase64 = (buffer) => {
   const bytes = new Uint8Array(buffer);
   const chunkSize = 0x8000;
   for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
   }
   return btoa(binary);
 };
@@ -23,8 +22,7 @@ const loadFontBase64 = async (url, cacheKey) => {
   if (fontCache[cacheKey]) return fontCache[cacheKey];
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Erro ao carregar fonte ${cacheKey}`);
-  const buffer = await response.arrayBuffer();
-  const base64 = arrayBufferToBase64(buffer);
+  const base64 = arrayBufferToBase64(await response.arrayBuffer());
   fontCache[cacheKey] = base64;
   return base64;
 };
@@ -34,7 +32,6 @@ const registerPdfFonts = async (doc) => {
     loadFontBase64(NOTO_REGULAR_URL, 'regular'),
     loadFontBase64(NOTO_BOLD_URL, 'bold'),
   ]);
-
   doc.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
   doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
   doc.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
@@ -49,27 +46,28 @@ const safe = (texto) => {
     .replace(/[\u2013\u2014]/g, '-')
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
-    .replace(/…/g, '...')
-    .replace(/•/g, '-');
+    .replace(/\u2026/g, '...')
+    .replace(/\u2022/g, '-');
 };
 
-const moeda = (valor = 0) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const percentual = (valor = 0) => `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
-const data = (valor) => {
+const moeda = (valor = 0) =>
+  `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const percentual = (valor = 0) =>
+  `${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+const dataFmt = (valor) => {
   if (!valor) return '-';
   const d = new Date(valor);
   if (Number.isNaN(d.getTime())) return String(valor);
   return d.toLocaleDateString('pt-BR');
 };
 
-const custoCalculadoProduto = (produto = {}) => {
-  return (Number(produto.valor_compra) || 0)
-    + (Number(produto.custo_frete_padrao) || 0)
-    + (Number(produto.custo_imposto1_padrao) || 0)
-    + (Number(produto.custo_imposto2_padrao) || 0)
-    + (Number(produto.custo_outros_padrao) || 0)
-    - (Number(produto.desconto_compra_padrao) || 0);
-};
+const custoCalculadoProduto = (produto = {}) =>
+  (Number(produto.valor_compra) || 0)
+  + (Number(produto.custo_frete_padrao) || 0)
+  + (Number(produto.custo_imposto1_padrao) || 0)
+  + (Number(produto.custo_imposto2_padrao) || 0)
+  + (Number(produto.custo_outros_padrao) || 0)
+  - (Number(produto.desconto_compra_padrao) || 0);
 
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
@@ -78,27 +76,27 @@ const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
 };
 
 const STATUS_PDF_COLORS = {
-  'Rascunho': { dot: [209, 213, 219], pillBg: [243, 244, 246], pillText: [107, 114, 128] },
-  'Aguardando Liberação': { dot: [203, 213, 225], pillBg: [241, 245, 249], pillText: [71, 85, 105] },
-  'Aprovado': { dot: [52, 211, 153], pillBg: [236, 253, 245], pillText: [4, 120, 87] },
-  'Despachado': { dot: [34, 211, 238], pillBg: [236, 254, 255], pillText: [14, 116, 144] },
-  'Em Trânsito': { dot: [56, 189, 248], pillBg: [240, 249, 255], pillText: [3, 105, 161] },
-  'Entregue': { dot: [16, 185, 129], pillBg: [236, 253, 245], pillText: [4, 120, 87] },
-  'Pendência': { dot: [251, 146, 60], pillBg: [255, 247, 237], pillText: [194, 65, 12] },
-  'Devolvido': { dot: [251, 113, 133], pillBg: [255, 241, 242], pillText: [190, 24, 93] },
-  'Concluído': { dot: [16, 185, 129], pillBg: [236, 253, 245], pillText: [4, 120, 87] },
-  'Cancelado': { dot: [209, 213, 219], pillBg: [243, 244, 246], pillText: [156, 163, 175] },
+  'Rascunho':              { dot: [209,213,219], pillBg: [243,244,246], pillText: [107,114,128] },
+  'Aguardando Liberacao':  { dot: [203,213,225], pillBg: [241,245,249], pillText: [71,85,105]   },
+  'Aprovado':              { dot: [52,211,153],  pillBg: [236,253,245], pillText: [4,120,87]    },
+  'Despachado':            { dot: [34,211,238],  pillBg: [236,254,255], pillText: [14,116,144]  },
+  'Em Transito':           { dot: [56,189,248],  pillBg: [240,249,255], pillText: [3,105,161]   },
+  'Pendencia':             { dot: [251,146,60],  pillBg: [255,247,237], pillText: [194,65,12]   },
+  'Devolvido':             { dot: [251,113,133], pillBg: [255,241,242], pillText: [190,24,93]   },
+  'Concluido':             { dot: [16,185,129],  pillBg: [236,253,245], pillText: [4,120,87]    },
+  'Cancelado':             { dot: [209,213,219], pillBg: [243,244,246], pillText: [156,163,175] },
 };
 
-const getStatusPdfColors = (status) => STATUS_PDF_COLORS[status] || STATUS_PDF_COLORS['Rascunho'];
+const getStatusColors = (status) => {
+  const key = (status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  return STATUS_PDF_COLORS[key] || STATUS_PDF_COLORS['Rascunho'];
+};
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const payload = await req.json();
     const {
@@ -109,443 +107,507 @@ Deno.serve(async (req) => {
       grupos = [],
     } = payload;
 
-    const isMobilePdf = version === 'expandida_mobile';
-    const isMobileSoulPdf = version === 'mobile_com_alma';
+    const isMobile = version === 'expandida_mobile';
 
+    // Carregar produtos para lookup de custo/venda
     const produtoIds = [...new Set(
-      pedidos.flatMap((pedido) => Array.isArray(pedido.itens) ? pedido.itens.map((item) => item.produto_id).filter(Boolean) : [])
+      pedidos.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean))
     )];
+    const produtos = produtoIds.length ? await base44.asServiceRole.entities.Produto.list() : [];
+    const produtosMap = Object.fromEntries((produtos || []).map((p) => [p.id, p]));
 
-    const produtos = produtoIds.length
-      ? await base44.asServiceRole.entities.Produto.list()
-      : [];
-
-    const produtosMap = Object.fromEntries((produtos || []).map((produto) => [produto.id, produto]));
-
+    // ── Criação do documento ─────────────────────────────────────────────────
+    const MOBILE_W = 100; // mm — largura estilo smartphone
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: (isMobilePdf || isMobileSoulPdf) ? [180, 72] : 'a4',
+      format: isMobile ? [MOBILE_W, 297] : 'a4',
     });
     await registerPdfFonts(doc);
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = (isMobilePdf || isMobileSoulPdf) ? 6 : 12;
-    const tableMargin = (isMobilePdf || isMobileSoulPdf) ? 6 : 18;
-    const contentWidth = pageWidth - (margin * 2);
-    const tableWidth = pageWidth - (tableMargin * 2);
-    const colors = {
-      text: [31, 41, 55],
-      muted: [107, 114, 128],
-      panel: [248, 250, 252],
-      panelSoft: [243, 244, 246],
-      rowAlt: [249, 250, 251],
-      accent: [45, 212, 191],
-      accentSoft: [240, 253, 250],
-      accentText: [15, 118, 110],
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const M = isMobile ? 5 : 12;          // margem
+    const TM = isMobile ? 5 : 18;         // margem tabela
+    const CW = pageW - M * 2;             // content width
+    const TW = pageW - TM * 2;            // table width
+
+    const C = {
+      text:      [31,  41,  55],
+      muted:     [107, 114, 128],
+      mutedLight:[156, 163, 175],
+      panel:     [248, 250, 252],
+      soft:      [243, 244, 246],
+      rowAlt:    [249, 250, 251],
+      dark:      [17,  24,  39],
+      white:     [255, 255, 255],
+      teal:      [45,  212, 191],
+      tealDark:  [15,  118, 110],
     };
+
     let y = 16;
 
     const ensureSpace = (needed = 24) => {
-      if (y + needed > pageHeight - 12) {
+      if (y + needed > pageH - 10) {
         doc.addPage();
-        y = 16;
+        if (isMobile) {
+          // repete faixa lateral teal em novas páginas
+          doc.setFillColor(...C.teal);
+          doc.rect(0, 0, 2, pageH, 'F');
+        }
+        y = 14;
       }
     };
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  HEADER
+    // ════════════════════════════════════════════════════════════════════════
     const drawHeader = () => {
-      doc.setFillColor(...colors.panel);
-      doc.roundedRect(margin, y, contentWidth, 26, 4, 4, 'F');
-      doc.setFillColor(...colors.accent);
-      doc.roundedRect(margin + 5, y + 5, 2.4, 10, 1.2, 1.2, 'F');
-      doc.setTextColor(...colors.text);
+      if (isMobile) {
+        // Faixa lateral teal em toda a altura da primeira página
+        doc.setFillColor(...C.teal);
+        doc.rect(0, 0, 2, pageH, 'F');
+
+        // Cabeçalho escuro
+        doc.setFillColor(...C.dark);
+        doc.rect(2, 0, pageW - 2, 30, 'F');
+
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(11);
+        doc.setTextColor(...C.white);
+        doc.text('Pedidos de Compra', M + 2, 12);
+
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(5.5);
+        doc.setTextColor(...C.mutedLight);
+        const filtroLine = doc.splitTextToSize(safe(filtros_desc), CW - 4)[0];
+        doc.text(filtroLine, M + 2, 18.5);
+        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M + 2, 23.5);
+
+        // Linha separadora teal
+        doc.setFillColor(...C.teal);
+        doc.rect(2, 28.5, pageW - 2, 1.5, 'F');
+
+        y = 36;
+        return;
+      }
+
+      // Desktop header
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, y, CW, 26, 4, 4, 'F');
+      doc.setFillColor(...C.teal);
+      doc.roundedRect(M + 5, y + 5, 2.4, 10, 1.2, 1.2, 'F');
+      doc.setTextColor(...C.text);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize((isMobilePdf || isMobileSoulPdf) ? 10 : 16);
-      const titulo = version === 'expandida'
-        ? 'Relatório expandido de compras'
-        : version === 'expandida_mobile'
-          ? 'Relatório mobile de compras'
-          : version === 'mobile_com_alma'
-            ? 'Relatório mobile com alma'
-            : 'Relatório compacto de compras';
-      doc.text(safe(titulo), margin + ((isMobilePdf || isMobileSoulPdf) ? 5 : 10), y + ((isMobilePdf || isMobileSoulPdf) ? 6 : 8));
+      doc.setFontSize(16);
+      const titulo = version === 'expandida' ? 'Relatorio expandido de compras' : 'Relatorio compacto de compras';
+      doc.text(safe(titulo), M + 11, y + 9);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize((isMobilePdf || isMobileSoulPdf) ? 6 : 9);
-      doc.setTextColor(...colors.muted);
-      doc.text(safe(filtros_desc), margin + ((isMobilePdf || isMobileSoulPdf) ? 5 : 10), y + ((isMobilePdf || isMobileSoulPdf) ? 10 : 14));
-      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin + ((isMobilePdf || isMobileSoulPdf) ? 5 : 10), y + ((isMobilePdf || isMobileSoulPdf) ? 14 : 19));
-      y += (isMobilePdf || isMobileSoulPdf) ? 22 : 32;
+      doc.setFontSize(9);
+      doc.setTextColor(...C.muted);
+      doc.text(safe(filtros_desc), M + 11, y + 15);
+      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M + 11, y + 21);
+      y += 32;
     };
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  KPIs
+    // ════════════════════════════════════════════════════════════════════════
     const drawKpis = () => {
       const cards = [
-        { label: 'Pedidos', value: String(kpis.totalPedidos || pedidos.length || 0) },
-        { label: 'Total pendente', value: moeda(kpis.totalGeral || 0) },
-        { label: 'Em aberto', value: moeda(kpis.totalEmAberto || 0) },
-        { label: 'Pago não entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
+        { label: 'Pedidos',         value: String(kpis.totalPedidos || pedidos.length || 0) },
+        { label: 'Total pendente',  value: moeda(kpis.totalGeral || 0) },
+        { label: 'Em aberto',       value: moeda(kpis.totalEmAberto || 0) },
+        { label: 'Pago/nao entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
       ];
 
-      if (isMobilePdf || isMobileSoulPdf) {
-        cards.forEach((card) => {
-          ensureSpace(10);
-          doc.setFillColor(250, 250, 250);
-          doc.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
-          doc.setTextColor(107, 114, 128);
-          doc.setFontSize(5.5);
-          doc.text(card.label, margin + 3, y + 3.2);
-          doc.setTextColor(17, 24, 39);
-          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-          doc.setFontSize(6.5);
-          doc.text(safe(String(card.value)), margin + 3, y + 6.5);
-          y += 10;
-        });
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      if (isMobile) {
+        const colW = (CW - 3) / 2;
+        for (let i = 0; i < cards.length; i += 2) {
+          ensureSpace(16);
+          [0, 1].forEach((col) => {
+            const card = cards[i + col];
+            if (!card) return;
+            const cx = M + col * (colW + 3);
+            doc.setFillColor(...C.soft);
+            doc.roundedRect(cx, y, colW, 13, 2, 2, 'F');
+            doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+            doc.setFontSize(5);
+            doc.setTextColor(...C.muted);
+            doc.text(safe(card.label), cx + 3, y + 4.5);
+            doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+            doc.setFontSize(7);
+            doc.setTextColor(...C.dark);
+            doc.text(safe(String(card.value)), cx + 3, y + 10);
+          });
+          y += 15;
+        }
         y += 2;
         return;
       }
 
       const gap = 4;
-      const cardWidth = (contentWidth - (gap * 3)) / 4;
-      cards.forEach((card, index) => {
-        const x = margin + ((cardWidth + gap) * index);
+      const cw = (CW - gap * 3) / 4;
+      cards.forEach((card, i) => {
+        const x = M + (cw + gap) * i;
         doc.setFillColor(250, 250, 250);
-        doc.roundedRect(x, y, cardWidth, 18, 3, 3, 'F');
-        doc.setTextColor(107, 114, 128);
+        doc.roundedRect(x, y, cw, 18, 3, 3, 'F');
         doc.setFontSize(8);
+        doc.setTextColor(...C.muted);
         doc.text(card.label, x + 4, y + 6);
-        doc.setTextColor(17, 24, 39);
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(10);
+        doc.setTextColor(...C.dark);
         doc.text(safe(String(card.value)), x + 4, y + 13);
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       });
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       y += 24;
     };
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  GROUP SUMMARY (desktop only)
+    // ════════════════════════════════════════════════════════════════════════
     const drawGroupSummary = () => {
-      if (!Array.isArray(grupos) || grupos.length === 0) return;
+      if (isMobile || !Array.isArray(grupos) || grupos.length === 0) return;
       ensureSpace(20);
-      doc.setTextColor(75, 85, 99);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(9);
-      doc.text('Agrupamento aplicado na tela', margin, y);
+      doc.setTextColor(...C.muted);
+      doc.text('Agrupamento aplicado na tela', M, y);
       y += 5;
-
-      grupos.forEach((grupo, index) => {
-        const totalGrupo = (grupo.pedidos || []).reduce((acc, pedido) => acc + (Number(pedido.valor_pendente_entrega ?? pedido.valor_total) || 0), 0);
+      grupos.forEach((grupo, idx) => {
+        const total = (grupo.pedidos || []).reduce((a, p) => a + (Number(p.valor_pendente_entrega ?? p.valor_total) || 0), 0);
         ensureSpace(8);
-        if (index % 2 === 0) {
+        if (idx % 2 === 0) {
           doc.setFillColor(250, 250, 250);
-          doc.roundedRect(margin, y - 1.5, contentWidth, 6.5, 2, 2, 'F');
+          doc.roundedRect(M, y - 1.5, CW, 6.5, 2, 2, 'F');
         }
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(7.5);
-        doc.setTextColor(31, 41, 55);
-        doc.text(safe(grupo.label || '-'), margin + 3, y + 2.5);
-        doc.text(`${(grupo.pedidos || []).length} pedidos`, margin + 122, y + 2.5);
-        doc.text(moeda(totalGrupo), margin + contentWidth - 3, y + 2.5, { align: 'right' });
+        doc.setTextColor(...C.text);
+        doc.text(safe(grupo.label || '-'), M + 3, y + 2.5);
+        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + 122, y + 2.5);
+        doc.text(moeda(total), M + CW - 3, y + 2.5, { align: 'right' });
         y += 7;
       });
-
       y += 4;
     };
 
-    const drawPedidoHeader = (pedido) => {
+    // ════════════════════════════════════════════════════════════════════════
+    //  DESKTOP: header compacto do pedido
+    // ════════════════════════════════════════════════════════════════════════
+    const drawPedidoHeaderCompacto = (pedido) => {
       ensureSpace(30);
       doc.setFillColor(245, 245, 245);
-      doc.roundedRect(margin, y, contentWidth, 22, 3, 3, 'F');
-      doc.setTextColor(17, 24, 39);
+      doc.roundedRect(M, y, CW, 22, 3, 3, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(11);
-      doc.text(safe(String(pedido.numero || 'Sem número')), margin + 5, y + 7);
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setTextColor(...C.dark);
+      doc.text(safe(pedido.numero || 'Sem numero'), M + 5, y + 7);
       doc.setFontSize(9.5);
-      doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 40, y + 7);
+      doc.text(safe(pedido.fornecedor_nome || 'Sem fornecedor'), M + 40, y + 7);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(8.5);
-      doc.setTextColor(75, 85, 99);
-      doc.text(`Emissão: ${data(pedido.data_emissao || pedido.created_date)}`, margin + 5, y + 13);
-      doc.text(`Entrega: ${data(pedido.data_prevista_entrega)}`, margin + 58, y + 13);
-      doc.text(`Status: ${pedido.status || '-'}`, margin + 105, y + 13);
-      doc.text(`Total: ${moeda(pedido.valor_total)}`, margin + 155, y + 13);
+      doc.setTextColor(...C.muted);
+      doc.text(`Emissao: ${dataFmt(pedido.data_emissao || pedido.created_date)}`, M + 5, y + 13);
+      doc.text(`Entrega: ${dataFmt(pedido.data_prevista_entrega)}`, M + 58, y + 13);
+      doc.text(`Status: ${pedido.status || '-'}`, M + 105, y + 13);
+      doc.text(`Total: ${moeda(pedido.valor_total)}`, M + 155, y + 13);
       y += 26;
     };
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  DESKTOP: header expandido do pedido
+    // ════════════════════════════════════════════════════════════════════════
     const drawPedidoHeaderExpandido = (pedido) => {
       ensureSpace(34);
-      const statusColors = getStatusPdfColors(pedido.status);
-      doc.setFillColor(...colors.panel);
-      doc.roundedRect(margin, y, contentWidth, 28, 4, 4, 'F');
-      doc.setFillColor(...statusColors.dot);
-      doc.circle(margin + 5, y + 6.5, 1.3, 'F');
-      doc.setTextColor(...colors.text);
+      const sc = getStatusColors(pedido.status);
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, y, CW, 28, 4, 4, 'F');
+      doc.setFillColor(...sc.dot);
+      doc.circle(M + 5, y + 6.5, 1.3, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(11);
-      doc.text(safe(String(pedido.numero || 'Sem número')), margin + 9, y + 8);
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setTextColor(...C.text);
+      doc.text(safe(pedido.numero || 'Sem numero'), M + 9, y + 8);
       doc.setFontSize(9.5);
-      doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 9, y + 14);
-      doc.setFillColor(...statusColors.pillBg);
-      doc.roundedRect(margin + 9, y + 17, 33, 6.2, 3, 3, 'F');
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.text(safe(pedido.fornecedor_nome || 'Sem fornecedor'), M + 9, y + 14);
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M + 9, y + 17, 33, 6.2, 3, 3, 'F');
       doc.setFontSize(7.1);
-      doc.setTextColor(...statusColors.pillText);
-      doc.text(safe(pedido.status || '-'), margin + 12, y + 21.2);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(pedido.status || '-'), M + 12, y + 21.2);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
-      doc.setTextColor(...colors.muted);
-      doc.text(`Emissão ${data(pedido.data_emissao || pedido.created_date)}`, margin + 48, y + 20);
-      doc.text(`Entrega ${data(pedido.data_prevista_entrega)}`, margin + 92, y + 20);
-      doc.setTextColor(...colors.text);
+      doc.setTextColor(...C.muted);
+      doc.text(`Emissao ${dataFmt(pedido.data_emissao || pedido.created_date)}`, M + 48, y + 20);
+      doc.text(`Entrega ${dataFmt(pedido.data_prevista_entrega)}`, M + 92, y + 20);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(10);
-      doc.text(moeda(pedido.valor_total), margin + contentWidth - 4, y + 10, { align: 'right' });
-      const totalLinhas = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
-      const totalQtd = Array.isArray(pedido.itens) ? pedido.itens.reduce((acc, item) => acc + (Number(item.quantidade) || 0), 0) : 0;
+      doc.setTextColor(...C.text);
+      doc.text(moeda(pedido.valor_total), M + CW - 4, y + 10, { align: 'right' });
+      const totalLinhas = (pedido.itens || []).length;
+      const totalQtd = (pedido.itens || []).reduce((a, i) => a + (Number(i.quantidade) || 0), 0);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(7.5);
-      doc.setTextColor(...colors.muted);
-      doc.text(`${totalLinhas} itens · ${totalQtd.toLocaleString('pt-BR')} un.`, margin + contentWidth - 4, y + 16, { align: 'right' });
+      doc.setTextColor(...C.muted);
+      doc.text(`${totalLinhas} itens - ${totalQtd.toLocaleString('pt-BR')} un.`, M + CW - 4, y + 16, { align: 'right' });
       y += 32;
     };
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  DESKTOP: layout compacto
+    // ════════════════════════════════════════════════════════════════════════
     const drawCompacto = (pedido) => {
-      drawPedidoHeader(pedido);
-      const embarque = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados[0] : null;
-      const observacao = pedido.observacoes || pedido.historico || '-';
+      drawPedidoHeaderCompacto(pedido);
+      const embarque = (pedido.embarques_registrados || [])[0] || null;
       doc.setFontSize(8);
-      doc.setTextColor(107, 114, 128);
-      doc.text(`Transportadora: ${safe(embarque?.transportadora_nome || 'Sem transportador')}`, margin + 2, y);
-      doc.text(`ETA: ${safe(embarque?.eta ? data(embarque.eta) : 'Sem ETA')}`, margin + 78, y);
-      doc.text(`Itens: ${Array.isArray(pedido.itens) ? pedido.itens.length : 0}`, margin + 134, y);
+      doc.setTextColor(...C.muted);
+      doc.text(`Transportadora: ${safe(embarque?.transportadora_nome || 'Sem transportador')}`, M + 2, y);
+      doc.text(`ETA: ${safe(embarque?.eta ? dataFmt(embarque.eta) : 'Sem ETA')}`, M + 78, y);
+      doc.text(`Itens: ${(pedido.itens || []).length}`, M + 134, y);
       y += 5;
-      y = addWrappedText(doc, observacao, margin + 2, y, contentWidth - 4, 4) + 4;
+      y = addWrappedText(doc, pedido.observacoes || pedido.historico || '-', M + 2, y, CW - 4, 4) + 4;
     };
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  DESKTOP: layout expandido
+    // ════════════════════════════════════════════════════════════════════════
     const drawExpandido = (pedido) => {
       drawPedidoHeaderExpandido(pedido);
-      const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-      let subtotalCompra = 0;
-      let subtotalVenda = 0;
+      const itens = pedido.itens || [];
+      let totCusto = 0, totVenda = 0;
 
-      if (isMobilePdf || isMobileSoulPdf) {
-        const statusColors = getStatusPdfColors(pedido.status);
-
-        if (isMobileSoulPdf) {
-          ensureSpace(24);
-          doc.setFillColor(...colors.panel);
-          doc.roundedRect(margin, y, contentWidth, 20, 4, 4, 'F');
-          doc.setFillColor(...statusColors.dot);
-          doc.roundedRect(margin + 3, y + 3, 1.8, 14, 1, 1, 'F');
-          doc.setTextColor(...colors.text);
-          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-          doc.setFontSize(7.6);
-          doc.text(safe(String(pedido.fornecedor_nome || 'Sem fornecedor')), margin + 7, y + 6);
-          doc.setFontSize(6.6);
-          doc.text(safe(String(pedido.numero || 'Sem número')), margin + 7, y + 10.2);
-          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-          doc.setFontSize(5.4);
-          doc.setTextColor(...colors.muted);
-          doc.text(`Emissão ${data(pedido.data_emissao || pedido.created_date)}`, margin + 7, y + 14);
-          doc.text(`Entrega ${data(pedido.data_prevista_entrega)}`, margin + 7, y + 17.4);
-          doc.setFillColor(...statusColors.pillBg);
-          doc.roundedRect(margin + contentWidth - 30, y + 3, 27, 5.8, 3, 3, 'F');
-          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-          doc.setFontSize(5.3);
-          doc.setTextColor(...statusColors.pillText);
-          doc.text(safe(pedido.status || '-'), margin + contentWidth - 16.5, y + 6.9, { align: 'center' });
-          doc.setTextColor(...colors.text);
-          doc.setFontSize(7.2);
-          doc.text(moeda(pedido.valor_total), margin + contentWidth - 3, y + 15.4, { align: 'right' });
-          y += 23;
-
-          itens.forEach((item, index) => {
-            const produto = produtosMap[item.produto_id] || {};
-            const quantidade = Number(item.quantidade) || 0;
-            const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
-            const valorUnitarioVenda = Number(produto.preco_venda_padrao) || 0;
-            const custoCalculadoTotal = quantidade * custoCalculado;
-            const vendaTotal = quantidade * valorUnitarioVenda;
-            const markup = custoCalculado > 0 ? ((valorUnitarioVenda - custoCalculado) / custoCalculado) * 100 : 0;
-
-            subtotalCompra += custoCalculadoTotal;
-            subtotalVenda += vendaTotal;
-
-            ensureSpace(22);
-            const itemBg = index % 2 === 0 ? colors.rowAlt : colors.accentSoft;
-            doc.setFillColor(...itemBg);
-            doc.roundedRect(margin, y, contentWidth, 20, 3, 3, 'F');
-            doc.setTextColor(...colors.text);
-            doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-            doc.setFontSize(6.3);
-            const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), contentWidth - 8)[0];
-            doc.text(nomeItem, margin + 3, y + 4.5);
-            doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-            doc.setFontSize(5.1);
-            doc.setTextColor(...colors.muted);
-            doc.text(`Qtd ${quantidade.toLocaleString('pt-BR')} · Custo calc ${moeda(custoCalculado)}`, margin + 3, y + 8.8);
-            doc.text(`Venda un ${moeda(valorUnitarioVenda)} · Markup ${percentual(markup)}`, margin + 3, y + 12.7);
-            doc.setTextColor(...colors.text);
-            doc.text(`Custo total ${moeda(custoCalculadoTotal)}`, margin + 3, y + 16.6);
-            doc.text(`Venda total ${moeda(vendaTotal)}`, margin + 3, y + 19.4);
-            y += 22;
-          });
-
-          ensureSpace(16);
-          doc.setFillColor(...statusColors.pillBg);
-          doc.roundedRect(margin, y, contentWidth, 14, 3, 3, 'F');
-          doc.setTextColor(...statusColors.pillText);
-          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-          doc.setFontSize(5.8);
-          doc.text(`Custo ${moeda(subtotalCompra)}`, margin + 3, y + 4.2);
-          doc.text(`Venda ${moeda(subtotalVenda)}`, margin + 3, y + 8.3);
-          doc.text(`Margem ${moeda(subtotalVenda - subtotalCompra)}`, margin + 3, y + 12.2);
-          y += 18;
-          return;
-        }
-
-        itens.forEach((item, index) => {
-          const produto = produtosMap[item.produto_id] || {};
-          const quantidade = Number(item.quantidade) || 0;
-          const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
-          const valorUnitarioVenda = Number(produto.preco_venda_padrao) || 0;
-          const custoCalculadoTotal = quantidade * custoCalculado;
-          const vendaTotal = quantidade * valorUnitarioVenda;
-          const markup = custoCalculado > 0 ? ((valorUnitarioVenda - custoCalculado) / custoCalculado) * 100 : 0;
-
-          subtotalCompra += custoCalculadoTotal;
-          subtotalVenda += vendaTotal;
-
-          ensureSpace(18);
-          if (index % 2 === 0) {
-            doc.setFillColor(...colors.rowAlt);
-            doc.roundedRect(margin, y, contentWidth, 16, 2, 2, 'F');
-          }
-
-          doc.setTextColor(...colors.text);
-          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-          doc.setFontSize(6.5);
-          const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), contentWidth - 6)[0];
-          doc.text(nomeItem, margin + 3, y + 4);
-          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-          doc.setFontSize(5.3);
-          doc.text(`Qtd ${quantidade.toLocaleString('pt-BR')} · Custo ${moeda(custoCalculado)}`, margin + 3, y + 8);
-          doc.text(`Venda ${moeda(valorUnitarioVenda)} · Markup ${percentual(markup)}`, margin + 3, y + 11.5);
-          doc.text(`Total custo ${moeda(custoCalculadoTotal)} · Venda ${moeda(vendaTotal)}`, margin + 3, y + 15);
-          y += 18;
-        });
-
-        ensureSpace(18);
-        doc.setFillColor(...statusColors.pillBg);
-        doc.roundedRect(margin, y, contentWidth, 14, 3, 3, 'F');
-        doc.setTextColor(...statusColors.pillText);
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(6.2);
-        doc.text(`Custo calc.: ${moeda(subtotalCompra)}`, margin + 3, y + 4.5);
-        doc.text(`Venda: ${moeda(subtotalVenda)}`, margin + 3, y + 8.5);
-        doc.text(`Margem bruta: ${moeda(subtotalVenda - subtotalCompra)}`, margin + 3, y + 12.5);
-        y += 18;
-        return;
-      }
       ensureSpace(12);
-      doc.setFillColor(...colors.panelSoft);
-      doc.roundedRect(tableMargin, y, tableWidth, 8, 2, 2, 'F');
-      doc.setTextColor(...colors.muted);
+      doc.setFillColor(...C.soft);
+      doc.roundedRect(TM, y, TW, 8, 2, 2, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(5.8);
-      doc.text('DESCRIÇÃO', tableMargin + 2, y + 5);
-      doc.text('LÍQ.', tableMargin + 54, y + 5);
-      doc.text('FRETE', tableMargin + 69, y + 5);
-      doc.text('OUTROS', tableMargin + 84, y + 5);
-      doc.text('CUSTO', tableMargin + 101, y + 5);
-      doc.text('VLR UN.', tableMargin + 118, y + 5);
-      doc.text('TOTAL', tableMargin + 136, y + 5);
-      doc.text('VENDA', tableMargin + 154, y + 5);
-      doc.text('MARKUP', tableMargin + 171, y + 5);
+      doc.setTextColor(...C.muted);
+      ['DESCRICAO','LIQ.','FRETE','OUTROS','CUSTO','VLR UN.','TOTAL','VENDA','MARKUP'].forEach((h, i) => {
+        doc.text(h, TM + [2,54,69,84,101,118,136,154,171][i], y + 5);
+      });
       y += 10;
 
-      itens.forEach((item, index) => {
-        const produto = produtosMap[item.produto_id] || {};
-        const quantidade = Number(item.quantidade) || 0;
-        const precoCompraLiquido = Number(item.custo_unitario) || Number(produto.valor_compra) || 0;
-        const custoFrete = Number(produto.custo_frete_padrao) || 0;
-        const outrosCustos = (Number(produto.custo_imposto1_padrao) || 0) + (Number(produto.custo_imposto2_padrao) || 0) + (Number(produto.custo_outros_padrao) || 0);
-        const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
-        const valorUnitarioVenda = Number(produto.preco_venda_padrao) || 0;
-        const valorCompraTotal = quantidade * precoCompraLiquido;
-        const custoCalculadoTotal = quantidade * custoCalculado;
-        const markup = custoCalculado > 0 ? ((valorUnitarioVenda - custoCalculado) / custoCalculado) * 100 : 0;
-
-        subtotalCompra += custoCalculadoTotal;
-        subtotalVenda += quantidade * valorUnitarioVenda;
+      itens.forEach((item, idx) => {
+        const prod = produtosMap[item.produto_id] || {};
+        const qtd = Number(item.quantidade) || 0;
+        const liq = Number(item.custo_unitario) || Number(prod.valor_compra) || 0;
+        const frete = Number(prod.custo_frete_padrao) || 0;
+        const outros = (Number(prod.custo_imposto1_padrao) || 0) + (Number(prod.custo_imposto2_padrao) || 0) + (Number(prod.custo_outros_padrao) || 0);
+        const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
+        const venda = Number(prod.preco_venda_padrao) || 0;
+        const totalLiq = qtd * liq;
+        const totalCusto = qtd * custo;
+        const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
+        totCusto += totalCusto;
+        totVenda += qtd * venda;
 
         ensureSpace(8);
-        if (index % 2 === 0) {
-          doc.setFillColor(...colors.rowAlt);
-          doc.roundedRect(tableMargin, y - 1, tableWidth, 7, 1.5, 1.5, 'F');
+        if (idx % 2 === 0) {
+          doc.setFillColor(...C.rowAlt);
+          doc.roundedRect(TM, y - 1, TW, 7, 1.5, 1.5, 'F');
         }
-
-        doc.setTextColor(...colors.text);
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(5.6);
-        const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), 50)[0];
-        doc.text(nomeItem, tableMargin + 2, y + 3.5);
-        doc.text(moeda(precoCompraLiquido), tableMargin + 54, y + 3.5);
-        doc.text(moeda(custoFrete), tableMargin + 69, y + 3.5);
-        doc.text(moeda(outrosCustos), tableMargin + 84, y + 3.5);
-        doc.text(moeda(custoCalculado), tableMargin + 101, y + 3.5);
-        doc.text(moeda(precoCompraLiquido), tableMargin + 118, y + 3.5);
-        doc.text(moeda(valorCompraTotal), tableMargin + 136, y + 3.5);
-        doc.text(moeda(valorUnitarioVenda), tableMargin + 154, y + 3.5);
-        doc.text(percentual(markup), tableMargin + 171, y + 3.5);
+        doc.setTextColor(...C.text);
+        const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 50)[0];
+        doc.text(nome, TM + 2, y + 3.5);
+        doc.text(moeda(liq),       TM + 54,  y + 3.5);
+        doc.text(moeda(frete),     TM + 69,  y + 3.5);
+        doc.text(moeda(outros),    TM + 84,  y + 3.5);
+        doc.text(moeda(custo),     TM + 101, y + 3.5);
+        doc.text(moeda(liq),       TM + 118, y + 3.5);
+        doc.text(moeda(totalLiq),  TM + 136, y + 3.5);
+        doc.text(moeda(venda),     TM + 154, y + 3.5);
+        doc.text(percentual(mk),   TM + 171, y + 3.5);
         y += 8;
       });
 
-      ensureSpace(18);
-      const statusColors = getStatusPdfColors(pedido.status);
-      doc.setFillColor(...statusColors.pillBg);
-      doc.roundedRect(margin, y, contentWidth, 14, 3, 3, 'F');
-      doc.setTextColor(...statusColors.pillText);
+      ensureSpace(16);
+      const sc = getStatusColors(pedido.status);
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M, y, CW, 14, 3, 3, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(8);
-      doc.text(`Compra total: ${moeda(subtotalCompra)}`, margin + 4, y + 5.5);
-      doc.text(`Venda total: ${moeda(subtotalVenda)}`, margin + 72, y + 5.5);
-      doc.text(`Margem bruta: ${moeda(subtotalVenda - subtotalCompra)}`, margin + 136, y + 5.5);
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(7);
-      doc.text(`Leitura expandida no padrão visual de ${safe(pedido.status || 'rascunho')}.`, margin + 4, y + 10.5);
+      doc.setTextColor(...sc.pillText);
+      doc.text(`Compra total: ${moeda(totCusto)}`,   M + 4,   y + 5.5);
+      doc.text(`Venda total: ${moeda(totVenda)}`,    M + 72,  y + 5.5);
+      doc.text(`Margem bruta: ${moeda(totVenda - totCusto)}`, M + 136, y + 5.5);
       y += 18;
     };
 
+    // ════════════════════════════════════════════════════════════════════════
+    //  MOBILE: card com alma
+    // ════════════════════════════════════════════════════════════════════════
+    const drawMobileCard = (pedido) => {
+      const itens = pedido.itens || [];
+      let totCusto = 0, totVenda = 0;
+      const sc = getStatusColors(pedido.status);
+
+      ensureSpace(36);
+
+      // ── Cabeçalho do card ──────────────────────────────────────────────
+      // Fundo cinza suave
+      doc.setFillColor(...C.soft);
+      doc.roundedRect(M, y, CW, 24, 3, 3, 'F');
+
+      // Barra colorida de status (esquerda)
+      doc.setFillColor(...sc.dot);
+      doc.roundedRect(M, y, 2.5, 24, 1.5, 1.5, 'F');
+
+      // Número do pedido — topo esquerda
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(6);
+      doc.setTextColor(...C.muted);
+      doc.text(safe(pedido.numero || '-'), M + 5, y + 5);
+
+      // Status pill — topo direita
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M + CW - 28, y + 1.5, 26, 5.5, 2.5, 2.5, 'F');
+      doc.setFontSize(5);
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(pedido.status || '-'), M + CW - 15, y + 5.3, { align: 'center' });
+
+      // Fornecedor — nome em destaque
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(8.5);
+      doc.setTextColor(...C.dark);
+      const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 10)[0];
+      doc.text(fornLine, M + 5, y + 12);
+
+      // Valor total — direita em destaque
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(8);
+      doc.setTextColor(...C.tealDark);
+      doc.text(moeda(pedido.valor_total), M + CW, y + 12, { align: 'right' });
+
+      // Datas
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(5.2);
+      doc.setTextColor(...C.muted);
+      doc.text(`Emissao: ${dataFmt(pedido.data_emissao || pedido.created_date)}`, M + 5, y + 17.5);
+      doc.text(`Entrega: ${dataFmt(pedido.data_prevista_entrega)}`, M + 5, y + 21.5);
+      doc.text(`${itens.length} item(ns)`, M + CW, y + 21.5, { align: 'right' });
+
+      y += 27;
+
+      // ── Itens do pedido ────────────────────────────────────────────────
+      itens.forEach((item, idx) => {
+        const prod = produtosMap[item.produto_id] || {};
+        const qtd = Number(item.quantidade) || 0;
+        const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
+        const venda = Number(prod.preco_venda_padrao) || 0;
+        const tCusto = qtd * custo;
+        const tVenda = qtd * venda;
+        const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
+        totCusto += tCusto;
+        totVenda += tVenda;
+
+        ensureSpace(16);
+
+        // fundo alternado
+        if (idx % 2 === 0) {
+          doc.setFillColor(...C.rowAlt);
+          doc.roundedRect(M, y, CW, 14, 2, 2, 'F');
+        }
+
+        // Nome
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(6);
+        doc.setTextColor(...C.text);
+        const nomeProd = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), CW - 25)[0];
+        doc.text(nomeProd, M + 2, y + 4.5);
+
+        // Venda total — direita alinhada verticalmente ao centro
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(6.5);
+        doc.setTextColor(...C.tealDark);
+        doc.text(moeda(tVenda), M + CW, y + 4.5, { align: 'right' });
+
+        // Detalhe: qtd · custo · markup
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(5);
+        doc.setTextColor(...C.muted);
+        doc.text(`${qtd.toLocaleString('pt-BR')} un  |  custo ${moeda(custo)}  |  mk ${percentual(mk)}`, M + 2, y + 9.5);
+
+        // Custo total linha
+        doc.setFontSize(4.8);
+        doc.text(`custo total ${moeda(tCusto)}`, M + 2, y + 13.5);
+
+        y += 16;
+      });
+
+      // ── Rodapé do card: totais ─────────────────────────────────────────
+      ensureSpace(20);
+      doc.setFillColor(...C.dark);
+      doc.roundedRect(M, y, CW, 17, 2.5, 2.5, 'F');
+
+      // Labels
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(5.2);
+      doc.setTextColor(...C.mutedLight);
+      doc.text('Custo total', M + 3, y + 5);
+      doc.text('Venda total', M + 3, y + 9.5);
+      doc.text('Margem bruta', M + 3, y + 14);
+
+      // Valores
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(6.5);
+      doc.setTextColor(...C.white);
+      doc.text(moeda(totCusto), M + CW, y + 5, { align: 'right' });
+      doc.text(moeda(totVenda), M + CW, y + 9.5, { align: 'right' });
+
+      const margem = totVenda - totCusto;
+      doc.setTextColor(margem >= 0 ? 52 : 252, margem >= 0 ? 211 : 100, margem >= 0 ? 153 : 100);
+      doc.text(moeda(margem), M + CW, y + 14, { align: 'right' });
+
+      y += 22;
+    };
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  RENDER PRINCIPAL
+    // ════════════════════════════════════════════════════════════════════════
     drawHeader();
     drawKpis();
     drawGroupSummary();
 
-    if (Array.isArray(grupos) && grupos.length > 0) {
-      grupos.forEach((grupo) => {
-        ensureSpace(14);
-        doc.setTextColor(...colors.muted);
+    const renderPedido = (pedido) => {
+      if (isMobile)              return drawMobileCard(pedido);
+      if (version === 'expandida') return drawExpandido(pedido);
+      return drawCompacto(pedido);
+    };
+
+    const renderGrupo = (grupo) => {
+      ensureSpace(14);
+      if (isMobile) {
+        // Separador de grupo estilo mobile
+        doc.setFillColor(...C.teal);
+        doc.rect(M, y, 2.5, 7, 'F');
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(7);
+        doc.setTextColor(...C.dark);
+        doc.text(safe(grupo.label || '-'), M + 6, y + 5);
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(5.2);
+        doc.setTextColor(...C.muted);
+        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + CW, y + 5, { align: 'right' });
+        y += 11;
+      } else {
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(8.5);
-        doc.text(safe(grupo.label || '-'), margin, y);
+        doc.setTextColor(...C.muted);
+        doc.text(safe(grupo.label || '-'), M, y);
         y += 4;
+      }
+      (grupo.pedidos || []).forEach(renderPedido);
+    };
 
-        (grupo.pedidos || []).forEach((pedido) => {
-          if (version === 'expandida' || version === 'expandida_mobile') {
-            drawExpandido(pedido);
-          } else {
-            drawCompacto(pedido);
-          }
-        });
-      });
+    if (Array.isArray(grupos) && grupos.length > 0) {
+      grupos.forEach(renderGrupo);
     } else {
-      pedidos.forEach((pedido) => {
-        if (version === 'expandida' || version === 'expandida_mobile') {
-          drawExpandido(pedido);
-        } else {
-          drawCompacto(pedido);
-        }
-      });
+      pedidos.forEach(renderPedido);
     }
 
     const pdfBytes = doc.output('arraybuffer');
