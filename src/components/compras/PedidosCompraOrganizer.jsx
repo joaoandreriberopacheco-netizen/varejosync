@@ -9,7 +9,7 @@ import {
 
 const OPTIONS = [
   { value: 'eta_transportadora', label: 'ETA/Transportadora', icon: Truck },
-  { value: 'data_pedido', label: 'Data do pedido', icon: CalendarDays },
+  { value: 'data_pedido', label: 'Data base', icon: CalendarDays },
   { value: 'fornecedor', label: 'Fornecedor', icon: Building2 },
   { value: 'status', label: 'Status', icon: Clock3 },
 ];

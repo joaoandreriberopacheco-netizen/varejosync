@@ -55,27 +55,18 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
 function EmbarquesInfo({ pedido }) {
   const embarque = pedido._embarque;
 
-  if (!embarque) {
-    return (
-      <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
-        <Truck className="w-3 h-3 flex-none" />
-        <span>Sem embarque</span>
-      </div>
-    );
-  }
-
   return (
     <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-gray-500 dark:text-gray-400">
       <span className="flex items-center gap-1.5">
         <Truck className="w-3 h-3 flex-none" />
-        <span>{embarque.transportadora_nome || 'Não informado'}</span>
+        <span>{embarque?.transportadora_nome || 'Aguardando associação'}</span>
       </span>
       <span className="flex items-center gap-1.5">
         <CalendarClock className="w-3 h-3 flex-none" />
-        <span>{embarque.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
+        <span>{embarque?.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
       </span>
       <span className="text-gray-400 dark:text-gray-500">
-        #{embarque.numero || '01'}
+        #{embarque?.numero || 'A'}
       </span>
     </div>
   );
@@ -86,6 +77,7 @@ function getLEDStatus(pedido) {
   const embarque = pedido._embarque;
   const statusRecebimento = embarque?.status_recebimento;
   const statusOperacional = embarque?.status;
+  const statusPedido = pedido.status;
 
   if (statusRecebimento === 'Recebido OK' || statusOperacional === 'Concluído') {
     return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true, isCyan: false, hasActiveDivergence: false };
@@ -99,8 +91,16 @@ function getLEDStatus(pedido) {
     return { isVermelho: false, isAmbar: true, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
   }
 
-  if (embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque) {
+  if (statusOperacional === 'Despachado' || embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque) {
     return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: true, hasActiveDivergence: false };
+  }
+
+  if (statusPedido === 'Aguardando Aprovação Financeira' || statusPedido === 'Aguardando Liberação') {
+    return { isVermelho: false, isAmbar: true, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
+  }
+
+  if (statusPedido === 'Rascunho') {
+    return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
   }
 
   return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
@@ -187,7 +187,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.08em]">
-                    {pedido.numero}
+                    {pedido._embarque?.numero ? `EMB ${pedido._embarque.numero}` : pedido.numero}
                   </span>
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {displayStatus}
@@ -202,11 +202,9 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 <p className="text-[0.75rem] text-gray-500 dark:text-gray-400 mt-1 truncate">
                   {pedido.fornecedor_nome || '—'}
                 </p>
-                {pedido._embarque && (
-                  <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1 truncate">
-                    Embarque {pedido._embarque.numero || '01'} vinculado ao pedido
-                  </p>
-                )}
+                <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1 truncate">
+                  Pedido {pedido.numero} · {pedido._embarque?.tipo || 'Embarque'}
+                </p>
               </div>
             </div>
 
@@ -327,7 +325,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
         <Package2 className="w-9 h-9 text-gray-200 dark:text-gray-700" />
-        <p className="text-sm text-gray-400">Nenhum pedido encontrado</p>
+        <p className="text-sm text-gray-400">Nenhum embarque encontrado</p>
       </div>
     );
   }

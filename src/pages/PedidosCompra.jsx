@@ -231,12 +231,9 @@ export default function PedidosCompraPage() {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [pedidos]);
 
-  const cardsFonte = useMemo(() => {
-    if (embarques.length > 0) return embarques;
-    return pedidos;
-  }, [embarques, pedidos]);
+  const cardsFonte = useMemo(() => embarques, [embarques]);
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque', 'Original'];
+  const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque', 'Original', 'Pendente', 'Despachado'];
 
   const filtrados = useMemo(() => {
     return cardsFonte.filter((p) => {
@@ -398,9 +395,9 @@ export default function PedidosCompraPage() {
       {/* Header */}
       <div className="pb-3 mb-1 flex items-start justify-between gap-3">
         <div className="space-y-1.5">
-          <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Pedidos de Compra</p>
-          <p className="text-xs text-gray-400">{pedidosVisiveisPendentes.length} pedidos com saldo pendente · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-emerald-600 dark:text-emerald-400">Pago e ainda não entregue no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Embarques</p>
+          <p className="text-xs text-gray-400">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">Liberados e ainda não concluídos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
         <PedidosCompraOrganizer
           groupBy={groupBy}

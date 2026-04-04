@@ -96,7 +96,7 @@ export default function FiltrosCompras({
           <input
             value={search}
             onChange={e => onSearch(e.target.value)}
-            placeholder="Buscar número, fornecedor..."
+            placeholder="Buscar embarque, pedido, fornecedor..."
             className="w-full pl-10 pr-4 h-12 bg-white dark:bg-slate-800 border-0 text-gray-700 dark:text-gray-100 placeholder:text-gray-400 rounded-2xl outline-none shadow-sm text-sm focus:ring-2 focus:ring-teal-300 dark:focus:ring-teal-600 transition-shadow"
           />
         </div>

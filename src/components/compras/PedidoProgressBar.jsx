@@ -3,35 +3,22 @@ import { differenceInDays, parseISO } from 'date-fns';
 
 function getProgressDetails(pedido) {
   const today = new Date();
-  const dataPrevista = pedido.data_prevista_entrega
-    ? parseISO(pedido.data_prevista_entrega + 'T00:00:00')
+  const dataPrevista = pedido._embarque?.eta
+    ? parseISO(String(pedido._embarque.eta).slice(0, 10) + 'T00:00:00')
     : null;
   const isAtrasado = dataPrevista && differenceInDays(today, dataPrevista) > 0;
 
-  const status = pedido.status || '';
+  const statusPedido = pedido.status || '';
+  const statusEmbarque = pedido._display_status || pedido._embarque?.status_recebimento || pedido._embarque?.status || '';
 
-  // Status virtuais/finais do card
-  if (status === 'Recebido OK' || status === 'Concluído')
-    return { filled: 5, active: 'teal-full' };
-
-  // Problemas — vermelho tem prioridade
-  if (pedido.tem_divergencias || status === 'Pendência' || status === 'Devolvido' || isAtrasado)
-    return { filled: 2, active: 'rose' };
-
-  if (status === 'Cancelado')              return { filled: 0, active: null };
-  if (status === 'Rascunho')               return { filled: 1, active: 'teal-light' };
-  if (status === 'Aguardando Liberação')   return { filled: 2, active: 'teal-light' };
-  if (status === 'Aprovado')               return { filled: 3, active: 'teal-mid' };
-
-  if (status === 'Despachado' || status === 'Em Trânsito') {
-    if (pedido.status_embarque === 'Parcial') return { filled: 4, active: 'amber' };
-    return { filled: 4, active: 'teal' };
-  }
-  if (status === 'Entregue' || status === 'Concluído')
-                                           return { filled: 5, active: 'teal-full' };
-
-  // Fallback: se tem data_aprovacao_financeira assume pelo menos "Aprovado"
-  if (pedido.data_aprovacao_financeira)    return { filled: 3, active: 'teal-mid' };
+  if (statusEmbarque === 'Recebido OK' || statusEmbarque === 'Concluído') return { filled: 5, active: 'teal-full' };
+  if (statusEmbarque === 'Com Divergência' || pedido.tem_divergencias || isAtrasado) return { filled: 2, active: 'rose' };
+  if (statusPedido === 'Rascunho') return { filled: 1, active: 'teal-light' };
+  if (statusPedido === 'Aguardando Aprovação Financeira' || statusPedido === 'Aguardando Liberação') return { filled: 2, active: 'teal-light' };
+  if (statusPedido === 'Aprovado' && !statusEmbarque) return { filled: 3, active: 'teal-mid' };
+  if (statusEmbarque === 'Pendente' || statusEmbarque === 'Aguardando Embarque' || statusEmbarque === 'Original') return { filled: 3, active: 'teal-mid' };
+  if (statusEmbarque === 'Despachado' || statusEmbarque === 'Em Trânsito' || statusEmbarque === 'Recebido Parcial') return { filled: 4, active: statusEmbarque === 'Recebido Parcial' ? 'amber' : 'teal' };
+  if (pedido.data_aprovacao_financeira) return { filled: 3, active: 'teal-mid' };
 
   return { filled: 1, active: 'teal-light' };
 }

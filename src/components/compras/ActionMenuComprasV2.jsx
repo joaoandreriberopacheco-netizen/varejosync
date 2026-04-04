@@ -39,7 +39,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
   const actions = [
     {
       icon: <CheckSquare className="w-5 h-5" />,
-      label: modoSelecao ? 'Cancelar seleção' : 'Selecionar pedidos',
+      label: modoSelecao ? 'Cancelar seleção' : 'Selecionar embarques',
       onClick: () => { onToggleModoSelecao?.(); setIsExpanded(false); },
       color: modoSelecao ? 'bg-gray-900 dark:bg-gray-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
     },
