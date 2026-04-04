@@ -299,19 +299,22 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         : '';
       const volumesDetalhados = volumes.length > 0 ? volumes : [];
 
+      const payloadEmbarque = {
+        data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : (embarqueExistente?.data_embarque || new Date().toISOString()),
+        eta: eta + 'T12:00:00.000Z',
+        transportadora_id: transportadoraId,
+        transportadora_nome: transportadora?.nome || '',
+        volumes: volumesTexto,
+        volumes_detalhados: volumesDetalhados,
+        peso_kg: totalPesoKg,
+        observacoes,
+        itens: itensEmbarcados,
+        itens_embarcados: itensEmbarcados,
+        status: 'Despachado'
+      };
+
       if (isEdicao) {
-        await base44.entities.Embarque.update(embarqueExistente.id, {
-          data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : embarqueExistente.data_embarque,
-          eta: eta + 'T12:00:00.000Z',
-          transportadora_id: transportadoraId,
-          transportadora_nome: transportadora?.nome || '',
-          volumes: volumesTexto,
-          volumes_detalhados: volumesDetalhados,
-          peso_kg: totalPesoKg,
-          observacoes,
-          itens: itensEmbarcados,
-          status: 'Despachado'
-        });
+        await base44.entities.Embarque.update(embarqueExistente.id, payloadEmbarque);
       } else {
         await base44.entities.Embarque.create({
           pedido_compra_id: pedido.id,
@@ -321,23 +324,14 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
           numero: String(embarquesExistentes.length + 1).padStart(2, '0'),
           codigo_exibicao: `${pedido.numero}-${letraExibicao}`,
           tipo: 'Embarque',
-          status: 'Despachado',
           status_recebimento: 'Pendente',
-          data_embarque: dataDespacho ? dataDespacho + 'T12:00:00.000Z' : new Date().toISOString(),
-          eta: eta + 'T12:00:00.000Z',
-          transportadora_id: transportadoraId,
-          transportadora_nome: transportadora?.nome || '',
-          volumes: volumesTexto,
-          volumes_detalhados: volumesDetalhados,
-          peso_kg: totalPesoKg,
-          observacoes,
-          itens: itensEmbarcados
+          ...payloadEmbarque
         });
       }
 
       await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
 
-      toast.success(isEdicao ? 'Embarque atualizado!' : novoStatusEmbarque === 'Total' ? 'Embarque total registrado!' : 'Embarque parcial registrado.');
+      toast.success(isEdicao ? 'Embarque atualizado!' : statusPreview === 'Total' ? 'Embarque total registrado!' : 'Embarque parcial registrado.');
       onSuccess?.();
       onClose();
     } catch (err) {
