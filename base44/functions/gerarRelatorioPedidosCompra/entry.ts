@@ -150,11 +150,6 @@ Deno.serve(async (req) => {
     const ensureSpace = (needed = 24) => {
       if (y + needed > pageH - 10) {
         doc.addPage();
-        if (isMobile) {
-          // repete faixa lateral teal em novas páginas
-          doc.setFillColor(...C.teal);
-          doc.rect(0, 0, 2, pageH, 'F');
-        }
         y = 14;
       }
     };
@@ -164,31 +159,24 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     const drawHeader = () => {
       if (isMobile) {
-        // Faixa lateral teal em toda a altura da primeira página
-        doc.setFillColor(...C.teal);
-        doc.rect(0, 0, 2, pageH, 'F');
-
-        // Cabeçalho escuro
-        doc.setFillColor(...C.dark);
-        doc.rect(2, 0, pageW - 2, 30, 'F');
-
+        // Header limpo — sem fundo escuro
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(11);
-        doc.setTextColor(...C.white);
-        doc.text('Pedidos de Compra', M + 2, 12);
+        doc.setTextColor(...C.text);
+        doc.text('Pedidos de Compra', M, 12);
 
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(5.5);
-        doc.setTextColor(...C.mutedLight);
-        const filtroLine = doc.splitTextToSize(safe(filtros_desc), CW - 4)[0];
-        doc.text(filtroLine, M + 2, 18.5);
-        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M + 2, 23.5);
+        doc.setFontSize(5.2);
+        doc.setTextColor(...C.muted);
+        const filtroLine = doc.splitTextToSize(safe(filtros_desc), CW)[0];
+        doc.text(filtroLine, M, 17.5);
+        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, 22);
 
-        // Linha separadora teal
-        doc.setFillColor(...C.teal);
-        doc.rect(2, 28.5, pageW - 2, 1.5, 'F');
+        // Linha separadora sutil cinza
+        doc.setFillColor(...C.soft);
+        doc.rect(M, 25, CW, 0.5, 'F');
 
-        y = 36;
+        y = 30;
         return;
       }
 
@@ -438,11 +426,11 @@ Deno.serve(async (req) => {
     };
 
     // ════════════════════════════════════════════════════════════════════════
-    //  MOBILE: card com alma
+    //  MOBILE: card limpo modo claro
     // ════════════════════════════════════════════════════════════════════════
-    const ITEM_ML = M + 8;  // margem esquerda dos itens (indentado)
-    const ITEM_MR = M + 8;  // margem direita dos itens (espelhada)
-    const ITEM_CW = CW - 16; // largura interna dos itens
+    const ITEM_ML = M + 6;   // indentação dos itens
+    const ITEM_CW = CW - 6;  // largura dos itens
+    const LINE_X = M + 2;    // x da linha hierárquica vertical
 
     const drawMobileCard = (pedido) => {
       const itens = pedido.itens || [];
@@ -451,46 +439,48 @@ Deno.serve(async (req) => {
 
       ensureSpace(22);
 
-      // ── Cabeçalho do pedido (compacto) ────────────────────────────────
-      // Barra de status fina na esquerda
-      doc.setFillColor(...sc.dot);
-      doc.rect(M, y, 2, 18, 'F');
+      // ── Cabeçalho do pedido — fundo soft claro ─────────────────────────
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, y, CW, 19, 2, 2, 'F');
 
-      // Número + status pill na mesma linha
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(5.5);
-      doc.setTextColor(...C.muted);
-      doc.text(safe(pedido.numero || '-'), M + 5, y + 4.5);
-
-      // Status pill direita
-      doc.setFillColor(...sc.pillBg);
-      doc.roundedRect(M + CW - 25, y + 1, 23, 5, 2.5, 2.5, 'F');
-      doc.setFontSize(4.8);
-      doc.setTextColor(...sc.pillText);
-      doc.text(safe(pedido.status || '-'), M + CW - 13.5, y + 4.5, { align: 'center' });
-
-      // Fornecedor
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(7.5);
-      doc.setTextColor(...C.dark);
-      const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 30)[0];
-      doc.text(fornLine, M + 5, y + 10);
-
-      // Valor total pedido — destaque teal
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(7.5);
-      doc.setTextColor(...C.tealDark);
-      doc.text(moeda(pedido.valor_total), M + CW, y + 10, { align: 'right' });
-
-      // Datas compactas
+      // Número (pequeno, muted)
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(4.8);
       doc.setTextColor(...C.muted);
-      doc.text(`Emissao: ${dataFmt(pedido.data_emissao || pedido.created_date)}  |  Entrega: ${dataFmt(pedido.data_prevista_entrega)}  |  ${itens.length} item(ns)`, M + 5, y + 15.5);
+      doc.text(safe(pedido.numero || '-'), M + 3, y + 4.5);
 
-      y += 21;
+      // Status pill direita
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M + CW - 26, y + 1.5, 24, 5, 2.5, 2.5, 'F');
+      doc.setFontSize(4.6);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(pedido.status || '-'), M + CW - 14, y + 5, { align: 'center' });
 
-      // ── Itens (com indentação maior) ──────────────────────────────────
+      // Fornecedor — bold, escuro
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+      doc.setFontSize(7);
+      doc.setTextColor(...C.text);
+      const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 32)[0];
+      doc.text(fornLine, M + 3, y + 10.5);
+
+      // Valor total — direita, escuro
+      doc.setFontSize(7);
+      doc.setTextColor(...C.text);
+      doc.text(moeda(pedido.valor_total), M + CW - 2, y + 10.5, { align: 'right' });
+
+      // Datas compactas
+      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+      doc.setFontSize(4.5);
+      doc.setTextColor(...C.muted);
+      doc.text(
+        `${dataFmt(pedido.data_emissao || pedido.created_date)}  →  ${dataFmt(pedido.data_prevista_entrega)}  ·  ${itens.length} iten(s)`,
+        M + 3, y + 16.5
+      );
+
+      y += 22;
+
+      // ── Itens com linha hierárquica sutil à esquerda ───────────────────
+      const totalItens = itens.length;
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = Number(item.quantidade) || 0;
@@ -502,57 +492,56 @@ Deno.serve(async (req) => {
         totCusto += tCusto;
         totVenda += tVenda;
 
-        ensureSpace(14);
+        ensureSpace(13);
+        const rowH = 12;
+        const isLast = idx === totalItens - 1;
 
-        if (idx % 2 === 0) {
-          doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(ITEM_ML - 2, y, ITEM_CW + 4, 12, 1.5, 1.5, 'F');
-        }
+        // Linha vertical hierárquica (cinza 220)
+        doc.setFillColor(220, 222, 226);
+        doc.rect(LINE_X, y, 0.5, isLast ? rowH - 4 : rowH, 'F');
+        // Tracinho horizontal saindo da linha
+        doc.rect(LINE_X, y + 4, 3, 0.4, 'F');
 
         // Nome do produto
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(5.8);
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(5.5);
         doc.setTextColor(...C.text);
         const nomeProd = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), ITEM_CW - 22)[0];
-        doc.text(nomeProd, ITEM_ML, y + 4.5);
+        doc.text(nomeProd, ITEM_ML, y + 4.8);
 
-        // Venda total — direita
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(6);
-        doc.setTextColor(...C.tealDark);
-        doc.text(moeda(tVenda), ITEM_ML + ITEM_CW, y + 4.5, { align: 'right' });
+        // Valor de venda total — direita, muted
+        doc.setFontSize(5.5);
+        doc.setTextColor(...C.muted);
+        doc.text(moeda(tVenda), M + CW - 2, y + 4.8, { align: 'right' });
 
         // Detalhe: qtd · custo · markup
-        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(4.6);
-        doc.setTextColor(...C.muted);
-        doc.text(`${qtd.toLocaleString('pt-BR')} un  |  custo ${moeda(custo)}  |  mk ${percentual(mk)}`, ITEM_ML, y + 9);
+        doc.setFontSize(4.2);
+        doc.setTextColor(...C.mutedLight);
+        doc.text(`${qtd.toLocaleString('pt-BR')} un  ·  custo ${moeda(custo)}  ·  mk ${percentual(mk)}`, ITEM_ML, y + 9.2);
 
-        y += 13;
+        y += rowH;
       });
 
-      // ── Rodapé totais (indentado igual) ───────────────────────────────
-      ensureSpace(16);
-      doc.setFillColor(...C.dark);
-      doc.roundedRect(ITEM_ML - 2, y, ITEM_CW + 4, 13, 2, 2, 'F');
+      // ── Rodapé totais — fundo soft, sem escuro ────────────────────────
+      ensureSpace(12);
+      doc.setFillColor(...C.soft);
+      doc.roundedRect(M, y, CW, 10, 2, 2, 'F');
 
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(4.8);
-      doc.setTextColor(...C.mutedLight);
-      doc.text('Custo', ITEM_ML, y + 4.5);
-      doc.text('Venda', ITEM_ML, y + 8.5);
-      doc.text('Margem', ITEM_ML, y + 12.5);
+      doc.setFontSize(4.5);
+      doc.setTextColor(...C.muted);
+      doc.text('Custo total', M + 3, y + 4);
+      doc.text('Venda total', M + 3, y + 8);
 
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(6);
-      doc.setTextColor(...C.white);
-      doc.text(moeda(totCusto), ITEM_ML + ITEM_CW, y + 4.5, { align: 'right' });
-      doc.text(moeda(totVenda), ITEM_ML + ITEM_CW, y + 8.5, { align: 'right' });
+      doc.setFontSize(5.5);
+      doc.setTextColor(...C.text);
+      doc.text(moeda(totCusto), M + CW - 2, y + 4, { align: 'right' });
       const margem = totVenda - totCusto;
-      doc.setTextColor(margem >= 0 ? 52 : 252, margem >= 0 ? 211 : 100, margem >= 0 ? 153 : 100);
-      doc.text(moeda(margem), ITEM_ML + ITEM_CW, y + 12.5, { align: 'right' });
+      doc.setTextColor(margem >= 0 ? 4 : 190, margem >= 0 ? 120 : 24, margem >= 0 ? 87 : 93);
+      doc.text(moeda(totVenda), M + CW - 2, y + 8, { align: 'right' });
 
-      y += 17;
+      y += 14;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -569,23 +558,21 @@ Deno.serve(async (req) => {
     };
 
     const renderGrupo = (grupo) => {
-      ensureSpace(16);
+      ensureSpace(14);
       if (isMobile) {
-        // Separador de grupo: fundo escuro full-width, tipografia forte
-        doc.setFillColor(...C.dark);
-        doc.rect(0, y, pageW, 10, 'F');
-        // linha teal à esquerda
-        doc.setFillColor(...C.teal);
-        doc.rect(0, y, 3, 10, 'F');
+        // Separador de grupo: label caps com linha sutil — estilo sidebar
+        y += 4;
+        doc.setFillColor(220, 222, 226);
+        doc.rect(M, y, CW, 0.4, 'F');
+        y += 3;
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(7);
-        doc.setTextColor(...C.white);
-        doc.text(safe(grupo.label || '-'), M + 2, y + 6.8);
+        doc.setFontSize(5.5);
+        doc.setTextColor(...C.muted);
+        doc.text(safe((grupo.label || '-').toUpperCase()), M, y + 4);
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(5);
-        doc.setTextColor(...C.mutedLight);
-        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + CW, y + 6.8, { align: 'right' });
-        y += 14;
+        doc.setFontSize(4.8);
+        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + CW, y + 4, { align: 'right' });
+        y += 10;
       } else {
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
         doc.setFontSize(8.5);
