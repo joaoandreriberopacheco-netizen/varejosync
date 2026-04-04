@@ -46,11 +46,10 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
 }
 
 function EmbarquesInfo({ pedido }) {
-  const embarques = pedido.embarques_registrados || [];
-  const primeiroEmbarque = embarques[0];
-  const segundoEmbarque = embarques[1];
+  // Usa o embarque virtual (card expandido) ou o primeiro do pedido
+  const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0];
 
-  if (!primeiroEmbarque) {
+  if (!embarque) {
     return (
       <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
         <Truck className="w-3 h-3 flex-none" />
@@ -60,29 +59,15 @@ function EmbarquesInfo({ pedido }) {
   }
 
   return (
-    <div className="flex flex-col gap-1 text-[0.7rem]">
-      <div className="flex items-center gap-4 flex-wrap text-gray-500 dark:text-gray-400">
-        <span className="flex items-center gap-1.5">
-          <Truck className="w-3 h-3 flex-none" />
-          <span>{primeiroEmbarque.transportadora_nome || 'Não informado'}</span>
-        </span>
-        <span className="flex items-center gap-1.5">
-          <CalendarClock className="w-3 h-3 flex-none" />
-          <span>{primeiroEmbarque.eta ? formatarDataCurta(primeiroEmbarque.eta) : 'Sem previsão'}</span>
-        </span>
-      </div>
-      {segundoEmbarque && (
-        <div className="flex items-center gap-4 flex-wrap text-gray-500 dark:text-gray-400">
-          <span className="flex items-center gap-1.5">
-            <Truck className="w-3 h-3 flex-none" />
-            <span>{segundoEmbarque.transportadora_nome || 'Não informado'}</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CalendarClock className="w-3 h-3 flex-none" />
-            <span>{segundoEmbarque.eta ? formatarDataCurta(segundoEmbarque.eta) : 'Sem previsão'}</span>
-          </span>
-        </div>
-      )}
+    <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-gray-500 dark:text-gray-400">
+      <span className="flex items-center gap-1.5">
+        <Truck className="w-3 h-3 flex-none" />
+        <span>{embarque.transportadora_nome || 'Não informado'}</span>
+      </span>
+      <span className="flex items-center gap-1.5">
+        <CalendarClock className="w-3 h-3 flex-none" />
+        <span>{embarque.eta ? formatarDataCurta(embarque.eta) : 'Sem previsão'}</span>
+      </span>
     </div>
   );
 }
@@ -270,7 +255,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
         <div className="space-y-2">
           {pedidos.map(p => (
             <PedidoCard
-              key={p.id}
+              key={p._virtual_key || p.id}
               pedido={p}
               onEdit={onEdit}
               onDelete={onDelete}

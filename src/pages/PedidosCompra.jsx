@@ -226,17 +226,7 @@ export default function PedidosCompraPage() {
   }, [pedidosPagosPendentes]);
 
   const grupos = useMemo(() => {
-    const normalizeTransportadora = (pedido) => {
-      const primeiroEmbarque = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados[0] : null;
-      return primeiroEmbarque?.transportadora_nome?.trim() || 'Sem transportadora';
-    };
-
-    const normalizeEta = (pedido) => {
-      const primeiroEmbarque = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados[0] : null;
-      return primeiroEmbarque?.eta ? toLocalDate(primeiroEmbarque.eta) : 'sem-eta';
-    };
-
-    const getGroupMeta = (pedido) => {
+    const getGroupMeta = (pedido, embarque) => {
       if (groupBy === 'fornecedor') {
         const fornecedor = pedido.fornecedor_nome?.trim() || 'Sem fornecedor';
         return { key: `fornecedor:${fornecedor}`, label: fornecedor, orderValue: fornecedor.toLowerCase() };
@@ -248,8 +238,8 @@ export default function PedidosCompraPage() {
       }
 
       if (groupBy === 'eta_transportadora') {
-        const eta = normalizeEta(pedido);
-        const transportadora = normalizeTransportadora(pedido);
+        const eta = embarque?.eta ? toLocalDate(embarque.eta) : 'sem-eta';
+        const transportadora = embarque?.transportadora_nome?.trim() || 'Sem transportadora';
         const semDados = eta === 'sem-eta' && transportadora === 'Sem transportadora';
         return {
           key: semDados ? 'eta_transportadora:sem-dados' : `eta_transportadora:${eta}:${transportadora}`,
@@ -263,8 +253,7 @@ export default function PedidosCompraPage() {
       const hoje = dataHoje();
       let label = 'Sem data';
       if (key !== 'sem-data') {
-        const dataFmt = formatarSoData(key);
-        label = key === hoje ? 'Hoje' : dataFmt;
+        label = key === hoje ? 'Hoje' : formatarSoData(key);
       }
       return { key: `data_pedido:${key}`, label, orderValue: key };
     };
@@ -274,14 +263,30 @@ export default function PedidosCompraPage() {
       return String(b).localeCompare(String(a), 'pt-BR');
     };
 
-    const map = {};
+    // Expande pedidos em entradas virtuais: uma por embarque (quando groupBy=eta_transportadora)
+    const virtualEntries = [];
     pedidosVisiveisLista.forEach((pedido) => {
-      const meta = getGroupMeta(pedido);
+      const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+
+      if (groupBy === 'eta_transportadora' && embarques.length > 0) {
+        embarques.forEach((emb, idx) => {
+          virtualEntries.push({ pedido, embarque: emb, virtualKey: `${pedido.id}_emb_${emb.id || idx}` });
+        });
+      } else {
+        virtualEntries.push({ pedido, embarque: embarques[0] || null, virtualKey: pedido.id });
+      }
+    });
+
+    const map = {};
+    virtualEntries.forEach(({ pedido, embarque, virtualKey }) => {
+      const meta = getGroupMeta(pedido, embarque);
       if (!map[meta.key]) {
         map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
       }
       map[meta.key].pedidos.push({
         ...pedido,
+        _virtual_key: virtualKey,
+        _embarque: embarque,
         valor_pendente_entrega: pedido.status === 'Concluído' ? 0 : calcularValorPendentePedido(pedido)
       });
     });
