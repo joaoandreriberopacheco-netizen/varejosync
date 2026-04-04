@@ -19,8 +19,13 @@ function calcularTotalEmbarcado(embarques) {
 
 function EmbarqueCard({ embarque, nivel, pedido, onEdit }) {
   const [expanded, setExpanded] = useState(false);
-  const dataEmb = embarque.data_embarque ? new Date(embarque.data_embarque) : null;
-  const eta = embarque.eta ? new Date(embarque.eta) : null;
+  const parseValidDate = (value) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+  const dataEmb = parseValidDate(embarque.data_embarque);
+  const eta = parseValidDate(embarque.eta);
   const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
   const totalItens = itensEmbarque.reduce((s, i) => s + (i.quantidade_embarcada || 0), 0);
   const codigoExibicao = embarque.codigo_exibicao || `${pedido?.numero || '-----'}-${String.fromCharCode(64 + nivel)}`;
