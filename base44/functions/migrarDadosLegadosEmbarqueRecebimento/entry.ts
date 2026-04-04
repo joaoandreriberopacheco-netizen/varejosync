@@ -4,7 +4,7 @@ function toNumber(value) {
   return Number(value) || 0;
 }
 
-function buildOriginalShipment(pedido) {
+function buildOriginalShipment(pedido, embarqueLegado = null) {
   const itensOriginais = (pedido.itens || []).map((item) => ({
     produto_id: item.produto_id,
     produto_nome: item.produto_nome,
@@ -20,8 +20,8 @@ function buildOriginalShipment(pedido) {
     numero: '00',
     tipo: 'Original',
     status: pedido.data_despacho ? 'Despachado' : 'Pendente',
-    data_embarque: pedido.data_despacho || null,
-    eta: pedido.data_chegada || (pedido.data_prevista_entrega ? `${pedido.data_prevista_entrega}T12:00:00.000Z` : null),
+    data_embarque: null,
+    eta: null,
     transportadora_id: '',
     transportadora_nome: '',
     volumes: '',
@@ -60,6 +60,35 @@ function mergeLegacyIntoOriginal(original, pedido, movimentos) {
     status: totalRecebido >= totalEmbarcado && totalEmbarcado > 0 ? 'Concluído' : totalEmbarcado > 0 ? 'Despachado' : 'Pendente',
     status_recebimento_embarque: totalRecebido >= totalEmbarcado && totalEmbarcado > 0 ? 'Recebido OK' : totalRecebido > 0 ? 'Recebido Parcial' : 'Pendente',
     itens_embarcados: itensAtualizados,
+  };
+}
+
+function buildLegacyShipment(pedido, originalAnterior) {
+  const temDadosLegados = Boolean(pedido.data_despacho || pedido.data_chegada || pedido.data_prevista_entrega);
+  if (!temDadosLegados) return null;
+
+  const itens = (originalAnterior?.itens_embarcados || []).map((item) => ({
+    ...item,
+    quantidade_recebida: 0,
+  })).filter((item) => toNumber(item.quantidade_embarcada) > 0);
+
+  if (!itens.length) return null;
+
+  return {
+    id: `emb_leg_${pedido.id}`,
+    numero: '01',
+    tipo: 'Embarque',
+    status: pedido.data_despacho ? 'Despachado' : 'Pendente',
+    data_embarque: pedido.data_despacho || null,
+    eta: pedido.data_chegada || (pedido.data_prevista_entrega ? `${pedido.data_prevista_entrega}T12:00:00.000Z` : null),
+    transportadora_id: '',
+    transportadora_nome: '',
+    volumes: '',
+    volumes_detalhados: [],
+    peso_kg: 0,
+    observacoes: 'Embarque legado reconstruído automaticamente a partir dos campos antigos do pedido.',
+    status_recebimento_embarque: 'Pendente',
+    itens_embarcados: itens
   };
 }
 
@@ -135,10 +164,12 @@ Deno.serve(async (req) => {
     for (const pedido of pedidos) {
       const embarquesAtuais = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
       const originalAtual = embarquesAtuais.find((emb) => emb.tipo === 'Original');
-      const outros = embarquesAtuais.filter((emb) => emb.tipo !== 'Original' && emb.tipo !== 'Necessidade');
+      const outrosExistentes = embarquesAtuais.filter((emb) => emb.tipo !== 'Original' && emb.tipo !== 'Necessidade' && emb.id !== `emb_leg_${pedido.id}`);
 
       const originalBase = originalAtual || buildOriginalShipment(pedido);
       const original = mergeLegacyIntoOriginal(originalBase, pedido, movimentos);
+      const embarqueLegado = buildLegacyShipment(pedido, original);
+      const outros = embarqueLegado ? [embarqueLegado, ...outrosExistentes] : outrosExistentes;
       const necessidade = buildNeedShipmentFromSaldo(original, embarquesAtuais);
       const embarquesFinal = [original, ...outros, ...(necessidade ? [necessidade] : [])];
       const percentuais = calcularPercentuais(pedido, original);
