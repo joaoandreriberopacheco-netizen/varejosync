@@ -7,7 +7,8 @@ function getProgressDetails(pedido) {
   const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
   const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
   const temTransporte = !!(embarque.transportadora_id || embarque.transportadora_nome || embarque.data_embarque || embarque.eta);
-  const necessidadeSemItens = embarque.tipo === 'Necessidade' && !temItensAssociados && !temTransporte;
+  const quantidadePendente = pedido._quantidade_pendente ?? 0;
+  const necessidadeSemItens = embarque.tipo === 'Necessidade' && !temTransporte && (!temItensAssociados || quantidadePendente > 0);
 
   if (necessidadeSemItens) return { filled: 3, active: 'rose' };
   if (statusBase === 'Concluído') return { filled: 5, active: 'teal-full' };

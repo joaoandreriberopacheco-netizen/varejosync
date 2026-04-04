@@ -81,6 +81,16 @@ const getDisplayValorEmbarque = (pedido, embarque) => {
   return buildDisplayItensFromEmbarque(pedido, embarque).reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
 };
 
+const getQuantidadePendenteNecessidade = (pedido, embarque) => {
+  if (embarque?.tipo !== 'Necessidade') return 0;
+
+  return (pedido.itens || []).reduce((acc, item) => {
+    const quantidade = Number(item.quantidade) || 0;
+    const quantidadeVinculada = Number(item.quantidade_vinculada) || 0;
+    return acc + Math.max(0, quantidade - quantidadeVinculada);
+  }, 0);
+};
+
 export default function PedidosCompraPage() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
@@ -185,6 +195,7 @@ export default function PedidosCompraPage() {
             _display_itens: buildDisplayItensFromEmbarque(pedido, embarque),
             _display_date: getEmbarqueDisplayDate(pedido),
             _display_fornecedor: pedido.fornecedor_nome || '—',
+            _quantidade_pendente: getQuantidadePendenteNecessidade(pedido, embarque),
           };
         })
         .filter(Boolean);
@@ -298,7 +309,7 @@ export default function PedidosCompraPage() {
 
   const cardsFonte = useMemo(() => embarques, [embarques]);
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Despachado', 'Concluído'];
+  const STATUS_EMBARQUE_VIRTUAIS = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado', 'Despachado', 'Concluído'];
 
   const filtrados = useMemo(() => {
     return cardsFonte.filter((p) => {

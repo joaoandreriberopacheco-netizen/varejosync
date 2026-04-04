@@ -46,7 +46,8 @@ function EmbarquesInfo({ pedido }) {
   const embarque = pedido._embarque;
   const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
   const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
-  const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados;
+  const quantidadePendente = pedido._quantidade_pendente ?? 0;
+  const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0;
 
   if (embarqueDormindo) return null;
 
@@ -113,10 +114,13 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   // LED: cards virtuais refletem seu próprio status; cards pai usam lógica FASE 2+
   const { isVermelho, isAmbar, isPisca, isVerde, isCyan } = useMemo(() => {
     if (isVirtualCard) {
+      const quantidadePendente = pedido._quantidade_pendente ?? 0;
       return {
         isVerde: displayStatus === 'Concluído',
         isAmbar: displayStatus === 'Aguardando Aprovação Financeira',
-        isVermelho: pedido._embarque?.tipo === 'Necessidade' && !((pedido._embarque?.itens || pedido._embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0)) && !(pedido._embarque?.transportadora_id || pedido._embarque?.transportadora_nome || pedido._embarque?.data_embarque || pedido._embarque?.eta),
+        isVermelho: pedido._embarque?.tipo === 'Necessidade' && !(pedido._embarque?.transportadora_id || pedido._embarque?.transportadora_nome || pedido._embarque?.data_embarque || pedido._embarque?.eta) && (
+          !((pedido._embarque?.itens || pedido._embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0)) || quantidadePendente > 0
+        ),
         isPisca: false,
         isCyan: displayStatus === 'Despachado',
       };
