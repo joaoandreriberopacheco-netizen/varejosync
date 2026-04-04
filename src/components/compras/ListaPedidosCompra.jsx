@@ -88,7 +88,7 @@ function EmbarquesInfo({ pedido }) {
   );
 }
 
-// ⭐ FASE 2+: Nova lógica de LED que ignora divergências RESOLVIDAS
+// ⭐ FASE 2+: Lógica centralizada de LED + divergência
 function getLEDStatus(pedido) {
   const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
   const qtdEmb = embarques.reduce((acc, emb) => {
@@ -99,19 +99,26 @@ function getLEDStatus(pedido) {
   const todosItensEmb = (pedido.itens || []).every(i => qtdEmb[i.produto_id] >= (Number(i.quantidade) || 0));
   const cicloResolvido = embarques.length > 0 && todasEntregasOK && todosItensEmb;
 
-  // Se ciclo está resolvido: LED VERDE (encerrado com sucesso)
-  if (cicloResolvido) return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true };
+  // 1️⃣ Ciclo RESOLVIDO: LED VERDE, sem divergências ativas
+  if (cicloResolvido) return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true, isCyan: false, hasActiveDivergence: false };
 
+  // 2️⃣ DESPACHADO: tem embarque e transportador mas não recebido = LED AZUL/CYAN
+  const hasRecebimento = embarques.some(e => ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Concluído'].includes(e.status_recebimento_embarque));
+  if (embarques.length > 0 && !hasRecebimento) {
+    return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: true, hasActiveDivergence: false };
+  }
+
+  // 3️⃣ Divergência NÃO-RESOLVIDA
   const dataAprovacao = pedido.data_aprovacao_financeira ? new Date(pedido.data_aprovacao_financeira) : null;
   const diasAposAprovacao = dataAprovacao ? Math.floor((new Date() - dataAprovacao) / (1000 * 60 * 60 * 24)) : null;
   const isPagamentoAutorizado = pedido.status_aprovacao_financeira === 'Aprovado';
-  const temDivergencias = pedido.tem_divergencias && !cicloResolvido;
+  const hasActiveDivergence = pedido.tem_divergencias && !cicloResolvido;
 
-  const isVermelho = !cicloResolvido && diasAposAprovacao !== null && diasAposAprovacao >= 20 && temDivergencias;
-  const isAmbar = isPagamentoAutorizado && temDivergencias;
+  const isVermelho = hasActiveDivergence && diasAposAprovacao !== null && diasAposAprovacao >= 20;
+  const isAmbar = isPagamentoAutorizado && hasActiveDivergence;
   const isPisca = isVermelho && isAmbar;
 
-  return { isVermelho, isAmbar, isPisca, isVerde: false };
+  return { isVermelho, isAmbar, isPisca, isVerde: false, isCyan: false, hasActiveDivergence };
 }
 
 function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
@@ -132,13 +139,15 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
 
   // LED: cards virtuais refletem seu próprio status; cards pai usam lógica FASE 2+
-  const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => {
+  const { isVermelho, isAmbar, isPisca, isVerde, isCyan, hasActiveDivergence } = useMemo(() => {
     if (isVirtualCard) {
       return {
         isVerde: ['Recebido OK', 'Concluído'].includes(displayStatus),
         isAmbar: displayStatus === 'Recebido Parcial',
         isVermelho: displayStatus === 'Com Divergência',
         isPisca: false,
+        isCyan: false,
+        hasActiveDivergence: displayStatus === 'Com Divergência',
       };
     }
     return getLEDStatus(pedido);
@@ -184,6 +193,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${
                 isPisca ? 'animate-blink-led' :
                 isVerde ? 'bg-emerald-500 dark:bg-emerald-400' :
+                isCyan ? 'bg-cyan-400 dark:bg-cyan-400' :
                 isVermelho ? 'bg-red-500 dark:bg-red-500' :
                 isAmbar ? 'bg-amber-400 dark:bg-amber-400' :
                 cfg.dot
@@ -197,8 +207,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {displayStatus}
                   </span>
-                  {/* Badge de pendências só aparece no card pai (sem status virtual de embarque específico) */}
-                  {isAmbar && !pedido._display_status && (
+                  {/* Badge de pendências só aparece no card pai com divergências ATIVAS */}
+                  {hasActiveDivergence && !pedido._display_status && (
                     <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold">
                       Pendências
                     </span>
