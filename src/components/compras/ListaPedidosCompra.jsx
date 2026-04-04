@@ -27,6 +27,12 @@ const STATUS_CONFIG = {
   'Devolvido':            { dot: 'bg-rose-400 dark:bg-rose-400',      pill: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
   'Concluído':            { dot: 'bg-emerald-500 dark:bg-emerald-500',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Cancelado':            { dot: 'bg-gray-300 dark:bg-gray-600',      pill: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
+  // Status virtuais de embarques
+  'Aguardando Embarque':  { dot: 'bg-orange-300 dark:bg-orange-400',  pill: 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' },
+  'Pendente':             { dot: 'bg-slate-300 dark:bg-slate-500',    pill: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' },
+  'Recebido OK':          { dot: 'bg-emerald-500 dark:bg-emerald-500',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
+  'Recebido Parcial':     { dot: 'bg-amber-400 dark:bg-amber-400',    pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
+  'Com Divergência':      { dot: 'bg-rose-400 dark:bg-rose-400',      pill: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
 };
 
 // Adiciona animação de piscar ao CSS global
@@ -93,21 +99,17 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const isPendencia = pedido.status === 'Pendência';
-  const itensPendentes = isPendencia
+  // Usa campos de display virtual se disponíveis (cards de embarque específico ou órfãos)
+  const displayStatus = pedido._display_status || pedido.status;
+  const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
     ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
-    : (pedido.itens || []);
-  const totalLinhas = itensPendentes.length;
-  const totalQtd = itensPendentes.reduce((a, i) => {
-    const qtd = isPendencia
-      ? (Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)
-      : (Number(i.quantidade) || 0);
-    return a + qtd;
-  }, 0);
-  const valorExibido = isPendencia
+    : (pedido.itens || []));
+  const totalLinhas = itensDisplay.length;
+  const totalQtd = itensDisplay.reduce((a, i) => a + (Number(i.quantidade) || 0), 0);
+  const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência'
     ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
-    : pedido.valor_total;
-  const cfg = STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
+    : pedido.valor_total);
+  const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
   const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => getLEDStatus(pedido), [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias]);
 
   const handleDelete = async () => {
@@ -161,7 +163,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                     {pedido.numero}
                   </span>
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
-                    {pedido.status}
+                    {displayStatus}
                   </span>
                   {isAmbar && (
                     <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold">

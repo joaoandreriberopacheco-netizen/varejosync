@@ -299,11 +299,49 @@ export default function PedidosCompraPage() {
       if (!map[meta.key]) {
         map[meta.key] = { key: meta.key, label: meta.label, orderValue: meta.orderValue, pedidos: [] };
       }
+      // Calcula campos de exibição específicos para cada card virtual
+      let _display_status = null;
+      let _display_valor = null;
+      let _display_itens = null;
+
+      if (_is_orfao) {
+        _display_status = 'Aguardando Embarque';
+        const qtdEmbarcadaPorProduto = (pedido.embarques_registrados || []).reduce((acc, emb) => {
+          (emb.itens_embarcados || []).forEach(ie => {
+            acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0);
+          });
+          return acc;
+        }, {});
+        const itensOrfaos = (pedido.itens || []).map(i => {
+          const embarcada = qtdEmbarcadaPorProduto[i.produto_id] || 0;
+          const pendente = Math.max(0, (Number(i.quantidade) || 0) - embarcada);
+          return { ...i, quantidade: pendente };
+        }).filter(i => i.quantidade > 0);
+        _display_itens = itensOrfaos;
+        _display_valor = itensOrfaos.reduce((acc, i) => acc + (i.quantidade * (Number(i.custo_unitario) || 0)), 0);
+      } else if (embarque) {
+        _display_status = embarque.status_recebimento_embarque || 'Pendente';
+        const custoPorProduto = (pedido.itens || []).reduce((acc, i) => {
+          acc[i.produto_id] = Number(i.custo_unitario) || 0;
+          return acc;
+        }, {});
+        _display_itens = (embarque.itens_embarcados || []).map(ie => ({
+          produto_id: ie.produto_id,
+          produto_nome: ie.produto_nome,
+          quantidade: Number(ie.quantidade_embarcada) || 0,
+          custo_unitario: custoPorProduto[ie.produto_id] || 0,
+        }));
+        _display_valor = _display_itens.reduce((acc, i) => acc + (i.quantidade * i.custo_unitario), 0);
+      }
+
       map[meta.key].pedidos.push({
         ...pedido,
         _virtual_key: virtualKey,
         _embarque: embarque,
         _is_orfao: _is_orfao || false,
+        _display_status,
+        _display_valor,
+        _display_itens,
         valor_pendente_entrega: pedido.status === 'Concluído' ? 0 : calcularValorPendentePedido(pedido)
       });
     });
