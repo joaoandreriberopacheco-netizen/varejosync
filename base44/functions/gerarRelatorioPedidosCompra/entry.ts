@@ -1,9 +1,46 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jsPDF } from 'npm:jspdf@2.5.2';
 
-const PDF_FONT_FAMILY = 'helvetica';
+const PDF_FONT_FAMILY = 'NotoSans';
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
+const NOTO_REGULAR_URL = 'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf';
+const NOTO_BOLD_URL = 'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Bold.ttf';
+const fontCache = { regular: null, bold: null };
+
+const arrayBufferToBase64 = (buffer) => {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+};
+
+const loadFontBase64 = async (url, cacheKey) => {
+  if (fontCache[cacheKey]) return fontCache[cacheKey];
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Erro ao carregar fonte ${cacheKey}`);
+  const buffer = await response.arrayBuffer();
+  const base64 = arrayBufferToBase64(buffer);
+  fontCache[cacheKey] = base64;
+  return base64;
+};
+
+const registerPdfFonts = async (doc) => {
+  const [regularBase64, boldBase64] = await Promise.all([
+    loadFontBase64(NOTO_REGULAR_URL, 'regular'),
+    loadFontBase64(NOTO_BOLD_URL, 'bold'),
+  ]);
+
+  doc.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
+  doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+  doc.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
+  doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+  doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+};
 
 const safe = (texto) => {
   if (texto === null || texto === undefined) return '';
@@ -83,7 +120,7 @@ Deno.serve(async (req) => {
     const produtosMap = Object.fromEntries((produtos || []).map((produto) => [produto.id, produto]));
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+    await registerPdfFonts(doc);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 12;
