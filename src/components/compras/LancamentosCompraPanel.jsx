@@ -4,6 +4,13 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CheckCircle2, Clock, AlertTriangle, Paperclip } from 'lucide-react';
 
+const formatDateSafe = (value, mask) => {
+  if (!value || typeof value !== 'string') return '';
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return '';
+  return format(date, mask, { locale: ptBR });
+};
+
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 const STATUS_CONFIG = {
@@ -96,10 +103,8 @@ export default function LancamentosCompraPanel({ pedidoId }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-[0.8rem] font-medium text-gray-800 dark:text-gray-100 truncate">{l.descricao}</p>
                   <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-0.5">
-                    {l.data_vencimento
-                      ? format(new Date(l.data_vencimento + 'T12:00:00'), "dd 'de' MMM yyyy", { locale: ptBR })
-                      : 'Sem vencimento'}
-                    {l.data_pagamento ? ` · Pago em ${format(new Date(l.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}` : ''}
+                    {formatDateSafe(l.data_vencimento, "dd 'de' MMM yyyy") || 'Sem vencimento'}
+                    {formatDateSafe(l.data_pagamento, 'dd/MM/yyyy') ? ` · Pago em ${formatDateSafe(l.data_pagamento, 'dd/MM/yyyy')}` : ''}
                     {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
                   </p>
                 </div>
