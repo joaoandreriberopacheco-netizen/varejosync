@@ -4,11 +4,8 @@ const STATUS_PEDIDO_CONCLUIDO = 'Concluído';
 const STATUS_PEDIDO_PENDENCIA = 'Pendência';
 const STATUS_PEDIDO_EM_CONFERENCIA = 'Em Conferência';
 
-function isEmbarqueDormindo(embarque) {
-  const tipoNecessidade = embarque?.tipo === 'Necessidade';
-  const semVidaOperacional = !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta;
-  const statusDormindo = !embarque?.status || embarque?.status === 'Pendente';
-  return tipoNecessidade && semVidaOperacional && statusDormindo;
+function hasItensAssociados(embarque) {
+  return (embarque?.itens || embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
 }
 
 function calcularPercentualPorStatus(pedido, embarques) {
@@ -133,16 +130,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
 
-    const embarquesRaw = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
-    const embarques = embarquesRaw.filter((embarque) => !isEmbarqueDormindo(embarque));
+    const embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
+    const embarquesComItensAssociados = embarques.filter((embarque) => hasItensAssociados(embarque));
     const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedido.id });
-    const resumoItens = calcularResumoItensPedido(pedido, embarques);
+    const resumoItens = calcularResumoItensPedido(pedido, embarquesComItensAssociados);
     const itensComPendencia = resumoItens.filter((item) => item.quantidade_recebida < item.quantidade_pedida);
-    const itensOrfaosRecebimento = extrairItensOrfaosDoRecebimento(pedido, embarques);
-    const temEmbarqueInformado = embarques.length > 0;
+    const itensOrfaosRecebimento = extrairItensOrfaosDoRecebimento(pedido, embarquesComItensAssociados);
+    const temEmbarqueInformado = embarquesComItensAssociados.length > 0;
     const haItensOrfaos = itensOrfaosRecebimento.length > 0;
     const temPendenciaReal = temEmbarqueInformado && haItensOrfaos;
-    const temDivergencia = embarques.some((embarque) =>
+    const temDivergencia = embarquesComItensAssociados.some((embarque) =>
       (embarque.itens || embarque.itens_embarcados || []).some((item) => item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma')
     );
     const pendenciaResolvidaFinanceiramente = temPendenciaReal && calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos);
@@ -172,8 +169,8 @@ Deno.serve(async (req) => {
       quantidade_pendente: Math.max(0, item.quantidade_pedida - item.quantidade_recebida),
     }));
 
-    const percentuais = calcularPercentualPorStatus(pedido, embarques);
-    const proximaEta = embarques
+    const percentuais = calcularPercentualPorStatus(pedido, embarquesComItensAssociados);
+    const proximaEta = embarquesComItensAssociados
       .filter((embarque) => embarque.status !== 'Concluído' && embarque.eta)
       .map((embarque) => embarque.eta)
       .sort()[0];
