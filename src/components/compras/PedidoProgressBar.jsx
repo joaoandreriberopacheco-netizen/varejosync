@@ -1,24 +1,19 @@
 import React from 'react';
-import { differenceInDays, parseISO } from 'date-fns';
 
 function getProgressDetails(pedido) {
-  const today = new Date();
-  const dataPrevista = pedido._embarque?.eta
-    ? parseISO(String(pedido._embarque.eta).slice(0, 10) + 'T00:00:00')
-    : null;
-  const isAtrasado = dataPrevista && differenceInDays(today, dataPrevista) > 0;
-
   const statusPedido = pedido.status || '';
-  const statusEmbarque = pedido._display_status || pedido._embarque?.status_recebimento || pedido._embarque?.status || '';
-  const statusBase = pedido._display_status || statusEmbarque || statusPedido;
+  const embarque = pedido._embarque || {};
+  const statusBase = pedido._display_status || embarque.status_recebimento || embarque.status || statusPedido;
+  const itensEmbarque = embarque.itens || embarque.itens_embarcados || [];
+  const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
+  const necessidadeSemItens = embarque.tipo === 'Necessidade' && !temItensAssociados;
 
   if (statusBase === 'Recebido OK' || statusBase === 'Concluído') return { filled: 5, active: 'teal-full' };
-  if (statusBase === 'Com Divergência' || pedido.tem_divergencias || isAtrasado) return { filled: 2, active: 'rose' };
   if (statusBase === 'Rascunho') return { filled: 1, active: 'teal-light' };
   if (statusBase === 'Aguardando Aprovação Financeira' || statusBase === 'Aguardando Liberação') return { filled: 2, active: 'teal-light' };
-  if (statusBase === 'Aprovado') return { filled: 3, active: 'teal-mid' };
-  if (statusBase === 'Pendente' || statusBase === 'Aguardando Embarque' || statusBase === 'Original') return { filled: 3, active: 'teal-mid' };
-  if (statusBase === 'Despachado' || statusBase === 'Em Trânsito' || statusBase === 'Recebido Parcial') return { filled: 4, active: statusBase === 'Recebido Parcial' ? 'amber' : 'teal' };
+  if (necessidadeSemItens) return { filled: 3, active: 'rose' };
+  if (statusBase === 'Aprovado' || statusBase === 'Pendente' || statusBase === 'Aguardando Embarque' || statusBase === 'Original') return { filled: 3, active: 'teal-mid' };
+  if (statusBase === 'Despachado' || statusBase === 'Em Trânsito' || statusBase === 'Recebido Parcial') return { filled: 4, active: 'teal' };
   if (pedido.data_aprovacao_financeira) return { filled: 3, active: 'teal-mid' };
 
   return { filled: 1, active: 'teal-light' };

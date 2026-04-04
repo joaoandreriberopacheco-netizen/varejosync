@@ -24,7 +24,6 @@ const STATUS_CONFIG = {
   'Despachado':           { dot: 'bg-cyan-400 dark:bg-cyan-400',      pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Em Trânsito':          { dot: 'bg-sky-400 dark:bg-sky-400',        pill: 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400' },
   'Entregue':             { dot: 'bg-emerald-500 dark:bg-emerald-500',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Pendência':            { dot: 'bg-orange-400 dark:bg-orange-400',  pill: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' },
   'Devolvido':            { dot: 'bg-rose-400 dark:bg-rose-400',      pill: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
   'Concluído':            { dot: 'bg-emerald-500 dark:bg-emerald-500',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Cancelado':            { dot: 'bg-gray-300 dark:bg-gray-600',      pill: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
@@ -33,7 +32,6 @@ const STATUS_CONFIG = {
   'Pendente':             { dot: 'bg-slate-300 dark:bg-slate-500',    pill: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' },
   'Recebido OK':          { dot: 'bg-emerald-500 dark:bg-emerald-500',pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Recebido Parcial':     { dot: 'bg-amber-400 dark:bg-amber-400',    pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' },
-  'Com Divergência':      { dot: 'bg-rose-400 dark:bg-rose-400',      pill: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' },
 };
 
 // Adiciona animação de piscar ao CSS global
@@ -75,23 +73,20 @@ function EmbarquesInfo({ pedido }) {
   );
 }
 
-// ⭐ FASE 2+: Lógica centralizada de LED + divergência
 function getLEDStatus(pedido) {
   const embarque = pedido._embarque;
   const statusRecebimento = embarque?.status_recebimento;
   const statusOperacional = embarque?.status;
   const statusPedido = pedido.status;
+  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
 
   if (statusRecebimento === 'Recebido OK' || statusOperacional === 'Concluído') {
     return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true, isCyan: false, hasActiveDivergence: false };
   }
 
-  if (statusRecebimento === 'Com Divergência') {
-    return { isVermelho: true, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: true };
-  }
-
-  if (statusRecebimento === 'Recebido Parcial') {
-    return { isVermelho: false, isAmbar: true, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
+  if (embarque?.tipo === 'Necessidade' && !temItensAssociados) {
+    return { isVermelho: true, isAmbar: false, isPisca: false, isVerde: false, isCyan: false, hasActiveDivergence: false };
   }
 
   if (statusOperacional === 'Despachado' || embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque) {
@@ -198,11 +193,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {displayStatus}
                   </span>
-                  {hasActiveDivergence && !pedido._display_status && (
-                    <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 font-semibold">
-                      Pendências
-                    </span>
-                  )}
+
                 </div>
                 <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1 truncate">
                   {pedido._embarque?.tipo || 'Embarque'}
