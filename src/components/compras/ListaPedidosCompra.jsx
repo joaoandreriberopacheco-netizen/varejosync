@@ -102,10 +102,20 @@ function getLEDStatus(pedido) {
   // 1️⃣ Ciclo RESOLVIDO: LED VERDE, sem divergências ativas
   if (cicloResolvido) return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true, isCyan: false, hasActiveDivergence: false };
 
-  // 2️⃣ DESPACHADO: tem embarque e transportador mas não recebido = LED AZUL/CYAN
-  const hasRecebimento = embarques.some(e => ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Concluído'].includes(e.status_recebimento_embarque));
-  if (embarques.length > 0 && !hasRecebimento) {
-    return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: false, isCyan: true, hasActiveDivergence: false };
+  // 2️⃣ DESPACHADO / EM TRÂNSITO: existe logística cadastrada e o ciclo ainda não foi concluído = LED AZUL/CYAN
+  const hasLogisticaAtiva = embarques.some(e => e.transportadora_nome || e.transportadora_id || e.eta || e.data_embarque);
+  const hasRecebimentoParcial = embarques.some(e => ['Recebido Parcial'].includes(e.status_recebimento_embarque));
+  const hasDivergenciaEmbarque = embarques.some(e => e.status_recebimento_embarque === 'Com Divergência');
+
+  if (hasLogisticaAtiva && !hasDivergenciaEmbarque && !cicloResolvido) {
+    return {
+      isVermelho: false,
+      isAmbar: hasRecebimentoParcial,
+      isPisca: false,
+      isVerde: false,
+      isCyan: true,
+      hasActiveDivergence: false,
+    };
   }
 
   // 3️⃣ Divergência NÃO-RESOLVIDA
