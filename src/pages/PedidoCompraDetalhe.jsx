@@ -33,7 +33,12 @@ export default function PedidoCompraDetalhe() {
       return null;
     }
 
-    const embarques = embarquesRes || [];
+    const embarques = (embarquesRes || []).filter((emb) => {
+      const tipoNecessidade = emb?.tipo === 'Necessidade';
+      const semVidaOperacional = !emb?.transportadora_id && !emb?.transportadora_nome && !emb?.data_embarque && !emb?.eta;
+      const statusDormindo = !emb?.status || emb?.status === 'Pendente';
+      return !(tipoNecessidade && semVidaOperacional && statusDormindo);
+    });
     const ultimoEmbarque = [...embarques]
       .filter((emb) => emb.status !== 'Concluído')
       .sort((a, b) => new Date(a.eta || a.created_date) - new Date(b.eta || b.created_date))[0]

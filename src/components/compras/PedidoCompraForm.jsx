@@ -1251,7 +1251,13 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     base44.entities.Embarque.filter({ pedido_compra_id: pedidoId })
                   ]);
                   if (atualizado?.[0]) {
-                    const pedidoCompleto = { ...atualizado[0], _embarques: embarquesAtualizados || [] };
+                    const embarquesVisiveis = (embarquesAtualizados || []).filter((emb) => {
+                      const tipoNecessidade = emb?.tipo === 'Necessidade';
+                      const semVidaOperacional = !emb?.transportadora_id && !emb?.transportadora_nome && !emb?.data_embarque && !emb?.eta;
+                      const statusDormindo = !emb?.status || emb?.status === 'Pendente';
+                      return !(tipoNecessidade && semVidaOperacional && statusDormindo);
+                    });
+                    const pedidoCompleto = { ...atualizado[0], _embarques: embarquesVisiveis };
                     setPedidoLogistica(pedidoCompleto);
                     setFormData(prev => ({ ...prev, ...pedidoCompleto }));
                   }

@@ -4,6 +4,13 @@ const STATUS_PEDIDO_CONCLUIDO = 'Concluído';
 const STATUS_PEDIDO_PENDENCIA = 'Pendência';
 const STATUS_PEDIDO_EM_CONFERENCIA = 'Em Conferência';
 
+function isEmbarqueDormindo(embarque) {
+  const tipoNecessidade = embarque?.tipo === 'Necessidade';
+  const semVidaOperacional = !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta;
+  const statusDormindo = !embarque?.status || embarque?.status === 'Pendente';
+  return tipoNecessidade && semVidaOperacional && statusDormindo;
+}
+
 function calcularPercentualPorStatus(pedido, embarques) {
   const itensPedido = new Map((pedido.itens || []).map((item) => [item.produto_id, Number(item.quantidade) || 0]));
   const totalPedido = Array.from(itensPedido.values()).reduce((acc, qtd) => acc + qtd, 0);
@@ -126,7 +133,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
 
-    const embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
+    const embarquesRaw = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
+    const embarques = embarquesRaw.filter((embarque) => !isEmbarqueDormindo(embarque));
     const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedido.id });
     const resumoItens = calcularResumoItensPedido(pedido, embarques);
     const itensComPendencia = resumoItens.filter((item) => item.quantidade_recebida < item.quantidade_pedida);
