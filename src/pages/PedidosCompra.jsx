@@ -156,6 +156,19 @@ export default function PedidosCompraPage() {
 
   const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque'];
 
+  // ⭐ FASE 2+: Detecta se pedido está RESOLVIDO (sem ações logísticas pendentes)
+  const isPedidoResolvido = (pedido) => {
+    const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+    if (embarques.length === 0) return false;
+    const qtdEmb = embarques.reduce((acc, emb) => {
+      (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
+      return acc;
+    }, {});
+    const todasOK = embarques.every(e => ['Recebido OK', 'Concluído'].includes(e.status_recebimento_embarque));
+    const todosEmb = (pedido.itens || []).every(i => qtdEmb[i.produto_id] >= (Number(i.quantidade) || 0));
+    return todasOK && todosEmb;
+  };
+
   const filtrados = useMemo(() => {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
@@ -168,6 +181,8 @@ export default function PedidosCompraPage() {
 
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
       if (ocultarConcluidos && !concluidosSelecionados && p.status === 'Concluído') return false;
+      // ⭐ FASE 2+: Filtra pedidos RESOLVIDOS quando '__nao_concluido__' está ativo
+      if (ocultarConcluidos && !concluidosSelecionados && isPedidoResolvido(p)) return false;
 
       // Filtro de status: combina status do pedido pai e status virtual de embarque (OR entre os selecionados)
       if (statusExplicitos.length > 0) {

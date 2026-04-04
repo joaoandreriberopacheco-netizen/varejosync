@@ -88,21 +88,30 @@ function EmbarquesInfo({ pedido }) {
   );
 }
 
+// ⭐ FASE 2+: Nova lógica de LED que ignora divergências RESOLVIDAS
 function getLEDStatus(pedido) {
+  const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+  const qtdEmb = embarques.reduce((acc, emb) => {
+    (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
+    return acc;
+  }, {});
+  const todasEntregasOK = embarques.every(e => ['Recebido OK', 'Concluído'].includes(e.status_recebimento_embarque));
+  const todosItensEmb = (pedido.itens || []).every(i => qtdEmb[i.produto_id] >= (Number(i.quantidade) || 0));
+  const cicloResolvido = embarques.length > 0 && todasEntregasOK && todosItensEmb;
+
+  // Se ciclo está resolvido: LED VERDE (encerrado com sucesso)
+  if (cicloResolvido) return { isVermelho: false, isAmbar: false, isPisca: false, isVerde: true };
+
   const dataAprovacao = pedido.data_aprovacao_financeira ? new Date(pedido.data_aprovacao_financeira) : null;
   const diasAposAprovacao = dataAprovacao ? Math.floor((new Date() - dataAprovacao) / (1000 * 60 * 60 * 24)) : null;
-
-  const semPendencias = !pedido.tem_divergencias;
-  const statusFinalizado = pedido.status === 'Entregue' || pedido.status === 'Concluído';
-  const cicloEncerrado = semPendencias && statusFinalizado;
   const isPagamentoAutorizado = pedido.status_aprovacao_financeira === 'Aprovado';
+  const temDivergencias = pedido.tem_divergencias && !cicloResolvido;
 
-  const isVermelho = !cicloEncerrado && diasAposAprovacao !== null && diasAposAprovacao >= 20;
-  const isAmbar = isPagamentoAutorizado && pedido.tem_divergencias;
+  const isVermelho = !cicloResolvido && diasAposAprovacao !== null && diasAposAprovacao >= 20 && temDivergencias;
+  const isAmbar = isPagamentoAutorizado && temDivergencias;
   const isPisca = isVermelho && isAmbar;
-  const isVerde = cicloEncerrado;
 
-  return { isVermelho, isAmbar, isPisca, isVerde };
+  return { isVermelho, isAmbar, isPisca, isVerde: false };
 }
 
 function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
@@ -122,7 +131,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
     : pedido.valor_total);
   const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
 
-  // LED: cards virtuais refletem seu próprio status; cards pai usam lógica original
+  // LED: cards virtuais refletem seu próprio status; cards pai usam lógica FASE 2+
   const { isVermelho, isAmbar, isPisca, isVerde } = useMemo(() => {
     if (isVirtualCard) {
       return {
@@ -133,7 +142,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
       };
     }
     return getLEDStatus(pedido);
-  }, [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias, displayStatus, isVirtualCard]);
+  }, [pedido.id, pedido.status, pedido.data_aprovacao_financeira, pedido.status_aprovacao_financeira, pedido.tem_divergencias, displayStatus, isVirtualCard, pedido.embarques_registrados]);
 
   const handleDelete = async () => {
     setDeleting(true);
