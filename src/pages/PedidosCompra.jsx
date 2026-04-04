@@ -389,7 +389,7 @@ export default function PedidosCompraPage() {
             return compareValues(valorA, valorB);
           })
       }));
-  }, [pedidosVisiveisLista, groupBy, sortOrder]);
+  }, [pedidosVisiveisLista, groupBy, sortOrder, statusSel]);
 
   const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || statusSel.some(status => status !== '__nao_concluido__');
 
