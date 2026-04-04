@@ -52,8 +52,18 @@ if (typeof document !== 'undefined' && !document.getElementById('blink-animation
 }
 
 function EmbarquesInfo({ pedido }) {
-  // Usa o embarque virtual (card expandido) ou o primeiro do pedido
-  const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0];
+  // Card órfão: sem embarque vinculado, não herda do pedido pai
+  if (pedido._is_orfao) {
+    return (
+      <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
+        <Truck className="w-3 h-3 flex-none" />
+        <span>Aguardando despacho</span>
+      </div>
+    );
+  }
+
+  // Card de embarque específico: usa _embarque (nunca o [0] do pedido)
+  const embarque = pedido._embarque;
 
   if (!embarque) {
     return (
