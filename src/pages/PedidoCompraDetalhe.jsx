@@ -22,9 +22,49 @@ export default function PedidoCompraDetalhe() {
       return;
     }
 
-    base44.entities.PedidoCompra.filter({ id })
-      .then((res) => {
-        setPedido(res?.[0] || null);
+    Promise.all([
+      base44.entities.PedidoCompra.filter({ id }),
+      base44.entities.Embarque.filter({ pedido_compra_id: id })
+    ])
+      .then(([pedidoRes, embarquesRes]) => {
+        const pedidoBase = pedidoRes?.[0] || null;
+        if (!pedidoBase) {
+          setPedido(null);
+          return;
+        }
+
+        const embarques = embarquesRes || [];
+        const ultimoEmbarque = [...embarques].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0] || null;
+        const totalPedido = Number(pedidoBase.valor_total) || 0;
+        const valorEmbarcado = embarques.reduce((acc, embarque) => {
+          const valorEmbarque = (embarque.itens || []).reduce((itemAcc, item) => {
+            const custoUnitario = Number((pedidoBase.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0;
+            return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitario);
+          }, 0);
+          return acc + valorEmbarque;
+        }, 0);
+        const percentualReal = totalPedido > 0 ? Math.min(100, (valorEmbarcado / totalPedido) * 100) : 0;
+
+        let statusRecebimentoReal = 'Nenhum';
+        if (embarques.length > 0) {
+          const recebimentos = embarques.map((embarque) => embarque.status_recebimento).filter(Boolean);
+          if (recebimentos.some((status) => status === 'Com Divergência')) statusRecebimentoReal = 'Concluído com Divergência';
+          else if (recebimentos.length > 0 && recebimentos.every((status) => status === 'Recebido OK')) statusRecebimentoReal = 'Concluído OK';
+          else if (recebimentos.some((status) => status === 'Recebido Parcial')) statusRecebimentoReal = 'Recebido Parcial';
+          else statusRecebimentoReal = 'Pendente';
+        }
+
+        const pedidoComVerdade = {
+          ...pedidoBase,
+          _embarques: embarques,
+          _embarque_principal: ultimoEmbarque,
+          percentual_valor_embarcado: percentualReal,
+          status_embarque: embarques.length === 0 ? 'Nenhum' : percentualReal >= 100 ? 'Total' : 'Parcial',
+          status_recebimento_geral: statusRecebimentoReal,
+          data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedidoBase.data_prevista_entrega,
+        };
+
+        setPedido(pedidoComVerdade);
       })
       .finally(() => setLoading(false));
   }, []);

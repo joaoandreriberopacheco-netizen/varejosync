@@ -18,6 +18,7 @@ const toLocalDate = (d) => toLocalDateKey(new Date(d));
 export default function PedidosCompraPage() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
+  const [embarques, setEmbarques] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');
   const [statusSel, setStatusSel] = useState([]);
@@ -51,7 +52,53 @@ export default function PedidosCompraPage() {
       ]);
 
       const pedidoMap = new Map(pcs.map((pedido) => [pedido.id, pedido]));
-      const pedidosComEmbarques = embarquesDb
+      const embarquesPorPedido = embarquesDb.reduce((acc, embarque) => {
+        const pedidoId = embarque.pedido_compra_id;
+        if (!pedidoId) return acc;
+        if (!acc[pedidoId]) acc[pedidoId] = [];
+        acc[pedidoId].push(embarque);
+        return acc;
+      }, {});
+
+      const pedidosComResumoReal = pcs.map((pedido) => {
+        const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
+        const totalPedido = Number(pedido.valor_total) || 0;
+        const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
+          const valorEmbarque = (embarque.itens || []).reduce((itemAcc, item) => {
+            const custoUnitario = Number((pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0;
+            return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitario);
+          }, 0);
+          return acc + valorEmbarque;
+        }, 0);
+        const percentualReal = totalPedido > 0 ? Math.min(100, (valorEmbarcado / totalPedido) * 100) : 0;
+        const ultimoEmbarque = [...embarquesDoPedido].sort((a, b) => new Date(b.updated_date || b.created_date) - new Date(a.updated_date || a.created_date))[0] || null;
+
+        let statusRecebimentoReal = 'Nenhum';
+        if (embarquesDoPedido.length > 0) {
+          const recebimentos = embarquesDoPedido.map((embarque) => embarque.status_recebimento).filter(Boolean);
+          if (recebimentos.some((status) => status === 'Com Divergência')) statusRecebimentoReal = 'Concluído com Divergência';
+          else if (recebimentos.length > 0 && recebimentos.every((status) => status === 'Recebido OK')) statusRecebimentoReal = 'Concluído OK';
+          else if (recebimentos.some((status) => status === 'Recebido Parcial')) statusRecebimentoReal = 'Recebido Parcial';
+          else statusRecebimentoReal = 'Pendente';
+        }
+
+        let statusEmbarqueReal = 'Nenhum';
+        if (embarquesDoPedido.length > 0) {
+          statusEmbarqueReal = percentualReal >= 100 ? 'Total' : 'Parcial';
+        }
+
+        return {
+          ...pedido,
+          _embarques: embarquesDoPedido,
+          _embarque_principal: ultimoEmbarque,
+          percentual_valor_embarcado: percentualReal,
+          status_embarque: statusEmbarqueReal,
+          status_recebimento_geral: statusRecebimentoReal,
+          data_prevista_entrega: ultimoEmbarque?.eta ? String(ultimoEmbarque.eta).slice(0, 10) : pedido.data_prevista_entrega,
+        };
+      });
+
+      const cardsDeEmbarque = embarquesDb
         .map((embarque) => {
           const pedido = pedidoMap.get(embarque.pedido_compra_id);
           if (!pedido) return null;
@@ -77,7 +124,8 @@ export default function PedidosCompraPage() {
         })
         .filter(Boolean);
 
-      setPedidos(pedidosComEmbarques);
+      setPedidos(pedidosComResumoReal);
+      setEmbarques(cardsDeEmbarque);
       setFornecedores(fns);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -183,10 +231,15 @@ export default function PedidosCompraPage() {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [pedidos]);
 
+  const cardsFonte = useMemo(() => {
+    if (embarques.length > 0) return embarques;
+    return pedidos;
+  }, [embarques, pedidos]);
+
   const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque', 'Original'];
 
   const filtrados = useMemo(() => {
-    return pedidos.filter((p) => {
+    return cardsFonte.filter((p) => {
       const searchLower = search.toLowerCase();
       const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
       const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
@@ -212,7 +265,7 @@ export default function PedidosCompraPage() {
       if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
       return true;
     });
-  }, [pedidos, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal]);
+  }, [cardsFonte, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal]);
 
   const calcularValorPendentePedido = (pedido) => {
     const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
