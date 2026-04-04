@@ -201,7 +201,7 @@ export default function PedidosCompraPage() {
 
     return filtrados.filter((pedido) => {
       if (pedido.status === 'Concluído') return concluidosSelecionados;
-      const statusPermitido = ['Rascunho', 'Aguardando Liberação', 'Aprovado'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
+      const statusPermitido = ['Rascunho', 'Aguardando Liberação', 'Aprovado', 'Pendência', 'Despachado', 'Em Recepção', 'Em Conferência'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
       return statusPermitido && calcularValorPendentePedido(pedido) > 0;
     });
   }, [filtrados, statusSel]);
