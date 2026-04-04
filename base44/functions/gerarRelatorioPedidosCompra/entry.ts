@@ -50,6 +50,21 @@ const safe = (texto) => {
     .replace(/\u2022/g, '-');
 };
 
+const toTitleCase = (str) => {
+  if (!str) return '';
+  return String(str).toLowerCase().replace(/(?:^|\s)\S/g, (c) => c.toUpperCase());
+};
+
+const STATUS_PROGRESS = {
+  'Rascunho': 1, 'Aguardando Liberacao': 2, 'Aprovado': 3,
+  'Despachado': 4, 'Em Recepcao': 4, 'Em Conferencia': 4,
+  'Pendencia': 3, 'Devolvido': 2, 'Concluido': 5, 'Cancelado': 0,
+};
+const getStatusProgress = (status) => {
+  const key = (status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  return STATUS_PROGRESS[key] ?? 1;
+};
+
 const moeda = (valor = 0) =>
   `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const percentual = (valor = 0) =>
@@ -430,60 +445,84 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     const ITEM_ML = M + 6;   // indentação dos itens
     const ITEM_CW = CW - 6;  // largura dos itens
-    const LINE_X = M + 2;    // x da linha hierárquica vertical
+    const LINE_X = M + 1.5;  // x da linha hierárquica vertical
+    const SLATE900 = [15, 23, 42];
+    const SLATE700 = [51, 65, 85];
+    const SLATE500 = [100, 116, 139];
+
+    // Barra de progresso multi-segmento
+    const drawProgressBar = (status, barY) => {
+      const level = getStatusProgress(status);
+      const totalSegs = 5;
+      const segW = (CW - (totalSegs - 1) * 1) / totalSegs;
+      const sc = getStatusColors(status);
+      for (let s = 0; s < totalSegs; s++) {
+        const sx = M + s * (segW + 1);
+        doc.setFillColor(...(s < level ? sc.dot : [220, 225, 230]));
+        doc.roundedRect(sx, barY, segW, 1.5, 0.75, 0.75, 'F');
+      }
+    };
 
     const drawMobileCard = (pedido) => {
       const itens = pedido.itens || [];
       let totCusto = 0, totVenda = 0;
       const sc = getStatusColors(pedido.status);
 
-      ensureSpace(22);
+      ensureSpace(32);
 
-      // ── Cabeçalho do pedido — fundo soft claro ─────────────────────────
+      // ── Cabeçalho do pedido ─────────────────────────────────────────
       doc.setFillColor(...C.panel);
-      doc.roundedRect(M, y, CW, 19, 2, 2, 'F');
+      doc.roundedRect(M, y, CW, 28, 2.5, 2.5, 'F');
 
-      // Número (pequeno, muted)
+      // LED dot
+      doc.setFillColor(...sc.dot);
+      doc.circle(M + 4.5, y + 6, 2, 'F');
+
+      // Número do pedido
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(4.8);
-      doc.setTextColor(...C.muted);
-      doc.text(safe(pedido.numero || '-'), M + 3, y + 4.5);
+      doc.setFontSize(6);
+      doc.setTextColor(...SLATE500);
+      doc.text(safe(pedido.numero || '-'), M + 9, y + 6.8);
 
       // Status pill direita
       doc.setFillColor(...sc.pillBg);
-      doc.roundedRect(M + CW - 26, y + 1.5, 24, 5, 2.5, 2.5, 'F');
-      doc.setFontSize(4.6);
+      doc.roundedRect(M + CW - 30, y + 2, 28, 7, 3.5, 3.5, 'F');
+      doc.setFontSize(6);
       doc.setTextColor(...sc.pillText);
-      doc.text(safe(pedido.status || '-'), M + CW - 14, y + 5, { align: 'center' });
+      doc.text(safe(pedido.status || '-'), M + CW - 16, y + 6.8, { align: 'center' });
 
-      // Fornecedor — bold, escuro
+      // Fornecedor — grande e legível
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(7);
-      doc.setTextColor(...C.text);
-      const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 32)[0];
-      doc.text(fornLine, M + 3, y + 10.5);
+      doc.setFontSize(9);
+      doc.setTextColor(...SLATE900);
+      const fornLine = doc.splitTextToSize(safe(pedido.fornecedor_nome || 'Sem fornecedor'), CW - 8)[0];
+      doc.text(fornLine, M + 3, y + 15);
 
-      // Valor total — direita, escuro
-      doc.setFontSize(7);
-      doc.setTextColor(...C.text);
-      doc.text(moeda(pedido.valor_total), M + CW - 2, y + 10.5, { align: 'right' });
+      // Valor total — direita
+      doc.setFontSize(8.5);
+      doc.text(moeda(pedido.valor_total), M + CW - 2, y + 15, { align: 'right' });
 
-      // Datas compactas
+      // Datas + contagem
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(4.5);
-      doc.setTextColor(...C.muted);
+      doc.setFontSize(6);
+      doc.setTextColor(...SLATE500);
       doc.text(
-        `${dataFmt(pedido.data_emissao || pedido.created_date)}  →  ${dataFmt(pedido.data_prevista_entrega)}  ·  ${itens.length} iten(s)`,
-        M + 3, y + 16.5
+        `${dataFmt(pedido.data_emissao || pedido.created_date)}  →  ${dataFmt(pedido.data_prevista_entrega)}  ·  ${itens.length} item(ns)`,
+        M + 3, y + 21.5
       );
 
-      y += 22;
+      // Barra de progresso dentro do card
+      drawProgressBar(pedido.status, y + 25);
 
-      // ── Itens com linha hierárquica sutil à esquerda ───────────────────
+      y += 31;
+
+      // ── Itens com linha hierárquica ─────────────────────────────────────
       const totalItens = itens.length;
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
         const qtd = Number(item.quantidade) || 0;
+        const un = safe(item.unidade_medida || prod.unidade_principal || 'UN');
+        const precoCompra = Number(item.custo_unitario) || Number(prod.valor_compra) || 0;
         const custo = Number(prod.preco_custo_calculado) || custoCalculadoProduto(prod);
         const venda = Number(prod.preco_venda_padrao) || 0;
         const tCusto = qtd * custo;
@@ -492,56 +531,67 @@ Deno.serve(async (req) => {
         totCusto += tCusto;
         totVenda += tVenda;
 
-        ensureSpace(13);
-        const rowH = 12;
+        ensureSpace(20);
+        const rowH = 18;
         const isLast = idx === totalItens - 1;
 
-        // Linha vertical hierárquica (cinza 220)
-        doc.setFillColor(220, 222, 226);
-        doc.rect(LINE_X, y, 0.5, isLast ? rowH - 4 : rowH, 'F');
-        // Tracinho horizontal saindo da linha
-        doc.rect(LINE_X, y + 4, 3, 0.4, 'F');
+        // Linha vertical hierárquica — ultra fina, slate-600
+        doc.setFillColor(71, 85, 105);
+        doc.rect(LINE_X, y, 0.2, isLast ? rowH - 6 : rowH, 'F');
+        doc.rect(LINE_X, y + 5, 4, 0.2, 'F');
 
-        // Nome do produto
+        // Qtd + unidade (bold, slate-900)
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(7.5);
+        doc.setTextColor(...SLATE900);
+        const qtdLabel = `${qtd.toLocaleString('pt-BR')} ${un}`;
+        doc.text(qtdLabel, ITEM_ML, y + 6);
+
+        // Custo total do item — direita
+        doc.text(moeda(tCusto), M + CW - 2, y + 6, { align: 'right' });
+
+        // Nome do produto — Title Case
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(5.5);
-        doc.setTextColor(...C.text);
-        const nomeProd = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), ITEM_CW - 22)[0];
-        doc.text(nomeProd, ITEM_ML, y + 4.8);
+        doc.setFontSize(7);
+        doc.setTextColor(...SLATE700);
+        const nomeProd = doc.splitTextToSize(
+          toTitleCase(safe(item.produto_nome || prod.nome || '-')),
+          ITEM_CW - 2
+        )[0];
+        doc.text(nomeProd, ITEM_ML, y + 12.5);
 
-        // Valor de venda total — direita, muted
-        doc.setFontSize(5.5);
-        doc.setTextColor(...C.muted);
-        doc.text(moeda(tVenda), M + CW - 2, y + 4.8, { align: 'right' });
-
-        // Detalhe: qtd · custo · markup
-        doc.setFontSize(4.2);
-        doc.setTextColor(...C.mutedLight);
-        doc.text(`${qtd.toLocaleString('pt-BR')} un  ·  custo ${moeda(custo)}  ·  mk ${percentual(mk)}`, ITEM_ML, y + 9.2);
+        // Linha 2: P.Compra | Custo un | P.Venda | Markup
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        doc.setFontSize(5.8);
+        doc.setTextColor(...SLATE500);
+        doc.text(
+          `Compra ${moeda(precoCompra)}  ·  Custo ${moeda(custo)}  ·  Venda ${moeda(venda)}  ·  Mk ${percentual(mk)}`,
+          ITEM_ML, y + 17
+        );
 
         y += rowH;
       });
 
-      // ── Rodapé totais — fundo soft, sem escuro ────────────────────────
-      ensureSpace(12);
+      // ── Rodapé totais ──────────────────────────────────────────
+      ensureSpace(14);
       doc.setFillColor(...C.soft);
-      doc.roundedRect(M, y, CW, 10, 2, 2, 'F');
+      doc.roundedRect(M, y, CW, 12, 2, 2, 'F');
 
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(4.5);
-      doc.setTextColor(...C.muted);
-      doc.text('Custo total', M + 3, y + 4);
-      doc.text('Venda total', M + 3, y + 8);
+      doc.setFontSize(6);
+      doc.setTextColor(...SLATE500);
+      doc.text('Total compra', M + 3, y + 5);
+      doc.text('Total venda', M + 3, y + 10);
 
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(5.5);
-      doc.setTextColor(...C.text);
-      doc.text(moeda(totCusto), M + CW - 2, y + 4, { align: 'right' });
+      doc.setFontSize(7);
+      doc.setTextColor(...SLATE900);
+      doc.text(moeda(totCusto), M + CW - 2, y + 5, { align: 'right' });
       const margem = totVenda - totCusto;
       doc.setTextColor(margem >= 0 ? 4 : 190, margem >= 0 ? 120 : 24, margem >= 0 ? 87 : 93);
-      doc.text(moeda(totVenda), M + CW - 2, y + 8, { align: 'right' });
+      doc.text(moeda(totVenda), M + CW - 2, y + 10, { align: 'right' });
 
-      y += 14;
+      y += 16;
     };
 
     // ════════════════════════════════════════════════════════════════════════
