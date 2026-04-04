@@ -109,6 +109,8 @@ Deno.serve(async (req) => {
       grupos = [],
     } = payload;
 
+    const isMobilePdf = version === 'expandida_mobile';
+
     const produtoIds = [...new Set(
       pedidos.flatMap((pedido) => Array.isArray(pedido.itens) ? pedido.itens.map((item) => item.produto_id).filter(Boolean) : [])
     )];
@@ -119,12 +121,16 @@ Deno.serve(async (req) => {
 
     const produtosMap = Object.fromEntries((produtos || []).map((produto) => [produto.id, produto]));
 
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: isMobilePdf ? [180, 72] : 'a4',
+    });
     await registerPdfFonts(doc);
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 12;
-    const tableMargin = 18;
+    const margin = isMobilePdf ? 6 : 12;
+    const tableMargin = isMobilePdf ? 6 : 18;
     const contentWidth = pageWidth - (margin * 2);
     const tableWidth = pageWidth - (tableMargin * 2);
     const colors = {
@@ -153,14 +159,19 @@ Deno.serve(async (req) => {
       doc.roundedRect(margin + 5, y + 5, 2.4, 10, 1.2, 1.2, 'F');
       doc.setTextColor(...colors.text);
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(16);
-      doc.text(safe(version === 'expandida' ? 'Relatório expandido de compras' : 'Relatório compacto de compras'), margin + 10, y + 8);
+      doc.setFontSize(isMobilePdf ? 10 : 16);
+      const titulo = version === 'expandida'
+        ? 'Relatório expandido de compras'
+        : version === 'expandida_mobile'
+          ? 'Relatório mobile de compras'
+          : 'Relatório compacto de compras';
+      doc.text(safe(titulo), margin + (isMobilePdf ? 5 : 10), y + (isMobilePdf ? 6 : 8));
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-      doc.setFontSize(9);
+      doc.setFontSize(isMobilePdf ? 6 : 9);
       doc.setTextColor(...colors.muted);
-      doc.text(safe(filtros_desc), margin + 10, y + 14);
-      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin + 10, y + 19);
-      y += 32;
+      doc.text(safe(filtros_desc), margin + (isMobilePdf ? 5 : 10), y + (isMobilePdf ? 10 : 14));
+      doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, margin + (isMobilePdf ? 5 : 10), y + (isMobilePdf ? 14 : 19));
+      y += isMobilePdf ? 22 : 32;
     };
 
     const drawKpis = () => {
@@ -170,6 +181,25 @@ Deno.serve(async (req) => {
         { label: 'Em aberto', value: moeda(kpis.totalEmAberto || 0) },
         { label: 'Pago não entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
       ];
+
+      if (isMobilePdf) {
+        cards.forEach((card) => {
+          ensureSpace(10);
+          doc.setFillColor(250, 250, 250);
+          doc.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
+          doc.setTextColor(107, 114, 128);
+          doc.setFontSize(5.5);
+          doc.text(card.label, margin + 3, y + 3.2);
+          doc.setTextColor(17, 24, 39);
+          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+          doc.setFontSize(6.5);
+          doc.text(safe(String(card.value)), margin + 3, y + 6.5);
+          y += 10;
+        });
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+        y += 2;
+        return;
+      }
 
       const gap = 4;
       const cardWidth = (contentWidth - (gap * 3)) / 4;
@@ -295,6 +325,51 @@ Deno.serve(async (req) => {
       let subtotalCompra = 0;
       let subtotalVenda = 0;
 
+      if (isMobilePdf) {
+        itens.forEach((item, index) => {
+          const produto = produtosMap[item.produto_id] || {};
+          const quantidade = Number(item.quantidade) || 0;
+          const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
+          const valorUnitarioVenda = Number(produto.preco_venda_padrao) || 0;
+          const custoCalculadoTotal = quantidade * custoCalculado;
+          const vendaTotal = quantidade * valorUnitarioVenda;
+          const markup = custoCalculado > 0 ? ((valorUnitarioVenda - custoCalculado) / custoCalculado) * 100 : 0;
+
+          subtotalCompra += custoCalculadoTotal;
+          subtotalVenda += vendaTotal;
+
+          ensureSpace(18);
+          if (index % 2 === 0) {
+            doc.setFillColor(...colors.rowAlt);
+            doc.roundedRect(margin, y, contentWidth, 16, 2, 2, 'F');
+          }
+
+          doc.setTextColor(...colors.text);
+          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+          doc.setFontSize(6.5);
+          const nomeItem = doc.splitTextToSize(safe(String(item.produto_nome || produto.nome || 'Item sem nome')), contentWidth - 6)[0];
+          doc.text(nomeItem, margin + 3, y + 4);
+          doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
+          doc.setFontSize(5.3);
+          doc.text(`Qtd ${quantidade.toLocaleString('pt-BR')} · Custo ${moeda(custoCalculado)}`, margin + 3, y + 8);
+          doc.text(`Venda ${moeda(valorUnitarioVenda)} · Markup ${percentual(markup)}`, margin + 3, y + 11.5);
+          doc.text(`Total custo ${moeda(custoCalculadoTotal)} · Venda ${moeda(vendaTotal)}`, margin + 3, y + 15);
+          y += 18;
+        });
+
+        ensureSpace(18);
+        const statusColors = getStatusPdfColors(pedido.status);
+        doc.setFillColor(...statusColors.pillBg);
+        doc.roundedRect(margin, y, contentWidth, 14, 3, 3, 'F');
+        doc.setTextColor(...statusColors.pillText);
+        doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
+        doc.setFontSize(6.2);
+        doc.text(`Custo calc.: ${moeda(subtotalCompra)}`, margin + 3, y + 4.5);
+        doc.text(`Venda: ${moeda(subtotalVenda)}`, margin + 3, y + 8.5);
+        doc.text(`Margem bruta: ${moeda(subtotalVenda - subtotalCompra)}`, margin + 3, y + 12.5);
+        y += 18;
+        return;
+      }
       ensureSpace(12);
       doc.setFillColor(...colors.panelSoft);
       doc.roundedRect(tableMargin, y, tableWidth, 8, 2, 2, 'F');
@@ -321,9 +396,10 @@ Deno.serve(async (req) => {
         const custoCalculado = Number(produto.preco_custo_calculado) || custoCalculadoProduto(produto);
         const valorUnitarioVenda = Number(produto.preco_venda_padrao) || 0;
         const valorCompraTotal = quantidade * precoCompraLiquido;
-        const markup = precoCompraLiquido > 0 ? ((valorUnitarioVenda - precoCompraLiquido) / precoCompraLiquido) * 100 : 0;
+        const custoCalculadoTotal = quantidade * custoCalculado;
+        const markup = custoCalculado > 0 ? ((valorUnitarioVenda - custoCalculado) / custoCalculado) * 100 : 0;
 
-        subtotalCompra += valorCompraTotal;
+        subtotalCompra += custoCalculadoTotal;
         subtotalVenda += quantidade * valorUnitarioVenda;
 
         ensureSpace(8);
@@ -378,7 +454,7 @@ Deno.serve(async (req) => {
         y += 4;
 
         (grupo.pedidos || []).forEach((pedido) => {
-          if (version === 'expandida') {
+          if (version === 'expandida' || version === 'expandida_mobile') {
             drawExpandido(pedido);
           } else {
             drawCompacto(pedido);
@@ -387,7 +463,7 @@ Deno.serve(async (req) => {
       });
     } else {
       pedidos.forEach((pedido) => {
-        if (version === 'expandida') {
+        if (version === 'expandida' || version === 'expandida_mobile') {
           drawExpandido(pedido);
         } else {
           drawCompacto(pedido);

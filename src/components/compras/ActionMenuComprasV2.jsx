@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpreadsheet } from 'lucide-react';
+import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpreadsheet, Smartphone } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 
@@ -79,6 +79,13 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       icon: <FileSpreadsheet className="w-5 h-5" />,
       label: 'PDF expandido',
       onClick: () => handleGerarRelatorio('expandida'),
+      color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+      disabled: !!gerando,
+    },
+    {
+      icon: <Smartphone className="w-5 h-5" />,
+      label: 'PDF mobile',
+      onClick: () => handleGerarRelatorio('expandida_mobile'),
       color: 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200',
       disabled: !!gerando,
     },
