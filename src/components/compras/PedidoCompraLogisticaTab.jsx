@@ -120,7 +120,13 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
   const [embarqueEditando, setEmbarqueEditando] = useState(null);
   const [acordoOpen, setAcordoOpen] = useState(false);
 
-  const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
+  const embarquesBase = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
+  const embarques = embarquesBase.filter((emb) => {
+    const tipoNecessidade = emb?.tipo === 'Necessidade';
+    const semVidaOperacional = !emb?.transportadora_id && !emb?.transportadora_nome && !emb?.data_embarque && !emb?.eta;
+    const statusDormindo = !emb?.status || emb?.status === 'Pendente';
+    return !(tipoNecessidade && semVidaOperacional && statusDormindo);
+  });
   const percentualEmbarcado = Number(pedido?.percentual_valor_embarcado || pedido?.percentual_despachado || 0);
   const percentualConcluido = Number(pedido?.percentual_concluido || 0);
   const percentualPendente = Number(pedido?.percentual_pendente || Math.max(0, 100 - percentualEmbarcado));
