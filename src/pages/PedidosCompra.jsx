@@ -240,13 +240,16 @@ export default function PedidosCompraPage() {
     const statusEmbSel = statusExplicitos.filter(s => STATUS_EMBARQUE_VIRTUAIS.includes(s));
 
     return filtrados.filter((pedido) => {
+      const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+      const hasVirtualConcluido = embarques.some((emb) => ['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque));
+
       if (pedido.status === 'Concluído') return concluidosSelecionados;
+
       const statusPermitido = ['Rascunho', 'Aguardando Liberação', 'Aprovado', 'Pendência', 'Despachado', 'Em Recepção', 'Em Conferência'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
       if (!(statusPermitido && calcularValorPendentePedido(pedido) > 0)) return false;
 
       // Quando groupBy=eta_transportadora, filtra também por status dos embarques virtuais
       if (groupBy === 'eta_transportadora' && statusExplicitos.length > 0) {
-        const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
         // Se há seleção de status pai, pedido passa se tem status pai ou embarques com status selecionado
         if (statusPaiSel.length > 0 && statusEmbSel.length === 0) {
           return statusPaiSel.includes(pedido.status);
@@ -259,9 +262,14 @@ export default function PedidosCompraPage() {
                 (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
                 return acc;
               }, {});
-              // Tem itens órfãos E status pai é Pendência
               const temOrfaos = (pedido.itens || []).some(i => (Number(i.quantidade) || 0) - (qtdEmb[i.produto_id] || 0) > 0);
               return temOrfaos && pedido.status === 'Pendência';
+            }
+            if (s === 'Concluído') {
+              return embarques.some(emb => ['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque));
+            }
+            if (s === 'Despachado') {
+              return embarques.some(emb => !['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque));
             }
             return embarques.some(emb => emb.status_recebimento_embarque === s);
           });
@@ -338,7 +346,13 @@ export default function PedidosCompraPage() {
 
       if (groupBy === 'eta_transportadora' && embarques.length > 0) {
         embarques.forEach((emb, idx) => {
-          virtualEntries.push({ pedido, embarque: emb, virtualKey: `${pedido.id}_emb_${emb.id || idx}` });
+          const displayStatus = ['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque) ? 'Concluído' : 'Despachado';
+          const ocultarConcluidoVirtual = statusSel.includes('__nao_concluido__') && !statusSel.includes('Concluído') && displayStatus === 'Concluído';
+          const matchStatusExplicito = !statusExplicitos.length || statusExplicitos.includes(displayStatus) || statusPaiSel.includes(pedido.status);
+
+          if (!ocultarConcluidoVirtual && matchStatusExplicito) {
+            virtualEntries.push({ pedido, embarque: emb, virtualKey: `${pedido.id}_emb_${emb.id || idx}` });
+          }
         });
         // Para Pendência: adiciona card extra para itens órfãos (não embarcados)
         if (pedido.status === 'Pendência') {
