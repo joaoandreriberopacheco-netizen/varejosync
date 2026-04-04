@@ -335,28 +335,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         });
       }
 
-      const embarcadosAtualizados = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
-
-      const todosMap = {};
-      embarcadosAtualizados.forEach(emb => {
-        (emb.itens || emb.itens_embarcados || []).forEach(item => {
-          todosMap[item.produto_id] = (todosMap[item.produto_id] || 0) + (item.quantidade_embarcada || 0);
-        });
-      });
-
-      const novoStatusEmbarque = calcularStatusEmbarque(pedido.itens || [], todosMap, {}, Object.fromEntries((pedido.itens || []).map(i => [i.produto_id, true])));
-      const percentualValorEmbarcado = calcularPercentualValorEmbarcado(pedido, embarcadosAtualizados);
-      const proximaEta = embarcadosAtualizados
-        .filter((emb) => emb.status !== 'Concluído' && emb.eta)
-        .map((emb) => emb.eta)
-        .sort()[0];
-
-      await base44.entities.PedidoCompra.update(pedido.id, {
-        data_despacho: pedido.data_despacho || new Date().toISOString(),
-        status_embarque: novoStatusEmbarque,
-        percentual_valor_embarcado: percentualValorEmbarcado,
-        data_prevista_entrega: proximaEta ? proximaEta.slice(0, 10) : pedido.data_prevista_entrega
-      });
+      await base44.functions.invoke('recalcularConclusaoPedidoCompra', { pedidoId: pedido.id });
 
       toast.success(isEdicao ? 'Embarque atualizado!' : novoStatusEmbarque === 'Total' ? 'Embarque total registrado!' : 'Embarque parcial registrado.');
       onSuccess?.();

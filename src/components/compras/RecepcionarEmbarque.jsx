@@ -135,8 +135,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         statusRecebimento = 'Recebido Parcial';
       }
       
-      novoEmbarque.status_recebimento_embarque = statusRecebimento;
-      novoEmbarque.status = todosRecebidos ? 'Concluído' : 'Despachado';
+      novoEmbarque.status_recebimento = statusRecebimento;
+      novoEmbarque.status = 'Concluído';
 
       const embarques = Array.isArray(pedido._embarques) ? pedido._embarques : (Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : []);
       const outrosEmbarques = embarques.filter(e => e.id !== embarque.id);
@@ -198,28 +198,11 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
         await base44.entities.Embarque.create(embarqueOrfao);
       }
 
-      // Calcular status geral de recebimento
-      const temComDivergencia = embarquesAtualizados.some(e => e.status_recebimento_embarque === 'Com Divergência');
-      const temRecebidoParcial = embarquesAtualizados.some(e => e.status_recebimento_embarque === 'Recebido Parcial');
-      const todosRecebidos_geral = embarquesAtualizados.every(e => 
-        e.status_recebimento_embarque === 'Recebido OK' || e.status_recebimento_embarque === 'Com Divergência'
-      );
-
-      let statusRecebimento_geral = 'Pendente';
-      if (todosRecebidos_geral) {
-        statusRecebimento_geral = temComDivergencia ? 'Concluído com Divergência' : 'Concluído OK';
-      } else if (temRecebidoParcial || temComDivergencia) {
-        statusRecebimento_geral = 'Recebido Parcial';
-      }
-
-      // Gerar resumo de divergências para o log
       const divergenciasCount = itens.filter(i => i.divergencia_tipo !== 'Nenhuma').length;
       const divergenciasDesc = divergenciasCount > 0 ? ` | ${divergenciasCount} divergência(s)` : '';
       const resumoItens = itens.map(i => `${i.produto_nome}: ${i.quantidade_recebida}/${i.quantidade_embarcada}`).join('; ');
 
       await base44.entities.PedidoCompra.update(pedido.id, {
-        status_recebimento_geral: statusRecebimento_geral,
-        tem_divergencias: temComDivergencia,
         historico: (pedido.historico || '') + `\n[RECEPÇÃO EMBARQUE ${embarque.codigo_exibicao || ''} | Status: ${statusRecebimento}${divergenciasDesc} | Data: ${dataEntrada} | Itens: ${resumoItens}${embarqueOrfao ? ' | split automático gerou novo embarque' : ''} | ${formatarLogTime()}]`
       });
 
@@ -254,7 +237,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   };
 
   const temDivergencias = itens.some(i => i.divergencia_tipo !== 'Nenhuma');
-  const isReadOnly = embarque?.status_recebimento_embarque && embarque.status_recebimento_embarque !== 'Pendente';
+  const isReadOnly = embarque?.status_recebimento && embarque.status_recebimento !== 'Pendente';
 
   const iniciarRecepção = () => {
     setShowModoDialog(true);

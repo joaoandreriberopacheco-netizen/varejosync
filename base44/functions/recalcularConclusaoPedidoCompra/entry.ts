@@ -4,7 +4,7 @@ const STATUS_PEDIDO_CONCLUIDO = 'Concluído';
 const STATUS_PEDIDO_PENDENCIA = 'Pendência';
 const STATUS_PEDIDO_EM_CONFERENCIA = 'Em Conferência';
 
-function calcularPercentualPorStatus(pedido) {
+function calcularPercentualPorStatus(pedido, embarques) {
   const itensPedido = new Map((pedido.itens || []).map((item) => [item.produto_id, Number(item.quantidade) || 0]));
   const totalPedido = Array.from(itensPedido.values()).reduce((acc, qtd) => acc + qtd, 0);
   if (!totalPedido) return { percentual_despachado: 0, percentual_concluido: 0, percentual_pendente: 100 };
@@ -12,13 +12,12 @@ function calcularPercentualPorStatus(pedido) {
   const despachadoMap = {};
   const concluidoMap = {};
 
-  for (const embarque of pedido.embarques_registrados || []) {
-    if (embarque.tipo === 'Necessidade') continue;
-    for (const item of embarque.itens_embarcados || []) {
+  for (const embarque of embarques || []) {
+    for (const item of (embarque.itens || embarque.itens_embarcados || [])) {
       const qtdEmbarcada = Number(item.quantidade_embarcada) || 0;
       const qtdRecebida = Number(item.quantidade_recebida) || 0;
-      despachadoMap[item.produto_id] = Math.max(despachadoMap[item.produto_id] || 0, qtdEmbarcada);
-      concluidoMap[item.produto_id] = Math.max(concluidoMap[item.produto_id] || 0, qtdRecebida);
+      despachadoMap[item.produto_id] = (despachadoMap[item.produto_id] || 0) + qtdEmbarcada;
+      concluidoMap[item.produto_id] = (concluidoMap[item.produto_id] || 0) + qtdRecebida;
     }
   }
 
@@ -44,7 +43,7 @@ function normalizarNumero(valor) {
   return Number(valor) || 0;
 }
 
-function calcularResumoItensPedido(pedido) {
+function calcularResumoItensPedido(pedido, embarques) {
   const resumo = new Map();
 
   for (const item of pedido.itens || []) {
@@ -64,8 +63,8 @@ function calcularResumoItensPedido(pedido) {
     atual.quantidade_pedida += normalizarNumero(item.quantidade_base || item.quantidade);
   }
 
-  for (const embarque of pedido.embarques_registrados || []) {
-    for (const item of embarque.itens_embarcados || []) {
+  for (const embarque of embarques || []) {
+    for (const item of (embarque.itens || embarque.itens_embarcados || [])) {
       const produtoResolvidoId = item.produto_id;
       if (produtoResolvidoId && resumo.has(produtoResolvidoId)) {
         resumo.get(produtoResolvidoId).quantidade_recebida += normalizarNumero(item.quantidade_recebida);
@@ -76,25 +75,12 @@ function calcularResumoItensPedido(pedido) {
   return Array.from(resumo.values());
 }
 
-function extrairItensOrfaosPrimeiroEmbarque(pedido) {
-  const primeiroEmbarque = (pedido.embarques_registrados || [])[0];
-  if (!primeiroEmbarque) return [];
-
-  return (primeiroEmbarque.itens_embarcados || []).filter((item) => {
-    const quantidadeEmbarcada = normalizarNumero(item.quantidade_embarcada);
-    const quantidadeRecebida = normalizarNumero(item.quantidade_recebida);
-    const temFalta = quantidadeRecebida < quantidadeEmbarcada;
-    const temDivergencia = item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma';
-    return temFalta || temDivergencia;
-  });
-}
-
-function extrairItensOrfaosDoRecebimento(pedido) {
+function extrairItensOrfaosDoRecebimento(pedido, embarques) {
   const itensPedido = new Map((pedido.itens || []).map((item) => [item.produto_id, normalizarNumero(item.quantidade_base || item.quantidade)]));
   const recebidos = new Map();
 
-  for (const embarque of pedido.embarques_registrados || []) {
-    for (const item of embarque.itens_embarcados || []) {
+  for (const embarque of embarques || []) {
+    for (const item of (embarque.itens || embarque.itens_embarcados || [])) {
       const produtoId = item.produto_id;
       if (!produtoId) continue;
       recebidos.set(produtoId, normalizarNumero(recebidos.get(produtoId)) + normalizarNumero(item.quantidade_recebida));
@@ -140,16 +126,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
 
+    const embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
     const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedido.id });
-    const resumoItens = calcularResumoItensPedido(pedido);
+    const resumoItens = calcularResumoItensPedido(pedido, embarques);
     const itensComPendencia = resumoItens.filter((item) => item.quantidade_recebida < item.quantidade_pedida);
-    const itensOrfaosPrimeiroEmbarque = extrairItensOrfaosPrimeiroEmbarque(pedido);
-    const itensOrfaosRecebimento = extrairItensOrfaosDoRecebimento(pedido);
-    const temEmbarqueInformado = (pedido.embarques_registrados || []).length > 0;
-    const haItensOrfaos = itensOrfaosPrimeiroEmbarque.length > 0 || itensOrfaosRecebimento.length > 0;
+    const itensOrfaosRecebimento = extrairItensOrfaosDoRecebimento(pedido, embarques);
+    const temEmbarqueInformado = embarques.length > 0;
+    const haItensOrfaos = itensOrfaosRecebimento.length > 0;
     const temPendenciaReal = temEmbarqueInformado && haItensOrfaos;
-    const temDivergencia = (pedido.embarques_registrados || []).some((embarque) =>
-      (embarque.itens_embarcados || []).some((item) => item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma')
+    const temDivergencia = embarques.some((embarque) =>
+      (embarque.itens || embarque.itens_embarcados || []).some((item) => item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma')
     );
     const pendenciaResolvidaFinanceiramente = temPendenciaReal && calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos);
 
@@ -178,16 +164,22 @@ Deno.serve(async (req) => {
       quantidade_pendente: Math.max(0, item.quantidade_pedida - item.quantidade_recebida),
     }));
 
-    const percentuais = calcularPercentualPorStatus(pedido);
+    const percentuais = calcularPercentualPorStatus(pedido, embarques);
+    const proximaEta = embarques
+      .filter((embarque) => embarque.status !== 'Concluído' && embarque.eta)
+      .map((embarque) => embarque.eta)
+      .sort()[0];
 
     await base44.entities.PedidoCompra.update(pedido.id, {
       status: statusPedido,
+      status_embarque: !temEmbarqueInformado ? 'Nenhum' : percentuais.percentual_despachado >= 100 ? 'Total' : 'Parcial',
       status_recebimento_geral: statusRecebimentoGeral,
       tem_divergencias: temDivergencia || (temPendenciaReal && !pendenciaResolvidaFinanceiramente),
       percentual_valor_embarcado: percentuais.percentual_despachado,
       percentual_despachado: percentuais.percentual_despachado,
       percentual_concluido: percentuais.percentual_concluido,
       percentual_pendente: percentuais.percentual_pendente,
+      data_prevista_entrega: proximaEta ? String(proximaEta).slice(0, 10) : null,
       historico: `${pedido.historico || ''}\n[RECALCULO CONCLUSAO | status=${statusPedido} | recebimento=${statusRecebimentoGeral} | pendencias=${resumoPendencias.length}]`,
     });
 
