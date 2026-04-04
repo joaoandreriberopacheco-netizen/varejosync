@@ -20,7 +20,7 @@ export default function PedidosCompraPage() {
   const [pedidos, setPedidos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');
-  const [statusSel, setStatusSel] = useState(['__nao_concluido__']);
+  const [statusSel, setStatusSel] = useState([]);
   const [fornecedorSel, setFornecedorSel] = useState([]);
   const [tagsSel, setTagsSel] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
@@ -82,7 +82,7 @@ export default function PedidosCompraPage() {
   };
 
   const handleOpenPedido = (pedido) => {
-    navigate(`/PedidoCompraDetalhe?id=${pedido.id}`);
+    navigate(`/PedidoCompraDetalhe?id=${pedido.id}${pedido._embarque?.id ? `&embarque=${pedido._embarque.id}` : ''}`);
   };
 
   const handleNovoPedido = () => {
@@ -154,7 +154,7 @@ export default function PedidosCompraPage() {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [pedidos]);
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque'];
+  const STATUS_EMBARQUE_VIRTUAIS = ['Recebido OK', 'Recebido Parcial', 'Com Divergência', 'Aguardando Embarque', 'Original'];
 
   // ⭐ FASE 2+: Detecta se pedido está RESOLVIDO (sem ações logísticas pendentes)
   const isPedidoResolvido = (pedido) => {
@@ -173,31 +173,19 @@ export default function PedidosCompraPage() {
     return pedidos.filter(p => {
       const searchLower = search.toLowerCase();
       const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
-      const ocultarConcluidos = statusSel.includes('__nao_concluido__');
       const statusExplicitos = statusSel.filter(status => status !== '__nao_concluido__');
-      const concluidosSelecionados = statusExplicitos.includes('Concluído');
       const statusPaiSel = statusExplicitos.filter(s => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
       const statusEmbSel  = statusExplicitos.filter(s => STATUS_EMBARQUE_VIRTUAIS.includes(s));
 
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) return false;
-      if (ocultarConcluidos && !concluidosSelecionados && p.status === 'Concluído') return false;
-      // ⭐ FASE 2+: Filtra pedidos RESOLVIDOS quando '__nao_concluido__' está ativo
-      if (ocultarConcluidos && !concluidosSelecionados && isPedidoResolvido(p)) return false;
 
-      // Filtro de status: combina status do pedido pai e status virtual de embarque (OR entre os selecionados)
       if (statusExplicitos.length > 0) {
         const matchPai = statusPaiSel.includes(p.status);
         const embarques = Array.isArray(p.embarques_registrados) ? p.embarques_registrados : [];
         const matchEmbarque = statusEmbSel.some(s => {
-          if (s === 'Aguardando Embarque') {
-            // pedido com itens que não foram embarcados
-            const qtdEmb = embarques.reduce((acc, emb) => {
-              (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
-              return acc;
-            }, {});
-            return (p.itens || []).some(i => (Number(i.quantidade) || 0) - (qtdEmb[i.produto_id] || 0) > 0);
-          }
-          return embarques.some(emb => emb.status_recebimento_embarque === s);
+          if (s === 'Original') return embarques.some(emb => emb.tipo === 'Original');
+          if (s === 'Aguardando Embarque') return embarques.some(emb => emb.tipo === 'Original' && !emb.transportadora_nome && !emb.eta);
+          return embarques.some(emb => emb.status_recebimento_embarque === s || emb.status === s);
         });
         if (!matchPai && !matchEmbarque) return false;
       }
@@ -234,54 +222,14 @@ export default function PedidosCompraPage() {
   };
 
   const pedidosVisiveisLista = useMemo(() => {
-    const concluidosSelecionados = statusSel.includes('Concluído');
-    const statusExplicitos = statusSel.filter(s => s !== '__nao_concluido__');
-    const statusPaiSel = statusExplicitos.filter(s => !STATUS_EMBARQUE_VIRTUAIS.includes(s));
-    const statusEmbSel = statusExplicitos.filter(s => STATUS_EMBARQUE_VIRTUAIS.includes(s));
-
     return filtrados.filter((pedido) => {
-      const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
-      const hasVirtualConcluido = embarques.some((emb) => ['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque));
-
-      if (pedido.status === 'Concluído') return concluidosSelecionados;
-
-      const statusPermitido = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
-      if (!(statusPermitido && calcularValorPendentePedido(pedido) > 0)) return false;
-
-      // Quando groupBy=eta_transportadora, filtra também por status dos embarques virtuais
-      if (groupBy === 'eta_transportadora' && statusExplicitos.length > 0) {
-        // Se há seleção de status pai, pedido passa se tem status pai ou embarques com status selecionado
-        if (statusPaiSel.length > 0 && statusEmbSel.length === 0) {
-          return statusPaiSel.includes(pedido.status);
-        }
-        // Se há seleção de status embarque, verifica se algum embarque / órfão corresponde
-        if (statusEmbSel.length > 0) {
-          const temEmbarqueMatch = statusEmbSel.some(s => {
-            if (s === 'Aguardando Embarque') {
-              const qtdEmb = embarques.reduce((acc, emb) => {
-                (emb.itens_embarcados || []).forEach(ie => { acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0); });
-                return acc;
-              }, {});
-              const temOrfaos = (pedido.itens || []).some(i => (Number(i.quantidade) || 0) - (qtdEmb[i.produto_id] || 0) > 0);
-              return temOrfaos && pedido.status === 'Pendência';
-            }
-            if (s === 'Concluído') {
-              return embarques.some(emb => ['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque));
-            }
-            if (s === 'Despachado') {
-              return embarques.some(emb => !['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque));
-            }
-            return embarques.some(emb => emb.status_recebimento_embarque === s);
-          });
-          if (!temEmbarqueMatch) return false;
-        }
-      }
-      return true;
+      const statusPermitido = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado', 'Concluído'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
+      return statusPermitido;
     });
-  }, [filtrados, statusSel, groupBy]);
+  }, [filtrados]);
 
   const pedidosVisiveisPendentes = useMemo(() => {
-    return pedidosVisiveisLista.filter((pedido) => pedido.status !== 'Concluído');
+    return pedidosVisiveisLista;
   }, [pedidosVisiveisLista]);
 
   const pedidosPagosPendentes = useMemo(() => {
@@ -342,39 +290,29 @@ export default function PedidosCompraPage() {
       return String(b).localeCompare(String(a), 'pt-BR');
     };
 
-    // Expande pedidos em entradas virtuais: uma por embarque (quando groupBy=eta_transportadora)
     const virtualEntries = [];
     pedidosVisiveisLista.forEach((pedido) => {
       const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+      const embarqueOriginal = embarques.find((emb) => emb.tipo === 'Original') || {
+        id: `orig_${pedido.id}`,
+        numero: '00',
+        tipo: 'Original',
+        status: 'Pendente',
+        eta: null,
+        transportadora_nome: '',
+        itens_embarcados: (pedido.itens || []).map((item) => ({
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          quantidade_pedida: item.quantidade,
+          quantidade_embarcada: 0,
+          quantidade_recebida: 0,
+          unidade_medida: item.unidade_medida
+        }))
+      };
 
-      if (groupBy === 'eta_transportadora' && embarques.length > 0) {
-        embarques.forEach((emb, idx) => {
-          const displayStatus = ['Recebido OK', 'Concluído'].includes(emb.status_recebimento_embarque) ? 'Concluído' : 'Despachado';
-          const ocultarConcluidoVirtual = statusSel.includes('__nao_concluido__') && !statusSel.includes('Concluído') && displayStatus === 'Concluído';
-          const matchStatusExplicito = !statusExplicitos.length || statusExplicitos.includes(displayStatus) || statusPaiSel.includes(pedido.status);
-
-          if (!ocultarConcluidoVirtual && matchStatusExplicito) {
-            virtualEntries.push({ pedido, embarque: emb, virtualKey: `${pedido.id}_emb_${emb.id || idx}` });
-          }
-        });
-        // Para Pendência: adiciona card extra para itens órfãos (não embarcados)
-        if (pedido.status === 'Pendência') {
-          const qtdEmbarcadaPorProduto = embarques.reduce((acc, emb) => {
-            (emb.itens_embarcados || []).forEach(ie => {
-              acc[ie.produto_id] = (acc[ie.produto_id] || 0) + (Number(ie.quantidade_embarcada) || 0);
-            });
-            return acc;
-          }, {});
-          const temOrfaos = (pedido.itens || []).some(i => {
-            const embarcada = qtdEmbarcadaPorProduto[i.produto_id] || 0;
-            return (Number(i.quantidade) || 0) - embarcada > 0;
-          });
-          if (temOrfaos) {
-            virtualEntries.push({ pedido, embarque: null, virtualKey: `${pedido.id}_orfaos`, _is_orfao: true });
-          }
-        }
-      } else {
-        virtualEntries.push({ pedido, embarque: embarques[0] || null, virtualKey: pedido.id });
+      const matchStatusExplicito = !statusExplicitos.length || statusExplicitos.includes('Original') || statusPaiSel.includes(pedido.status) || statusExplicitos.includes(embarqueOriginal.status);
+      if (matchStatusExplicito) {
+        virtualEntries.push({ pedido, embarque: embarqueOriginal, virtualKey: `${pedido.id}_original` });
       }
     });
 
@@ -424,15 +362,24 @@ export default function PedidosCompraPage() {
         _display_valor = _display_itens.reduce((acc, i) => acc + (i.quantidade * i.custo_unitario), 0);
       }
 
+      const statusOriginal = pedido.status === 'Concluído' ? 'Concluído' : (!embarque?.eta && !embarque?.transportadora_nome ? 'Aguardando Embarque' : (embarque?.status || pedido.status));
+      const itensOriginais = (pedido.itens || []).map((item) => ({
+        produto_id: item.produto_id,
+        produto_nome: item.produto_nome,
+        quantidade: Number(item.quantidade) || 0,
+        custo_unitario: Number(item.custo_unitario) || 0,
+      }));
+      const valorOriginal = itensOriginais.reduce((acc, item) => acc + (item.quantidade * item.custo_unitario), 0);
+
       map[meta.key].pedidos.push({
         ...pedido,
         _virtual_key: virtualKey,
         _embarque: embarque,
-        _is_orfao: _is_orfao || false,
-        _display_status,
-        _display_valor,
-        _display_itens,
-        _is_virtual_concluido: STATUS_VIRTUAL_CONCLUIDOS.includes(_display_status),
+        _is_orfao: false,
+        _display_status: statusOriginal,
+        _display_valor: valorOriginal,
+        _display_itens: itensOriginais,
+        _is_virtual_concluido: STATUS_VIRTUAL_CONCLUIDOS.includes(statusOriginal),
         valor_pendente_entrega: pedido.status === 'Concluído' ? 0 : calcularValorPendentePedido(pedido)
       });
     });
