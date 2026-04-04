@@ -247,6 +247,8 @@ export default function PedidosCompraPage() {
     return pedidosPagosPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
   }, [pedidosPagosPendentes]);
 
+  const STATUS_VIRTUAL_CONCLUIDOS = ['Recebido OK'];
+
   const grupos = useMemo(() => {
     const getGroupMeta = (pedido, embarque) => {
       if (groupBy === 'fornecedor') {
@@ -364,6 +366,7 @@ export default function PedidosCompraPage() {
         _display_status,
         _display_valor,
         _display_itens,
+        _is_virtual_concluido: STATUS_VIRTUAL_CONCLUIDOS.includes(_display_status),
         valor_pendente_entrega: pedido.status === 'Concluído' ? 0 : calcularValorPendentePedido(pedido)
       });
     });
@@ -373,11 +376,18 @@ export default function PedidosCompraPage() {
       .map((grupo) => ({
         key: grupo.key,
         label: grupo.label,
-        pedidos: grupo.pedidos.sort((a, b) => {
-          const valorA = a.data_emissao || a.created_date || '';
-          const valorB = b.data_emissao || b.created_date || '';
-          return compareValues(valorA, valorB);
-        })
+        pedidos: grupo.pedidos
+          // Filtra cards virtuais concluídos conforme seleção de status
+          .filter(p => {
+            const concluidosSelecionados = statusSel.includes('Concluído');
+            if (p._is_virtual_concluido) return concluidosSelecionados;
+            return true;
+          })
+          .sort((a, b) => {
+            const valorA = a.data_emissao || a.created_date || '';
+            const valorB = b.data_emissao || b.created_date || '';
+            return compareValues(valorA, valorB);
+          })
       }));
   }, [pedidosVisiveisLista, groupBy, sortOrder]);
 
