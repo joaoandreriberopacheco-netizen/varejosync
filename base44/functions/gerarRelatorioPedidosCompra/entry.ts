@@ -521,7 +521,11 @@ Deno.serve(async (req) => {
       // Valor (pendente para Pendencia, total para outros)
       doc.setFontSize(8.5);
       const valorHeader = isPendencia
-        ? moeda(itens.reduce((a, i) => a + (i._qtdMostrada * (Number(i.custo_unitario) || 0)), 0))
+        ? moeda(itens.reduce((a, i) => {
+            const prod = produtosMap[i.produto_id] || {};
+            const cu = Number(i.custo_unitario) || Number(prod.valor_compra) || 0;
+            return a + (i._qtdMostrada * cu);
+          }, 0))
         : moeda(pedido.valor_total);
       doc.text(valorHeader, M + CW - 2, y + 15, { align: 'right' });
 
@@ -575,15 +579,23 @@ Deno.serve(async (req) => {
         doc.setTextColor(...SLATE700);
         doc.text(un, UN_X, y + 6);
 
-        // Nome do produto — Title Case, preenchendo o meio
+        // Nome do produto — Title Case, pode quebrar linha
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(7);
         doc.setTextColor(...SLATE700);
-        const nomeDisp = doc.splitTextToSize(
+        const nomeLinhas = doc.splitTextToSize(
           toTitleCase(safe(item.produto_nome || prod.nome || '-')),
-          M + CW - NOME_X - 24  // espaço para o total
-        )[0];
-        doc.text(nomeDisp, NOME_X, y + 6);
+          M + CW - NOME_X - 24
+        );
+        // Renderiza nome na linha 1 (junto com qtd/un/total)
+        doc.text(nomeLinhas[0], NOME_X, y + 6);
+        // Linhas extras do nome (se houver quebra)
+        if (nomeLinhas.length > 1) {
+          for (let nl = 1; nl < nomeLinhas.length; nl++) {
+            doc.text(nomeLinhas[nl], NOME_X, y + 6 + nl * 7);
+          }
+        }
+        const nomeExtraH = Math.max(0, (nomeLinhas.length - 1) * 7);
 
         // Total do item (custo) — right aligned, bold
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
@@ -597,10 +609,10 @@ Deno.serve(async (req) => {
         doc.setTextColor(...SLATE500);
         doc.text(
           `Compra ${moeda(precoCompra)}  ·  Custo ${moeda(custo)}  ·  Venda ${moeda(venda)}  ·  Mk ${percentual(mk)}`,
-          NOME_X, y + 12
+          NOME_X, y + 12 + nomeExtraH
         );
 
-        y += rowH;
+        y += rowH + nomeExtraH;
       });
 
       y += 4; // espaço entre pedidos
@@ -622,18 +634,19 @@ Deno.serve(async (req) => {
     const renderGrupo = (grupo) => {
       ensureSpace(14);
       if (isMobile) {
-        // Separador de grupo: label caps com linha sutil — estilo sidebar
-        y += 4;
-        doc.setFillColor(220, 222, 226);
-        doc.rect(M, y, CW, 0.4, 'F');
+        // Separador de grupo: fundo escuro estilo sidebar
         y += 3;
+        doc.setFillColor(...SLATE900);
+        doc.rect(M, y, CW, 0.25, 'F');
+        y += 2;
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(5.5);
-        doc.setTextColor(...C.muted);
-        doc.text(safe((grupo.label || '-').toUpperCase()), M, y + 4);
+        doc.setFontSize(6);
+        doc.setTextColor(...SLATE900);
+        doc.text(safe(grupo.label || '-'), M, y + 5);
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(4.8);
-        doc.text(`${(grupo.pedidos || []).length} pedidos`, M + CW, y + 4, { align: 'right' });
+        doc.setFontSize(5.5);
+        doc.setTextColor(...SLATE500);
+        doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW, y + 5, { align: 'right' });
         y += 10;
       } else {
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
