@@ -1,8 +1,9 @@
 import React from 'react';
 import GestaoCaixa from '../components/financeiro/GestaoCaixa';
+import AgefinPortal from '../components/financeiro/AgefinPortal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Landmark, ArrowLeftRight } from "lucide-react";
+import { Wallet, Landmark, ArrowLeftRight, Calendar } from "lucide-react";
 
 export default function FinanceiroPage() {
   return (
@@ -15,6 +16,7 @@ export default function FinanceiroPage() {
           <TabsList>
             <TabsTrigger value="caixa" className="gap-2"><Wallet className="w-4 h-4"/> Gestão de Caixa</TabsTrigger>
             <TabsTrigger value="contas" className="gap-2"><Landmark className="w-4 h-4"/> Contas a Pagar/Receber</TabsTrigger>
+            <TabsTrigger value="agefin" className="gap-2"><Calendar className="w-4 h-4"/> Agefin</TabsTrigger>
             <TabsTrigger value="movimentos" className="gap-2"><ArrowLeftRight className="w-4 h-4"/> Movimentos</TabsTrigger>
           </TabsList>
           <TabsContent value="caixa">
@@ -27,6 +29,9 @@ export default function FinanceiroPage() {
                     <p className="text-gray-500">Em desenvolvimento...</p>
                 </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="agefin" className="mt-0">
+            <AgefinPortal />
           </TabsContent>
            <TabsContent value="movimentos">
             <Card>
