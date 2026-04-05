@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronRight, AlertCircle, CheckCircle2, Calendar, DollarSign, Paperclip } from 'lucide-react';
+import { ChevronRight, AlertCircle, CheckCircle2, Calendar, DollarSign, Paperclip, Filter, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AgefinDetalhes from './AgefinDetalhes';
 
@@ -65,8 +65,23 @@ export default function AgefinLista({ contas, onRefresh }) {
       {/* List */}
       <div className="space-y-3">
         {sorted.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">Nenhuma conta neste período</p>
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Filter className="w-10 h-10 text-gray-400" />
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 font-medium mb-2">Nenhuma conta encontrada</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+              {filterStatus ? `Nenhuma conta com status "${filterStatus}". Ajuste o filtro para ver outras contas.` : 'Adicione contas para começar a gerenciar seus pagamentos.'}
+            </p>
+            {filterStatus && (
+              <button
+                onClick={() => setFilterStatus(null)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all"
+              >
+                <X className="w-4 h-4" />
+                Limpar filtro
+              </button>
+            )}
           </div>
         ) : (
           sorted.map((conta) => <ContaCard key={conta.id} conta={conta} onClick={() => setSelectedConta(conta)} />)
