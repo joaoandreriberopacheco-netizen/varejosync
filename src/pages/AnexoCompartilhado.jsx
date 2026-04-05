@@ -230,7 +230,7 @@ export default function AnexoCompartilhado() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="min-h-[100dvh] flex flex-col overflow-y-auto bg-gray-50 pb-[calc(7rem+env(safe-area-inset-bottom))] dark:bg-gray-950">
       <div className="flex items-center gap-3 px-5 pt-6 pb-4">
         <button onClick={() => window.history.back()} className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
           <ArrowLeft className="w-4 h-4" />
@@ -284,7 +284,7 @@ export default function AnexoCompartilhado() {
 
       {etapa === 'vincular' && <BuscarLancamentoSheet onSelecionar={handleVincular} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />}
       {abrirNovo && (
-        <div className="fixed inset-0 z-[70] h-[100dvh] overflow-hidden bg-gray-50 dark:bg-gray-950">
+        <div className="fixed inset-0 z-[70] h-[100dvh] overflow-hidden bg-gray-50 pb-[calc(5.5rem+env(safe-area-inset-bottom))] dark:bg-gray-950">
           <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />
         </div>
       )}
