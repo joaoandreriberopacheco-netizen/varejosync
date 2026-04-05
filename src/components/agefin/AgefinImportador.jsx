@@ -300,7 +300,7 @@ Campos a interpretar do documento:
                   <input
                     type="number"
                     value={extractedData.valor}
-                    onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) })}
+                    onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) || 0 })}
                     className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-lg font-semibold text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
                     step="0.01"
                   />
@@ -377,7 +377,9 @@ Campos a interpretar do documento:
             <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
             <AgefinNaturezaSelector value={selectedNatureza || 'Único'} onChange={setSelectedNatureza} />
             {selectedNatureza === 'Recorrente' && (
-              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Sugestão de recorrência: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span></p>
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                Sugestão de recorrência: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span>
+              </p>
             )}
           </div>
 
