@@ -55,7 +55,6 @@ const FAB_ITEMS = [
   { tipo: 'Receita', icon: ArrowDownLeft, label: 'Receita' },
   { tipo: 'Despesa', icon: ArrowUpRight, label: 'Despesa' },
   { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transf.' },
-  { tipo: 'Importar', icon: Upload, label: 'Importar' },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -268,6 +267,15 @@ export default function ExecucaoOrcamentaria() {
           </div>
 
           {abaContas === 'contas' ? <ContasAbertas /> : <AgefinRecorrentes />}
+
+          {abaContas === 'contas' && (
+            <button
+              onClick={() => setShowImportadorAgefin(true)}
+              className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl bg-slate-900 dark:bg-slate-200 active:scale-95 transition-all"
+            >
+              <Upload className="w-5 h-5 text-white dark:text-slate-900" />
+            </button>
+          )}
         </div>
       )}
 
@@ -322,13 +330,6 @@ export default function ExecucaoOrcamentaria() {
             {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
               <button key={tipo}
                 onClick={() => {
-                  if (tipo === 'Importar') {
-                    setAba('contas');
-                    setAbaContas('contas');
-                    setShowImportadorAgefin(true);
-                    setFabOpen(false);
-                    return;
-                  }
                   setNovoTipo(tipo);
                   setShowNovo(true);
                   setFabOpen(false);
