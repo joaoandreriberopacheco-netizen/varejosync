@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
 
 export default function AgefinImportador({ onSuccess }) {
@@ -10,6 +11,7 @@ export default function AgefinImportador({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [selectedNatureza, setSelectedNatureza] = useState('Único');
+  const [selectedRecorrencia, setSelectedRecorrencia] = useState('Mensal');
   const [error, setError] = useState(null);
 
   const handleFileUpload = async (e) => {
@@ -58,10 +60,14 @@ Campos a interpretar do documento:
             beneficiario: { type: ['string', 'null'] },
             competencia: { type: ['string', 'null'] },
             numero_parcela: { type: ['string', 'null'] },
+            linha_digitavel: { type: ['string', 'null'] },
+            codigo_pix_copia_cola: { type: ['string', 'null'] },
+            instrucoes: { type: ['string', 'null'] },
+            frequencia_sugerida: { type: ['string', 'null'] },
             natureza_sugerida: { type: ['string', 'null'] },
             confianca_leitura: { type: ['string', 'null'] }
           },
-          required: ['descricao', 'valor_pagamento', 'data_vencimento', 'beneficiario', 'competencia', 'numero_parcela', 'natureza_sugerida', 'confianca_leitura']
+          required: ['descricao', 'valor_pagamento', 'data_vencimento', 'beneficiario', 'competencia', 'numero_parcela', 'linha_digitavel', 'codigo_pix_copia_cola', 'instrucoes', 'frequencia_sugerida', 'natureza_sugerida', 'confianca_leitura']
         }
       });
 
@@ -69,12 +75,30 @@ Campos a interpretar do documento:
       const naturezaValida = ['Parcelado', 'Único', 'Recorrente'].includes(extracted.natureza_sugerida)
         ? extracted.natureza_sugerida
         : 'Único';
+      const frequenciaValida = ['Semanal', 'Mensal', 'Bimestral', 'Trimestral', 'Semestral', 'Anual'].includes(extracted.frequencia_sugerida)
+        ? extracted.frequencia_sugerida
+        : 'Mensal';
+      const numeroParcela = extracted.numero_parcela ? parseInt(String(extracted.numero_parcela).replace(/[^0-9]/g, ''), 10) : null;
+      const periodoReferencia = extracted.competencia && /^\d{4}-\d{2}-\d{2}$/.test(extracted.competencia)
+        ? extracted.competencia
+        : extracted.competencia && /^\d{2}\/\d{4}$/.test(extracted.competencia)
+          ? `${extracted.competencia.split('/')[1]}-${extracted.competencia.split('/')[0]}-01`
+          : extracted.competencia && /^\d{2}\/\d{2}\/\d{4}$/.test(extracted.competencia)
+            ? `${extracted.competencia.split('/')[2]}-${extracted.competencia.split('/')[1]}-01`
+            : null;
 
       setSelectedNatureza(naturezaValida);
+      setSelectedRecorrencia(frequenciaValida);
       setExtractedData({
         descricao: descricaoFallback || 'Conta importada',
         valor: extracted.valor_pagamento ?? 0,
         data_vencimento: extracted.data_vencimento || dataHoje(),
+        terceiro_nome: extracted.beneficiario || '',
+        periodo_referencia: periodoReferencia || dataHoje().slice(0, 8) + '01',
+        parcela_numero: Number.isFinite(numeroParcela) ? numeroParcela : '',
+        linha_digitavel: extracted.linha_digitavel || '',
+        codigo_pix_copia_cola: extracted.codigo_pix_copia_cola || '',
+        observacoes: extracted.instrucoes || '',
       });
     } catch (err) {
       setError('Não consegui ler este documento com precisão. Tente outra imagem ou PDF mais nítido.');
@@ -88,6 +112,7 @@ Campos a interpretar do documento:
     setFile(null);
     setExtractedData(null);
     setSelectedNatureza('Único');
+    setSelectedRecorrencia('Mensal');
     setError(null);
   };
 
@@ -96,11 +121,28 @@ Campos a interpretar do documento:
 
     setLoading(true);
     try {
-      await base44.entities.ContaPrevista.create({
-        ...extractedData,
+      const payload = {
+        descricao: extractedData.descricao,
+        terceiro_id: 'importado-manualmente',
+        terceiro_nome: extractedData.terceiro_nome || 'Beneficiário não identificado',
+        categoria_financeira_id: 'importacao-pendente',
+        categoria_nome: 'Importação pendente',
+        valor: extractedData.valor,
+        data_vencimento: extractedData.data_vencimento,
         natureza: selectedNatureza,
+        parcela_numero: selectedNatureza === 'Parcelado' && extractedData.parcela_numero ? Number(extractedData.parcela_numero) : null,
+        periodo_referencia: extractedData.periodo_referencia || null,
         status: 'Pendente',
-      });
+        boleto_url: file?.name || null,
+        observacoes: [
+          extractedData.observacoes ? `Instruções: ${extractedData.observacoes}` : null,
+          extractedData.linha_digitavel ? `Linha digitável: ${extractedData.linha_digitavel}` : null,
+          extractedData.codigo_pix_copia_cola ? `PIX copia e cola: ${extractedData.codigo_pix_copia_cola}` : null,
+          selectedNatureza === 'Recorrente' ? `Frequência sugerida: ${selectedRecorrencia}` : null,
+        ].filter(Boolean).join('\n'),
+      };
+
+      await base44.entities.ContaPrevista.create(payload);
       resetState();
       onSuccess?.();
     } catch (err) {
@@ -231,6 +273,27 @@ Campos a interpretar do documento:
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Beneficiário</label>
+              <input
+                type="text"
+                value={extractedData.terceiro_nome}
+                onChange={(e) => setExtractedData({ ...extractedData, terceiro_nome: e.target.value })}
+                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Competência</label>
+              <input
+                type="date"
+                value={extractedData.periodo_referencia}
+                onChange={(e) => setExtractedData({ ...extractedData, periodo_referencia: e.target.value })}
+                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Valor</label>
               <input
                 type="number"
@@ -250,12 +313,70 @@ Campos a interpretar do documento:
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nº da parcela</label>
+              <input
+                type="number"
+                value={extractedData.parcela_numero}
+                onChange={(e) => setExtractedData({ ...extractedData, parcela_numero: e.target.value })}
+                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Frequência</label>
+              <Select value={selectedRecorrencia} onValueChange={setSelectedRecorrencia}>
+                <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-gray-900 shadow-none focus:ring-0 dark:bg-gray-900 dark:text-white">
+                  <SelectValue placeholder="Escolher frequência" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Semanal">Semanal</SelectItem>
+                  <SelectItem value="Mensal">Mensal</SelectItem>
+                  <SelectItem value="Bimestral">Bimestral</SelectItem>
+                  <SelectItem value="Trimestral">Trimestral</SelectItem>
+                  <SelectItem value="Semestral">Semestral</SelectItem>
+                  <SelectItem value="Anual">Anual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Linha digitável</label>
+            <textarea
+              value={extractedData.linha_digitavel}
+              onChange={(e) => setExtractedData({ ...extractedData, linha_digitavel: e.target.value })}
+              className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">PIX copia e cola</label>
+            <textarea
+              value={extractedData.codigo_pix_copia_cola}
+              onChange={(e) => setExtractedData({ ...extractedData, codigo_pix_copia_cola: e.target.value })}
+              className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Instruções / observações</label>
+            <textarea
+              value={extractedData.observacoes}
+              onChange={(e) => setExtractedData({ ...extractedData, observacoes: e.target.value })}
+              className="min-h-[110px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+            />
+          </div>
         </div>
       </div>
 
       <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
         <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
         <AgefinNaturezaSelector value={selectedNatureza || 'Único'} onChange={setSelectedNatureza} />
+        {selectedNatureza === 'Recorrente' && (
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Sugestão de recorrência: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span></p>
+        )}
       </div>
 
       {error && (
