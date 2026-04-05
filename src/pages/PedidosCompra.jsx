@@ -17,7 +17,11 @@ const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const isNecessidadeRenderizada = (embarque) => !!embarque?.observacoes && String(embarque.observacoes).includes('criado automaticamente para itens pendentes');
+const isNecessidadeRenderizada = (embarque) => {
+  if (!embarque) return false;
+  if (embarque?.tipo === 'Necessidade') return true;
+  return !!embarque?.observacoes && String(embarque.observacoes).includes('criado automaticamente para itens pendentes');
+};
 
 const getEmbarqueSuffixIndex = (embarque, pedido) => {
   const embarquesDoPedido = (pedido?._embarques || [])
@@ -110,8 +114,19 @@ const buildDisplayItensFromEmbarque = (pedido, embarque) => {
   });
 };
 
+const getValorTotalPedidoCalculado = (pedido) => {
+  return Number(pedido?.valor_total) || (pedido?.itens || []).reduce((acc, item) => acc + ((Number(item?.quantidade) || 0) * (Number(item?.custo_unitario) || 0)), 0);
+};
+
 const getDisplayValorEmbarque = (pedido, embarque) => {
-  return buildDisplayItensFromEmbarque(pedido, embarque).reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
+  const itensDisplay = buildDisplayItensFromEmbarque(pedido, embarque);
+  const valorItens = itensDisplay.reduce((acc, item) => acc + ((Number(item.quantidade) || 0) * (Number(item.custo_unitario) || 0)), 0);
+  const valorTotalPedido = getValorTotalPedidoCalculado(pedido);
+  const valorBaseItens = (pedido?.itens || []).reduce((acc, item) => acc + ((Number(item?.quantidade) || 0) * (Number(item?.custo_unitario) || 0)), 0);
+
+  if (!valorItens || !valorBaseItens || !valorTotalPedido) return valorItens;
+
+  return Number(((valorItens / valorBaseItens) * valorTotalPedido).toFixed(2));
 };
 
 export default function PedidosCompraPage() {
@@ -161,7 +176,7 @@ export default function PedidosCompraPage() {
 
       const pedidosComResumoReal = pcs.map((pedido) => {
         const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
-        const totalPedido = Number(pedido.valor_total) || 0;
+        const totalPedido = getValorTotalPedidoCalculado(pedido);
         const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
           const valorEmbarque = (embarque.itens || embarque.itens_embarcados || []).reduce((itemAcc, item) => {
             const custoUnitario = Number((pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0;
@@ -197,32 +212,52 @@ export default function PedidosCompraPage() {
         };
       });
 
-      const cardsDeEmbarque = embarquesDb
-        .map((embarque) => {
-          const pedido = pedidoMap.get(embarque.pedido_compra_id);
-          if (!pedido) return null;
+      const cardsDeEmbarque = pcs.flatMap((pedido) => {
+        const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice();
+        const embarqueOriginal = embarquesDoPedido
+          .slice()
+          .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0))[0] || null;
 
-          const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
-          const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
+        const embarquesRenderizados = embarquesDoPedido.length > 0
+          ? embarquesDoPedido
+          : [{
+              id: `original-${pedido.id}`,
+              pedido_compra_id: pedido.id,
+              numero: pedido.numero,
+              tipo: 'Original',
+              status: 'Pendente',
+              status_recebimento: 'Pendente',
+              itens: [],
+              itens_embarcados: [],
+              observacoes: '',
+              created_date: pedido.created_date,
+            }];
+
+        return embarquesRenderizados.map((embarque) => {
+          const referenciaEmbarque = embarqueOriginal || embarque;
           const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
-          const embarqueDormindo = isNecessidadeRenderizada(embarque) && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0 && !(embarque?.itens || embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_pedida) || 0) > 0);
-          if (embarqueDormindo) return null;
+          const ehNecessidade = embarque !== referenciaEmbarque && isNecessidadeRenderizada(embarque);
 
           return {
             ...pedido,
             _virtual_key: `${pedido.id}_${embarque.id}`,
             _embarque: embarque,
             _display_code: getDisplayEmbarqueCode(pedido, embarque),
-            _display_ordinal: getDisplayEmbarqueOrdinal(embarque, pedido),
+            _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
             _display_status: getBorrowedStatus(pedido, embarque),
-            _display_valor: getDisplayValorEmbarque(pedido, embarque),
-            _display_itens: buildDisplayItensFromEmbarque(pedido, embarque),
+            _display_valor: ehNecessidade ? getDisplayValorEmbarque(pedido, embarque) : getValorTotalPedidoCalculado(pedido),
+            _display_itens: ehNecessidade ? buildDisplayItensFromEmbarque(pedido, embarque) : (pedido.itens || []).map((item) => ({
+              produto_id: item.produto_id,
+              produto_nome: item.produto_nome,
+              quantidade: Number(item.quantidade) || 0,
+              custo_unitario: Number(item.custo_unitario) || 0,
+            })),
             _display_date: getEmbarqueDisplayDate(pedido),
             _display_fornecedor: pedido.fornecedor_nome || '—',
-            _quantidade_pendente: getQuantidadePendenteNecessidade(pedido, embarque),
+            _quantidade_pendente: quantidadePendente,
           };
-        })
-        .filter(Boolean);
+        });
+      });
 
       setPedidos(pedidosComResumoReal);
       setEmbarques(cardsDeEmbarque);
