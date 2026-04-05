@@ -193,11 +193,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
-                  <div className="min-w-0 flex-1 overflow-hidden pr-2">
+                  <div className="min-w-0 flex-1 overflow-hidden" style={{maxWidth: '55%'}}>
                     <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
-                    <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight truncate">
+                    <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-1">
