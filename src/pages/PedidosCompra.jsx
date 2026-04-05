@@ -189,7 +189,7 @@ export default function PedidosCompraPage() {
           const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
           const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
           const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
-          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0;
+          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0 && !(embarque?.itens || embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_pedida) || 0) > 0);
           if (embarqueDormindo) return null;
 
           return {

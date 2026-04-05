@@ -37,7 +37,8 @@ export default function PedidoCompraDetalhe() {
       const tipoNecessidade = emb?.tipo === 'Necessidade';
       const semVidaOperacional = !emb?.transportadora_id && !emb?.transportadora_nome && !emb?.data_embarque && !emb?.eta;
       const statusDormindo = !emb?.status || emb?.status === 'Pendente';
-      return !(tipoNecessidade && semVidaOperacional && statusDormindo);
+      const temItensPendentes = (emb?.itens || emb?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_pedida) || 0) > 0);
+      return !(tipoNecessidade && semVidaOperacional && statusDormindo && !temItensPendentes);
     });
     const ultimoEmbarque = [...embarques]
       .filter((emb) => emb.status !== 'Concluído')
