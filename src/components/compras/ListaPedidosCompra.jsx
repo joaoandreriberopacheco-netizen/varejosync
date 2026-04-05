@@ -107,6 +107,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
   const isVirtualCard = !!pedido._display_status;
   const displayStatus = pedido._display_status || pedido.status;
+  const displayStatusLabel = displayStatus === 'Aguardando Liberação Financeira'
+    ? 'Aguard. Pgto'
+    : displayStatus === 'Aguardando Aprovação Financeira'
+      ? 'Aguard. Pgto'
+      : displayStatus;
 
   const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
     ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
@@ -193,8 +198,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                   </div>
-                  <span className={`max-w-[10rem] text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
-                    {displayStatus}
+                  <span className={`max-w-[8rem] text-[0.56rem] px-1.5 py-[0.2rem] rounded-full font-semibold tracking-wide whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
+                    {displayStatusLabel}
                   </span>
                 </div>
               </div>
