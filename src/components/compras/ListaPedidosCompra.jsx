@@ -160,7 +160,6 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        style={{outline:'2px solid purple'}}
         className="group relative w-full min-w-0 box-border bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
       >
         {/* Seleção overlay */}
@@ -168,10 +167,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
         )}
 
-        <div style={{outline:'2px solid orange'}} className="w-full min-w-0 px-3 py-3 overflow-hidden">
+        <div className="w-full min-w-0 px-3 py-3 overflow-hidden">
           {/* Linha principal */}
-          <div style={{outline:'2px solid blue'}} className="flex w-full min-w-0 items-start justify-between gap-1.5 overflow-hidden">
-            <div style={{outline:'2px solid green'}} className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
+          <div className="flex w-full min-w-0 items-start justify-between gap-1.5 overflow-hidden">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
                 <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
@@ -209,8 +208,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div style={{outline:'2px solid cyan'}} className="flex-none text-right w-[5.5rem] shrink-0">
-              <p className="text-[0.78rem] font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap">
+            <div className="flex-none text-right shrink-0 max-w-[7rem]">
+              <p className="text-[0.72rem] font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap">
                 {R(valorExibido)}
               </p>
               <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 mt-1 whitespace-nowrap">
@@ -289,7 +288,7 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
       }, 0);
 
   return (
-    <div style={{outline:'2px solid red'}} className={`w-full space-y-2 ${className}`}>
+    <div className={`w-full space-y-2 ${className}`}>
       <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between px-1 py-1 gap-2 group">
         <p className="text-[0.62rem] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 truncate min-w-0 flex-1">
           {label}
@@ -338,7 +337,7 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
   }
 
   return (
-    <div style={{outline:'2px solid black'}} className="space-y-5">
+    <div className="space-y-5">
       {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
         const isSpecialTransition = (
