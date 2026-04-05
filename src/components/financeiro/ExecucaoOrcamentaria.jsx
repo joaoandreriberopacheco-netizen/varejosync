@@ -262,7 +262,7 @@ export default function ExecucaoOrcamentaria() {
                 onClick={() => setAbaContas('agefin')}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${abaContas === 'agefin' ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' : 'text-gray-700 dark:text-gray-300'}`}
               >
-                Agefin
+                Atualizar boletos
               </button>
             </div>
           </div>
