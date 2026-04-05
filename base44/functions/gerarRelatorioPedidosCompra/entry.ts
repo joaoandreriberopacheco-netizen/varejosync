@@ -89,9 +89,11 @@ const getQuantidadeRelatorio = (pedido) => {
   const itens = pedido._display_itens || pedido.itens || [];
   return itens.reduce((a, i) => a + (Number(i.quantidade_embarcada) || Number(i.quantidade_pedida) || Number(i.quantidade) || 0), 0);
 };
+const getItensRelatorio = (pedido) => pedido._display_itens || pedido.itens || [];
 const getTransportadoraRelatorio = (pedido) => pedido._embarque?.transportadora_nome || 'Sem transportadora';
 const getEtaRelatorio = (pedido) => pedido._embarque?.eta || null;
 const getOrdinalRelatorio = (pedido) => pedido._display_ordinal || pedido._embarque?.numero || '#01';
+const isNecessidadeRelatorio = (pedido) => !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
 
 const custoCalculadoProduto = (produto = {}) =>
   (Number(produto.valor_compra) || 0)
@@ -380,22 +382,14 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     const drawCompacto = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
-      // Ajustar valor total no cabeçalho compacto para Pendência
-      const pedidoParaHeader = isPendencia ? {
+      const itensTela = getItensRelatorio(pedido);
+      const pedidoParaHeader = {
         ...pedido,
-        valor_total: (pedido.itens || [])
-          .filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
-          .reduce((a, i) => {
-            const cu = Number(i.custo_unitario) || Number((produtosMap[i.produto_id] || {}).valor_compra) || 0;
-            const qtdPend = (Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0);
-            return a + qtdPend * cu;
-          }, 0)
-      } : pedido;
+        valor_total: getValorRelatorio(pedido)
+      };
       drawPedidoHeaderCompacto(pedidoParaHeader);
       const embarque = pedido._embarque || (pedido.embarques_registrados || [])[0] || null;
-      const itensEfetivos = isPendencia
-        ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
-        : (pedido.itens || []);
+      const itensEfetivos = itensTela;
       doc.setFontSize(8);
       doc.setTextColor(...C.muted);
       doc.text(`Transportadora: ${safe(getTransportadoraRelatorio(pedido))}`, M + 2, y);
@@ -410,17 +404,10 @@ Deno.serve(async (req) => {
     // ════════════════════════════════════════════════════════════════════════
     const drawExpandido = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
-      let itens;
-      if (isPendencia) {
-        itens = (pedido.itens || [])
-          .map((item) => ({
-            ...item,
-            _qtdEfetiva: Math.max(0, (Number(item.quantidade) || 0) - (Number(item.quantidade_vinculada) || 0))
-          }))
-          .filter((i) => i._qtdEfetiva > 0);
-      } else {
-        itens = (pedido.itens || []).map((item) => ({ ...item, _qtdEfetiva: Number(item.quantidade) || 0 }));
-      }
+      let itens = getItensRelatorio(pedido).map((item) => ({
+        ...item,
+        _qtdEfetiva: Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0
+      }));
 
       // Cabeçalho com valor ajustado
       ensureSpace(34);
@@ -555,18 +542,10 @@ Deno.serve(async (req) => {
       const sc = getStatusColors(statusRelatorio);
 
       // Para Pendência: filtrar apenas itens com quantidade pendente
-      let itensBrutos = pedido.itens || [];
-      let itens;
-      if (isPendencia) {
-        itens = itensBrutos
-          .map((item) => {
-            const qtdPendente = (Number(item.quantidade) || 0) - (Number(item.quantidade_vinculada) || 0);
-            return { ...item, _qtdMostrada: qtdPendente, _isPendente: qtdPendente > 0 };
-          })
-          .filter((i) => i._isPendente);
-      } else {
-        itens = itensBrutos.map((item) => ({ ...item, _qtdMostrada: Number(item.quantidade) || 0 }));
-      }
+      let itens = getItensRelatorio(pedido).map((item) => ({
+        ...item,
+        _qtdMostrada: Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || Number(item.quantidade) || 0
+      }));
 
       ensureSpace(32);
 
@@ -613,7 +592,9 @@ Deno.serve(async (req) => {
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
       doc.setFontSize(6);
       doc.setTextColor(...SLATE500);
-      const countLabel = isPendencia ? `${itens.length} item(ns) pendente(s)` : `${itens.length} item(ns)`;
+      const countLabel = isNecessidadeRelatorio(pedido)
+        ? `${itens.length} item(ns) pendente(s)`
+        : `${itens.length} item(ns)`;
       doc.text(
         `${dataFmt(getDataRelatorio(pedido))}  -  ${dataFmt(getEtaRelatorio(pedido))}  ·  ${getOrdinalRelatorio(pedido)}  ·  ${countLabel}`,
         M + 3, y + 21.5

@@ -160,17 +160,17 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
+        className="group relative w-full min-w-0 max-w-full bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
       >
         {/* Seleção overlay */}
         {modoSelecao && selecionado && (
           <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
         )}
 
-        <div className="px-4 py-3.5">
+        <div className="w-full min-w-0 px-4 py-3.5 overflow-hidden">
           {/* Linha principal */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex w-full min-w-0 items-start justify-between gap-3 overflow-hidden">
+            <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
                 <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
@@ -188,17 +188,17 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 cfg.dot
               }`} />
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
+                  <div className="min-w-0 flex-1 overflow-hidden pr-1">
+                    <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
                     <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight truncate">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                   </div>
-                  <span className={`max-w-[8rem] text-[0.56rem] px-1.5 py-[0.2rem] rounded-full font-semibold tracking-wide whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
+                  <span className={`max-w-[5.5rem] shrink text-[0.5rem] px-1 py-[0.1rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
                     {displayStatusLabel}
                   </span>
                 </div>
