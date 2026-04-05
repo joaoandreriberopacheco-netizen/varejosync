@@ -77,10 +77,11 @@ function calcularResumoItensPedido(pedido, embarques) {
   }
 
   for (const embarque of embarques || []) {
-    for (const item of (embarque.itens || embarque.itens_embarcados || [])) {
+    for (const item of getItensDoEmbarque(embarque)) {
       const produtoResolvidoId = item.produto_id;
       if (produtoResolvidoId && resumo.has(produtoResolvidoId)) {
-        resumo.get(produtoResolvidoId).quantidade_recebida += normalizarNumero(item.quantidade_recebida);
+        const quantidadeRecebida = normalizarNumero(item.quantidade_recebida || item.quantidade_embarcada);
+        resumo.get(produtoResolvidoId).quantidade_recebida += quantidadeRecebida;
       }
     }
   }
@@ -93,10 +94,11 @@ function extrairItensOrfaosDoRecebimento(pedido, embarques) {
   const recebidos = new Map();
 
   for (const embarque of embarques || []) {
-    for (const item of (embarque.itens || embarque.itens_embarcados || [])) {
+    for (const item of getItensDoEmbarque(embarque)) {
       const produtoId = item.produto_id;
       if (!produtoId) continue;
-      recebidos.set(produtoId, normalizarNumero(recebidos.get(produtoId)) + normalizarNumero(item.quantidade_recebida));
+      const quantidadeRecebida = normalizarNumero(item.quantidade_recebida || item.quantidade_embarcada);
+      recebidos.set(produtoId, normalizarNumero(recebidos.get(produtoId)) + quantidadeRecebida);
     }
   }
 
@@ -187,7 +189,6 @@ Deno.serve(async (req) => {
           fornecedor_id: pedido.fornecedor_id,
           fornecedor_nome: pedido.fornecedor_nome,
           numero: String((embarques?.length || 0) + 1).padStart(2, '0'),
-          codigo_exibicao: getProximoCodigoEmbarque(pedido.numero, embarques),
           tipo: 'Necessidade',
           status: 'Pendente',
           status_recebimento: 'Pendente',

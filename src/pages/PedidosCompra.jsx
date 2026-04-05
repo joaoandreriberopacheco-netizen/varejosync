@@ -17,7 +17,11 @@ const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const getEmbarqueSuffixIndex = (embarque) => {
+const getEmbarqueSuffixIndex = (embarque, pedido) => {
+  const embarquesDoPedido = (pedido?._embarques || []).slice().sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+  const idxPorOrdem = embarquesDoPedido.findIndex((item) => item.id === embarque?.id);
+  if (idxPorOrdem >= 0) return idxPorOrdem;
+
   const numero = String(embarque?.numero || '').trim();
   const match = numero.match(/(\d+)$/);
   if (match) return Math.max(0, Number(match[1]) - 1);
@@ -26,14 +30,14 @@ const getEmbarqueSuffixIndex = (embarque) => {
   return idx >= 0 ? idx : 0;
 };
 
-const getEmbarqueSuffix = (embarque) => LETTERS[getEmbarqueSuffixIndex(embarque)] || 'A';
+const getEmbarqueSuffix = (embarque, pedido) => LETTERS[getEmbarqueSuffixIndex(embarque, pedido)] || 'A';
 
 const getDisplayEmbarqueCode = (pedido, embarque) => {
   const baseCode = pedido?.numero || '';
-  return `${baseCode} - ${getEmbarqueSuffix(embarque)}`;
+  return `${baseCode} - ${getEmbarqueSuffix(embarque, pedido)}`;
 };
 
-const getDisplayEmbarqueOrdinal = (embarque) => `#${String(getEmbarqueSuffixIndex(embarque) + 1).padStart(2, '0')}`;
+const getDisplayEmbarqueOrdinal = (embarque, pedido) => `#${String(getEmbarqueSuffixIndex(embarque, pedido) + 1).padStart(2, '0')}`;
 
 const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens || embarque?.itens_embarcados) && (embarque.itens || embarque.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
@@ -197,7 +201,7 @@ export default function PedidosCompraPage() {
             _virtual_key: `${pedido.id}_${embarque.id}`,
             _embarque: embarque,
             _display_code: getDisplayEmbarqueCode(pedido, embarque),
-            _display_ordinal: getDisplayEmbarqueOrdinal(embarque),
+            _display_ordinal: getDisplayEmbarqueOrdinal(embarque, pedido),
             _display_status: getBorrowedStatus(pedido, embarque),
             _display_valor: getDisplayValorEmbarque(pedido, embarque),
             _display_itens: buildDisplayItensFromEmbarque(pedido, embarque),
