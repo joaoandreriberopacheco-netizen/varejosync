@@ -22,7 +22,11 @@ export default function AgefinImportador({ onSuccess }) {
     setError(null);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFile });
-      setFile(selectedFile);
+      setFile({
+        original: selectedFile,
+        url: file_url,
+        name: selectedFile.name,
+      });
 
       const extracted = await base44.integrations.Core.InvokeLLM({
         file_urls: [file_url],
@@ -141,24 +145,46 @@ Campos a interpretar do documento:
             .find((conta) => (conta.data_vencimento || '').slice(0, 7) === mesReferencia)
         : null;
 
+      let recorrenteFinal = recorrenteVinculado;
+
+      if (!recorrenteFinal && selectedNatureza === 'Recorrente') {
+        recorrenteFinal = await base44.entities.ContaRecorrente.create({
+          nome_despesa: extractedData.descricao,
+          terceiro_id: 'importado-manualmente',
+          terceiro_nome: extractedData.terceiro_nome || 'Beneficiário não identificado',
+          categoria_financeira_id: 'importacao-pendente',
+          categoria_nome: 'Importação pendente',
+          valor_previsto: extractedData.valor,
+          frequencia: selectedRecorrencia,
+          dia_vencimento: Number((extractedData.data_vencimento || '').slice(8, 10)) || 1,
+          observacoes: extractedData.observacoes || '',
+          ativa: true,
+        });
+      }
+
+      const contaDoMesFinal = recorrenteFinal
+        ? (await base44.entities.ContaPrevista.filter({ conta_recorrente_id: recorrenteFinal.id }, '-data_vencimento', 50))
+            .find((conta) => (conta.data_vencimento || '').slice(0, 7) === mesReferencia)
+        : contaExistenteDoMes;
+
       const payload = {
         tipo: 'Despesa',
-        descricao: recorrenteVinculado?.nome_despesa || extractedData.descricao,
-        terceiro_id: recorrenteVinculado?.terceiro_id || 'importado-manualmente',
-        terceiro_nome: recorrenteVinculado?.terceiro_nome || extractedData.terceiro_nome || 'Beneficiário não identificado',
-        categoria_financeira_id: recorrenteVinculado?.categoria_financeira_id || 'importacao-pendente',
-        categoria_nome: recorrenteVinculado?.categoria_nome || 'Importação pendente',
-        categoria: recorrenteVinculado?.categoria_nome || 'Importação pendente',
+        descricao: recorrenteFinal?.nome_despesa || extractedData.descricao,
+        terceiro_id: recorrenteFinal?.terceiro_id || 'importado-manualmente',
+        terceiro_nome: recorrenteFinal?.terceiro_nome || extractedData.terceiro_nome || 'Beneficiário não identificado',
+        categoria_financeira_id: recorrenteFinal?.categoria_financeira_id || 'importacao-pendente',
+        categoria_nome: recorrenteFinal?.categoria_nome || 'Importação pendente',
+        categoria: recorrenteFinal?.categoria_nome || 'Importação pendente',
         valor: extractedData.valor,
         data_vencimento: extractedData.data_vencimento,
-        natureza: recorrenteVinculado ? 'Recorrente' : selectedNatureza,
+        natureza: recorrenteFinal ? 'Recorrente' : selectedNatureza,
         parcela_numero: selectedNatureza === 'Parcelado' && extractedData.parcela_numero ? Number(extractedData.parcela_numero) : null,
         periodo_referencia: extractedData.periodo_referencia || null,
-        status: 'Boleto Anexado',
+        status: file?.url ? 'Boleto Anexado' : 'Pendente',
         status_conciliacao: 'N/A',
-        boleto_url: file?.name || null,
+        boleto_url: file?.url || null,
         referencia_tipo: 'Manual',
-        conta_recorrente_id: recorrenteVinculado?.id || null,
+        conta_recorrente_id: recorrenteFinal?.id || null,
         observacoes: [
           extractedData.observacoes ? `Instruções: ${extractedData.observacoes}` : null,
           extractedData.linha_digitavel ? `Linha digitável: ${extractedData.linha_digitavel}` : null,
@@ -167,8 +193,8 @@ Campos a interpretar do documento:
         ].filter(Boolean).join('\n'),
       };
 
-      const contaCriada = contaExistenteDoMes
-        ? await base44.entities.ContaPrevista.update(contaExistenteDoMes.id, payload)
+      const contaCriada = contaDoMesFinal
+        ? await base44.entities.ContaPrevista.update(contaDoMesFinal.id, payload)
         : await base44.entities.ContaPrevista.create(payload);
 
       resetState();
