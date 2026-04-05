@@ -85,7 +85,7 @@ const getBorrowedStatus = (pedido, embarque) => {
 
   if (!ehNecessidade && !temDespachoVinculado) {
     if (pedido?.status === 'Aguardando Aprovação Financeira' || pedido?.status === 'Aguardando Liberação') {
-      return 'Aguardando Aprovação Financeira';
+      return 'Aguardando Liberação Financeira';
     }
 
     if (pedido?.status === 'Aprovado') {

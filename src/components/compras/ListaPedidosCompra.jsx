@@ -20,6 +20,7 @@ const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
   'Aguardando': { dot: 'bg-red-500 dark:bg-red-500', pill: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' },
   'Aguardando Aprovação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
+  'Aguardando Liberação Financeira': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aguardando Liberação': { dot: 'bg-amber-400 dark:bg-amber-400', pill: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   'Aprovado': { dot: 'bg-emerald-400 dark:bg-emerald-400', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
@@ -185,8 +186,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.02em]">
-                      {String(pedido._display_code || pedido.numero || '').replace(' - ', '-')}
+                    <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
+                      {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
                     <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight truncate">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
