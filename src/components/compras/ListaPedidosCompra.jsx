@@ -289,12 +289,12 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
 
   return (
     <div className={`w-full space-y-2 ${className}`}>
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-1 py-1 group">
-        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+      <button onClick={() => setOpen(o => !o)} className="w-full min-w-0 flex items-center justify-between px-1 py-1 gap-2 group">
+        <p className="text-[0.62rem] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 truncate min-w-0 flex-1">
           {label}
         </p>
-        <div className="flex items-center gap-2">
-          <span className="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400">{R(valorTotal)}</span>
+        <div className="flex items-center gap-1.5 flex-none shrink-0">
+          <span className="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap">{R(valorTotal)}</span>
           <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
         </div>
       </button>
