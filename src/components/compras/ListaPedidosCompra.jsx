@@ -167,10 +167,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
         )}
 
-        <div className="w-full min-w-0 px-4 py-3.5 overflow-hidden">
+        <div className="w-full min-w-0 px-3 py-3 overflow-hidden">
           {/* Linha principal */}
-          <div className="flex w-full min-w-0 items-start justify-between gap-3 overflow-hidden">
-            <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
+          <div className="flex w-full min-w-0 items-start justify-between gap-2 overflow-hidden">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
                 <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
@@ -188,7 +188,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 cfg.dot
               }`} />
 
-              <div className="min-w-0 flex-1 overflow-hidden max-w-[calc(100%-4.75rem)]">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
                   <div className="min-w-0 flex-1 overflow-hidden pr-1">
                     <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
@@ -208,11 +208,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right min-w-[4.5rem]">
-              <p className="text-[0.95rem] font-bold text-gray-900 dark:text-white leading-none">
+            <div className="flex-none text-right min-w-[4rem] max-w-[4.6rem] shrink-0">
+              <p className="text-[0.9rem] font-bold text-gray-900 dark:text-white leading-none break-words">
                 {R(valorExibido)}
               </p>
-              <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 mt-1">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>

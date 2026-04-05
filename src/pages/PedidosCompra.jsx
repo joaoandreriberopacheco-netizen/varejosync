@@ -503,8 +503,9 @@ export default function PedidosCompraPage() {
   const pedidosPagosPendentes = useMemo(() => {
     return filtrados.filter((pedido) => {
       const aprovadoFinanceiro = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado' || pedido._display_status === 'Aprovado';
+      const ehNecessidade = !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
       const aindaNaoRecebido = pedido._display_status !== 'Concluído';
-      const aindaNaoEhAguardandoPagamento = !['Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aguardando'].includes(pedido._display_status);
+      const aindaNaoEhAguardandoPagamento = ehNecessidade || !['Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aguardando'].includes(pedido._display_status);
       return aprovadoFinanceiro && aindaNaoRecebido && aindaNaoEhAguardandoPagamento;
     });
   }, [filtrados]);
