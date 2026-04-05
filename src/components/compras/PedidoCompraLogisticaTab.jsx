@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Truck, ChevronDown, ChevronUp, Edit3, Plus, CheckCircle2, Clock, Handshake, Trash2 } from 'lucide-react';
+import { Truck, ChevronDown, ChevronUp, Edit3, Plus, CheckCircle2, Clock, Handshake, Trash2, CalendarDays } from 'lucide-react';
 import AcordoFinanceiroOrfaoDialog from './AcordoFinanceiroOrfaoDialog';
 import InformarEmbarque from './InformarEmbarque';
 import { format } from 'date-fns';
@@ -23,6 +23,9 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editandoEta, setEditandoEta] = useState(false);
+  const [etaValue, setEtaValue] = useState('');
+  const [salvandoEta, setSalvandoEta] = useState(false);
   const parseValidDate = (value) => {
     if (!value) return null;
     const parsed = new Date(value);
@@ -43,6 +46,21 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
     onDelete?.();
   };
 
+  const handleEditarEta = () => {
+    const etaAtual = embarque.eta ? String(embarque.eta).slice(0, 10) : '';
+    setEtaValue(etaAtual);
+    setEditandoEta(true);
+  };
+
+  const handleSalvarEta = async () => {
+    if (!etaValue) { setEditandoEta(false); return; }
+    setSalvandoEta(true);
+    await base44.entities.Embarque.update(embarque.id, { eta: etaValue });
+    setSalvandoEta(false);
+    setEditandoEta(false);
+    onDelete?.(); // recarrega
+  };
+
   return (
     <div className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
       {/* Header do card */}
@@ -56,7 +74,20 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
           </p>
           <p className="text-[10px] text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
             {dataEmb && <span>Emb: {format(dataEmb, 'dd/MM/yy')}</span>}
-            {eta && <span className="text-teal-500">ETA: {format(eta, 'dd/MM/yy HH:mm', { locale: ptBR })}</span>}
+            {eta && !editandoEta && <span className="text-teal-500">ETA: {format(eta, 'dd/MM/yy HH:mm', { locale: ptBR })}</span>}
+            {editandoEta && (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="date"
+                  value={etaValue}
+                  onChange={e => setEtaValue(e.target.value)}
+                  className="text-[0.75rem] border border-gray-300 dark:border-gray-500 rounded-lg px-1 py-0 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-teal-400"
+                  autoFocus
+                />
+                <button onClick={handleSalvarEta} disabled={salvandoEta} className="text-emerald-500 font-bold text-xs">{salvandoEta ? '…' : '✓'}</button>
+                <button onClick={() => setEditandoEta(false)} className="text-gray-400 text-xs">✕</button>
+              </div>
+            )}
             {embarque.volumes && <span>{embarque.volumes}</span>}
             {embarque.peso_kg > 0 && <span>{embarque.peso_kg} kg</span>}
             <span>{statusRecebimento}</span>
@@ -64,14 +95,19 @@ function EmbarqueCard({ embarque, nivel, pedido, onEdit, onDelete }) {
           </p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          {podeExcluir && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowDeleteConfirm(true)}>
-              <Trash2 className="w-3.5 h-3.5 text-red-400" />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
-            <Edit3 className="w-3.5 h-3.5 text-gray-400" />
-          </Button>
+           {!editandoEta && (
+             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleEditarEta} title="Editar ETA">
+               <CalendarDays className="w-3.5 h-3.5 text-teal-400" />
+             </Button>
+           )}
+           {podeExcluir && (
+             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowDeleteConfirm(true)}>
+               <Trash2 className="w-3.5 h-3.5 text-red-400" />
+             </Button>
+           )}
+           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(embarque)}>
+             <Edit3 className="w-3.5 h-3.5 text-gray-400" />
+           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
           </Button>
