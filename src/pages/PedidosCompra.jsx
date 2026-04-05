@@ -511,7 +511,7 @@ export default function PedidosCompraPage() {
   }, [filtrados]);
 
   const valorTotal = useMemo(() => {
-    return pedidosVisiveisPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
+    return pedidosVisiveisPendentes.reduce((acc, pedido) => acc + (pedido._display_valor ?? pedido.valor_total ?? 0), 0);
   }, [pedidosVisiveisPendentes]);
 
   const valorPagoNaoEntregue = useMemo(() => {
