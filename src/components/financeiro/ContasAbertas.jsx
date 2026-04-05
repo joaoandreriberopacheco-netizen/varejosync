@@ -125,8 +125,8 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
       {/* Ícone tipo */}
       <span className="bg-gray-100 dark:bg-gray-700 rounded-xl flex-none w-8 h-8 flex items-center justify-center">
         {isR
-          ? <ArrowDownLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-          : <ArrowUpRight  className={`w-3.5 h-3.5 ${isVencida ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'}`} />
+          ? <ArrowDownLeft className="w-3.5 h-3.5 text-green-500 dark:text-green-400" />
+          : <ArrowUpRight className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
         }
       </span>
 
@@ -150,8 +150,8 @@ function ContaRow({ l, onPagar, onClick, emSelecao, selecionado, onToggleSelecio
 
       {/* Valor + badge status */}
       <span className="flex-none flex flex-col items-end gap-0.5 pl-1">
-        <span className={`text-[0.82rem] font-bold whitespace-nowrap ${isVencida ? 'text-red-400 dark:text-red-500' : 'text-gray-700 dark:text-gray-200'}`}>
-          {isR ? '+' : '−'}{R(val)}
+        <span className="text-[0.82rem] font-bold whitespace-nowrap text-gray-700 dark:text-gray-200">
+          <span className={isR ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{isR ? '+' : '−'}</span>{R(val)}
         </span>
         {isPago ? (
           <span className="flex items-center gap-0.5 text-[0.6rem] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md px-2 py-0.5 font-medium">

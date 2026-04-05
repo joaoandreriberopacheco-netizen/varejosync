@@ -49,11 +49,11 @@ function LancRow({ l, onClick }) {
     icon = <ArrowRightLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />;
     valColor = 'text-gray-500 dark:text-gray-400';
   } else if (isR) {
-    icon = <ArrowDownLeft className={`w-3.5 h-3.5 ${pago ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />;
-    valColor = pago ? 'text-gray-800 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200';
+    icon = <ArrowDownLeft className="w-3.5 h-3.5 text-green-500 dark:text-green-400" />;
+    valColor = 'text-gray-700 dark:text-gray-200';
   } else {
-    icon = <ArrowUpRight className={`w-3.5 h-3.5 ${pago ? 'text-red-500' : vencido ? 'text-red-400' : 'text-gray-300 dark:text-gray-600'}`} />;
-    valColor = pago ? 'text-red-500 dark:text-red-400' : vencido ? 'text-red-400 dark:text-red-500' : 'text-gray-700 dark:text-gray-200';
+    icon = <ArrowUpRight className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />;
+    valColor = 'text-gray-700 dark:text-gray-200';
   }
 
   if (cancelado) {
@@ -90,7 +90,7 @@ function LancRow({ l, onClick }) {
       </span>
       <span className="flex-none flex flex-col items-end gap-0.5 pl-1">
         <span className={`text-[0.82rem] font-bold whitespace-nowrap ${valColor}`}>
-          {cancelado ? '—' : (isT ? '' : isR ? '+' : '−') + R(Math.abs(l.valor || 0))}
+          {cancelado ? '—' : isT ? R(Math.abs(l.valor || 0)) : <><span className={isR ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{isR ? '+' : '−'}</span>{R(Math.abs(l.valor || 0))}</>}
         </span>
         {conc === 'Pendente' && <Clock className="w-2.5 h-2.5 text-gray-400" />}
         {conc === 'Discrepância' && <AlertCircle className="w-2.5 h-2.5 text-gray-500" />}
