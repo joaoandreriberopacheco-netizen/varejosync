@@ -191,7 +191,7 @@ export default function PedidosCompraPage() {
   const [embarques, setEmbarques] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');
-  const [statusSel, setStatusSel] = useState([]);
+  const [statusSel, setStatusSel] = useState(['__nao_concluido__']);
   const [fornecedorSel, setFornecedorSel] = useState([]);
   const [tagsSel, setTagsSel] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
@@ -216,9 +216,9 @@ export default function PedidosCompraPage() {
     setLoading(true);
     try {
       const [pcs, embarquesDb, fns] = await Promise.all([
-        base44.entities.PedidoCompra.list('-created_date'),
-        base44.entities.Embarque.list('-created_date'),
-        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }),
+        base44.entities.PedidoCompra.list('-created_date', 300),
+        base44.entities.Embarque.list('-created_date', 600),
+        base44.entities.Terceiro.filter({ tipo: ['Fornecedor', 'Ambos'] }, 'nome', 300),
       ]);
 
       const pedidoMap = new Map(pcs.map((pedido) => [pedido.id, pedido]));
@@ -448,6 +448,8 @@ export default function PedidosCompraPage() {
       const embarque = p._embarque;
 
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower) || embarque?.transportadora_nome?.toLowerCase().includes(searchLower))) return false;
+
+      if (statusSel.includes('__nao_concluido__') && p._display_status === 'Concluído') return false;
 
       if (statusExplicitos.length > 0) {
         const matchPai = statusPaiSel.includes(p.status) || statusPaiSel.includes(p._display_status);

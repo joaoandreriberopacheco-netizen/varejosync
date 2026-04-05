@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpreadsheet, Smartphone } from 'lucide-react';
+import { Plus, FileText, X, Download, FileBarChart2, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2 } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 
@@ -9,6 +9,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
 
   const handleGerarRelatorio = async (version) => {
     setGerando(version);
+    toast.loading('Gerando relatório...', { id: 'gerando-relatorio' });
     try {
       const resposta = await gerarRelatorioPedidosCompra({
         pedidos,
@@ -26,10 +27,10 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       a.click();
       URL.revokeObjectURL(url);
 
-      toast.success(`Relatório ${version} gerado com sucesso`);
+      toast.success(`Relatório ${version} gerado com sucesso`, { id: 'gerando-relatorio' });
       setIsExpanded(false);
     } catch (error) {
-      toast.error('Erro ao gerar relatório');
+      toast.error('Erro ao gerar relatório', { id: 'gerando-relatorio' });
       console.error(error);
     } finally {
       setGerando('');
@@ -134,7 +135,9 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
               animationDelay: `${idx * 30}ms`,
             }}
           >
-            {action.icon}
+            {gerando === (action.label === 'PDF compacto' ? 'compacta' : action.label === 'PDF expandido' ? 'expandida' : action.label === 'PDF mobile' ? 'expandida_mobile' : action.label === 'Mobile com alma' ? 'mobile_com_alma' : '')
+              ? <Loader2 className="w-5 h-5 animate-spin" />
+              : action.icon}
             {action.label}
           </button>
         ))}

@@ -143,12 +143,12 @@ Deno.serve(async (req) => {
 
     const isMobile = version === 'expandida_mobile';
 
-    // Carregar produtos para lookup de custo/venda
+    // Carregar apenas produtos realmente usados no relatório
     const produtoIds = [...new Set(
-      pedidos.flatMap((p) => (p.itens || []).map((i) => i.produto_id).filter(Boolean))
+      pedidos.flatMap((p) => (p._display_itens || p.itens || []).map((i) => i.produto_id).filter(Boolean))
     )];
-    const produtos = produtoIds.length ? await base44.asServiceRole.entities.Produto.list() : [];
-    const produtosMap = Object.fromEntries((produtos || []).map((p) => [p.id, p]));
+    const produtos = produtoIds.length ? await Promise.all(produtoIds.map((id) => base44.asServiceRole.entities.Produto.get(id).catch(() => null))) : [];
+    const produtosMap = Object.fromEntries((produtos || []).filter(Boolean).map((p) => [p.id, p]));
 
     // ── Criação do documento ─────────────────────────────────────────────────
     const MOBILE_W = 100; // mm — largura estilo smartphone

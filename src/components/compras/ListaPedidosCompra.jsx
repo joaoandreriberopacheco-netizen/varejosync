@@ -198,21 +198,23 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                   </div>
-                  <span className={`max-w-[5.5rem] shrink text-[0.5rem] px-1 py-[0.1rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
-                    {displayStatusLabel}
-                  </span>
                 </div>
               </div>
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right">
+            <div className="flex-none text-right min-w-[4.5rem]">
               <p className="text-[0.95rem] font-bold text-gray-900 dark:text-white leading-none">
                 {R(valorExibido)}
               </p>
               <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
+              <div className="mt-1.5 flex justify-end">
+                <span className={`max-w-[5.1rem] text-[0.48rem] px-1 py-[0.08rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
+                  {displayStatusLabel}
+                </span>
+              </div>
             </div>
           </div>
 
