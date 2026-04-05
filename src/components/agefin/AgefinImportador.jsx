@@ -232,8 +232,8 @@ Campos a interpretar do documento:
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-2 touch-pan-y">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 pb-[calc(10rem+env(safe-area-inset-bottom))] pt-2 touch-pan-y [-webkit-overflow-scrolling:touch]">
         <div className="space-y-5">
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
             <div className="flex items-start gap-3">
