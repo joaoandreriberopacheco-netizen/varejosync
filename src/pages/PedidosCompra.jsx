@@ -599,12 +599,11 @@ export default function PedidosCompraPage() {
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header */}
       <div className="pb-3 mb-1 flex items-start justify-between gap-3">
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 min-w-0 overflow-hidden">
           <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Embarques</p>
-          <p className="text-xs text-gray-400">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xs text-gray-400 break-words">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-400 break-words">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
-        <PedidosCompraOrganizer
           groupBy={groupBy}
           sortOrder={sortOrder}
           onGroupByChange={setGroupBy}
