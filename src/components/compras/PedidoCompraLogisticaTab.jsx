@@ -246,7 +246,7 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
             onClick={handleNovoEmbarque}
             className="h-8 px-3 text-xs border-0 shadow-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
             <Plus className="w-3.5 h-3.5 mr-1" />
-            Informar Embarque
+            Informar Despacho
           </Button>
         </div>
       </div>

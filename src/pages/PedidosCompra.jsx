@@ -35,7 +35,7 @@ const getDisplayEmbarqueCode = (pedido, embarque) => {
 
 const getDisplayEmbarqueOrdinal = (embarque) => `#${String(getEmbarqueSuffixIndex(embarque) + 1).padStart(2, '0')}`;
 
-const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens) && embarque.itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
+const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens || embarque?.itens_embarcados) && (embarque.itens || embarque.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
 const getQuantidadePendenteNecessidade = (pedido, embarque) => {
   if (embarque?.tipo !== 'Necessidade') return 0;
@@ -56,7 +56,7 @@ const getBorrowedStatus = (pedido, embarque) => {
   const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
   const precisaPreenchimento = embarque.tipo === 'Necessidade' && !temTransporte && !temItensAssociados && quantidadePendente > 0;
 
-  if (statusRecebimento === 'Recebido OK' || embarque.status === 'Concluído') {
+  if (statusRecebimento === 'Recebido OK' || statusRecebimento === 'Com Divergência' || embarque.status === 'Concluído') {
     return 'Concluído';
   }
 
@@ -82,7 +82,7 @@ const getBorrowedStatus = (pedido, embarque) => {
 const getEmbarqueDisplayDate = (pedido) => pedido?.data_aprovacao_financeira || pedido?.data_emissao || pedido?.created_date;
 
 const buildDisplayItensFromEmbarque = (pedido, embarque) => {
-  return (embarque?.itens || []).map((item) => {
+  return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
     const quantidade = Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
     return {
@@ -147,7 +147,7 @@ export default function PedidosCompraPage() {
         const embarquesDoPedido = embarquesPorPedido[pedido.id] || [];
         const totalPedido = Number(pedido.valor_total) || 0;
         const valorEmbarcado = embarquesDoPedido.reduce((acc, embarque) => {
-          const valorEmbarque = (embarque.itens || []).reduce((itemAcc, item) => {
+          const valorEmbarque = (embarque.itens || embarque.itens_embarcados || []).reduce((itemAcc, item) => {
             const custoUnitario = Number((pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id)?.custo_unitario) || 0;
             return itemAcc + ((Number(item.quantidade_embarcada) || 0) * custoUnitario);
           }, 0);

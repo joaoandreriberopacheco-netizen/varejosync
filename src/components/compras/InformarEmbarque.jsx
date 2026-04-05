@@ -352,7 +352,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
           <div className="flex items-center gap-2 px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
             <Truck className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 font-quicksand flex-1">
-              {isEdicao ? 'Editar Embarque' : 'Informar Embarque'}
+              {isEdicao ? 'Editar Despacho' : 'Informar Despacho'}
               <span className="text-gray-400 font-normal"> — {pedido.numero}</span>
             </h2>
           </div>
@@ -530,7 +530,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
             </Button>
             <Button onClick={handleSalvar} disabled={loading}
               className="h-12 px-8 rounded-xl border-0 shadow-sm bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 text-white min-w-[160px]">
-              {loading ? 'Salvando...' : isEdicao ? 'Salvar Edição' : 'Registrar Embarque'}
+              {loading ? 'Salvando...' : isEdicao ? 'Salvar Despacho' : 'Registrar Despacho'}
             </Button>
           </div>
 

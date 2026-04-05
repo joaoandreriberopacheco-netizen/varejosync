@@ -8,6 +8,15 @@ function hasItensAssociados(embarque) {
   return (embarque?.itens || embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
 }
 
+function getItensDoEmbarque(embarque) {
+  return embarque?.itens || embarque?.itens_embarcados || [];
+}
+
+function getProximoCodigoEmbarque(pedidoNumero, embarques) {
+  const letra = String.fromCharCode(65 + (embarques?.length || 0));
+  return `${pedidoNumero}-${letra}`;
+}
+
 function calcularPercentualPorStatus(pedido, embarques) {
   const itensPedido = new Map((pedido.itens || []).map((item) => [item.produto_id, Number(item.quantidade) || 0]));
   const totalPedido = Array.from(itensPedido.values()).reduce((acc, qtd) => acc + qtd, 0);
@@ -130,7 +139,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
 
-    const embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
+    let embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
     const embarquesComItensAssociados = embarques.filter((embarque) => hasItensAssociados(embarque));
     const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedido.id });
     const resumoItens = calcularResumoItensPedido(pedido, embarquesComItensAssociados);
@@ -140,9 +149,61 @@ Deno.serve(async (req) => {
     const haItensOrfaos = itensOrfaosRecebimento.length > 0;
     const temPendenciaReal = temEmbarqueInformado && haItensOrfaos;
     const temDivergencia = embarquesComItensAssociados.some((embarque) =>
-      (embarque.itens || embarque.itens_embarcados || []).some((item) => item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma')
+      getItensDoEmbarque(embarque).some((item) => item.divergencia_tipo && item.divergencia_tipo !== 'Nenhuma')
     );
     const pendenciaResolvidaFinanceiramente = temPendenciaReal && calcularPendenciasResolvidasFinanceiramente(pedido, lancamentos);
+
+    const itensNecessidade = itensOrfaosRecebimento.map(([produtoId, quantidadePedida]) => {
+      const itemPedido = (pedido.itens || []).find((item) => item.produto_id === produtoId);
+      const quantidadeRecebida = resumoItens.find((item) => item.produto_id === produtoId)?.quantidade_recebida || 0;
+      return {
+        produto_id: produtoId,
+        produto_nome: itemPedido?.produto_nome || '',
+        quantidade_pedida: quantidadePedida,
+        quantidade_embarcada: Math.max(0, quantidadePedida - quantidadeRecebida),
+        quantidade_recebida: 0,
+        unidade_medida: itemPedido?.unidade_medida || ''
+      };
+    }).filter((item) => item.quantidade_embarcada > 0);
+
+    const embarquesNecessidade = embarques.filter((embarque) => embarque.tipo === 'Necessidade');
+    const necessidadeAtiva = embarquesNecessidade.find((embarque) => {
+      const statusRecebimento = embarque.status_recebimento;
+      return statusRecebimento !== 'Recebido OK' && embarque.status !== 'Concluído';
+    });
+
+    if (itensNecessidade.length > 0) {
+      if (necessidadeAtiva) {
+        await base44.entities.Embarque.update(necessidadeAtiva.id, {
+          status: 'Pendente',
+          status_recebimento: 'Pendente',
+          itens: itensNecessidade,
+          observacoes: necessidadeAtiva.observacoes || 'Embarque de necessidade criado automaticamente para itens pendentes.'
+        });
+      } else {
+        await base44.entities.Embarque.create({
+          pedido_compra_id: pedido.id,
+          pedido_compra_numero: pedido.numero,
+          fornecedor_id: pedido.fornecedor_id,
+          fornecedor_nome: pedido.fornecedor_nome,
+          numero: String((embarques?.length || 0) + 1).padStart(2, '0'),
+          codigo_exibicao: getProximoCodigoEmbarque(pedido.numero, embarques),
+          tipo: 'Necessidade',
+          status: 'Pendente',
+          status_recebimento: 'Pendente',
+          observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
+          itens: itensNecessidade
+        });
+      }
+    } else if (necessidadeAtiva) {
+      await base44.entities.Embarque.update(necessidadeAtiva.id, {
+        status: 'Concluído',
+        status_recebimento: 'Recebido OK',
+        itens: getItensDoEmbarque(necessidadeAtiva)
+      });
+    }
+
+    embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
 
     let statusRecebimentoGeral = 'Pendente';
     let statusPedido = pedido.status;
