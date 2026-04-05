@@ -9,7 +9,7 @@ export default function AgefinImportador({ onSuccess }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
-  const [selectedNatureza, setSelectedNatureza] = useState(null);
+  const [selectedNatureza, setSelectedNatureza] = useState('Único');
   const [error, setError] = useState(null);
 
   const handleFileUpload = async (e) => {
@@ -23,40 +23,57 @@ export default function AgefinImportador({ onSuccess }) {
       setFile(selectedFile);
 
       const extracted = await base44.integrations.Core.InvokeLLM({
-        model: 'claude_sonnet_4_6',
         file_urls: [file_url],
-        prompt: `Extraia os dados principais deste documento brasileiro de cobrança com OCR visual de alta precisão. Priorize boletos, faturas de energia, água, internet, DAR, carnês e contas similares.
+        prompt: `Leia visualmente este documento brasileiro de cobrança e extraia dados REAIS do conteúdo do documento, nunca do nome do arquivo.
 
-Regras:
-- Leia o conteúdo visual do arquivo com máxima precisão.
-- Identifique o beneficiário/emissor principal.
-- Identifique a descrição mais útil para uso financeiro humano.
-- Extraia o valor final do documento a pagar.
-- Extraia a data de vencimento real.
-- Se houver múltiplas datas, use a data explicitamente ligada a vencimento.
-- Se houver múltiplos valores, use o valor final do documento/cobrança.
-- Se não tiver certeza absoluta em algum campo, retorne null nesse campo em vez de inventar.
-- Para descrição, prefira algo como "Energia - Amazonas Energia" ou "Boleto - Nome do Beneficiário".
-- Retorne a data sempre em formato YYYY-MM-DD.
-- Retorne o valor como número decimal, sem símbolo monetário.
-- Retorne também um resumo_texto curto com os trechos mais relevantes encontrados no documento.`,
+Regras obrigatórias:
+- Ignore completamente o nome do arquivo.
+- Leia o PDF/imagem como OCR visual completo.
+- Extraia apenas o que estiver claramente visível no documento.
+- Se um campo não existir, retorne null.
+- Não invente valores.
+- Se houver vários valores, use o valor final a pagar, valor total do documento ou valor do boleto.
+- Se houver várias datas, use a data explicitamente associada a vencimento.
+- A descrição deve ser útil para um lançamento financeiro humano.
+- A descrição deve preferir o conceito do pagamento + beneficiário, por exemplo: "Energia elétrica - Amazonas Energia", "FGTS Digital - Ministério do Trabalho", "DAR IPVA - SEFAZ AM", "Taxa ambiental - IBAMA".
+- Identifique também a natureza sugerida: use "Único" por padrão; use "Parcelado" apenas quando houver parcela explícita; use "Recorrente" apenas quando o documento indicar cobrança mensal/competência recorrente e isso estiver claro.
+- Retorne data em YYYY-MM-DD.
+- Retorne valor como número decimal sem símbolo monetário.
+
+Campos a interpretar do documento:
+- beneficiario
+- data_vencimento
+- valor_pagamento
+- competencia
+- numero_parcela
+- descricao
+- natureza_sugerida
+- confianca_leitura: alta, media ou baixa`,
         response_json_schema: {
           type: 'object',
           properties: {
             descricao: { type: ['string', 'null'] },
-            valor: { type: ['number', 'null'] },
+            valor_pagamento: { type: ['number', 'null'] },
             data_vencimento: { type: ['string', 'null'] },
-            fornecedor: { type: ['string', 'null'] },
-            documento_tipo: { type: ['string', 'null'] },
-            resumo_texto: { type: ['string', 'null'] }
+            beneficiario: { type: ['string', 'null'] },
+            competencia: { type: ['string', 'null'] },
+            numero_parcela: { type: ['string', 'null'] },
+            natureza_sugerida: { type: ['string', 'null'] },
+            confianca_leitura: { type: ['string', 'null'] }
           },
-          required: ['descricao', 'valor', 'data_vencimento', 'fornecedor', 'documento_tipo', 'resumo_texto']
+          required: ['descricao', 'valor_pagamento', 'data_vencimento', 'beneficiario', 'competencia', 'numero_parcela', 'natureza_sugerida', 'confianca_leitura']
         }
       });
 
+      const descricaoFallback = [extracted.descricao, extracted.beneficiario].filter(Boolean).join(' - ');
+      const naturezaValida = ['Parcelado', 'Único', 'Recorrente'].includes(extracted.natureza_sugerida)
+        ? extracted.natureza_sugerida
+        : 'Único';
+
+      setSelectedNatureza(naturezaValida);
       setExtractedData({
-        descricao: extracted.descricao || (extracted.fornecedor ? `${extracted.documento_tipo || 'Conta'} - ${extracted.fornecedor}` : selectedFile.name.replace(/\.[^/.]+$/, '')),
-        valor: extracted.valor ?? 0,
+        descricao: descricaoFallback || 'Conta importada',
+        valor: extracted.valor_pagamento ?? 0,
         data_vencimento: extracted.data_vencimento || dataHoje(),
       });
     } catch (err) {
@@ -70,7 +87,7 @@ Regras:
   const resetState = () => {
     setFile(null);
     setExtractedData(null);
-    setSelectedNatureza(null);
+    setSelectedNatureza('Único');
     setError(null);
   };
 
@@ -238,7 +255,7 @@ Regras:
 
       <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
         <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
-        <AgefinNaturezaSelector value={selectedNatureza} onChange={setSelectedNatureza} />
+        <AgefinNaturezaSelector value={selectedNatureza || 'Único'} onChange={setSelectedNatureza} />
       </div>
 
       {error && (
