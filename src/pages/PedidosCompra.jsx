@@ -504,7 +504,8 @@ export default function PedidosCompraPage() {
     return filtrados.filter((pedido) => {
       const aprovadoFinanceiro = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado' || pedido._display_status === 'Aprovado';
       const aindaNaoRecebido = pedido._display_status !== 'Concluído';
-      return aprovadoFinanceiro && aindaNaoRecebido;
+      const aindaNaoEhAguardandoPagamento = !['Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aguardando'].includes(pedido._display_status);
+      return aprovadoFinanceiro && aindaNaoRecebido && aindaNaoEhAguardandoPagamento;
     });
   }, [filtrados]);
 

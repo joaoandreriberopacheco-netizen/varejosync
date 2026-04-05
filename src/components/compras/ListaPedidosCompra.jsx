@@ -188,7 +188,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 cfg.dot
               }`} />
 
-              <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="min-w-0 flex-1 overflow-hidden max-w-[calc(100%-4.75rem)]">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
                   <div className="min-w-0 flex-1 overflow-hidden pr-1">
                     <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
@@ -198,7 +198,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-1">
-                      <span className={`inline-flex max-w-[5.1rem] text-[0.48rem] px-1 py-[0.08rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
+                      <span className={`inline-flex max-w-[4.7rem] text-[0.46rem] px-[0.22rem] py-[0.06rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
                         {displayStatusLabel}
                       </span>
                     </div>
