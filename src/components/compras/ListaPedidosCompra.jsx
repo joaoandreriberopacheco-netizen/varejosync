@@ -160,7 +160,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           onEdit(pedido);
         }}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative w-full min-w-0 max-w-full bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
+        className="group relative w-full min-w-0 box-border bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
       >
         {/* Seleção overlay */}
         {modoSelecao && selecionado && (
@@ -198,7 +198,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-1">
-                      <span className={`inline-flex max-w-[4.7rem] text-[0.46rem] px-[0.22rem] py-[0.06rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
+                      <span className={`inline-flex max-w-[5.5rem] text-[0.6rem] px-1.5 py-[0.1rem] rounded-full font-semibold tracking-tight whitespace-nowrap truncate ${cfg.pill}`}>
                         {displayStatusLabel}
                       </span>
                     </div>
