@@ -14,7 +14,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+const R = (v) => {
+  const n = v || 0;
+  if (n >= 1_000_000) return `R$ ${(n / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  if (n >= 1_000) return `R$ ${(n / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}K`;
+  return `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+};
 
 const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
@@ -54,7 +59,7 @@ function EmbarquesInfo({ pedido }) {
   if (embarqueDormindo) return null;
 
   return (
-    <div style={{outline:'2px solid magenta'}} className="flex items-center gap-4 flex-wrap text-[0.7rem] text-gray-500 dark:text-gray-400">
+    <div className="flex items-center gap-4 flex-wrap text-[0.7rem] text-gray-500 dark:text-gray-400">
       <span className="flex items-center gap-1.5">
         <Truck className="w-3 h-3 flex-none" />
         <span>{embarque?.transportadora_nome || 'Sem transportadora'}</span>
@@ -190,7 +195,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
-                  <div style={{outline:'2px solid red'}} className="min-w-0 flex-1 overflow-hidden pr-2">
+                  <div className="min-w-0 flex-1 overflow-hidden pr-2">
                     <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
@@ -219,8 +224,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           </div>
 
           {/* Linha de metadados */}
-          <div style={{outline:'2px solid orange'}} className="mt-3 flex flex-col gap-2 text-[0.7rem]">
-            <div style={{outline:'2px solid yellow'}} className="flex items-center gap-4 flex-wrap">
+          <div className="mt-3 flex flex-col gap-2 text-[0.7rem]">
+            <div className="flex items-center gap-4 flex-wrap">
               <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
                 <Package2 className="w-3 h-3 flex-none" />
                 <span>
@@ -235,12 +240,12 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
             <EmbarquesInfo pedido={pedido} />
           </div>
-          <div style={{outline:'2px solid lime'}}><PedidoProgressBar
+          <PedidoProgressBar
             pedido={isVirtualCard
               ? { ...pedido, status: displayStatus, tem_divergencias: false, status_embarque: undefined }
               : pedido
             }
-          /></div>
+          />
         </div>
 
         {/* Botão delete hover (rascunho) */}
