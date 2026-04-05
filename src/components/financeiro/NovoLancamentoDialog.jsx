@@ -199,7 +199,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-gray-900" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="fixed inset-0 z-50 flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gray-50 dark:bg-gray-900" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-5 pb-3">
         <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800 active:scale-95">
@@ -249,7 +249,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         </div>
       )}
       {step === 'detalhes' && (
-        <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-3 pt-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 pt-2 space-y-3">
           {/* Resumo */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm">
             <span className="text-sm text-gray-500 dark:text-gray-400">{tipo} · {descricao || '—'}</span>
