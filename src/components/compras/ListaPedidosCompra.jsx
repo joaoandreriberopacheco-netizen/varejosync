@@ -183,17 +183,19 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               }`} />
 
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.08em]">
-                    {pedido._display_code || pedido.numero}
-                  </span>
-                  <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.02em]">
+                      {String(pedido._display_code || pedido.numero || '').replace(' - ', '-')}
+                    </span>
+                    <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight truncate">
+                      {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {displayStatus}
                   </span>
                 </div>
-                <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight truncate">
-                  {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
-                </p>
               </div>
             </div>
 
