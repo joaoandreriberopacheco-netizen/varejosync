@@ -232,177 +232,183 @@ Campos a interpretar do documento:
   }
 
   return (
-    <div className="space-y-5 px-5 pb-5 pt-2">
-      <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
-            <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-32 pt-2">
+        <div className="space-y-5">
+          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
+                <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-gray-900 dark:text-white">Documento lido com sucesso</p>
+                <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{file?.name}</p>
+              </div>
+              <button
+                onClick={resetState}
+                className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-gray-900 dark:text-white">Documento lido com sucesso</p>
-            <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{file?.name}</p>
+
+          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Pré-preenchimento</p>
+                <h3 className="mt-2 font-glacial text-xl font-semibold text-gray-900 dark:text-white">Revisar dados</h3>
+              </div>
+              <span className="rounded-2xl bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">PDV style</span>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
+                <input
+                  type="text"
+                  value={extractedData.descricao}
+                  onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
+                  className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Beneficiário</label>
+                  <input
+                    type="text"
+                    value={extractedData.terceiro_nome}
+                    onChange={(e) => setExtractedData({ ...extractedData, terceiro_nome: e.target.value })}
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Competência</label>
+                  <input
+                    type="date"
+                    value={extractedData.periodo_referencia}
+                    onChange={(e) => setExtractedData({ ...extractedData, periodo_referencia: e.target.value })}
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Valor</label>
+                  <input
+                    type="number"
+                    value={extractedData.valor}
+                    onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) })}
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-lg font-semibold text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                    step="0.01"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Vencimento</label>
+                  <input
+                    type="date"
+                    value={extractedData.data_vencimento}
+                    onChange={(e) => setExtractedData({ ...extractedData, data_vencimento: e.target.value })}
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nº da parcela</label>
+                  <input
+                    type="number"
+                    value={extractedData.parcela_numero}
+                    onChange={(e) => setExtractedData({ ...extractedData, parcela_numero: e.target.value })}
+                    className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Frequência</label>
+                  <Select value={selectedRecorrencia} onValueChange={setSelectedRecorrencia}>
+                    <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-gray-900 shadow-none focus:ring-0 dark:bg-gray-900 dark:text-white">
+                      <SelectValue placeholder="Escolher frequência" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Semanal">Semanal</SelectItem>
+                      <SelectItem value="Mensal">Mensal</SelectItem>
+                      <SelectItem value="Bimestral">Bimestral</SelectItem>
+                      <SelectItem value="Trimestral">Trimestral</SelectItem>
+                      <SelectItem value="Semestral">Semestral</SelectItem>
+                      <SelectItem value="Anual">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Linha digitável</label>
+                <textarea
+                  value={extractedData.linha_digitavel}
+                  onChange={(e) => setExtractedData({ ...extractedData, linha_digitavel: e.target.value })}
+                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">PIX copia e cola</label>
+                <textarea
+                  value={extractedData.codigo_pix_copia_cola}
+                  onChange={(e) => setExtractedData({ ...extractedData, codigo_pix_copia_cola: e.target.value })}
+                  className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Instruções / observações</label>
+                <textarea
+                  value={extractedData.observacoes}
+                  onChange={(e) => setExtractedData({ ...extractedData, observacoes: e.target.value })}
+                  className="min-h-[110px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                />
+              </div>
+            </div>
           </div>
-          <button
+
+          <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+            <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
+            <AgefinNaturezaSelector value={selectedNatureza || 'Único'} onChange={setSelectedNatureza} />
+            {selectedNatureza === 'Recorrente' && (
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Sugestão de recorrência: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span></p>
+            )}
+          </div>
+
+          {error && (
+            <div className="rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-white/5 bg-gray-50/95 px-5 pb-5 pt-3 backdrop-blur dark:bg-gray-950/95">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
             onClick={resetState}
-            className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+            className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
           >
-            <X className="h-4 w-4" />
-          </button>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={loading || !selectedNatureza}
+            className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-gray-900 hover:bg-gray-400 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-white"
+          >
+            {loading ? 'Salvando...' : 'Salvar Conta'}
+          </Button>
         </div>
-      </div>
-
-      <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Pré-preenchimento</p>
-            <h3 className="mt-2 font-glacial text-xl font-semibold text-gray-900 dark:text-white">Revisar dados</h3>
-          </div>
-          <span className="rounded-2xl bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">PDV style</span>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
-            <input
-              type="text"
-              value={extractedData.descricao}
-              onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
-              className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Beneficiário</label>
-              <input
-                type="text"
-                value={extractedData.terceiro_nome}
-                onChange={(e) => setExtractedData({ ...extractedData, terceiro_nome: e.target.value })}
-                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Competência</label>
-              <input
-                type="date"
-                value={extractedData.periodo_referencia}
-                onChange={(e) => setExtractedData({ ...extractedData, periodo_referencia: e.target.value })}
-                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Valor</label>
-              <input
-                type="number"
-                value={extractedData.valor}
-                onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) })}
-                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-lg font-semibold text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-                step="0.01"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Vencimento</label>
-              <input
-                type="date"
-                value={extractedData.data_vencimento}
-                onChange={(e) => setExtractedData({ ...extractedData, data_vencimento: e.target.value })}
-                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nº da parcela</label>
-              <input
-                type="number"
-                value={extractedData.parcela_numero}
-                onChange={(e) => setExtractedData({ ...extractedData, parcela_numero: e.target.value })}
-                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Frequência</label>
-              <Select value={selectedRecorrencia} onValueChange={setSelectedRecorrencia}>
-                <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-gray-900 shadow-none focus:ring-0 dark:bg-gray-900 dark:text-white">
-                  <SelectValue placeholder="Escolher frequência" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Semanal">Semanal</SelectItem>
-                  <SelectItem value="Mensal">Mensal</SelectItem>
-                  <SelectItem value="Bimestral">Bimestral</SelectItem>
-                  <SelectItem value="Trimestral">Trimestral</SelectItem>
-                  <SelectItem value="Semestral">Semestral</SelectItem>
-                  <SelectItem value="Anual">Anual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Linha digitável</label>
-            <textarea
-              value={extractedData.linha_digitavel}
-              onChange={(e) => setExtractedData({ ...extractedData, linha_digitavel: e.target.value })}
-              className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">PIX copia e cola</label>
-            <textarea
-              value={extractedData.codigo_pix_copia_cola}
-              onChange={(e) => setExtractedData({ ...extractedData, codigo_pix_copia_cola: e.target.value })}
-              className="min-h-[92px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Instruções / observações</label>
-            <textarea
-              value={extractedData.observacoes}
-              onChange={(e) => setExtractedData({ ...extractedData, observacoes: e.target.value })}
-              className="min-h-[110px] w-full rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
-        <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
-        <AgefinNaturezaSelector value={selectedNatureza || 'Único'} onChange={setSelectedNatureza} />
-        {selectedNatureza === 'Recorrente' && (
-          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Sugestão de recorrência: <span className="font-medium text-gray-900 dark:text-white">{selectedRecorrencia}</span></p>
-        )}
-      </div>
-
-      {error && (
-        <div className="rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-            <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-3 pt-1">
-        <Button
-          variant="outline"
-          onClick={resetState}
-          className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleConfirm}
-          disabled={loading || !selectedNatureza}
-          className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-gray-900 hover:bg-gray-400 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-white"
-        >
-          {loading ? 'Salvando...' : 'Salvar Conta'}
-        </Button>
       </div>
     </div>
   );
