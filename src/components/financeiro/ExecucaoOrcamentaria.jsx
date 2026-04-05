@@ -254,6 +254,7 @@ export default function ExecucaoOrcamentaria() {
       </div>
 
       {aba === 'contas' && (
+        <>
         <div className="space-y-4">
           <div className="rounded-[28px] bg-white dark:bg-slate-900 shadow-md p-2">
             <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-2xl p-1">
@@ -306,6 +307,22 @@ export default function ExecucaoOrcamentaria() {
             </>
           )}
         </div>
+
+        <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
+        <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
+          <DialogContent className="max-w-2xl p-0 rounded-3xl border-0 shadow-xl overflow-hidden backdrop-blur-xl bg-white/95 dark:bg-slate-900/95">
+            <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
+              <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
+            </DialogHeader>
+            <AgefinImportador
+              onSuccess={() => {
+                setShowImportadorAgefin(false);
+                setTimeout(() => setShowImportadorAgefin(true), 50);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+        </>
       )}
 
       {aba === 'fluxo' && (
@@ -375,7 +392,6 @@ export default function ExecucaoOrcamentaria() {
           </div>
 
           {/* Dialogs */}
-          <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
           <FluxoCaixaPrintDialog
             open={showPrintDialog}
@@ -405,19 +421,6 @@ export default function ExecucaoOrcamentaria() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
-            <DialogContent className="max-w-2xl p-0 rounded-3xl border-0 shadow-xl overflow-hidden backdrop-blur-xl bg-white/95 dark:bg-slate-900/95">
-              <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
-                <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
-              </DialogHeader>
-              <AgefinImportador
-                onSuccess={() => {
-                  setShowImportadorAgefin(false);
-                  setTimeout(() => setShowImportadorAgefin(true), 50);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
         </>
       )}
     </div>
