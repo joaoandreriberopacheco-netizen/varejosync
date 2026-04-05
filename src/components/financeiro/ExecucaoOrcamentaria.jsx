@@ -317,8 +317,8 @@ export default function ExecucaoOrcamentaria() {
             <div className="min-h-0 flex-1 overflow-hidden overscroll-none">
               <AgefinImportador
                 onSuccess={() => {
+                  load();
                   setShowImportadorAgefin(false);
-                  setTimeout(() => setShowImportadorAgefin(true), 50);
                 }}
               />
             </div>

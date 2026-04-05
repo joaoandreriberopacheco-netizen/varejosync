@@ -122,18 +122,22 @@ Campos a interpretar do documento:
     setLoading(true);
     try {
       const payload = {
+        tipo: 'Despesa',
         descricao: extractedData.descricao,
         terceiro_id: 'importado-manualmente',
         terceiro_nome: extractedData.terceiro_nome || 'Beneficiário não identificado',
         categoria_financeira_id: 'importacao-pendente',
         categoria_nome: 'Importação pendente',
+        categoria: 'Importação pendente',
         valor: extractedData.valor,
         data_vencimento: extractedData.data_vencimento,
         natureza: selectedNatureza,
         parcela_numero: selectedNatureza === 'Parcelado' && extractedData.parcela_numero ? Number(extractedData.parcela_numero) : null,
         periodo_referencia: extractedData.periodo_referencia || null,
-        status: 'Pendente',
+        status: 'Em Aberto',
+        status_conciliacao: 'N/A',
         boleto_url: file?.name || null,
+        referencia_tipo: 'Manual',
         observacoes: [
           extractedData.observacoes ? `Instruções: ${extractedData.observacoes}` : null,
           extractedData.linha_digitavel ? `Linha digitável: ${extractedData.linha_digitavel}` : null,
@@ -142,9 +146,9 @@ Campos a interpretar do documento:
         ].filter(Boolean).join('\n'),
       };
 
-      await base44.entities.ContaPrevista.create(payload);
+      const contaCriada = await base44.entities.ContaPrevista.create(payload);
       resetState();
-      onSuccess?.();
+      onSuccess?.(contaCriada);
     } catch (err) {
       setError('Erro ao salvar conta');
       console.error(err);
