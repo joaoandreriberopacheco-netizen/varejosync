@@ -310,16 +310,18 @@ export default function ExecucaoOrcamentaria() {
 
         <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
-          <DialogContent className="max-w-2xl p-0 rounded-3xl border-0 shadow-xl overflow-hidden backdrop-blur-xl bg-white/95 dark:bg-slate-900/95">
-            <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
+          <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
+            <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
               <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
             </DialogHeader>
-            <AgefinImportador
-              onSuccess={() => {
-                setShowImportadorAgefin(false);
-                setTimeout(() => setShowImportadorAgefin(true), 50);
-              }}
-            />
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <AgefinImportador
+                onSuccess={() => {
+                  setShowImportadorAgefin(false);
+                  setTimeout(() => setShowImportadorAgefin(true), 50);
+                }}
+              />
+            </div>
           </DialogContent>
         </Dialog>
         </>
