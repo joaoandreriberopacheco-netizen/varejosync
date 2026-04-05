@@ -491,12 +491,7 @@ export default function PedidosCompraPage() {
   };
 
   const pedidosVisiveisLista = useMemo(() => {
-    return filtrados.filter((pedido) => {
-      const statusVisual = pedido._display_status || pedido.status;
-      const statusPermitido = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado', 'Concluído', 'Despachado', 'Aguardando'].includes(statusVisual)
-        || pedido.status_aprovacao_financeira === 'Aprovado';
-      return statusPermitido;
-    });
+    return filtrados;
   }, [filtrados]);
 
   const pedidosVisiveisPendentes = useMemo(() => {
