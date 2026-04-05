@@ -169,7 +169,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
         <div className="w-full min-w-0 px-3 py-3 overflow-hidden">
           {/* Linha principal */}
-          <div className="flex w-full min-w-0 items-start justify-between gap-2 overflow-hidden">
+          <div className="flex w-full min-w-0 items-start justify-between gap-1.5 overflow-hidden">
             <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
@@ -190,7 +190,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
-                  <div className="min-w-0 flex-1 overflow-hidden pr-1">
+                  <div className="min-w-0 flex-1 overflow-hidden pr-2">
                     <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.01em]">
                       {String(pedido._display_code || pedido.numero || '').replace(' - ', '-').replace(/\s+/g, '')}
                     </span>
@@ -208,11 +208,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right min-w-[4rem] max-w-[4.6rem] shrink-0">
-              <p className="text-[0.9rem] font-bold text-gray-900 dark:text-white leading-none break-words">
+            <div className="flex-none text-right w-[5.5rem] shrink-0">
+              <p className="text-[0.78rem] font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap">
                 {R(valorExibido)}
               </p>
-              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 mt-1 whitespace-nowrap">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
