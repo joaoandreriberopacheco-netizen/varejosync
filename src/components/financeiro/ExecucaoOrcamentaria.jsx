@@ -58,6 +58,8 @@ const FAB_ITEMS = [
 ];
 
 const FAB_CONTAS_ITEMS = [
+  { tipo: 'Despesa', icon: ArrowUpRight, label: 'Conta a Pagar' },
+  { tipo: 'Receita', icon: ArrowDownLeft, label: 'Conta a Receber' },
   { tipo: 'Importar', icon: Upload, label: 'Importar PDF' },
 ];
 
@@ -280,7 +282,13 @@ export default function ExecucaoOrcamentaria() {
                   <button
                     key={tipo}
                     onClick={() => {
-                      setShowImportadorAgefin(true);
+                      if (tipo === 'Importar') {
+                        setShowImportadorAgefin(true);
+                        setFabOpen(false);
+                        return;
+                      }
+                      setNovoTipo(tipo);
+                      setShowNovo(true);
                       setFabOpen(false);
                     }}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform"
