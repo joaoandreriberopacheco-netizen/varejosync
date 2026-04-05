@@ -23,6 +23,8 @@ function isEmbarqueRealInformado(embarque) {
 }
 
 function isNecessidadeRenderizada(embarque) {
+  if (!embarque) return false;
+  if (embarque?.tipo === 'Necessidade') return true;
   return !!embarque?.observacoes && String(embarque.observacoes).includes('criado automaticamente para itens pendentes');
 }
 
