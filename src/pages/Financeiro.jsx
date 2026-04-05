@@ -1,9 +1,10 @@
 import React from 'react';
 import GestaoCaixa from '../components/financeiro/GestaoCaixa';
-import AgefinPortal from '../components/financeiro/AgefinPortal';
+import AgefinRecorrentes from '../components/financeiro/AgefinRecorrentes';
+import AgefinImportador from '../components/agefin/AgefinImportador';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Landmark, ArrowLeftRight, Calendar } from "lucide-react";
+import { Wallet, Landmark, ArrowLeftRight, Repeat2, Upload } from "lucide-react";
 
 export default function FinanceiroPage() {
   return (
@@ -16,7 +17,8 @@ export default function FinanceiroPage() {
           <TabsList>
             <TabsTrigger value="caixa" className="gap-2"><Wallet className="w-4 h-4"/> Gestão de Caixa</TabsTrigger>
             <TabsTrigger value="contas" className="gap-2"><Landmark className="w-4 h-4"/> Contas a Pagar/Receber</TabsTrigger>
-            <TabsTrigger value="agefin" className="gap-2"><Calendar className="w-4 h-4"/> Agefin</TabsTrigger>
+            <TabsTrigger value="recorrentes" className="gap-2"><Repeat2 className="w-4 h-4"/> Recorrências</TabsTrigger>
+            <TabsTrigger value="importar" className="gap-2"><Upload className="w-4 h-4"/> Importar</TabsTrigger>
             <TabsTrigger value="movimentos" className="gap-2"><ArrowLeftRight className="w-4 h-4"/> Movimentos</TabsTrigger>
           </TabsList>
           <TabsContent value="caixa">
@@ -30,8 +32,16 @@ export default function FinanceiroPage() {
                 </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="agefin" className="mt-0">
-            <AgefinPortal />
+          <TabsContent value="recorrentes" className="mt-0">
+            <AgefinRecorrentes />
+          </TabsContent>
+          <TabsContent value="importar" className="mt-0">
+            <Card>
+              <CardHeader><CardTitle>Importar Contas a Pagar</CardTitle></CardHeader>
+              <CardContent>
+                <AgefinImportador onSuccess={() => {}} />
+              </CardContent>
+            </Card>
           </TabsContent>
            <TabsContent value="movimentos">
             <Card>
