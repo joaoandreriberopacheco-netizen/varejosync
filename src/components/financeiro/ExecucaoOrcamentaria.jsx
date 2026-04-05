@@ -4,7 +4,7 @@ import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } fro
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
-import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale, Printer } from 'lucide-react';
+import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale, Printer, Upload } from 'lucide-react';
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
@@ -13,6 +13,8 @@ import FiltrosFluxoCaixa from './fluxo/FiltrosFluxoCaixa';
 import KpiFluxo from './fluxo/KpiFluxo';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import ContasAbertas from './ContasAbertas';
+import AgefinRecorrentes from './AgefinRecorrentes';
+import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -75,6 +77,8 @@ export default function ExecucaoOrcamentaria() {
   const [detalhe, setDetalhe] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [abaContas, setAbaContas] = useState('contas');
+  const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -243,7 +247,35 @@ export default function ExecucaoOrcamentaria() {
         </div>
       </div>
 
-      {aba === 'contas' && <ContasAbertas />}
+      {aba === 'contas' && (
+        <div className="space-y-4">
+          <div className="rounded-[28px] bg-white dark:bg-slate-900 shadow-md p-2">
+            <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-2xl p-1">
+              <button
+                onClick={() => setAbaContas('contas')}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${abaContas === 'contas' ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' : 'text-gray-700 dark:text-gray-300'}`}
+              >
+                Contas a Pagar
+              </button>
+              <button
+                onClick={() => setAbaContas('agefin')}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${abaContas === 'agefin' ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' : 'text-gray-700 dark:text-gray-300'}`}
+              >
+                Agefin
+              </button>
+            </div>
+          </div>
+
+          {abaContas === 'contas' ? <ContasAbertas /> : <AgefinRecorrentes />}
+
+          <button
+            onClick={() => setShowImportadorAgefin(true)}
+            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl bg-slate-900 dark:bg-slate-200 active:scale-95 transition-all"
+          >
+            <Upload className="w-5 h-5 text-white dark:text-slate-900" />
+          </button>
+        </div>
+      )}
 
       {aba === 'fluxo' && (
         <>
@@ -335,6 +367,20 @@ export default function ExecucaoOrcamentaria() {
                   }}
                 />
               </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
+            <DialogContent className="max-w-2xl p-0 rounded-3xl border-0 shadow-xl overflow-hidden">
+              <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
+                <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
+              </DialogHeader>
+              <AgefinImportador
+                onSuccess={() => {
+                  setShowImportadorAgefin(false);
+                  setTimeout(() => setShowImportadorAgefin(true), 50);
+                }}
+              />
             </DialogContent>
           </Dialog>
         </>
