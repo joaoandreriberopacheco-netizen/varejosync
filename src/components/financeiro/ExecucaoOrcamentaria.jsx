@@ -57,6 +57,10 @@ const FAB_ITEMS = [
   { tipo: 'Transferência', icon: ArrowRightLeft, label: 'Transf.' },
 ];
 
+const FAB_CONTAS_ITEMS = [
+  { tipo: 'Importar', icon: Upload, label: 'Importar PDF' },
+];
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ExecucaoOrcamentaria() {
   const [lancs, setLancs] = useState([]);
@@ -269,12 +273,29 @@ export default function ExecucaoOrcamentaria() {
           {abaContas === 'contas' ? <ContasAbertas /> : <AgefinRecorrentes />}
 
           {abaContas === 'contas' && (
-            <button
-              onClick={() => setShowImportadorAgefin(true)}
-              className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl bg-slate-900 dark:bg-slate-200 active:scale-95 transition-all"
-            >
-              <Upload className="w-5 h-5 text-white dark:text-slate-900" />
-            </button>
+            <>
+              {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
+              <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
+                {fabOpen && FAB_CONTAS_ITEMS.map(({ tipo, icon: Icon, label }) => (
+                  <button
+                    key={tipo}
+                    onClick={() => {
+                      setShowImportadorAgefin(true);
+                      setFabOpen(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform"
+                  >
+                    <Icon className="w-4 h-4" />{label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setFabOpen(o => !o)}
+                  className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all ${fabOpen ? 'bg-slate-700 rotate-45' : 'bg-slate-900 dark:bg-slate-200'}`}
+                >
+                  <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-slate-900'}`} />
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -377,7 +398,7 @@ export default function ExecucaoOrcamentaria() {
           </Dialog>
 
           <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
-            <DialogContent className="max-w-2xl p-0 rounded-3xl border-0 shadow-xl overflow-hidden">
+            <DialogContent className="max-w-2xl p-0 rounded-3xl border-0 shadow-xl overflow-hidden backdrop-blur-xl bg-white/95 dark:bg-slate-900/95">
               <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
                 <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
               </DialogHeader>
