@@ -11,8 +11,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  AlertDialogTitle } from
+"@/components/ui/alert-dialog";
 
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -25,7 +25,7 @@ const STATUS_CONFIG = {
   'Aprovado': { dot: 'bg-emerald-400 dark:bg-emerald-400', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
   'Despachado': { dot: 'bg-cyan-400 dark:bg-cyan-400', pill: 'bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300' },
   'Concluído': { dot: 'bg-emerald-500 dark:bg-emerald-500', pill: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' },
-  'Cancelado': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' },
+  'Cancelado': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500' }
 };
 
 // Adiciona animação de piscar ao CSS global
@@ -66,13 +66,13 @@ function EmbarquesInfo({ pedido }) {
       <span className="text-gray-400 dark:text-gray-500">
         {pedido._display_ordinal || '#01'}
       </span>
-      {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
-        <span className="text-red-500 dark:text-red-400 font-medium">
+      {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 &&
+      <span className="text-red-500 dark:text-red-400 font-medium">
           {pedido._quantidade_pendente} un. faltando embarcar
         </span>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 function getLEDStatus(pedido) {
@@ -107,22 +107,22 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
   const isVirtualCard = !!pedido._display_status;
   const displayStatus = pedido._display_status || pedido.status;
-  const displayStatusLabel = displayStatus === 'Aguardando Liberação Financeira'
-    ? 'Aguard. Pgto'
-    : displayStatus === 'Aguardando Aprovação Financeira'
-      ? 'Aguard. Pgto'
-      : displayStatus;
+  const displayStatusLabel = displayStatus === 'Aguardando Liberação Financeira' ?
+  'Aguard. Pgto' :
+  displayStatus === 'Aguardando Aprovação Financeira' ?
+  'Aguard. Pgto' :
+  displayStatus;
 
-  const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência'
-    ? (pedido.itens || []).filter(i => ((Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0)) > 0)
-    : (pedido.itens || []));
+  const itensDisplay = pedido._display_itens || (pedido.status === 'Pendência' ?
+  (pedido.itens || []).filter((i) => (Number(i.quantidade) || 0) - (Number(i.quantidade_vinculada) || 0) > 0) :
+  pedido.itens || []);
   const totalLinhas = itensDisplay.length;
   const totalQtd = itensDisplay.reduce((a, i) => a + (Number(i.quantidade) || 0), 0);
   const totalQtdEmbarcada = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_embarcada) || 0), 0);
   const totalQtdPedidaCard = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_pedida) || Number(i.quantidade) || 0), 0);
-  const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência'
-    ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
-    : pedido.valor_total);
+  const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência' ?
+  pedido.valor_pendente_entrega ?? pedido.valor_total :
+  pedido.valor_total);
   const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG[pedido.status] || STATUS_CONFIG['Rascunho'];
 
   // LED: cards virtuais refletem seu próprio status; cards pai usam lógica FASE 2+
@@ -133,10 +133,10 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
         isVerde: displayStatus === 'Concluído',
         isAmbar: displayStatus === 'Aguardando Aprovação Financeira',
         isVermelho: pedido._embarque?.tipo === 'Necessidade' && !(pedido._embarque?.transportadora_id || pedido._embarque?.transportadora_nome || pedido._embarque?.data_embarque || pedido._embarque?.eta) && (
-          !((pedido._embarque?.itens || pedido._embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0)) || quantidadePendente > 0
-        ),
+        !(pedido._embarque?.itens || pedido._embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0) || quantidadePendente > 0),
+
         isPisca: false,
-        isCyan: displayStatus === 'Despachado',
+        isCyan: displayStatus === 'Despachado'
       };
     }
     return getLEDStatus(pedido);
@@ -156,37 +156,37 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
         role="button"
         tabIndex={0}
         onClick={() => {
-          if (modoSelecao) { if (!desabilitadoSelecao) onToggleSelecao?.(pedido); return; }
+          if (modoSelecao) {if (!desabilitadoSelecao) onToggleSelecao?.(pedido);return;}
           onEdit(pedido);
         }}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!modoSelecao) onEdit(pedido); } }}
-        className="group relative w-full min-w-0 max-w-full bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden"
-      >
+        onKeyDown={(e) => {if (e.key === 'Enter' || e.key === ' ') {e.preventDefault();if (!modoSelecao) onEdit(pedido);}}}
+        className="group relative w-full min-w-0 max-w-full bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.995] transition-all cursor-pointer overflow-hidden">
+        
         {/* Seleção overlay */}
-        {modoSelecao && selecionado && (
-          <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
-        )}
+        {modoSelecao && selecionado &&
+        <div className="absolute inset-0 bg-emerald-500/8 dark:bg-emerald-500/10 rounded-2xl pointer-events-none" />
+        }
 
         <div className="w-full min-w-0 px-3 py-3 overflow-hidden">
           {/* Linha principal */}
           <div className="flex w-full min-w-0 items-start justify-between gap-2 overflow-hidden">
             <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               {/* Checkbox modo seleção */}
-              {modoSelecao && (
-                <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
+              {modoSelecao &&
+              <div className={`flex-none w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selecionado ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-700'} ${desabilitadoSelecao ? 'opacity-40' : ''}`}>
                   {selecionado && <Check className="w-3 h-3" />}
                 </div>
-              )}
+              }
 
               {/* LED com lógica de status */}
               <span className={`flex-none w-2.5 h-2.5 rounded-full mt-0.5 ${
-                isPisca ? 'animate-blink-led' :
-                isVerde ? 'bg-emerald-500 dark:bg-emerald-400' :
-                isCyan ? 'bg-cyan-400 dark:bg-cyan-400' :
-                isVermelho ? 'bg-red-500 dark:bg-red-500' :
-                isAmbar ? 'bg-amber-400 dark:bg-amber-400' :
-                cfg.dot
-              }`} />
+              isPisca ? 'animate-blink-led' :
+              isVerde ? 'bg-emerald-500 dark:bg-emerald-400' :
+              isCyan ? 'bg-cyan-400 dark:bg-cyan-400' :
+              isVermelho ? 'bg-red-500 dark:bg-red-500' :
+              isAmbar ? 'bg-amber-400 dark:bg-amber-400' :
+              cfg.dot}`
+              } />
 
               <div className="min-w-0 flex-1 overflow-hidden">
                 <div className="flex min-w-0 items-start justify-between gap-2 overflow-hidden">
@@ -198,7 +198,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                     <div className="mt-1">
-                      <span className={`inline-flex max-w-[4.7rem] text-[0.46rem] px-[0.22rem] py-[0.06rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
+                      <span className="bg-amber-50 text-amber-700 px-[0.22rem] py-[0.06rem] text-xs font-semibold text-center tracking-tight leading-tight rounded-full inline-flex max-w-[4.7rem] whitespace-normal break-words dark:bg-amber-900/30 dark:text-amber-300">
                         {displayStatusLabel}
                       </span>
                     </div>
@@ -225,34 +225,34 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                 <Package2 className="w-3 h-3 flex-none" />
                 <span>
                   {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
-                  {pedido._is_necessidade
-                    ? (totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un. pend.` : '')
-                    : totalQtdEmbarcada > 0
-                      ? ` · ${totalQtdEmbarcada.toLocaleString('pt-BR')} de ${totalQtdPedidaCard.toLocaleString('pt-BR')} un.`
-                      : (totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : '')}
+                  {pedido._is_necessidade ?
+                  totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un. pend.` : '' :
+                  totalQtdEmbarcada > 0 ?
+                  ` · ${totalQtdEmbarcada.toLocaleString('pt-BR')} de ${totalQtdPedidaCard.toLocaleString('pt-BR')} un.` :
+                  totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : ''}
                 </span>
               </span>
             </div>
             <EmbarquesInfo pedido={pedido} />
           </div>
           <PedidoProgressBar
-            pedido={isVirtualCard
-              ? { ...pedido, status: displayStatus, tem_divergencias: false, status_embarque: undefined }
-              : pedido
-            }
-          />
+            pedido={isVirtualCard ?
+            { ...pedido, status: displayStatus, tem_divergencias: false, status_embarque: undefined } :
+            pedido
+            } />
+          
         </div>
 
         {/* Botão delete hover (rascunho) */}
-        {pedido.status === 'Rascunho' && !modoSelecao && (
-          <button
-            onClick={e => { e.stopPropagation(); setShowConfirm(true); }}
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            title="Excluir rascunho"
-          >
+        {pedido.status === 'Rascunho' && !modoSelecao &&
+        <button
+          onClick={(e) => {e.stopPropagation();setShowConfirm(true);}}
+          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+          title="Excluir rascunho">
+          
             <Trash2 className="w-3.5 h-3.5" />
           </button>
-        )}
+        }
       </div>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
@@ -271,25 +271,25 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
-  );
+    </>);
+
 }
 
 function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleSelecao, modoSelecao, className = '', _total_eta = 0 }) {
   const [open, setOpen] = useState(true);
   // Soma apenas _display_valor para cards virtuais (embarques + órfãos), ou usa _total_eta se disponível
-  const valorTotal = _total_eta > 0
-    ? _total_eta
-    : pedidos.reduce((acc, p) => {
-        const valorPedido = p._display_valor ?? (p.status === 'Pendência'
-          ? (p.valor_pendente_entrega ?? p.valor_total ?? 0)
-          : (p.valor_total ?? 0));
-        return acc + valorPedido;
-      }, 0);
+  const valorTotal = _total_eta > 0 ?
+  _total_eta :
+  pedidos.reduce((acc, p) => {
+    const valorPedido = p._display_valor ?? (p.status === 'Pendência' ?
+    p.valor_pendente_entrega ?? p.valor_total ?? 0 :
+    p.valor_total ?? 0);
+    return acc + valorPedido;
+  }, 0);
 
   return (
     <div className={`w-full space-y-2 ${className}`}>
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-1 py-1 group">
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-1 py-1 group">
         <p className="text-[0.62rem] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
           {label}
         </p>
@@ -298,33 +298,33 @@ function GrupoDia({ label, pedidos, onEdit, onDelete, selecionadosIds, onToggleS
           <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
         </div>
       </button>
-      {open && (
-        <div className="space-y-2">
-          {pedidos.map(p => (
-            <PedidoCard
-              key={p._virtual_key || p.id}
-              pedido={p}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              modoSelecao={modoSelecao}
-              selecionado={selecionadosIds.includes(p.id)}
-              desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
-              onToggleSelecao={onToggleSelecao}
-            />
-          ))}
+      {open &&
+      <div className="space-y-2">
+          {pedidos.map((p) =>
+        <PedidoCard
+          key={p._virtual_key || p.id}
+          pedido={p}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          modoSelecao={modoSelecao}
+          selecionado={selecionadosIds.includes(p.id)}
+          desabilitadoSelecao={p.status !== 'Rascunho' || !!p.status_aprovacao_financeira}
+          onToggleSelecao={onToggleSelecao} />
+
+        )}
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, selecionadosIds = [], onToggleSelecao, modoSelecao = false }) {
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
-      </div>
-    );
+        {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />)}
+      </div>);
+
   }
 
   if (grupos.length === 0) {
@@ -332,18 +332,18 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm py-16 flex flex-col items-center gap-2">
         <Package2 className="w-9 h-9 text-gray-200 dark:text-gray-700" />
         <p className="text-sm text-gray-400">Nenhum embarque encontrado</p>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
     <div className="space-y-5">
       {grupos.map(({ key, label, pedidos, _total_eta }, index) => {
         const previousLabel = grupos[index - 1]?.label || '';
-        const isSpecialTransition = (
-          (previousLabel.includes('Sem transportador') && label.includes('Sem ETA')) ||
-          (previousLabel.includes('Sem ETA') && label.includes('Sem transportador'))
-        );
+        const isSpecialTransition =
+        previousLabel.includes('Sem transportador') && label.includes('Sem ETA') ||
+        previousLabel.includes('Sem ETA') && label.includes('Sem transportador');
+
 
         return (
           <GrupoDia
@@ -355,11 +355,11 @@ export default function ListaPedidosCompra({ grupos, loading, onEdit, onDelete, 
             selecionadosIds={selecionadosIds}
             onToggleSelecao={onToggleSelecao}
             modoSelecao={modoSelecao}
-            className={index > 0 ? (isSpecialTransition ? 'pt-5' : 'pt-3') : ''}
-            _total_eta={_total_eta}
-          />
-        );
+            className={index > 0 ? isSpecialTransition ? 'pt-5' : 'pt-3' : ''}
+            _total_eta={_total_eta} />);
+
+
       })}
-    </div>
-  );
+    </div>);
+
 }
