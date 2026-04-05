@@ -335,11 +335,11 @@ export default function PedidosCompraPage() {
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower) || embarque?.transportadora_nome?.toLowerCase().includes(searchLower))) return false;
 
       if (statusExplicitos.length > 0) {
-        const matchPai = statusPaiSel.includes(p.status);
+        const matchPai = statusPaiSel.includes(p.status) || statusPaiSel.includes(p._display_status);
         const matchEmbarque = statusEmbSel.some((s) => {
           if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
           if (s === 'Original') return false;
-          return embarque?.status_recebimento === s || embarque?.status === s;
+          return embarque?.status_recebimento === s || embarque?.status === s || p._display_status === s;
         });
         if (!matchPai && !matchEmbarque) return false;
       }
@@ -377,7 +377,9 @@ export default function PedidosCompraPage() {
 
   const pedidosVisiveisLista = useMemo(() => {
     return filtrados.filter((pedido) => {
-      const statusPermitido = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado', 'Concluído'].includes(pedido.status) || pedido.status_aprovacao_financeira === 'Aprovado';
+      const statusVisual = pedido._display_status || pedido.status;
+      const statusPermitido = ['Rascunho', 'Aguardando Aprovação Financeira', 'Aprovado', 'Concluído', 'Despachado', 'Aguardando'].includes(statusVisual)
+        || pedido.status_aprovacao_financeira === 'Aprovado';
       return statusPermitido;
     });
   }, [filtrados]);
