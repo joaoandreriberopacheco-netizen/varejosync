@@ -502,8 +502,9 @@ export default function PedidosCompraPage() {
 
   const pedidosPagosPendentes = useMemo(() => {
     return filtrados.filter((pedido) => {
-      const pago = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado';
-      return pago && calcularValorPendentePedido(pedido) > 0;
+      const aprovadoFinanceiro = pedido.status === 'Aprovado' || pedido.status_aprovacao_financeira === 'Aprovado' || pedido._display_status === 'Aprovado';
+      const aindaNaoRecebido = pedido._display_status !== 'Concluído';
+      return aprovadoFinanceiro && aindaNaoRecebido;
     });
   }, [filtrados]);
 
@@ -512,7 +513,7 @@ export default function PedidosCompraPage() {
   }, [pedidosVisiveisPendentes]);
 
   const valorPagoNaoEntregue = useMemo(() => {
-    return pedidosPagosPendentes.reduce((acc, pedido) => acc + calcularValorPendentePedido(pedido), 0);
+    return pedidosPagosPendentes.reduce((acc, pedido) => acc + Number(pedido._display_valor || 0), 0);
   }, [pedidosPagosPendentes]);
 
   const STATUS_VIRTUAL_CONCLUIDOS = ['Recebido OK', 'Concluído'];
@@ -599,7 +600,7 @@ export default function PedidosCompraPage() {
         <div className="space-y-1.5">
           <p className="text-xl font-medium text-gray-800 dark:text-gray-200 font-glacial">Embarques</p>
           <p className="text-xs text-gray-400">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-emerald-600 dark:text-emerald-400">Liberados e ainda não concluídos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
         <PedidosCompraOrganizer
           groupBy={groupBy}

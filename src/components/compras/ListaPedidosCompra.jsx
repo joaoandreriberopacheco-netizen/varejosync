@@ -197,6 +197,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                     <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight truncate">
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
+                    <div className="mt-1">
+                      <span className={`inline-flex max-w-[5.1rem] text-[0.48rem] px-1 py-[0.08rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
+                        {displayStatusLabel}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -210,11 +215,6 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
               <p className="text-[0.68rem] text-gray-400 dark:text-gray-500 mt-1">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
-              <div className="mt-1.5 flex justify-end">
-                <span className={`max-w-[5.1rem] text-[0.48rem] px-1 py-[0.08rem] rounded-full font-semibold tracking-tight whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
-                  {displayStatusLabel}
-                </span>
-              </div>
             </div>
           </div>
 
