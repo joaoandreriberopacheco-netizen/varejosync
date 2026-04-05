@@ -121,23 +121,44 @@ Campos a interpretar do documento:
 
     setLoading(true);
     try {
+      const recorrentes = await base44.entities.ContaRecorrente.filter({ ativa: true }, '-created_date', 200);
+      const mesReferencia = (extractedData.periodo_referencia || extractedData.data_vencimento || '').slice(0, 7);
+      const recorrenteVinculado = recorrentes.find((recorrente) => {
+        const nomeDespesa = (recorrente.nome_despesa || '').toLowerCase();
+        const terceiroNome = (recorrente.terceiro_nome || '').toLowerCase();
+        const descricao = (extractedData.descricao || '').toLowerCase();
+        const beneficiario = (extractedData.terceiro_nome || '').toLowerCase();
+        const vencimentoConfere = Number(recorrente.dia_vencimento) === Number((extractedData.data_vencimento || '').slice(8, 10));
+        return vencimentoConfere && (
+          (nomeDespesa && descricao.includes(nomeDespesa)) ||
+          (terceiroNome && beneficiario.includes(terceiroNome)) ||
+          (terceiroNome && descricao.includes(terceiroNome))
+        );
+      }) || null;
+
+      const contaExistenteDoMes = recorrenteVinculado
+        ? (await base44.entities.ContaPrevista.filter({ conta_recorrente_id: recorrenteVinculado.id }, '-data_vencimento', 50))
+            .find((conta) => (conta.data_vencimento || '').slice(0, 7) === mesReferencia)
+        : null;
+
       const payload = {
         tipo: 'Despesa',
-        descricao: extractedData.descricao,
-        terceiro_id: 'importado-manualmente',
-        terceiro_nome: extractedData.terceiro_nome || 'Beneficiário não identificado',
-        categoria_financeira_id: 'importacao-pendente',
-        categoria_nome: 'Importação pendente',
-        categoria: 'Importação pendente',
+        descricao: recorrenteVinculado?.nome_despesa || extractedData.descricao,
+        terceiro_id: recorrenteVinculado?.terceiro_id || 'importado-manualmente',
+        terceiro_nome: recorrenteVinculado?.terceiro_nome || extractedData.terceiro_nome || 'Beneficiário não identificado',
+        categoria_financeira_id: recorrenteVinculado?.categoria_financeira_id || 'importacao-pendente',
+        categoria_nome: recorrenteVinculado?.categoria_nome || 'Importação pendente',
+        categoria: recorrenteVinculado?.categoria_nome || 'Importação pendente',
         valor: extractedData.valor,
         data_vencimento: extractedData.data_vencimento,
-        natureza: selectedNatureza,
+        natureza: recorrenteVinculado ? 'Recorrente' : selectedNatureza,
         parcela_numero: selectedNatureza === 'Parcelado' && extractedData.parcela_numero ? Number(extractedData.parcela_numero) : null,
         periodo_referencia: extractedData.periodo_referencia || null,
-        status: 'Em Aberto',
+        status: 'Boleto Anexado',
         status_conciliacao: 'N/A',
         boleto_url: file?.name || null,
         referencia_tipo: 'Manual',
+        conta_recorrente_id: recorrenteVinculado?.id || null,
         observacoes: [
           extractedData.observacoes ? `Instruções: ${extractedData.observacoes}` : null,
           extractedData.linha_digitavel ? `Linha digitável: ${extractedData.linha_digitavel}` : null,
@@ -146,7 +167,10 @@ Campos a interpretar do documento:
         ].filter(Boolean).join('\n'),
       };
 
-      const contaCriada = await base44.entities.ContaPrevista.create(payload);
+      const contaCriada = contaExistenteDoMes
+        ? await base44.entities.ContaPrevista.update(contaExistenteDoMes.id, payload)
+        : await base44.entities.ContaPrevista.create(payload);
+
       resetState();
       onSuccess?.(contaCriada);
     } catch (err) {

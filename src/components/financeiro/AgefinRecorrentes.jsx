@@ -11,11 +11,23 @@ function getMonthKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function getContaDoMes(contas, recorrenteId, monthKey) {
+function getContaDoMes(contas, recorrente, monthKey) {
   return contas.find((conta) => {
-    if (conta.conta_recorrente_id !== recorrenteId) return false;
-    if (!conta.data_vencimento) return false;
-    return conta.data_vencimento.slice(0, 7) === monthKey;
+    if (!conta.data_vencimento || conta.data_vencimento.slice(0, 7) !== monthKey) return false;
+    if (conta.conta_recorrente_id === recorrente.id) return true;
+
+    const descricaoConta = (conta.descricao || '').toLowerCase();
+    const terceiroConta = (conta.terceiro_nome || '').toLowerCase();
+    const nomeRecorrente = (recorrente.nome_despesa || '').toLowerCase();
+    const terceiroRecorrente = (recorrente.terceiro_nome || '').toLowerCase();
+    const diaRecorrente = String(recorrente.dia_vencimento || '').padStart(2, '0');
+    const diaConta = (conta.data_vencimento || '').slice(8, 10);
+
+    return diaRecorrente === diaConta && (
+      (nomeRecorrente && descricaoConta.includes(nomeRecorrente)) ||
+      (terceiroRecorrente && terceiroConta.includes(terceiroRecorrente)) ||
+      (terceiroRecorrente && descricaoConta.includes(terceiroRecorrente))
+    );
   });
 }
 
@@ -100,7 +112,7 @@ export default function AgefinRecorrentes() {
 
   const filteredCards = useMemo(() => {
     const cards = recorrentes.map((recorrente) => {
-      const contaMes = getContaDoMes(contas, recorrente.id, monthKey);
+      const contaMes = getContaDoMes(contas, recorrente, monthKey);
       return {
         recorrente,
         contaMes,
