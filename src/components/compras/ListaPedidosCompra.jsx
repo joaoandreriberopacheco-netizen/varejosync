@@ -208,11 +208,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right shrink-0 pl-1">
-              <p className="text-[0.72rem] font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap">
+            <div className="flex-none text-right w-[5.5rem] shrink-0">
+              <p className="text-[0.78rem] font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap">
                 {R(valorExibido)}
               </p>
-              <p className="text-[0.6rem] text-gray-400 dark:text-gray-500 mt-1 whitespace-nowrap">
+              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 mt-1 whitespace-nowrap">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
