@@ -17,17 +17,14 @@ const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const getEmbarqueSuffixIndex = (embarque, pedido) => {
-  const embarquesDoPedido = (pedido?._embarques || []).slice().sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
-  const idxPorOrdem = embarquesDoPedido.findIndex((item) => item.id === embarque?.id);
-  if (idxPorOrdem >= 0) return idxPorOrdem;
+const isNecessidadeRenderizada = (embarque) => !!embarque?.observacoes && String(embarque.observacoes).includes('criado automaticamente para itens pendentes');
 
-  const numero = String(embarque?.numero || '').trim();
-  const match = numero.match(/(\d+)$/);
-  if (match) return Math.max(0, Number(match[1]) - 1);
-  const letter = numero.replace(/[^A-Za-z]/g, '').toUpperCase();
-  const idx = LETTERS.indexOf(letter);
-  return idx >= 0 ? idx : 0;
+const getEmbarqueSuffixIndex = (embarque, pedido) => {
+  const embarquesDoPedido = (pedido?._embarques || [])
+    .slice()
+    .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+  const idxPorOrdem = embarquesDoPedido.findIndex((item) => item.id === embarque?.id);
+  return idxPorOrdem >= 0 ? idxPorOrdem : 0;
 };
 
 const getEmbarqueSuffix = (embarque, pedido) => LETTERS[getEmbarqueSuffixIndex(embarque, pedido)] || 'A';
@@ -42,7 +39,7 @@ const getDisplayEmbarqueOrdinal = (embarque, pedido) => `#${String(getEmbarqueSu
 const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens || embarque?.itens_embarcados) && (embarque.itens || embarque.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
 const getQuantidadePendenteNecessidade = (pedido, embarque) => {
-  if (embarque?.tipo !== 'Necessidade') return 0;
+  if (!isNecessidadeRenderizada(embarque)) return 0;
 
   return (pedido.itens || []).reduce((acc, item) => {
     const quantidade = Number(item.quantidade) || 0;
@@ -58,7 +55,8 @@ const getBorrowedStatus = (pedido, embarque) => {
   const statusRecebimento = embarque.status_recebimento;
   const temItensAssociados = hasLinkedItems(embarque);
   const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
-  const precisaPreenchimento = embarque.tipo === 'Necessidade' && !temTransporte && !temItensAssociados && quantidadePendente > 0;
+  const ehNecessidade = isNecessidadeRenderizada(embarque);
+  const precisaPreenchimento = ehNecessidade && !temTransporte && !temItensAssociados && quantidadePendente > 0;
 
   if (statusRecebimento === 'Recebido OK' || statusRecebimento === 'Com Divergência' || embarque.status === 'Concluído') {
     return 'Concluído';
@@ -193,7 +191,7 @@ export default function PedidosCompraPage() {
           const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
           const temItensAssociados = itensEmbarque.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
           const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
-          const embarqueDormindo = embarque?.tipo === 'Necessidade' && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0 && !(embarque?.itens || embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_pedida) || 0) > 0);
+          const embarqueDormindo = isNecessidadeRenderizada(embarque) && !embarque?.transportadora_id && !embarque?.transportadora_nome && !embarque?.data_embarque && !embarque?.eta && !temItensAssociados && quantidadePendente <= 0 && !(embarque?.itens || embarque?.itens_embarcados || []).some((item) => (Number(item?.quantidade_pedida) || 0) > 0);
           if (embarqueDormindo) return null;
 
           return {

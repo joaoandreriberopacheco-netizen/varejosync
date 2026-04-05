@@ -12,9 +12,15 @@ function getItensDoEmbarque(embarque) {
   return embarque?.itens || embarque?.itens_embarcados || [];
 }
 
-function getProximoCodigoEmbarque(pedidoNumero, embarques) {
-  const letra = String.fromCharCode(65 + (embarques?.length || 0));
-  return `${pedidoNumero}-${letra}`;
+function isEmbarqueRealInformado(embarque) {
+  const itens = getItensDoEmbarque(embarque);
+  const temItens = itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
+  const temTransporte = !!(embarque?.transportadora_id || embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque);
+  return temItens && temTransporte;
+}
+
+function isNecessidadeRenderizada(embarque) {
+  return !!embarque?.observacoes && String(embarque.observacoes).includes('criado automaticamente para itens pendentes');
 }
 
 function calcularPercentualPorStatus(pedido, embarques) {
@@ -143,11 +149,12 @@ Deno.serve(async (req) => {
 
     let embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
     const embarquesComItensAssociados = embarques.filter((embarque) => hasItensAssociados(embarque));
+    const embarquesReaisInformados = embarques.filter((embarque) => isEmbarqueRealInformado(embarque));
     const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedido.id });
     const resumoItens = calcularResumoItensPedido(pedido, embarquesComItensAssociados);
     const itensComPendencia = resumoItens.filter((item) => item.quantidade_recebida < item.quantidade_pedida);
     const itensOrfaosRecebimento = extrairItensOrfaosDoRecebimento(pedido, embarquesComItensAssociados);
-    const temEmbarqueInformado = embarquesComItensAssociados.length > 0;
+    const temEmbarqueInformado = embarquesReaisInformados.length > 0;
     const haItensOrfaos = itensOrfaosRecebimento.length > 0;
     const temPendenciaReal = temEmbarqueInformado && haItensOrfaos;
     const temDivergencia = embarquesComItensAssociados.some((embarque) =>
@@ -168,13 +175,13 @@ Deno.serve(async (req) => {
       };
     }).filter((item) => item.quantidade_embarcada > 0);
 
-    const embarquesNecessidade = embarques.filter((embarque) => embarque.tipo === 'Necessidade');
+    const embarquesNecessidade = embarques.filter((embarque) => isNecessidadeRenderizada(embarque));
     const necessidadeAtiva = embarquesNecessidade.find((embarque) => {
       const statusRecebimento = embarque.status_recebimento;
       return statusRecebimento !== 'Recebido OK' && embarque.status !== 'Concluído';
     });
 
-    if (itensNecessidade.length > 0) {
+    if (temEmbarqueInformado && itensNecessidade.length > 0) {
       if (necessidadeAtiva) {
         await base44.entities.Embarque.update(necessidadeAtiva.id, {
           status: 'Pendente',
@@ -188,8 +195,6 @@ Deno.serve(async (req) => {
           pedido_compra_numero: pedido.numero,
           fornecedor_id: pedido.fornecedor_id,
           fornecedor_nome: pedido.fornecedor_nome,
-          numero: String((embarques?.length || 0) + 1).padStart(2, '0'),
-          tipo: 'Necessidade',
           status: 'Pendente',
           status_recebimento: 'Pendente',
           observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
