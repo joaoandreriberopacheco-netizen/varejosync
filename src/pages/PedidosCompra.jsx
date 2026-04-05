@@ -38,6 +38,8 @@ const getDisplayEmbarqueOrdinal = (embarque, pedido) => `#${String(getEmbarqueSu
 
 const hasLinkedItems = (embarque) => Array.isArray(embarque?.itens || embarque?.itens_embarcados) && (embarque.itens || embarque.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0 || (Number(item?.quantidade_recebida) || 0) > 0);
 
+const hasDespachoVinculado = (embarque) => !!(embarque?.data_embarque || embarque?.eta || embarque?.transportadora_id || embarque?.transportadora_nome);
+
 const getQuantidadePendenteNecessidade = (pedido, embarque) => {
   if (!isNecessidadeRenderizada(embarque)) return 0;
 
@@ -51,31 +53,43 @@ const getQuantidadePendenteNecessidade = (pedido, embarque) => {
 const getBorrowedStatus = (pedido, embarque) => {
   if (!embarque) return pedido?.status || 'Rascunho';
 
-  const temTransporte = !!(embarque.transportadora_id || embarque.transportadora_nome || embarque.data_embarque || embarque.eta);
+  const temDespachoVinculado = hasDespachoVinculado(embarque);
   const statusRecebimento = embarque.status_recebimento;
   const temItensAssociados = hasLinkedItems(embarque);
   const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
   const ehNecessidade = isNecessidadeRenderizada(embarque);
-  const precisaPreenchimento = ehNecessidade && !temTransporte && !temItensAssociados && quantidadePendente > 0;
+  const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && quantidadePendente > 0;
 
   if (statusRecebimento === 'Recebido OK' || statusRecebimento === 'Com Divergência' || embarque.status === 'Concluído') {
     return 'Concluído';
   }
 
-  if (precisaPreenchimento) {
-    return 'Aguardando';
-  }
-
-  if (temItensAssociados || temTransporte || statusRecebimento === 'Recebido Parcial') {
+  if (statusRecebimento === 'Recebido Parcial') {
     return 'Despachado';
   }
 
-  if (pedido?.status === 'Aguardando Aprovação Financeira' || pedido?.status === 'Aguardando Liberação') {
-    return 'Aguardando Aprovação Financeira';
+  if (ehNecessidade && !temDespachoVinculado) {
+    return 'Aguardando';
   }
 
-  if (pedido?.status === 'Aprovado') {
-    return 'Aprovado';
+  if (!ehNecessidade && !temDespachoVinculado) {
+    if (pedido?.status === 'Aguardando Aprovação Financeira' || pedido?.status === 'Aguardando Liberação') {
+      return 'Aguardando Aprovação Financeira';
+    }
+
+    if (pedido?.status === 'Aprovado') {
+      return 'Aprovado';
+    }
+
+    return 'Rascunho';
+  }
+
+  if (temDespachoVinculado || temItensAssociados) {
+    return 'Despachado';
+  }
+
+  if (precisaPreenchimento) {
+    return 'Aguardando';
   }
 
   return 'Rascunho';

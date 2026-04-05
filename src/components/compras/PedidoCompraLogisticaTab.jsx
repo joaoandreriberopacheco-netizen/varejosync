@@ -155,11 +155,12 @@ export default function PedidoCompraLogisticaTab({ pedido, onPedidoUpdated }) {
   const [acordoOpen, setAcordoOpen] = useState(false);
 
   const embarques = Array.isArray(pedido?._embarques) ? pedido._embarques : (pedido?.embarques_registrados || []);
-  const embarquesComItensAssociados = embarques.filter((emb) => (emb.itens || emb.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
+  const embarquesComDespacho = embarques.filter((emb) => !!(emb?.data_embarque || emb?.eta || emb?.transportadora_id || emb?.transportadora_nome));
+  const embarquesComItensAssociados = embarquesComDespacho.filter((emb) => (emb.itens || emb.itens_embarcados || []).some((item) => (Number(item?.quantidade_embarcada) || 0) > 0));
   const percentualEmbarcado = Number(pedido?.percentual_valor_embarcado || pedido?.percentual_despachado || 0);
   const percentualConcluido = Number(pedido?.percentual_concluido || 0);
   const percentualPendente = Number(pedido?.percentual_pendente || Math.max(0, 100 - percentualEmbarcado));
-  const temEmbarqueReal = embarquesComItensAssociados.length > 0;
+  const temEmbarqueReal = embarquesComDespacho.length > 0;
   const totalEmbarcado = useMemo(() => calcularTotalEmbarcado(embarquesComItensAssociados), [embarquesComItensAssociados]);
 
   // Itens órfãos: qty pedida - qty embarcada em todos os embarques reais

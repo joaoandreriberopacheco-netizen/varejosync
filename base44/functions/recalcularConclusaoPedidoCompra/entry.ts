@@ -12,11 +12,14 @@ function getItensDoEmbarque(embarque) {
   return embarque?.itens || embarque?.itens_embarcados || [];
 }
 
+function hasDespachoVinculado(embarque) {
+  return !!(embarque?.transportadora_id || embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque);
+}
+
 function isEmbarqueRealInformado(embarque) {
   const itens = getItensDoEmbarque(embarque);
   const temItens = itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
-  const temTransporte = !!(embarque?.transportadora_id || embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque);
-  return temItens && temTransporte;
+  return temItens && hasDespachoVinculado(embarque);
 }
 
 function isNecessidadeRenderizada(embarque) {
@@ -150,6 +153,9 @@ Deno.serve(async (req) => {
     let embarques = await base44.entities.Embarque.filter({ pedido_compra_id: pedido.id });
     const embarquesComItensAssociados = embarques.filter((embarque) => hasItensAssociados(embarque));
     const embarquesReaisInformados = embarques.filter((embarque) => isEmbarqueRealInformado(embarque));
+    const embarqueOriginal = embarques
+      .slice()
+      .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0))[0] || null;
     const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedido.id });
     const resumoItens = calcularResumoItensPedido(pedido, embarquesComItensAssociados);
     const itensComPendencia = resumoItens.filter((item) => item.quantidade_recebida < item.quantidade_pedida);
@@ -181,12 +187,25 @@ Deno.serve(async (req) => {
       return statusRecebimento !== 'Recebido OK' && embarque.status !== 'Concluído';
     });
 
-    if (temEmbarqueInformado && itensNecessidade.length > 0) {
+    if (embarqueOriginal && !hasDespachoVinculado(embarqueOriginal)) {
+      if (necessidadeAtiva) {
+        await base44.entities.Embarque.update(necessidadeAtiva.id, {
+          status: 'Concluído',
+          status_recebimento: 'Recebido OK',
+          itens: getItensDoEmbarque(necessidadeAtiva)
+        });
+      }
+    } else if (temEmbarqueInformado && itensNecessidade.length > 0) {
       if (necessidadeAtiva) {
         await base44.entities.Embarque.update(necessidadeAtiva.id, {
           status: 'Pendente',
           status_recebimento: 'Pendente',
+          data_embarque: null,
+          eta: null,
+          transportadora_id: null,
+          transportadora_nome: null,
           itens: itensNecessidade,
+          itens_embarcados: itensNecessidade,
           observacoes: necessidadeAtiva.observacoes || 'Embarque de necessidade criado automaticamente para itens pendentes.'
         });
       } else {
@@ -195,10 +214,13 @@ Deno.serve(async (req) => {
           pedido_compra_numero: pedido.numero,
           fornecedor_id: pedido.fornecedor_id,
           fornecedor_nome: pedido.fornecedor_nome,
+          numero: `${pedido.numero || 'PC'}-NEC`,
+          tipo: 'Embarque',
           status: 'Pendente',
           status_recebimento: 'Pendente',
           observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
-          itens: itensNecessidade
+          itens: itensNecessidade,
+          itens_embarcados: itensNecessidade
         });
       }
     } else if (necessidadeAtiva) {

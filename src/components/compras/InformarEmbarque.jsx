@@ -310,7 +310,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         observacoes,
         itens: itensEmbarcados,
         itens_embarcados: itensEmbarcados,
-        status: 'Despachado'
+        status: 'Pendente'
       };
 
       if (isEdicao) {
