@@ -140,6 +140,51 @@ const getDisplayValorEmbarque = (pedido, embarque) => {
   return Number(((valorItens / valorBaseItens) * valorTotalPedido).toFixed(2));
 };
 
+const buildVirtualNecessidade = (pedido, embarquesDoPedido) => {
+  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
+  const temDespachoReal = embarquesReais.some((embarque) => hasLinkedItems(embarque) && hasDespachoVinculado(embarque));
+  if (!temDespachoReal) return null;
+
+  const recebidosPorProduto = embarquesReais.reduce((acc, embarque) => {
+    (embarque?.itens || embarque?.itens_embarcados || []).forEach((item) => {
+      const produtoId = item.produto_id;
+      if (!produtoId) return;
+      acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || Number(item.quantidade_embarcada) || 0);
+    });
+    return acc;
+  }, {});
+
+  const itensPendentes = (pedido.itens || []).map((item) => {
+    const quantidadePedida = Number(item.quantidade_base || item.quantidade) || 0;
+    const quantidadeRecebida = Number(recebidosPorProduto[item.produto_id]) || 0;
+    const quantidadePendente = Math.max(0, quantidadePedida - quantidadeRecebida);
+    if (!quantidadePendente) return null;
+    return {
+      produto_id: item.produto_id,
+      produto_nome: item.produto_nome,
+      quantidade_pedida: quantidadePedida,
+      quantidade_embarcada: quantidadePendente,
+      quantidade_recebida: 0,
+      unidade_medida: item.unidade_medida || '',
+    };
+  }).filter(Boolean);
+
+  if (!itensPendentes.length) return null;
+
+  return {
+    id: `virtual-necessidade-${pedido.id}`,
+    pedido_compra_id: pedido.id,
+    numero: `${pedido.numero || 'PC'}-NEC`,
+    tipo: 'Necessidade',
+    status: 'Pendente',
+    status_recebimento: 'Pendente',
+    observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
+    itens: itensPendentes,
+    itens_embarcados: itensPendentes,
+    created_date: new Date().toISOString(),
+  };
+};
+
 export default function PedidosCompraPage() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
@@ -230,9 +275,10 @@ export default function PedidosCompraPage() {
         const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
         const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
         const embarqueOriginal = embarquesReais[0] || null;
+        const necessidadeVirtual = embarquesNecessidade.length === 0 ? buildVirtualNecessidade(pedido, embarquesDoPedido) : null;
 
         const embarquesRenderizados = embarquesDoPedido.length > 0
-          ? [...embarquesReais, ...embarquesNecessidade]
+          ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
           : [{
               id: `original-${pedido.id}`,
               pedido_compra_id: pedido.id,

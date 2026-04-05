@@ -187,13 +187,13 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                   <span className="text-[0.9rem] font-semibold text-gray-900 dark:text-white leading-none font-mono tracking-[0.08em]">
                     {pedido._display_code || pedido.numero}
                   </span>
-                  <span className="text-[0.8rem] font-semibold text-gray-600 dark:text-gray-300 truncate max-w-[180px]">
-                    {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
-                  </span>
                   <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
                     {displayStatus}
                   </span>
                 </div>
+                <p className="mt-1 text-[0.78rem] font-medium text-gray-600 dark:text-gray-300 leading-tight truncate">
+                  {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
+                </p>
               </div>
             </div>
 
