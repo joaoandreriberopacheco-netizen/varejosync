@@ -232,8 +232,8 @@ Campos a interpretar do documento:
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 pb-[calc(12rem+env(safe-area-inset-bottom))] pt-2 touch-pan-y [-webkit-overflow-scrolling:touch]">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="h-0 min-h-0 flex-1 overflow-y-scroll overscroll-y-contain px-5 pb-[calc(12rem+env(safe-area-inset-bottom))] pt-2 touch-pan-y [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]">
         <div className="space-y-5">
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
             <div className="flex items-start gap-3">
@@ -394,7 +394,7 @@ Campos a interpretar do documento:
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-gray-50/95 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-gray-950/95">
+      <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-gray-50/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-gray-950/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"

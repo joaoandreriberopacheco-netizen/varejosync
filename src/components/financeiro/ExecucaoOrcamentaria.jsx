@@ -314,7 +314,7 @@ export default function ExecucaoOrcamentaria() {
             <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
               <DialogTitle className="text-gray-900 dark:text-white">Importar conta</DialogTitle>
             </DialogHeader>
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div className="min-h-0 flex-1 overflow-hidden overscroll-none">
               <AgefinImportador
                 onSuccess={() => {
                   setShowImportadorAgefin(false);
