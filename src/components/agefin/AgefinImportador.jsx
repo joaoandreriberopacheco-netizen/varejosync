@@ -232,8 +232,8 @@ Campos a interpretar do documento:
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-32 pt-2">
+    <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden md:h-full">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-2 touch-pan-y">
         <div className="space-y-5">
           <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
             <div className="flex items-start gap-3">
@@ -392,7 +392,7 @@ Campos a interpretar do documento:
         </div>
       </div>
 
-      <div className="border-t border-white/5 bg-gray-50/95 px-5 pb-5 pt-3 backdrop-blur dark:bg-gray-950/95">
+      <div className="shrink-0 border-t border-white/5 bg-gray-50/95 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-gray-950/95">
         <div className="grid grid-cols-2 gap-3">
           <Button
             variant="outline"

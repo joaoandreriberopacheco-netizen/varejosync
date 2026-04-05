@@ -283,7 +283,11 @@ export default function AnexoCompartilhado() {
       )}
 
       {etapa === 'vincular' && <BuscarLancamentoSheet onSelecionar={handleVincular} onVoltar={() => setEtapa('opcoes')} uploadando={uploadando} />}
-      {abrirNovo && <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />}
+      {abrirNovo && (
+        <div className="fixed inset-0 z-[70] h-[100dvh] overflow-hidden bg-gray-50 dark:bg-gray-950">
+          <NovoLancamentoDialog open={abrirNovo} onClose={() => setAbrirNovo(false)} onSaved={handleNovoCriado} />
+        </div>
+      )}
     </div>
   );
 }
