@@ -38,6 +38,7 @@ import SimuladorCartao from '@/pages/SimuladorCartao';
 import ReversaoDespesasSangrias from '@/pages/ReversaoDespesasSangrias';
 import ConsumoInterno from '@/pages/ConsumoInterno';
 import AuditoriaPins from '@/pages/AuditoriaPins';
+import Agefin from '@/pages/Agefin';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -197,6 +198,7 @@ const AuthenticatedApp = () => {
       <Route path="/ReversaoDespesasSangrias" element={<LayoutWrapper currentPageName="ReversaoDespesasSangrias"><ReversaoDespesasSangrias /></LayoutWrapper>} />
       <Route path="/ConsumoInterno" element={<LayoutWrapper currentPageName="ConsumoInterno"><ConsumoInterno /></LayoutWrapper>} />
       <Route path="/AuditoriaPins" element={<LayoutWrapper currentPageName="AuditoriaPins"><AuditoriaPins /></LayoutWrapper>} />
+      <Route path="/Agefin" element={<LayoutWrapper currentPageName="Agefin"><Agefin /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
       </Routes>
     </>
