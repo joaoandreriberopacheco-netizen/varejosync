@@ -69,7 +69,7 @@ export default function ExecucaoOrcamentaria() {
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [periodo, setPeriodo] = useState('tudo');
+  const [periodo, setPeriodo] = useState('mes');
   const [cs, setCs] = useState('');
   const [ce, setCe] = useState('');
   const [contasSel, setContasSel] = useState([]);
@@ -364,7 +364,7 @@ export default function ExecucaoOrcamentaria() {
             onOpenConciliacao={setConciliacaoConta}
             totalFiltrados={filtrados.length}
             hasActiveFilters={hasActiveFilters}
-            onLimparFiltros={() => { setPeriodo('tudo'); setCs(''); setCe(''); setTiposSel([]); setContasSel(contas.map(conta => conta.id)); setStatusSel([]); setPendentes(false); setCmvOnly(false); setSearch(''); }}
+            onLimparFiltros={() => { setPeriodo('mes'); setCs(''); setCe(''); setTiposSel([]); setContasSel(contas.map(conta => conta.id)); setStatusSel([]); setPendentes(false); setCmvOnly(false); setSearch(''); }}
           />
 
           {/* Lista */}
