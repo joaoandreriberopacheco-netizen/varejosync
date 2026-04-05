@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
+import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
 
 export default function AgefinImportador({ onSuccess }) {
@@ -68,6 +67,13 @@ Regras:
     }
   };
 
+  const resetState = () => {
+    setFile(null);
+    setExtractedData(null);
+    setSelectedNatureza(null);
+    setError(null);
+  };
+
   const handleConfirm = async () => {
     if (!extractedData || !selectedNatureza) return;
 
@@ -78,10 +84,7 @@ Regras:
         natureza: selectedNatureza,
         status: 'Pendente',
       });
-      setFile(null);
-      setExtractedData(null);
-      setSelectedNatureza(null);
-      setError(null);
+      resetState();
       onSuccess?.();
     } catch (err) {
       setError('Erro ao salvar conta');
@@ -93,35 +96,76 @@ Regras:
 
   if (!extractedData) {
     return (
-      <div className="p-6 text-center">
-        <label className="block cursor-pointer">
-          <div className="border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-3xl p-8 hover:border-blue-400 transition-colors">
-            <Upload className="w-12 h-12 text-blue-500 dark:text-blue-400 mx-auto mb-3" />
-            <p className="font-semibold text-gray-900 dark:text-white mb-1">
-              {file ? file.name : 'Selecione um documento'}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Boleto, NF, DAR, Carnê ou imagem
-            </p>
+      <div className="space-y-5 px-5 pb-5 pt-2">
+        <div className="rounded-[28px] bg-white/95 p-5 shadow-sm dark:bg-gray-800">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-gray-400">Importar conta</p>
+              <h2 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">Leitura automática</h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Envie boleto, guia, DAR, PDF ou imagem para pré-preencher a conta.</p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
+              <Sparkles className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+            </div>
           </div>
-          <input
-            type="file"
-            onChange={handleFileUpload}
-            disabled={loading}
-            className="hidden"
-            accept="image/*,.pdf"
-          />
-        </label>
+
+          <label className="block cursor-pointer">
+            <div className="rounded-[24px] bg-gray-100 px-5 py-7 text-center shadow-sm transition-all hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-950">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-gray-800">
+                <Upload className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              </div>
+              <p className="font-medium text-gray-900 dark:text-white">{file ? file.name : 'Selecionar documento'}</p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">PDF, boleto escaneado ou imagem nítida</p>
+            </div>
+            <input
+              type="file"
+              onChange={handleFileUpload}
+              disabled={loading}
+              className="hidden"
+              accept="image/*,.pdf"
+            />
+          </label>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-gray-800">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">Formato</p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
+                <FileText className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">PDF ou imagem</p>
+            </div>
+          </div>
+          <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-gray-800">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400">Resultado</p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700">
+                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Pré-cadastro</p>
+            </div>
+          </div>
+        </div>
+
         {loading && (
-          <div className="mt-4 flex flex-col items-center gap-3">
-            <div className="w-6 h-6 border-3 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Lendo documento com OCR avançado…</p>
+          <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-gray-800">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl border-2 border-gray-300 border-t-gray-600 animate-spin dark:border-gray-600 dark:border-t-gray-200" />
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Lendo documento</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Analisando campos principais para contas a pagar.</p>
+              </div>
+            </div>
           </div>
         )}
+
         {error && (
-          <div className="mt-4 bg-red-50 dark:bg-red-900/20 rounded-2xl p-4 flex items-start gap-3 text-left">
-            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+          <div className="rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
+            <div className="flex items-start gap-3 text-left">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+              <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+            </div>
           </div>
         )}
       </div>
@@ -129,99 +173,95 @@ Regras:
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Preview */}
-      <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 flex items-start gap-3">
-        <FileCheck className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="font-semibold text-green-900 dark:text-green-100">Documento lido com sucesso</p>
-          <p className="text-sm text-green-700 dark:text-green-200 mt-1">{file?.name}</p>
-        </div>
-        <button
-          onClick={() => {
-            setFile(null);
-            setExtractedData(null);
-            setSelectedNatureza(null);
-          }}
-          className="text-green-600 hover:text-green-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Extracted Data Form */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Descrição
-          </label>
-          <input
-            type="text"
-            value={extractedData.descricao}
-            onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
-            className="w-full px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Valor
-            </label>
-            <input
-              type="number"
-              value={extractedData.valor}
-              onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) })}
-              className="w-full px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-blue-500 text-lg font-semibold"
-              step="0.01"
-            />
+    <div className="space-y-5 px-5 pb-5 pt-2">
+      <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
+            <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Vencimento
-            </label>
-            <input
-              type="date"
-              value={extractedData.data_vencimento}
-              onChange={(e) => setExtractedData({ ...extractedData, data_vencimento: e.target.value })}
-              className="w-full px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-0 focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-gray-900 dark:text-white">Documento lido com sucesso</p>
+            <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{file?.name}</p>
           </div>
+          <button
+            onClick={resetState}
+            className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
-      {/* Natureza Selector */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          Qual é a natureza desta conta?
-        </label>
+      <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400">Pré-preenchimento</p>
+            <h3 className="mt-2 font-glacial text-xl font-semibold text-gray-900 dark:text-white">Revisar dados</h3>
+          </div>
+          <span className="rounded-2xl bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-300">PDV style</span>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
+            <input
+              type="text"
+              value={extractedData.descricao}
+              onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
+              className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 placeholder:text-gray-400 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Valor</label>
+              <input
+                type="number"
+                value={extractedData.valor}
+                onChange={(e) => setExtractedData({ ...extractedData, valor: parseFloat(e.target.value) })}
+                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-lg font-semibold text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Vencimento</label>
+              <input
+                type="date"
+                value={extractedData.data_vencimento}
+                onChange={(e) => setExtractedData({ ...extractedData, data_vencimento: e.target.value })}
+                className="h-14 w-full rounded-2xl bg-gray-100 px-4 text-base text-gray-900 outline-none ring-0 focus:bg-gray-200 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-950"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[28px] bg-white p-5 shadow-sm dark:bg-gray-800">
+        <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">Qual é a natureza desta conta?</label>
         <AgefinNaturezaSelector value={selectedNatureza} onChange={setSelectedNatureza} />
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 rounded-2xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+        <div className="rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+            <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+          </div>
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-3 pt-4">
+      <div className="grid grid-cols-2 gap-3 pt-1">
         <Button
           variant="outline"
-          onClick={() => {
-            setFile(null);
-            setExtractedData(null);
-            setSelectedNatureza(null);
-          }}
-          className="flex-1 rounded-2xl h-12"
+          onClick={resetState}
+          className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
         >
           Cancelar
         </Button>
         <Button
           onClick={handleConfirm}
           disabled={loading || !selectedNatureza}
-          className="flex-1 rounded-2xl h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base"
+          className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-gray-900 hover:bg-gray-400 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-white"
         >
           {loading ? 'Salvando...' : 'Salvar Conta'}
         </Button>
