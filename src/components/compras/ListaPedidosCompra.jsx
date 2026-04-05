@@ -193,7 +193,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       {pedido._display_fornecedor || pedido.fornecedor_nome || '—'}
                     </p>
                   </div>
-                  <span className={`shrink-0 text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide ${cfg.pill}`}>
+                  <span className={`max-w-[10rem] text-[0.6rem] px-2 py-0.5 rounded-full font-semibold tracking-wide whitespace-normal break-words text-center leading-tight ${cfg.pill}`}>
                     {displayStatus}
                   </span>
                 </div>
