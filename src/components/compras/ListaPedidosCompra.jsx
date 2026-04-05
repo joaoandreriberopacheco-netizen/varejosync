@@ -14,12 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const R = (v) => {
-  const n = v || 0;
-  if (n >= 1_000_000) return `R$ ${(n / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
-  if (n >= 1_000) return `R$ ${(n / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}K`;
-  return `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-};
+const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
 const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
@@ -213,11 +208,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right shrink-0 max-w-[7rem]">
-              <p className="text-[0.72rem] font-bold text-gray-900 dark:text-white leading-none whitespace-nowrap">
+            <div className="flex-none text-right shrink-0 self-stretch flex flex-col justify-between pl-2">
+              <p className="text-[0.82rem] font-bold text-gray-900 dark:text-white leading-tight break-words text-right">
                 {R(valorExibido)}
               </p>
-              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 mt-1 whitespace-nowrap">
+              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 whitespace-nowrap text-right">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
