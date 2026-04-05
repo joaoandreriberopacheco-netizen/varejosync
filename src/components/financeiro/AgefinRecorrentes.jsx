@@ -52,7 +52,7 @@ export default function AgefinRecorrentes() {
       });
     }
 
-    const valorTotal = filtered.reduce((sum, r) => sum + (r.valor_previsto || 0), sum);
+    const valorTotal = filtered.reduce((sum, r) => sum + (r.valor_previsto || 0), 0);
     const countVencendo = recorrentes.filter(r => {
       const conta = contas.find(c => c.conta_recorrente_id === r.id && new Date(c.data_vencimento) >= today && new Date(c.data_vencimento) <= monthEnd);
       return conta && conta.status !== 'Pago';
