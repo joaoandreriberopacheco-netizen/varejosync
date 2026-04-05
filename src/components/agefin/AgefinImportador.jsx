@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { Upload, X, FileCheck, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -19,19 +20,48 @@ export default function AgefinImportador({ onSuccess }) {
     setLoading(true);
     setError(null);
     try {
-      const fileUrl = await base44.integrations.Core.UploadFile({ file: selectedFile });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFile });
       setFile(selectedFile);
 
-      // Aqui virá a função de OCR/IA para extrair dados
-      // Por enquanto, vamos usar um mock
-      const mockData = {
-        descricao: selectedFile.name.replace(/\.[^/.]+$/, ''),
-        valor: 0,
-        data_vencimento: new Date().toISOString().split('T')[0],
-      };
-      setExtractedData(mockData);
+      const extracted = await base44.integrations.Core.InvokeLLM({
+        model: 'claude_sonnet_4_6',
+        file_urls: [file_url],
+        prompt: `Extraia os dados principais deste documento brasileiro de cobrança com OCR visual de alta precisão. Priorize boletos, faturas de energia, água, internet, DAR, carnês e contas similares.
+
+Regras:
+- Leia o conteúdo visual do arquivo com máxima precisão.
+- Identifique o beneficiário/emissor principal.
+- Identifique a descrição mais útil para uso financeiro humano.
+- Extraia o valor final do documento a pagar.
+- Extraia a data de vencimento real.
+- Se houver múltiplas datas, use a data explicitamente ligada a vencimento.
+- Se houver múltiplos valores, use o valor final do documento/cobrança.
+- Se não tiver certeza absoluta em algum campo, retorne null nesse campo em vez de inventar.
+- Para descrição, prefira algo como "Energia - Amazonas Energia" ou "Boleto - Nome do Beneficiário".
+- Retorne a data sempre em formato YYYY-MM-DD.
+- Retorne o valor como número decimal, sem símbolo monetário.
+- Retorne também um resumo_texto curto com os trechos mais relevantes encontrados no documento.`,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            descricao: { type: ['string', 'null'] },
+            valor: { type: ['number', 'null'] },
+            data_vencimento: { type: ['string', 'null'] },
+            fornecedor: { type: ['string', 'null'] },
+            documento_tipo: { type: ['string', 'null'] },
+            resumo_texto: { type: ['string', 'null'] }
+          },
+          required: ['descricao', 'valor', 'data_vencimento', 'fornecedor', 'documento_tipo', 'resumo_texto']
+        }
+      });
+
+      setExtractedData({
+        descricao: extracted.descricao || (extracted.fornecedor ? `${extracted.documento_tipo || 'Conta'} - ${extracted.fornecedor}` : selectedFile.name.replace(/\.[^/.]+$/, '')),
+        valor: extracted.valor ?? 0,
+        data_vencimento: extracted.data_vencimento || dataHoje(),
+      });
     } catch (err) {
-      setError('Erro ao fazer upload do arquivo');
+      setError('Não consegui ler este documento com precisão. Tente outra imagem ou PDF mais nítido.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -83,8 +113,15 @@ export default function AgefinImportador({ onSuccess }) {
           />
         </label>
         {loading && (
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 flex flex-col items-center gap-3">
             <div className="w-6 h-6 border-3 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">Lendo documento com OCR avançado…</p>
+          </div>
+        )}
+        {error && (
+          <div className="mt-4 bg-red-50 dark:bg-red-900/20 rounded-2xl p-4 flex items-start gap-3 text-left">
+            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
           </div>
         )}
       </div>
