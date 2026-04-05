@@ -20,7 +20,7 @@ import {
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   BarChart2, Users, MapPin, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   Layers, ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
-  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, TruckIcon, RefreshCcw
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, TruckIcon, RefreshCcw, AlertCircle
 } from 'lucide-react';
 
 export function resolverPermissoes(perfilDeAcesso, overridePermissoes = {}) {
@@ -315,9 +315,15 @@ export const ALL_MENU_ITEMS = [
         page: 'TurnosFechados',
         icon: Clock,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
+        name: 'Contas a Pagar',
+        page: 'Agefin',
+        icon: AlertCircle,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
       }
-    ]
-  },
+      ]
+      },
   {
     name: 'Relatórios',
     icon: BookOpen,
