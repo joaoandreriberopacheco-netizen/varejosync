@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import PedidoProgressBar from '@/components/compras/PedidoProgressBar';
-import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { ChevronDown, AlertCircle, Trash2, Check, Package2, CalendarClock, Truck } from 'lucide-react';
+import { formatarDataCurta, toLocalDateKey } from '@/components/utils/dateUtils';
+import { ChevronDown, AlertCircle, Trash2, Check, Package2, CalendarClock, Truck, CalendarDays } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
   AlertDialog,
@@ -107,6 +107,9 @@ function getLEDStatus(pedido) {
 function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao, onToggleSelecao, modoSelecao }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editandoEta, setEditandoEta] = useState(false);
+  const [etaValue, setEtaValue] = useState('');
+  const [salvandoEta, setSalvandoEta] = useState(false);
 
   const isVirtualCard = !!pedido._display_status;
   const displayStatus = pedido._display_status || pedido.status;
@@ -144,6 +147,23 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
     }
     return getLEDStatus(pedido);
   }, [pedido.id, pedido.status, displayStatus, isVirtualCard, pedido._embarque]);
+
+  const handleEditEta = (e) => {
+    e.stopPropagation();
+    const etaAtual = pedido._embarque?.eta ? toLocalDateKey(pedido._embarque.eta) : '';
+    setEtaValue(etaAtual);
+    setEditandoEta(true);
+  };
+
+  const handleSalvarEta = async (e) => {
+    e.stopPropagation();
+    if (!pedido._embarque?.id || !etaValue) { setEditandoEta(false); return; }
+    setSalvandoEta(true);
+    await base44.entities.Embarque.update(pedido._embarque.id, { eta: etaValue });
+    setSalvandoEta(false);
+    setEditandoEta(false);
+    onDelete(); // recarrega lista
+  };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -235,6 +255,31 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
                       : (totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : '')}
                 </span>
               </span>
+              {/* Botão editar ETA rápido */}
+              {pedido._embarque?.id && !editandoEta && (
+                <button
+                  onClick={handleEditEta}
+                  className="ml-auto flex items-center gap-1 text-[0.62rem] text-gray-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors"
+                  title="Ajustar ETA"
+                >
+                  <CalendarDays className="w-3 h-3" />
+                  <span>{pedido._embarque?.eta ? formatarDataCurta(toLocalDateKey(pedido._embarque.eta)) : 'ETA'}</span>
+                </button>
+              )}
+              {/* Edição inline de ETA */}
+              {editandoEta && (
+                <div className="ml-auto flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                  <input
+                    type="date"
+                    value={etaValue}
+                    onChange={e => setEtaValue(e.target.value)}
+                    className="text-[0.7rem] border border-gray-200 dark:border-gray-600 rounded-lg px-1.5 py-0.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:border-cyan-400"
+                    autoFocus
+                  />
+                  <button onClick={handleSalvarEta} disabled={salvandoEta} className="text-emerald-500 hover:text-emerald-600 font-bold text-xs">{salvandoEta ? '…' : '✓'}</button>
+                  <button onClick={e => { e.stopPropagation(); setEditandoEta(false); }} className="text-gray-400 hover:text-red-400 text-xs">✕</button>
+                </div>
+              )}
             </div>
             <EmbarquesInfo pedido={pedido} />
           </div>
