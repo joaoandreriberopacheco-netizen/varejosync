@@ -14,7 +14,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+const R = (v) => {
+  const n = v || 0;
+  return `R$ ${n.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}`;
+};
 
 const STATUS_CONFIG = {
   'Rascunho': { dot: 'bg-gray-300 dark:bg-gray-600', pill: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
@@ -169,7 +172,7 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
 
         <div className="w-full min-w-0 px-3 py-3 overflow-hidden">
           {/* Linha principal */}
-          <div className="flex w-full min-w-0 items-start justify-between gap-1.5 overflow-hidden">
+          <div className="flex w-full min-w-0 items-stretch justify-between gap-1.5 overflow-hidden">
             <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden">
               {/* Checkbox modo seleção */}
               {modoSelecao && (
@@ -208,11 +211,11 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             </div>
 
             {/* Valor + data */}
-            <div className="flex-none text-right shrink-0 self-stretch flex flex-col justify-between pl-2">
-              <p className="text-[0.82rem] font-bold text-gray-900 dark:text-white leading-tight break-words text-right">
+            <div className="flex-none text-right shrink-0 flex flex-col justify-center gap-0.5 pl-1">
+              <p className="text-[0.92rem] font-bold text-gray-900 dark:text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                 {R(valorExibido)}
               </p>
-              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 whitespace-nowrap text-right">
+              <p className="text-[0.64rem] text-gray-400 dark:text-gray-500 whitespace-nowrap">
                 {pedido._display_date ? formatarDataCurta(pedido._display_date) : '—'}
               </p>
             </div>
