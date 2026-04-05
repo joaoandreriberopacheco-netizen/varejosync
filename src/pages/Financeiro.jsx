@@ -22,7 +22,7 @@ export default function FinanceiroPage() {
           <TabsList className="grid grid-cols-4 w-full rounded-full bg-gray-100 dark:bg-gray-800 p-1 h-auto">
             <TabsTrigger value="caixa" className="rounded-full text-xs md:text-sm">Fluxo de Caixa</TabsTrigger>
             <TabsTrigger value="contas" className="rounded-full text-xs md:text-sm">Contas a Pagar</TabsTrigger>
-            <TabsTrigger value="agefin" className="rounded-full text-xs md:text-sm">Agefin</TabsTrigger>
+            <TabsTrigger value="agefin" className="rounded-full text-xs md:text-sm">AGEFIN</TabsTrigger>
             <TabsTrigger value="movimentos" className="rounded-full text-xs md:text-sm">Movimentos</TabsTrigger>
           </TabsList>
 

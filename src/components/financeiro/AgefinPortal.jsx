@@ -166,7 +166,7 @@ export default function AgefinPortal() {
         <DialogTrigger asChild>
           <Button className="w-full rounded-2xl h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm">
             <ChevronRight className="w-4 h-4 mr-2" />
-            Gerenciar contas no Agefin
+            Gerenciar contas no AGEFIN
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0 rounded-3xl border-0 shadow-lg overflow-hidden">

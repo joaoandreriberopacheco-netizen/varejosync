@@ -168,29 +168,19 @@ Campos a interpretar do documento:
         : contaExistenteDoMes;
 
       const payload = {
-        tipo: 'Despesa',
         descricao: recorrenteFinal?.nome_despesa || extractedData.descricao,
         terceiro_id: recorrenteFinal?.terceiro_id || 'importado-manualmente',
         terceiro_nome: recorrenteFinal?.terceiro_nome || extractedData.terceiro_nome || 'Beneficiário não identificado',
         categoria_financeira_id: recorrenteFinal?.categoria_financeira_id || 'importacao-pendente',
         categoria_nome: recorrenteFinal?.categoria_nome || 'Importação pendente',
-        categoria: recorrenteFinal?.categoria_nome || 'Importação pendente',
         valor: extractedData.valor,
         data_vencimento: extractedData.data_vencimento,
         natureza: recorrenteFinal ? 'Recorrente' : selectedNatureza,
         parcela_numero: selectedNatureza === 'Parcelado' && extractedData.parcela_numero ? Number(extractedData.parcela_numero) : null,
         periodo_referencia: extractedData.periodo_referencia || null,
         status: file?.url ? 'Boleto Anexado' : 'Pendente',
-        status_conciliacao: 'N/A',
         boleto_url: file?.url || null,
-        referencia_tipo: 'Manual',
         conta_recorrente_id: recorrenteFinal?.id || null,
-        observacoes: [
-          extractedData.observacoes ? `Instruções: ${extractedData.observacoes}` : null,
-          extractedData.linha_digitavel ? `Linha digitável: ${extractedData.linha_digitavel}` : null,
-          extractedData.codigo_pix_copia_cola ? `PIX copia e cola: ${extractedData.codigo_pix_copia_cola}` : null,
-          selectedNatureza === 'Recorrente' ? `Frequência sugerida: ${selectedRecorrencia}` : null,
-        ].filter(Boolean).join('\n'),
       };
 
       const contaCriada = contaDoMesFinal
