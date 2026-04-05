@@ -43,7 +43,6 @@ export default function AgefinImportador({ onSuccess }) {
 
     setLoading(true);
     try {
-      // Criar ContaPrevista
       await base44.entities.ContaPrevista.create({
         ...extractedData,
         natureza: selectedNatureza,
@@ -52,6 +51,7 @@ export default function AgefinImportador({ onSuccess }) {
       setFile(null);
       setExtractedData(null);
       setSelectedNatureza(null);
+      setError(null);
       onSuccess?.();
     } catch (err) {
       setError('Erro ao salvar conta');
