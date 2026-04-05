@@ -58,8 +58,8 @@ const FAB_ITEMS = [
 ];
 
 const FAB_CONTAS_ITEMS = [
-  { tipo: 'Despesa', icon: ArrowUpRight, label: 'Conta a Pagar' },
-  { tipo: 'Receita', icon: ArrowDownLeft, label: 'Conta a Receber' },
+  { tipo: 'Despesa', icon: ArrowUpRight, label: 'Conta a Pagar', dialogTipo: 'Despesa' },
+  { tipo: 'Receita', icon: ArrowDownLeft, label: 'Conta a Receber', dialogTipo: 'Receita' },
   { tipo: 'Importar', icon: Upload, label: 'Importar PDF' },
 ];
 
@@ -278,7 +278,7 @@ export default function ExecucaoOrcamentaria() {
             <>
               {fabOpen && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
               <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
-                {fabOpen && FAB_CONTAS_ITEMS.map(({ tipo, icon: Icon, label }) => (
+                {fabOpen && FAB_CONTAS_ITEMS.map(({ tipo, icon: Icon, label, dialogTipo }) => (
                   <button
                     key={tipo}
                     onClick={() => {
@@ -287,7 +287,7 @@ export default function ExecucaoOrcamentaria() {
                         setFabOpen(false);
                         return;
                       }
-                      setNovoTipo(tipo);
+                      setNovoTipo(dialogTipo || tipo);
                       setShowNovo(true);
                       setFabOpen(false);
                     }}
