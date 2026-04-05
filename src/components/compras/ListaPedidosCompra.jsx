@@ -65,7 +65,7 @@ function EmbarquesInfo({ pedido }) {
       <span className="text-gray-400 dark:text-gray-500">
         {pedido._display_ordinal || '#01'}
       </span>
-      {pedido._display_status === 'Aguardando' && (pedido._quantidade_pendente ?? 0) > 0 && (
+      {pedido._is_necessidade && (pedido._quantidade_pendente ?? 0) > 0 && (
         <span className="text-red-500 dark:text-red-400 font-medium">
           {pedido._quantidade_pendente} un. faltando embarcar
         </span>
@@ -112,6 +112,8 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
     : (pedido.itens || []));
   const totalLinhas = itensDisplay.length;
   const totalQtd = itensDisplay.reduce((a, i) => a + (Number(i.quantidade) || 0), 0);
+  const totalQtdEmbarcada = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_embarcada) || 0), 0);
+  const totalQtdPedidaCard = itensDisplay.reduce((a, i) => a + (Number(i.quantidade_pedida) || Number(i.quantidade) || 0), 0);
   const valorExibido = pedido._display_valor ?? (pedido.status === 'Pendência'
     ? (pedido.valor_pendente_entrega ?? pedido.valor_total)
     : pedido.valor_total);
@@ -211,7 +213,14 @@ function PedidoCard({ pedido, onEdit, onDelete, selecionado, desabilitadoSelecao
             <div className="flex items-center gap-4 flex-wrap">
               <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
                 <Package2 className="w-3 h-3 flex-none" />
-                <span>{totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}{totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : ''}</span>
+                <span>
+                  {totalLinhas} {totalLinhas === 1 ? 'item' : 'itens'}
+                  {pedido._is_necessidade
+                    ? (totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un. pend.` : '')
+                    : totalQtdEmbarcada > 0
+                      ? ` · ${totalQtdEmbarcada.toLocaleString('pt-BR')} de ${totalQtdPedidaCard.toLocaleString('pt-BR')} un.`
+                      : (totalQtd > 0 ? ` · ${totalQtd.toLocaleString('pt-BR')} un.` : '')}
+                </span>
               </span>
             </div>
             <EmbarquesInfo pedido={pedido} />

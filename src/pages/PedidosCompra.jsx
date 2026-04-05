@@ -47,6 +47,13 @@ const hasDespachoVinculado = (embarque) => !!(embarque?.data_embarque || embarqu
 const getQuantidadePendenteNecessidade = (pedido, embarque) => {
   if (!isNecessidadeRenderizada(embarque)) return 0;
 
+  const itensNecessidade = embarque?.itens || embarque?.itens_embarcados || [];
+  const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
+    return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
+  }, 0);
+
+  if (quantidadeDoEmbarque > 0) return quantidadeDoEmbarque;
+
   return (pedido.itens || []).reduce((acc, item) => {
     const quantidade = Number(item.quantidade) || 0;
     const quantidadeVinculada = Number(item.quantidade_vinculada) || 0;
@@ -104,12 +111,16 @@ const getEmbarqueDisplayDate = (pedido) => pedido?.data_aprovacao_financeira || 
 const buildDisplayItensFromEmbarque = (pedido, embarque) => {
   return (embarque?.itens || embarque?.itens_embarcados || []).map((item) => {
     const pedidoItem = (pedido.itens || []).find((pedidoItem) => pedidoItem.produto_id === item.produto_id);
-    const quantidade = Number(item.quantidade_embarcada) || Number(item.quantidade_pedida) || 0;
+    const quantidadeEmbarcada = Number(item.quantidade_embarcada) || 0;
+    const quantidadePedida = Number(item.quantidade_pedida) || 0;
     return {
       produto_id: item.produto_id,
       produto_nome: item.produto_nome,
-      quantidade,
+      quantidade: quantidadeEmbarcada || quantidadePedida,
+      quantidade_embarcada: quantidadeEmbarcada,
+      quantidade_pedida: quantidadePedida,
       custo_unitario: Number(pedidoItem?.custo_unitario) || 0,
+      unidade_medida: item.unidade_medida || pedidoItem?.unidade_medida || '',
     };
   });
 };
@@ -213,13 +224,15 @@ export default function PedidosCompraPage() {
       });
 
       const cardsDeEmbarque = pcs.flatMap((pedido) => {
-        const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice();
-        const embarqueOriginal = embarquesDoPedido
-          .slice()
-          .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0))[0] || null;
+        const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
+          .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+
+        const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
+        const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
+        const embarqueOriginal = embarquesReais[0] || null;
 
         const embarquesRenderizados = embarquesDoPedido.length > 0
-          ? embarquesDoPedido
+          ? [...embarquesReais, ...embarquesNecessidade]
           : [{
               id: `original-${pedido.id}`,
               pedido_compra_id: pedido.id,
@@ -234,9 +247,21 @@ export default function PedidosCompraPage() {
             }];
 
         return embarquesRenderizados.map((embarque) => {
-          const referenciaEmbarque = embarqueOriginal || embarque;
           const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
-          const ehNecessidade = embarque !== referenciaEmbarque && isNecessidadeRenderizada(embarque);
+          const ehNecessidade = isNecessidadeRenderizada(embarque);
+          const itensDoCard = ehNecessidade
+            ? buildDisplayItensFromEmbarque(pedido, embarque)
+            : (hasLinkedItems(embarque)
+                ? buildDisplayItensFromEmbarque(pedido, embarque)
+                : (pedido.itens || []).map((item) => ({
+                    produto_id: item.produto_id,
+                    produto_nome: item.produto_nome,
+                    quantidade: Number(item.quantidade) || 0,
+                    quantidade_embarcada: 0,
+                    quantidade_pedida: Number(item.quantidade) || 0,
+                    custo_unitario: Number(item.custo_unitario) || 0,
+                    unidade_medida: item.unidade_medida || '',
+                  })));
 
           return {
             ...pedido,
@@ -245,16 +270,13 @@ export default function PedidosCompraPage() {
             _display_code: getDisplayEmbarqueCode(pedido, embarque),
             _display_ordinal: getDisplayEmbarqueOrdinal(embarque, { ...pedido, _embarques: embarquesRenderizados }),
             _display_status: getBorrowedStatus(pedido, embarque),
-            _display_valor: ehNecessidade ? getDisplayValorEmbarque(pedido, embarque) : getValorTotalPedidoCalculado(pedido),
-            _display_itens: ehNecessidade ? buildDisplayItensFromEmbarque(pedido, embarque) : (pedido.itens || []).map((item) => ({
-              produto_id: item.produto_id,
-              produto_nome: item.produto_nome,
-              quantidade: Number(item.quantidade) || 0,
-              custo_unitario: Number(item.custo_unitario) || 0,
-            })),
+            _display_valor: hasLinkedItems(embarque) || ehNecessidade ? getDisplayValorEmbarque(pedido, embarque) : getValorTotalPedidoCalculado(pedido),
+            _display_itens: itensDoCard,
             _display_date: getEmbarqueDisplayDate(pedido),
             _display_fornecedor: pedido.fornecedor_nome || '—',
             _quantidade_pendente: quantidadePendente,
+            _is_original: !!embarqueOriginal && embarque.id === embarqueOriginal.id,
+            _is_necessidade: ehNecessidade,
           };
         });
       });
