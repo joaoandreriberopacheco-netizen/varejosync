@@ -33,14 +33,14 @@ export default function CaixasAtivosPage() {
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
         base44.entities.ConsumoInterno.list('-created_date'),
-        base44.entities.RascunhoPedidoVenda.list('-created_date'),
+        base44.entities.RascunhoPedidoVenda.list(),
       ]);
 
       const turnosUnicos = turnos.filter((turno, index, array) =>
         array.findIndex(t => t.conta_caixa_pdv_id === turno.conta_caixa_pdv_id) === index
       );
 
-      const rascunhosPendentes = rascunhos.filter(r => {
+      const rascunhosPendentes = rascunhos.filter((r) => {
         const registro = r.data || r;
         const status = registro.status;
         const convertido = registro.pedido_venda_final_id;
@@ -48,7 +48,7 @@ export default function CaixasAtivosPage() {
         const temSenha = !!registro.senha_atendimento;
         const temItens = Array.isArray(registro.itens) && registro.itens.length > 0;
         return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
-      }).map(r => ({ ...(r.data || r), id: r.id }));
+      }).map((r) => ({ ...(r.data || r), id: r.id }));
 
       const consumosDeHoje = consumos.filter(c => {
         const d = new Date(c.created_date);
@@ -82,14 +82,7 @@ export default function CaixasAtivosPage() {
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
-          const senhasAguardando = rascunhosPendentes.filter((registro) => {
-            const turnoCaixaId = registro.turno_caixa_id;
-            const contaCaixaId = registro.conta_caixa_pdv_id;
-            if (turnoCaixaId || contaCaixaId) {
-              return turnoCaixaId === turno.id || contaCaixaId === caixa.id;
-            }
-            return true;
-          });
+          const senhasAguardando = rascunhosPendentes;
           
           liquidez[caixa.id] = {
             turnoAberto: true,
@@ -167,18 +160,6 @@ export default function CaixasAtivosPage() {
     [liquidezPorCaixa]
   );
 
-  const resumoSenhas = useMemo(() => {
-    const porVendedor = {};
-    senhasNaoProcessadas.forEach((rascunho) => {
-      const vendedor = rascunho.vendedor_nome || 'Sem vendedor';
-      if (!porVendedor[vendedor]) porVendedor[vendedor] = 0;
-      porVendedor[vendedor] += 1;
-    });
-
-    return Object.entries(porVendedor)
-      .map(([nome, quantidade]) => ({ nome, quantidade }))
-      .sort((a, b) => b.quantidade - a.quantidade);
-  }, [senhasNaoProcessadas]);
 
   // Se já selecionou um caixa, mostra a view completa
   if (turnoSelecionado && caixaSelecionado) {
@@ -379,13 +360,6 @@ export default function CaixasAtivosPage() {
                 </button>
               </div>
               <div className="p-5 space-y-3">
-                {resumoSenhas.map((grupo) => (
-                  <div key={grupo.nome} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-                    <span className="text-sm text-gray-700 dark:text-gray-200 truncate pr-3">{grupo.nome}</span>
-                    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{grupo.quantidade} senha{grupo.quantidade === 1 ? '' : 's'}</span>
-                  </div>
-                ))}
-
                 {senhasNaoProcessadas.map((rascunho) => (
                   <div
                     key={rascunho.id}
