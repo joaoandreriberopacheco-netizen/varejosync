@@ -23,7 +23,7 @@ export default function CaixasAtivosPage() {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
-      const [turnos, contas, vendas, movs, despesas, fiados, consumos] = await Promise.all([
+      const [turnos, contas, vendas, movs, despesas, fiados, consumos, rascunhos] = await Promise.all([
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
         base44.entities.ContasFinanceiras.list(),
         base44.entities.PedidoVenda.list(),
@@ -31,6 +31,7 @@ export default function CaixasAtivosPage() {
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
         base44.entities.ConsumoInterno.list('-created_date'),
+        base44.entities.RascunhoPedidoVenda.filter({ status: 'Aguardando Caixa' }),
       ]);
 
       const consumosDeHoje = consumos.filter(c => {
@@ -65,6 +66,7 @@ export default function CaixasAtivosPage() {
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
+          const senhasAguardando = rascunhos.filter(r => r.turno_caixa_id === turno.id || r.conta_caixa_pdv_id === caixa.id);
           
           liquidez[caixa.id] = {
             turnoAberto: true,
@@ -74,6 +76,7 @@ export default function CaixasAtivosPage() {
             dinheiroNaGaveta,
             totalFiado,
             quantidadeFiado: lancamentosFiado.length,
+            senhasAguardando,
           };
         }
       });
@@ -202,6 +205,20 @@ export default function CaixasAtivosPage() {
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
                               </p>
+                            )}
+                            {(liq.senhasAguardando?.length || 0) > 0 && (
+                              <div className="pt-2 flex flex-wrap gap-1.5">
+                                {liq.senhasAguardando.slice(0, 6).map((rascunho) => (
+                                  <span key={rascunho.id} className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-semibold">
+                                    {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
+                                  </span>
+                                ))}
+                                {liq.senhasAguardando.length > 6 && (
+                                  <span className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-[11px] font-medium">
+                                    +{liq.senhasAguardando.length - 6}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}

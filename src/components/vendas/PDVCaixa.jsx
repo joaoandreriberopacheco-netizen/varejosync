@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { base44 } from '@/api/base44Client';
@@ -177,6 +177,7 @@ export default function PDVCaixa() {
   const [vendaDetalhada, setVendaDetalhada] = useState(null);
   const [activeTab, setActiveTab] = useState('balanco');
   const [showDespesaDialog, setShowDespesaDialog] = useState(false);
+  const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [showSaldoConsolidadoDialog, setShowSaldoConsolidadoDialog] = useState(false);
   const [showGerenciarMovimentoDialog, setShowGerenciarMovimentoDialog] = useState(false);
   const [movimentoSelecionado, setMovimentoSelecionado] = useState(null);
@@ -807,7 +808,8 @@ export default function PDVCaixa() {
 
   const handleSalvarDespesaNum = async (valorStr) => {
     const valorFloat = parseFloat((valorStr || '0').replace(/\./g, '').replace(',', '.')) || 0;
-    if (valorFloat <= 0 || !descricaoDespesa.trim()) return;
+    if (valorFloat <= 0 || !descricaoDespesa.trim() || salvandoDespesa) return;
+    setSalvandoDespesa(true);
     try {
       const lancamento = await base44.entities.LancamentoFinanceiro.create({
         tipo: 'Despesa',
@@ -838,6 +840,8 @@ export default function PDVCaixa() {
       loadData();
     } catch (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setSalvandoDespesa(false);
     }
   };
 
@@ -1867,7 +1871,7 @@ export default function PDVCaixa() {
         <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} />
         <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} />
         <ComprovanteDespesaDialog open={showComprovanteDespesa} onOpenChange={setShowComprovanteDespesa} despesaCriada={despesaCriada} currentUser={currentUser} formatValor={formatValor} />
-        <DespesaDialog open={showDespesaDialog} onOpenChange={setShowDespesaDialog} despesaStep={despesaStep} setDespesaStep={setDespesaStep} descricaoDespesa={descricaoDespesa} setDescricaoDespesa={setDescricaoDespesa} categoriaDespesa={categoriaDespesa} setCategoriaDespesa={setCategoriaDespesa} valorDespesaNum={valorDespesaNum} setValorDespesaNum={setValorDespesaNum} contaCaixaPDV={contaCaixaPDV} onSalvar={handleSalvarDespesaNum} formatarValorExibicao={formatarValorExibicao} />
+        <DespesaDialog open={showDespesaDialog} onOpenChange={setShowDespesaDialog} despesaStep={despesaStep} setDespesaStep={setDespesaStep} descricaoDespesa={descricaoDespesa} setDescricaoDespesa={setDescricaoDespesa} categoriaDespesa={categoriaDespesa} setCategoriaDespesa={setCategoriaDespesa} valorDespesaNum={valorDespesaNum} setValorDespesaNum={setValorDespesaNum} contaCaixaPDV={contaCaixaPDV} onSalvar={handleSalvarDespesaNum} salvando={salvandoDespesa} formatarValorExibicao={formatarValorExibicao} />
         <RetornoEdicaoDialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog} motivo={motivoRetorno} onMotivoChange={setMotivoRetorno} onConfirmar={handleRetornarParaEdicao} />
         <PromissoriaDialog
           open={showPromissoria}

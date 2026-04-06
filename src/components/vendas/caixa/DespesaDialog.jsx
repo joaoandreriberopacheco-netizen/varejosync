@@ -12,6 +12,7 @@ export default function DespesaDialog({
   valorDespesaNum, setValorDespesaNum,
   contaCaixaPDV,
   onSalvar,
+  salvando,
   formatarValorExibicao,
 }) {
   const { toast } = useToast();
@@ -27,7 +28,7 @@ export default function DespesaDialog({
       e.preventDefault();
       const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
       if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
-      onSalvar(valorDespesaNum);
+      if (!salvando) onSalvar(valorDespesaNum);
     }
     if (e.key === 'Backspace') {
       e.preventDefault();
@@ -141,11 +142,12 @@ export default function DespesaDialog({
                 onClick={() => {
                   const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
                   if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
-                  onSalvar(valorDespesaNum);
+                  if (!salvando) onSalvar(valorDespesaNum);
                 }}
-                className="w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm bg-red-600"
+                disabled={salvando}
+                className="w-full h-14 rounded-2xl font-semibold text-white text-base shadow-sm bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{ minHeight: '56px' }}>
-                Confirmar
+                {salvando ? 'Processando...' : 'Confirmar'}
               </button>
             </>
           )}

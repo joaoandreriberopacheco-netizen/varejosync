@@ -1,7 +1,16 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { formatarDataHora } from '@/components/utils/dateUtils';
+
+const TZ = 'America/Rio_Branco';
+const formatarDataHoraLocal = (data) => data ? new Intl.DateTimeFormat('pt-BR', {
+  timeZone: TZ,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+}).format(new Date(data)) : '—';
 
 export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
   if (!venda) return null;
@@ -26,7 +35,7 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
             <div>
               <span className="text-gray-500 dark:text-gray-400">Horário:</span>
               <p className="font-medium text-gray-800 dark:text-gray-200">
-                {formatarDataHora(venda.created_date)}
+                {formatarDataHoraLocal(venda.created_date)}
               </p>
             </div>
             <div>
