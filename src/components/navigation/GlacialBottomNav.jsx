@@ -40,7 +40,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/96 dark:bg-[#1f1d22]/96 backdrop-blur-xl border-t border-slate-200/70 dark:border-white/5"
+      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/96 dark:bg-[#182132]/96 backdrop-blur-xl border-t border-slate-200/70 dark:border-white/5"
       style={{ 
         paddingBottom: 'env(safe-area-inset-bottom)',
         boxShadow: '0 -6px 24px -12px rgba(15,23,42,0.28)'

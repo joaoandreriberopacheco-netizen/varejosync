@@ -359,7 +359,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
           )}
         </div>
-        {!isFullscreen && (
+        {isMobile && !isFullscreen && (
           <GlacialBottomNav
             onMenuClick={() => setShowMobileMenu(true)}
             onProfileClick={() => setShowMobileUserMenu(true)}
