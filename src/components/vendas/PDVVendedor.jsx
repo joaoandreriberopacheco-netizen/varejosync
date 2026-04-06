@@ -1003,26 +1003,25 @@ export default function PDVVendedor() {
               <div className="min-w-0">
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em]">Operação de vendas</p>
                 <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white leading-tight font-glacial">PDV Vendedor</h1>
-                <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                  {tabelaPreco && <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">{tabelaPreco.nome_tabela}</span>}
-                  {rascunhoEmEdicaoId && (
+                {rascunhoEmEdicaoId && (
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5">
                     <span className="text-[11px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full font-medium">Editando</span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
                 className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Orçamentos recentes">
-                <FileText className="w-4.5 h-4.5" />
+                <FileText className="w-4 h-4 stroke-[1.5]" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
                 className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Reeditar rascunho">
-                <Edit className="w-4.5 h-4.5" />
+                <Edit className="w-4 h-4 stroke-[1.5]" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleSair}
                 className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">
-                <Undo2 className="w-4.5 h-4.5" />
+                <Undo2 className="w-4 h-4 stroke-[1.5]" />
               </Button>
             </div>
           </div>
@@ -1040,7 +1039,7 @@ export default function PDVVendedor() {
                   <Input
                   ref={inputProdutoRef}
                   placeholder="Buscar por nome, código ou código de barras..."
-                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-0 focus:border-transparent focus-visible:ring-0 focus-visible:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -1057,7 +1056,7 @@ export default function PDVVendedor() {
                   inputMode="decimal"
                   step="0.01"
                   placeholder="Qtd"
-                  className="w-full bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 focus:border-transparent"
+                  className="w-full bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus-visible:ring-0 focus-visible:outline-none"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(e.target.value)}
                   onKeyDown={handleQuantidadeKeyDown}
