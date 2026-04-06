@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Minus, ShoppingCart, ChevronLeft, Trash2, DollarSign, AlertCircle, ArrowRight, TrendingDown, TrendingUp } from 'lucide-react';
@@ -74,10 +75,10 @@ export default function MobileProductSelector({
       return;
     }
 
-    const custo = selectedUnit.valor_unitario || 0;
+    const custo = roundToTwoDecimals(selectedUnit.valor_unitario || 0);
     const descontoValorBase = descontoGlobalPct !== 0
-      ? parseFloat((custo * Math.abs(descontoGlobalPct) / 100).toFixed(2))
-      : (product.desconto_compra_padrao || 0);
+      ? roundToTwoDecimals(custo * Math.abs(descontoGlobalPct) / 100)
+      : roundToTwoDecimals(product.desconto_compra_padrao || 0);
     const descontoValor = descontoGlobalPct < 0 ? -descontoValorBase : descontoValorBase;
     const newItem = {
       produto_id: product.id,
@@ -131,15 +132,17 @@ export default function MobileProductSelector({
     if (!editingItem) return;
 
     const quantidade = parseFloat(editingItem.quantidade) || 0;
-    const custo = parseFloat(editingItem.custo_unitario) || 0;
-    const desconto = parseFloat(editingItem.valor_desconto_item) || 0;
+    const custo = roundToTwoDecimals(parseFloat(editingItem.custo_unitario) || 0);
+    const desconto = roundToTwoDecimals(parseFloat(editingItem.valor_desconto_item) || 0);
     const fatorConversao = parseFloat(editingItem.fator_conversao) || 1;
     const itemAtualizado = {
       ...editingItem,
+      custo_unitario: custo,
+      valor_desconto_item: desconto,
       quantidade_base: calculateBaseQuantity(quantidade, fatorConversao),
-      subtotal: quantidade * custo,
-      custo_final_unitario: custo - desconto,
-      total: (custo - desconto) * quantidade,
+      subtotal: roundToTwoDecimals(quantidade * custo),
+      custo_final_unitario: roundToTwoDecimals(custo - desconto),
+      total: roundToTwoDecimals((custo - desconto) * quantidade),
     };
 
     if (editingIndex >= 0) {
@@ -163,16 +166,16 @@ export default function MobileProductSelector({
 
   const calculateTotal = (item) => {
     const qty = parseFloat(item.quantidade) || 0;
-    const cost = parseFloat(item.custo_unitario) || 0;
-    const discountUnit = parseFloat(item.valor_desconto_item) || 0;
+    const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
+    const discountUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
     
-    const unitFinalCost = cost - discountUnit;
-    return unitFinalCost * qty;
+    const unitFinalCost = roundToTwoDecimals(cost - discountUnit);
+    return roundToTwoDecimals(unitFinalCost * qty);
   };
 
   // Helpers de parse BR
-  const parseBR = (s) => parseFloat(String(s || '').replace(/\./g, '').replace(',', '.')) || 0;
-  const fmtBR = (n) => (parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const parseBR = (s) => roundToTwoDecimals(parseFloat(String(s || '').replace(/\./g, '').replace(',', '.')) || 0);
+  const fmtBR = (n) => roundToTwoDecimals(parseFloat(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // Sincroniza ao entrar na tela de desconto
   useEffect(() => {
@@ -674,7 +677,7 @@ export default function MobileProductSelector({
   }
 
   const totalItems = items.length;
-  const totalValue = items.reduce((acc, item) => acc + (item.total || 0), 0);
+  const totalValue = roundToTwoDecimals(items.reduce((acc, item) => acc + (item.total || 0), 0));
 
   // View: Catalog (Busca de Produtos)
   if (view === 'catalog') {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { roundToTwoDecimals, formatCurrency as formatCurrencyValue } from '@/lib/financialUtils';
 import { Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -234,11 +235,11 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
 
   // Cálculos automáticos
   const { valorItens, valorTotal, percentualDesconto } = useMemo(() => {
-    const itens = (formData.itens || []).reduce((acc, item) => acc + (item.total || 0), 0);
-    const frete = parseFloat(formData.valor_frete) || 0;
-    const desconto = parseFloat(formData.valor_desconto) || 0;
-    const total = itens + frete - desconto;
-    const percentDesc = itens > 0 ? (desconto / itens) * 100 : 0;
+    const itens = roundToTwoDecimals((formData.itens || []).reduce((acc, item) => acc + (item.total || 0), 0));
+    const frete = roundToTwoDecimals(parseFloat(formData.valor_frete) || 0);
+    const desconto = roundToTwoDecimals(parseFloat(formData.valor_desconto) || 0);
+    const total = roundToTwoDecimals(itens + frete - desconto);
+    const percentDesc = itens > 0 ? roundToTwoDecimals((desconto / itens) * 100) : 0;
     return { 
       valorItens: itens, 
       valorTotal: total,
@@ -316,8 +317,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   const handleDescontoPercentualChange = (value) => {
-    const percent = parseFloat(value) || 0;
-    const descontoValor = (valorItens * percent) / 100;
+    const percent = roundToTwoDecimals(parseFloat(value) || 0);
+    const descontoValor = roundToTwoDecimals((valorItens * percent) / 100);
     setFormData(prev => ({ 
       ...prev, 
       percentual_desconto: percent,
@@ -326,8 +327,8 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   const handleDescontoValorChange = (value) => {
-    const desconto = parseFloat(value) || 0;
-    const percent = valorItens > 0 ? (desconto / valorItens) * 100 : 0;
+    const desconto = roundToTwoDecimals(parseFloat(value) || 0);
+    const percent = valorItens > 0 ? roundToTwoDecimals((desconto / valorItens) * 100) : 0;
     setFormData(prev => ({ 
       ...prev, 
       valor_desconto: desconto,
@@ -359,15 +360,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     }
 
     const qty = parseFloat(item.quantidade) || 0;
-    const cost = parseFloat(item.custo_unitario) || 0;
-    const descUnit = parseFloat(item.valor_desconto_item) || 0;
+    const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
+    const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
     const fatorConversao = parseFloat(item.fator_conversao) || 1;
     
-    const custoFinalUnitario = cost - descUnit;
+    const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
     item.quantidade_base = qty * fatorConversao;
+    item.custo_unitario = cost;
+    item.valor_desconto_item = descUnit;
     item.custo_final_unitario = custoFinalUnitario;
-    item.subtotal = qty * cost;
-    item.total = custoFinalUnitario * qty;
+    item.subtotal = roundToTwoDecimals(qty * cost);
+    item.total = roundToTwoDecimals(custoFinalUnitario * qty);
 
     const newData = { ...formData, itens: newItems };
     saveToHistory(newData);
@@ -379,15 +382,17 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     
     const calculateItemTotals = (item) => {
         const qty = parseFloat(item.quantidade) || 0;
-        const cost = parseFloat(item.custo_unitario) || 0;
-        const descUnit = parseFloat(item.valor_desconto_item) || 0;
+        const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
+        const descUnit = roundToTwoDecimals(parseFloat(item.valor_desconto_item) || 0);
         
-        const custoFinalUnitario = cost - descUnit;
-        const total = custoFinalUnitario * qty;
+        const custoFinalUnitario = roundToTwoDecimals(cost - descUnit);
+        const total = roundToTwoDecimals(custoFinalUnitario * qty);
 
         return {
             ...item,
-            subtotal: qty * cost,
+            custo_unitario: cost,
+            valor_desconto_item: descUnit,
+            subtotal: roundToTwoDecimals(qty * cost),
             total: total,
             custo_final_unitario: custoFinalUnitario
         };
@@ -496,8 +501,9 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                     const newCost = parseBRFloat(cols[6]?.replace(/"/g, ''));
                     const discount = parseBRFloat(cols[10]?.replace(/"/g, ''));
                     
-                    const finalCost = newCost > 0 ? newCost : (currentCost > 0 ? currentCost : product.valor_compra);
-                    const custoFinalUnitario = finalCost - discount;
+                    const finalCost = roundToTwoDecimals(newCost > 0 ? newCost : (currentCost > 0 ? currentCost : product.valor_compra));
+                    const descontoImportado = roundToTwoDecimals(discount);
+                    const custoFinalUnitario = roundToTwoDecimals(finalCost - descontoImportado);
 
                     newItems.push({
                         produto_id: product.id,
@@ -506,10 +512,10 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
                         quantidade: qty,
                         unidade_medida: product.unidade_principal || 'UN',
                         custo_unitario: finalCost,
-                        valor_desconto_item: discount,
+                        valor_desconto_item: descontoImportado,
                         custo_final_unitario: custoFinalUnitario,
-                        subtotal: qty * finalCost,
-                        total: custoFinalUnitario * qty,
+                        subtotal: roundToTwoDecimals(qty * finalCost),
+                        total: roundToTwoDecimals(custoFinalUnitario * qty),
                         observacao_item: 'Importado via CSV'
                     });
                     successCount++;
@@ -872,7 +878,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
   };
 
   const formatCurrency = (value) => {
-    return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    return `R$ ${formatCurrencyValue(value)}`;
   };
 
 
@@ -1332,12 +1338,12 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
           setFormData(prev => {
             const novosItens = importedItems.map(item => {
               const qty = parseFloat(item.quantidade) || 1;
-              const cost = parseFloat(item.custo_unitario) || 0;
-              // Note: desconto já foi aplicado na importação, então custo_unitario já é o final
+              const cost = roundToTwoDecimals(parseFloat(item.custo_unitario) || 0);
               return {
                 ...item,
-                subtotal: qty * cost,
-                total: qty * cost,
+                custo_unitario: cost,
+                subtotal: roundToTwoDecimals(qty * cost),
+                total: roundToTwoDecimals(qty * cost),
                 custo_final_unitario: cost,
               };
             });
