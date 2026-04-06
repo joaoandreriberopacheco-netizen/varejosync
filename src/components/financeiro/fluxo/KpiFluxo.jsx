@@ -44,7 +44,7 @@ export default function KpiFluxo({ kpis }) {
       </div>
 
       {kpis.vencidos > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm border border-gray-100/60 dark:border-white/5 p-4 flex items-center gap-3">
+        <div className="bg-[#EEF1F4] dark:bg-slate-900 rounded-[20px] p-3 flex items-center gap-3">
           <AlertTriangle className="w-4 h-4 text-red-500 flex-none" />
           <div className="flex-1 min-w-0">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-gray-400">Vencidos</p>
@@ -54,7 +54,7 @@ export default function KpiFluxo({ kpis }) {
       )}
 
       {kpis.totalTransferencias > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm border border-gray-100/60 dark:border-white/5 p-4 flex items-center gap-3">
+        <div className="bg-[#EEF1F4] dark:bg-slate-900 rounded-[20px] p-3 flex items-center gap-3">
           <ArrowRightLeft className="w-4 h-4 text-slate-500 flex-none" />
           <div className="flex-1 min-w-0">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-gray-400">Transferências</p>
