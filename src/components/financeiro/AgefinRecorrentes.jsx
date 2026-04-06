@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, Repeat2, Upload, FileText, CircleAlert, BadgeCheck, Receipt } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Repeat2, Upload, CircleAlert, BadgeCheck, Receipt, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function formatCurrency(value) {
@@ -33,52 +33,75 @@ function getContaDoMes(contas, recorrente, monthKey) {
 
 function StatusBadge({ hasBoleto }) {
   return (
-    <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${hasBoleto ? 'bg-gray-200/80 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+    <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${hasBoleto ? 'bg-gray-200/90 text-gray-700 dark:bg-gray-700 dark:text-gray-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
       <Receipt className="w-3 h-3" />
       {hasBoleto ? 'Com boleto' : 'Sem boleto'}
-      {hasBoleto && <BadgeCheck className="w-3 h-3 opacity-70" />}
+      {hasBoleto && (
+        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-400/60 dark:border-gray-500/70">
+          <BadgeCheck className="w-2.5 h-2.5 opacity-80" />
+        </span>
+      )}
     </div>
   );
 }
 
 function AgefinCard({ recorrente, contaMes }) {
   const hasBoleto = Boolean(contaMes?.boleto_url);
+  const isPaid = contaMes?.status === 'Pago';
 
   return (
-    <div className={`rounded-[22px] p-3 md:p-3.5 space-y-2.5 ${hasBoleto ? 'bg-white dark:bg-gray-900 shadow-sm' : 'bg-gray-50/90 dark:bg-gray-900/90 shadow-sm opacity-90'}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white line-clamp-2">{recorrente.nome_despesa}</p>
-            <div className="text-right shrink-0 pl-2">
-              <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+    <div className="rounded-[28px] bg-white dark:bg-gray-900 p-3 shadow-sm">
+      <div className="rounded-[24px] bg-gray-50/95 dark:bg-gray-800/70 px-4 py-4 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white line-clamp-2">{recorrente.nome_despesa}</p>
+              <div className="flex items-start gap-2 shrink-0 pl-2">
+                {isPaid && <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />}
+                <div className="text-right">
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+                </div>
+              </div>
             </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
         </div>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1">
-          <Repeat2 className="w-3 h-3" />
-          {recorrente.frequencia}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1">
-          <Calendar className="w-3 h-3" />
-          Dia {recorrente.dia_vencimento}
-        </span>
-      </div>
+        <div className="flex items-end justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 dark:bg-gray-900 px-2 py-1 shadow-sm">
+              <Repeat2 className="w-3 h-3" />
+              {recorrente.frequencia}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 dark:bg-gray-900 px-2 py-1 shadow-sm">
+              <Calendar className="w-3 h-3" />
+              Dia {recorrente.dia_vencimento}
+            </span>
+          </div>
 
-      <div className="flex items-center justify-between gap-2 rounded-[18px] bg-gray-100/80 dark:bg-gray-800/60 px-2.5 py-2">
-        <div className="min-w-0 flex items-center gap-2">
-          <StatusBadge hasBoleto={hasBoleto} />
-          {!hasBoleto && <CircleAlert className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />}
+          <div className="relative shrink-0">
+            <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? 'ring-1 ring-gray-300/80 dark:ring-gray-600/70' : ''}`}>
+              <Receipt className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+            </div>
+            {hasBoleto && (
+              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm">
+                <CheckCircle2 className="w-3.5 h-3.5 text-gray-500 dark:text-gray-300" />
+              </span>
+            )}
+          </div>
         </div>
-        <button className="h-8 rounded-full bg-white dark:bg-gray-900 px-3 text-[11px] font-medium text-gray-700 dark:text-gray-200 flex items-center justify-center gap-1.5 shadow-sm">
-          <Upload className="w-3.5 h-3.5" />
-          {hasBoleto ? 'Trocar' : 'Adicionar'}
-        </button>
+
+        <div className="flex items-center justify-between gap-2 rounded-[18px] bg-white/80 dark:bg-gray-900/80 px-2.5 py-2 shadow-sm">
+          <div className="min-w-0 flex items-center gap-2">
+            <StatusBadge hasBoleto={hasBoleto} />
+            {!hasBoleto && <CircleAlert className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />}
+          </div>
+          <button className="h-8 rounded-full bg-white dark:bg-gray-900 px-3 text-[11px] font-medium text-gray-700 dark:text-gray-200 flex items-center justify-center gap-1.5 shadow-sm">
+            <Upload className="w-3.5 h-3.5" />
+            {hasBoleto ? 'Trocar' : 'Adicionar'}
+          </button>
+        </div>
       </div>
     </div>
   );
