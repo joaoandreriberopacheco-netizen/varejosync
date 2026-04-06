@@ -236,37 +236,39 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
-      <div className="rounded-[28px] bg-white dark:bg-slate-900 shadow-md p-4 space-y-4">
+      <div className="rounded-[28px] bg-[#F7F7F5] dark:bg-slate-900 p-5 space-y-4">
         <div>
-          <p className="text-xl font-medium text-gray-800 dark:text-gray-100 font-glacial">Financeiro</p>
-          <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Fluxo e contas em uma navegação mais limpa</p>
+          <p className="text-[30px] leading-none font-semibold text-gray-900 dark:text-gray-100 font-glacial">Financeiro</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Fluxo e contas com a mesma linguagem visual da home.</p>
         </div>
-        <div className="flex gap-1 bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm">
-          <button onClick={() => setAba('fluxo')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'fluxo' ? 'bg-slate-900 dark:bg-slate-700 text-white dark:text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 bg-transparent'}`}>
-            Fluxo de Caixa
-          </button>
-          <button onClick={() => setAba('contas')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${aba === 'contas' ? 'bg-slate-900 dark:bg-slate-700 text-white dark:text-white shadow-sm' : 'text-gray-700 dark:text-gray-300 bg-transparent'}`}>
-            Contas Abertas
-          </button>
+        <div className="rounded-[24px] bg-white dark:bg-slate-800 p-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
+            <button onClick={() => setAba('fluxo')}
+              className={`h-12 rounded-[18px] text-sm font-medium transition-colors ${aba === 'fluxo' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300 bg-transparent'}`}>
+              Fluxo de Caixa
+            </button>
+            <button onClick={() => setAba('contas')}
+              className={`h-12 rounded-[18px] text-sm font-medium transition-colors ${aba === 'contas' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300 bg-transparent'}`}>
+              Contas Abertas
+            </button>
+          </div>
         </div>
       </div>
 
       {aba === 'contas' && (
         <>
         <div className="space-y-4">
-          <div className="rounded-[28px] bg-white dark:bg-slate-900 shadow-md p-2">
-            <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 rounded-2xl p-1">
+          <div className="rounded-[24px] bg-[#F7F7F5] dark:bg-slate-900 p-1.5">
+            <div className="grid grid-cols-2 gap-1.5 rounded-[20px] bg-white dark:bg-slate-800 p-1.5">
               <button
                 onClick={() => setAbaContas('contas')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${abaContas === 'contas' ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' : 'text-gray-700 dark:text-gray-300'}`}
+                className={`h-11 rounded-[16px] text-sm font-medium transition-colors ${abaContas === 'contas' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300'}`}
               >
                 Contas a Pagar
               </button>
               <button
                 onClick={() => setAbaContas('agefin')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${abaContas === 'agefin' ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' : 'text-gray-700 dark:text-gray-300'}`}
+                className={`h-11 rounded-[16px] text-sm font-medium transition-colors ${abaContas === 'agefin' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300'}`}
               >
                 Atualizar boletos
               </button>
@@ -334,7 +336,7 @@ export default function ExecucaoOrcamentaria() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="h-11 px-4 rounded-2xl bg-slate-900 dark:bg-slate-900 text-white dark:text-gray-100 shadow-sm flex items-center gap-2"
+              className="h-11 px-4 rounded-[18px] bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />
               <span className="text-sm font-medium">Imprimir</span>
@@ -347,7 +349,7 @@ export default function ExecucaoOrcamentaria() {
           {/* Alerta conciliação pendente */}
           {totalPend > 0 && !pendentes && (
             <button onClick={() => setPendentes(true)}
-              className="w-full flex items-center gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-gray-700/60 text-gray-800 dark:text-gray-300 text-xs text-left shadow-sm">
+              className="w-full flex items-center gap-2 px-4 py-3 rounded-[20px] bg-[#F7F7F5] dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs text-left">
               <Clock className="w-3.5 h-3.5 flex-none text-gray-400" />
               <span className="flex-1 min-w-0 truncate">{totalPend} aguardando conciliação</span>
               <span className="font-semibold flex-none text-gray-500">Ver →</span>
