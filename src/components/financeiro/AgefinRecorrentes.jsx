@@ -53,8 +53,8 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
 
   return (
-    <button type="button" onClick={onOpen} className="w-full text-left rounded-[28px] bg-white dark:bg-gray-900 p-2 shadow-sm">
-      <div className="rounded-[24px] bg-gray-50/95 dark:bg-gray-800/70 px-4 py-4 space-y-3">
+    <button type="button" onClick={onOpen} className="w-full text-left rounded-[28px] bg-white dark:bg-gray-900 p-1.5 shadow-sm">
+      <div className="rounded-[24px] bg-gray-50/95 dark:bg-gray-800/70 px-3.5 py-3.5 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">

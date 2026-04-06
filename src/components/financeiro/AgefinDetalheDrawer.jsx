@@ -81,7 +81,7 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
               <AnexosPanel
                 inline
                 referenciaId={contaMes?.id}
-                referenciaTipo="LancamentoFinanceiro"
+                referenciaTipo="ContaPrevista"
                 referenciaNomero={contaMes?.referencia_numero || contaMes?.descricao || recorrente.nome_despesa}
               />
             </div>
