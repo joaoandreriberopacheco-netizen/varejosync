@@ -1,5 +1,5 @@
 import React from 'react';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { Calendar, CheckCircle2, CircleAlert, Receipt, Paperclip } from 'lucide-react';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
 
@@ -26,7 +26,9 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
       <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-6">
         <DrawerHeader className="px-0 pb-2 text-left">
           <DrawerTitle className="font-glacial text-gray-900 dark:text-white">{recorrente.nome_despesa}</DrawerTitle>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
+          <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {recorrente.terceiro_nome || 'Sem beneficiário'}
+          </DrawerDescription>
         </DrawerHeader>
 
         <div className="space-y-3">
