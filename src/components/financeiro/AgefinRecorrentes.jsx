@@ -15,20 +15,7 @@ function getMonthKey(date) {
 function getContaDoMes(contas, recorrente, monthKey) {
   return contas.find((conta) => {
     if (!conta.data_vencimento || conta.data_vencimento.slice(0, 7) !== monthKey) return false;
-    if (conta.conta_recorrente_id === recorrente.id) return true;
-
-    const descricaoConta = (conta.descricao || '').toLowerCase();
-    const terceiroConta = (conta.terceiro_nome || '').toLowerCase();
-    const nomeRecorrente = (recorrente.nome_despesa || '').toLowerCase();
-    const terceiroRecorrente = (recorrente.terceiro_nome || '').toLowerCase();
-    const diaRecorrente = String(recorrente.dia_vencimento || '').padStart(2, '0');
-    const diaConta = (conta.data_vencimento || '').slice(8, 10);
-
-    return diaRecorrente === diaConta && (
-      (nomeRecorrente && descricaoConta.includes(nomeRecorrente)) ||
-      (terceiroRecorrente && terceiroConta.includes(terceiroRecorrente)) ||
-      (terceiroRecorrente && descricaoConta.includes(terceiroRecorrente))
-    );
+    return conta.conta_recorrente_id === recorrente.id;
   });
 }
 
@@ -46,7 +33,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 flex items-start gap-2.5">
             {(isPaid || isOverdue) && (
-              <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:bg-emerald-300 dark:shadow-[0_0_0_3px_rgba(110,231,183,0.12)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)] dark:bg-red-300 dark:shadow-[0_0_0_3px_rgba(252,165,165,0.12)]'}`} />
+              <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:bg-emerald-300 dark:shadow-[0_0_0_3px_rgba(110,231,183,0.12)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.18)] dark:bg-red-400 dark:shadow-[0_0_0_3px_rgba(248,113,113,0.16)]'}`} />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
@@ -76,7 +63,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
           </div>
 
           <div className="relative shrink-0">
-            <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${isPaid ? 'ring-2 ring-emerald-300 dark:ring-emerald-300/60' : hasBoleto ? boletoVencido ? 'ring-2 ring-red-300 dark:ring-red-300/70' : 'ring-2 ring-lime-300 dark:ring-emerald-300/60' : ''}`}>
+            <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${isPaid ? 'ring-2 ring-emerald-300 dark:ring-emerald-300/60' : hasBoleto ? boletoVencido ? 'ring-2 ring-red-400 dark:ring-red-400/75' : 'ring-2 ring-lime-300 dark:ring-emerald-300/60' : ''}`}>
               <Receipt className="w-5 h-5 text-gray-500 dark:text-gray-300" />
             </div>
             {hasBoleto && (
