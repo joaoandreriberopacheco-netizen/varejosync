@@ -1450,8 +1450,11 @@ export default function PDVVendedor() {
                 <CreditCard className="w-5 h-5" />
               </button>
             )}
-            <button type="button" onClick={() => setShowCarrinhoMobile(true)}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 cursor-pointer pointer-events-auto z-10">
+            <button
+              type="button"
+              onClick={() => setShowCarrinhoMobile(true)}
+              aria-label="Abrir carrinho"
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 z-20">
               <ShoppingCart className="w-5 h-5" />
               {carrinho.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-slate-700 text-slate-100 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
