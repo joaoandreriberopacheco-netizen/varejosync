@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Clock3, Printer, Paperclip, Wallet, CircleSlash } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Clock3, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import AgefinConsultaDrawer from '@/components/agefin/AgefinConsultaDrawer';
 
 function monthBounds(date) {
@@ -104,6 +106,9 @@ export default function AgefinConsulta() {
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedConta, setSelectedConta] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('todos');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -123,20 +128,38 @@ export default function AgefinConsulta() {
       .sort((a, b) => new Date(a.data_vencimento) - new Date(b.data_vencimento));
   }, [contas, currentMonth]);
 
+  const filteredData = useMemo(() => {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    return monthData.filter((conta) => {
+      const isPaid = conta.status === 'Pago';
+      const isOpen = !isPaid && conta.status !== 'Cancelado';
+      const isOverdue = isOpen && conta.data_vencimento < todayKey;
+      const matchesStatus =
+        statusFilter === 'todos' ||
+        (statusFilter === 'pagos' && isPaid) ||
+        (statusFilter === 'nao_pagos' && !isPaid) ||
+        (statusFilter === 'abertos' && isOpen) ||
+        (statusFilter === 'vencidos' && isOverdue);
+      const matchesFrom = !dateFrom || conta.data_vencimento >= dateFrom;
+      const matchesTo = !dateTo || conta.data_vencimento <= dateTo;
+      return matchesStatus && matchesFrom && matchesTo;
+    });
+  }, [monthData, statusFilter, dateFrom, dateTo]);
+
   const kpis = useMemo(() => {
-    const paid = monthData.filter((c) => c.status === 'Pago');
-    const unpaid = monthData.filter((c) => c.status !== 'Pago' && c.status !== 'Cancelado');
+    const paid = filteredData.filter((c) => c.status === 'Pago');
+    const unpaid = filteredData.filter((c) => c.status !== 'Pago' && c.status !== 'Cancelado');
     const overdue = unpaid.filter((c) => c.data_vencimento < new Date().toISOString().slice(0, 10));
     return {
-      totalValue: monthData.reduce((sum, c) => sum + (c.valor || 0), 0),
+      totalValue: filteredData.reduce((sum, c) => sum + (c.valor || 0), 0),
       paidValue: paid.reduce((sum, c) => sum + (c.valor || 0), 0),
       unpaidValue: unpaid.reduce((sum, c) => sum + (c.valor || 0), 0),
       overdueValue: overdue.reduce((sum, c) => sum + (c.valor || 0), 0),
     };
-  }, [monthData]);
+  }, [filteredData]);
 
   const imprimirRelatorio = () => {
-    const linhas = monthData.map((conta) => `<tr>
+    const linhas = filteredData.map((conta) => `<tr>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.descricao}</td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${conta.terceiro_nome || '-'}</td>
       <td style="padding:8px;border-bottom:1px solid #e5e7eb">${new Date(`${conta.data_vencimento}T12:00:00`).toLocaleDateString('pt-BR')}</td>
@@ -160,9 +183,44 @@ export default function AgefinConsulta() {
               <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white font-glacial">Agefin</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Visão de contas a pagar por período, sem edição.</p>
             </div>
-            <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
-              <Printer className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                    <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80 rounded-[24px] border-0 bg-white dark:bg-gray-900 shadow-xl p-4">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">Filtro</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">Filtrar por datas e status</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="ghost" onClick={() => setStatusFilter('todos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>Todos</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('pagos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'pagos' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : ''}`}>Pagos</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('nao_pagos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'nao_pagos' ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>Não pagos</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('abertos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'abertos' ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>Em aberto</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('vencidos')} className={`justify-start rounded-2xl px-3 text-left ${statusFilter === 'vencidos' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : ''}`}>Vencidos</Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">De</p>
+                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Até</p>
+                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800" />
+                      </div>
+                    </div>
+                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                <Printer className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between gap-3">
@@ -188,11 +246,11 @@ export default function AgefinConsulta() {
 
         {loading ? (
           <div className="flex justify-center items-center py-16"><div className="w-8 h-8 border-4 border-gray-300 border-t-gray-800 dark:border-gray-700 dark:border-t-gray-200 rounded-full animate-spin" /></div>
-        ) : monthData.length === 0 ? (
-          <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm p-12 text-center text-gray-500 dark:text-gray-400">Nenhuma conta a pagar encontrada neste período.</div>
+        ) : filteredData.length === 0 ? (
+          <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm p-12 text-center text-gray-500 dark:text-gray-400">Nenhuma conta a pagar encontrada para esse filtro.</div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-            {monthData.map((conta) => (
+            {filteredData.map((conta) => (
               <ContaCard key={conta.id} conta={conta} onOpen={() => setSelectedConta(conta)} />
             ))}
           </div>
