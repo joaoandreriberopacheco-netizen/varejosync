@@ -236,7 +236,7 @@ export default function ExecucaoOrcamentaria() {
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
-      <div className="rounded-[32px] bg-[#F5F5F2] dark:bg-slate-900 px-5 py-6 space-y-5">
+      <div className="rounded-[32px] bg-[#F3F4F6] dark:bg-slate-900 px-5 py-5 space-y-4">
         <div className="space-y-2">
           <p className="text-[32px] leading-none font-semibold text-gray-900 dark:text-gray-100 font-glacial">Financeiro</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
@@ -244,23 +244,23 @@ export default function ExecucaoOrcamentaria() {
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setAba('fluxo')}
-            className={`rounded-[28px] px-4 py-5 text-center transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/70 dark:bg-slate-800/70 opacity-85'}`}
+            className={`rounded-[24px] px-3 py-4 text-center transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/75 dark:bg-slate-800/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[20px] ${aba === 'fluxo' ? 'bg-[#EEF0F3] dark:bg-slate-700' : 'bg-[#F3F4F6] dark:bg-slate-800'}`}>
-              <Scale className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+            <div className={`mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-[16px] ${aba === 'fluxo' ? 'bg-[#EAECEF] dark:bg-slate-700' : 'bg-[#F3F4F6] dark:bg-slate-800'}`}>
+              <Scale className="h-4 w-4 text-gray-700 dark:text-gray-200" />
             </div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">Fluxo de Caixa</p>
-            <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">Movimento do período</p>
+            <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Movimento do período</p>
           </button>
           <button
             onClick={() => setAba('contas')}
-            className={`rounded-[28px] px-4 py-5 text-center transition-all ${aba === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/70 dark:bg-slate-800/70 opacity-85'}`}
+            className={`rounded-[24px] px-3 py-4 text-center transition-all ${aba === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/75 dark:bg-slate-800/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[20px] ${aba === 'contas' ? 'bg-[#EEF0F3] dark:bg-slate-700' : 'bg-[#F3F4F6] dark:bg-slate-800'}`}>
-              <Clock className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+            <div className={`mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-[16px] ${aba === 'contas' ? 'bg-[#EAECEF] dark:bg-slate-700' : 'bg-[#F3F4F6] dark:bg-slate-800'}`}>
+              <Clock className="h-4 w-4 text-gray-700 dark:text-gray-200" />
             </div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">Contas Abertas</p>
-            <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">Pendências e cobranças</p>
+            <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Pendências e cobranças</p>
           </button>
         </div>
       </div>
@@ -350,7 +350,7 @@ export default function ExecucaoOrcamentaria() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="rounded-[24px] bg-[#F7F7F5] dark:bg-slate-800 px-4 py-3.5 flex items-center gap-3"
+              className="rounded-[24px] bg-[#F3F4F6] dark:bg-slate-800 px-4 py-3.5 flex items-center gap-3"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-slate-700">
                 <Printer className="w-4 h-4 text-gray-700 dark:text-gray-200" />
