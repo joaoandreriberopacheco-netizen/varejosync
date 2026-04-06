@@ -30,9 +30,9 @@ function KpiCard({ label, value, tone = 'default' }) {
   };
 
   return (
-    <div className={`rounded-[24px] shadow-sm p-4 ${toneMap[tone]}`}>
-      <p className="text-xs uppercase tracking-[0.18em] opacity-70">{label}</p>
-      <p className="mt-2 text-2xl font-semibold font-glacial">{value}</p>
+    <div className={`min-w-0 rounded-[22px] shadow-sm px-4 py-3 ${toneMap[tone]}`}>
+      <p className="text-[10px] uppercase tracking-[0.16em] opacity-70 truncate">{label}</p>
+      <p className="mt-1 text-sm md:text-base font-semibold font-glacial truncate">{value}</p>
     </div>
   );
 }
@@ -101,13 +101,13 @@ export default function AgefinConsulta() {
 
   const kpis = useMemo(() => {
     const paid = monthData.filter((c) => c.status === 'Pago');
-    const pending = monthData.filter((c) => c.status !== 'Pago' && c.status !== 'Cancelado');
-    const overdue = pending.filter((c) => c.data_vencimento < new Date().toISOString().slice(0, 10));
+    const unpaid = monthData.filter((c) => c.status !== 'Pago' && c.status !== 'Cancelado');
+    const overdue = unpaid.filter((c) => c.data_vencimento < new Date().toISOString().slice(0, 10));
     return {
       totalValue: monthData.reduce((sum, c) => sum + (c.valor || 0), 0),
-      overdueValue: overdue.reduce((sum, c) => sum + (c.valor || 0), 0),
       paidValue: paid.reduce((sum, c) => sum + (c.valor || 0), 0),
-      pendingCount: pending.length,
+      unpaidValue: unpaid.reduce((sum, c) => sum + (c.valor || 0), 0),
+      overdueValue: overdue.reduce((sum, c) => sum + (c.valor || 0), 0),
     };
   }, [monthData]);
 
@@ -155,11 +155,11 @@ export default function AgefinConsulta() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard label="Total do período" value={formatCurrency(kpis.totalValue)} />
-          <KpiCard label="Contas vencidas" value={formatCurrency(kpis.overdueValue)} tone="danger" />
-          <KpiCard label="Contas pagas" value={formatCurrency(kpis.paidValue)} tone="success" />
-          <KpiCard label="Pendentes" value={String(kpis.pendingCount)} tone="muted" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+          <KpiCard label="Total do mês" value={formatCurrency(kpis.totalValue)} />
+          <KpiCard label="Pago" value={formatCurrency(kpis.paidValue)} tone="success" />
+          <KpiCard label="Não pago" value={formatCurrency(kpis.unpaidValue)} tone="muted" />
+          <KpiCard label="Vencido" value={formatCurrency(kpis.overdueValue)} tone="danger" />
         </div>
 
         {loading ? (
