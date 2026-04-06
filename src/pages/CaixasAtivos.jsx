@@ -40,7 +40,7 @@ export default function CaixasAtivosPage() {
         array.findIndex(t => t.conta_caixa_pdv_id === turno.conta_caixa_pdv_id) === index
       );
 
-      const rascunhosPendentes = rascunhos.filter((r) => {
+      const rascunhosPendentesCaixa = rascunhos.filter((r) => {
         const registro = r.data || r;
         const status = registro.status;
         const convertido = registro.pedido_venda_final_id;
@@ -49,14 +49,6 @@ export default function CaixasAtivosPage() {
         const temItens = Array.isArray(registro.itens) && registro.itens.length > 0;
         return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
       }).map((r) => ({ ...(r.data || r), id: r.id }));
-
-      const pedidosJaConvertidosIds = new Set(
-        vendas
-          .map((pedido) => pedido.orcamento_origem_id)
-          .filter(Boolean)
-      );
-
-      const rascunhosPendentesCaixa = rascunhosPendentes.filter((rascunho) => !pedidosJaConvertidosIds.has(rascunho.id));
 
       const consumosDeHoje = consumos.filter(c => {
         const d = new Date(c.created_date);
