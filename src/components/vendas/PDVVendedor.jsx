@@ -1028,13 +1028,13 @@ export default function PDVVendedor() {
         </div>
       </div>
 
-      <div className={`flex-1 flex overflow-hidden ${showCarrinhoMobile ? 'pb-0' : 'pb-20'} md:pb-0`}>
+      <div className={`flex-1 flex overflow-hidden ${showCarrinhoMobile ? 'pb-0' : 'pb-28'} md:pb-0`}>
         {/* Área Principal */}
         <div className="flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto bg-gray-50 dark:bg-gray-950">
           {/* Busca de Produto */}
           <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2.5 w-full">
-                <div className="flex-1 relative min-w-0 rounded-2xl overflow-hidden">
+                <div className="flex-1 relative min-w-0 rounded-2xl overflow-hidden z-0">
                   <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                   <Input
                   ref={inputProdutoRef}
@@ -1043,7 +1043,8 @@ export default function PDVVendedor() {
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  autoFocus={false} />
+                  autoFocus={false}
+                  style={{ touchAction: 'manipulation' }} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">
                     <Camera className="w-5 h-5" />
@@ -1442,7 +1443,7 @@ export default function PDVVendedor() {
       )}
 
       {/* Barra Inferior Mobile */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800 rounded-t-[26px] shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pointer-events-auto">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] flex items-center gap-2 z-[120] border-t border-gray-100 dark:border-gray-800 rounded-t-[26px] shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pointer-events-auto">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
               <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
