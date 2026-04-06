@@ -24,14 +24,28 @@ function formatMonth(date) {
 function KpiCard({ label, value, tone = 'default' }) {
   const toneMap = {
     default: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
-    danger: 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-200',
-    success: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-200',
-    muted: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200',
+    danger: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
+    success: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
+    muted: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
+  };
+
+  const reactiveMap = {
+    default: '',
+    success: 'ring-1 ring-emerald-200/70 dark:ring-emerald-400/20 shadow-[inset_0_1px_0_rgba(16,185,129,0.08)] dark:shadow-[inset_0_1px_0_rgba(110,231,183,0.08)]',
+    danger: 'ring-1 ring-red-200/70 dark:ring-red-400/20 shadow-[inset_0_1px_0_rgba(239,68,68,0.08)] dark:shadow-[inset_0_1px_0_rgba(248,113,113,0.08)]',
+    muted: '',
+  };
+
+  const labelToneMap = {
+    default: 'text-gray-500 dark:text-gray-400',
+    success: 'text-emerald-700/80 dark:text-emerald-300/80',
+    danger: 'text-red-700/80 dark:text-red-300/80',
+    muted: 'text-gray-500 dark:text-gray-400',
   };
 
   return (
-    <div className={`min-w-0 rounded-[22px] shadow-sm px-4 py-3 ${toneMap[tone]}`}>
-      <p className="text-[10px] uppercase tracking-[0.16em] opacity-70 truncate">{label}</p>
+    <div className={`min-w-0 rounded-[22px] shadow-sm px-4 py-3 ${toneMap[tone]} ${reactiveMap[tone]}`}>
+      <p className={`text-[10px] uppercase tracking-[0.16em] truncate ${labelToneMap[tone]}`}>{label}</p>
       <p className="mt-1 text-sm md:text-base font-semibold font-glacial truncate">{value}</p>
     </div>
   );
