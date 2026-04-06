@@ -1028,9 +1028,9 @@ export default function PDVVendedor() {
         </div>
       </div>
 
-      <div className={`flex-1 flex overflow-hidden ${showCarrinhoMobile ? 'pb-0' : 'pb-28'} md:pb-0`}>
+      <div className="flex-1 flex overflow-hidden md:pb-0 md:gap-0">
         {/* Área Principal */}
-        <div className="flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto bg-gray-50 dark:bg-gray-950">
+        <div className="flex-1 flex flex-col px-3 md:px-5 pb-24 md:pb-5 overflow-y-auto bg-gray-50 dark:bg-gray-950">
           {/* Busca de Produto */}
           <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2.5 w-full">
@@ -1066,7 +1066,7 @@ export default function PDVVendedor() {
                 </div>
             </div>
             {showSuggestions && produtosSugeridos.length > 0 &&
-            <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
+            <div className="absolute z-50 left-0 right-0 top-[calc(100%+8px)] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[50vh] overflow-y-auto border border-gray-100 dark:border-gray-800">
                   <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                     <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
                       {produtosSugeridos.length} resultado{produtosSugeridos.length > 1 ? 's' : ''}
@@ -1074,94 +1074,36 @@ export default function PDVVendedor() {
                     <span className="text-xs text-gray-400 hidden md:block">Tab para quantidade · Enter para adicionar</span>
                   </div>
                   {produtosSugeridos.map((produto, index) => {
-                const precoTabela = produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
-                const estoqueStatus = produto.estoque_atual <= 0 ? 'sem' : produto.estoque_atual <= 5 ? 'baixo' : 'ok';
-                const estoqueColor = estoqueStatus === 'sem' ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : estoqueStatus === 'baixo' ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
-                return (
-                  <div key={produto.id}
-                    className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${
-                    index === produtoSelecionadoIndex ? 'bg-gray-50 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}`}
-                    onClick={() => handleSelecionarProduto(produto)}>
-                    {produto.imagem_url
-                      ? <img src={produto.imagem_url} alt={produto.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                          <Package className={`w-5 h-5 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-gray-400'}`} />
+                    const precoTabela = produto.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1);
+                    const estoqueStatus = produto.estoque_atual <= 0 ? 'sem' : produto.estoque_atual <= 5 ? 'baixo' : 'ok';
+                    const estoqueColor = estoqueStatus === 'sem' ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : estoqueStatus === 'baixo' ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
+                    return (
+                      <div key={produto.id}
+                        className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-b border-gray-50 dark:border-gray-800 last:border-b-0 ${
+                        index === produtoSelecionadoIndex ? 'bg-gray-50 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'}`}
+                        onClick={() => handleSelecionarProduto(produto)}>
+                        {produto.imagem_url
+                          ? <img src={produto.imagem_url} alt={produto.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                          : <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${estoqueStatus === 'sem' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                              <Package className={`w-5 h-5 ${estoqueStatus === 'sem' ? 'text-red-400' : 'text-gray-400'}`} />
+                            </div>
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug break-words whitespace-normal">{produto.nome}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-xs text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${estoqueColor}`}>
+                              {produto.estoque_atual} un
+                            </span>
+                            <span className="text-base font-bold text-gray-900 dark:text-gray-100 ml-auto tabular-nums">
+                              R$ {precoTabela.toFixed(2).replace('.', ',')}
+                            </span>
+                          </div>
                         </div>
-                    }
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug break-words whitespace-normal">{produto.nome}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-xs text-gray-400 font-mono">#{produto.codigo_interno || '—'}</span>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${estoqueColor}`}>
-                          {produto.estoque_atual} un
-                        </span>
-                        <span className="text-base font-bold text-gray-900 dark:text-gray-100 ml-auto tabular-nums">
-                          R$ {precoTabela.toFixed(2).replace('.', ',')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>);
-              })}
-                </div>
-            }
-                {produtoSelecionado &&
-                <div className="mt-3 p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-3">
-                <div className="flex items-center gap-3">
-                {produtoSelecionado.imagem_url
-                  ? <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                  : <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                      <Package className="w-5 h-5 text-gray-500" />
-                    </div>
-                }
-                <div className="flex-1 min-w-0">
-                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100 break-words whitespace-normal leading-snug">{produtoSelecionado.nome}</p>
-                  {produtoSelecionado.preco_livre ? (
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
-                      <div className="relative flex-1">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
-                        <input
-                          ref={precoLivreInputRef}
-                          type="number" step="0.01" inputMode="decimal" min={(produtoSelecionado.preco_custo_calculado || 0) * (produtoSelecionado.fator_conversao || 1)}
-                          placeholder={((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)}
-                          defaultValue={((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)}
-                          onChange={(e) => {
-                            const precoDigitado = parseFloat(e.target.value) || 0;
-                            setProdutoSelecionado({...produtoSelecionado, _preco_digitado: precoDigitado});
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleConfirmarAdicao();
-                            }
-                          }}
-                          className="w-full pl-8 h-10 bg-gray-50 dark:bg-gray-800/70 rounded-xl text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-gray-900 dark:text-gray-100 font-semibold"
-                        />
-                      </div>
-                      <span className="text-xs text-gray-400">× {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}</span>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-400 mt-1">
-                      R$ {((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)} × {parseFloat(quantidadeAtual) || 1} {produtoSelecionado.unidade_medida || 'UN'}
-                      {' '}= <span className="font-semibold text-gray-700 dark:text-gray-300">R$ {(((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0) * (parseFloat(quantidadeAtual) || 1)).toFixed(2)}</span>
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-400 mt-1">Equivale a {produtoSelecionado.fator_conversao || 1} {produtoSelecionado.unidade_principal || 'UN'} por {produtoSelecionado.unidade_medida || 'UN'}</p>
-                </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); }}
-                    variant="ghost" size="sm" className="h-10 px-3 text-gray-400 hover:text-gray-600">
-                    <X className="w-4 h-4" />
-                  </Button>
-                  <Button onClick={handleConfirmarAdicao}
-                    className="flex-1 h-10 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white text-sm font-semibold rounded-xl shadow-none">
-                    + Adicionar
-                  </Button>
-                </div>
-                </div>
-                }
+                      </div>);
+                  })}
             </div>
+            }
         </div>
 
         {/* Sidebar Carrinho - Desktop Only */}
