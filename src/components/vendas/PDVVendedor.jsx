@@ -393,10 +393,10 @@ export default function PDVVendedor() {
   }, [showClienteDialog, showNovoClienteForm, carrinho, showSuggestions, produtosSugeridos, produtoSelecionadoIndex, clientesFiltrados, clienteSelecionadoIndex, showComprovante, ajusteExcedido]);
 
   useEffect(() => {
-    if (inputProdutoRef.current && !showClienteDialog) {// Updated ref
+    if (inputProdutoRef.current && !showClienteDialog && !showCarrinhoMobile) {// Updated ref
       inputProdutoRef.current.focus();
     }
-  }, [carrinho, showClienteDialog]);
+  }, [carrinho, showClienteDialog, showCarrinhoMobile]);
 
   useEffect(() => {
     if (buscaProduto.trim().length >= 2) {
@@ -1435,7 +1435,10 @@ export default function PDVVendedor() {
       </div>
 
       {showCarrinhoMobile && (
-        <div className="md:hidden fixed inset-0 z-[80] bg-gray-950/40 backdrop-blur-[2px]" onClick={() => setShowCarrinhoMobile(false)} />
+        <div className="md:hidden fixed inset-0 z-[80] bg-gray-950/40 backdrop-blur-[2px]" onClick={() => {
+          setShowCarrinhoMobile(false);
+          setTimeout(() => inputProdutoRef.current?.focus(), 100);
+        }} />
       )}
 
       {/* Barra Inferior Mobile */}
@@ -1456,14 +1459,25 @@ export default function PDVVendedor() {
             )}
             <button
               type="button"
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                inputProdutoRef.current?.blur();
+                quantidadeInputRef.current?.blur();
+                setShowCarrinhoMobile(true);
+              }}
               onPointerDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                inputProdutoRef.current?.blur();
+                quantidadeInputRef.current?.blur();
                 setShowCarrinhoMobile(true);
               }}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                inputProdutoRef.current?.blur();
+                quantidadeInputRef.current?.blur();
                 setShowCarrinhoMobile(true);
               }}
               aria-label="Abrir carrinho"
