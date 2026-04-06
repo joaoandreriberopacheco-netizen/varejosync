@@ -1302,135 +1302,6 @@ export default function PDVVendedor() {
           </div>
         </div>
 
-        {/* Carrinho Mobile - Overlay */}
-        {showCarrinhoMobile &&
-        <div className="md:hidden fixed inset-0 z-[70] bg-gray-50 dark:bg-gray-950 flex flex-col">
-            {/* Header */}
-            <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
-              <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div className="text-center">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Carrinho</h2>
-                <p className="text-[10px] text-gray-400">{totalItens} un · {carrinho.length} itens</p>
-              </div>
-              <div className="w-9" />
-            </div>
-
-            {/* Lista de Itens */}
-            <div className="flex-1 overflow-auto p-3 space-y-2">
-              {carrinho.length === 0 ?
-            <div className="flex flex-col items-center justify-center h-full text-center py-16">
-                  <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center mb-4">
-                    <ShoppingCart className="w-7 h-7 text-gray-300 dark:text-gray-600" />
-                  </div>
-                  <p className="text-base text-gray-400">Carrinho vazio</p>
-                </div> :
-            carrinho.map((item) =>
-            <div key={item.item_key} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
-                    <div className="flex items-start gap-3 mb-3">
-                      {item.imagem_url
-                        ? <img src={item.imagem_url} alt={item.produto_nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                        : <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                            <Package className="w-5 h-5 text-gray-400" />
-                          </div>
-                      }
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-snug break-words">{item.produto_nome}</p>
-                        {item.preco_livre ? (
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
-                            <div className="relative flex-1 max-w-[160px]">
-                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
-                              <input
-                                type="number" step="0.01" inputMode="decimal"
-                                value={item.preco_unitario_praticado?.toFixed(2)}
-                                onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
-                                onBlur={() => handleBlurPrecoLivre(item.item_key)}
-                                className="w-full pl-8 h-10 bg-gray-50 dark:bg-gray-800/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-gray-900 dark:text-gray-100 font-semibold"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                           <p className="text-xs text-gray-400 mt-0.5">{item.quantidade} {item.unidade_medida || 'UN'} × R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')}</p>
-                         )}
-                      </div>
-                      <button onClick={() => handleRemoveItem(item.item_key)}
-                        className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg flex-shrink-0">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-400 mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
-                        <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
-                        <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade - 1)}
-                          className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700">
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="text-base font-bold w-10 text-center text-gray-900 dark:text-white">{item.quantidade}</span>
-                        <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
-                          disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
-                          className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700 disabled:opacity-40">
-                          <Plus className="w-4 h-4" />
-                        </button>
-                        </div>
-                        </div>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">R$ {item.total.toFixed(2).replace('.', ',')}</p>
-                    </div>
-                  </div>
-            )
-            }
-            </div>
-
-            {/* Footer - Resumo e Ação */}
-            <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 space-y-3 flex-shrink-0">
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>Subtotal</span>
-                <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
-              </div>
-
-              {/* Desconto Two-Way - Mobile */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
-                  {tabelaPreco?.percentual_desconto_maximo > 0 && (
-                    <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
-                  )}
-                </div>
-                <div className="flex gap-2 items-center">
-                  <div className="relative flex-1">
-                    <Input type="number" inputMode="decimal" min="0" max={Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0) || 100} step="0.01"
-                      value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
-                      className="pr-6 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-gray-200"
-                      placeholder="0" />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
-                  </div>
-                  <span className="text-gray-300 dark:text-gray-700 text-xs">=</span>
-                  <div className="relative flex-1">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
-                    <Input type="number" inputMode="decimal" min="0" step="0.01"
-                      value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
-                      className="pl-7 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm focus:ring-1 focus:ring-gray-200"
-                      placeholder="0,00" />
-                  </div>
-                </div>
-                {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Total</span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2).replace('.', ',')}</span>
-              </div>
-
-              <Button onClick={() => { setShowCarrinhoMobile(false); handleAvancarParaCliente(); }}
-                disabled={carrinho.length === 0 || ajusteExcedido}
-                className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-2xl shadow-none border-0 disabled:opacity-40">
-                Avançar <ArrowRight className="w-4 h-4 ml-1.5 inline" />
-              </Button>
-            </div>
-          </div>
-        }
         </div>
       </div>
 
@@ -1756,6 +1627,135 @@ export default function PDVVendedor() {
           }
         </DialogContent>
       </Dialog>
+
+      {showCarrinhoMobile &&
+      <div className="md:hidden fixed inset-0 z-[70] bg-gray-50 dark:bg-gray-950 flex flex-col">
+          {/* Header */}
+          <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
+            <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Carrinho</h2>
+              <p className="text-[10px] text-gray-400">{totalItens} un · {carrinho.length} itens</p>
+            </div>
+            <div className="w-9" />
+          </div>
+
+          {/* Lista de Itens */}
+          <div className="flex-1 overflow-auto p-3 space-y-2">
+            {carrinho.length === 0 ?
+          <div className="flex flex-col items-center justify-center h-full text-center py-16">
+                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center mb-4">
+                  <ShoppingCart className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+                </div>
+                <p className="text-base text-gray-400">Carrinho vazio</p>
+              </div> :
+          carrinho.map((item) =>
+          <div key={item.item_key} className="p-3.5 bg-white dark:bg-gray-900 rounded-2xl shadow-sm">
+                  <div className="flex items-start gap-3 mb-3">
+                    {item.imagem_url
+                      ? <img src={item.imagem_url} alt={item.produto_nome} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                      : <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-gray-400" />
+                        </div>
+                    }
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100 leading-snug break-words">{item.produto_nome}</p>
+                      {item.preco_livre ? (
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>
+                          <div className="relative flex-1 max-w-[160px]">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">R$</span>
+                            <input
+                              type="number" step="0.01" inputMode="decimal"
+                              value={item.preco_unitario_praticado?.toFixed(2)}
+                              onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
+                              onBlur={() => handleBlurPrecoLivre(item.item_key)}
+                              className="w-full pl-8 h-10 bg-gray-50 dark:bg-gray-800/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-gray-900 dark:text-gray-100 font-semibold"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                         <p className="text-xs text-gray-400 mt-0.5">{item.quantidade} {item.unidade_medida || 'UN'} × R$ {item.preco_unitario_praticado.toFixed(2).replace('.', ',')}</p>
+                       )}
+                    </div>
+                    <button onClick={() => handleRemoveItem(item.item_key)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-lg flex-shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-2">{item.quantidade} {item.unidade_medida || 'UN'} · base: {item.quantidade_base || item.quantidade}</p>
+                      <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+                      <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade - 1)}
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700">
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="text-base font-bold w-10 text-center text-gray-900 dark:text-white">{item.quantidade}</span>
+                      <button onClick={() => handleUpdateQuantity(item.item_key, item.quantidade + 1)}
+                        disabled={!configVenda?.vender_sem_estoque && calculateBaseQuantity(item.quantidade + 1, item.fator_conversao || 1) > item.estoque_disponivel}
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-gray-200 dark:active:bg-gray-700 disabled:opacity-40">
+                        <Plus className="w-4 h-4" />
+                      </button>
+                      </div>
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">R$ {item.total.toFixed(2).replace('.', ',')}</p>
+                  </div>
+                </div>
+          )
+          }
+          </div>
+
+          {/* Footer - Resumo e Ação */}
+          <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 space-y-3 flex-shrink-0">
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Subtotal</span>
+              <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
+            </div>
+
+            {/* Desconto Two-Way - Mobile */}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Desconto</span>
+                {tabelaPreco?.percentual_desconto_maximo > 0 && (
+                  <span className="text-[9px] text-gray-400">máx {tabelaPreco.percentual_desconto_maximo}%</span>
+                )}
+              </div>
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                  <Input type="number" inputMode="decimal" min="0" max={Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0) || 100} step="0.01"
+                    value={ajustePercentual} onChange={(e) => handleAjustePercentualChange(e.target.value)}
+                    className="pr-6 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-gray-200"
+                    placeholder="0" />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">%</span>
+                </div>
+                <span className="text-gray-300 dark:text-gray-700 text-xs">=</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">R$</span>
+                  <Input type="number" inputMode="decimal" min="0" step="0.01"
+                    value={ajusteValor} onChange={(e) => handleAjusteValorChange(e.target.value)}
+                    className="pl-7 h-10 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-xl text-sm focus:ring-1 focus:ring-gray-200"
+                    placeholder="0,00" />
+                </div>
+              </div>
+              {ajusteExcedido && <p className="text-[10px] text-red-500">Excede limite de {Math.max(currentUser?.limite_desconto || 0, tabelaPreco?.percentual_desconto_maximo || 0)}%</p>}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">Total</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">R$ {valorTotal.toFixed(2).replace('.', ',')}</span>
+            </div>
+
+            <Button onClick={() => { setShowCarrinhoMobile(false); handleAvancarParaCliente(); }}
+              disabled={carrinho.length === 0 || ajusteExcedido}
+              className="w-full h-12 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 text-white font-semibold rounded-2xl shadow-none border-0 disabled:opacity-40">
+              Avançar <ArrowRight className="w-4 h-4 ml-1.5 inline" />
+            </Button>
+          </div>
+        </div>
+      }
 
       {ultimaPreVenda &&
       <ComprovantePreVenda
