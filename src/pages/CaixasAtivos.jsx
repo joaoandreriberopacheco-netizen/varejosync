@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer } from 'lucide-react';
+import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer, Ticket } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 
 export default function CaixasAtivosPage() {
@@ -10,6 +10,7 @@ export default function CaixasAtivosPage() {
   const [liquidezPorCaixa, setLiquidezPorCaixa] = useState({});
   const [turnoSelecionado, setTurnoSelecionado] = useState(null);
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
+  const [rascunhoSelecionado, setRascunhoSelecionado] = useState(null);
   const [consumosHoje, setConsumosHoje] = useState([]);
   const [destinacoesExpandidas, setDestinacoesExpandidas] = useState({});
 
@@ -34,6 +35,10 @@ export default function CaixasAtivosPage() {
         base44.entities.RascunhoPedidoVenda.filter({ status: 'Aguardando Caixa' }),
       ]);
 
+      const turnosUnicos = turnos.filter((turno, index, array) =>
+        array.findIndex(t => t.conta_caixa_pdv_id === turno.conta_caixa_pdv_id) === index
+      );
+
       const consumosDeHoje = consumos.filter(c => {
         const d = new Date(c.created_date);
         return d >= hoje;
@@ -44,7 +49,7 @@ export default function CaixasAtivosPage() {
       
       const liquidez = {};
       caixasPDV.forEach(caixa => {
-        const turno = turnos.find(t => t.conta_caixa_pdv_id === caixa.id);
+        const turno = turnosUnicos.find(t => t.conta_caixa_pdv_id === caixa.id);
         if (turno) {
           const vendasTurno = vendas.filter(v => v.turno_caixa_id === turno.id);
           const totalVendas = vendasTurno.reduce((s, v) => s + (v.valor_total || 0), 0);
@@ -82,7 +87,7 @@ export default function CaixasAtivosPage() {
       });
 
       setLiquidezPorCaixa(liquidez);
-      setTurnosAtivos(turnos);
+      setTurnosAtivos(turnosUnicos);
       setLoading(false);
     } catch (error) {
       console.error('Erro ao carregar turnos:', error);
@@ -139,6 +144,11 @@ export default function CaixasAtivosPage() {
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const senhasNaoProcessadas = useMemo(
+    () => Object.values(liquidezPorCaixa).flatMap(item => item.senhasAguardando || []),
+    [liquidezPorCaixa]
+  );
+
   // Se já selecionou um caixa, mostra a view completa
   if (turnoSelecionado && caixaSelecionado) {
     return (
@@ -173,60 +183,95 @@ export default function CaixasAtivosPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {turnosAtivos.map(turno => {
-                const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
-                return (
-                  <button
-                    key={turno.id}
-                    onClick={() => handleSelecionarCaixa(turno)}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <Banknote className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
-                          {turno.conta_caixa_pdv_nome}
-                        </h3>
-                        {liq?.turnoAberto && (
-                          <div className="space-y-0.5">
-                            <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                              Turno aberto · Liquidez: {formatValor(liq.liquidez)}
-                            </p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                              Dinheiro na gaveta: {formatValor(liq.dinheiroNaGaveta)}
-                            </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">
-                              Saldo Inicial: {formatValor(liq.saldoInicial)} · Vendas: {formatValor(liq.totalVendas)}
-                            </p>
-                            {(liq.quantidadeFiado || 0) > 0 && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {turnosAtivos.map(turno => {
+                  const liq = liquidezPorCaixa[turno.conta_caixa_pdv_id];
+                  return (
+                    <button
+                      key={turno.id}
+                      onClick={() => handleSelecionarCaixa(turno)}
+                      className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                          <Banknote className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white font-glacial mb-1">
+                            {turno.conta_caixa_pdv_nome}
+                          </h3>
+                          {liq?.turnoAberto && (
+                            <div className="space-y-0.5">
+                              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                                Turno aberto · Liquidez: {formatValor(liq.liquidez)}
                               </p>
-                            )}
-                            {(liq.senhasAguardando?.length || 0) > 0 && (
-                              <div className="pt-2 flex flex-wrap gap-1.5">
-                                {liq.senhasAguardando.slice(0, 6).map((rascunho) => (
-                                  <span key={rascunho.id} className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-semibold">
-                                    {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
-                                  </span>
-                                ))}
-                                {liq.senhasAguardando.length > 6 && (
-                                  <span className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-[11px] font-medium">
-                                    +{liq.senhasAguardando.length - 6}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                Dinheiro na gaveta: {formatValor(liq.dinheiroNaGaveta)}
+                              </p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">
+                                Saldo Inicial: {formatValor(liq.saldoInicial)} · Vendas: {formatValor(liq.totalVendas)}
+                              </p>
+                              {(liq.quantidadeFiado || 0) > 0 && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
+                                </p>
+                              )}
+                              {(liq.senhasAguardando?.length || 0) > 0 && (
+                                <div className="pt-2 flex flex-wrap gap-1.5">
+                                  {liq.senhasAguardando.slice(0, 6).map((rascunho) => (
+                                    <span key={rascunho.id} className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-semibold">
+                                      {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
+                                    </span>
+                                  ))}
+                                  {liq.senhasAguardando.length > 6 && (
+                                    <span className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-[11px] font-medium">
+                                      +{liq.senhasAguardando.length - 6}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {senhasNaoProcessadas.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Ticket className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">Senhas não processadas</h2>
+                  </div>
+                  <div className="space-y-2">
+                    {senhasNaoProcessadas.map((rascunho) => (
+                      <button
+                        key={rascunho.id}
+                        onClick={() => setRascunhoSelecionado(rascunho)}
+                        className="w-full text-left rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              Senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              {rascunho.cliente_nome || 'Avulso'} · {rascunho.vendedor_nome || 'Sem vendedor'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{rascunho.itens?.length || 0} itens</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Relatório de Consumo Interno do Dia */}
@@ -291,6 +336,46 @@ export default function CaixasAtivosPage() {
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {rascunhoSelecionado && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                  <div className="text-xs text-gray-400 uppercase tracking-wider">Senha</div>
+                  <div className="text-3xl font-bold font-mono text-gray-900 dark:text-white">{String(rascunhoSelecionado.senha_atendimento || '').slice(-4) || '----'}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300">{rascunhoSelecionado.cliente_nome || 'Avulso'}</div>
+                  <div className="text-xs text-gray-400">{rascunhoSelecionado.vendedor_nome || 'Sem vendedor'}</div>
+                </div>
+                <button onClick={() => setRascunhoSelecionado(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 text-sm font-medium">
+                  Fechar
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Itens</div>
+                {(rascunhoSelecionado.itens || []).map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{item.produto_nome}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">R$ {(item.preco_unitario_praticado || 0).toFixed(2)} × {item.quantidade}</div>
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">R$ {(item.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                  </div>
+                ))}
+                {rascunhoSelecionado.valor_desconto > 0 && (
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Desconto</span><span>-R$ {rascunhoSelecionado.valor_desconto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <span>Total</span><span>{formatValor(rascunhoSelecionado.valor_total || 0)}</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

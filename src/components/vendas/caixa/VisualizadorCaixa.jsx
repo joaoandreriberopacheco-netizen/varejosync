@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatarDataHora } from '@/components/utils/dateUtils';
 import VendasTurnoDialog from './VendasTurnoDialog';
 import VendaDetalheDialog from './VendaDetalheDialog';
 import ListaMovimentosDialog from './ListaMovimentosDialog';
@@ -404,7 +404,7 @@ export default function VisualizadorCaixa({ turnoAtivo, caixaSelecionado, onVolt
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="text-base font-medium text-gray-900 dark:text-white truncate">{v.cliente_nome}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{v.numero} · {v.created_date ? format(new Date(v.created_date), 'HH:mm') : ''}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{v.numero} · {v.created_date ? formatarDataHora(v.created_date).split(' ')[1] : ''}</div>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{formatValor(v.valor_total)}</div>

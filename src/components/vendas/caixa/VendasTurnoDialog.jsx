@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ArrowLeft, Printer, Receipt, Eye } from 'lucide-react';
+import { formatarDataHora } from '@/components/utils/dateUtils';
 
-const TZ = 'America/Rio_Branco';
-const fmtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '--:--';
-const fmtDtHora = (d) => d ? new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '—';
+const fmtHora = (d) => {
+  const dataHora = formatarDataHora(d);
+  return dataHora === '—' ? '--:--' : dataHora.split(' ')[1];
+};
+const fmtDtHora = (d) => formatarDataHora(d);
 
 export default function VendasTurnoDialog({ open, onOpenChange, vendasFinalizadas, turnoAtivo, caixaData, formatValor, onVerDetalhes }) {
   return (
