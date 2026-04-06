@@ -7,9 +7,9 @@ export default function KpiFluxo({ kpis }) {
   const taxa = kpis.entrou > 0 ? (kpis.saiu / kpis.entrou * 100).toFixed(0) : 0;
 
   return (
-    <div className="space-y-2.5">
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] shadow-md border-0">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] border-0">
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingUp className="w-3 h-3 text-green-500" />
             <p className="text-[9px] uppercase tracking-wider text-gray-700 dark:text-gray-400">Receitas</p>
@@ -17,7 +17,7 @@ export default function KpiFluxo({ kpis }) {
           <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{R(kpis.entrou)}</p>
           {kpis.pEntrou > 0 && <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1">+{R(kpis.pEntrou)} prev.</p>}
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] shadow-md border-0">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-[24px] border-0">
           <div className="flex items-center gap-1.5 mb-2">
             <TrendingDown className="w-3 h-3 text-red-500" />
             <p className="text-[9px] uppercase tracking-wider text-gray-700 dark:text-gray-400">Despesas</p>
@@ -27,7 +27,7 @@ export default function KpiFluxo({ kpis }) {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 px-4 py-4 rounded-[24px] shadow-md border-0">
+      <div className="bg-white dark:bg-slate-900 px-4 py-4 rounded-[24px] border-0">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[9px] uppercase tracking-wider text-gray-700 dark:text-gray-400 mb-0.5">Saldo de Execução</p>

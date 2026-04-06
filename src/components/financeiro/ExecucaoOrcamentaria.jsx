@@ -241,38 +241,50 @@ export default function ExecucaoOrcamentaria() {
           <p className="text-[30px] leading-none font-semibold text-gray-900 dark:text-gray-100 font-glacial">Financeiro</p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Fluxo e contas com a mesma linguagem visual da home.</p>
         </div>
-        <div className="rounded-[24px] bg-white dark:bg-slate-800 p-1.5">
-          <div className="grid grid-cols-2 gap-1.5">
-            <button onClick={() => setAba('fluxo')}
-              className={`h-12 rounded-[18px] text-sm font-medium transition-colors ${aba === 'fluxo' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300 bg-transparent'}`}>
-              Fluxo de Caixa
-            </button>
-            <button onClick={() => setAba('contas')}
-              className={`h-12 rounded-[18px] text-sm font-medium transition-colors ${aba === 'contas' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300 bg-transparent'}`}>
-              Contas Abertas
-            </button>
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setAba('fluxo')}
+            className={`rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 transition-all ${aba === 'fluxo' ? 'ring-1 ring-gray-200 dark:ring-slate-700' : 'opacity-80'}`}
+          >
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-700">
+              <Scale className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white text-center">Fluxo de Caixa</p>
+          </button>
+          <button
+            onClick={() => setAba('contas')}
+            className={`rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 transition-all ${aba === 'contas' ? 'ring-1 ring-gray-200 dark:ring-slate-700' : 'opacity-80'}`}
+          >
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-700">
+              <Clock className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white text-center">Contas Abertas</p>
+          </button>
         </div>
       </div>
 
       {aba === 'contas' && (
         <>
         <div className="space-y-4">
-          <div className="rounded-[24px] bg-[#F7F7F5] dark:bg-slate-900 p-1.5">
-            <div className="grid grid-cols-2 gap-1.5 rounded-[20px] bg-white dark:bg-slate-800 p-1.5">
-              <button
-                onClick={() => setAbaContas('contas')}
-                className={`h-11 rounded-[16px] text-sm font-medium transition-colors ${abaContas === 'contas' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300'}`}
-              >
-                Contas a Pagar
-              </button>
-              <button
-                onClick={() => setAbaContas('agefin')}
-                className={`h-11 rounded-[16px] text-sm font-medium transition-colors ${abaContas === 'agefin' ? 'bg-[#1B2238] text-white' : 'text-gray-600 dark:text-gray-300'}`}
-              >
-                Atualizar boletos
-              </button>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setAbaContas('contas')}
+              className={`rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 transition-all ${abaContas === 'contas' ? 'ring-1 ring-gray-200 dark:ring-slate-700' : 'opacity-80'}`}
+            >
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-700">
+                <ArrowUpRight className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white text-center">Contas a Pagar</p>
+            </button>
+            <button
+              onClick={() => setAbaContas('agefin')}
+              className={`rounded-[24px] bg-white dark:bg-slate-800 px-4 py-4 transition-all ${abaContas === 'agefin' ? 'ring-1 ring-gray-200 dark:ring-slate-700' : 'opacity-80'}`}
+            >
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-700">
+                <Upload className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white text-center">Atualizar boletos</p>
+            </button>
           </div>
 
           {abaContas === 'contas' ? <ContasAbertas /> : <AgefinRecorrentes />}
@@ -336,10 +348,12 @@ export default function ExecucaoOrcamentaria() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="h-11 px-4 rounded-[18px] bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 flex items-center gap-2"
+              className="rounded-[24px] bg-white dark:bg-slate-800 px-4 py-3.5 flex items-center gap-3"
             >
-              <Printer className="w-4 h-4" />
-              <span className="text-sm font-medium">Imprimir</span>
+              <span className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-[#F3F4F6] dark:bg-slate-700">
+                <Printer className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+              </span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Imprimir</span>
             </button>
           </div>
 

@@ -311,9 +311,9 @@ export default function FiltrosFluxoCaixa({
 
   return (
     <>
-      <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-md p-3">
+      <div className="bg-white dark:bg-slate-900 rounded-[24px] p-3">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+          <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-[#F7F7F5] dark:bg-slate-800">
             <Search className="w-4 h-4 text-gray-400 flex-none" />
             <input
               value={search} onChange={e => onSearch(e.target.value)}
@@ -325,7 +325,7 @@ export default function FiltrosFluxoCaixa({
 
           <button
             onClick={() => setOpen(true)}
-            className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-gray-900 dark:text-gray-200 relative shadow-sm"
+            className="h-12 w-12 rounded-2xl bg-[#F7F7F5] dark:bg-slate-800 flex items-center justify-center text-gray-900 dark:text-gray-200 relative"
           >
             <SlidersHorizontal className="w-4 h-4" />
             {hasActiveFilters && (
