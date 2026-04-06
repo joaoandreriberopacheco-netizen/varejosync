@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Clock3, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import AgefinConsultaDrawer from '@/components/agefin/AgefinConsultaDrawer';
 
@@ -184,39 +184,41 @@ export default function AgefinConsulta() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Visão de contas a pagar por período, sem edição.</p>
             </div>
             <div className="flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
+              <Drawer>
+                <DrawerTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
                     <SlidersHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-80 rounded-[24px] border-0 bg-white dark:bg-gray-900 shadow-xl p-4">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">Filtro</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">Filtrar por datas e status</p>
-                    </div>
+                </DrawerTrigger>
+                <DrawerContent className="border-0 rounded-t-[32px] bg-white dark:bg-gray-900 px-4 pb-6">
+                  <DrawerHeader className="px-0 text-left">
+                    <DrawerTitle className="font-glacial text-gray-900 dark:text-white">Filtrar contas</DrawerTitle>
+                    <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400">Escolha o status e o intervalo de datas.</DrawerDescription>
+                  </DrawerHeader>
+                  <div className="space-y-4 px-0">
                     <div className="grid grid-cols-2 gap-2">
-                      <Button variant="ghost" onClick={() => setStatusFilter('todos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>Todos</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('pagos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'pagos' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : ''}`}>Pagos</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('nao_pagos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'nao_pagos' ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>Não pagos</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('abertos')} className={`justify-start rounded-2xl px-3 ${statusFilter === 'abertos' ? 'bg-gray-100 dark:bg-gray-800' : ''}`}>Em aberto</Button>
-                      <Button variant="ghost" onClick={() => setStatusFilter('vencidos')} className={`justify-start rounded-2xl px-3 text-left ${statusFilter === 'vencidos' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : ''}`}>Vencidos</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('todos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'todos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Todos</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('pagos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'pagos' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Pagos</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('nao_pagos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'nao_pagos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Não pagos</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('abertos')} className={`justify-start rounded-2xl px-4 h-12 ${statusFilter === 'abertos' ? 'bg-gray-100 dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Em aberto</Button>
+                      <Button variant="ghost" onClick={() => setStatusFilter('vencidos')} className={`col-span-2 justify-start rounded-2xl px-4 h-12 ${statusFilter === 'vencidos' ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-gray-50 dark:bg-gray-800/60'}`}>Vencidos</Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">De</p>
-                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Data inicial</p>
+                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Até</p>
-                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800" />
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Data final</p>
+                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 h-12" />
                       </div>
                     </div>
-                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
                   </div>
-                </PopoverContent>
-              </Popover>
+                  <DrawerFooter className="px-0 pb-0 pt-5">
+                    <Button variant="ghost" onClick={() => { setStatusFilter('todos'); setDateFrom(''); setDateTo(''); }} className="w-full rounded-2xl h-12 bg-gray-100 dark:bg-gray-800">Limpar filtros</Button>
+                  </DrawerFooter>
+                </DrawerContent>
+              </Drawer>
               <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800">
                 <Printer className="w-4 h-4 text-gray-600 dark:text-gray-300" />
               </Button>
