@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Receipt, Wallet, Plus, Minus, DollarSign, Eye, CheckCircle2, Printer, Lock, ArrowLeft, Clock } from 'lucide-react';
 import { formatarDataHora } from '@/components/utils/dateUtils';
+import { format } from 'date-fns';
 import VendasTurnoDialog from './VendasTurnoDialog';
 import VendaDetalheDialog from './VendaDetalheDialog';
 import ListaMovimentosDialog from './ListaMovimentosDialog';
