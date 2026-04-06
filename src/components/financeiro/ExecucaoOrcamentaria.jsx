@@ -4,7 +4,7 @@ import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } fro
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
-import { Plus, X, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale, Printer, Upload } from 'lucide-react';
+import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Clock, Scale, Printer, Upload } from 'lucide-react';
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
@@ -350,12 +350,10 @@ export default function ExecucaoOrcamentaria() {
           <div className="flex justify-end">
             <button
               onClick={() => setShowPrintDialog(true)}
-              className="rounded-[24px] bg-[#F3F4F6] dark:bg-slate-800 px-4 py-3.5 flex items-center gap-3"
+              className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-800"
+              aria-label="Imprimir extrato"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-slate-700">
-                <Printer className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-              </span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Imprimir extrato</span>
+              <Printer className="w-4 h-4 text-gray-700 dark:text-gray-200" />
             </button>
           </div>
 
