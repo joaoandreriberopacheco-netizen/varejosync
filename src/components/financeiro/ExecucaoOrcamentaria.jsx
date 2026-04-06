@@ -237,9 +237,20 @@ export default function ExecucaoOrcamentaria() {
     <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 pb-28">
       {/* Header + tabs */}
       <div className="rounded-[32px] bg-[#F3F4F6] dark:bg-slate-900 px-5 py-5 space-y-4">
-        <div className="space-y-2">
-          <p className="text-[32px] leading-none font-semibold text-gray-900 dark:text-gray-100 font-glacial">Financeiro</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-2 min-w-0">
+            <p className="text-[32px] leading-none font-semibold text-gray-900 dark:text-gray-100 font-glacial">Financeiro</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
+          </div>
+          {aba === 'fluxo' && (
+            <button
+              onClick={() => setShowPrintDialog(true)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/90 dark:bg-slate-800"
+              aria-label="Imprimir extrato"
+            >
+              <Printer className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2.5">
           <button
@@ -347,16 +358,6 @@ export default function ExecucaoOrcamentaria() {
 
       {aba === 'fluxo' && (
         <>
-          <div className="flex justify-end">
-            <button
-              onClick={() => setShowPrintDialog(true)}
-              className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-[#F3F4F6] dark:bg-slate-800"
-              aria-label="Imprimir extrato"
-            >
-              <Printer className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-            </button>
-          </div>
-
           {/* KPIs */}
           <KpiFluxo kpis={kpis} />
 
