@@ -71,7 +71,7 @@ export default function ConsumoProdutoSelectorPDV({ open, onOpenChange, produtos
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
+      <DialogContent className="max-w-3xl rounded-[28px] border-0 bg-white p-0 shadow-2xl pointer-events-auto dark:bg-gray-900">
         {!produtoSelecionado ? (
           <div className="flex max-h-[80vh] flex-col">
             <div className="border-b border-gray-100 p-4 dark:border-gray-800">
