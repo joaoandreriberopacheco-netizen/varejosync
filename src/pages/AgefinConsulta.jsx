@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Clock3, Printer, Paperclip } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Clock3, Printer, Paperclip, Wallet, CircleSlash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgefinConsultaDrawer from '@/components/agefin/AgefinConsultaDrawer';
 
@@ -29,13 +29,6 @@ function KpiCard({ label, value, tone = 'default' }) {
     muted: 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white',
   };
 
-  const reactiveMap = {
-    default: '',
-    success: 'ring-1 ring-emerald-200/70 dark:ring-emerald-400/20 shadow-[inset_0_1px_0_rgba(16,185,129,0.08)] dark:shadow-[inset_0_1px_0_rgba(110,231,183,0.08)]',
-    danger: 'ring-1 ring-red-200/70 dark:ring-red-400/20 shadow-[inset_0_1px_0_rgba(239,68,68,0.08)] dark:shadow-[inset_0_1px_0_rgba(248,113,113,0.08)]',
-    muted: '',
-  };
-
   const labelToneMap = {
     default: 'text-gray-500 dark:text-gray-400',
     success: 'text-emerald-700/80 dark:text-emerald-300/80',
@@ -43,9 +36,26 @@ function KpiCard({ label, value, tone = 'default' }) {
     muted: 'text-gray-500 dark:text-gray-400',
   };
 
+  const iconToneMap = {
+    default: 'text-gray-500 dark:text-gray-400',
+    success: 'text-emerald-700/80 dark:text-emerald-300/80',
+    danger: 'text-red-700/80 dark:text-red-300/80',
+    muted: 'text-gray-500 dark:text-gray-400',
+  };
+
+  const Icon = {
+    default: Wallet,
+    success: CheckCircle2,
+    danger: CircleAlert,
+    muted: CircleSlash,
+  }[tone] || Wallet;
+
   return (
-    <div className={`min-w-0 rounded-[22px] shadow-sm px-4 py-3 ${toneMap[tone]} ${reactiveMap[tone]}`}>
-      <p className={`text-[10px] uppercase tracking-[0.16em] truncate ${labelToneMap[tone]}`}>{label}</p>
+    <div className={`min-w-0 rounded-[22px] shadow-sm px-4 py-3 ${toneMap[tone]}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className={`text-[10px] uppercase tracking-[0.16em] truncate ${labelToneMap[tone]}`}>{label}</p>
+        <Icon className={`w-3.5 h-3.5 shrink-0 ${iconToneMap[tone]}`} />
+      </div>
       <p className="mt-1 text-sm md:text-base font-semibold font-glacial truncate">{value}</p>
     </div>
   );
