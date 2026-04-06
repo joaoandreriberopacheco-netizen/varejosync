@@ -1436,10 +1436,10 @@ export default function PDVVendedor() {
               className="flex items-center gap-1.5 h-12 px-4 bg-slate-700 dark:bg-slate-700 hover:bg-slate-600 dark:hover:bg-slate-600 text-slate-100 dark:text-slate-100 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none border-0 pointer-events-auto">
               <UserPlus className="w-4 h-4" />
               Cliente
-            </button>
-          </div>
+              </button>
+              </div>
 
-      {/* Dialog de cliente - GLACIAL PROTOCOL */}
+              {/* Dialog de cliente - GLACIAL PROTOCOL */}
       <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 rounded-3xl border-0 shadow-2xl">
           <DialogHeader className="pb-4 border-b border-gray-100 dark:border-gray-800">
