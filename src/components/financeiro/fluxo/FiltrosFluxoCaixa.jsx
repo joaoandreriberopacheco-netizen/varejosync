@@ -311,7 +311,7 @@ export default function FiltrosFluxoCaixa({
 
   return (
     <>
-      <div className="bg-[#F3F4F6] dark:bg-slate-900 rounded-[24px] p-3">
+      <div className="bg-[#EEF1F4] dark:bg-slate-900 rounded-[24px] p-3">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 px-3 h-12 flex-1 rounded-2xl bg-white dark:bg-slate-800">
             <Search className="w-4 h-4 text-gray-400 flex-none" />

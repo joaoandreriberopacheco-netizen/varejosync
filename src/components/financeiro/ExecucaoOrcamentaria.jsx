@@ -241,25 +241,25 @@ export default function ExecucaoOrcamentaria() {
           <p className="text-[32px] leading-none font-semibold text-gray-900 dark:text-gray-100 font-glacial">Financeiro</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">Fluxo e contas com visual mais leve, limpo e direto.</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={() => setAba('fluxo')}
-            className={`rounded-[24px] px-3 py-4 text-center transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/75 dark:bg-slate-800/70 opacity-85'}`}
+            className={`rounded-[22px] px-3 py-3 text-center transition-all ${aba === 'fluxo' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-[16px] ${aba === 'fluxo' ? 'bg-[#EAECEF] dark:bg-slate-700' : 'bg-[#F3F4F6] dark:bg-slate-800'}`}>
+            <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${aba === 'fluxo' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
               <Scale className="h-4 w-4 text-gray-700 dark:text-gray-200" />
             </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Fluxo de Caixa</p>
+            <p className="text-[13px] font-medium text-gray-900 dark:text-white">Fluxo de Caixa</p>
             <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Movimento do período</p>
           </button>
           <button
             onClick={() => setAba('contas')}
-            className={`rounded-[24px] px-3 py-4 text-center transition-all ${aba === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/75 dark:bg-slate-800/70 opacity-85'}`}
+            className={`rounded-[22px] px-3 py-3 text-center transition-all ${aba === 'contas' ? 'bg-white dark:bg-slate-800 opacity-100' : 'bg-white/80 dark:bg-slate-800/70 opacity-85'}`}
           >
-            <div className={`mx-auto mb-2.5 flex h-11 w-11 items-center justify-center rounded-[16px] ${aba === 'contas' ? 'bg-[#EAECEF] dark:bg-slate-700' : 'bg-[#F3F4F6] dark:bg-slate-800'}`}>
+            <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-[15px] ${aba === 'contas' ? 'bg-[#E5E7EB] dark:bg-slate-700' : 'bg-[#ECEFF3] dark:bg-slate-800'}`}>
               <Clock className="h-4 w-4 text-gray-700 dark:text-gray-200" />
             </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Contas Abertas</p>
+            <p className="text-[13px] font-medium text-gray-900 dark:text-white">Contas Abertas</p>
             <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">Pendências e cobranças</p>
           </button>
         </div>
