@@ -86,13 +86,16 @@ Campos a interpretar do documento:
         ? extracted.frequencia_sugerida
         : 'Mensal';
       const numeroParcela = extracted.numero_parcela ? parseInt(String(extracted.numero_parcela).replace(/[^0-9]/g, ''), 10) : null;
-      const periodoReferencia = extracted.competencia && /^\d{4}-\d{2}-\d{2}$/.test(extracted.competencia)
+      const periodoReferenciaExtraido = extracted.competencia && /^\d{4}-\d{2}-\d{2}$/.test(extracted.competencia)
         ? extracted.competencia
         : extracted.competencia && /^\d{2}\/\d{4}$/.test(extracted.competencia)
           ? `${extracted.competencia.split('/')[1]}-${extracted.competencia.split('/')[0]}-01`
           : extracted.competencia && /^\d{2}\/\d{2}\/\d{4}$/.test(extracted.competencia)
             ? `${extracted.competencia.split('/')[2]}-${extracted.competencia.split('/')[1]}-01`
             : null;
+      const periodoReferencia = extracted.data_vencimento
+        ? `${extracted.data_vencimento.slice(0, 7)}-01`
+        : periodoReferenciaExtraido;
 
       setSelectedNatureza(naturezaValida);
       setSelectedRecorrencia(frequenciaValida);
