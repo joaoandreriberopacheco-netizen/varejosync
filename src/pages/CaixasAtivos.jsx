@@ -32,12 +32,18 @@ export default function CaixasAtivosPage() {
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Despesa' }),
         base44.entities.LancamentoFinanceiro.filter({ tipo: 'Receita', forma_pagamento: 'Conta a Pagar' }),
         base44.entities.ConsumoInterno.list('-created_date'),
-        base44.entities.RascunhoPedidoVenda.filter({ status: 'Aguardando Caixa' }),
+        base44.entities.RascunhoPedidoVenda.list('-created_date'),
       ]);
 
       const turnosUnicos = turnos.filter((turno, index, array) =>
         array.findIndex(t => t.conta_caixa_pdv_id === turno.conta_caixa_pdv_id) === index
       );
+
+      const rascunhosPendentes = rascunhos.filter(r => {
+        const status = r.status || r.data?.status;
+        const convertido = r.pedido_venda_final_id || r.data?.pedido_venda_final_id;
+        return status === 'Aguardando Caixa' && !convertido;
+      });
 
       const consumosDeHoje = consumos.filter(c => {
         const d = new Date(c.created_date);
@@ -71,7 +77,11 @@ export default function CaixasAtivosPage() {
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
-          const senhasAguardando = rascunhos.filter(r => r.turno_caixa_id === turno.id || r.conta_caixa_pdv_id === caixa.id);
+          const senhasAguardando = rascunhosPendentes.filter(r => {
+            const turnoCaixaId = r.turno_caixa_id || r.data?.turno_caixa_id;
+            const contaCaixaId = r.conta_caixa_pdv_id || r.data?.conta_caixa_pdv_id;
+            return turnoCaixaId === turno.id || contaCaixaId === caixa.id;
+          }).map(r => ({ ...r.data, id: r.id }));
           
           liquidez[caixa.id] = {
             turnoAberto: true,
