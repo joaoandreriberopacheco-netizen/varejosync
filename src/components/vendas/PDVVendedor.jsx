@@ -1039,11 +1039,11 @@ export default function PDVVendedor() {
                   <Input
                   ref={inputProdutoRef}
                   placeholder="Buscar por nome, código ou código de barras..."
-                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-0 focus:border-transparent focus-visible:ring-0 focus-visible:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  autoFocus={!isMobile} />
+                  autoFocus={false} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">
                     <Camera className="w-5 h-5" />
@@ -1056,7 +1056,7 @@ export default function PDVVendedor() {
                   inputMode="decimal"
                   step="0.01"
                   placeholder="Qtd"
-                  className="w-full bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus-visible:ring-0 focus-visible:outline-none"
+                  className="w-full bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(e.target.value)}
                   onKeyDown={handleQuantidadeKeyDown}
@@ -1149,7 +1149,7 @@ export default function PDVVendedor() {
                 </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); inputProdutoRef.current?.focus(); }}
+                  <Button onClick={() => { setProdutoSelecionado(null); setQuantidadeAtual(''); }}
                     variant="ghost" size="sm" className="h-10 px-3 text-gray-400 hover:text-gray-600">
                     <X className="w-4 h-4" />
                   </Button>
@@ -1450,8 +1450,8 @@ export default function PDVVendedor() {
                 <CreditCard className="w-5 h-5" />
               </button>
             )}
-            <button onClick={() => setShowCarrinhoMobile(true)}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0">
+            <button type="button" onClick={() => setShowCarrinhoMobile(true)}
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 cursor-pointer">
               <ShoppingCart className="w-5 h-5" />
               {carrinho.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -1760,7 +1760,6 @@ export default function PDVVendedor() {
         open={showComprovante}
         onClose={() => {
           setShowComprovante(false);
-          setTimeout(() => inputProdutoRef.current?.focus(), 100);
         }} />
 
       }
