@@ -402,14 +402,13 @@ export default function PDVVendedor() {
     if (buscaProduto.trim().length >= 2) {
       const termo = buscaProduto.toLowerCase();
       const resultados = produtos.filter((p) =>
-        (p.codigo_barras?.toLowerCase().includes(termo) ||
-        p.codigo_interno?.toLowerCase().includes(termo) ||
-        p.nome?.toLowerCase().includes(termo)) &&
-        p.ativo
+      p.codigo_barras?.toLowerCase().includes(termo) ||
+      p.codigo_interno?.toLowerCase().includes(termo) ||
+      p.nome?.toLowerCase().includes(termo)
       ).sort((a, b) => a.nome.localeCompare(b.nome));
 
       setProdutosSugeridos(resultados.slice(0, 10));
-      setShowSuggestions(resultados.length > 0);
+      setShowSuggestions(true);
       setProdutoSelecionadoIndex(0);
     } else {
       setProdutosSugeridos([]);
