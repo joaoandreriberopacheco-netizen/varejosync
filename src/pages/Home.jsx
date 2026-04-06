@@ -122,7 +122,7 @@ export default function HomePage() {
   }, [loadKPIs]);
 
   const handleSaveActions = (ids) => {
-    const limited = ids.slice(0, 6);
+    const limited = ids.slice(0, 9);
     setQuickActionIds(limited);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
   };

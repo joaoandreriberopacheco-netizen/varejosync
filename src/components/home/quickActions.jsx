@@ -2,7 +2,7 @@ import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
   Truck, BarChart3, Users, ClipboardList, Receipt, Warehouse,
   FileText, QrCode, LayoutDashboard, Tag, Settings, Upload, MonitorCheck,
-  Scan, Tablet, ClipboardPenLine
+  Scan, Tablet, ClipboardPenLine, ReceiptText
 } from 'lucide-react';
 
 /**
@@ -132,6 +132,13 @@ export const ALL_QUICK_ACTIONS = [
     permissaoCheck: (p) => p?.pdv?.acesso_caixa || p?.financeiro?.caixas_ativos || p?.financeiro?.acesso,
   },
   {
+    id: 'agefin_consulta',
+    icon: ReceiptText,
+    label: 'Agefin',
+    page: 'AgefinConsulta',
+    permissaoCheck: (p) => p?.financeiro?.acesso || p?.dashboard?.acesso,
+  },
+  {
     id: 'consumo_interno',
     icon: ClipboardPenLine,
     label: 'Consumo',
@@ -161,4 +168,4 @@ export const ALL_QUICK_ACTIONS = [
   },
 ];
 
-export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'tabelaprecos', 'terceiros'];
+export const DEFAULT_QUICK_ACTIONS = ['pdv', 'vendas', 'tabelaprecos', 'terceiros', 'financeiro', 'caixas_ativos', 'agefin_consulta'];

@@ -1167,7 +1167,6 @@ export default function PDVVendedor() {
                 </div>
                 }
             </div>
-
         </div>
 
         {/* Sidebar Carrinho - Desktop Only */}
