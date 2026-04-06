@@ -1034,12 +1034,12 @@ export default function PDVVendedor() {
           {/* Busca de Produto */}
           <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2.5 w-full">
-                <div className="flex-1 relative min-w-0">
+                <div className="flex-1 relative min-w-0 rounded-2xl overflow-hidden">
                   <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                   <Input
                   ref={inputProdutoRef}
                   placeholder="Buscar por nome, código ou código de barras..."
-                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent] placeholder:text-gray-400 dark:placeholder:text-gray-600"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -1056,7 +1056,7 @@ export default function PDVVendedor() {
                   inputMode="decimal"
                   step="0.01"
                   placeholder="Qtd"
-                  className="w-full bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none"
+                  className="w-full bg-white dark:bg-gray-900 border-0 outline-none ring-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-0 focus:border-transparent focus:outline-none focus-visible:ring-0 focus-visible:outline-none active:outline-none appearance-none [-webkit-tap-highlight-color:transparent]"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(e.target.value)}
                   onKeyDown={handleQuantidadeKeyDown}
@@ -1304,7 +1304,7 @@ export default function PDVVendedor() {
 
         {/* Carrinho Mobile - Overlay */}
         {showCarrinhoMobile &&
-        <div className="md:hidden fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950 flex flex-col">
+        <div className="md:hidden fixed inset-0 z-[70] bg-gray-50 dark:bg-gray-950 flex flex-col">
             {/* Header */}
             <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
               <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -1435,7 +1435,7 @@ export default function PDVVendedor() {
       </div>
 
       {/* Barra Inferior Mobile */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800 rounded-t-[26px] shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800 rounded-t-[26px] shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pointer-events-auto">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
               <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
@@ -1446,21 +1446,21 @@ export default function PDVVendedor() {
             </button>
             {carrinho.length > 0 && (
               <button onClick={() => setShowSimuladorTaxa(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0">
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0">
                 <CreditCard className="w-5 h-5" />
               </button>
             )}
             <button type="button" onClick={() => setShowCarrinhoMobile(true)}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 cursor-pointer">
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 cursor-pointer pointer-events-auto z-10">
               <ShoppingCart className="w-5 h-5" />
               {carrinho.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 bg-slate-700 text-slate-100 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {carrinho.length}
                 </span>
               )}
             </button>
             <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
-              className="flex items-center gap-1.5 h-10 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0">
+              className="flex items-center gap-1.5 h-10 px-4 bg-slate-700 dark:bg-slate-700 hover:bg-slate-600 dark:hover:bg-slate-600 text-slate-100 dark:text-slate-100 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none border-0">
               <UserPlus className="w-4 h-4" />
               Cliente
             </button>
