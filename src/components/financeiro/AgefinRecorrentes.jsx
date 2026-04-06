@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, Repeat2, Upload, FileText, CircleAlert } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Repeat2, Upload, FileText, CircleAlert, BadgeCheck, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function formatCurrency(value) {
@@ -34,8 +34,9 @@ function getContaDoMes(contas, recorrente, monthKey) {
 function StatusBadge({ hasBoleto }) {
   return (
     <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${hasBoleto ? 'bg-gray-200/80 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-      {hasBoleto ? <FileText className="w-3 h-3" /> : <CircleAlert className="w-3 h-3" />}
+      <Receipt className="w-3 h-3" />
       {hasBoleto ? 'Com boleto' : 'Sem boleto'}
+      {hasBoleto && <BadgeCheck className="w-3 h-3 opacity-70" />}
     </div>
   );
 }
@@ -44,15 +45,17 @@ function AgefinCard({ recorrente, contaMes }) {
   const hasBoleto = Boolean(contaMes?.boleto_url);
 
   return (
-    <div className={`rounded-[24px] shadow-sm p-3 md:p-4 space-y-3 ${hasBoleto ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/90 dark:bg-gray-900/90 opacity-80'}`}>
+    <div className={`rounded-[22px] p-3 md:p-3.5 space-y-2.5 ${hasBoleto ? 'bg-white dark:bg-gray-900 shadow-sm' : 'bg-gray-50/90 dark:bg-gray-900/90 shadow-sm opacity-90'}`}>
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white break-words line-clamp-3">{recorrente.nome_despesa}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
-        </div>
-        <div className="text-right flex-shrink-0 pl-2">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white line-clamp-2">{recorrente.nome_despesa}</p>
+            <div className="text-right shrink-0 pl-2">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
         </div>
       </div>
 
@@ -67,19 +70,14 @@ function AgefinCard({ recorrente, contaMes }) {
         </span>
       </div>
 
-      <div className="rounded-2xl bg-white/70 dark:bg-gray-800/70 p-2.5 space-y-2">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 rounded-[18px] bg-gray-100/80 dark:bg-gray-800/60 px-2.5 py-2">
+        <div className="min-w-0 flex items-center gap-2">
           <StatusBadge hasBoleto={hasBoleto} />
           {!hasBoleto && <CircleAlert className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />}
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 leading-5">
-          {hasBoleto
-            ? 'Integrado à conta a pagar do mês.'
-            : 'Falta anexar o boleto deste mês na conta a pagar.'}
-        </p>
-        <button className="w-full h-9 rounded-2xl bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 text-xs font-medium flex items-center justify-center gap-2 shadow-sm">
+        <button className="h-8 rounded-full bg-white dark:bg-gray-900 px-3 text-[11px] font-medium text-gray-700 dark:text-gray-200 flex items-center justify-center gap-1.5 shadow-sm">
           <Upload className="w-3.5 h-3.5" />
-          {hasBoleto ? 'Trocar boleto' : 'Anexar boleto'}
+          {hasBoleto ? 'Trocar' : 'Adicionar'}
         </button>
       </div>
     </div>
