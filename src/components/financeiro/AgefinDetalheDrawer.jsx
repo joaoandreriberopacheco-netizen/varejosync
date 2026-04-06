@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
-import { Calendar, CheckCircle2, CircleAlert, Receipt, Paperclip } from 'lucide-react';
+import { Calendar, CheckCircle2, CircleAlert, Receipt, Paperclip, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
+import AgefinImportador from '@/components/agefin/AgefinImportador';
 
 function formatDate(value) {
   if (!value) return '—';
@@ -13,6 +16,8 @@ function formatCurrency(value) {
 }
 
 export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMes }) {
+  const [showRefreshImport, setShowRefreshImport] = React.useState(false);
+
   if (!recorrente || !contaMes) return null;
 
   const isPaid = contaMes?.status === 'Pago';
@@ -20,6 +25,8 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
   const todayKey = today.toISOString().slice(0, 10);
   const isDueToday = contaMes?.data_vencimento === todayKey;
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
+  const hasBoleto = Boolean(contaMes?.boleto_url);
+  const boletoVencido = hasBoleto && isOverdue;
 
   return (
     <Drawer open={open} onOpenChange={onClose}>
@@ -39,11 +46,11 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
                 <p className="text-xl font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
               </div>
               {isPaid ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Pago
                 </span>
               ) : isOverdue ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-400/10 dark:text-red-200">
                   <CircleAlert className="w-3.5 h-3.5" /> Vencido
                 </span>
               ) : isDueToday ? (
@@ -68,6 +75,28 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
               <p className="text-xs text-gray-400 dark:text-gray-500">Descrição da conta</p>
               <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">{contaMes?.descricao || recorrente.nome_despesa}</p>
             </div>
+
+            <div className="rounded-2xl bg-white dark:bg-gray-900 p-3 shadow-sm space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Status do boleto</p>
+                  <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                    {!hasBoleto ? 'Sem boleto anexado' : boletoVencido ? 'Boleto vencido' : 'Boleto válido'}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => setShowRefreshImport(true)}
+                  className="h-10 rounded-2xl bg-gray-900 px-3 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {hasBoleto ? 'Atualizar' : 'Importar'}
+                </Button>
+              </div>
+              {boletoVencido && (
+                <p className="text-xs text-red-600 dark:text-red-200">Esse boleto venceu e o valor pode estar desatualizado. Importe um novo boleto para atualizar.</p>
+              )}
+            </div>
           </div>
 
           <div className="rounded-[22px] bg-gray-50 dark:bg-gray-800/70 p-4 shadow-sm space-y-3">
@@ -90,6 +119,22 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
           </div>
         </div>
       </DrawerContent>
+
+      <Dialog open={showRefreshImport} onOpenChange={setShowRefreshImport}>
+        <DialogContent className="max-w-3xl border-0 bg-transparent p-0 shadow-none">
+          <div className="max-h-[85vh] overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-950">
+            <AgefinImportador
+              modoAtualizacao
+              contaPrevistaId={contaMes?.id}
+              onSuccess={() => {
+                setShowRefreshImport(false);
+                onClose?.();
+                window.location.reload();
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </Drawer>
   );
 }

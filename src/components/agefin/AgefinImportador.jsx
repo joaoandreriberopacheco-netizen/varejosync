@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
 
-export default function AgefinImportador({ onSuccess }) {
+export default function AgefinImportador({ onSuccess, contaPrevistaId = null, modoAtualizacao = false }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
@@ -199,33 +199,42 @@ Campos a interpretar do documento:
         conta_recorrente_id: recorrenteFinal?.id || null,
       };
 
-      const contaCriada = contaDoMesFinal
-        ? await base44.entities.ContaPrevista.update(contaDoMesFinal.id, payload)
-        : await base44.entities.ContaPrevista.create(payload);
+      const contaCriada = contaPrevistaId
+        ? await base44.entities.ContaPrevista.update(contaPrevistaId, {
+            ...payload,
+            valor_desatualizado: false,
+          })
+        : contaDoMesFinal
+          ? await base44.entities.ContaPrevista.update(contaDoMesFinal.id, payload)
+          : await base44.entities.ContaPrevista.create(payload);
 
       const contaFinanceira = contasFinanceiras.find((item) => item.id === contaFinanceiraId);
-      const lancamentoPayload = {
-        tipo: 'Despesa',
-        descricao: payload.descricao,
-        terceiro_id: payload.terceiro_id,
-        terceiro_nome: payload.terceiro_nome,
-        valor: payload.valor,
-        data_vencimento: payload.data_vencimento,
-        status: 'Em Aberto',
-        status_conciliacao: 'N/A',
-        categoria: payload.categoria_nome,
-        categoria_id: payload.categoria_financeira_id,
-        conta_financeira_id: contaFinanceiraId,
-        conta_financeira_nome: contaFinanceira?.nome || '',
-        referencia_tipo: 'Manual',
-        referencia_id: contaCriada.id,
-        observacoes: extractedData.observacoes || '',
-        is_recorrente: payload.natureza === 'Recorrente' || payload.natureza === 'Parcelado',
-        frequencia_recorrencia: payload.natureza === 'Recorrente' ? selectedRecorrencia : payload.natureza === 'Parcelado' ? 'Parcelado' : undefined,
-        parcela_atual: payload.parcela_numero || undefined,
-      };
+      let lancamentoCriado = null;
 
-      const lancamentoCriado = await base44.entities.LancamentoFinanceiro.create(lancamentoPayload);
+      if (!modoAtualizacao) {
+        const lancamentoPayload = {
+          tipo: 'Despesa',
+          descricao: payload.descricao,
+          terceiro_id: payload.terceiro_id,
+          terceiro_nome: payload.terceiro_nome,
+          valor: payload.valor,
+          data_vencimento: payload.data_vencimento,
+          status: 'Em Aberto',
+          status_conciliacao: 'N/A',
+          categoria: payload.categoria_nome,
+          categoria_id: payload.categoria_financeira_id,
+          conta_financeira_id: contaFinanceiraId,
+          conta_financeira_nome: contaFinanceira?.nome || '',
+          referencia_tipo: 'Manual',
+          referencia_id: contaCriada.id,
+          observacoes: extractedData.observacoes || '',
+          is_recorrente: payload.natureza === 'Recorrente' || payload.natureza === 'Parcelado',
+          frequencia_recorrencia: payload.natureza === 'Recorrente' ? selectedRecorrencia : payload.natureza === 'Parcelado' ? 'Parcelado' : undefined,
+          parcela_atual: payload.parcela_numero || undefined,
+        };
+
+        lancamentoCriado = await base44.entities.LancamentoFinanceiro.create(lancamentoPayload);
+      }
 
       setSuccessState({
         descricao: payload.descricao,
@@ -250,7 +259,7 @@ Campos a interpretar do documento:
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Sucesso</p>
-              <h3 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">Conta a pagar criada com sucesso</h3>
+              <h3 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">{modoAtualizacao ? 'Boleto atualizado com sucesso' : 'Conta a pagar criada com sucesso'}</h3>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{successState.descricao}</p>
             </div>
           </div>
@@ -258,11 +267,11 @@ Campos a interpretar do documento:
           <div className="rounded-[24px] bg-gray-50 p-4 dark:bg-gray-900">
             <div className="flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-gray-700 dark:text-gray-300">A conta já foi enviada para o Contas a Pagar.</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'O novo boleto substituiu o anterior nesta conta.' : 'A conta já foi enviada para o Contas a Pagar.'}</p>
             </div>
             <div className="mt-3 flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-gray-700 dark:text-gray-300">Ela também já pode aparecer no AGEFIN quando for recorrente.</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">{modoAtualizacao ? 'Os dados foram relidos e o status foi atualizado automaticamente.' : 'Ela também já pode aparecer no AGEFIN quando for recorrente.'}</p>
             </div>
           </div>
         </div>

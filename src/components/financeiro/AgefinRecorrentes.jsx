@@ -38,6 +38,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
   const isPaid = contaMes?.status === 'Pago';
   const todayKey = new Date().toISOString().slice(0, 10);
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
+  const boletoVencido = hasBoleto && isOverdue;
 
   return (
     <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpen(); }} className="w-full text-left rounded-[28px] bg-white dark:bg-gray-900 p-1 shadow-sm cursor-pointer">
@@ -45,7 +46,7 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 flex items-start gap-2.5">
             {(isPaid || isOverdue) && (
-              <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)] dark:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]'}`} />
+              <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:bg-emerald-300 dark:shadow-[0_0_0_3px_rgba(110,231,183,0.12)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)] dark:bg-red-300 dark:shadow-[0_0_0_3px_rgba(252,165,165,0.12)]'}`} />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
@@ -75,12 +76,12 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
           </div>
 
           <div className="relative shrink-0">
-            <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? 'ring-2 ring-lime-300 dark:ring-lime-400/80' : ''}`}>
-              <Receipt className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+            <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? boletoVencido ? 'ring-2 ring-red-300 dark:ring-red-300/70' : 'ring-2 ring-lime-300 dark:ring-emerald-300/60' : ''}`}>
+              <Receipt className={`w-5 h-5 ${boletoVencido ? 'text-red-500 dark:text-red-200' : 'text-gray-500 dark:text-gray-300'}`} />
             </div>
             {hasBoleto && (
               <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gray-500 dark:text-gray-300" />
+                <CheckCircle2 className={`w-3.5 h-3.5 ${boletoVencido ? 'text-red-500 dark:text-red-200' : 'text-gray-500 dark:text-gray-300'}`} />
               </span>
             )}
           </div>
