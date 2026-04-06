@@ -30,7 +30,7 @@ function ThumbnailIcon({ anexo, large = false }) {
   );
 }
 
-function AnexoCard({ anexo, onDelete }) {
+function AnexoCard({ anexo, onDelete, readOnly = false }) {
   const [deleting, setDeleting] = useState(false);
   const formatSize = (bytes) => {
     if (!bytes) return '';
@@ -54,18 +54,20 @@ function AnexoCard({ anexo, onDelete }) {
         </a>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatSize(anexo.tamanho_bytes)}</p>
       </div>
-      <button
-        onClick={async () => { setDeleting(true); await onDelete(anexo); setDeleting(false); }}
-        disabled={deleting}
-        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-none"
-      >
-        {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-      </button>
+      {!readOnly && (
+        <button
+          onClick={async () => { setDeleting(true); await onDelete(anexo); setDeleting(false); }}
+          disabled={deleting}
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-none"
+        >
+          {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+        </button>
+      )}
     </div>
   );
 }
 
-export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelete, uploading, referenciaNomero }) {
+export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelete, uploading, referenciaNomero, readOnly = false }) {
   const [tipoSelecionado, setTipoSelecionado] = useState('Comprovante');
   const inputRef = useRef();
 
@@ -98,40 +100,44 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
         </button>
       </div>
 
-      {/* Tipo Selector */}
-      <div className="px-5 pb-3">
-        <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-2">Tipo do documento</p>
-        <div className="grid grid-cols-3 gap-2">
-          {TIPOS_DOCUMENTO.map(tipo => (
-            <button
-              key={tipo}
-              onClick={() => setTipoSelecionado(tipo)}
-              className={`py-4 px-2 rounded-2xl text-sm font-medium transition-all ${
-                tipoSelecionado === tipo
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              {tipo}
-            </button>
-          ))}
-        </div>
-      </div>
+      {!readOnly && (
+        <>
+          {/* Tipo Selector */}
+          <div className="px-5 pb-3">
+            <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-600 mb-2">Tipo do documento</p>
+            <div className="grid grid-cols-3 gap-2">
+              {TIPOS_DOCUMENTO.map(tipo => (
+                <button
+                  key={tipo}
+                  onClick={() => setTipoSelecionado(tipo)}
+                  className={`py-4 px-2 rounded-2xl text-sm font-medium transition-all ${
+                    tipoSelecionado === tipo
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  {tipo}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Upload button */}
-      <div className="px-5 pb-4">
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 transition-colors border border-dashed border-gray-300 dark:border-gray-700"
-        >
-          {uploading
-            ? <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm font-medium">Enviando...</span></>
-            : <><Upload className="w-5 h-5" /><span className="text-sm font-medium">Selecionar arquivo</span></>
-          }
-        </button>
-        <input ref={inputRef} type="file" className="hidden" onChange={handleFileChange} />
-      </div>
+          {/* Upload button */}
+          <div className="px-5 pb-4">
+            <button
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+              className="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 transition-colors border border-dashed border-gray-300 dark:border-gray-700"
+            >
+              {uploading
+                ? <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm font-medium">Enviando...</span></>
+                : <><Upload className="w-5 h-5" /><span className="text-sm font-medium">Selecionar arquivo</span></>
+              }
+            </button>
+            <input ref={inputRef} type="file" className="hidden" onChange={handleFileChange} />
+          </div>
+        </>
+      )}
 
       {/* Lista */}
       <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 rounded-t-3xl px-5 py-5 shadow-inner">
@@ -144,6 +150,11 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
           </div>
         ) : (
           <div className="space-y-5">
+            {readOnly && (
+              <div className="rounded-2xl bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                Visualização apenas: você pode abrir os anexos, mas não pode adicionar nem excluir arquivos.
+              </div>
+            )}
             {grupos.map(({ tipo, itens }) => (
               <div key={tipo}>
                 <div className="flex items-center gap-2 mb-2">
@@ -153,7 +164,7 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
                 </div>
                 <div className="space-y-2">
                   {itens.map(anexo => (
-                    <AnexoCard key={anexo.id} anexo={anexo} onDelete={onDelete} />
+                    <AnexoCard key={anexo.id} anexo={anexo} onDelete={onDelete} readOnly={readOnly} />
                   ))}
                 </div>
               </div>

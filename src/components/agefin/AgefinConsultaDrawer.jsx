@@ -2,7 +2,6 @@ import React from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { Calendar, CheckCircle2, CircleAlert, Paperclip, Receipt, Wallet } from 'lucide-react';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
-import { Button } from '@/components/ui/button';
 
 function formatDate(value) {
   if (!value) return '—';
@@ -103,6 +102,7 @@ export default function AgefinConsultaDrawer({ open, onClose, conta }) {
                 referenciaId={conta.id}
                 referenciaTipo="ContaPrevista"
                 referenciaNomero={conta.referencia_numero || conta.descricao}
+                readOnly
               />
             </div>
           </div>
