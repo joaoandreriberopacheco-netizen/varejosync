@@ -315,7 +315,7 @@ export default function Layout({ children, currentPageName }) {
 
 
         {/* Sidebar Desktop */}
-        {!isMobile && (
+        {!isMobile && !showMobileMenu && (
           <div
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -359,14 +359,14 @@ export default function Layout({ children, currentPageName }) {
             </div>
           )}
         </div>
-        {isMobile && !isFullscreen && (
+        {!isFullscreen && (
           <GlacialBottomNav
             onMenuClick={() => setShowMobileMenu(true)}
             onProfileClick={() => setShowMobileUserMenu(true)}
             currentPageName={currentPageName}
           />
         )}
-        {isMobile && !isFullscreen && (
+        {!isFullscreen && (
           <MobileFunctionSelector
             isOpen={showMobileMenu}
             onClose={() => setShowMobileMenu(false)}
@@ -374,7 +374,7 @@ export default function Layout({ children, currentPageName }) {
             currentUser={currentUser}
           />
         )}
-        {isMobile && !isFullscreen && (
+        {!isFullscreen && (
           <MobileUserMenu
             darkMode={darkMode}
             toggleDarkMode={toggleDarkMode}
