@@ -253,20 +253,6 @@ export default function CaixasAtivosPage() {
                                   Fiado: {formatValor(liq.totalFiado)} · {liq.quantidadeFiado} lançamento{liq.quantidadeFiado > 1 ? 's' : ''}
                                 </p>
                               )}
-                              {(liq.senhasAguardando?.length || 0) > 0 && (
-                                <div className="pt-2 flex flex-wrap gap-1.5">
-                                  {liq.senhasAguardando.slice(0, 6).map((rascunho) => (
-                                    <span key={rascunho.id} className="px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-semibold">
-                                      {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
-                                    </span>
-                                  ))}
-                                  {liq.senhasAguardando.length > 6 && (
-                                    <span className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-[11px] font-medium">
-                                      +{liq.senhasAguardando.length - 6}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           )}
                         </div>
@@ -300,62 +286,14 @@ export default function CaixasAtivosPage() {
                 {senhasNaoProcessadas.length === 0 ? (
                   <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhuma senha aguardando processamento.</p>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Senhas</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
-                      </div>
-                      <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Vendedores</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white font-glacial">{resumoSenhas.length}</p>
-                      </div>
-                      <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Valor</p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
-                      </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Senhas</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
                     </div>
-
-                    <div className="space-y-2">
-                      {resumoSenhas.slice(0, 3).map((grupo) => (
-                        <div key={grupo.nome} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-2.5">
-                          <span className="text-sm text-gray-700 dark:text-gray-200 truncate pr-3">{grupo.nome}</span>
-                          <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{grupo.quantidade} senha{grupo.quantidade === 1 ? '' : 's'}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="space-y-2">
-                      {senhasNaoProcessadas.slice(0, 3).map((rascunho) => (
-                        <button
-                          key={rascunho.id}
-                          onClick={() => setRascunhoSelecionado(rascunho)}
-                          className="w-full text-left rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                Senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                {rascunho.cliente_nome || 'Avulso'} · {rascunho.vendedor_nome || 'Sem vendedor'}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500">senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}</p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                      {senhasNaoProcessadas.length > 3 && (
-                        <button
-                          onClick={() => setShowSenhasDialog(true)}
-                          className="w-full rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
-                        >
-                          Ver todas as {senhasNaoProcessadas.length} senhas
-                        </button>
-                      )}
+                    <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Valor</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
                     </div>
                   </div>
                 )}
@@ -441,32 +379,44 @@ export default function CaixasAtivosPage() {
                 </button>
               </div>
               <div className="p-5 space-y-3">
+                {resumoSenhas.map((grupo) => (
+                  <div key={grupo.nome} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+                    <span className="text-sm text-gray-700 dark:text-gray-200 truncate pr-3">{grupo.nome}</span>
+                    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{grupo.quantidade} senha{grupo.quantidade === 1 ? '' : 's'}</span>
+                  </div>
+                ))}
+
                 {senhasNaoProcessadas.map((rascunho) => (
-                  <button
+                  <div
                     key={rascunho.id}
-                    onClick={() => {
-                      setShowSenhasDialog(false);
-                      setRascunhoSelecionado(rascunho);
-                    }}
-                    className="w-full text-left rounded-2xl bg-gray-50 dark:bg-gray-800 px-4 py-4 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
+                    className="rounded-2xl bg-gray-50 dark:bg-gray-800 px-4 py-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className="px-3 py-2 rounded-xl bg-white dark:bg-gray-900 min-w-[72px] text-center">
-                          <div className="text-[10px] text-gray-400 uppercase tracking-wider">Senha</div>
-                          <div className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{String(rascunho.senha_atendimento || '').slice(-4) || '----'}</div>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{rascunho.cliente_nome || 'Avulso'}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{rascunho.vendedor_nome || 'Sem vendedor'}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{rascunho.itens?.length || 0} item{(rascunho.itens?.length || 0) === 1 ? '' : 's'}</p>
-                        </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                          {rascunho.cliente_nome || 'Avulso'} · {rascunho.vendedor_nome || 'Sem vendedor'}
+                        </p>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowSenhasDialog(false);
+                            setRascunhoSelecionado(rascunho);
+                          }}
+                          className="h-11 w-11 rounded-xl bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+                        >
+                          <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        </button>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
