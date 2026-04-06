@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight, Calendar, Repeat2, Receipt, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgefinDetalheDrawer from '@/components/financeiro/AgefinDetalheDrawer';
-import AnexosPanel from '@/components/anexos/AnexosPanel';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -41,23 +40,23 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
 
   return (
-    <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpen(); }} className="w-full text-left rounded-[28px] bg-white dark:bg-gray-900 p-1.5 shadow-sm cursor-pointer">
-      <div className="rounded-[24px] bg-gray-50/95 dark:bg-gray-800/70 px-3.5 py-3.5 space-y-3">
+    <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpen(); }} className="w-full text-left rounded-[28px] bg-white dark:bg-gray-900 p-1 shadow-sm cursor-pointer">
+      <div className="rounded-[24px] bg-gray-50/95 dark:bg-gray-800/70 px-3.5 py-3 space-y-2.5">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1 flex items-start gap-2.5">
-                {(isPaid || isOverdue) && (
-                  <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)] dark:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]'}`} />
-                )}
+          <div className="min-w-0 flex-1 flex items-start gap-2.5">
+            {(isPaid || isOverdue) && (
+              <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)] dark:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]'}`} />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white line-clamp-2">{recorrente.nome_despesa}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
                 </div>
-              </div>
-              <div className="text-right shrink-0 pl-2">
-                <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+                <div className="text-right shrink-0 pl-2">
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -75,18 +74,12 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
             </span>
           </div>
 
-          <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-            <AnexosPanel
-              inline
-              referenciaId={contaMes?.id}
-              referenciaTipo="ContaPrevista"
-              referenciaNomero={contaMes?.referencia_numero || contaMes?.descricao || recorrente.nome_despesa}
-            />
-            <div className={`pointer-events-none flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? 'ring-2 ring-lime-300 dark:ring-lime-400/80' : ''}`}>
+          <div className="relative shrink-0">
+            <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? 'ring-2 ring-lime-300 dark:ring-lime-400/80' : ''}`}>
               <Receipt className="w-5 h-5 text-gray-500 dark:text-gray-300" />
             </div>
             {hasBoleto && (
-              <span className="pointer-events-none absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm">
+              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm">
                 <CheckCircle2 className="w-3.5 h-3.5 text-gray-500 dark:text-gray-300" />
               </span>
             )}
