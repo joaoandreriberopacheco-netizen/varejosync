@@ -50,6 +50,14 @@ export default function CaixasAtivosPage() {
         return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
       }).map((r) => ({ ...(r.data || r), id: r.id }));
 
+      const pedidosJaConvertidosIds = new Set(
+        vendas
+          .map((pedido) => pedido.orcamento_origem_id)
+          .filter(Boolean)
+      );
+
+      const rascunhosPendentesCaixa = rascunhosPendentes.filter((rascunho) => !pedidosJaConvertidosIds.has(rascunho.id));
+
       const consumosDeHoje = consumos.filter(c => {
         const d = new Date(c.created_date);
         return d >= hoje;
@@ -82,7 +90,7 @@ export default function CaixasAtivosPage() {
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
-          const senhasAguardando = rascunhosPendentes;
+          const senhasAguardando = rascunhosPendentesCaixa;
           
           liquidez[caixa.id] = {
             turnoAberto: true,
