@@ -67,9 +67,10 @@ export default function FinanceiroPage() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Importar conta</h2>
             </div>
             <AgefinImportador
-              onSuccess={() => {
-                setShowImportDialog(false);
-                setShowImportDialog(true);
+              onSuccess={(_, options) => {
+                if (options?.close) {
+                  setShowImportDialog(false);
+                }
               }}
             />
           </DialogContent>

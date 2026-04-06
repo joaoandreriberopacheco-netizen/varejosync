@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText } from 'lucide-react';
+import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AgefinNaturezaSelector from './AgefinNaturezaSelector';
@@ -13,6 +13,7 @@ export default function AgefinImportador({ onSuccess }) {
   const [selectedNatureza, setSelectedNatureza] = useState('Único');
   const [selectedRecorrencia, setSelectedRecorrencia] = useState('Mensal');
   const [error, setError] = useState(null);
+  const [successState, setSuccessState] = useState(null);
 
   const handleFileUpload = async (e) => {
     const selectedFile = e.target.files?.[0];
@@ -118,6 +119,7 @@ Campos a interpretar do documento:
     setSelectedNatureza('Único');
     setSelectedRecorrencia('Mensal');
     setError(null);
+    setSuccessState(null);
   };
 
   const handleConfirm = async () => {
@@ -187,7 +189,10 @@ Campos a interpretar do documento:
         ? await base44.entities.ContaPrevista.update(contaDoMesFinal.id, payload)
         : await base44.entities.ContaPrevista.create(payload);
 
-      resetState();
+      setSuccessState({
+        descricao: payload.descricao,
+        recorrenteCriada: Boolean(!recorrenteVinculado && recorrenteFinal),
+      });
       onSuccess?.(contaCriada);
     } catch (err) {
       setError('Erro ao salvar conta');
@@ -196,6 +201,52 @@ Campos a interpretar do documento:
       setLoading(false);
     }
   };
+
+  if (successState) {
+    return (
+      <div className="flex h-full min-h-[32rem] flex-col justify-between px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-5">
+        <div className="rounded-[32px] bg-white p-6 shadow-sm dark:bg-gray-800">
+          <div className="mb-5 flex items-start gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
+              <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Sucesso</p>
+              <h3 className="mt-2 font-glacial text-2xl font-semibold text-gray-900 dark:text-white">Conta a pagar criada com sucesso</h3>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{successState.descricao}</p>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] bg-gray-50 p-4 dark:bg-gray-900">
+            <div className="flex items-center gap-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <p className="text-sm text-gray-700 dark:text-gray-300">A conta já foi enviada para o Contas a Pagar.</p>
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <p className="text-sm text-gray-700 dark:text-gray-300">Ela também já pode aparecer no AGEFIN quando for recorrente.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => onSuccess?.(null, { close: true })}
+            className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+          >
+            Fechar
+          </Button>
+          <Button
+            onClick={resetState}
+            className="h-14 rounded-2xl bg-emerald-100 text-base font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-200 dark:text-emerald-900 dark:hover:bg-emerald-100"
+          >
+            Importar outra
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!extractedData) {
     return (
