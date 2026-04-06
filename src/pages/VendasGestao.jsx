@@ -52,6 +52,8 @@ export default function VendasGestaoPage() {
   const [showComprovante, setShowComprovante] = useState(false);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
   const [showFiltros, setShowFiltros] = useState(false);
+  const [showOrcamentosSalvos, setShowOrcamentosSalvos] = useState(false);
+  const [orcamentosSalvos, setOrcamentosSalvos] = useState([]);
   const [stats, setStats] = useState({
     orcamentos: 0,
     aprovados: 0,
@@ -160,6 +162,14 @@ export default function VendasGestaoPage() {
     loadPedidos();
   };
 
+  const handleVerOrcamentosSalvos = () => {
+    const lista = pedidos
+      .filter((pedido) => pedido.status === 'Orçamento')
+      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    setOrcamentosSalvos(lista);
+    setShowOrcamentosSalvos(true);
+  };
+
   // getStatusBadge function is no longer used due to direct inline styling, but kept here for completeness
   // if Badge component was to be reintroduced. For this exact change, it could be removed.
   const getStatusBadge = (status) => {
@@ -202,6 +212,9 @@ export default function VendasGestaoPage() {
           </Button>
           <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Troca" onClick={() => window.location.href = createPageUrl('DevolucaoTroca?tipo=Troca')}>
             <RefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Orçamentos salvos" onClick={handleVerOrcamentosSalvos}>
+            <FileText className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </Button>
           <Button variant="ghost" size="icon" className="h-11 w-full sm:w-10 rounded-2xl bg-gray-100 dark:bg-slate-800" title="Alterar Pagamento" onClick={() => setShowAlterarPagamento(true)}>
             <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -604,6 +617,47 @@ export default function VendasGestaoPage() {
 
       {/* Dialogs de operações */}
       <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
+
+      <Dialog open={showOrcamentosSalvos} onOpenChange={setShowOrcamentosSalvos}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto rounded-3xl border-0 bg-white dark:bg-slate-900">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white font-glacial">Orçamentos salvos</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Visualize os orçamentos registrados no sistema.</p>
+            </div>
+            <div className="space-y-2">
+              {orcamentosSalvos.length === 0 && (
+                <div className="rounded-2xl bg-gray-50 dark:bg-slate-800 px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                  Nenhum orçamento salvo encontrado.
+                </div>
+              )}
+              {orcamentosSalvos.map((orcamento) => (
+                <button
+                  key={orcamento.id}
+                  type="button"
+                  onClick={() => {
+                    setShowOrcamentosSalvos(false);
+                    handleVerDetalhes(orcamento);
+                  }}
+                  className="w-full rounded-2xl bg-gray-50 dark:bg-slate-800 px-4 py-4 text-left shadow-sm transition hover:bg-gray-100 dark:hover:bg-slate-700"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white break-words">{orcamento.cliente_nome || 'Cliente não informado'}</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">{orcamento.numero}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{fmtDtHora(orcamento.created_date)}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-semibold text-gray-800 dark:text-gray-200">R$ {(orcamento.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{orcamento.vendedor_nome || '-'}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de Detalhes */}
       <DetalhesPedidoVenda

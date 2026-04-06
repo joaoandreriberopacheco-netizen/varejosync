@@ -1434,6 +1434,10 @@ export default function PDVVendedor() {
         </div>
       </div>
 
+      {showCarrinhoMobile && (
+        <div className="md:hidden fixed inset-0 z-[80] bg-gray-950/40 backdrop-blur-[2px]" onClick={() => setShowCarrinhoMobile(false)} />
+      )}
+
       {/* Barra Inferior Mobile */}
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800 rounded-t-[26px] shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)] pointer-events-auto">
             <div className="flex-1 min-w-0">
@@ -1452,9 +1456,18 @@ export default function PDVVendedor() {
             )}
             <button
               type="button"
-              onClick={() => setShowCarrinhoMobile(true)}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowCarrinhoMobile(true);
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowCarrinhoMobile(true);
+              }}
               aria-label="Abrir carrinho"
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 z-20">
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 z-[90] pointer-events-auto touch-manipulation">
               <ShoppingCart className="w-5 h-5" />
               {carrinho.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-slate-700 text-slate-100 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
