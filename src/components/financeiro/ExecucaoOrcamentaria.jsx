@@ -316,9 +316,11 @@ export default function ExecucaoOrcamentaria() {
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-hidden overscroll-none">
               <AgefinImportador
-                onSuccess={() => {
+                onSuccess={(_, options) => {
                   load();
-                  setShowImportadorAgefin(false);
+                  if (options?.close) {
+                    setShowImportadorAgefin(false);
+                  }
                 }}
               />
             </div>
