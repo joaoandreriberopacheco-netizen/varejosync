@@ -1044,7 +1044,7 @@ export default function PDVVendedor() {
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoFocus={false}
-                  style={{ touchAction: 'manipulation' }} />
+                  style={{ touchAction: 'manipulation', pointerEvents: 'auto' }} />
                   <Button type="button" variant="ghost" size="icon" onClick={() => setShowBarcodeScanner(true)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">
                     <Camera className="w-5 h-5" />
@@ -1448,13 +1448,13 @@ export default function PDVVendedor() {
               <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
               <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
             </div>
-            <button onClick={() => setShowLostSalesForm(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex-shrink-0">
+            <button onClick={() => { inputProdutoRef.current?.blur(); setShowLostSalesForm(true); }}
+              className="w-10 h-10 flex items-center justify-center rounded-xl text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex-shrink-0 pointer-events-auto">
               <AlertCircle className="w-5 h-5" />
             </button>
             {carrinho.length > 0 && (
-              <button onClick={() => setShowSimuladorTaxa(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0">
+              <button onClick={() => { inputProdutoRef.current?.blur(); setShowSimuladorTaxa(true); }}
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 pointer-events-auto">
                 <CreditCard className="w-5 h-5" />
               </button>
             )}
@@ -1482,7 +1482,7 @@ export default function PDVVendedor() {
                 setShowCarrinhoMobile(true);
               }}
               aria-label="Abrir carrinho"
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 z-[90] pointer-events-auto touch-manipulation">
+              className="relative w-12 h-12 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800/80 flex-shrink-0 z-[90] pointer-events-auto touch-manipulation">
               <ShoppingCart className="w-5 h-5" />
               {carrinho.length > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-slate-700 text-slate-100 text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -1490,8 +1490,8 @@ export default function PDVVendedor() {
                 </span>
               )}
             </button>
-            <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
-              className="flex items-center gap-1.5 h-10 px-4 bg-slate-700 dark:bg-slate-700 hover:bg-slate-600 dark:hover:bg-slate-600 text-slate-100 dark:text-slate-100 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none border-0">
+            <button onClick={() => { inputProdutoRef.current?.blur(); quantidadeInputRef.current?.blur(); handleAvancarParaCliente(); }} disabled={carrinho.length === 0 || ajusteExcedido}
+              className="flex items-center gap-1.5 h-12 px-4 bg-slate-700 dark:bg-slate-700 hover:bg-slate-600 dark:hover:bg-slate-600 text-slate-100 dark:text-slate-100 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0 shadow-none border-0 pointer-events-auto">
               <UserPlus className="w-4 h-4" />
               Cliente
             </button>
