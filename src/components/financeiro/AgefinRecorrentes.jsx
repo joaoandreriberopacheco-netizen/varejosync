@@ -77,11 +77,11 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
 
           <div className="relative shrink-0">
             <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? boletoVencido ? 'ring-2 ring-red-300 dark:ring-red-300/70' : 'ring-2 ring-lime-300 dark:ring-emerald-300/60' : ''}`}>
-              <Receipt className={`w-5 h-5 ${boletoVencido ? 'text-red-500 dark:text-red-200' : 'text-gray-500 dark:text-gray-300'}`} />
+              <Receipt className="w-5 h-5 text-gray-500 dark:text-gray-300" />
             </div>
             {hasBoleto && (
               <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm">
-                <CheckCircle2 className={`w-3.5 h-3.5 ${boletoVencido ? 'text-red-500 dark:text-red-200' : 'text-gray-500 dark:text-gray-300'}`} />
+                <CheckCircle2 className="w-3.5 h-3.5 text-gray-500 dark:text-gray-300" />
               </span>
             )}
           </div>

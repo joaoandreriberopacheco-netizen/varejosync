@@ -29,8 +29,9 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
   const boletoVencido = hasBoleto && isOverdue;
 
   return (
-    <Drawer open={open} onOpenChange={onClose}>
-      <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-6">
+    <>
+      <Drawer open={open && !showRefreshImport} onOpenChange={onClose}>
+        <DrawerContent className="border-0 rounded-t-[28px] bg-white dark:bg-gray-900 px-4 pb-6">
         <DrawerHeader className="px-0 pb-2 text-left">
           <DrawerTitle className="font-glacial text-gray-900 dark:text-white">{recorrente.nome_despesa}</DrawerTitle>
           <DrawerDescription className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -118,10 +119,11 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
             </div>
           </div>
         </div>
-      </DrawerContent>
+        </DrawerContent>
+      </Drawer>
 
       <Dialog open={showRefreshImport} onOpenChange={setShowRefreshImport}>
-        <DialogContent className="max-w-3xl border-0 bg-transparent p-0 shadow-none">
+        <DialogContent className="z-[120] max-w-3xl border-0 bg-transparent p-0 shadow-none">
           <div className="max-h-[85vh] overflow-hidden rounded-[28px] bg-gray-50 dark:bg-gray-950">
             <AgefinImportador
               modoAtualizacao
@@ -135,6 +137,6 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
           </div>
         </DialogContent>
       </Dialog>
-    </Drawer>
+    </>
   );
 }
