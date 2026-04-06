@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { Upload, X, FileCheck, AlertCircle, ChevronRight, Sparkles, FileText, CheckCircle2 } from 'lucide-react';
@@ -14,6 +14,8 @@ export default function AgefinImportador({ onSuccess }) {
   const [selectedRecorrencia, setSelectedRecorrencia] = useState('Mensal');
   const [error, setError] = useState(null);
   const [successState, setSuccessState] = useState(null);
+  const [contaFinanceiraId, setContaFinanceiraId] = useState('');
+  const [contasFinanceiras, setContasFinanceiras] = useState([]);
 
   const handleFileUpload = async (e) => {
     const selectedFile = e.target.files?.[0];
@@ -113,6 +115,15 @@ Campos a interpretar do documento:
     }
   };
 
+  useEffect(() => {
+    base44.entities.ContasFinanceiras.filter({ ativo: true }).then((data) => {
+      setContasFinanceiras(data || []);
+      if (!contaFinanceiraId && data?.length) {
+        setContaFinanceiraId(data[0].id);
+      }
+    });
+  }, []);
+
   const resetState = () => {
     setFile(null);
     setExtractedData(null);
@@ -123,7 +134,7 @@ Campos a interpretar do documento:
   };
 
   const handleConfirm = async () => {
-    if (!extractedData || !selectedNatureza) return;
+    if (!extractedData || !selectedNatureza || !contaFinanceiraId) return;
 
     setLoading(true);
     try {
@@ -189,11 +200,35 @@ Campos a interpretar do documento:
         ? await base44.entities.ContaPrevista.update(contaDoMesFinal.id, payload)
         : await base44.entities.ContaPrevista.create(payload);
 
+      const contaFinanceira = contasFinanceiras.find((item) => item.id === contaFinanceiraId);
+      const lancamentoPayload = {
+        tipo: 'Despesa',
+        descricao: payload.descricao,
+        terceiro_id: payload.terceiro_id,
+        terceiro_nome: payload.terceiro_nome,
+        valor: payload.valor,
+        data_vencimento: payload.data_vencimento,
+        status: 'Em Aberto',
+        status_conciliacao: 'N/A',
+        categoria: payload.categoria_nome,
+        categoria_id: payload.categoria_financeira_id,
+        conta_financeira_id: contaFinanceiraId,
+        conta_financeira_nome: contaFinanceira?.nome || '',
+        referencia_tipo: 'Manual',
+        referencia_id: contaCriada.id,
+        observacoes: extractedData.observacoes || '',
+        is_recorrente: payload.natureza === 'Recorrente' || payload.natureza === 'Parcelado',
+        frequencia_recorrencia: payload.natureza === 'Recorrente' ? selectedRecorrencia : payload.natureza === 'Parcelado' ? 'Parcelado' : undefined,
+        parcela_atual: payload.parcela_numero || undefined,
+      };
+
+      const lancamentoCriado = await base44.entities.LancamentoFinanceiro.create(lancamentoPayload);
+
       setSuccessState({
         descricao: payload.descricao,
         recorrenteCriada: Boolean(!recorrenteVinculado && recorrenteFinal),
       });
-      onSuccess?.(contaCriada);
+      onSuccess?.({ contaPrevista: contaCriada, lancamento: lancamentoCriado });
     } catch (err) {
       setError('Erro ao salvar conta');
       console.error(err);
@@ -359,6 +394,20 @@ Campos a interpretar do documento:
 
             <div className="space-y-4">
               <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Conta financeira</label>
+                <Select value={contaFinanceiraId} onValueChange={setContaFinanceiraId}>
+                  <SelectTrigger className="h-14 rounded-2xl border-0 bg-gray-100 px-4 text-base text-gray-900 shadow-none focus:ring-0 dark:bg-gray-900 dark:text-white">
+                    <SelectValue placeholder="Escolher conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contasFinanceiras.map((conta) => (
+                      <SelectItem key={conta.id} value={conta.id}>{conta.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
                 <input
                   type="text"
@@ -500,7 +549,7 @@ Campos a interpretar do documento:
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={loading || !selectedNatureza}
+            disabled={loading || !selectedNatureza || !contaFinanceiraId}
             className="h-14 rounded-2xl bg-gray-300 text-base font-semibold text-gray-900 hover:bg-gray-400 dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-white"
           >
             {loading ? 'Salvando...' : 'Salvar Conta'}
