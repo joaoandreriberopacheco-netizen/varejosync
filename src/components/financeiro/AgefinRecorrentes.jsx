@@ -97,8 +97,13 @@ export default function AgefinRecorrentes() {
         base44.entities.ContaRecorrente.filter({ ativa: true }, 'nome_despesa', 100),
         base44.entities.ContaPrevista.list('-data_vencimento', 300),
       ]);
-      setRecorrentes(recorrentesData || []);
-      setContas(contasData || []);
+
+      const recorrentesAtivas = recorrentesData || [];
+      const recorrenteIds = new Set(recorrentesAtivas.map((item) => item.id));
+      const contasVinculadas = (contasData || []).filter((item) => item.conta_recorrente_id && recorrenteIds.has(item.conta_recorrente_id));
+
+      setRecorrentes(recorrentesAtivas);
+      setContas(contasVinculadas);
     } finally {
       setLoading(false);
     }
