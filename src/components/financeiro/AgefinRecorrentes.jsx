@@ -33,9 +33,9 @@ function getContaDoMes(contas, recorrente, monthKey) {
 
 function StatusBadge({ hasBoleto }) {
   return (
-    <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium ${hasBoleto ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'}`}>
-      {hasBoleto ? <FileText className="w-3.5 h-3.5" /> : <CircleAlert className="w-3.5 h-3.5" />}
-      {hasBoleto ? 'Boleto do mês anexado' : 'Aguardando boleto do mês'}
+    <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${hasBoleto ? 'bg-gray-200/80 text-gray-600 dark:bg-gray-700 dark:text-gray-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+      {hasBoleto ? <FileText className="w-3 h-3" /> : <CircleAlert className="w-3 h-3" />}
+      {hasBoleto ? 'Com boleto' : 'Sem boleto'}
     </div>
   );
 }
@@ -44,39 +44,42 @@ function AgefinCard({ recorrente, contaMes }) {
   const hasBoleto = Boolean(contaMes?.boleto_url);
 
   return (
-    <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm p-4 md:p-5 space-y-4">
+    <div className={`rounded-[24px] shadow-sm p-3 md:p-4 space-y-3 ${hasBoleto ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/90 dark:bg-gray-900/90 opacity-80'}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-base font-semibold text-gray-900 dark:text-white break-words">{recorrente.nome_despesa}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 break-words">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
+          <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white break-words line-clamp-3">{recorrente.nome_despesa}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
         </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Previsto</p>
-          <p className="text-base font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+        <div className="text-right flex-shrink-0 pl-2">
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1">
-          <Repeat2 className="w-3.5 h-3.5" />
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1">
+          <Repeat2 className="w-3 h-3" />
           {recorrente.frequencia}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1">
-          <Calendar className="w-3.5 h-3.5" />
+        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1">
+          <Calendar className="w-3 h-3" />
           Dia {recorrente.dia_vencimento}
         </span>
       </div>
 
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-800/80 p-3 space-y-3">
-        <StatusBadge hasBoleto={hasBoleto} />
-        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+      <div className="rounded-2xl bg-white/70 dark:bg-gray-800/70 p-2.5 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <StatusBadge hasBoleto={hasBoleto} />
+          {!hasBoleto && <CircleAlert className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />}
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-5">
           {hasBoleto
-            ? 'Este boleto já está vinculado à conta a pagar deste mês e deve aparecer nos anexos da conta.'
-            : 'Anexe o boleto atualizador deste mês para que ele apareça nos anexos da conta a pagar.'}
+            ? 'Integrado à conta a pagar do mês.'
+            : 'Falta anexar o boleto deste mês na conta a pagar.'}
         </p>
-        <button className="w-full h-11 rounded-2xl bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 text-sm font-medium flex items-center justify-center gap-2 shadow-sm">
-          <Upload className="w-4 h-4" />
-          {hasBoleto ? 'Trocar boleto do mês' : 'Anexar boleto do mês'}
+        <button className="w-full h-9 rounded-2xl bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 text-xs font-medium flex items-center justify-center gap-2 shadow-sm">
+          <Upload className="w-3.5 h-3.5" />
+          {hasBoleto ? 'Trocar boleto' : 'Anexar boleto'}
         </button>
       </div>
     </div>
@@ -111,14 +114,16 @@ export default function AgefinRecorrentes() {
   const monthKey = getMonthKey(currentMonth);
 
   const filteredCards = useMemo(() => {
-    const cards = recorrentes.map((recorrente) => {
-      const contaMes = getContaDoMes(contas, recorrente, monthKey);
-      return {
-        recorrente,
-        contaMes,
-        hasBoleto: Boolean(contaMes?.boleto_url),
-      };
-    });
+    const cards = recorrentes
+      .map((recorrente) => {
+        const contaMes = getContaDoMes(contas, recorrente, monthKey);
+        return {
+          recorrente,
+          contaMes,
+          hasBoleto: Boolean(contaMes?.boleto_url),
+        };
+      })
+      .filter((item) => item.contaMes && item.recorrente);
 
     if (filterStatus === 'pendentes') {
       return cards.filter((item) => !item.hasBoleto);
@@ -136,6 +141,11 @@ export default function AgefinRecorrentes() {
   return (
     <div className="space-y-4 pb-24">
       <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm p-4">
+        <div className="mb-3 rounded-2xl bg-gray-50 dark:bg-gray-800/70 px-3 py-2">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-4">
+            Este painel é integrado às contas a pagar e ao fluxo financeiro: quando a conta é paga ou atualizada, o status aqui acompanha automaticamente.
+          </p>
+        </div>
         <div className="flex items-center justify-between gap-3">
           <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} variant="ghost" size="sm" className="rounded-full h-10 w-10 p-0">
             <ChevronLeft className="w-5 h-5" />
@@ -177,7 +187,7 @@ export default function AgefinRecorrentes() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Altere o filtro para ver outras contas do período.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
           {filteredCards.map(({ recorrente, contaMes }) => (
             <AgefinCard key={recorrente.id} recorrente={recorrente} contaMes={contaMes} />
           ))}
