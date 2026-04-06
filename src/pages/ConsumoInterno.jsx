@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Package, MapPin, UserRound, Search, Plus, MoreVertical, Trash2, Pencil, Paperclip } from 'lucide-react';
+import { Package, MapPin, UserRound, Search, Plus, MoreVertical, Trash2, Pencil, Paperclip, RefreshCw } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, subDays, startOfDay, endOfDay, startOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -283,9 +283,14 @@ export default function ConsumoInternoPage() {
             <p className="text-2xl font-semibold text-gray-900 dark:text-white">Consumo Interno</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Movimentações internas.</p>
           </div>
-          <div className="rounded-[24px] bg-white px-4 py-3 shadow-sm dark:bg-gray-800">
-            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total — {labelFiltro[filtroTemporal]}</p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatCurrency(consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0))}</p>
+          <div className="flex items-center gap-2">
+            <button onClick={loadData} className="p-3 rounded-[24px] bg-white shadow-sm dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
+              <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            </button>
+            <div className="rounded-[24px] bg-white px-4 py-3 shadow-sm dark:bg-gray-800">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Total — {labelFiltro[filtroTemporal]}</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatCurrency(consumosFiltrados.reduce((sum, item) => sum + (item.valor_total || 0), 0))}</p>
+            </div>
           </div>
         </div>
 

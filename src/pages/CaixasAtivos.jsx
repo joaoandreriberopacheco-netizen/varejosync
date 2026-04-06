@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer, Ticket } from 'lucide-react';
+import { Banknote, Lock, PackageCheck, Eye, EyeOff, Printer, Ticket, RefreshCw } from 'lucide-react';
 import VisualizadorCaixa from '@/components/vendas/caixa/VisualizadorCaixa';
 
 export default function CaixasAtivosPage() {
@@ -44,7 +44,9 @@ export default function CaixasAtivosPage() {
         const status = registro.status;
         const convertido = registro.pedido_venda_final_id;
         const emProcessamento = !!registro.data_inicio_processamento && !convertido;
-        return status === 'Aguardando Caixa' || emProcessamento;
+        const temSenha = !!registro.senha_atendimento;
+        const temItens = Array.isArray(registro.itens) && registro.itens.length > 0;
+        return (status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido'));
       });
 
       const consumosDeHoje = consumos.filter(c => {
@@ -190,9 +192,14 @@ export default function CaixasAtivosPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-2">Caixas Ativos</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Visualize o balanço de caixas em operação</p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-glacial mb-2">Caixas Ativos</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Visualize o balanço de caixas em operação</p>
+          </div>
+          <button onClick={loadTurnos} className="p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" style={{ minWidth: '48px', minHeight: '48px' }}>
+            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
         </div>
 
         {loading ? (

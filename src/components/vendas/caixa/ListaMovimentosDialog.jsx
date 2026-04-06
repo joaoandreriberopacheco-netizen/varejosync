@@ -1,9 +1,9 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Minus, DollarSign, Receipt, Pencil } from 'lucide-react';
-import { format } from 'date-fns';
+import { ArrowLeft, Plus, Minus, DollarSign, Receipt, Pencil, RefreshCw } from 'lucide-react';
+import { formatarDataHora } from '@/components/utils/dateUtils';
 
-export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, totalReforcos, totalSangrias, totalDespesas, formatValor, onSelectMovimento }) {
+export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movimentos, despesasLista, totalReforcos, totalSangrias, totalDespesas, formatValor, onSelectMovimento, onRefresh }) {
 
   const isReforcos = tipo === 'reforcos';
   const isSangrias = tipo === 'sangrias';
@@ -34,7 +34,9 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
             <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </button>
           <h2 className="flex-1 text-center text-lg font-semibold text-gray-900 dark:text-white font-glacial">{titulo}</h2>
-          <div className="w-10"></div>
+          <button onClick={onRefresh} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" style={{ minWidth: '44px', minHeight: '44px' }}>
+            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -52,7 +54,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="text-sm font-semibold text-gray-900 dark:text-white">{d.descricao}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{d.categoria} · {d.created_date ? format(new Date(d.created_date), 'HH:mm') : ''}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{d.categoria} · {d.created_date ? formatarDataHora(d.created_date).split(' ')[1] : ''}</div>
                     </div>
                     <div className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">−{formatValor(d.valor)}</div>
                   </div>
@@ -66,7 +68,7 @@ export default function ListaMovimentosDialog({ open, onOpenChange, tipo, movime
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <span className={`text-sm font-semibold ${cancelado ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>{mov.numero}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(mov.created_date), 'HH:mm')}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{formatarDataHora(mov.created_date).split(' ')[1]}</span>
                         {cancelado && <span className="text-[10px] px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">Cancelado</span>}
                         {editado && <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Editado</span>}
                       </div>
