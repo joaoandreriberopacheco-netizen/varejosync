@@ -94,7 +94,7 @@ export default function AgefinRecorrentes() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [recorrentes, setRecorrentes] = useState([]);
   const [contas, setContas] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('pendentes');
+  const [filterStatus, setFilterStatus] = useState('todas');
   const [loading, setLoading] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
 
