@@ -994,49 +994,44 @@ export default function PDVVendedor() {
 
       {/* Header */}
       <div className="bg-gray-50 dark:bg-gray-950 px-3 md:px-5 pt-3 md:pt-5 pb-2 md:pb-3 flex-shrink-0">
-        <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm px-4 py-4 md:px-5 md:py-5">
-          <div className="flex items-start justify-between gap-4">
+        <div className="rounded-[28px] bg-white dark:bg-gray-900 shadow-sm px-4 py-3 md:px-5 md:py-4">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gray-900 dark:bg-white flex items-center justify-center shadow-sm shrink-0">
-                <ShoppingCart className="w-5 h-5 text-white dark:text-gray-900" />
+              <div className="w-10 h-10 rounded-2xl bg-gray-900 dark:bg-white flex items-center justify-center shadow-sm shrink-0">
+                <ShoppingCart className="w-4.5 h-4.5 text-white dark:text-gray-900" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em]">Operação de vendas</p>
-                <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white leading-tight font-glacial">PDV Vendedor</h1>
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  {tabelaPreco && <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">{tabelaPreco.nome_tabela}</span>}
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em]">Operação de vendas</p>
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white leading-tight font-glacial">PDV Vendedor</h1>
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  {tabelaPreco && <span className="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">{tabelaPreco.nome_tabela}</span>}
                   {rascunhoEmEdicaoId && (
-                    <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full font-medium">Editando</span>
+                    <span className="text-[11px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full font-medium">Editando</span>
                   )}
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button variant="ghost" size="icon" onClick={() => setShowOrcamentosRecentes(true)}
-                className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Orçamentos recentes">
-                <FileText className="w-5 h-5" />
+                className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Orçamentos recentes">
+                <FileText className="w-4.5 h-4.5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setShowReeditarDialog(true)}
-                className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Reeditar rascunho">
-                <Edit className="w-5 h-5" />
+                className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700" title="Reeditar rascunho">
+                <Edit className="w-4.5 h-4.5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleSair}
-                className="h-10 w-10 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">
-                <Undo2 className="w-5 h-5" />
+                className="h-9 w-9 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">
+                <Undo2 className="w-4.5 h-4.5" />
               </Button>
             </div>
-          </div>
-          <div className="hidden lg:flex items-center gap-1.5 mt-4">
-            {['F1 Ajuda','F3 Avançar','F4 Limpar'].map(k => (
-              <span key={k} className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">{k}</span>
-            ))}
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden pb-20 md:pb-0">
         {/* Área Principal */}
-        <div className="flex-1 flex flex-col px-3 md:px-5 pb-24 md:pb-5 overflow-auto bg-gray-50 dark:bg-gray-950">
+        <div className="flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto bg-gray-50 dark:bg-gray-950">
           {/* Busca de Produto */}
           <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2.5 w-full">
@@ -1045,7 +1040,7 @@ export default function PDVVendedor() {
                   <Input
                   ref={inputProdutoRef}
                   placeholder="Buscar por nome, código ou código de barras..."
-                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                  className="w-full pl-12 pr-14 bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-base focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-gray-600"
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -1062,7 +1057,7 @@ export default function PDVVendedor() {
                   inputMode="decimal"
                   step="0.01"
                   placeholder="Qtd"
-                  className="w-full bg-white dark:bg-gray-900 border-0 shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700"
+                  className="w-full bg-white dark:bg-gray-900 border-transparent shadow-sm rounded-2xl text-gray-800 dark:text-gray-200 h-14 text-center text-lg font-bold focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-700 focus:border-transparent"
                   value={quantidadeAtual}
                   onChange={(e) => setQuantidadeAtual(e.target.value)}
                   onKeyDown={handleQuantidadeKeyDown}
@@ -1441,7 +1436,7 @@ export default function PDVVendedor() {
       </div>
 
       {/* Barra Inferior Mobile */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 py-2.5 flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md px-3 pt-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] flex items-center gap-2 z-40 border-t border-gray-100 dark:border-gray-800 rounded-t-[26px] shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] text-gray-400 leading-none mb-0.5">Total</div>
               <div className="text-xl font-bold text-gray-900 dark:text-white leading-tight">R$ {valorTotal.toFixed(2).replace('.', ',')}</div>
@@ -1465,7 +1460,7 @@ export default function PDVVendedor() {
                 </span>
               )}
             </button>
-            <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0}
+            <button onClick={handleAvancarParaCliente} disabled={carrinho.length === 0 || ajusteExcedido}
               className="flex items-center gap-1.5 h-10 px-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold text-sm rounded-xl disabled:opacity-40 flex-shrink-0">
               <UserPlus className="w-4 h-4" />
               Cliente
