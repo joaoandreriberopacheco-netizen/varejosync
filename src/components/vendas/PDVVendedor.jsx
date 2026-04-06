@@ -1840,5 +1840,6 @@ export default function PDVVendedor() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
       );
       }
