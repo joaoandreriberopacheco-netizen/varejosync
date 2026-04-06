@@ -13,6 +13,7 @@ export default function CaixasAtivosPage() {
   const [rascunhoSelecionado, setRascunhoSelecionado] = useState(null);
   const [consumosHoje, setConsumosHoje] = useState([]);
   const [destinacoesExpandidas, setDestinacoesExpandidas] = useState({});
+  const [showSenhasDialog, setShowSenhasDialog] = useState(false);
 
   useEffect(() => {
     loadTurnos();
@@ -46,8 +47,8 @@ export default function CaixasAtivosPage() {
         const emProcessamento = !!registro.data_inicio_processamento && !convertido;
         const temSenha = !!registro.senha_atendimento;
         const temItens = Array.isArray(registro.itens) && registro.itens.length > 0;
-        return (status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido'));
-      });
+        return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
+      }).map(r => ({ ...(r.data || r), id: r.id }));
 
       const consumosDeHoje = consumos.filter(c => {
         const d = new Date(c.created_date);
@@ -81,12 +82,14 @@ export default function CaixasAtivosPage() {
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
-          const senhasAguardando = rascunhosPendentes.filter(r => {
-            const registro = r.data || r;
+          const senhasAguardando = rascunhosPendentes.filter((registro) => {
             const turnoCaixaId = registro.turno_caixa_id;
             const contaCaixaId = registro.conta_caixa_pdv_id;
-            return turnoCaixaId === turno.id || contaCaixaId === caixa.id;
-          }).map(r => ({ ...(r.data || r), id: r.id }));
+            if (turnoCaixaId || contaCaixaId) {
+              return turnoCaixaId === turno.id || contaCaixaId === caixa.id;
+            }
+            return true;
+          });
           
           liquidez[caixa.id] = {
             turnoAberto: true,
@@ -284,10 +287,14 @@ export default function CaixasAtivosPage() {
                       <p className="text-xs text-gray-500 dark:text-gray-400">Acompanhe o volume pendente antes do processamento</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <button
+                    onClick={() => senhasNaoProcessadas.length > 0 && setShowSenhasDialog(true)}
+                    className="text-right disabled:cursor-default"
+                    disabled={senhasNaoProcessadas.length === 0}
+                  >
                     <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">pendente{senhasNaoProcessadas.length === 1 ? '' : 's'}</p>
-                  </div>
+                  </button>
                 </div>
 
                 {senhasNaoProcessadas.length === 0 ? (
@@ -341,6 +348,14 @@ export default function CaixasAtivosPage() {
                           </div>
                         </button>
                       ))}
+                      {senhasNaoProcessadas.length > 3 && (
+                        <button
+                          onClick={() => setShowSenhasDialog(true)}
+                          className="w-full rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
+                        >
+                          Ver todas as {senhasNaoProcessadas.length} senhas
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -409,6 +424,51 @@ export default function CaixasAtivosPage() {
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {showSenhasDialog && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                  <div className="text-xs text-gray-400 uppercase tracking-wider">Controle</div>
+                  <div className="text-xl font-bold text-gray-900 dark:text-white font-glacial">Senhas aguardando caixa</div>
+                </div>
+                <button onClick={() => setShowSenhasDialog(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 text-sm font-medium">
+                  Fechar
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                {senhasNaoProcessadas.map((rascunho) => (
+                  <button
+                    key={rascunho.id}
+                    onClick={() => {
+                      setShowSenhasDialog(false);
+                      setRascunhoSelecionado(rascunho);
+                    }}
+                    className="w-full text-left rounded-2xl bg-gray-50 dark:bg-gray-800 px-4 py-4 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="px-3 py-2 rounded-xl bg-white dark:bg-gray-900 min-w-[72px] text-center">
+                          <div className="text-[10px] text-gray-400 uppercase tracking-wider">Senha</div>
+                          <div className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{String(rascunho.senha_atendimento || '').slice(-4) || '----'}</div>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{rascunho.cliente_nome || 'Avulso'}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{rascunho.vendedor_nome || 'Sem vendedor'}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{rascunho.itens?.length || 0} item{(rascunho.itens?.length || 0) === 1 ? '' : 's'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
