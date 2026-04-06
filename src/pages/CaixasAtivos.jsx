@@ -159,6 +159,19 @@ export default function CaixasAtivosPage() {
     [liquidezPorCaixa]
   );
 
+  const resumoSenhas = useMemo(() => {
+    const porVendedor = {};
+    senhasNaoProcessadas.forEach((rascunho) => {
+      const vendedor = rascunho.vendedor_nome || 'Sem vendedor';
+      if (!porVendedor[vendedor]) porVendedor[vendedor] = 0;
+      porVendedor[vendedor] += 1;
+    });
+
+    return Object.entries(porVendedor)
+      .map(([nome, quantidade]) => ({ nome, quantidade }))
+      .sort((a, b) => b.quantidade - a.quantidade);
+  }, [senhasNaoProcessadas]);
+
   // Se já selecionou um caixa, mostra a view completa
   if (turnoSelecionado && caixaSelecionado) {
     return (
@@ -250,38 +263,78 @@ export default function CaixasAtivosPage() {
                 })}
               </div>
 
-              {senhasNaoProcessadas.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Ticket className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">Senhas não processadas</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+                      <Ticket className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-gray-900 dark:text-white">Senhas aguardando caixa</h2>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Acompanhe o volume pendente antes do processamento</p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {senhasNaoProcessadas.map((rascunho) => (
-                      <button
-                        key={rascunho.id}
-                        onClick={() => setRascunhoSelecionado(rascunho)}
-                        className="w-full text-left rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                              Senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                              {rascunho.cliente_nome || 'Avulso'} · {rascunho.vendedor_nome || 'Sem vendedor'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">{rascunho.itens?.length || 0} itens</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">pendente{senhasNaoProcessadas.length === 1 ? '' : 's'}</p>
                   </div>
                 </div>
-              )}
+
+                {senhasNaoProcessadas.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhuma senha aguardando processamento.</p>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Senhas</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Vendedores</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white font-glacial">{resumoSenhas.length}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Valor</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {resumoSenhas.slice(0, 3).map((grupo) => (
+                        <div key={grupo.nome} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-2.5">
+                          <span className="text-sm text-gray-700 dark:text-gray-200 truncate pr-3">{grupo.nome}</span>
+                          <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{grupo.quantidade} senha{grupo.quantidade === 1 ? '' : 's'}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-2">
+                      {senhasNaoProcessadas.slice(0, 3).map((rascunho) => (
+                        <button
+                          key={rascunho.id}
+                          onClick={() => setRascunhoSelecionado(rascunho)}
+                          className="w-full text-left rounded-xl bg-gray-50 dark:bg-gray-900 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {rascunho.cliente_nome || 'Avulso'} · {rascunho.vendedor_nome || 'Sem vendedor'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">ver detalhes</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Relatório de Consumo Interno do Dia */}
