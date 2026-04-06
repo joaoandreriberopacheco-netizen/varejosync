@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, Repeat2, Upload, CircleAlert, BadgeCheck, Receipt, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Repeat2, Receipt, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgefinDetalheDrawer from '@/components/financeiro/AgefinDetalheDrawer';
+import AnexosPanel from '@/components/anexos/AnexosPanel';
 
 function formatCurrency(value) {
   return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -32,19 +33,6 @@ function getContaDoMes(contas, recorrente, monthKey) {
   });
 }
 
-function StatusBadge({ hasBoleto }) {
-  return (
-    <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${hasBoleto ? 'bg-gray-200/90 text-gray-700 dark:bg-gray-700 dark:text-gray-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-      <Receipt className="w-3 h-3" />
-      {hasBoleto ? 'Com boleto' : 'Sem boleto'}
-      {hasBoleto && (
-        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-400/60 dark:border-gray-500/70">
-          <BadgeCheck className="w-2.5 h-2.5 opacity-80" />
-        </span>
-      )}
-    </div>
-  );
-}
 
 function AgefinCard({ recorrente, contaMes, onOpen }) {
   const hasBoleto = Boolean(contaMes?.boleto_url);
@@ -58,18 +46,20 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white line-clamp-2">{recorrente.nome_despesa}</p>
-              <div className="flex items-start gap-2 shrink-0 pl-2">
+              <div className="min-w-0 flex-1 flex items-start gap-2.5">
                 {(isPaid || isOverdue) && (
-                  <span className={`mt-1 h-2.5 w-2.5 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)] dark:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]'}`} />
+                  <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${isPaid ? 'bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)] dark:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]' : 'bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)] dark:shadow-[0_0_0_3px_rgba(239,68,68,0.18)]'}`} />
                 )}
-                <div className="text-right">
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold leading-5 text-gray-900 dark:text-white line-clamp-2">{recorrente.nome_despesa}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
                 </div>
               </div>
+              <div className="text-right shrink-0 pl-2">
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">Previsto</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(recorrente.valor_previsto)}</p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{recorrente.terceiro_nome || 'Sem beneficiário'}</p>
           </div>
         </div>
 
@@ -85,26 +75,21 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
             </span>
           </div>
 
-          <div className="relative shrink-0">
-            <div className={`flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? 'ring-2 ring-lime-300 dark:ring-lime-400/80' : ''}`}>
+          <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+            <AnexosPanel
+              inline
+              referenciaId={contaMes?.id}
+              referenciaTipo="ContaPrevista"
+              referenciaNomero={contaMes?.referencia_numero || contaMes?.descricao || recorrente.nome_despesa}
+            />
+            <div className={`pointer-events-none flex h-11 w-11 items-center justify-center rounded-[16px] bg-white dark:bg-gray-900 shadow-sm ${hasBoleto ? 'ring-2 ring-lime-300 dark:ring-lime-400/80' : ''}`}>
               <Receipt className="w-5 h-5 text-gray-500 dark:text-gray-300" />
             </div>
             {hasBoleto && (
-              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm">
+              <span className="pointer-events-none absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white dark:bg-gray-900 shadow-sm">
                 <CheckCircle2 className="w-3.5 h-3.5 text-gray-500 dark:text-gray-300" />
               </span>
             )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 rounded-[18px] bg-white/80 dark:bg-gray-900/80 px-2.5 py-2 shadow-sm">
-          <div className="min-w-0 flex items-center gap-2">
-            <StatusBadge hasBoleto={hasBoleto} />
-            {!hasBoleto && <CircleAlert className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />}
-          </div>
-          <div className="h-8 rounded-full bg-white dark:bg-gray-900 px-3 text-[11px] font-medium text-gray-700 dark:text-gray-200 flex items-center justify-center gap-1.5 shadow-sm">
-            <Upload className="w-3.5 h-3.5" />
-            {hasBoleto ? 'Trocar' : 'Adicionar'}
           </div>
         </div>
       </div>
