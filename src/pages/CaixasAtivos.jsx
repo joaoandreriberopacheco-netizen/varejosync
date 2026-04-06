@@ -40,9 +40,11 @@ export default function CaixasAtivosPage() {
       );
 
       const rascunhosPendentes = rascunhos.filter(r => {
-        const status = r.status || r.data?.status;
-        const convertido = r.pedido_venda_final_id || r.data?.pedido_venda_final_id;
-        return status === 'Aguardando Caixa' && !convertido;
+        const registro = r.data || r;
+        const status = registro.status;
+        const convertido = registro.pedido_venda_final_id;
+        const emProcessamento = !!registro.data_inicio_processamento && !convertido;
+        return status === 'Aguardando Caixa' || emProcessamento;
       });
 
       const consumosDeHoje = consumos.filter(c => {
@@ -78,10 +80,11 @@ export default function CaixasAtivosPage() {
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
           const senhasAguardando = rascunhosPendentes.filter(r => {
-            const turnoCaixaId = r.turno_caixa_id || r.data?.turno_caixa_id;
-            const contaCaixaId = r.conta_caixa_pdv_id || r.data?.conta_caixa_pdv_id;
+            const registro = r.data || r;
+            const turnoCaixaId = registro.turno_caixa_id;
+            const contaCaixaId = registro.conta_caixa_pdv_id;
             return turnoCaixaId === turno.id || contaCaixaId === caixa.id;
-          }).map(r => ({ ...r.data, id: r.id }));
+          }).map(r => ({ ...(r.data || r), id: r.id }));
           
           liquidez[caixa.id] = {
             turnoAberto: true,
@@ -326,7 +329,7 @@ export default function CaixasAtivosPage() {
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatValor(rascunho.valor_total)}</p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500">ver detalhes</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">senha {String(rascunho.senha_atendimento || '').slice(-4) || '----'}</p>
                             </div>
                           </div>
                         </button>
