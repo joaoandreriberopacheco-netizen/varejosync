@@ -1028,7 +1028,7 @@ export default function PDVVendedor() {
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden pb-20 md:pb-0">
+      <div className={`flex-1 flex overflow-hidden ${showCarrinhoMobile ? 'pb-0' : 'pb-20'} md:pb-0`}>
         {/* Área Principal */}
         <div className="flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto bg-gray-50 dark:bg-gray-950">
           {/* Busca de Produto */}
