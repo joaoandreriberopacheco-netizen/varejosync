@@ -41,19 +41,19 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
   // Color tokens based on actual dark mode state
   const c = isDark ? {
-    bg: '#1f1d22',
-    headerBg: '#27242b',
-    searchBg: '#3a3640',
-    cardBg: '#23212a',
+    bg: '#182132',
+    headerBg: '#1d2940',
+    searchBg: '#243146',
+    cardBg: '#1f2b40',
     text: '#f1f5f9',
-    textMuted: 'rgba(255,255,255,0.55)',
-    textSub: 'rgba(203,213,225,1)',
+    textMuted: 'rgba(203,213,225,0.72)',
+    textSub: '#cbd5e1',
     iconColor: '#94a3b8',
-    chevron: '#64748b',
-    divider: 'rgba(255,255,255,0.07)',
-    btnBg: 'rgba(255,255,255,0.07)',
-    backBg: '#1b2236',
-    closeBg: 'rgba(255,255,255,0.1)',
+    chevron: '#6f84a3',
+    divider: 'rgba(255,255,255,0.05)',
+    btnBg: 'rgba(255,255,255,0.05)',
+    backBg: '#243146',
+    closeBg: 'rgba(255,255,255,0.08)',
     closeColor: '#fff',
   } : {
     bg: '#f8fafc',
@@ -175,9 +175,9 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
                   key={subItem.page}
                   to={createPageUrl(subItem.page)}
                   onClick={onClose}
-                  className="flex items-center gap-3 px-1 py-4 transition-colors"
+                  className="flex items-center gap-3 px-3 py-3.5 rounded-2xl transition-colors"
                   style={{
-                    borderBottom: `1px solid ${c.divider}`,
+                    background: isItemActive(subItem.page) ? c.btnBg : 'transparent',
                     color: isItemActive(subItem.page) ? c.text : c.textSub,
                   }}
                 >

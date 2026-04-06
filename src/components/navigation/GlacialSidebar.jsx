@@ -78,16 +78,16 @@ export default function GlacialSidebar({
   const fontLabel = fontSize === 1 ? 'A' : fontSize < 1 ? 'A-' : 'A+';
 
   const c = isDark ? {
-    bg: '#1f1d22',
-    border: 'rgba(255,255,255,0.07)',
+    bg: '#182132',
+    border: 'rgba(255,255,255,0.05)',
     text: '#f1f5f9',
-    textSub: '#94a3b8',
+    textSub: '#9fb0c9',
     iconColor: '#94a3b8',
-    activeBg: 'rgba(255,255,255,0.07)',
-    hoverBg: 'rgba(255,255,255,0.05)',
-    chevron: '#64748b',
-    sectionLabel: '#64748b',
-    subBorder: 'rgba(255,255,255,0.1)',
+    activeBg: 'rgba(255,255,255,0.06)',
+    hoverBg: 'rgba(255,255,255,0.035)',
+    chevron: '#6f84a3',
+    sectionLabel: '#6f84a3',
+    subBorder: 'rgba(255,255,255,0.08)',
   } : {
     bg: '#ffffff',
     border: 'rgba(0,0,0,0.06)',
@@ -207,8 +207,7 @@ export default function GlacialSidebar({
 
                     {isExpanded && isOpen && (
                       <div
-                        className="ml-8 mt-1 space-y-0.5 pl-3"
-                        style={{ borderLeft: `2px solid ${c.subBorder}` }}
+                        className="ml-8 mt-1 space-y-1 pl-2"
                       >
                         {item.submenu.map(subItem => {
                           const isSubActive = currentPageName === subItem.page || location.pathname.includes(subItem.page);

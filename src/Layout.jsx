@@ -91,7 +91,7 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
+      const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       if (!mobile) {
         setIsOpen(false);
@@ -311,7 +311,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
-      <div className="min-h-screen flex font-sans bg-white dark:bg-gray-900">
+      <div className="min-h-screen flex font-sans bg-white dark:bg-[#182132]">
 
 
         {/* Sidebar Desktop */}
