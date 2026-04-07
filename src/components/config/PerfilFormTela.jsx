@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -175,86 +175,125 @@ function setDeepValue(obj, path, value) {
   };
 }
 
-// ─── Renderização hierárquica corrigida ──────────────────────────
-function RenderizarHierarquia({ item, moduloKey, caminho = [], permissoes, onChange, nivel = 0 }) {
-  const temSubitens = item.submodulos && item.submodulos.length > 0;
-  const caminhoCompleto = [...caminho, item.key]; // caminho dentro do módulo
-
-  // Ler valor atual: permissoes[moduloKey][key1][key2]...
+function getValueByPath(permissoes, moduloKey, caminhoCompleto) {
   let valor = permissoes?.[moduloKey];
   for (const k of caminhoCompleto) {
     valor = valor?.[k];
   }
-  const checked = valor === true;
+  return valor;
+}
 
-  const paddingLeft = `${nivel * 1}rem`;
+function TreePermissionRow({ item, moduloKey, caminho = [], permissoes, onChange, nivel = 0, expandedMap, onToggleExpand }) {
+  const temSubitens = item.submodulos && item.submodulos.length > 0;
+  const caminhoCompleto = [...caminho, item.key];
+  const valor = getValueByPath(permissoes, moduloKey, caminhoCompleto);
+  const checked = valor === true;
+  const expandKey = `${moduloKey}.${caminhoCompleto.join('.')}`;
+  const isExpanded = expandedMap[expandKey] ?? nivel < 1;
+  const childPerms = typeof valor === 'object' && valor !== null ? valor : {};
+  const childCount = temSubitens ? contarPermissoes({ [item.key]: childPerms }, item.key) : { ativas: 0, total: 0 };
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-1">
       <div
-        style={{ paddingLeft }}
-        className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors rounded-lg group"
+        className="group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/20"
+        style={{ paddingLeft: `${12 + nivel * 18}px` }}
       >
-        <Switch
-          checked={checked}
-          onCheckedChange={v => {
-            const novoModulo = setDeepValue(
-              permissoes?.[moduloKey] || {},
-              caminhoCompleto,
-              v
-            );
-            onChange({ ...permissoes, [moduloKey]: novoModulo });
-          }}
-          className="scale-100 data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200 flex-shrink-0"
-        />
-        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 font-medium">
-          {item.label}
-        </span>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {temSubitens ? (
+            <button
+              type="button"
+              onClick={() => onToggleExpand(expandKey)}
+              className="flex h-7 w-7 flex-none items-center justify-center rounded-xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            </button>
+          ) : (
+            <div className="w-7 flex-none" />
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-200">{item.label}</span>
+              {temSubitens && (
+                <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-mono ${
+                  childCount.ativas > 0 ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+                }`}>
+                  {childCount.ativas}/{childCount.total}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex h-10 w-14 flex-none items-center justify-end">
+          <Switch
+            checked={checked}
+            onCheckedChange={v => {
+              const novoModulo = setDeepValue(permissoes?.[moduloKey] || {}, caminhoCompleto, v);
+              onChange({ ...permissoes, [moduloKey]: novoModulo });
+            }}
+            className="data-[state=checked]:bg-gray-800 dark:data-[state=checked]:bg-gray-200"
+          />
+        </div>
       </div>
 
-      {temSubitens && item.submodulos.map(sub => (
-        <RenderizarHierarquia
-          key={sub.key}
-          item={sub}
-          moduloKey={moduloKey}
-          caminho={caminhoCompleto}
-          permissoes={permissoes}
-          onChange={onChange}
-          nivel={nivel + 1}
-        />
-      ))}
+      {temSubitens && isExpanded && (
+        <div className="space-y-1 border-l border-gray-200/80 pl-1 dark:border-gray-700/80">
+          {item.submodulos.map((sub) => (
+            <TreePermissionRow
+              key={sub.key}
+              item={sub}
+              moduloKey={moduloKey}
+              caminho={caminhoCompleto}
+              permissoes={permissoes}
+              onChange={onChange}
+              nivel={nivel + 1}
+              expandedMap={expandedMap}
+              onToggleExpand={onToggleExpand}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function ModuloCard({ modulo, permissoes, onChange }) {
   const [expandido, setExpandido] = useState(false);
+  const [expandedMap, setExpandedMap] = useState({});
   const { ativas, total } = contarPermissoes(permissoes, modulo.key);
   const Icon = MODULO_ICONS[modulo.key] || Shield;
 
+  const toggleExpand = (key) => {
+    setExpandedMap((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-gray-800">
       <button
         type="button"
         onClick={() => setExpandido(!expandido)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/30"
       >
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            <Icon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700">
+            <Icon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           </div>
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{modulo.label}</span>
-          <span className={`text-xs px-1.5 py-0.5 rounded font-mono ${
+          <span className="truncate text-sm font-semibold text-gray-800 dark:text-gray-200">{modulo.label}</span>
+          <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-mono ${
             ativas > 0 ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
-          }`}>{ativas}/{total}</span>
+          }`}>
+            {ativas}/{total}
+          </span>
         </div>
-        {expandido ? <ChevronDown className="w-3.5 h-3.5 text-gray-400" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
+        {expandido ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
       </button>
 
       {expandido && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-0">
-          {modulo.submodulos && modulo.submodulos.map(item => (
-            <RenderizarHierarquia
+        <div className="border-t border-gray-100 px-2 pb-3 pt-2 dark:border-gray-700">
+          {modulo.submodulos?.map((item) => (
+            <TreePermissionRow
               key={item.key}
               item={item}
               moduloKey={modulo.key}
@@ -262,6 +301,8 @@ function ModuloCard({ modulo, permissoes, onChange }) {
               permissoes={permissoes}
               onChange={onChange}
               nivel={0}
+              expandedMap={expandedMap}
+              onToggleExpand={toggleExpand}
             />
           ))}
         </div>
@@ -388,8 +429,8 @@ export default function PerfilFormTela({ perfil, onSalvar, onCancelar }) {
         </div>
 
         {/* Coluna direita: permissões */}
-        <div className="space-y-1.5">
-          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium tracking-wide px-1 mb-2">PERMISSÕES POR MÓDULO</p>
+        <div className="space-y-2">
+          <p className="mb-2 px-1 text-xs font-medium tracking-wide text-gray-400 dark:text-gray-500">PERMISSÕES POR MÓDULO</p>
           {MODULOS.map(modulo => (
             <ModuloCard
               key={modulo.key}
