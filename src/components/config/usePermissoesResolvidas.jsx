@@ -221,7 +221,7 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.estoque?.compras?.conferencia === true || p?.estoque?.logistica === true
       },
       {
-        name: 'Logística',
+        name: 'Boats',
         page: 'ItinerarioFluvial',
         icon: Ship,
         permissaoCheck: (p) => p?.estoque?.compras?.logistica === true || p?.estoque?.logistica === true

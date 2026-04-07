@@ -84,7 +84,6 @@ import HubLogistico from './pages/HubLogistico';
 import ImportacaoProdutos from './pages/ImportacaoProdutos';
 import InterfaceSeparador from './pages/InterfaceSeparador';
 import Intervenientes from './pages/Intervenientes';
-import Logistica from './pages/Logistica';
 import LogsAutenticacao from './pages/LogsAutenticacao';
 import Manual from './pages/Manual';
 import MapaFuncionalidades from './pages/MapaFuncionalidades';
@@ -146,7 +145,6 @@ export const PAGES = {
     "ImportacaoProdutos": ImportacaoProdutos,
     "InterfaceSeparador": InterfaceSeparador,
     "Intervenientes": Intervenientes,
-    "Logistica": Logistica,
     "LogsAutenticacao": LogsAutenticacao,
     "Manual": Manual,
     "MapaFuncionalidades": MapaFuncionalidades,

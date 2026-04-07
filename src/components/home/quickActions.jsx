@@ -58,7 +58,7 @@ export const ALL_QUICK_ACTIONS = [
     id: 'logistica',
     icon: Ship,
     label: 'Boats',
-    page: 'Logistica',
+    page: 'ItinerarioFluvial',
     permissaoCheck: (p) => p?.estoque?.logistica || p?.estoque?.compras?.hub_logistico?.logistica,
   },
   {
