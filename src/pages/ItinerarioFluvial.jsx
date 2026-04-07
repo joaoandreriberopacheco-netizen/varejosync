@@ -257,12 +257,12 @@ export default function ItinerarioFluvial() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
-      <div className={`max-w-4xl mx-auto px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden ${isMobile && routeType === 'Fluvial' && showFilters ? 'pb-[27rem]' : ''}`}>
+      <div className="max-w-4xl mx-auto px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
         <LogisticaSandboxHeader />
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <RouteModeToggle value={routeType} onChange={setRouteType} />
-            {routeType === 'Fluvial' && (
+            {routeType === 'Fluvial' && !isMobile && (
               <Button
                 type="button"
                 variant="ghost"
@@ -369,10 +369,13 @@ export default function ItinerarioFluvial() {
           <BoatsTab />
         )}
         {routeType === 'Fluvial' && showFilters && (
-          <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-3 md:px-6 lg:bottom-6">
-            <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-2xl p-4 md:p-5">
+          <div className="w-full">
+            <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
               <div className="flex items-center justify-between gap-3 mb-4 md:hidden">
-                <div className="w-12 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Filtros</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Ajuste a visualização abaixo</p>
+                </div>
                 <Button
                   type="button"
                   variant="ghost"
@@ -383,7 +386,7 @@ export default function ItinerarioFluvial() {
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="space-y-4 max-h-[calc(100vh-11rem-env(safe-area-inset-bottom))] overflow-y-auto pr-1 md:max-h-none">
+              <div className="space-y-4">
                 <TimelineViewControls
                   viewMode={viewMode}
                   onViewModeChange={setViewMode}
