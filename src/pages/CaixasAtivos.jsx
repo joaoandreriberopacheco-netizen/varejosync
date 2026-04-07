@@ -13,7 +13,7 @@ export default function CaixasAtivosPage() {
   const [rascunhoSelecionado, setRascunhoSelecionado] = useState(null);
   const [consumosHoje, setConsumosHoje] = useState([]);
   const [destinacoesExpandidas, setDestinacoesExpandidas] = useState({});
-  const [showSenhasDialog, setShowSenhasDialog] = useState(false);
+  const [showSenhasPage, setShowSenhasPage] = useState(false);
 
   useEffect(() => {
     loadTurnos();
@@ -263,7 +263,7 @@ export default function CaixasAtivosPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => senhasNaoProcessadas.length > 0 && setShowSenhasDialog(true)}
+                    onClick={() => senhasNaoProcessadas.length > 0 && setShowSenhasPage(true)}
                     className="text-right disabled:cursor-default"
                     disabled={senhasNaoProcessadas.length === 0}
                   >
@@ -355,23 +355,35 @@ export default function CaixasAtivosPage() {
           </div>
         )}
 
-        {showSenhasDialog && (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-start md:items-center justify-center p-3 md:p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-4 overflow-hidden">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-full md:max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-                <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wider">Controle</div>
-                  <div className="text-xl font-bold text-gray-900 dark:text-white font-glacial">Senhas aguardando caixa</div>
-                </div>
-                <button onClick={() => setShowSenhasDialog(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 text-sm font-medium">
-                  Fechar
-                </button>
+        {showSenhasPage && (
+          <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 flex flex-col">
+            <div className="flex items-center justify-between px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+              <div>
+                <div className="text-xs text-gray-400 uppercase tracking-wider">Controle</div>
+                <div className="text-xl font-bold text-gray-900 dark:text-white font-glacial">Senhas aguardando caixa</div>
               </div>
-              <div className="p-5 space-y-3 overflow-y-auto overscroll-contain flex-1">
+              <button onClick={() => setShowSenhasPage(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 dark:text-gray-400 text-sm font-medium">
+                Fechar
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
+              <div className="max-w-2xl mx-auto space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white dark:bg-gray-800 p-4 shadow-sm">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Senhas</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white font-glacial">{senhasNaoProcessadas.length}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white dark:bg-gray-800 p-4 shadow-sm">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Valor total</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatValor(senhasNaoProcessadas.reduce((s, item) => s + (item.valor_total || 0), 0))}</p>
+                  </div>
+                </div>
+
                 {senhasNaoProcessadas.map((rascunho) => (
                   <div
                     key={rascunho.id}
-                    className="rounded-2xl bg-gray-50 dark:bg-gray-800 px-4 py-4"
+                    className="rounded-2xl bg-white dark:bg-gray-800 px-4 py-4 shadow-sm"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
@@ -389,10 +401,10 @@ export default function CaixasAtivosPage() {
                         </div>
                         <button
                           onClick={() => {
-                            setShowSenhasDialog(false);
+                            setShowSenhasPage(false);
                             setRascunhoSelecionado(rascunho);
                           }}
-                          className="h-11 w-11 rounded-xl bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+                          className="h-11 w-11 rounded-xl bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
                         >
                           <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         </button>
