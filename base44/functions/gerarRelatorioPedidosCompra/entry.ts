@@ -103,10 +103,12 @@ const custoCalculadoProduto = (produto = {}) =>
   + (Number(produto.custo_outros_padrao) || 0)
   - (Number(produto.desconto_compra_padrao) || 0);
 
+const TEXT_VERTICAL_SCALE = 1.75;
+
 const addWrappedText = (doc, text, x, y, maxWidth, lineHeight = 5) => {
   const lines = doc.splitTextToSize(safe(text || '-'), maxWidth);
-  doc.text(lines, x, y);
-  return y + (lines.length * lineHeight);
+  doc.text(lines, x, y, { charSpace: 0, horizontalScale: 100 });
+  return y + (lines.length * lineHeight * TEXT_VERTICAL_SCALE);
 };
 
 const STATUS_PDF_COLORS = {
@@ -187,6 +189,8 @@ Deno.serve(async (req) => {
         y = 14;
       }
     };
+
+    const scaledHeight = (value) => value * TEXT_VERTICAL_SCALE;
 
     // ════════════════════════════════════════════════════════════════════════
     //  HEADER
@@ -448,16 +452,16 @@ Deno.serve(async (req) => {
 
       let totCusto = 0, totVenda = 0;
 
-      ensureSpace(12);
+      ensureSpace(scaledHeight(12));
       doc.setFillColor(...C.soft);
-      doc.roundedRect(TM, y, TW, 8, 2, 2, 'F');
+      doc.roundedRect(TM, y, TW, scaledHeight(8), 2, 2, 'F');
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(5.8);
       doc.setTextColor(...C.muted);
       ['QTD','DESCRICAO','VLR. UN.','FRETE','OUTROS','CUSTO','TOTAL','VENDA','MARKUP'].forEach((h, i) => {
-        doc.text(h, TM + [2,14,54,71,86,103,121,139,156][i], y + 5);
+        doc.text(h, TM + [2,14,54,71,86,103,121,139,156][i], y + scaledHeight(5));
       });
-      y += 10;
+      y += scaledHeight(10);
 
       itens.forEach((item, idx) => {
         const prod = produtosMap[item.produto_id] || {};
@@ -473,32 +477,32 @@ Deno.serve(async (req) => {
         totCusto += totalCusto;
         totVenda += qtd * venda;
 
-        ensureSpace(8);
+        ensureSpace(scaledHeight(8));
         if (idx % 2 === 0) {
           doc.setFillColor(...C.rowAlt);
-          doc.roundedRect(TM, y - 1, TW, 7, 1.5, 1.5, 'F');
+          doc.roundedRect(TM, y - 1, TW, scaledHeight(7), 1.5, 1.5, 'F');
         }
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(5.6);
         doc.setTextColor(...C.text);
         const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 38)[0];
-        doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + 3.5);
-        doc.text(nome,             TM + 14,  y + 3.5);
-        doc.text(moeda(liq),       TM + 54,  y + 3.5);
-        doc.text(moeda(frete),     TM + 71,  y + 3.5);
-        doc.text(moeda(outros),    TM + 86,  y + 3.5);
-        doc.text(moeda(custo),     TM + 103, y + 3.5);
-        doc.text(moeda(totalLiq),  TM + 121, y + 3.5);
-        doc.text(moeda(venda),     TM + 139, y + 3.5);
-        doc.text(percentual(mk),   TM + 156, y + 3.5);
-        y += 8;
+        doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + scaledHeight(3.5));
+        doc.text(nome,             TM + 14,  y + scaledHeight(3.5));
+        doc.text(moeda(liq),       TM + 54,  y + scaledHeight(3.5));
+        doc.text(moeda(frete),     TM + 71,  y + scaledHeight(3.5));
+        doc.text(moeda(outros),    TM + 86,  y + scaledHeight(3.5));
+        doc.text(moeda(custo),     TM + 103, y + scaledHeight(3.5));
+        doc.text(moeda(totalLiq),  TM + 121, y + scaledHeight(3.5));
+        doc.text(moeda(venda),     TM + 139, y + scaledHeight(3.5));
+        doc.text(percentual(mk),   TM + 156, y + scaledHeight(3.5));
+        y += scaledHeight(8);
       });
 
-      ensureSpace(8);
+      ensureSpace(scaledHeight(8));
       doc.setDrawColor(229, 231, 235);
       doc.setLineWidth(0.2);
-      doc.line(M, y + 1, M + CW, y + 1);
-      y += 8;
+      doc.line(M, y + scaledHeight(1), M + CW, y + scaledHeight(1));
+      y += scaledHeight(8);
     };
 
     // ════════════════════════════════════════════════════════════════════════
