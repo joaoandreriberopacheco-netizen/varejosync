@@ -78,7 +78,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
             </Select>
           </Field>
           <Field label="Destinação">
-            <div className="flex gap-2">
+            <div className="flex items-stretch gap-2 min-w-0">
               <SearchableSelect
                 items={destinacoes || []}
                 value={formData.destinacao}
@@ -101,7 +101,7 @@ function DesktopForm({ formData, setFormData, turnos, destinacoes, responsaveis,
             />
           </Field>
           <Field label="Interveniente / quem recebeu">
-            <div className="flex gap-2">
+            <div className="flex items-stretch gap-2 min-w-0">
               <SearchableSelect
                 items={responsaveis || []}
                 value={formData.responsavel_recebimento}
@@ -202,7 +202,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           </Select>
         </Field>
         <Field label="Destinação">
-          <div className="flex gap-2">
+          <div className="flex items-stretch gap-2 min-w-0">
             <SearchableSelect
               items={destinacoes || []}
               value={formData.destinacao}
@@ -218,7 +218,7 @@ function MobileForm({ step, setStep, formData, setFormData, turnos, destinacoes,
           </div>
         </Field>
         <Field label="Interveniente / quem recebeu">
-          <div className="flex gap-2">
+          <div className="flex items-stretch gap-2 min-w-0">
             <SearchableSelect
               items={responsaveis || []}
               value={formData.responsavel_recebimento}

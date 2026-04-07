@@ -64,14 +64,14 @@ export default function SearchableSelect({
   }, []);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative flex-1 min-w-0 w-full">
       {/* Trigger */}
       <div
         onClick={() => {
           setIsOpen(!isOpen);
           if (!isOpen) inputRef.current?.focus();
         }}
-        className="flex h-12 items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-gray-900 cursor-pointer"
+        className="flex h-12 w-full items-center gap-2 rounded-2xl border-0 bg-gray-100 px-3 shadow-sm dark:bg-gray-900 cursor-pointer overflow-hidden"
       >
         <Search className="h-4 w-4 text-gray-400" />
         <input

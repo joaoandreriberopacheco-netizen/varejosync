@@ -430,11 +430,9 @@ export default function PDVCaixa() {
 
       const rascunhosAguardandoCaixa = todosRascunhos.filter((r) => {
         const status = r.status;
-        const convertido = r.pedido_venda_final_id;
-        const emProcessamento = !!r.data_inicio_processamento && !convertido;
+        const pedidoVendaVinculado = r.pedido_venda_final_id || r.pedido_venda_id;
         const temSenha = !!r.senha_atendimento;
-        const temItens = Array.isArray(r.itens) && r.itens.length > 0;
-        return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
+        return status === 'Aguardando Caixa' && temSenha && !pedidoVendaVinculado;
       });
 
       setPedidosAguardando(pedidosAguardandoCaixa);
