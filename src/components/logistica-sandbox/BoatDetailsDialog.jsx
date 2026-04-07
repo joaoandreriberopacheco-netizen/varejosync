@@ -202,8 +202,8 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                     </div>
                     <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm md:col-span-2 space-y-2">
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><CalendarClock className="w-4 h-4" /> Saída de referência</div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Esta é a data-chave da rota. A partir dela, o sistema entende que a chegada anterior aconteceu 7 dias antes, o ETA acontece no fim deste ciclo e a próxima chegada inicia o ciclo seguinte 7 dias após o ETA.</p>
-                      {isEditing ? <Input value={draft.recorrencia} onChange={(e) => setDraft({ ...draft, recorrencia: e.target.value })} placeholder="Ex: Saída em 10/04/2026 → chegada anterior 7 dias antes → ETA no fim do ciclo → próxima chegada 7 dias depois" className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.recorrencia || 'Não informada'}</p>}
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Esta é a data-base usada para criar um evento logístico. Cada evento logístico representa um ciclo com três marcos: chegada em Manaus, saída de Manaus e ETA em Tabatinga.</p>
+                      {isEditing ? <Input type="date" value={draft.recorrencia || ''} onChange={(e) => setDraft({ ...draft, recorrencia: e.target.value })} className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.recorrencia || 'Não informada'}</p>}
                     </div>
                   </div>
 
