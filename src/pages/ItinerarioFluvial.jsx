@@ -282,6 +282,18 @@ export default function ItinerarioFluvial() {
             )}
           </div>
         </div>
+        {routeType === 'Fluvial' && isMobile && !selectedEvento ? (
+          <FluvialExpandableFilters
+            open={showFilters}
+            onOpenChange={setShowFilters}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            periodRange={periodRange}
+            onPeriodRangeChange={setPeriodRange}
+            simulationDate={simulationDate}
+            onSimulationDateChange={setSimulationDate}
+          />
+        ) : null}
         {routeType === 'Fluvial' ? (
           <>
             {isMobile ? (
@@ -377,18 +389,7 @@ export default function ItinerarioFluvial() {
         ) : (
           <BoatsTab />
         )}
-        {routeType === 'Fluvial' && isMobile ? (
-          <FluvialExpandableFilters
-            open={showFilters}
-            onOpenChange={setShowFilters}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            periodRange={periodRange}
-            onPeriodRangeChange={setPeriodRange}
-            simulationDate={simulationDate}
-            onSimulationDateChange={setSimulationDate}
-          />
-        ) : routeType === 'Fluvial' && showFilters ? (
+        {routeType === 'Fluvial' && !isMobile && showFilters ? (
           <div className="w-full">
             <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
               <div className="space-y-4">

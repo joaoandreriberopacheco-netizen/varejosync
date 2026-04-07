@@ -17,8 +17,8 @@ export default function FluvialExpandableFilters({
   onSimulationDateChange,
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-20 z-30 px-3 md:hidden pointer-events-none">
-      <div className="mx-auto max-w-4xl pointer-events-auto">
+    <div className="md:hidden">
+      <div className="mx-auto max-w-4xl">
         <Collapsible open={open} onOpenChange={onOpenChange}>
           <div className="rounded-[28px] bg-[#111827]/95 dark:bg-[#111827]/95 shadow-2xl backdrop-blur-sm overflow-hidden">
             <div className="flex items-center justify-between gap-3 p-3">
