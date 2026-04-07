@@ -1,20 +1,13 @@
 import React from 'react';
-import { CalendarDays, ArrowDownUp, Clock3 } from 'lucide-react';
+import { CalendarDays, ArrowDownUp } from 'lucide-react';
 
 const viewOptions = [
-  { value: 'saida_manaus', label: 'Saída de Manaus' },
   { value: 'chegada_manaus', label: 'Chegada em Manaus' },
+  { value: 'saida_manaus', label: 'Saída de Manaus' },
   { value: 'chegada_tabatinga', label: 'Chegada em Tabatinga' },
 ];
 
-const horizonOptions = [
-  { value: '30', label: '30 dias' },
-  { value: '60', label: '60 dias' },
-  { value: '90', label: '90 dias' },
-  { value: '180', label: '180 dias' },
-];
-
-export default function TimelineViewControls({ viewMode, onViewModeChange, horizonDays, onHorizonDaysChange }) {
+export default function TimelineViewControls({ viewMode, onViewModeChange }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-4">
       <div className="flex items-center gap-3">
@@ -48,26 +41,7 @@ export default function TimelineViewControls({ viewMode, onViewModeChange, horiz
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <Clock3 className="w-4 h-4" /> Janela de tempo
-        </div>
-        <div className="flex gap-2 overflow-x-auto">
-          {horizonOptions.map((option) => {
-            const active = String(horizonDays) === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => onHorizonDaysChange(Number(option.value))}
-                className={`px-4 py-2.5 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-50 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { addDays, format, isSameDay } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
@@ -9,6 +9,7 @@ import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import CreateEventoLogisticoDialog from '@/components/logistica-sandbox/CreateEventoLogisticoDialog';
 import TimelineViewControls from '@/components/logistica-sandbox/TimelineViewControls';
+import TimelinePeriodPicker from '@/components/logistica-sandbox/TimelinePeriodPicker';
 
 const fallbackEventos = [
   {
@@ -56,8 +57,8 @@ export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [viewMode, setViewMode] = useState('saida_manaus');
-  const [horizonDays, setHorizonDays] = useState(90);
+  const [viewMode, setViewMode] = useState('chegada_manaus');
+  const [periodRange, setPeriodRange] = useState({ from: new Date(), to: undefined });
   const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -81,29 +82,32 @@ export default function ItinerarioFluvial() {
         const saidaManaus = item.data_saida_origem || item.data_referencia;
         const chegadaTabatinga = item.data_chegada_destino || item.previsao_chegada;
         const chegadaManaus = item.data_chegada_manaus || item.data_retorno_origem || item.previsao_retorno;
+        const proximaChegadaManaus = item.proxima_chegada_manaus || item.proximo_ciclo_chegada_manaus;
 
         return {
           ...item,
           data_chegada_manaus: chegadaManaus,
           data_saida_origem: saidaManaus,
           data_chegada_destino: chegadaTabatinga,
+          proxima_chegada_manaus: proximaChegadaManaus,
           data_chegada_manaus_formatada: formatDate(chegadaManaus),
           data_saida_manaus_formatada: formatDate(saidaManaus),
           data_chegada_destino_formatada: formatDate(chegadaTabatinga),
-          data_retorno_origem_formatada: formatDate(chegadaManaus)
+          proxima_chegada_manaus_formatada: formatDate(proximaChegadaManaus),
+          data_retorno_origem_formatada: formatDate(proximaChegadaManaus)
         };
       })
       .sort((a, b) => new Date(b.data_saida_origem || 0) - new Date(a.data_saida_origem || 0));
   }, [eventosLogisticos, routeType]);
 
   const groupedEventos = useMemo(() => {
-    const targetDate = new Date(`${simulationDate}T00:00:00`);
-    const endDate = addDays(targetDate, horizonDays);
+    const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
+    const endDate = periodRange?.to || null;
 
     const getViewDate = (evento) => {
-      if (viewMode === 'chegada_manaus') return evento.data_chegada_manaus;
       if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
-      return evento.data_saida_origem;
+      if (viewMode === 'saida_manaus') return evento.data_saida_origem;
+      return evento.data_chegada_manaus;
     };
 
     return eventos
@@ -118,7 +122,9 @@ export default function ItinerarioFluvial() {
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
         const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
-        return marco >= targetDate && marco <= endDate;
+        if (marco < targetDate) return false;
+        if (endDate && marco > endDate) return false;
+        return true;
       })
       .reduce((acc, evento) => {
         const key = evento.visualizacao_data;
@@ -126,7 +132,7 @@ export default function ItinerarioFluvial() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, horizonDays, viewMode]);
+  }, [eventos, simulationDate, periodRange, viewMode]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -162,9 +168,8 @@ export default function ItinerarioFluvial() {
         <TimelineViewControls
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          horizonDays={horizonDays}
-          onHorizonDaysChange={setHorizonDays}
         />
+        <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
         <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
           <div className="bg-transparent space-y-1">
