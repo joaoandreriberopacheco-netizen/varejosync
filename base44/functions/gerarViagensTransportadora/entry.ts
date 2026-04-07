@@ -6,25 +6,9 @@ function addDays(dateString, days) {
   return date.toISOString().slice(0, 10);
 }
 
-function addMonths(dateString, months) {
-  const date = new Date(`${dateString}T00:00:00.000Z`);
-  date.setUTCMonth(date.getUTCMonth() + months);
-  return date.toISOString().slice(0, 10);
-}
-
-function monthKey(dateString) {
-  return dateString.slice(0, 7);
-}
-
-function diffInMonths(startDateString, endDateString) {
-  const start = new Date(`${startDateString}T00:00:00.000Z`);
-  const end = new Date(`${endDateString}T00:00:00.000Z`);
-  return ((end.getUTCFullYear() - start.getUTCFullYear()) * 12) + (end.getUTCMonth() - start.getUTCMonth());
-}
-
-function startOfCurrentMonth() {
+function startOfToday() {
   const now = new Date();
-  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   return date.toISOString().slice(0, 10);
 }
 
@@ -61,29 +45,28 @@ Deno.serve(async (req) => {
     }
 
     const viagensExistentes = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500);
-    const mesAtual = startOfCurrentMonth();
-    const dataLimite = addMonths(mesAtual, monthsToCreate);
-    const offsets = [];
+    const hoje = startOfToday();
+    const dataLimite = addDays(hoje, monthsToCreate * 30);
+    const sequencias = [];
 
-    let offset = 0;
+    let sequencia = 1;
     while (true) {
-      const saidaManaus = addMonths(transportadora.saida_referencia, offset);
+      const saidaManaus = addDays(transportadora.saida_referencia, (sequencia - 1) * 21);
       const chegadaManaus = addDays(saidaManaus, -7);
       if (new Date(`${chegadaManaus}T00:00:00.000Z`) > new Date(`${dataLimite}T00:00:00.000Z`)) break;
-      if (new Date(`${saidaManaus}T00:00:00.000Z`) >= new Date(`${mesAtual}T00:00:00.000Z`) || new Date(`${chegadaManaus}T00:00:00.000Z`) >= new Date(`${mesAtual}T00:00:00.000Z`)) {
-        offsets.push(offset);
+      if (new Date(`${saidaManaus}T00:00:00.000Z`) >= new Date(`${hoje}T00:00:00.000Z`) || new Date(`${chegadaManaus}T00:00:00.000Z`) >= new Date(`${hoje}T00:00:00.000Z`)) {
+        sequencias.push(sequencia);
       }
-      offset += 1;
+      sequencia += 1;
     }
 
-    const offsetsFiltrados = ensureNextMonthOnly ? offsets.slice(-1) : offsets;
+    const sequenciasFiltradas = ensureNextMonthOnly ? sequencias.slice(-1) : sequencias;
 
-    const novasViagens = offsetsFiltrados.map((offset, index) => {
-      const saidaManaus = addMonths(transportadora.saida_referencia, offset);
+    const novasViagens = sequenciasFiltradas.map((sequencia) => {
+      const saidaManaus = addDays(transportadora.saida_referencia, (sequencia - 1) * 21);
       const chegadaManaus = addDays(saidaManaus, -7);
       const etaTabatinga = addDays(saidaManaus, 7);
       const proximaChegadaManaus = addDays(saidaManaus, 21);
-      const sequencia = offset + 1;
 
       return {
         nome: `${transportadora.nome} · Viagem ${sequencia}`,
