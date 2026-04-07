@@ -9,7 +9,7 @@ const viewOptions = [
 
 export default function TimelineViewControls({ viewMode, onViewModeChange }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 md:p-5 shadow-sm space-y-4">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
           <ArrowDownUp className="w-5 h-5 text-gray-700 dark:text-gray-200" />
@@ -24,7 +24,7 @@ export default function TimelineViewControls({ viewMode, onViewModeChange }) {
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <CalendarDays className="w-4 h-4" /> Marco principal
         </div>
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
           {viewOptions.map((option) => {
             const active = option.value === viewMode;
             return (
@@ -32,7 +32,7 @@ export default function TimelineViewControls({ viewMode, onViewModeChange }) {
                 key={option.value}
                 type="button"
                 onClick={() => onViewModeChange(option.value)}
-                className={`px-4 py-2.5 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-50 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
+                className={`snap-start px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all min-w-fit ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-50 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
               >
                 {option.label}
               </button>

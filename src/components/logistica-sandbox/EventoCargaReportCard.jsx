@@ -17,11 +17,11 @@ function printReport(evento) {
 
 export default function EventoCargaReportCard({ evento }) {
   if (!evento) {
-    return <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm text-sm text-gray-500 dark:text-gray-400">Selecione um frete para ver o resumo da carga.</div>;
+    return <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 md:p-5 shadow-sm text-sm text-gray-500 dark:text-gray-400">Selecione um frete para ver o resumo da carga.</div>;
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 md:p-5 shadow-sm space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-400">Resumo da carga</p>

@@ -3,7 +3,7 @@ import { CircleDollarSign, Package, ShipWheel } from 'lucide-react';
 
 export default function FreteListCard({ evento, onSelect }) {
   return (
-    <button onClick={() => onSelect(evento)} className="w-full text-left bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm">
+    <button onClick={() => onSelect(evento)} className="w-full text-left bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm active:scale-[0.99] transition-transform">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">

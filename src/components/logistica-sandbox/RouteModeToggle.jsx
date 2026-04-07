@@ -8,7 +8,7 @@ const options = [
 
 export default function RouteModeToggle({ value, onChange }) {
   return (
-    <div className="flex gap-2 overflow-x-auto">
+    <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
       {options.map((option) => {
         const Icon = option.icon;
         const active = value === option.value;
@@ -16,7 +16,7 @@ export default function RouteModeToggle({ value, onChange }) {
           <button
             key={option.value}
             onClick={() => onChange(option.value)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-600 dark:bg-gray-900 dark:text-gray-300'}`}
+            className={`snap-start flex items-center justify-center gap-2 min-w-[132px] px-4 py-3 rounded-2xl shadow-sm text-sm whitespace-nowrap transition-all ${active ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-white text-gray-600 dark:bg-gray-900 dark:text-gray-300'}`}
           >
             <Icon className="w-4 h-4" />
             <span>{option.value}</span>
