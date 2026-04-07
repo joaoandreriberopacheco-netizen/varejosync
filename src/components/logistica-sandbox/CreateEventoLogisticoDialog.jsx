@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog.jsx';
 
-const defaultCycle = { nome: 'Ciclo padrão', duracao: 21 };
+const defaultCycle = { nome: 'Ciclo fluvial 21 dias', duracao: 21, diasAteETA: 7, diasAteRetornoManaus: 14 };
 
 export default function CreateEventoLogisticoDialog({ onCreated }) {
   const [open, setOpen] = useState(false);
@@ -31,10 +31,12 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     };
   }, [form]);
 
-  const chegadaPrevista = useMemo(() => {
-    if (!form.data_saida_origem || !cicloAtivo.duracao) return '';
-    return format(addDays(new Date(`${form.data_saida_origem}T00:00:00`), cicloAtivo.duracao), 'dd/MM/yyyy');
-  }, [form.data_saida_origem, cicloAtivo]);
+  const etaPrevisto = useMemo(() => {
+    if (!form.data_saida_origem) return '';
+    const diasAteETA = form.usar_ciclo_padrao ? defaultCycle.diasAteETA : Number(form.ciclo_personalizado_duracao || 0);
+    if (!diasAteETA) return '';
+    return format(addDays(new Date(`${form.data_saida_origem}T00:00:00`), diasAteETA), 'dd/MM/yyyy');
+  }, [form.data_saida_origem, form.usar_ciclo_padrao, form.ciclo_personalizado_duracao]);
 
   const handleChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -42,9 +44,11 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     e.preventDefault();
     setSaving(true);
 
-    const duracao = cicloAtivo.duracao || 21;
     const saida = new Date(`${form.data_saida_origem}T00:00:00`);
-    const chegada = addDays(saida, duracao);
+    const diasAteETA = form.usar_ciclo_padrao ? defaultCycle.diasAteETA : Number(form.ciclo_personalizado_duracao || 0);
+    const diasAteRetornoManaus = form.usar_ciclo_padrao ? defaultCycle.diasAteRetornoManaus : Number(form.ciclo_personalizado_duracao || 0) * 2;
+    const duracao = form.usar_ciclo_padrao ? defaultCycle.duracao : diasAteRetornoManaus;
+    const chegada = addDays(saida, diasAteETA);
 
     const payload = {
       embarcacao_nome: form.embarcacao_nome,
@@ -53,14 +57,17 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
       embarcacao_nome: form.embarcacao_nome,
       rota_nome: 'Manaus → Tabatinga',
       status_operacao: 'Atracado na Origem',
+      data_saida_origem: form.data_saida_origem,
       data_referencia: form.data_saida_origem,
+      data_chegada_destino: format(chegada, 'yyyy-MM-dd'),
       previsao_chegada: format(chegada, 'yyyy-MM-dd'),
-      previsao_retorno: format(addDays(saida, duracao * 2), 'yyyy-MM-dd'),
+      data_retorno_origem: format(addDays(saida, diasAteRetornoManaus), 'yyyy-MM-dd'),
+      previsao_retorno: format(addDays(saida, diasAteRetornoManaus), 'yyyy-MM-dd'),
       observacoes: [
         form.observacoes,
         form.contato_viajante ? `Contato: ${form.contato_viajante}` : '',
         form.telefone_viajante ? `Telefone: ${form.telefone_viajante}` : '',
-        `Lógica: ${cicloAtivo.nome} (${duracao} dias)`
+        `Lógica: ETA em ${diasAteETA} dias • retorno a Manaus em ${diasAteRetornoManaus} dias • ciclo total ${duracao} dias`
       ].filter(Boolean).join(' • '),
       ocupacao_percentual: 0,
       dias_atraso: 0,
@@ -113,7 +120,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Usar lógica padrão de 21 dias</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Pré-configurada para a maioria das viagens.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Saída de Manaus + 7 dias = ETA em Tabatinga; + 14 dias = retorno a Manaus.</p>
                 </div>
                 <button
                   type="button"
@@ -133,8 +140,8 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
 
               <div className="rounded-2xl bg-white dark:bg-gray-700 p-4 shadow-sm">
                 <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">ETA projetado</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{chegadaPrevista || '-'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Renderização sugerida: {form.embarcacao_nome || 'Embarcação'} · ETA {chegadaPrevista || '--/--/----'}</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{etaPrevisto || '-'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Renderização sugerida: {form.embarcacao_nome || 'Embarcação'} · ETA {etaPrevisto || '--/--/----'}</p>
               </div>
             </div>
 

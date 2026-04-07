@@ -1,9 +1,8 @@
 import React from 'react';
-import { Waves, Truck } from 'lucide-react';
+import { Waves } from 'lucide-react';
 
 const options = [
   { value: 'Fluvial', icon: Waves },
-  { value: 'Rodoviária', icon: Truck },
 ];
 
 export default function RouteModeToggle({ value, onChange }) {
