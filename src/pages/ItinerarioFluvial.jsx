@@ -21,48 +21,6 @@ import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const fallbackEventos = [
-  {
-    id: 'mock-1',
-    codigo: 'EVT-001',
-    embarcacao_nome: 'Rei do Rio',
-    rota_nome: 'Manaus → Tabatinga',
-    status_operacao: 'Em Viagem',
-    data_saida_origem: '2026-04-07',
-    data_chegada_destino: '2026-04-14',
-    data_retorno_origem: '2026-04-21',
-    ocupacao_percentual: 72,
-    dias_atraso: 0,
-    chave_relacional_futura: 'evento_logistico_id'
-  },
-  {
-    id: 'mock-2',
-    codigo: 'EVT-002',
-    embarcacao_nome: 'Solimões I',
-    rota_nome: 'Manaus → Tabatinga',
-    status_operacao: 'Atracado no Destino',
-    data_saida_origem: '2026-04-01',
-    data_chegada_destino: '2026-04-08',
-    data_retorno_origem: '2026-04-15',
-    ocupacao_percentual: 91,
-    dias_atraso: 1,
-    chave_relacional_futura: 'evento_logistico_id'
-  },
-  {
-    id: 'mock-3',
-    codigo: 'EVT-003',
-    embarcacao_nome: 'Estrela do Norte',
-    rota_nome: 'Manaus → Tabatinga',
-    status_operacao: 'Retornando',
-    data_saida_origem: '2026-04-11',
-    data_chegada_destino: '2026-04-18',
-    data_retorno_origem: '2026-04-25',
-    ocupacao_percentual: 44,
-    dias_atraso: 0,
-    chave_relacional_futura: 'evento_logistico_id'
-  }
-];
-
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
@@ -101,7 +59,7 @@ export default function ItinerarioFluvial() {
   };
 
   const eventos = useMemo(() => {
-    const source = eventosLogisticos.length ? eventosLogisticos : fallbackEventos;
+    const source = eventosLogisticos;
     const simulationBaseDate = new Date(`${simulationDate}T00:00:00`);
     const contasFrete = (contasPrevistas || []).filter((conta) => {
       const descricao = `${conta.descricao || ''} ${Array.isArray(conta.tags) ? conta.tags.join(' ') : ''}`.toLowerCase();

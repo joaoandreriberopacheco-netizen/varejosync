@@ -4,23 +4,43 @@
   "properties": {
     "codigo": {
       "type": "string",
-      "description": "C\u00f3digo visual do evento sanit\u00e1rio"
+      "description": "C\u00f3digo visual da viagem"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome visual da viagem"
     },
     "embarcacao_template_id": {
       "type": "string",
-      "description": "ID da embarca\u00e7\u00e3o sanit\u00e1ria vinculada"
+      "description": "ID da embarca\u00e7\u00e3o/transportadora vinculada"
     },
     "embarcacao_nome": {
       "type": "string",
-      "description": "Nome da embarca\u00e7\u00e3o em cache"
+      "description": "Nome da viagem/transportadora em cache"
+    },
+    "transportadora_id": {
+      "type": "string",
+      "description": "ID da transportadora vinculada"
+    },
+    "transportadora_nome": {
+      "type": "string",
+      "description": "Nome da transportadora vinculada"
     },
     "rota_template_id": {
       "type": "string",
-      "description": "ID da rota sanit\u00e1ria vinculada"
+      "description": "ID da rota vinculada"
     },
     "rota_nome": {
       "type": "string",
       "description": "Nome da rota em cache"
+    },
+    "tipo_registro": {
+      "type": "string",
+      "enum": [
+        "Viagem"
+      ],
+      "default": "Viagem",
+      "description": "Tipo do registro log\u00edstico"
     },
     "status_operacao": {
       "type": "string",
@@ -37,22 +57,47 @@
     "data_referencia": {
       "type": "string",
       "format": "date",
-      "description": "Data base do ciclo, sem uso de horas"
+      "description": "Data base da viagem"
+    },
+    "data_chegada_manaus": {
+      "type": "string",
+      "format": "date",
+      "description": "Chegada em Manaus"
+    },
+    "data_saida_origem": {
+      "type": "string",
+      "format": "date",
+      "description": "Sa\u00edda de Manaus"
+    },
+    "data_chegada_destino": {
+      "type": "string",
+      "format": "date",
+      "description": "ETA em Tabatinga"
+    },
+    "proxima_chegada_manaus": {
+      "type": "string",
+      "format": "date",
+      "description": "Pr\u00f3xima chegada em Manaus"
     },
     "previsao_chegada": {
       "type": "string",
       "format": "date",
-      "description": "Previs\u00e3o de chegada em dias"
+      "description": "Previs\u00e3o de chegada em Tabatinga"
     },
     "previsao_retorno": {
       "type": "string",
       "format": "date",
-      "description": "Previs\u00e3o de retorno em dias"
+      "description": "Previs\u00e3o de retorno a Manaus"
+    },
+    "data_retorno_origem": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de retorno/origem"
     },
     "ocupacao_percentual": {
       "type": "number",
       "default": 0,
-      "description": "Percentual de ocupa\u00e7\u00e3o atual da embarca\u00e7\u00e3o"
+      "description": "Percentual de ocupa\u00e7\u00e3o atual da viagem"
     },
     "dias_atraso": {
       "type": "number",
@@ -61,11 +106,11 @@
     },
     "observacoes": {
       "type": "string",
-      "description": "Observa\u00e7\u00f5es operacionais do evento"
+      "description": "Observa\u00e7\u00f5es operacionais da viagem"
     },
     "chave_relacional_futura": {
       "type": "string",
-      "description": "Campo reservado para futura conex\u00e3o com embarques ou pedidos reais"
+      "description": "Campo reservado para conex\u00e3o com embarques"
     }
   },
   "required": [

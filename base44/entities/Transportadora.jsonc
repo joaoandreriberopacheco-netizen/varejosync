@@ -26,6 +26,11 @@
       "type": "string",
       "description": "Observa\u00e7\u00f5es"
     },
+    "saida_referencia": {
+      "type": "string",
+      "format": "date",
+      "description": "Data base da sa\u00edda em Manaus para gerar as viagens"
+    },
     "ativo": {
       "type": "boolean",
       "default": true

@@ -62,7 +62,7 @@ export default function BoatsTab() {
       ...item,
       status: item.ativo === false ? 'inativa' : 'ativa',
       proximo_eta: '-',
-      recorrencia: item.observacoes || '-',
+      recorrencia: item.saida_referencia || '-',
       eventos: [],
       timeline: [],
       itinerario_real: [],

@@ -19,13 +19,17 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
   const handleSave = async () => {
     const novaTransportadora = await base44.entities.Transportadora.create({
       nome,
-      observacoes: saidaReferencia,
+      saida_referencia: saidaReferencia,
       ativo: true,
     });
 
+    await import('@/functions/gerarViagensTransportadora').then(({ gerarViagensTransportadora }) =>
+      gerarViagensTransportadora({ transportadoraId: novaTransportadora.id, monthsToCreate: 3 })
+    );
+
     toast({
       title: 'Transportadora salva com sucesso',
-      description: 'Os respectivos eventos logísticos serão criados a partir da saída de referência.',
+      description: 'As viagens dos próximos 3 meses foram criadas a partir da saída de referência.',
     });
     onCreated?.(novaTransportadora);
     onOpenChange(false);
