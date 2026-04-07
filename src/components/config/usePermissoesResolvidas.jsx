@@ -187,10 +187,12 @@ export const ALL_MENU_ITEMS = [
     name: 'Compras',
     icon: ShoppingCart,
     permissaoCheck: (p) =>
+      p?.estoque?.compras_ativo ||
       p?.estoque?.compras?.sugestoes ||
       p?.estoque?.compras?.cotacoes ||
       p?.estoque?.compras?.pedidos ||
-      p?.estoque?.compras?.hub_logistico?.conferencia ||
+      p?.estoque?.compras?.conferencia ||
+      p?.estoque?.compras?.logistica ||
       p?.estoque?.logistica,
     submenu: [
       {
@@ -216,13 +218,13 @@ export const ALL_MENU_ITEMS = [
         name: 'Conferência de Entrada',
         page: 'ConferenciaEntrada',
         icon: ScanLine,
-        permissaoCheck: (p) => p?.estoque?.compras?.hub_logistico?.conferencia === true || p?.estoque?.logistica === true
+        permissaoCheck: (p) => p?.estoque?.compras?.conferencia === true || p?.estoque?.logistica === true
       },
       {
         name: 'Logística',
         page: 'ItinerarioFluvial',
         icon: Ship,
-        permissaoCheck: (p) => p?.estoque?.logistica === true
+        permissaoCheck: (p) => p?.estoque?.compras?.logistica === true || p?.estoque?.logistica === true
       }
     ]
   },

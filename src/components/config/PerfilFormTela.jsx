@@ -75,24 +75,20 @@ export const MODULOS = [
       { key: 'conferencia_estoque', label: 'Conferência' },
       { key: 'auditoria_estoque', label: 'Auditoria' },
       {
+        key: 'compras_ativo',
+        label: 'Exibir grupo Compras',
+      },
+      {
         key: 'compras',
-        label: 'Módulo de Compras',
+        label: 'Compras',
         submodulos: [
           { key: 'sugestoes', label: 'Sugestões de Compra' },
           { key: 'cotacoes', label: 'Cotações' },
           { key: 'pedidos', label: 'Pedidos de Compra' },
-          {
-            key: 'hub_logistico',
-            label: 'Hub Logístico',
-            submodulos: [
-              { key: 'manifestos', label: 'Manifestos' },
-              { key: 'supermanifestos', label: 'Supermanifestos' },
-              { key: 'conferencia', label: 'Conferência' },
-            ]
-          }
+          { key: 'conferencia', label: 'Conferência de Entrada' },
+          { key: 'logistica', label: 'Logística / Itinerário Fluvial' }
         ]
       },
-      { key: 'logistica', label: 'Módulo de Logística' },
       { key: 'armazenagem', label: 'Armazenagem' },
       { key: 'tabela_precos', label: 'Tabela de Preços (Consulta)' },
       { key: 'gerar_orcamento', label: 'Gerar Orçamento na Tabela de Preços' },
