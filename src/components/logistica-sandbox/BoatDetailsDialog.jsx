@@ -200,9 +200,10 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><Phone className="w-4 h-4" /> Telefone</div>
                       {isEditing ? <Input value={draft.telefone} onChange={(e) => setDraft({ ...draft, telefone: e.target.value })} className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.telefone}</p>}
                     </div>
-                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm md:col-span-2">
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><CalendarClock className="w-4 h-4" /> Itinerário base</div>
-                      {isEditing ? <Input value={draft.recorrencia} onChange={(e) => setDraft({ ...draft, recorrencia: e.target.value })} className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.recorrencia}</p>}
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm md:col-span-2 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><CalendarClock className="w-4 h-4" /> Regra da viagem</div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Descreva em palavras como essa rota costuma acontecer. Ex: chega em Manaus, sai 7 dias depois e prevê chegada 7 dias após a saída.</p>
+                      {isEditing ? <Input value={draft.recorrencia} onChange={(e) => setDraft({ ...draft, recorrencia: e.target.value })} placeholder="Ex: Chega em Manaus → sai em 7 dias → ETA em 7 dias" className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.recorrencia || 'Não informada'}</p>}
                     </div>
                   </div>
 
