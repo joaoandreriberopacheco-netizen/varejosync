@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import BoatHistoryDetailsDialog from '@/components/logistica-sandbox/BoatHistoryDetailsDialog';
+import { sincronizarViagensTransportadora } from '@/functions/sincronizarViagensTransportadora';
 
 function StatusBadge({ status }) {
   const classes = status === 'ativa'
@@ -115,7 +116,17 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
 
   const hasRecords = (transportadora.eventos || []).length > 0;
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    await sincronizarViagensTransportadora({
+      transportadoraId: draft.id,
+      nome: draft.nome,
+      saidaReferencia: draft.saida_referencia,
+      contato: draft.contato,
+      telefone: draft.telefone,
+      email: draft.email,
+      observacoes: draft.observacoes,
+      ativo: draft.status !== 'inativa',
+    });
     onSave?.(draft);
     setIsEditing(false);
   };

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { base44 } from '@/api/base44Client';
+import { sincronizarViagensTransportadora } from '@/functions/sincronizarViagensTransportadora';
 
 export default function NewTransportadoraDialog({ open, onOpenChange, onCreated }) {
   const [nome, setNome] = useState('');
@@ -23,15 +24,18 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
       ativo: true,
     });
 
-    await import('@/functions/gerarViagensTransportadora').then(({ gerarViagensTransportadora }) =>
-      gerarViagensTransportadora({ transportadoraId: novaTransportadora.id, monthsToCreate: 3 })
-    );
+    await sincronizarViagensTransportadora({
+      transportadoraId: novaTransportadora.id,
+      nome,
+      saidaReferencia,
+      ativo: true,
+    });
 
     toast({
       title: 'Transportadora salva com sucesso',
-      description: 'As viagens foram normalizadas da primeira saída válida até os próximos 3 meses.',
+      description: 'As viagens foram recalculadas automaticamente a partir da saída de referência.',
     });
-    onCreated?.(novaTransportadora);
+    onCreated?.({ ...novaTransportadora, saida_referencia: saidaReferencia });
     onOpenChange(false);
   };
 

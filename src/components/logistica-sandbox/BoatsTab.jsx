@@ -91,7 +91,7 @@ export default function BoatsTab() {
       ...createdBoat,
       status: createdBoat.ativo === false ? 'inativa' : 'ativa',
       proximo_eta: '-',
-      recorrencia: createdBoat.observacoes || '-',
+      recorrencia: createdBoat.saida_referencia || '-',
       eventos: [],
       timeline: [],
       itinerario_real: [],
