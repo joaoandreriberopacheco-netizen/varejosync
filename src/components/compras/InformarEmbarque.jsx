@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog.jsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Boxes, Plus, Check, X, Search } from 'lucide-react';
+import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Boxes, Plus, Check, X, Search, Anchor } from 'lucide-react';
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
 
@@ -188,6 +188,8 @@ function TransportadoraSearch({ transportadoras, value, onChange, onCriarNova })
 export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, embarqueExistente }) {
   const isEdicao = !!embarqueExistente;
   const [transportadoras, setTransportadoras] = useState([]);
+  const [eventosLogisticos, setEventosLogisticos] = useState([]);
+  const [eventoLogisticoId, setEventoLogisticoId] = useState('');
   const [transportadoraId, setTransportadoraId] = useState('');
   const [dataDespacho, setDataDespacho] = useState('');
   const [eta, setEta] = useState('');
@@ -207,9 +209,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   useEffect(() => {
     if (!isOpen || !pedido) return;
     loadTransportadoras();
+    loadEventosLogisticos();
     if (isEdicao) {
       setDataDespacho(embarqueExistente.data_embarque ? new Date(embarqueExistente.data_embarque).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
         setTransportadoraId(embarqueExistente.transportadora_id || '');
+        setEventoLogisticoId(embarqueExistente.evento_logistico_id || '');
         // ETA: pega só a data (YYYY-MM-DD)
       const etaVal = embarqueExistente.eta
         ? new Date(embarqueExistente.eta).toISOString().slice(0, 10)
@@ -233,6 +237,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     } else {
       setDataDespacho(new Date().toISOString().slice(0, 10));
       setTransportadoraId('');
+      setEventoLogisticoId('');
       setEta('');
       setVolumes([]);
       setObservacoes('');
@@ -257,6 +262,15 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     }
   };
 
+  const loadEventosLogisticos = async () => {
+    try {
+      const data = await base44.entities.EventoLogisticoSandbox.list('-data_referencia', 100);
+      setEventosLogisticos(data || []);
+    } catch {
+      toast.error('Erro ao carregar eventos logísticos');
+    }
+  };
+
   const toggleItem = (produtoId) => {
     setSelectedItems(prev => ({ ...prev, [produtoId]: !prev[produtoId] }));
   };
@@ -277,6 +291,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     setLoading(true);
     try {
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
+      const eventoLogistico = eventosLogisticos.find(evento => evento.id === eventoLogisticoId);
       const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
       const itensEmbarcados = (pedido.itens || [])
@@ -304,6 +319,9 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         eta: eta + 'T12:00:00.000Z',
         transportadora_id: transportadoraId,
         transportadora_nome: transportadora?.nome || '',
+        evento_logistico_id: eventoLogisticoId || '',
+        evento_logistico_codigo: eventoLogistico?.codigo || '',
+        evento_logistico_nome: eventoLogistico?.embarcacao_nome || '',
         volumes: volumesTexto,
         volumes_detalhados: volumesDetalhados,
         peso_kg: totalPesoKg,
@@ -398,6 +416,28 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                 onChange={setTransportadoraId}
                 onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm text-gray-500 dark:text-gray-400">
+                Evento logístico <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+              </label>
+              <div className="relative">
+                <Anchor className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  value={eventoLogisticoId}
+                  onChange={(e) => setEventoLogisticoId(e.target.value)}
+                  className="w-full h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 pl-11 pr-4 appearance-none"
+                >
+                  <option value="">Selecionar depois</option>
+                  {eventosLogisticos.map((evento) => (
+                    <option key={evento.id} value={evento.id}>
+                      {(evento.embarcacao_nome || 'Evento')} · {evento.codigo || 'Sem código'}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
 
             {/* Volumes */}
