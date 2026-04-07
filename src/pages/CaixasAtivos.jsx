@@ -42,12 +42,10 @@ export default function CaixasAtivosPage() {
 
       const rascunhosPendentesCaixa = rascunhos.filter((r) => {
         const registro = r.data || r;
-        const status = registro.status;
         const convertido = registro.pedido_venda_final_id;
-        const emProcessamento = !!registro.data_inicio_processamento && !convertido;
         const temSenha = !!registro.senha_atendimento;
         const temItens = Array.isArray(registro.itens) && registro.itens.length > 0;
-        return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
+        return temSenha && temItens && !convertido;
       }).map((r) => ({ ...(r.data || r), id: r.id }));
 
       const rascunhosPorCaixa = {};
@@ -84,13 +82,7 @@ export default function CaixasAtivosPage() {
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
-          const senhasAguardando = rascunhosPendentesCaixa.filter((rascunho) => {
-            const turnoCaixaId = rascunho.turno_caixa_id;
-            const contaCaixaId = rascunho.conta_caixa_pdv_id;
-            if (turnoCaixaId) return turnoCaixaId === turno.id;
-            if (contaCaixaId) return contaCaixaId === caixa.id;
-            return false;
-          });
+          const senhasAguardando = rascunhosPendentesCaixa;
 
           rascunhosPorCaixa[caixa.id] = senhasAguardando;
 
