@@ -309,7 +309,7 @@ export default function ExecucaoOrcamentaria() {
 
           {abaContas === 'contas' && (
             <>
-              {(fabOpen || showNovo) && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => { if (showNovo) return; setFabOpen(false); }} />}
+              {fabOpen && !showNovo && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
               <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
                 {fabOpen && FAB_CONTAS_ITEMS.map(({ tipo, icon: Icon, label, dialogTipo }) => (
                   <button
@@ -397,7 +397,7 @@ export default function ExecucaoOrcamentaria() {
           <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />
 
           {/* FAB */}
-          {(fabOpen || showNovo) && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => { if (showNovo) return; setFabOpen(false); }} />}
+          {fabOpen && !showNovo && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
           <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
             {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
               <button key={tipo}
