@@ -59,7 +59,7 @@ export const ALL_QUICK_ACTIONS = [
     icon: Truck,
     label: 'Logística',
     page: 'Logistica',
-    permissaoCheck: (p) => p?.estoque?.logistica,
+    permissaoCheck: (p) => p?.estoque?.logistica || p?.estoque?.compras?.hub_logistico?.logistica,
   },
   {
     id: 'dashboard',
