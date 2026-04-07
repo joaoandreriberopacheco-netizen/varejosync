@@ -94,6 +94,11 @@ export default function ExecucaoOrcamentaria() {
     }
   }, [contas]);
 
+  useEffect(() => {
+    if (!showNovo) return;
+    setFabOpen(false);
+  }, [showNovo]);
+
   const load = async () => {
     setLoading(true);
     const [ls, cts] = await Promise.all([
@@ -304,7 +309,7 @@ export default function ExecucaoOrcamentaria() {
 
           {abaContas === 'contas' && (
             <>
-              {fabOpen && !showNovo && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
+              {(fabOpen || showNovo) && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => { if (showNovo) return; setFabOpen(false); }} />}
               <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
                 {fabOpen && FAB_CONTAS_ITEMS.map(({ tipo, icon: Icon, label, dialogTipo }) => (
                   <button
@@ -335,7 +340,7 @@ export default function ExecucaoOrcamentaria() {
           )}
         </div>
 
-        <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => setShowNovo(false)} onSaved={load} />
+        <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} onClose={() => { setShowNovo(false); setFabOpen(false); }} onSaved={load} />
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
           <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-white/95 p-0 shadow-xl backdrop-blur-xl dark:bg-slate-900/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
             <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800">
@@ -392,7 +397,7 @@ export default function ExecucaoOrcamentaria() {
           <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />
 
           {/* FAB */}
-          {fabOpen && !showNovo && <div className="fixed inset-0 z-20" onClick={() => setFabOpen(false)} />}
+          {(fabOpen || showNovo) && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => { if (showNovo) return; setFabOpen(false); }} />}
           <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
             {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
               <button key={tipo}
