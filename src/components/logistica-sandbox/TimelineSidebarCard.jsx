@@ -1,5 +1,6 @@
 import React from 'react';
 import { CalendarRange, Package2, Waves } from 'lucide-react';
+import EventoEmbarquesPanel from '@/components/logistica-sandbox/EventoEmbarquesPanel';
 
 export default function TimelineSidebarCard({ evento }) {
   if (!evento) {
@@ -27,6 +28,11 @@ export default function TimelineSidebarCard({ evento }) {
       <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm">
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Package2 className="w-4 h-4" /> Ocupação projetada</div>
         <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">{evento.ocupacao_percentual_dinamica || 0}% da capacidade</div>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">A contagem sobe em 7 partes iguais entre a chegada em Manaus e a saída, e reinicia no próximo ciclo.</p>
+      </div>
+      <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm space-y-3">
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Waves className="w-4 h-4" /> Embarques vinculados</div>
+        <EventoEmbarquesPanel embarques={evento.embarques_relacionados || []} />
       </div>
     </div>
   );

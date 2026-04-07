@@ -17,6 +17,9 @@ import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaRep
 import MobileFilterSheet from '@/components/logistica-sandbox/MobileFilterSheet';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
+import { SlidersHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog.jsx';
 
 const fallbackEventos = [
   {
@@ -64,10 +67,11 @@ export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [viewMode, setViewMode] = useState('chegada_manaus');
-  const [periodRange, setPeriodRange] = useState({ from: new Date(), to: undefined });
+  const [viewMode, setViewMode] = useState('saida_manaus');
+  const [periodRange, setPeriodRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) });
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -131,7 +135,9 @@ export default function ItinerarioFluvial() {
         const diasDesdeChegada = chegadaManaus ? Math.round((simulationBaseDate - new Date(`${chegadaManaus}T00:00:00`)) / (1000 * 60 * 60 * 24)) : null;
         const ocupacaoPercentualDinamica = diasAteSaida === null || diasDesdeChegada === null
           ? (item.ocupacao_percentual || 0)
-          : Math.max(0, Math.min(100, Math.round((Math.max(0, diasDesdeChegada) / 7) * 100)));
+          : diasDesdeChegada < 0 || diasAteSaida < 0
+            ? 0
+            : Math.max(0, Math.min(100, Math.round((Math.min(diasDesdeChegada, 7) / 7) * 100)));
 
         const contaFrete = contasFrete.find((conta) => {
           const ref = `${conta.referencia_id || ''} ${conta.descricao || ''}`;
@@ -255,8 +261,20 @@ export default function ItinerarioFluvial() {
       <div className="max-w-4xl mx-auto px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
         <LogisticaSandboxHeader />
         <div className="flex flex-col gap-3">
-          <RouteModeToggle value={routeType} onChange={setRouteType} />
-          {routeType === 'Boats' ? null : <CreateEventoLogisticoDialog onCreated={() => queryClient.invalidateQueries({ queryKey: ['evento-logistico'] })} />}
+          <div className="flex items-center justify-between gap-3">
+            <RouteModeToggle value={routeType} onChange={setRouteType} />
+            {routeType === 'Fluvial' && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowFilters(true)}
+                className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
         {routeType === 'Fluvial' ? (
           <>
@@ -298,30 +316,22 @@ export default function ItinerarioFluvial() {
                 </div>
               )
             ) : (
-              <>
-                <TimelineViewControls
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                />
-                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
-                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
-                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
-                  <div className="bg-transparent space-y-1">
-                    {timelineItems.map((item) => (
-                      <TimelineDayGroup
-                        key={item.key}
-                        label={item.label}
-                        dayNumber={item.dayNumber}
-                        eventos={item.eventos}
-                        isToday={item.isToday}
-                        onSelect={setSelectedEvento}
-                        viewModeLabel={viewModeLabel}
-                      />
-                    ))}
-                  </div>
-                  <TimelineSidebarCard evento={currentEvento} />
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
+                <div className="bg-transparent space-y-1">
+                  {timelineItems.map((item) => (
+                    <TimelineDayGroup
+                      key={item.key}
+                      label={item.label}
+                      dayNumber={item.dayNumber}
+                      eventos={item.eventos}
+                      isToday={item.isToday}
+                      onSelect={setSelectedEvento}
+                      viewModeLabel={viewModeLabel}
+                    />
+                  ))}
                 </div>
-              </>
+                <TimelineSidebarCard evento={currentEvento} />
+              </div>
             )}
           </>
         ) : routeType === 'Fretes' ? (
@@ -366,6 +376,18 @@ export default function ItinerarioFluvial() {
         ) : (
           <BoatsTab />
         )}
+        <Dialog open={showFilters} onOpenChange={setShowFilters}>
+          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-2xl rounded-3xl border-0 shadow-xl p-4 md:p-5 bg-white dark:bg-gray-900">
+            <div className="space-y-4">
+              <TimelineViewControls
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+              <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
+              <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
