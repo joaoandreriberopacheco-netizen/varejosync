@@ -29,7 +29,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
 
     toast({
       title: 'Transportadora salva com sucesso',
-      description: 'As viagens dos próximos 3 meses foram criadas a partir da saída de referência.',
+      description: 'As viagens foram normalizadas da primeira saída válida até os próximos 3 meses.',
     });
     onCreated?.(novaTransportadora);
     onOpenChange(false);
