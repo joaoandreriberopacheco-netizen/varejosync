@@ -150,12 +150,7 @@ export default function VendasGestaoPage() {
   };
 
   const handleInutilizarRascunho = async (rascunho) => {
-    const mesmoDia = toLocalDateKey(rascunho.created_date) === dataHoje();
     const pedidoVendaVinculado = rascunho.pedido_venda_final_id || rascunho.pedido_venda_id;
-    if (!mesmoDia) {
-      alert('Só é possível inutilizar senhas criadas hoje.');
-      return;
-    }
     if (pedidoVendaVinculado) {
       alert('Esta senha já está vinculada a um pedido de venda e não pode ser inutilizada.');
       return;
@@ -362,9 +357,8 @@ export default function VendasGestaoPage() {
             {/* Mobile: Cards */}
             <div className="md:hidden space-y-2">
               {rascunhosFiltrados.map(rascunho => {
-                const mesmoDia = toLocalDateKey(rascunho.created_date) === dataHoje();
                 const pedidoVendaVinculado = rascunho.pedido_venda_final_id || rascunho.pedido_venda_id;
-                const podeInutilizar = mesmoDia && !pedidoVendaVinculado && !['Cancelado','Convertido'].includes(rascunho.status);
+                const podeInutilizar = !pedidoVendaVinculado && !['Cancelado','Convertido'].includes(rascunho.status);
                 return (
                 <div key={rascunho.id} className="bg-white dark:bg-slate-900 rounded-[26px] p-4 shadow-sm overflow-hidden">
                   <div className="flex items-start justify-between gap-3">
@@ -420,9 +414,8 @@ export default function VendasGestaoPage() {
                 </TableHeader>
                 <TableBody>
                   {rascunhosFiltrados.map(rascunho => {
-                    const mesmoDia = toLocalDateKey(rascunho.created_date) === dataHoje();
                     const pedidoVendaVinculado = rascunho.pedido_venda_final_id || rascunho.pedido_venda_id;
-                    const podeInutilizar = mesmoDia && !pedidoVendaVinculado && !['Cancelado','Convertido'].includes(rascunho.status);
+                    const podeInutilizar = !pedidoVendaVinculado && !['Cancelado','Convertido'].includes(rascunho.status);
                     return (
                     <TableRow key={rascunho.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <TableCell>
