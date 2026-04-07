@@ -72,6 +72,8 @@ export default function ItinerarioFluvial() {
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedBoat, setSelectedBoat] = useState('all');
+  const [onlyLinked, setOnlyLinked] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -187,6 +189,10 @@ export default function ItinerarioFluvial() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const boatOptions = useMemo(() => {
+    return Array.from(new Set(eventos.map((evento) => evento.embarcacao_nome).filter(Boolean))).sort();
+  }, [eventos]);
+
   const groupedEventos = useMemo(() => {
     const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
     const endDate = periodRange?.to || null;
@@ -208,6 +214,8 @@ export default function ItinerarioFluvial() {
       })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
+        if (selectedBoat !== 'all' && evento.embarcacao_nome !== selectedBoat) return false;
+        if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
         if (marco < targetDate) return false;
         if (endDate && marco > endDate) return false;
@@ -219,7 +227,7 @@ export default function ItinerarioFluvial() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, periodRange, viewMode]);
+  }, [eventos, simulationDate, periodRange, viewMode, selectedBoat, onlyLinked]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -292,6 +300,11 @@ export default function ItinerarioFluvial() {
             onPeriodRangeChange={setPeriodRange}
             simulationDate={simulationDate}
             onSimulationDateChange={setSimulationDate}
+            boatOptions={boatOptions}
+            selectedBoat={selectedBoat}
+            onBoatChange={setSelectedBoat}
+            onlyLinked={onlyLinked}
+            onOnlyLinkedChange={setOnlyLinked}
           />
         ) : null}
         {routeType === 'Fluvial' ? (

@@ -1,13 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Anchor, CalendarRange, FileText, Link as LinkIcon, MoreHorizontal, Pencil, Power, Trash2, Waves } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import BoatExpandedCard from '@/components/logistica-sandbox/BoatExpandedCard';
 
 const mockTransportadoras = [
   {
@@ -61,131 +53,6 @@ const mockTransportadoras = [
   },
 ];
 
-function StatusBadge({ status }) {
-  const classes = status === 'ativa'
-    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
-
-  return <Badge className={`border-0 shadow-none ${classes}`}>{status === 'ativa' ? 'Ativa' : 'Inativa'}</Badge>;
-}
-
-function EventBadge({ status }) {
-  const map = {
-    'Concluído': 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900',
-    'Previsto': 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-    'Finalizado': 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-  };
-  return <Badge className={`border-0 shadow-none ${map[status] || 'bg-gray-100 text-gray-700'}`}>{status}</Badge>;
-}
-
-function FreteBadge({ status }) {
-  const map = {
-    'Pago': 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-    'Em aberto': 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  };
-  return <Badge className={`border-0 shadow-none ${map[status] || 'bg-gray-100 text-gray-700'}`}>{status}</Badge>;
-}
-
-function BoatCard({ transportadora }) {
-  const hasHistory = transportadora.eventos.length > 0 || transportadora.fretes.length > 0;
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-4 md:p-5 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
-              <Anchor className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate font-glacial">{transportadora.nome}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{transportadora.recorrencia}</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <StatusBadge status={transportadora.status} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-2xl bg-gray-100 dark:bg-gray-700 shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-2xl border-0 shadow-xl">
-              <DropdownMenuItem className="rounded-xl gap-2"><Pencil className="w-4 h-4" /> Editar</DropdownMenuItem>
-              {hasHistory ? (
-                <DropdownMenuItem className="rounded-xl gap-2"><Power className="w-4 h-4" /> Inativar</DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem className="rounded-xl gap-2 text-red-600 focus:text-red-600"><Trash2 className="w-4 h-4" /> Excluir</DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm">
-          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Chegada Manaus</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{transportadora.inicio_ciclo}</p>
-        </div>
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm">
-          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Saída Manaus</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{transportadora.proxima_saida}</p>
-        </div>
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm">
-          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">ETA Tabatinga</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{transportadora.proximo_eta}</p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 md:p-4 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <CalendarRange className="w-4 h-4" /> Histórico de eventos logísticos
-        </div>
-        <div className="space-y-2">
-          {transportadora.eventos.map((evento) => (
-            <div key={evento.id} className="flex items-center justify-between gap-3 rounded-2xl bg-white dark:bg-gray-800 px-3 py-2 shadow-sm">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{evento.titulo}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{evento.codigo} · {evento.data}</p>
-              </div>
-              <EventBadge status={evento.status} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 md:p-4 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <Waves className="w-4 h-4" /> Histórico de fretes
-        </div>
-        <div className="space-y-2">
-          {transportadora.fretes.map((frete) => (
-            <div key={frete.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl bg-white dark:bg-gray-800 px-3 py-3 shadow-sm">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{frete.periodo}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{frete.valor}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <FreteBadge status={frete.status} />
-                <Button variant="ghost" size="sm" className="rounded-2xl bg-gray-100 dark:bg-gray-700 shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 gap-2">
-                  <LinkIcon className="w-4 h-4" /> {frete.anexo}
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {hasHistory && transportadora.status === 'ativa' && (
-        <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-3 shadow-sm">
-          <p className="text-sm font-medium text-red-700 dark:text-red-300">Inativação com histórico</p>
-          <p className="mt-1 text-xs text-red-600 dark:text-red-300/90">Ao inativar esta transportadora, os eventos vinculados a partir da data escolhida deixarão de existir.</p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function BoatsTab() {
   const [filter, setFilter] = useState('todas');
@@ -216,7 +83,17 @@ export default function BoatsTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {transportadoras.map((transportadora) => (
-          <BoatCard key={transportadora.id} transportadora={transportadora} />
+          <BoatExpandedCard
+            key={transportadora.id}
+            transportadora={{
+              ...transportadora,
+              timeline: [
+                { label: 'Chegada em Manaus', data: transportadora.inicio_ciclo },
+                { label: 'Saída de Manaus', data: transportadora.proxima_saida },
+                { label: 'Chegada em Tabatinga', data: transportadora.proximo_eta },
+              ],
+            }}
+          />
         ))}
       </div>
     </div>
