@@ -44,10 +44,9 @@ export default function CaixasAtivosPage() {
         const registro = r.data || r;
         const status = registro.status;
         const convertido = registro.pedido_venda_final_id;
-        const emProcessamento = !!registro.data_inicio_processamento && !convertido;
         const temSenha = !!registro.senha_atendimento;
         const temItens = Array.isArray(registro.itens) && registro.itens.length > 0;
-        return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
+        return status === 'Aguardando Caixa' && !convertido && temSenha && temItens;
       }).map((r) => ({ ...(r.data || r), id: r.id }));
 
       const rascunhosPorCaixa = {};
