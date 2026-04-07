@@ -6,10 +6,6 @@
       "type": "string",
       "description": "C\u00f3digo visual do evento sanit\u00e1rio"
     },
-    "nome": {
-      "type": "string",
-      "description": "Nome renderizado do evento com ETA"
-    },
     "embarcacao_template_id": {
       "type": "string",
       "description": "ID da embarca\u00e7\u00e3o sanit\u00e1ria vinculada"
@@ -46,7 +42,7 @@
     "previsao_chegada": {
       "type": "string",
       "format": "date",
-      "description": "ETA do destino em dias"
+      "description": "Previs\u00e3o de chegada em dias"
     },
     "previsao_retorno": {
       "type": "string",
@@ -70,50 +66,11 @@
     "chave_relacional_futura": {
       "type": "string",
       "description": "Campo reservado para futura conex\u00e3o com embarques ou pedidos reais"
-    },
-    "ciclo_nome": {
-      "type": "string",
-      "description": "Nome da l\u00f3gica de ciclo aplicada"
-    },
-    "ciclo_dias": {
-      "type": "number",
-      "description": "Quantidade de dias da l\u00f3gica aplicada"
-    },
-    "contato_viajante": {
-      "type": "string",
-      "description": "Nome do contato principal do viajante"
-    },
-    "telefone_viajante": {
-      "type": "string",
-      "description": "Telefone do contato principal do viajante"
-    },
-    "conta_frete_status": {
-      "type": "string",
-      "enum": [
-        "N\u00e3o gerado",
-        "Agendado",
-        "Pago"
-      ],
-      "default": "N\u00e3o gerado",
-      "description": "Status do frete relacionado"
-    },
-    "conta_frete_data": {
-      "type": "string",
-      "format": "date",
-      "description": "Data agendada da conta de frete"
-    },
-    "conta_frete_titulo": {
-      "type": "string",
-      "description": "Descri\u00e7\u00e3o da conta a pagar do frete"
-    },
-    "anexo_frete_url": {
-      "type": "string",
-      "description": "URL do anexo do frete"
     }
   },
   "required": [
     "codigo",
-    "embarcacao_nome",
+    "embarcacao_template_id",
     "status_operacao",
     "data_referencia"
   ]

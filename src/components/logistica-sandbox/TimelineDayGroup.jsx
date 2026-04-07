@@ -24,7 +24,7 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <ShipWheel className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                    <span className="text-sm text-gray-900 dark:text-gray-100 font-medium truncate">{evento.nome || evento.embarcacao_nome}</span>
+                    <span className="text-sm text-gray-900 dark:text-gray-100 font-medium truncate">{evento.embarcacao_nome}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
                     {evento.codigo && <span>{evento.codigo}</span>}
@@ -37,7 +37,7 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
                     <CalendarClock className="w-3.5 h-3.5" />
                     <span>Saída Manaus</span>
                   </div>
-                  <p className="text-xs text-gray-900 dark:text-gray-100 mt-1">{evento.data_saida_manaus_formatada || evento.data_chegada_destino_formatada || evento.data_retorno_origem_formatada}</p>
+                  <p className="text-xs text-gray-900 dark:text-gray-100 mt-1">{evento.data_saida_manaus_formatada}</p>
                 </div>
               </div>
             </button>
