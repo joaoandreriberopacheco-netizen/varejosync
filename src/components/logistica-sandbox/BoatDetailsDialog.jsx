@@ -1,8 +1,11 @@
-import React from 'react';
-import { Anchor, CalendarClock, Waves, FileText, CalendarDays, Package2, Phone, User, DollarSign, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Anchor, CalendarClock, Waves, FileText, CalendarDays, Package2, Phone, User, DollarSign, ChevronRight, Pencil, Trash2, Power, Save } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import BoatHistoryDetailsDialog from '@/components/logistica-sandbox/BoatHistoryDetailsDialog';
 
 function StatusBadge({ status }) {
   const classes = status === 'ativa'
@@ -10,14 +13,6 @@ function StatusBadge({ status }) {
     : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
 
   return <Badge className={`border-0 shadow-none ${classes}`}>{status === 'ativa' ? 'Ativa' : 'Inativa'}</Badge>;
-}
-
-function FreteBadge({ status }) {
-  const map = {
-    'Pago': 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-    'Em aberto': 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  };
-  return <Badge className={`border-0 shadow-none ${map[status] || 'bg-gray-100 text-gray-700'}`}>{status}</Badge>;
 }
 
 function BoatTimelineItem({ item }) {
@@ -71,21 +66,22 @@ function ItinerarioEditorCard({ item }) {
 
 function HistoricoStatusIcon({ status }) {
   const colorMap = {
-    vinculado: 'text-yellow-500 ring-yellow-400/60',
-    atrasado: 'text-red-500 ring-red-400/60',
-    pago: 'text-emerald-500 ring-emerald-400/60',
+    sem_conta: 'bg-transparent text-gray-500 ring-gray-500/30',
+    vinculado: 'bg-[#d7de79]/12 text-[#d7de79] ring-[#d7de79]/55',
+    atrasado: 'bg-[#f27979]/12 text-[#f27979] ring-[#f27979]/55',
+    pago: 'bg-emerald-500/12 text-emerald-400 ring-emerald-400/55',
   };
 
   return (
-    <div className={`w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center ring-2 ${colorMap[status] || 'text-gray-500 ring-gray-300'}`}>
+    <div className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 ${colorMap[status] || 'bg-transparent text-gray-500 ring-gray-500/30'}`}>
       <DollarSign className="w-4 h-4" />
     </div>
   );
 }
 
-function HistoricoCard({ evento }) {
+function HistoricoCard({ evento, onOpen }) {
   return (
-    <button type="button" className="w-full rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm text-left">
+    <button type="button" onClick={() => onOpen(evento)} className="w-full rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm text-left">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{evento.titulo}</p>
@@ -104,90 +100,137 @@ function HistoricoCard({ evento }) {
   );
 }
 
-export default function BoatDetailsDialog({ open, onOpenChange, transportadora }) {
-  if (!transportadora) return null;
+export default function BoatDetailsDialog({ open, onOpenChange, transportadora, onSave, onDelete, onInactivate }) {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [selectedEvento, setSelectedEvento] = React.useState(null);
+  const [draft, setDraft] = React.useState(transportadora);
+
+  React.useEffect(() => {
+    setDraft(transportadora);
+    setIsEditing(false);
+    setSelectedEvento(null);
+  }, [transportadora]);
+
+  if (!transportadora || !draft) return null;
+
+  const hasRecords = (transportadora.eventos || []).length > 0;
+
+  const handleSave = () => {
+    onSave?.(draft);
+    setIsEditing(false);
+  };
+
+  const handleDeleteOrInactivate = () => {
+    if (hasRecords) {
+      const updated = { ...draft, status: 'inativa' };
+      setDraft(updated);
+      onInactivate?.(transportadora.id);
+      return;
+    }
+    onDelete?.(transportadora.id);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl h-[90vh] p-0 overflow-hidden rounded-[28px] border-0 bg-white dark:bg-gray-900 shadow-2xl sm:rounded-[28px]">
-        <div className="flex h-full min-h-0 flex-col relative">
-          <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 text-left">
-            <div className="flex items-start justify-between gap-3 pr-8">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
-                  <Anchor className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl h-[90vh] p-0 overflow-hidden rounded-[28px] border-0 bg-white dark:bg-gray-900 shadow-2xl sm:rounded-[28px]">
+          <div className="flex h-full min-h-0 flex-col relative">
+            <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 text-left">
+              <div className="flex items-start justify-between gap-3 pr-8">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
+                    <Anchor className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                  </div>
+                  <div className="min-w-0">
+                    <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100 font-glacial truncate">{draft.nome}</DialogTitle>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Próximo ETA: {draft.proximo_eta}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100 font-glacial truncate">{transportadora.nome}</DialogTitle>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Próximo ETA: {transportadora.proximo_eta}</p>
-                </div>
+                <StatusBadge status={draft.status} />
               </div>
-              <StatusBadge status={transportadora.status} />
+            </DialogHeader>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              <Tabs defaultValue="cadastro" className="space-y-4">
+                <TabsList className="w-full h-auto rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 grid grid-cols-3">
+                  <TabsTrigger value="cadastro" className="rounded-2xl text-xs">Cadastro</TabsTrigger>
+                  <TabsTrigger value="timeline" className="rounded-2xl text-xs">Timeline</TabsTrigger>
+                  <TabsTrigger value="historico" className="rounded-2xl text-xs">Histórico</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="timeline" className="mt-0">
+                  <div className="space-y-1 pr-1">
+                    {draft.timeline.map((item) => (
+                      <BoatTimelineItem key={`${item.label}-${item.data}`} item={item} />
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="cadastro" className="mt-0 space-y-4">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Button type="button" onClick={() => setIsEditing((prev) => !prev)} variant="outline" className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 shadow-sm">
+                      <Pencil className="w-4 h-4 mr-2" />
+                      {isEditing ? 'Cancelar' : 'Editar'}
+                    </Button>
+                    <Button type="button" onClick={handleDeleteOrInactivate} variant="outline" className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 shadow-sm text-red-500 dark:text-red-400">
+                      {hasRecords ? <Power className="w-4 h-4 mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                      {hasRecords ? 'Inativar' : 'Excluir'}
+                    </Button>
+                    {isEditing && (
+                      <Button type="button" onClick={handleSave} className="rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200">
+                        <Save className="w-4 h-4 mr-2" />Salvar
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><FileText className="w-4 h-4" /> Transportadora</div>
+                      {isEditing ? <Input value={draft.nome} onChange={(e) => setDraft({ ...draft, nome: e.target.value })} className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.nome}</p>}
+                    </div>
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><Waves className="w-4 h-4" /> Status</div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.status === 'ativa' ? 'Ativa' : 'Inativa'}</p>
+                    </div>
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><User className="w-4 h-4" /> Contato</div>
+                      {isEditing ? <Input value={draft.contato} onChange={(e) => setDraft({ ...draft, contato: e.target.value })} className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.contato}</p>}
+                    </div>
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><Phone className="w-4 h-4" /> Telefone</div>
+                      {isEditing ? <Input value={draft.telefone} onChange={(e) => setDraft({ ...draft, telefone: e.target.value })} className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.telefone}</p>}
+                    </div>
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm md:col-span-2">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><CalendarClock className="w-4 h-4" /> Itinerário base</div>
+                      {isEditing ? <Input value={draft.recorrencia} onChange={(e) => setDraft({ ...draft, recorrencia: e.target.value })} className="h-10 rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-none" /> : <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{draft.recorrencia}</p>}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Controle de itinerário</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Ajuste visual de eventos atuais, futuros e passados.</p>
+                    </div>
+                    {draft.itinerario_real.map((item) => (
+                      <ItinerarioEditorCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="historico" className="mt-0">
+                  <div className="space-y-3">
+                    {draft.eventos.map((evento) => (
+                      <HistoricoCard key={evento.id} evento={evento} onOpen={setSelectedEvento} />
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
-          </DialogHeader>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-            <Tabs defaultValue="cadastro" className="space-y-4">
-              <TabsList className="w-full h-auto rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 grid grid-cols-3">
-                <TabsTrigger value="cadastro" className="rounded-2xl text-xs">Cadastro</TabsTrigger>
-                <TabsTrigger value="timeline" className="rounded-2xl text-xs">Timeline</TabsTrigger>
-                <TabsTrigger value="historico" className="rounded-2xl text-xs">Histórico</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="timeline" className="mt-0">
-                <div className="space-y-1 pr-1">
-                  {transportadora.timeline.map((item) => (
-                    <BoatTimelineItem key={`${item.label}-${item.data}`} item={item} />
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="cadastro" className="mt-0 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><FileText className="w-4 h-4" /> Transportadora</div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{transportadora.nome}</p>
-                  </div>
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><Waves className="w-4 h-4" /> Status</div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{transportadora.status === 'ativa' ? 'Ativa' : 'Inativa'}</p>
-                  </div>
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><User className="w-4 h-4" /> Contato</div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{transportadora.contato}</p>
-                  </div>
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><Phone className="w-4 h-4" /> Telefone</div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{transportadora.telefone}</p>
-                  </div>
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm md:col-span-2">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2"><CalendarClock className="w-4 h-4" /> Itinerário base</div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{transportadora.recorrencia}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Controle de itinerário</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Ajuste visual de eventos atuais, futuros e passados.</p>
-                  </div>
-                  {transportadora.itinerario_real.map((item) => (
-                    <ItinerarioEditorCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="historico" className="mt-0">
-                <div className="space-y-3">
-                  {transportadora.eventos.map((evento) => (
-                    <HistoricoCard key={evento.id} evento={evento} />
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <BoatHistoryDetailsDialog open={!!selectedEvento} onOpenChange={(open) => !open && setSelectedEvento(null)} evento={selectedEvento} />
+    </>
   );
 }

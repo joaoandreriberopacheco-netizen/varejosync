@@ -22,9 +22,9 @@ const mockTransportadoras = [
     proxima_saida: '2026-03-10',
     proximo_eta: '2026-03-17',
     eventos: [
-      { id: 'evt-1', codigo: 'EVT-0310', titulo: 'Saída de Manaus', data: '10/03/2026', status: 'Concluído', cargas: 2, freteValor: 'R$ 14.800,00', financeiroStatus: 'pago' },
-      { id: 'evt-2', codigo: 'EVT-0317', titulo: 'ETA Tabatinga', data: '17/03/2026', status: 'Previsto', cargas: 1, freteValor: 'R$ 16.250,00', financeiroStatus: 'atrasado' },
-      { id: 'evt-3', codigo: 'EVT-0303', titulo: 'Chegada em Manaus', data: '03/03/2026', status: 'Concluído', cargas: 1, freteValor: 'R$ 13.200,00', financeiroStatus: 'vinculado' },
+      { id: 'evt-1', codigo: 'EVT-0310', titulo: 'Saída de Manaus', data: '10/03/2026', status: 'Concluído', cargas: 2, freteValor: 'R$ 14.800,00', financeiroStatus: 'pago', pagamentoLabel: 'Frete pago', embarques: [{ id: 'emb-1', nome: 'EMB-201', resumo: '2 volumes · Fornecedor A', status: 'Despachado' }, { id: 'emb-2', nome: 'EMB-202', resumo: '5 volumes · Fornecedor B', status: 'Recebido' }], anexos: [{ id: 'anx-1', nome: 'Conhecimento.pdf', tipo: 'PDF' }, { id: 'anx-2', nome: 'Comprovante.jpg', tipo: 'Imagem' }] },
+      { id: 'evt-2', codigo: 'EVT-0317', titulo: 'ETA Tabatinga', data: '17/03/2026', status: 'Previsto', cargas: 1, freteValor: 'R$ 16.250,00', financeiroStatus: 'atrasado', pagamentoLabel: 'Conta atrasada', embarques: [{ id: 'emb-3', nome: 'EMB-203', resumo: '1 volume · Fornecedor C', status: 'Em trânsito' }], anexos: [{ id: 'anx-3', nome: 'Romaneio.pdf', tipo: 'PDF' }] },
+      { id: 'evt-3', codigo: 'EVT-0303', titulo: 'Chegada em Manaus', data: '03/03/2026', status: 'Concluído', cargas: 1, freteValor: 'R$ 13.200,00', financeiroStatus: 'vinculado', pagamentoLabel: 'Conta a pagar vinculada', embarques: [{ id: 'emb-4', nome: 'EMB-204', resumo: '3 volumes · Fornecedor D', status: 'Conferido' }], anexos: [{ id: 'anx-4', nome: 'Recibo.png', tipo: 'Imagem' }] },
     ],
   },
   {
@@ -43,8 +43,8 @@ const mockTransportadoras = [
     proxima_saida: '2026-03-15',
     proximo_eta: '2026-03-22',
     eventos: [
-      { id: 'evt-4', codigo: 'EVT-0315', titulo: 'Saída de Manaus', data: '15/03/2026', status: 'Concluído', cargas: 1, freteValor: 'R$ 12.500,00', financeiroStatus: 'pago' },
-      { id: 'evt-5', codigo: 'EVT-0322', titulo: 'ETA Tabatinga', data: '22/03/2026', status: 'Previsto', cargas: 1, freteValor: 'R$ 11.900,00', financeiroStatus: 'vinculado' },
+      { id: 'evt-4', codigo: 'EVT-0315', titulo: 'Saída de Manaus', data: '15/03/2026', status: 'Concluído', cargas: 1, freteValor: 'R$ 12.500,00', financeiroStatus: 'pago', pagamentoLabel: 'Frete pago', embarques: [{ id: 'emb-5', nome: 'EMB-205', resumo: '4 volumes · Fornecedor E', status: 'Despachado' }], anexos: [{ id: 'anx-5', nome: 'Nota.pdf', tipo: 'PDF' }] },
+      { id: 'evt-5', codigo: 'EVT-0322', titulo: 'ETA Tabatinga', data: '22/03/2026', status: 'Previsto', cargas: 1, freteValor: 'R$ 11.900,00', financeiroStatus: 'vinculado', pagamentoLabel: 'Conta a pagar vinculada', embarques: [{ id: 'emb-6', nome: 'EMB-206', resumo: '2 volumes · Fornecedor F', status: 'Em trânsito' }], anexos: [{ id: 'anx-6', nome: 'Comprovante.pdf', tipo: 'PDF' }] },
     ],
   },
   {
@@ -63,7 +63,7 @@ const mockTransportadoras = [
     proxima_saida: '-',
     proximo_eta: '-',
     eventos: [
-      { id: 'evt-6', codigo: 'EVT-1222', titulo: 'ETA Tabatinga', data: '22/12/2025', status: 'Finalizado', cargas: 1, freteValor: 'R$ 11.900,00', financeiroStatus: 'pago' },
+      { id: 'evt-6', codigo: 'EVT-1222', titulo: 'ETA Tabatinga', data: '22/12/2025', status: 'Finalizado', cargas: 1, freteValor: 'R$ 11.900,00', financeiroStatus: 'sem_conta', pagamentoLabel: 'Sem conta a pagar associada', embarques: [{ id: 'emb-7', nome: 'EMB-207', resumo: '1 volume · Fornecedor G', status: 'Finalizado' }], anexos: [{ id: 'anx-7', nome: 'Resumo.txt', tipo: 'Texto' }] },
     ],
   },
 ];
@@ -109,12 +109,28 @@ export default function BoatsTab() {
   const [filter, setFilter] = useState('todas');
   const [selectedBoat, setSelectedBoat] = useState(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const [transportadorasData, setTransportadorasData] = useState(mockTransportadoras);
 
   const transportadoras = useMemo(() => {
-    if (filter === 'ativas') return mockTransportadoras.filter((item) => item.status === 'ativa');
-    if (filter === 'inativas') return mockTransportadoras.filter((item) => item.status === 'inativa');
-    return mockTransportadoras;
-  }, [filter]);
+    if (filter === 'ativas') return transportadorasData.filter((item) => item.status === 'ativa');
+    if (filter === 'inativas') return transportadorasData.filter((item) => item.status === 'inativa');
+    return transportadorasData;
+  }, [filter, transportadorasData]);
+
+  const handleSaveBoat = (updatedBoat) => {
+    setTransportadorasData((prev) => prev.map((item) => item.id === updatedBoat.id ? updatedBoat : item));
+    setSelectedBoat(updatedBoat);
+  };
+
+  const handleDeleteBoat = (boatId) => {
+    setTransportadorasData((prev) => prev.filter((item) => item.id !== boatId));
+    setSelectedBoat(null);
+  };
+
+  const handleInactivateBoat = (boatId) => {
+    setTransportadorasData((prev) => prev.map((item) => item.id === boatId ? { ...item, status: 'inativa' } : item));
+    setSelectedBoat((prev) => prev && prev.id === boatId ? { ...prev, status: 'inativa' } : prev);
+  };
 
   return (
     <div className="space-y-4">
@@ -159,7 +175,14 @@ export default function BoatsTab() {
         ))}
       </div>
 
-      <BoatDetailsDialog open={!!selectedBoat} onOpenChange={(open) => !open && setSelectedBoat(null)} transportadora={selectedBoat} />
+      <BoatDetailsDialog
+        open={!!selectedBoat}
+        onOpenChange={(open) => !open && setSelectedBoat(null)}
+        transportadora={selectedBoat}
+        onSave={handleSaveBoat}
+        onDelete={handleDeleteBoat}
+        onInactivate={handleInactivateBoat}
+      />
       <NewTransportadoraDialog open={showNewDialog} onOpenChange={setShowNewDialog} />
     </div>
   );
