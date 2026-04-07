@@ -98,8 +98,8 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
           Adicionar
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl rounded-3xl border-0 shadow-xl p-0 overflow-hidden">
-        <div className="p-6 bg-white dark:bg-gray-900">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-xl max-h-[calc(100vh-1.5rem)] rounded-3xl border-0 shadow-xl p-0 overflow-hidden flex flex-col">
+        <div className="p-4 md:p-6 bg-white dark:bg-gray-900 overflow-y-auto overscroll-contain max-h-[calc(100vh-1.5rem)]">
           <DialogHeader>
             <DialogTitle className="font-glacial text-2xl text-gray-900 dark:text-gray-100">Novo evento fluvial</DialogTitle>
             <DialogDescription>Cadastre o marco zero da saída de Manaus e deixe o ETA ser projetado automaticamente.</DialogDescription>
