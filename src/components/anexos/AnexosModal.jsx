@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, ChevronRight } from 'lucide-react';
-import { deletarAnexo } from '@/functions/deletarAnexo';
-import { base44 } from '@/api/base44Client';
+import { X, FileText, Image, File, Trash2, ExternalLink, Loader2, Upload, Printer } from 'lucide-react';
+import exportAnexosToPdf from '@/components/anexos/exportAnexosToPdf';
 
 const TIPOS_DOCUMENTO = ['Comprovante', 'Boleto', 'Nota Fiscal', 'Contrato', 'Orçamento', 'Outro'];
 const ORDER = ['Nota Fiscal', 'Boleto', 'Comprovante', 'Contrato', 'Orçamento', 'Outro'];
@@ -69,6 +68,7 @@ function AnexoCard({ anexo, onDelete, readOnly = false }) {
 
 export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelete, uploading, referenciaNomero, readOnly = false }) {
   const [tipoSelecionado, setTipoSelecionado] = useState('Comprovante');
+  const [exportingPdf, setExportingPdf] = useState(false);
   const inputRef = useRef();
 
   const grupos = ORDER.reduce((acc, tipo) => {
@@ -87,17 +87,31 @@ export default function AnexosModal({ isOpen, onClose, anexos, onUpload, onDelet
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-4">
+      <div className="flex items-center justify-between px-5 pt-6 pb-4 gap-3">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white font-glacial">Anexos</h2>
           {referenciaNomero && <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">{referenciaNomero}</p>}
         </div>
-        <button
-          onClick={onClose}
-          className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              setExportingPdf(true);
+              await exportAnexosToPdf(anexos);
+              setExportingPdf(false);
+            }}
+            disabled={exportingPdf || anexos.length === 0}
+            className="h-9 px-3 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50 flex items-center justify-center gap-2 text-gray-600 dark:text-gray-300 transition-colors"
+          >
+            {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+            <span className="text-xs font-medium">PDF</span>
+          </button>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {!readOnly && (
