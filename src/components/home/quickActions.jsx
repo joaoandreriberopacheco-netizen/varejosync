@@ -1,6 +1,6 @@
 import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
-  Truck, BarChart3, Users, ClipboardList, Receipt, Warehouse,
+  Ship, BarChart3, Users, ClipboardList, Receipt, Warehouse,
   FileText, QrCode, LayoutDashboard, Tag, Settings, Upload, MonitorCheck,
   Scan, Tablet, ClipboardPenLine, ReceiptText
 } from 'lucide-react';
@@ -56,8 +56,8 @@ export const ALL_QUICK_ACTIONS = [
   },
   {
     id: 'logistica',
-    icon: Truck,
-    label: 'Logística',
+    icon: Ship,
+    label: 'Boats',
     page: 'Logistica',
     permissaoCheck: (p) => p?.estoque?.logistica || p?.estoque?.compras?.hub_logistico?.logistica,
   },
