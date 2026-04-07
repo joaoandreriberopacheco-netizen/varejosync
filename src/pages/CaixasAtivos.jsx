@@ -356,9 +356,9 @@ export default function CaixasAtivosPage() {
         )}
 
         {showSenhasDialog && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-start md:items-center justify-center p-3 md:p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-4 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-full md:max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
                 <div>
                   <div className="text-xs text-gray-400 uppercase tracking-wider">Controle</div>
                   <div className="text-xl font-bold text-gray-900 dark:text-white font-glacial">Senhas aguardando caixa</div>
@@ -367,7 +367,7 @@ export default function CaixasAtivosPage() {
                   Fechar
                 </button>
               </div>
-              <div className="p-5 space-y-3">
+              <div className="p-5 space-y-3 overflow-y-auto overscroll-contain flex-1">
                 {senhasNaoProcessadas.map((rascunho) => (
                   <div
                     key={rascunho.id}
