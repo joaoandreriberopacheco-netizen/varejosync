@@ -174,6 +174,12 @@ export default function ItinerarioFluvial() {
     setSelectedEvento(null);
   }, [routeType, viewMode, simulationDate, freteMonth, periodRange]);
 
+  React.useEffect(() => {
+    if (routeType !== 'Fluvial') {
+      setShowFilters(false);
+    }
+  }, [routeType]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     handleResize();
@@ -291,7 +297,9 @@ export default function ItinerarioFluvial() {
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
-                    <MobileFilterSheet open={showFilters} onOpenChange={setShowFilters} />
+                    {routeType === 'Fluvial' && (
+                      <MobileFilterSheet open={showFilters} onOpenChange={setShowFilters} />
+                    )}
                   </div>
                   <div className="bg-transparent space-y-1">
                     {timelineItems.map((item) => (
