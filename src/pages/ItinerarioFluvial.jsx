@@ -16,6 +16,7 @@ import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
 import MobileFilterSheet from '@/components/logistica-sandbox/MobileFilterSheet';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
+import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 
 const fallbackEventos = [
   {
@@ -255,7 +256,7 @@ export default function ItinerarioFluvial() {
         <LogisticaSandboxHeader />
         <div className="flex flex-col gap-3">
           <RouteModeToggle value={routeType} onChange={setRouteType} />
-          <CreateEventoLogisticoDialog onCreated={() => queryClient.invalidateQueries({ queryKey: ['evento-logistico'] })} />
+          {routeType === 'Boats' ? null : <CreateEventoLogisticoDialog onCreated={() => queryClient.invalidateQueries({ queryKey: ['evento-logistico'] })} />}
         </div>
         {routeType === 'Fluvial' ? (
           <>
@@ -323,7 +324,7 @@ export default function ItinerarioFluvial() {
               </>
             )}
           </>
-        ) : (
+        ) : routeType === 'Fretes' ? (
           <div className="space-y-5">
             {isMobile && selectedEvento ? (
               <div className="space-y-4">
@@ -362,6 +363,8 @@ export default function ItinerarioFluvial() {
               </>
             )}
           </div>
+        ) : (
+          <BoatsTab />
         )}
       </div>
     </div>

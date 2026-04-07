@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { addDays, format } from 'date-fns';
+import { addDays, subDays, format } from 'date-fns';
 import { Plus, Route, Ship, StickyNote, User, Phone } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -32,11 +32,22 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     };
   }, [form]);
 
-  const etaPrevisto = useMemo(() => {
-    if (!form.data_saida_origem) return '';
-    const diasAteETA = form.usar_ciclo_padrao ? defaultCycle.diasAteETA : Number(form.ciclo_personalizado_duracao || 0);
-    if (!diasAteETA) return '';
-    return format(addDays(new Date(`${form.data_saida_origem}T00:00:00`), diasAteETA), 'dd/MM/yyyy');
+  const cicloProjetado = useMemo(() => {
+    if (!form.data_saida_origem) {
+      return { chegadaManaus: '', saidaManaus: '', etaTabatinga: '' };
+    }
+
+    const saidaManaus = new Date(`${form.data_saida_origem}T00:00:00`);
+    const deslocamento = form.usar_ciclo_padrao ? 7 : Number(form.ciclo_personalizado_duracao || 0);
+    if (!deslocamento) {
+      return { chegadaManaus: '', saidaManaus: format(saidaManaus, 'dd/MM/yyyy'), etaTabatinga: '' };
+    }
+
+    return {
+      chegadaManaus: format(subDays(saidaManaus, deslocamento), 'dd/MM/yyyy'),
+      saidaManaus: format(saidaManaus, 'dd/MM/yyyy'),
+      etaTabatinga: format(addDays(saidaManaus, deslocamento), 'dd/MM/yyyy')
+    };
   }, [form.data_saida_origem, form.usar_ciclo_padrao, form.ciclo_personalizado_duracao]);
 
   const handleChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -49,6 +60,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     const diasAteETA = form.usar_ciclo_padrao ? defaultCycle.diasAteETA : Number(form.ciclo_personalizado_duracao || 0);
     const diasAteRetornoManaus = form.usar_ciclo_padrao ? defaultCycle.diasAteRetornoManaus : Number(form.ciclo_personalizado_duracao || 0) * 2;
     const duracao = form.usar_ciclo_padrao ? defaultCycle.duracao : diasAteRetornoManaus;
+    const chegadaManaus = subDays(saida, diasAteETA);
     const chegada = addDays(saida, diasAteETA);
 
     const payload = {
@@ -58,6 +70,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
       embarcacao_nome: form.embarcacao_nome,
       rota_nome: 'Manaus → Tabatinga',
       status_operacao: 'Atracado na Origem',
+      data_chegada_manaus: format(chegadaManaus, 'yyyy-MM-dd'),
       data_saida_origem: form.data_saida_origem,
       data_referencia: form.data_saida_origem,
       data_chegada_destino: format(chegada, 'yyyy-MM-dd'),
@@ -68,7 +81,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
         form.observacoes,
         form.contato_viajante ? `Contato: ${form.contato_viajante}` : '',
         form.telefone_viajante ? `Telefone: ${form.telefone_viajante}` : '',
-        `Lógica: ETA em ${diasAteETA} dias • retorno a Manaus em ${diasAteRetornoManaus} dias • ciclo total ${duracao} dias`
+        `Lógica: chegada em Manaus ${diasAteETA} dias antes da saída • ETA em Tabatinga ${diasAteETA} dias após a saída • retorno a Manaus em ${diasAteRetornoManaus} dias • ciclo total ${duracao} dias`
       ].filter(Boolean).join(' • '),
       ocupacao_percentual: 0,
       dias_atraso: 0,
@@ -77,7 +90,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
 
     await base44.entities.EventoLogisticoSandbox.create(payload);
     toast.success('Transportadora e recorrência salvas com sucesso', {
-      description: 'O ciclo gera automaticamente as datas do evento logístico: chegada em Manaus, saída de Manaus 7 dias depois e chegada em Tabatinga 7 dias depois.'
+      description: 'O ciclo considera chegada em Manaus 7 dias antes da saída, depois saída de Manaus e ETA em Tabatinga 7 dias depois.'
     });
     setSaving(false);
     setOpen(false);
@@ -124,7 +137,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Usar ciclo padrão da recorrência</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">O evento logístico nasce desta recorrência: chegada em Manaus, saída de Manaus 7 dias depois e chegada em Tabatinga 7 dias depois.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">O ciclo considera chegada em Manaus, saída de Manaus 7 dias depois e chegada em Tabatinga 7 dias depois.</p>
                 </div>
                 <button
                   type="button"
@@ -142,10 +155,12 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
                 </div>
               )}
 
-              <div className="rounded-2xl bg-white dark:bg-gray-700 p-4 shadow-sm">
+              <div className="rounded-2xl bg-white dark:bg-gray-700 p-4 shadow-sm space-y-2">
                 <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ciclo projetado</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">Chegada em Manaus: {etaPrevisto || '-'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Depois disso, a automação considera saída de Manaus 7 dias depois e chegada em Tabatinga 7 dias depois.</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Chegada em Manaus: {cicloProjetado.chegadaManaus || '-'}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Saída de Manaus: {cicloProjetado.saidaManaus || '-'}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">ETA Tabatinga: {cicloProjetado.etaTabatinga || '-'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Se a saída for em 10/03, o ciclo projetado entende chegada em Manaus em 03/03 e ETA em Tabatinga em 17/03.</p>
               </div>
             </div>
 
