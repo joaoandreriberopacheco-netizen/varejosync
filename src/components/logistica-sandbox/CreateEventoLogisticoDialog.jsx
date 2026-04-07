@@ -9,6 +9,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 const defaultCycle = { nome: 'Ciclo padrão', duracao: 21 };
 
+function buildObservacaoBase(form, cicloNome, cicloDias) {
+  return [
+    form.observacoes,
+    form.contato_viajante ? `Contato: ${form.contato_viajante}` : '',
+    form.telefone_viajante ? `Telefone: ${form.telefone_viajante}` : '',
+    `Lógica: ${cicloNome} (${cicloDias} dias)`
+  ].filter(Boolean).join(' • ');
+}
+
 export default function CreateEventoLogisticoDialog({ onCreated }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -31,7 +40,17 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     };
   }, [form]);
 
-  const chegadaPrevista = useMemo(() => {
+  const chegadaTabatingaPrevista = useMemo(() => {
+    if (!form.data_saida_origem || !cicloAtivo.duracao) return '';
+    return format(addDays(new Date(`${form.data_saida_origem}T00:00:00`), 7), 'dd/MM/yyyy');
+  }, [form.data_saida_origem, cicloAtivo]);
+
+  const chegadaManausPrevista = useMemo(() => {
+    if (!form.data_saida_origem || !cicloAtivo.duracao) return '';
+    return format(addDays(new Date(`${form.data_saida_origem}T00:00:00`), 14), 'dd/MM/yyyy');
+  }, [form.data_saida_origem, cicloAtivo]);
+
+  const encerramentoPrevisto = useMemo(() => {
     if (!form.data_saida_origem || !cicloAtivo.duracao) return '';
     return format(addDays(new Date(`${form.data_saida_origem}T00:00:00`), cicloAtivo.duracao), 'dd/MM/yyyy');
   }, [form.data_saida_origem, cicloAtivo]);
@@ -43,31 +62,87 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
     setSaving(true);
 
     const duracao = cicloAtivo.duracao || 21;
-    const saida = new Date(`${form.data_saida_origem}T00:00:00`);
-    const chegada = addDays(saida, duracao);
+    const saidaManaus = new Date(`${form.data_saida_origem}T00:00:00`);
+    const chegadaTabatinga = addDays(saidaManaus, 7);
+    const chegadaManaus = addDays(saidaManaus, 14);
+    const encerramentoCiclo = addDays(saidaManaus, duracao);
+    const observacaoBase = buildObservacaoBase(form, cicloAtivo.nome, duracao);
+    const codigoBase = format(saidaManaus, 'ddMMyy');
 
-    const payload = {
-      embarcacao_nome: form.embarcacao_nome,
-      nome: `${form.embarcacao_nome} · ETA ${format(chegada, 'dd/MM/yyyy')}`,
-      codigo: `ETA-${format(chegada, 'ddMMyy')}`,
-      embarcacao_nome: form.embarcacao_nome,
-      rota_nome: 'Manaus → Tabatinga',
-      status_operacao: 'Atracado na Origem',
-      data_referencia: form.data_saida_origem,
-      previsao_chegada: format(chegada, 'yyyy-MM-dd'),
-      previsao_retorno: format(addDays(saida, duracao * 2), 'yyyy-MM-dd'),
-      observacoes: [
-        form.observacoes,
-        form.contato_viajante ? `Contato: ${form.contato_viajante}` : '',
-        form.telefone_viajante ? `Telefone: ${form.telefone_viajante}` : '',
-        `Lógica: ${cicloAtivo.nome} (${duracao} dias)`
-      ].filter(Boolean).join(' • '),
-      ocupacao_percentual: 0,
-      dias_atraso: 0,
-      chave_relacional_futura: 'evento_logistico_id'
-    };
-
-    await base44.entities.EventoLogisticoSandbox.create(payload);
+    await Promise.all([
+      base44.entities.EventoLogisticoSandbox.create({
+        codigo: `SM-${codigoBase}`,
+        nome: `${form.embarcacao_nome} · Saída Manaus`,
+        embarcacao_nome: form.embarcacao_nome,
+        rota_nome: 'Manaus → Tabatinga',
+        status_operacao: 'Atracado na Origem',
+        data_referencia: format(saidaManaus, 'yyyy-MM-dd'),
+        previsao_chegada: format(chegadaTabatinga, 'yyyy-MM-dd'),
+        previsao_retorno: format(chegadaManaus, 'yyyy-MM-dd'),
+        observacoes: [observacaoBase, 'Marco: saída de Manaus.'].filter(Boolean).join(' • '),
+        ciclo_nome: cicloAtivo.nome,
+        ciclo_dias: duracao,
+        contato_viajante: form.contato_viajante,
+        telefone_viajante: form.telefone_viajante,
+        ocupacao_percentual: 0,
+        dias_atraso: 0,
+        chave_relacional_futura: `ciclo-${codigoBase}`
+      }),
+      base44.entities.EventoLogisticoSandbox.create({
+        codigo: `CT-${codigoBase}`,
+        nome: `${form.embarcacao_nome} · Chegada Tabatinga`,
+        embarcacao_nome: form.embarcacao_nome,
+        rota_nome: 'Manaus → Tabatinga',
+        status_operacao: 'Atracado no Destino',
+        data_referencia: format(chegadaTabatinga, 'yyyy-MM-dd'),
+        previsao_chegada: format(chegadaTabatinga, 'yyyy-MM-dd'),
+        previsao_retorno: format(chegadaManaus, 'yyyy-MM-dd'),
+        observacoes: [observacaoBase, 'Marco: chegada em Tabatinga. Este marco encerra a etapa de ida.'].filter(Boolean).join(' • '),
+        ciclo_nome: cicloAtivo.nome,
+        ciclo_dias: duracao,
+        contato_viajante: form.contato_viajante,
+        telefone_viajante: form.telefone_viajante,
+        ocupacao_percentual: 0,
+        dias_atraso: 0,
+        chave_relacional_futura: `ciclo-${codigoBase}`
+      }),
+      base44.entities.EventoLogisticoSandbox.create({
+        codigo: `CM-${codigoBase}`,
+        nome: `${form.embarcacao_nome} · Chegada Manaus`,
+        embarcacao_nome: form.embarcacao_nome,
+        rota_nome: 'Tabatinga → Manaus',
+        status_operacao: 'Retornando',
+        data_referencia: format(chegadaManaus, 'yyyy-MM-dd'),
+        previsao_chegada: format(chegadaManaus, 'yyyy-MM-dd'),
+        previsao_retorno: format(encerramentoCiclo, 'yyyy-MM-dd'),
+        observacoes: [observacaoBase, 'Marco: retorno para Manaus.'].filter(Boolean).join(' • '),
+        ciclo_nome: cicloAtivo.nome,
+        ciclo_dias: duracao,
+        contato_viajante: form.contato_viajante,
+        telefone_viajante: form.telefone_viajante,
+        ocupacao_percentual: 0,
+        dias_atraso: 0,
+        chave_relacional_futura: `ciclo-${codigoBase}`
+      }),
+      base44.entities.EventoLogisticoSandbox.create({
+        codigo: `EC-${codigoBase}`,
+        nome: `${form.embarcacao_nome} · Encerramento do ciclo`,
+        embarcacao_nome: form.embarcacao_nome,
+        rota_nome: 'Manaus → Tabatinga → Manaus',
+        status_operacao: 'Atracado na Origem',
+        data_referencia: format(encerramentoCiclo, 'yyyy-MM-dd'),
+        previsao_chegada: format(encerramentoCiclo, 'yyyy-MM-dd'),
+        previsao_retorno: format(encerramentoCiclo, 'yyyy-MM-dd'),
+        observacoes: [observacaoBase, 'Marco: encerramento do ciclo de 21 dias.'].filter(Boolean).join(' • '),
+        ciclo_nome: cicloAtivo.nome,
+        ciclo_dias: duracao,
+        contato_viajante: form.contato_viajante,
+        telefone_viajante: form.telefone_viajante,
+        ocupacao_percentual: 0,
+        dias_atraso: 0,
+        chave_relacional_futura: `ciclo-${codigoBase}`
+      })
+    ]);
     setSaving(false);
     setOpen(false);
     setForm({
@@ -132,9 +207,13 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
               )}
 
               <div className="rounded-2xl bg-white dark:bg-gray-700 p-4 shadow-sm">
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">ETA projetado</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{chegadaPrevista || '-'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Renderização sugerida: {form.embarcacao_nome || 'Embarcação'} · ETA {chegadaPrevista || '--/--/----'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Ciclo projetado</p>
+                <div className="mt-2 space-y-1 text-sm text-gray-900 dark:text-gray-100">
+                  <p>Saída Manaus: {format(new Date(`${form.data_saida_origem}T00:00:00`), 'dd/MM/yyyy')}</p>
+                  <p>Chegada Tabatinga: {chegadaTabatingaPrevista || '-'}</p>
+                  <p>Chegada Manaus: {chegadaManausPrevista || '-'}</p>
+                  <p>Encerramento: {encerramentoPrevisto || '-'}</p>
+                </div>
               </div>
             </div>
 
@@ -157,7 +236,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-2xl border-0 shadow-sm">Cancelar</Button>
               <Button type="submit" disabled={saving} className="rounded-2xl shadow-sm bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
-                {saving ? 'Salvando...' : 'Criar evento com ETA'}
+                {saving ? 'Salvando...' : 'Criar recorrência do ciclo'}
               </Button>
             </DialogFooter>
           </form>

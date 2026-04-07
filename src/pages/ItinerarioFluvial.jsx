@@ -106,11 +106,11 @@ export default function ItinerarioFluvial() {
 
     return eventos
       .filter((evento) => {
-        const saida = new Date(`${evento.data_saida_origem || evento.data_referencia || simulationDate}T00:00:00`);
-        return saida >= targetDate;
+        const dataEvento = new Date(`${evento.data_referencia || simulationDate}T00:00:00`);
+        return dataEvento >= targetDate;
       })
       .reduce((acc, evento) => {
-        const key = evento.data_saida_origem || evento.data_referencia || simulationDate;
+        const key = evento.data_referencia || simulationDate;
         if (!acc[key]) acc[key] = [];
         acc[key].push(evento);
         return acc;
@@ -127,7 +127,7 @@ export default function ItinerarioFluvial() {
           label: format(date, 'EEEE, d MMM'),
           dayNumber: format(date, 'd'),
           isToday: isSameDay(date, new Date(`${simulationDate}T00:00:00`)),
-          eventos: items
+          eventos: items.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
         };
       });
   }, [groupedEventos, simulationDate]);
