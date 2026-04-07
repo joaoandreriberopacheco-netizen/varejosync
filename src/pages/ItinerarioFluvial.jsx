@@ -14,6 +14,8 @@ import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNaviga
 import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
+import MobileFilterSheet from '@/components/logistica-sandbox/MobileFilterSheet';
+import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 
 const fallbackEventos = [
   {
@@ -64,6 +66,7 @@ export default function ItinerarioFluvial() {
   const [viewMode, setViewMode] = useState('chegada_manaus');
   const [periodRange, setPeriodRange] = useState({ from: new Date(), to: undefined });
   const [freteMonth, setFreteMonth] = useState(new Date());
+  const [isMobile, setIsMobile] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -163,6 +166,13 @@ export default function ItinerarioFluvial() {
     setSelectedEvento(null);
   }, [routeType, viewMode, simulationDate, freteMonth, periodRange]);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const groupedEventos = useMemo(() => {
     const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
     const endDate = periodRange?.to || null;
@@ -248,54 +258,108 @@ export default function ItinerarioFluvial() {
         </div>
         {routeType === 'Fluvial' ? (
           <>
-            <TimelineViewControls
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-            <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
-            <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
-              <div className="bg-transparent space-y-1">
-                {timelineItems.map((item) => (
-                  <TimelineDayGroup
-                    key={item.key}
-                    label={item.label}
-                    dayNumber={item.dayNumber}
-                    eventos={item.eventos}
-                    isToday={item.isToday}
-                    onSelect={setSelectedEvento}
-                    viewModeLabel={viewModeLabel}
+            {isMobile ? (
+              selectedEvento ? (
+                <div className="space-y-4">
+                  <MobileDetailHeader
+                    title={selectedEvento.embarcacao_nome}
+                    subtitle={selectedEvento.codigo || 'Detalhes do evento'}
+                    onBack={() => setSelectedEvento(null)}
                   />
-                ))}
-              </div>
-              <TimelineSidebarCard evento={currentEvento} />
-            </div>
+                  <TimelineSidebarCard evento={selectedEvento} />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <MobileFilterSheet>
+                      <TimelineViewControls
+                        viewMode={viewMode}
+                        onViewModeChange={setViewMode}
+                      />
+                      <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
+                      <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
+                    </MobileFilterSheet>
+                  </div>
+                  <div className="bg-transparent space-y-1">
+                    {timelineItems.map((item) => (
+                      <TimelineDayGroup
+                        key={item.key}
+                        label={item.label}
+                        dayNumber={item.dayNumber}
+                        eventos={item.eventos}
+                        isToday={item.isToday}
+                        onSelect={setSelectedEvento}
+                        viewModeLabel={viewModeLabel}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+            ) : (
+              <>
+                <TimelineViewControls
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
+                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
+                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
+                  <div className="bg-transparent space-y-1">
+                    {timelineItems.map((item) => (
+                      <TimelineDayGroup
+                        key={item.key}
+                        label={item.label}
+                        dayNumber={item.dayNumber}
+                        eventos={item.eventos}
+                        isToday={item.isToday}
+                        onSelect={setSelectedEvento}
+                        viewModeLabel={viewModeLabel}
+                      />
+                    ))}
+                  </div>
+                  <TimelineSidebarCard evento={currentEvento} />
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="space-y-5">
-            <FreteMonthNavigator
-              currentMonth={freteMonth}
-              onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-              onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-            />
-            <FreteResumoCard
-              totalFretes={freteResumo.totalFretes}
-              totalComConta={freteResumo.totalComConta}
-              totalSemConta={freteResumo.totalSemConta}
-            />
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
-              <div className="space-y-3">
-                {freteEventos.map((evento) => (
-                  <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
-                ))}
-                {freteEventos.length === 0 && (
-                  <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
-                    Nenhum frete com carga encontrado neste período.
-                  </div>
-                )}
+            {isMobile && selectedEvento ? (
+              <div className="space-y-4">
+                <MobileDetailHeader
+                  title={selectedEvento.embarcacao_nome}
+                  subtitle={selectedEvento.codigo || 'Resumo da carga'}
+                  onBack={() => setSelectedEvento(null)}
+                />
+                <EventoCargaReportCard evento={selectedEvento} />
               </div>
-              <EventoCargaReportCard evento={currentEvento} />
-            </div>
+            ) : (
+              <>
+                <FreteMonthNavigator
+                  currentMonth={freteMonth}
+                  onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
+                  onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
+                />
+                <FreteResumoCard
+                  totalFretes={freteResumo.totalFretes}
+                  totalComConta={freteResumo.totalComConta}
+                  totalSemConta={freteResumo.totalSemConta}
+                />
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
+                  <div className="space-y-3">
+                    {freteEventos.map((evento) => (
+                      <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
+                    ))}
+                    {freteEventos.length === 0 && (
+                      <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
+                        Nenhum frete com carga encontrado neste período.
+                      </div>
+                    )}
+                  </div>
+                  {!isMobile && <EventoCargaReportCard evento={currentEvento} />}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

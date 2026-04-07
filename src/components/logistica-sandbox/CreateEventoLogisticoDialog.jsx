@@ -93,7 +93,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-11 rounded-2xl shadow-sm bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 gap-2">
+        <Button className="h-11 rounded-2xl border-0 shadow-sm bg-gray-800 hover:bg-gray-700 text-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 gap-2">
           <Plus className="w-4 h-4" />
           Adicionar
         </Button>
@@ -162,8 +162,8 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-2xl border-0 shadow-sm">Cancelar</Button>
-              <Button type="submit" disabled={saving} className="rounded-2xl shadow-sm bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-2xl border-0 shadow-sm bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200">Cancelar</Button>
+              <Button type="submit" disabled={saving} className="rounded-2xl border-0 shadow-sm bg-gray-800 hover:bg-gray-700 text-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
                 {saving ? 'Salvando...' : 'Criar evento com ETA'}
               </Button>
             </DialogFooter>
