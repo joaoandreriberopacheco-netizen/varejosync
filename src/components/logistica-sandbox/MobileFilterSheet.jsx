@@ -1,5 +1,5 @@
 import React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function MobileFilterSheet({ open, onOpenChange }) {
@@ -7,10 +7,9 @@ export default function MobileFilterSheet({ open, onOpenChange }) {
     <Button
       type="button"
       onClick={() => onOpenChange?.(!open)}
-      className="h-11 rounded-2xl border-0 shadow-sm bg-gray-800 hover:bg-gray-700 text-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 gap-2 justify-center"
+      className="h-11 w-11 rounded-2xl border-0 shadow-sm bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-100 px-0"
     >
-      <SlidersHorizontal className="w-4 h-4" />
-      Filtros
+      <ListFilter className="w-4 h-4" />
     </Button>
   );
 }

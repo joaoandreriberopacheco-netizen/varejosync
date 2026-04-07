@@ -17,8 +17,9 @@ import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaRep
 import MobileFilterSheet from '@/components/logistica-sandbox/MobileFilterSheet';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { ListFilter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 const fallbackEventos = [
   {
@@ -270,7 +271,7 @@ export default function ItinerarioFluvial() {
                 onClick={() => setShowFilters(true)}
                 className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
               >
-                <SlidersHorizontal className="w-4 h-4" />
+                <ListFilter className="w-4 h-4" />
               </Button>
             )}
           </div>
@@ -368,24 +369,43 @@ export default function ItinerarioFluvial() {
         ) : (
           <BoatsTab />
         )}
-        {routeType === 'Fluvial' && showFilters && (
+        {routeType === 'Fluvial' && isMobile ? (
+          <Sheet open={showFilters} onOpenChange={setShowFilters}>
+            <SheetContent side="bottom" className="rounded-t-[28px] border-0 bg-[#0f172a] dark:bg-[#0f172a] px-4 py-5 max-h-[85vh] overflow-y-auto">
+              <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mb-4" />
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-white">Filtros</p>
+                </div>
+                <TimelineViewControls
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
+                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
+                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowFilters(false)}
+                    className="h-11 rounded-2xl bg-white/10 text-white hover:bg-white/15"
+                  >
+                    Limpar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setShowFilters(false)}
+                    className="h-11 rounded-2xl bg-white text-slate-900 hover:bg-white/90"
+                  >
+                    Aplicar
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        ) : routeType === 'Fluvial' && showFilters ? (
           <div className="w-full">
             <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
-              <div className="flex items-center justify-between gap-3 mb-4 md:hidden">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Filtros</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Ajuste a visualização abaixo</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowFilters(false)}
-                  className="rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
               <div className="space-y-4">
                 <TimelineViewControls
                   viewMode={viewMode}
@@ -396,7 +416,7 @@ export default function ItinerarioFluvial() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
