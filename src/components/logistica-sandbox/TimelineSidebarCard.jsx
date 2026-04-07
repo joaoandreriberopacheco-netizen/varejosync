@@ -18,10 +18,10 @@ export default function TimelineSidebarCard({ evento }) {
         <p className="text-sm text-gray-500 dark:text-gray-400">{evento.codigo || 'Sem código'}</p>
       </div>
       <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm">
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><CalendarRange className="w-4 h-4" /> Linha do tempo</div>
-        <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">Saída Manaus: {evento.data_saida_manaus_formatada || '-'}</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">ETA destino: {evento.data_chegada_destino_formatada || '-'}</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">Retorno: {evento.data_retorno_origem_formatada || '-'}</div>
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><CalendarRange className="w-4 h-4" /> Linha do tempo do evento</div>
+        <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">Chegada em Manaus: {evento.data_chegada_manaus_formatada || '-'}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Saída de Manaus: {evento.data_saida_manaus_formatada || '-'}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">Chegada em Tabatinga (ETA): {evento.data_chegada_destino_formatada || '-'}</div>
       </div>
       <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 p-3 shadow-sm">
         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Package2 className="w-4 h-4" /> Ocupação</div>

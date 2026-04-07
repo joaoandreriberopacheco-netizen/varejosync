@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarClock, ShipWheel } from 'lucide-react';
 
-export default function TimelineDayGroup({ label, dayNumber, eventos = [], isToday = false, onSelect }) {
+export default function TimelineDayGroup({ label, dayNumber, eventos = [], isToday = false, onSelect, viewModeLabel }) {
   return (
     <div className="relative pl-12">
       <div className="absolute left-[18px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700" />
@@ -35,9 +35,9 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
                 <div className="text-right flex-shrink-0">
                   <div className="flex items-center gap-1 justify-end text-[11px] text-gray-500 dark:text-gray-400">
                     <CalendarClock className="w-3.5 h-3.5" />
-                    <span>Saída Manaus</span>
+                    <span>{viewModeLabel}</span>
                   </div>
-                  <p className="text-xs text-gray-900 dark:text-gray-100 mt-1">{evento.data_saida_manaus_formatada}</p>
+                  <p className="text-xs text-gray-900 dark:text-gray-100 mt-1">{evento.visualizacao_data_formatada}</p>
                 </div>
               </div>
             </button>
