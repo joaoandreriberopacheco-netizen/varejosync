@@ -1,5 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import BoatExpandedCard from '@/components/logistica-sandbox/BoatExpandedCard';
+import { Anchor, ChevronDown, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import BoatDetailsDialog from '@/components/logistica-sandbox/BoatDetailsDialog';
+import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransportadoraDialog';
 
 const mockTransportadoras = [
   {
@@ -54,8 +58,46 @@ const mockTransportadoras = [
 ];
 
 
+function StatusBadge({ status }) {
+  const classes = status === 'ativa'
+    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+
+  return <Badge className={`border-0 shadow-none ${classes}`}>{status === 'ativa' ? 'Ativa' : 'Inativa'}</Badge>;
+}
+
+function BoatListCard({ transportadora, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-4 text-left"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm flex-shrink-0">
+            <Anchor className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 font-glacial truncate">{transportadora.nome}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">Próximo ETA: {transportadora.proximo_eta}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <StatusBadge status={transportadora.status} />
+          <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-sm">
+            <ChevronDown className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export default function BoatsTab() {
   const [filter, setFilter] = useState('todas');
+  const [selectedBoat, setSelectedBoat] = useState(null);
+  const [showNewDialog, setShowNewDialog] = useState(false);
 
   const transportadoras = useMemo(() => {
     if (filter === 'ativas') return mockTransportadoras.filter((item) => item.status === 'ativa');
@@ -65,7 +107,8 @@ export default function BoatsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-wrap gap-2">
         {[
           { value: 'todas', label: 'Todas' },
           { value: 'ativas', label: 'Ativas' },
@@ -79,23 +122,31 @@ export default function BoatsTab() {
             {item.label}
           </button>
         ))}
+        </div>
+        <Button onClick={() => setShowNewDialog(true)} className="rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 gap-2">
+          <Plus className="w-4 h-4" /> Nova transportadora
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="space-y-4">
         {transportadoras.map((transportadora) => (
-          <BoatExpandedCard
+          <BoatListCard
             key={transportadora.id}
-            transportadora={{
+            transportadora={transportadora}
+            onClick={() => setSelectedBoat({
               ...transportadora,
               timeline: [
                 { label: 'Chegada em Manaus', data: transportadora.inicio_ciclo },
                 { label: 'Saída de Manaus', data: transportadora.proxima_saida },
                 { label: 'Chegada em Tabatinga', data: transportadora.proximo_eta },
               ],
-            }}
+            })}
           />
         ))}
       </div>
+
+      <BoatDetailsDialog open={!!selectedBoat} onOpenChange={(open) => !open && setSelectedBoat(null)} transportadora={selectedBoat} />
+      <NewTransportadoraDialog open={showNewDialog} onOpenChange={setShowNewDialog} />
     </div>
   );
 }
