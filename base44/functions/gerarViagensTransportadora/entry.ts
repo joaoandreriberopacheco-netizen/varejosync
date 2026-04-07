@@ -28,9 +28,10 @@ function startOfCurrentMonth() {
   return date.toISOString().slice(0, 10);
 }
 
-function buildCodigo(index, saidaManaus) {
-  const base = saidaManaus.replaceAll('-', '').slice(2);
-  return `VIG-${base}-${String(index + 1).padStart(2, '0')}`;
+function buildCodigo(sequence) {
+  const grupo = String(Math.floor((sequence - 1) / 999) + 1).padStart(3, '0');
+  const item = String(((sequence - 1) % 999) + 1).padStart(3, '0');
+  return `${grupo}-${item}`;
 }
 
 Deno.serve(async (req) => {
@@ -60,39 +61,38 @@ Deno.serve(async (req) => {
     }
 
     const viagensExistentes = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500);
-    const mesesExistentes = new Set(viagensExistentes.map((item) => monthKey(item.data_saida_origem || item.data_referencia || '')).filter(Boolean));
     const mesAtual = startOfCurrentMonth();
-    const mesLimite = addMonths(mesAtual, monthsToCreate - 1);
-    const offsetInicial = Math.max(0, diffInMonths(transportadora.saida_referencia, mesAtual));
-    const offsetFinal = diffInMonths(transportadora.saida_referencia, mesLimite);
+    const dataLimite = addMonths(mesAtual, monthsToCreate);
+    const offsets = [];
 
-    const offsets = ensureNextMonthOnly
-      ? (() => {
-          const ultimoOffsetExistente = viagensExistentes.length
-            ? Math.max(...viagensExistentes.map((item) => diffInMonths(transportadora.saida_referencia, item.data_saida_origem || item.data_referencia || transportadora.saida_referencia)))
-            : offsetInicial - 1;
-          const proximoOffset = ultimoOffsetExistente + 1;
-          const proximaSaida = addMonths(transportadora.saida_referencia, proximoOffset);
-          if (proximoOffset > offsetFinal || mesesExistentes.has(monthKey(proximaSaida))) return [];
-          return [proximoOffset];
-        })()
-      : Array.from({ length: Math.max(0, offsetFinal - offsetInicial + 1) }, (_, index) => offsetInicial + index)
-          .filter((offset) => !mesesExistentes.has(monthKey(addMonths(transportadora.saida_referencia, offset))));
+    let offset = 0;
+    while (true) {
+      const saidaManaus = addMonths(transportadora.saida_referencia, offset);
+      const chegadaManaus = addDays(saidaManaus, -7);
+      if (new Date(`${chegadaManaus}T00:00:00.000Z`) > new Date(`${dataLimite}T00:00:00.000Z`)) break;
+      if (new Date(`${saidaManaus}T00:00:00.000Z`) >= new Date(`${mesAtual}T00:00:00.000Z`) || new Date(`${chegadaManaus}T00:00:00.000Z`) >= new Date(`${mesAtual}T00:00:00.000Z`)) {
+        offsets.push(offset);
+      }
+      offset += 1;
+    }
 
-    const novasViagens = offsets.map((offset, index) => {
+    const offsetsFiltrados = ensureNextMonthOnly ? offsets.slice(-1) : offsets;
+
+    const novasViagens = offsetsFiltrados.map((offset, index) => {
       const saidaManaus = addMonths(transportadora.saida_referencia, offset);
       const chegadaManaus = addDays(saidaManaus, -7);
       const etaTabatinga = addDays(saidaManaus, 7);
       const proximaChegadaManaus = addDays(saidaManaus, 21);
+      const sequencia = offset + 1;
 
       return {
-        nome: `${transportadora.nome} · ${saidaManaus}`,
-        codigo: buildCodigo(viagensExistentes.length + index, saidaManaus),
+        nome: `${transportadora.nome} · Viagem ${sequencia}`,
+        codigo: buildCodigo(sequencia),
         embarcacao_template_id: transportadoraId,
         embarcacao_nome: transportadora.nome,
         rota_nome: 'Manaus → Tabatinga',
         status_operacao: 'Atracado na Origem',
-        data_referencia: saidaManaus,
+        data_referencia: chegadaManaus,
         data_chegada_manaus: chegadaManaus,
         data_saida_origem: saidaManaus,
         previsao_chegada: etaTabatinga,
