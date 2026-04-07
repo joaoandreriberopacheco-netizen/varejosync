@@ -85,6 +85,7 @@ export default function ExecucaoOrcamentaria() {
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [abaContas, setAbaContas] = useState('contas');
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
+  const [showNovoFluxo, setShowNovoFluxo] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -95,9 +96,9 @@ export default function ExecucaoOrcamentaria() {
   }, [contas]);
 
   useEffect(() => {
-    if (!showNovo) return;
+    if (!showNovoFluxo) return;
     setFabOpen(false);
-  }, [showNovo]);
+  }, [showNovoFluxo]);
 
   const load = async () => {
     setLoading(true);
@@ -309,7 +310,7 @@ export default function ExecucaoOrcamentaria() {
 
           {abaContas === 'contas' && (
             <>
-              {fabOpen && !showNovo && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
+              {fabOpen && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
               <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
                 {fabOpen && FAB_CONTAS_ITEMS.map(({ tipo, icon: Icon, label, dialogTipo }) => (
                   <button
@@ -397,14 +398,14 @@ export default function ExecucaoOrcamentaria() {
           <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />
 
           {/* FAB */}
-          {fabOpen && !showNovo && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
+          {fabOpen && !showNovoFluxo && <div className="fixed inset-0 z-20 bg-slate-950/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
           <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-30 flex flex-col items-end gap-2">
             {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
               <button key={tipo}
                 onClick={() => {
                   setFabOpen(false);
                   setNovoTipo(tipo);
-                  setShowNovo(true);
+                  setShowNovoFluxo(true);
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 dark:bg-slate-200 text-white dark:text-slate-900 text-sm font-medium shadow-lg whitespace-nowrap active:scale-95 transition-transform">
                 <Icon className="w-4 h-4" />{label}
@@ -419,6 +420,7 @@ export default function ExecucaoOrcamentaria() {
 
           {/* Dialogs */}
           {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+          <NovoLancamentoDialog open={showNovoFluxo} tipoInicial={novoTipo} onClose={() => { setShowNovoFluxo(false); setFabOpen(false); }} onSaved={load} />
           <FluxoCaixaPrintDialog
             open={showPrintDialog}
             onOpenChange={setShowPrintDialog}

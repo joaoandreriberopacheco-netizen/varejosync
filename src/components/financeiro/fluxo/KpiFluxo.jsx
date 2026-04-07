@@ -35,7 +35,7 @@ export default function KpiFluxo({ kpis }) {
         <div className="flex items-start justify-between gap-3 mb-2.5">
           <div>
             <p className="text-[8px] uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400 mb-1">Saldo de Execução</p>
-            <p className={`text-[19px] leading-none font-semibold ${kpis.saldo >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-500 dark:text-red-400'}`}>{R(kpis.saldo)}</p>
+            <p className="text-[19px] leading-none font-semibold text-white dark:text-white"><span className={kpis.saldo >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{kpis.saldo >= 0 ? '+' : '−'}</span>{R(Math.abs(kpis.saldo))}</p>
           </div>
           <div className="text-right pt-0.5">
             <p className="text-[8px] uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500 mb-1">Taxa</p>

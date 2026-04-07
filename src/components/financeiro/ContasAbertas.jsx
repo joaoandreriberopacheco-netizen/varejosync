@@ -80,8 +80,8 @@ function KpiAbertas({ kpis }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-3 flex items-center justify-between">
         <div>
           <p className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Saldo Projetado</p>
-          <p className={`text-base font-bold ${kpis.saldoProjetado >= 0 ? 'text-gray-800 dark:text-gray-100' : 'text-red-500 dark:text-red-400'}`}>
-            {R(kpis.saldoProjetado)}
+          <p className="text-base font-bold text-white dark:text-white">
+            <span className={kpis.saldoProjetado >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>{kpis.saldoProjetado >= 0 ? '+' : '−'}</span>{R(Math.abs(kpis.saldoProjetado))}
           </p>
         </div>
         {kpis.vencidas > 0 && (
