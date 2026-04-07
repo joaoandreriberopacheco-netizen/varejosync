@@ -32,10 +32,13 @@ export default function AprovacoesFinanceirasPage() {
   }, []);
 
   const loadData = async () => {
-    const [pedidosPendentes, contasData] = await Promise.all([
+    const [pedidosLiberacao, pedidosAprovacaoFinanceira, contasData] = await Promise.all([
       base44.entities.PedidoCompra.filter({ status: 'Aguardando Liberação' }),
+      base44.entities.PedidoCompra.filter({ status: 'Aguardando Aprovação Financeira' }),
       base44.entities.ContasFinanceiras.filter({ ativo: true })
     ]);
+
+    const pedidosPendentes = [...pedidosLiberacao, ...pedidosAprovacaoFinanceira];
     const adaptados = pedidosPendentes.map(p => ({
       id: p.id,
       referencia_id: p.id,
@@ -43,7 +46,7 @@ export default function AprovacoesFinanceirasPage() {
       referencia_numero: p.numero,
       descricao: `Compra - ${p.fornecedor_nome}`,
       valor: p.valor_total,
-      status: 'Aguardando Liberação',
+      status: p.status,
       _pedido: p,
     }));
     setPendingTransactions(adaptados);
