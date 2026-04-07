@@ -28,8 +28,7 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
                   </div>
                   <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
                     {evento.codigo && <span>{evento.codigo}</span>}
-                    <span>{evento.status_operacao}</span>
-                    <span>{evento.ocupacao_percentual || 0}%</span>
+                    <span>{evento.ocupacao_percentual_dinamica || 0}%</span>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">

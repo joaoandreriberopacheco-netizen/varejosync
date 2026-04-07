@@ -1,8 +1,9 @@
 import React from 'react';
-import { Waves } from 'lucide-react';
+import { Waves, BadgeDollarSign } from 'lucide-react';
 
 const options = [
   { value: 'Fluvial', icon: Waves },
+  { value: 'Fretes', icon: BadgeDollarSign },
 ];
 
 export default function RouteModeToggle({ value, onChange }) {
