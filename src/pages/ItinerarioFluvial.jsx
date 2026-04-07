@@ -156,6 +156,7 @@ export default function ItinerarioFluvial() {
           resumo_fornecedores: resumoFornecedores,
           valor_total_carga: valorTotalCarga,
           conta_frete: contaFrete || null,
+          conta_frete_status: contaFrete?.status || null,
           tem_conta_frete: Boolean(contaFrete)
         };
       })
