@@ -19,9 +19,10 @@ export default function LogisticaSandboxSidebar({ evento }) {
       </div>
       <div className="grid gap-3">
         <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-3 shadow-sm">
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><CalendarRange className="w-4 h-4" /> Previsão</div>
-          <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">Chega em {evento.previsao_chegada || '-'}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">Retorno em {evento.previsao_retorno || '-'}</div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><CalendarRange className="w-4 h-4" /> Cronologia</div>
+          <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">Saída Manaus: {evento.data_saida_manaus_formatada || '-'}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">ETA destino: {evento.data_chegada_destino_formatada || evento.previsao_chegada || '-'}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Retorno origem: {evento.data_retorno_origem_formatada || evento.previsao_retorno || '-'}</div>
         </div>
         <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-3 shadow-sm">
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Package2 className="w-4 h-4" /> Ocupação</div>
@@ -32,7 +33,7 @@ export default function LogisticaSandboxSidebar({ evento }) {
           <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">{evento.status_operacao}</div>
         </div>
         <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-3 shadow-sm">
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Link2 className="w-4 h-4" /> Chave futura</div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><Link2 className="w-4 h-4" /> Chave</div>
           <div className="mt-2 text-sm text-gray-900 dark:text-gray-100 break-all">{evento.chave_relacional_futura || 'evento_logistico_id'}</div>
         </div>
       </div>

@@ -53,7 +53,10 @@ export default function LogisticaSandboxBoard({ eventos, onSelect }) {
                     <ShipWheel className="w-4 h-4 text-gray-500" />
                     <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{evento.embarcacao_nome}</span>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{evento.status_operacao}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {evento.codigo && <span className="text-[11px] text-gray-400 dark:text-gray-500">{evento.codigo}</span>}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{evento.status_operacao}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <BatteryMedium className="w-4 h-4" />
@@ -72,9 +75,11 @@ export default function LogisticaSandboxBoard({ eventos, onSelect }) {
                 <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                   <div className={`h-full ${getLoadColor(evento.ocupacao_percentual || 0)}`} style={{ width: `${evento.ocupacao_percentual || 0}%` }} />
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-                  <span>Chegada: {evento.previsao_chegada || '-'}</span>
-                  <span>{evento.dias_atraso ? `+${evento.dias_atraso}d atraso` : 'No prazo'}</span>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                  <span>Saída Manaus: {evento.data_saida_manaus_formatada || '-'}</span>
+                  <span>ETA destino: {evento.data_chegada_destino_formatada || evento.previsao_chegada || '-'}</span>
+                  <span>Retorno: {evento.data_retorno_origem_formatada || evento.previsao_retorno || '-'}</span>
+                  <span className="text-right">{evento.dias_atraso ? `+${evento.dias_atraso}d atraso` : 'No prazo'}</span>
                 </div>
               </div>
             </button>
