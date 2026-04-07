@@ -10,49 +10,60 @@ const mockTransportadoras = [
     id: 'boat-1',
     nome: 'F/B Vitória Régia',
     status: 'ativa',
+    contato: 'Carlos Nogueira',
+    telefone: '(92) 99999-1001',
     recorrencia: 'Chegada em Manaus → +7 dias saída → +7 dias ETA Tabatinga',
+    itinerario_real: [
+      { id: 'itr-1', etapa: 'Chegada em Manaus', data: '2026-03-03', tipo: 'passada' },
+      { id: 'itr-2', etapa: 'Saída de Manaus', data: '2026-03-10', tipo: 'atual' },
+      { id: 'itr-3', etapa: 'ETA Tabatinga', data: '2026-03-17', tipo: 'futura' },
+    ],
     inicio_ciclo: '2026-03-03',
     proxima_saida: '2026-03-10',
     proximo_eta: '2026-03-17',
     eventos: [
-      { id: 'evt-1', codigo: 'EVT-0310', titulo: 'Saída de Manaus', data: '10/03/2026', status: 'Concluído' },
-      { id: 'evt-2', codigo: 'EVT-0317', titulo: 'ETA Tabatinga', data: '17/03/2026', status: 'Previsto' },
-      { id: 'evt-3', codigo: 'EVT-0303', titulo: 'Chegada em Manaus', data: '03/03/2026', status: 'Concluído' },
-    ],
-    fretes: [
-      { id: 'frt-1', periodo: 'Mar/2026', valor: 'R$ 14.800,00', status: 'Pago', anexo: 'Ver anexo' },
-      { id: 'frt-2', periodo: 'Abr/2026', valor: 'R$ 16.250,00', status: 'Em aberto', anexo: 'Ver anexo' },
+      { id: 'evt-1', codigo: 'EVT-0310', titulo: 'Saída de Manaus', data: '10/03/2026', status: 'Concluído', cargas: 2, freteValor: 'R$ 14.800,00', financeiroStatus: 'pago' },
+      { id: 'evt-2', codigo: 'EVT-0317', titulo: 'ETA Tabatinga', data: '17/03/2026', status: 'Previsto', cargas: 1, freteValor: 'R$ 16.250,00', financeiroStatus: 'atrasado' },
+      { id: 'evt-3', codigo: 'EVT-0303', titulo: 'Chegada em Manaus', data: '03/03/2026', status: 'Concluído', cargas: 1, freteValor: 'R$ 13.200,00', financeiroStatus: 'vinculado' },
     ],
   },
   {
     id: 'boat-2',
     nome: 'B/M Solimões Norte',
     status: 'ativa',
+    contato: 'Marina Souza',
+    telefone: '(92) 99999-2002',
     recorrencia: 'Chegada em Manaus → +7 dias saída → +7 dias ETA Tabatinga',
+    itinerario_real: [
+      { id: 'itr-4', etapa: 'Chegada em Manaus', data: '2026-03-08', tipo: 'passada' },
+      { id: 'itr-5', etapa: 'Saída de Manaus', data: '2026-03-15', tipo: 'atual' },
+      { id: 'itr-6', etapa: 'ETA Tabatinga', data: '2026-03-22', tipo: 'futura' },
+    ],
     inicio_ciclo: '2026-03-08',
     proxima_saida: '2026-03-15',
     proximo_eta: '2026-03-22',
     eventos: [
-      { id: 'evt-4', codigo: 'EVT-0315', titulo: 'Saída de Manaus', data: '15/03/2026', status: 'Concluído' },
-      { id: 'evt-5', codigo: 'EVT-0322', titulo: 'ETA Tabatinga', data: '22/03/2026', status: 'Previsto' },
-    ],
-    fretes: [
-      { id: 'frt-3', periodo: 'Fev/2026', valor: 'R$ 12.500,00', status: 'Pago', anexo: 'Ver anexo' },
+      { id: 'evt-4', codigo: 'EVT-0315', titulo: 'Saída de Manaus', data: '15/03/2026', status: 'Concluído', cargas: 1, freteValor: 'R$ 12.500,00', financeiroStatus: 'pago' },
+      { id: 'evt-5', codigo: 'EVT-0322', titulo: 'ETA Tabatinga', data: '22/03/2026', status: 'Previsto', cargas: 1, freteValor: 'R$ 11.900,00', financeiroStatus: 'vinculado' },
     ],
   },
   {
     id: 'boat-3',
     nome: 'N/M Estrela do Rio',
     status: 'inativa',
+    contato: 'Ronaldo Barros',
+    telefone: '(92) 99999-3003',
     recorrencia: 'Ciclo encerrado por inativação',
+    itinerario_real: [
+      { id: 'itr-7', etapa: 'Chegada em Manaus', data: '2025-12-01', tipo: 'passada' },
+      { id: 'itr-8', etapa: 'Saída de Manaus', data: '2025-12-08', tipo: 'passada' },
+      { id: 'itr-9', etapa: 'ETA Tabatinga', data: '2025-12-22', tipo: 'passada' },
+    ],
     inicio_ciclo: '2025-12-01',
     proxima_saida: '-',
     proximo_eta: '-',
     eventos: [
-      { id: 'evt-6', codigo: 'EVT-1222', titulo: 'ETA Tabatinga', data: '22/12/2025', status: 'Finalizado' },
-    ],
-    fretes: [
-      { id: 'frt-4', periodo: 'Dez/2025', valor: 'R$ 11.900,00', status: 'Pago', anexo: 'Ver anexo' },
+      { id: 'evt-6', codigo: 'EVT-1222', titulo: 'ETA Tabatinga', data: '22/12/2025', status: 'Finalizado', cargas: 1, freteValor: 'R$ 11.900,00', financeiroStatus: 'pago' },
     ],
   },
 ];
@@ -135,11 +146,14 @@ export default function BoatsTab() {
             transportadora={transportadora}
             onClick={() => setSelectedBoat({
               ...transportadora,
-              timeline: [
-                { label: 'Chegada em Manaus', data: transportadora.inicio_ciclo, dayLabel: 'CM', status: 'Concluído', hasLinked: true, linkedCount: 1 },
-                { label: 'Saída de Manaus', data: transportadora.proxima_saida, dayLabel: 'SM', status: 'Previsto', hasLinked: true, linkedCount: 2 },
-                { label: 'ETA Tabatinga', data: transportadora.proximo_eta, dayLabel: 'ET', status: 'Previsto', hasLinked: false, linkedCount: 0 },
-              ],
+              timeline: transportadora.eventos.map((evento, index) => ({
+                label: evento.titulo,
+                data: evento.data,
+                dayLabel: `${index + 1}`.padStart(2, '0'),
+                status: evento.status,
+                hasLinked: (evento.cargas || 0) > 0,
+                linkedCount: evento.cargas || 0,
+              })),
             })}
           />
         ))}
