@@ -34,8 +34,8 @@ const getEmbarqueSuffixIndex = (embarque, pedido) => {
 const getEmbarqueSuffix = (embarque, pedido) => LETTERS[getEmbarqueSuffixIndex(embarque, pedido)] || 'A';
 
 const getDisplayEmbarqueCode = (pedido, embarque) => {
-  const baseCode = pedido?.numero || '';
-  return `${baseCode} - ${getEmbarqueSuffix(embarque, pedido)}`;
+  const baseCode = String(pedido?.numero || '').replace(/\s+/g, '');
+  return `${baseCode}-${getEmbarqueSuffix(embarque, pedido)}`;
 };
 
 const getDisplayEmbarqueOrdinal = (embarque, pedido) => `#${String(getEmbarqueSuffixIndex(embarque, pedido) + 1).padStart(2, '0')}`;
@@ -436,7 +436,14 @@ export default function PedidosCompraPage() {
 
   const cardsFonte = useMemo(() => embarques, [embarques]);
 
-  const STATUS_EMBARQUE_VIRTUAIS = ['Rascunho', 'Aguardando', 'Aguardando Aprovação Financeira', 'Aprovado', 'Despachado', 'Concluído'];
+  const STATUS_EMBARQUE_VIRTUAIS = ['Rascunho', 'Aguardando', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira', 'Aguardando Liberação', 'Aprovado', 'Despachado', 'Concluído'];
+
+  const normalizeStatusFiltro = (status) => {
+    if (status === 'Aguardando Liberação') {
+      return ['Aguardando Liberação', 'Aguardando Aprovação Financeira', 'Aguardando Liberação Financeira'];
+    }
+    return [status];
+  };
 
   const filtrados = useMemo(() => {
     return cardsFonte.filter((p) => {
@@ -452,8 +459,10 @@ export default function PedidosCompraPage() {
       if (statusSel.includes('__nao_concluido__') && p._display_status === 'Concluído') return false;
 
       if (statusExplicitos.length > 0) {
-        const matchPai = statusPaiSel.includes(p.status) || statusPaiSel.includes(p._display_status);
-        const matchEmbarque = statusEmbSel.some((s) => {
+        const statusPaiExpandido = statusPaiSel.flatMap(normalizeStatusFiltro);
+        const statusEmbExpandido = statusEmbSel.flatMap(normalizeStatusFiltro);
+        const matchPai = statusPaiExpandido.includes(p.status) || statusPaiExpandido.includes(p._display_status);
+        const matchEmbarque = statusEmbExpandido.some((s) => {
           if (s === 'Aguardando Embarque') return !embarque?.transportadora_nome && !embarque?.eta;
           if (s === 'Original') return false;
           return embarque?.status_recebimento === s || embarque?.status === s || p._display_status === s;
