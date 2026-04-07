@@ -63,6 +63,9 @@ export default function ItinerarioFluvial() {
     <div className="min-h-screen bg-gray-50 dark:bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-5">
         <LogisticaSandboxHeader />
+        <div className="text-xs text-gray-500 dark:text-gray-400 px-1">
+          Caminho: Compras → Logística
+        </div>
         <RouteModeToggle value={routeType} onChange={setRouteType} />
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
           <LogisticaSandboxBoard eventos={eventos} onSelect={setSelectedEvento} />
