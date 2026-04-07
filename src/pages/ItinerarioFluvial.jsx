@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, isSameDay } from 'date-fns';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
@@ -7,6 +7,7 @@ import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
+import CreateEventoLogisticoDialog from '@/components/logistica-sandbox/CreateEventoLogisticoDialog';
 
 const fallbackEventos = [
   {
@@ -54,6 +55,7 @@ export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
     queryKey: ['evento-logistico'],
@@ -129,7 +131,10 @@ export default function ItinerarioFluvial() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         <LogisticaSandboxHeader totalEventos={eventos.length} />
-        <RouteModeToggle value={routeType} onChange={setRouteType} />
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <RouteModeToggle value={routeType} onChange={setRouteType} />
+          <CreateEventoLogisticoDialog onCreated={() => queryClient.invalidateQueries({ queryKey: ['evento-logistico'] })} />
+        </div>
         <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
           <div className="bg-transparent space-y-1">
