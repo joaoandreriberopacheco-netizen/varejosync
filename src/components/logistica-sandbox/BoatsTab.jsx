@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Anchor, ChevronDown, Plus } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Anchor, ChevronDown, Plus, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import BoatDetailsDialog from '@/components/logistica-sandbox/BoatDetailsDialog';
 import NewTransportadoraDialog from '@/components/logistica-sandbox/NewTransportadoraDialog';
 
@@ -45,8 +46,10 @@ function BoatListCard({ transportadora, onClick }) {
 
 export default function BoatsTab() {
   const [filter, setFilter] = useState('todas');
+  const [search, setSearch] = useState('');
   const [selectedBoat, setSelectedBoat] = useState(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: transportadorasData = [] } = useQuery({
     queryKey: ['transportadoras-fluvial'],
@@ -67,13 +70,32 @@ export default function BoatsTab() {
   }, [transportadorasData]);
 
   const transportadoras = useMemo(() => {
-    if (filter === 'ativas') return transportadorasNormalizadas.filter((item) => item.status === 'ativa');
-    if (filter === 'inativas') return transportadorasNormalizadas.filter((item) => item.status === 'inativa');
-    return transportadorasNormalizadas;
-  }, [filter, transportadorasNormalizadas]);
+    const termo = search.trim().toLowerCase();
+    let items = transportadorasNormalizadas;
+
+    if (filter === 'ativas') items = items.filter((item) => item.status === 'ativa');
+    if (filter === 'inativas') items = items.filter((item) => item.status === 'inativa');
+    if (termo) items = items.filter((item) => (item.nome || '').toLowerCase().includes(termo));
+
+    return [...items].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+  }, [filter, search, transportadorasNormalizadas]);
 
   const handleSaveBoat = (updatedBoat) => {
     setSelectedBoat(updatedBoat);
+    queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
+  };
+
+  const handleCreatedBoat = (createdBoat) => {
+    queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
+    setSelectedBoat({
+      ...createdBoat,
+      status: createdBoat.ativo === false ? 'inativa' : 'ativa',
+      proximo_eta: '-',
+      recorrencia: createdBoat.observacoes || '-',
+      eventos: [],
+      timeline: [],
+      itinerario_real: [],
+    });
   };
 
   const handleDeleteBoat = () => {
@@ -107,6 +129,11 @@ export default function BoatsTab() {
         </Button>
       </div>
 
+      <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-3 flex items-center gap-3">
+        <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar transportadora" className="border-0 bg-transparent shadow-none h-10 px-0" />
+      </div>
+
       <div className="space-y-4">
         {transportadoras.length === 0 ? (
           <div className="rounded-3xl bg-white dark:bg-gray-800 shadow-sm p-6 text-sm text-gray-500 dark:text-gray-400">
@@ -129,7 +156,7 @@ export default function BoatsTab() {
         onDelete={handleDeleteBoat}
         onInactivate={handleInactivateBoat}
       />
-      <NewTransportadoraDialog open={showNewDialog} onOpenChange={setShowNewDialog} />
+      <NewTransportadoraDialog open={showNewDialog} onOpenChange={setShowNewDialog} onCreated={handleCreatedBoat} />
     </div>
   );
 }

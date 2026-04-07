@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
+import { base44 } from '@/api/base44Client';
 
-export default function NewTransportadoraDialog({ open, onOpenChange }) {
+export default function NewTransportadoraDialog({ open, onOpenChange, onCreated }) {
   const [nome, setNome] = useState('');
   const [saidaReferencia, setSaidaReferencia] = useState('');
 
@@ -15,11 +16,18 @@ export default function NewTransportadoraDialog({ open, onOpenChange }) {
     }
   }, [open]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const novaTransportadora = await base44.entities.Transportadora.create({
+      nome,
+      observacoes: saidaReferencia,
+      ativo: true,
+    });
+
     toast({
       title: 'Transportadora salva com sucesso',
       description: 'Os respectivos eventos logísticos serão criados a partir da saída de referência.',
     });
+    onCreated?.(novaTransportadora);
     onOpenChange(false);
   };
 
