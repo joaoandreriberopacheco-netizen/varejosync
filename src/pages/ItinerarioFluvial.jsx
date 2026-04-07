@@ -59,7 +59,7 @@ export default function ItinerarioFluvial() {
 
   const { data: eventosLogisticos = [] } = useQuery({
     queryKey: ['evento-logistico'],
-    queryFn: () => base44.entities.EventoLogistico.list('-data_saida_origem', 50),
+    queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 50),
     initialData: []
   });
 

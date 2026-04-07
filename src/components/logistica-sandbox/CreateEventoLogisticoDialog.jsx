@@ -48,21 +48,26 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
 
     const payload = {
       embarcacao_nome: form.embarcacao_nome,
-      nome: `${form.embarcacao_nome} · ITA ${format(chegada, 'dd/MM/yyyy')}`,
-      rota_nome: 'Manaus → Interior',
+      nome: `${form.embarcacao_nome} · ETA ${format(chegada, 'dd/MM/yyyy')}`,
+      codigo: `ETA-${format(chegada, 'ddMMyy')}`,
+      embarcacao_nome: form.embarcacao_nome,
+      rota_nome: 'Manaus → Tabatinga',
       status_operacao: 'Atracado na Origem',
-      data_saida_origem: form.data_saida_origem,
-      data_chegada_destino: format(chegada, 'yyyy-MM-dd'),
-      data_retorno_origem: format(addDays(saida, duracao * 2), 'yyyy-MM-dd'),
-      observacoes: form.observacoes,
-      contato_viajante: form.contato_viajante,
-      telefone_viajante: form.telefone_viajante,
-      ciclo_nome: cicloAtivo.nome,
-      ciclo_dias: duracao,
-      tipo_veiculo: 'Balsa/Barco'
+      data_referencia: form.data_saida_origem,
+      previsao_chegada: format(chegada, 'yyyy-MM-dd'),
+      previsao_retorno: format(addDays(saida, duracao * 2), 'yyyy-MM-dd'),
+      observacoes: [
+        form.observacoes,
+        form.contato_viajante ? `Contato: ${form.contato_viajante}` : '',
+        form.telefone_viajante ? `Telefone: ${form.telefone_viajante}` : '',
+        `Lógica: ${cicloAtivo.nome} (${duracao} dias)`
+      ].filter(Boolean).join(' • '),
+      ocupacao_percentual: 0,
+      dias_atraso: 0,
+      chave_relacional_futura: 'evento_logistico_id'
     };
 
-    await base44.entities.EventoLogistico.create(payload);
+    await base44.entities.EventoLogisticoSandbox.create(payload);
     setSaving(false);
     setOpen(false);
     setForm({
@@ -90,7 +95,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
         <div className="p-6 bg-white dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="font-glacial text-2xl text-gray-900 dark:text-gray-100">Novo evento fluvial</DialogTitle>
-            <DialogDescription>Cadastre o marco zero da saída de Manaus e deixe o ITA ser projetado automaticamente.</DialogDescription>
+            <DialogDescription>Cadastre o marco zero da saída de Manaus e deixe o ETA ser projetado automaticamente.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -127,9 +132,9 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
               )}
 
               <div className="rounded-2xl bg-white dark:bg-gray-700 p-4 shadow-sm">
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">ITA projetado</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">ETA projetado</p>
                 <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{chegadaPrevista || '-'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Renderização sugerida: {form.embarcacao_nome || 'Embarcação'} · ITA {chegadaPrevista || '--/--/----'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Renderização sugerida: {form.embarcacao_nome || 'Embarcação'} · ETA {chegadaPrevista || '--/--/----'}</p>
               </div>
             </div>
 
@@ -152,7 +157,7 @@ export default function CreateEventoLogisticoDialog({ onCreated }) {
             <DialogFooter className="pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-2xl border-0 shadow-sm">Cancelar</Button>
               <Button type="submit" disabled={saving} className="rounded-2xl shadow-sm bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
-                {saving ? 'Salvando...' : 'Criar evento'}
+                {saving ? 'Salvando...' : 'Criar evento com ETA'}
               </Button>
             </DialogFooter>
           </form>
