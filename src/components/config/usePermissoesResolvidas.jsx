@@ -221,7 +221,7 @@ export const ALL_MENU_ITEMS = [
       {
         name: 'Logística',
         page: 'ItinerarioFluvial',
-        icon: TruckIcon,
+        icon: Ship,
         permissaoCheck: (p) => p?.estoque?.logistica === true
       }
     ]
