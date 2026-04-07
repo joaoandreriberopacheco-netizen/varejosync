@@ -39,7 +39,7 @@ import ReversaoDespesasSangrias from '@/pages/ReversaoDespesasSangrias';
 import ConsumoInterno from '@/pages/ConsumoInterno';
 import AuditoriaPins from '@/pages/AuditoriaPins';
 import AgefinConsulta from '@/pages/AgefinConsulta';
-import ItinerarioFluvial from '@/pages/ItinerarioFluvial';
+import ItinerarioFluvial from './pages/ItinerarioFluvial';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
