@@ -136,9 +136,9 @@ export default function BoatsTab() {
             onClick={() => setSelectedBoat({
               ...transportadora,
               timeline: [
-                { label: 'Chegada em Manaus', data: transportadora.inicio_ciclo },
-                { label: 'Saída de Manaus', data: transportadora.proxima_saida },
-                { label: 'Chegada em Tabatinga', data: transportadora.proximo_eta },
+                { label: 'Chegada em Manaus', data: transportadora.inicio_ciclo, dayLabel: 'CM', status: 'Concluído', hasLinked: true, linkedCount: 1 },
+                { label: 'Saída de Manaus', data: transportadora.proxima_saida, dayLabel: 'SM', status: 'Previsto', hasLinked: true, linkedCount: 2 },
+                { label: 'ETA Tabatinga', data: transportadora.proximo_eta, dayLabel: 'ET', status: 'Previsto', hasLinked: false, linkedCount: 0 },
               ],
             })}
           />
