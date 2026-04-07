@@ -6,6 +6,7 @@ import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSand
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
+import FluvialExpandableFilters from '@/components/logistica-sandbox/FluvialExpandableFilters';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import CreateEventoLogisticoDialog from '@/components/logistica-sandbox/CreateEventoLogisticoDialog';
 import TimelineViewControls from '@/components/logistica-sandbox/TimelineViewControls';
@@ -17,9 +18,8 @@ import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaRep
 import MobileFilterSheet from '@/components/logistica-sandbox/MobileFilterSheet';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
-import { ListFilter, X } from 'lucide-react';
+import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 const fallbackEventos = [
   {
@@ -378,39 +378,16 @@ export default function ItinerarioFluvial() {
           <BoatsTab />
         )}
         {routeType === 'Fluvial' && isMobile ? (
-          <Sheet open={showFilters} onOpenChange={setShowFilters}>
-            <SheetContent side="bottom" className="rounded-t-[28px] border-0 bg-[#0f172a] dark:bg-[#0f172a] px-4 py-5 max-h-[85vh] overflow-y-auto">
-              <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto mb-4" />
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-semibold text-white">Filtros</p>
-                </div>
-                <TimelineViewControls
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                />
-                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
-                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setShowFilters(false)}
-                    className="h-11 rounded-2xl bg-white/10 text-white hover:bg-white/15"
-                  >
-                    Limpar
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setShowFilters(false)}
-                    className="h-11 rounded-2xl bg-white text-slate-900 hover:bg-white/90"
-                  >
-                    Aplicar
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <FluvialExpandableFilters
+            open={showFilters}
+            onOpenChange={setShowFilters}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            periodRange={periodRange}
+            onPeriodRangeChange={setPeriodRange}
+            simulationDate={simulationDate}
+            onSimulationDateChange={setSimulationDate}
+          />
         ) : routeType === 'Fluvial' && showFilters ? (
           <div className="w-full">
             <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
