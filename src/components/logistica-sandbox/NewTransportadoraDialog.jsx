@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/use-toast';
 
 export default function NewTransportadoraDialog({ open, onOpenChange }) {
   const [nome, setNome] = useState('');
@@ -13,6 +14,14 @@ export default function NewTransportadoraDialog({ open, onOpenChange }) {
       setSaidaReferencia('');
     }
   }, [open]);
+
+  const handleSave = () => {
+    toast({
+      title: 'Transportadora salva com sucesso',
+      description: 'Os respectivos eventos logísticos serão criados a partir da saída de referência.',
+    });
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -30,7 +39,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange }) {
             </div>
           </div>
           <div className="flex justify-end">
-            <Button onClick={() => onOpenChange(false)} className="rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200">Salvar</Button>
+            <Button onClick={handleSave} className="rounded-2xl bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200">Salvar</Button>
           </div>
         </div>
       </DialogContent>
