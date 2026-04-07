@@ -514,6 +514,8 @@ Deno.serve(async (req) => {
     const SLATE900 = [15, 23, 42];
     const SLATE700 = [51, 65, 85];
     const SLATE500 = [100, 116, 139];
+    const MOBILE_ITEMS_FONT_SCALE = 1.15;
+    const MOBILE_ITEMS_VERTICAL_SCALE = 1.6;
 
     // Barra de progresso multi-segmento
     const drawProgressBar = (status, barY) => {
@@ -616,60 +618,65 @@ Deno.serve(async (req) => {
         const tVenda = qtd * venda;
         const mk = custo > 0 ? ((venda - custo) / custo) * 100 : 0;
 
-        ensureSpace(16);
-        const rowH = 15;
+        ensureSpace(16 * MOBILE_ITEMS_VERTICAL_SCALE);
+        const rowH = 15 * MOBILE_ITEMS_VERTICAL_SCALE;
+        const branchY = y + (5 * MOBILE_ITEMS_VERTICAL_SCALE);
+        const lineWidth = 3.5;
+        const primaryLineY = y + (6 * MOBILE_ITEMS_VERTICAL_SCALE);
+        const secondaryLineY = y + (12 * MOBILE_ITEMS_VERTICAL_SCALE);
+        const extraLineStep = 4.5 * MOBILE_ITEMS_VERTICAL_SCALE;
         const isLast = idx === totalItens - 1;
 
         // Linha vertical hierárquica — mais fina e muito escura (slate-900)
         doc.setFillColor(...SLATE900);
-        doc.rect(LINE_X, y, 0.15, isLast ? rowH - 5 : rowH, 'F');
-        doc.rect(LINE_X, y + 5, 3.5, 0.15, 'F');
+        doc.rect(LINE_X, y, 0.15, isLast ? rowH - branchY + y : rowH, 'F');
+        doc.rect(LINE_X, branchY, lineWidth, 0.15, 'F');
 
         // LINHA Única: QTD (right-align coluna fixa) | UN | Nome | Total
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(7.5);
+        doc.setFontSize(7.5 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE900);
 
         // Qtd right-aligned numa coluna fixa
-        doc.text(fmtQtd(qtd), QTD_RIGHT_X, y + 6, { align: 'right' });
+        doc.text(fmtQtd(qtd), QTD_RIGHT_X, primaryLineY, { align: 'right' });
 
         // UN
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(7);
+        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE700);
-        doc.text(un, UN_X, y + 6);
+        doc.text(un, UN_X, primaryLineY);
 
         // Nome do produto — Title Case, pode quebrar linha
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(7);
+        doc.setFontSize(7 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE700);
         const nomeLinhas = doc.splitTextToSize(
           toTitleCase(safe(item.produto_nome || prod.nome || '-')),
           M + CW - NOME_X - 24
         );
         // Renderiza nome na linha 1 (junto com qtd/un/total)
-        doc.text(nomeLinhas[0], NOME_X, y + 6);
+        doc.text(nomeLinhas[0], NOME_X, primaryLineY);
         // Linhas extras do nome (se houver quebra)
         if (nomeLinhas.length > 1) {
           for (let nl = 1; nl < nomeLinhas.length; nl++) {
-            doc.text(nomeLinhas[nl], NOME_X, y + 6 + nl * 4.5);
+            doc.text(nomeLinhas[nl], NOME_X, primaryLineY + nl * extraLineStep);
           }
         }
-        const nomeExtraH = Math.max(0, (nomeLinhas.length - 1) * 4.5);
+        const nomeExtraH = Math.max(0, (nomeLinhas.length - 1) * extraLineStep);
 
         // Total do item (custo) — right aligned, bold
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-        doc.setFontSize(7.5);
+        doc.setFontSize(7.5 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE900);
-        doc.text(moeda(tCusto), M + CW - 2, y + 6, { align: 'right' });
+        doc.text(moeda(tCusto), M + CW - 2, primaryLineY, { align: 'right' });
 
         // Linha 2: Compra | Custo | Venda | Mk
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
-        doc.setFontSize(5.5);
+        doc.setFontSize(5.5 * MOBILE_ITEMS_FONT_SCALE);
         doc.setTextColor(...SLATE500);
         doc.text(
           `Compra ${moeda(precoCompra)}  ·  Custo ${moeda(custo)}  ·  Venda ${moeda(venda)}  ·  Mk ${percentual(mk)}`,
-          NOME_X, y + 12 + nomeExtraH
+          NOME_X, secondaryLineY + nomeExtraH
         );
 
         y += rowH + nomeExtraH;
