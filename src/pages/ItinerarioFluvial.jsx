@@ -17,9 +17,8 @@ import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaRep
 import MobileFilterSheet from '@/components/logistica-sandbox/MobileFilterSheet';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog.jsx';
 
 const fallbackEventos = [
   {
@@ -258,7 +257,7 @@ export default function ItinerarioFluvial() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
-      <div className="max-w-4xl mx-auto px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
+      <div className={`max-w-4xl mx-auto px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden ${isMobile && routeType === 'Fluvial' && showFilters ? 'pb-[27rem]' : ''}`}>
         <LogisticaSandboxHeader />
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -291,14 +290,7 @@ export default function ItinerarioFluvial() {
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
-                    <MobileFilterSheet>
-                      <TimelineViewControls
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                      />
-                      <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
-                      <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
-                    </MobileFilterSheet>
+                    <MobileFilterSheet open={showFilters} onOpenChange={setShowFilters} />
                   </div>
                   <div className="bg-transparent space-y-1">
                     {timelineItems.map((item) => (
@@ -376,18 +368,32 @@ export default function ItinerarioFluvial() {
         ) : (
           <BoatsTab />
         )}
-        <Dialog open={showFilters} onOpenChange={setShowFilters}>
-          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-2xl rounded-3xl border-0 shadow-xl p-4 md:p-5 bg-white dark:bg-gray-900">
-            <div className="space-y-4">
-              <TimelineViewControls
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-              />
-              <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
-              <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
+        {routeType === 'Fluvial' && showFilters && (
+          <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-3 md:px-6 lg:bottom-6">
+            <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-2xl p-4 md:p-5">
+              <div className="flex items-center justify-between gap-3 mb-4 md:hidden">
+                <div className="w-12 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowFilters(false)}
+                  className="rounded-2xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="space-y-4 max-h-[calc(100vh-11rem-env(safe-area-inset-bottom))] overflow-y-auto pr-1 md:max-h-none">
+                <TimelineViewControls
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
+                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
+                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
       </div>
     </div>
   );
