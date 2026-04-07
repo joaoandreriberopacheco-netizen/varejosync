@@ -2,12 +2,16 @@ import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, isSameDay } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import CreateEventoLogisticoDialog from '@/components/logistica-sandbox/CreateEventoLogisticoDialog';
+import AgendaCalendarView from '@/components/logistica-sandbox/AgendaCalendarView';
+import FreteStatusReport from '@/components/logistica-sandbox/FreteStatusReport';
 
 const fallbackEventos = [
   {
@@ -55,6 +59,9 @@ export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [reportTab, setReportTab] = useState('timeline');
+  const [periodoInicio, setPeriodoInicio] = useState(format(new Date(), 'yyyy-MM-01'));
+  const [periodoFim, setPeriodoFim] = useState(format(new Date(), 'yyyy-MM-dd'));
   const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -125,6 +132,64 @@ export default function ItinerarioFluvial() {
       });
   }, [groupedEventos, simulationDate]);
 
+  const agendaPeriodo = useMemo(() => {
+    return eventos.filter((evento) => {
+      const data = evento.data_saida_origem || evento.data_referencia || '';
+      return (!periodoInicio || data >= periodoInicio) && (!periodoFim || data <= periodoFim);
+    });
+  }, [eventos, periodoInicio, periodoFim]);
+
+  const agendaChegada = useMemo(() => {
+    return eventos.filter((evento) => {
+      const data = evento.data_chegada_destino || evento.previsao_chegada || '';
+      return (!periodoInicio || data >= periodoInicio) && (!periodoFim || data <= periodoFim);
+    });
+  }, [eventos, periodoInicio, periodoFim]);
+
+  const agendaGroups = useMemo(() => {
+    const grouped = agendaPeriodo.reduce((acc, evento) => {
+      const key = evento.data_saida_origem || evento.data_referencia;
+      if (!key) return acc;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(evento);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .sort(([a], [b]) => new Date(a) - new Date(b))
+      .map(([key, items]) => ({
+        key,
+        label: format(new Date(`${key}T00:00:00`), 'EEEE, d MMM'),
+        eventos: items
+      }));
+  }, [agendaPeriodo]);
+
+  const chegadaGroups = useMemo(() => {
+    const grouped = agendaChegada.reduce((acc, evento) => {
+      const key = evento.data_chegada_destino || evento.previsao_chegada;
+      if (!key) return acc;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(evento);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .sort(([a], [b]) => new Date(a) - new Date(b))
+      .map(([key, items]) => ({
+        key,
+        label: format(new Date(`${key}T00:00:00`), 'EEEE, d MMM'),
+        eventos: items.map((item) => ({ ...item, data_saida_manaus_formatada: item.data_chegada_destino_formatada }))
+      }));
+  }, [agendaChegada]);
+
+  const fretePeriodo = useMemo(() => {
+    return eventos.filter((evento) => {
+      const data = evento.data_saida_origem || evento.data_referencia || '';
+      const noPeriodo = (!periodoInicio || data >= periodoInicio) && (!periodoFim || data <= periodoFim);
+      return noPeriodo;
+    });
+  }, [eventos, periodoInicio, periodoFim]);
+
   const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || null;
 
   return (
@@ -136,20 +201,56 @@ export default function ItinerarioFluvial() {
           <CreateEventoLogisticoDialog onCreated={() => queryClient.invalidateQueries({ queryKey: ['evento-logistico'] })} />
         </div>
         <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
-          <div className="bg-transparent space-y-1">
-            {timelineItems.map((item) => (
-              <TimelineDayGroup
-                key={item.key}
-                label={item.label}
-                dayNumber={item.dayNumber}
-                eventos={item.eventos}
-                isToday={item.isToday}
-                onSelect={setSelectedEvento}
-              />
-            ))}
-          </div>
-          <TimelineSidebarCard evento={currentEvento} />
+        <div className="rounded-3xl bg-white dark:bg-gray-800 p-4 shadow-sm space-y-4">
+          <Tabs value={reportTab} onValueChange={setReportTab}>
+            <TabsList className="w-full justify-start rounded-2xl bg-gray-100 dark:bg-gray-700 p-1 h-auto flex-wrap">
+              <TabsTrigger value="timeline" className="rounded-2xl">Timeline</TabsTrigger>
+              <TabsTrigger value="agenda_saida" className="rounded-2xl">Saídas</TabsTrigger>
+              <TabsTrigger value="agenda_chegada" className="rounded-2xl">Chegadas</TabsTrigger>
+              <TabsTrigger value="fretes" className="rounded-2xl">Fretes</TabsTrigger>
+            </TabsList>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Período inicial</p>
+                <Input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)} className="rounded-2xl border-0 bg-gray-50 dark:bg-gray-700 shadow-sm" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Período final</p>
+                <Input type="date" value={periodoFim} onChange={(e) => setPeriodoFim(e.target.value)} className="rounded-2xl border-0 bg-gray-50 dark:bg-gray-700 shadow-sm" />
+              </div>
+            </div>
+
+            <TabsContent value="timeline" className="mt-4">
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
+                <div className="bg-transparent space-y-1">
+                  {timelineItems.map((item) => (
+                    <TimelineDayGroup
+                      key={item.key}
+                      label={item.label}
+                      dayNumber={item.dayNumber}
+                      eventos={item.eventos}
+                      isToday={item.isToday}
+                      onSelect={setSelectedEvento}
+                    />
+                  ))}
+                </div>
+                <TimelineSidebarCard evento={currentEvento} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="agenda_saida" className="mt-4">
+              <AgendaCalendarView groupedDates={agendaGroups} />
+            </TabsContent>
+
+            <TabsContent value="agenda_chegada" className="mt-4">
+              <AgendaCalendarView groupedDates={chegadaGroups} />
+            </TabsContent>
+
+            <TabsContent value="fretes" className="mt-4">
+              <FreteStatusReport eventos={fretePeriodo} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
