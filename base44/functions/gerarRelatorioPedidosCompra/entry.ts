@@ -454,8 +454,8 @@ Deno.serve(async (req) => {
       doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
       doc.setFontSize(5.8);
       doc.setTextColor(...C.muted);
-      ['DESCRICAO','LIQ.','FRETE','OUTROS','CUSTO','VLR UN.','TOTAL','VENDA','MARKUP'].forEach((h, i) => {
-        doc.text(h, TM + [2,54,69,84,101,118,136,154,171][i], y + 5);
+      ['QTD','DESCRICAO','VLR. UN.','FRETE','OUTROS','CUSTO','TOTAL','VENDA','MARKUP'].forEach((h, i) => {
+        doc.text(h, TM + [2,14,54,71,86,103,121,139,156][i], y + 5);
       });
       y += 10;
 
@@ -481,29 +481,24 @@ Deno.serve(async (req) => {
         doc.setFont(PDF_FONT_FAMILY, PDF_FONT_NORMAL);
         doc.setFontSize(5.6);
         doc.setTextColor(...C.text);
-        const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 50)[0];
-        doc.text(nome, TM + 2, y + 3.5);
+        const nome = doc.splitTextToSize(safe(item.produto_nome || prod.nome || '-'), 38)[0];
+        doc.text(String(qtd.toLocaleString('pt-BR')), TM + 2, y + 3.5);
+        doc.text(nome,             TM + 14,  y + 3.5);
         doc.text(moeda(liq),       TM + 54,  y + 3.5);
-        doc.text(moeda(frete),     TM + 69,  y + 3.5);
-        doc.text(moeda(outros),    TM + 84,  y + 3.5);
-        doc.text(moeda(custo),     TM + 101, y + 3.5);
-        doc.text(moeda(liq),       TM + 118, y + 3.5);
-        doc.text(moeda(totalLiq),  TM + 136, y + 3.5);
-        doc.text(moeda(venda),     TM + 154, y + 3.5);
-        doc.text(percentual(mk),   TM + 171, y + 3.5);
+        doc.text(moeda(frete),     TM + 71,  y + 3.5);
+        doc.text(moeda(outros),    TM + 86,  y + 3.5);
+        doc.text(moeda(custo),     TM + 103, y + 3.5);
+        doc.text(moeda(totalLiq),  TM + 121, y + 3.5);
+        doc.text(moeda(venda),     TM + 139, y + 3.5);
+        doc.text(percentual(mk),   TM + 156, y + 3.5);
         y += 8;
       });
 
-      ensureSpace(16);
-      doc.setFillColor(...sc.pillBg);
-      doc.roundedRect(M, y, CW, 14, 3, 3, 'F');
-      doc.setFont(PDF_FONT_FAMILY, PDF_FONT_BOLD);
-      doc.setFontSize(8);
-      doc.setTextColor(...sc.pillText);
-      doc.text(`Compra total: ${moeda(totCusto)}`,   M + 4,   y + 5.5);
-      doc.text(`Venda total: ${moeda(totVenda)}`,    M + 72,  y + 5.5);
-      doc.text(`Margem bruta: ${moeda(totVenda - totCusto)}`, M + 136, y + 5.5);
-      y += 18;
+      ensureSpace(8);
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.2);
+      doc.line(M, y + 1, M + CW, y + 1);
+      y += 8;
     };
 
     // ════════════════════════════════════════════════════════════════════════
