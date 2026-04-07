@@ -89,7 +89,7 @@ function KpiAbertas({ kpis }) {
             <AlertTriangle className="w-3.5 h-3.5 text-gray-400 flex-none" />
             <div>
               <p className="text-[9px] text-gray-400 dark:text-gray-500">Vencidas</p>
-              <p className="text-xs font-semibold text-red-500 dark:text-red-400">{R(kpis.vencidas)}</p>
+              <p className="text-xs font-semibold text-white dark:text-white"><span className="text-red-500 dark:text-red-400">−</span>{R(kpis.vencidas)}</p>
             </div>
           </div>
         )}

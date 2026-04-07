@@ -52,7 +52,7 @@ export default function KpiFluxo({ kpis }) {
           <AlertTriangle className="w-4 h-4 text-red-500 flex-none" />
           <div className="flex-1 min-w-0">
             <p className="text-[9px] uppercase tracking-wider text-gray-500 dark:text-gray-400">Vencidos</p>
-            <p className="text-sm font-semibold text-red-500 dark:text-red-400">{R(kpis.vencidos)} · {kpis.qtdVencidos} lançamento{kpis.qtdVencidos !== 1 ? 's' : ''}</p>
+            <p className="text-sm font-semibold text-white dark:text-white"><span className="text-red-500 dark:text-red-400">−</span>{R(kpis.vencidos)} · {kpis.qtdVencidos} lançamento{kpis.qtdVencidos !== 1 ? 's' : ''}</p>
           </div>
         </div>
       )}
