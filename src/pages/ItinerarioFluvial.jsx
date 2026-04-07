@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
-import LogisticaSandboxBoard from '@/components/logistica-sandbox/LogisticaSandboxBoard';
-import LogisticaSandboxSidebar from '@/components/logistica-sandbox/LogisticaSandboxSidebar';
+import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
+import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
+import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 
 const fallbackEventos = [
   {
@@ -52,6 +53,7 @@ const fallbackEventos = [
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
+  const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const { data: eventosLogisticos = [] } = useQuery({
     queryKey: ['evento-logistico'],
@@ -90,16 +92,59 @@ export default function ItinerarioFluvial() {
         }));
   }, [eventosLogisticos, routeType]);
 
-  const currentEvento = selectedEvento || eventos[0] || null;
+  const groupedEventos = useMemo(() => {
+    const targetDate = new Date(`${simulationDate}T00:00:00`);
+
+    return eventos
+      .filter((evento) => {
+        const saida = new Date(`${evento.data_saida_origem || evento.data_referencia || simulationDate}T00:00:00`);
+        return saida >= targetDate;
+      })
+      .reduce((acc, evento) => {
+        const key = evento.data_saida_origem || evento.data_referencia || simulationDate;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(evento);
+        return acc;
+      }, {});
+  }, [eventos, simulationDate]);
+
+  const timelineItems = useMemo(() => {
+    return Object.entries(groupedEventos)
+      .sort(([a], [b]) => new Date(a) - new Date(b))
+      .map(([dateKey, items]) => {
+        const date = new Date(`${dateKey}T00:00:00`);
+        return {
+          key: dateKey,
+          label: format(date, 'EEEE, d MMM'),
+          dayNumber: format(date, 'd'),
+          isToday: isSameDay(date, new Date(`${simulationDate}T00:00:00`)),
+          eventos: items
+        };
+      });
+  }, [groupedEventos, simulationDate]);
+
+  const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         <LogisticaSandboxHeader totalEventos={eventos.length} />
         <RouteModeToggle value={routeType} onChange={setRouteType} />
+        <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
-          <LogisticaSandboxBoard eventos={eventos} onSelect={setSelectedEvento} />
-          <LogisticaSandboxSidebar evento={currentEvento} />
+          <div className="bg-transparent space-y-1">
+            {timelineItems.map((item) => (
+              <TimelineDayGroup
+                key={item.key}
+                label={item.label}
+                dayNumber={item.dayNumber}
+                eventos={item.eventos}
+                isToday={item.isToday}
+                onSelect={setSelectedEvento}
+              />
+            ))}
+          </div>
+          <TimelineSidebarCard evento={currentEvento} />
         </div>
       </div>
     </div>
