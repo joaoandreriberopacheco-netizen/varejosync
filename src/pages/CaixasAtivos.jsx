@@ -50,6 +50,8 @@ export default function CaixasAtivosPage() {
         return status === 'Aguardando Caixa' || emProcessamento || (temSenha && temItens && !convertido && status !== 'Convertido');
       }).map((r) => ({ ...(r.data || r), id: r.id }));
 
+      const rascunhosPorCaixa = {};
+
       const consumosDeHoje = consumos.filter(c => {
         const d = new Date(c.created_date);
         return d >= hoje;
@@ -82,8 +84,16 @@ export default function CaixasAtivosPage() {
           const lancamentosFiado = fiados.filter(f => f.turno_caixa_id === turno.id);
           const totalFiado = lancamentosFiado.reduce((s, f) => s + (f.valor || 0), 0);
           const dinheiroNaGaveta = liquidezTurno - totalPix - totalCredito - totalDebito - totalVale - totalFiado;
-          const senhasAguardando = rascunhosPendentesCaixa;
-          
+          const senhasAguardando = rascunhosPendentesCaixa.filter((rascunho) => {
+            const turnoCaixaId = rascunho.turno_caixa_id;
+            const contaCaixaId = rascunho.conta_caixa_pdv_id;
+            if (turnoCaixaId) return turnoCaixaId === turno.id;
+            if (contaCaixaId) return contaCaixaId === caixa.id;
+            return false;
+          });
+
+          rascunhosPorCaixa[caixa.id] = senhasAguardando;
+
           liquidez[caixa.id] = {
             turnoAberto: true,
             saldoInicial: turno.saldo_inicial || 0,
@@ -155,10 +165,15 @@ export default function CaixasAtivosPage() {
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  const senhasNaoProcessadas = useMemo(
-    () => Object.values(liquidezPorCaixa).flatMap(item => item.senhasAguardando || []),
-    [liquidezPorCaixa]
-  );
+  const senhasNaoProcessadas = useMemo(() => {
+    const unicos = new Map();
+    Object.values(liquidezPorCaixa).forEach((item) => {
+      (item.senhasAguardando || []).forEach((rascunho) => {
+        if (!unicos.has(rascunho.id)) unicos.set(rascunho.id, rascunho);
+      });
+    });
+    return Array.from(unicos.values());
+  }, [liquidezPorCaixa]);
 
 
   // Se já selecionou um caixa, mostra a view completa
