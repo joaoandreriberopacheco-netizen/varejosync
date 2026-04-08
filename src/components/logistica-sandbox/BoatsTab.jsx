@@ -100,20 +100,21 @@ export default function BoatsTab() {
     return [...items].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
   }, [filter, search, transportadorasNormalizadas]);
 
-  const handleSaveBoat = (updatedBoat) => {
+  const handleSaveBoat = async (updatedBoat) => {
+    await queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
+    await queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
+    await queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
+    await queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
+
     const boatAtualizada = transportadorasNormalizadas.find((item) => item.id === updatedBoat.id) || updatedBoat;
     setSelectedBoat(boatAtualizada);
-    queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
-    queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
-    queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
-    queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
   };
 
-  const handleCreatedBoat = (createdBoat) => {
-    queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
-    queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
-    queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
-    queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
+  const handleCreatedBoat = async (createdBoat) => {
+    await queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
+    await queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
+    await queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
+    await queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
     setSelectedBoat(createdBoat);
   };
 

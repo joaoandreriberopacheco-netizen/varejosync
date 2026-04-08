@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import BoatHistoryDetailsDialog from '@/components/logistica-sandbox/BoatHistoryDetailsDialog';
 import { sincronizarViagensTransportadora } from '@/functions/sincronizarViagensTransportadora';
+import TransportadoraProgressDialog from '@/components/logistica-sandbox/TransportadoraProgressDialog';
 
 function StatusBadge({ status }) {
   const classes = status === 'ativa'
@@ -105,11 +106,19 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
   const [isEditing, setIsEditing] = React.useState(false);
   const [selectedEvento, setSelectedEvento] = React.useState(null);
   const [draft, setDraft] = React.useState(transportadora);
+  const [showProgress, setShowProgress] = React.useState(false);
+  const [progressStep, setProgressStep] = React.useState(0);
+  const [progressSuccess, setProgressSuccess] = React.useState(false);
+
+  const progressSteps = ['Atualizando dados', 'Criando/atualizando viagens', 'Atualizando timeline', 'Sucesso'];
 
   React.useEffect(() => {
     setDraft(transportadora);
     setIsEditing(false);
     setSelectedEvento(null);
+    setShowProgress(false);
+    setProgressStep(0);
+    setProgressSuccess(false);
   }, [transportadora]);
 
   if (!transportadora || !draft) return null;
@@ -117,6 +126,11 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
   const hasRecords = (transportadora.eventos || []).length > 0;
 
   const handleSave = async () => {
+    setShowProgress(true);
+    setProgressSuccess(false);
+    setProgressStep(0);
+
+    setProgressStep(1);
     await sincronizarViagensTransportadora({
       transportadoraId: draft.id,
       nome: draft.nome,
@@ -127,8 +141,17 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
       observacoes: draft.observacoes,
       ativo: draft.status !== 'inativa',
     });
-    onSave?.(draft);
+
+    setProgressStep(2);
+    await onSave?.(draft);
+
+    setProgressStep(3);
+    setProgressSuccess(true);
     setIsEditing(false);
+
+    setTimeout(() => {
+      setShowProgress(false);
+    }, 900);
   };
 
   const handleDeleteOrInactivate = () => {
@@ -243,6 +266,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
       </Dialog>
 
       <BoatHistoryDetailsDialog open={!!selectedEvento} onOpenChange={(open) => !open && setSelectedEvento(null)} evento={selectedEvento} />
+      <TransportadoraProgressDialog open={showProgress} currentStep={progressStep} steps={progressSteps} success={progressSuccess} />
     </>
   );
 }
