@@ -209,26 +209,25 @@ export default function PedidoCompraForm({ pedido, onSave, onClose }) {
     const loadDependencies = async () => {
       const user = await base44.auth.me();
       setCurrentUser(user);
-      
-      const [fornecedorData, produtoData, transportadoraData, contasData, empresaData] = await Promise.all([
+
+      const [terceirosRes, produtosRes, contasRes, empresaRes] = await Promise.allSettled([
         base44.entities.Terceiro.list(),
         base44.entities.Produto.list(),
-        base44.entities.Terceiro.list(),
         base44.entities.ContasFinanceiras.list(),
         base44.entities.DadosEmpresa.list()
       ]);
-      setFornecedores(fornecedorData.filter(t => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
-      setProdutos(produtoData);
-      setContas(contasData);
-      if (empresaData && empresaData.length > 0) {
-        setEmpresa(empresaData[0]);
+
+      const terceiros = terceirosRes.status === 'fulfilled' ? (terceirosRes.value || []) : [];
+      const produtosLista = produtosRes.status === 'fulfilled' ? (produtosRes.value || []) : [];
+      const contasLista = contasRes.status === 'fulfilled' ? (contasRes.value || []) : [];
+      const empresaLista = empresaRes.status === 'fulfilled' ? (empresaRes.value || []) : [];
+
+      setFornecedores(terceiros.filter(t => t.tipo === 'Fornecedor' || t.tipo === 'Ambos'));
+      setProdutos(produtosLista);
+      setContas(contasLista);
+      if (empresaLista.length > 0) {
+        setEmpresa(empresaLista[0]);
       }
-      
-      // Transportadoras são também fornecedores
-      const transportadoras = transportadoraData.filter(t => (t.tipo === 'Fornecedor' || t.tipo === 'Ambos') && t.ativo);
-      setFornecedores(prev => transportadoras); // Reutiliza a lista
-
-
     };
     loadDependencies();
   }, [pedido]);

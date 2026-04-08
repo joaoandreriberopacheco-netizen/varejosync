@@ -124,28 +124,24 @@ export default function StatusTimeline({ currentStatus, dataAprovacao, dataEmiss
           const dataStage = getDataTransicao(stage.key) || (idx === 0 ? dataEmissao : null);
 
           return (
-            <React.Fragment key={stage.key}>
-              <div className="flex flex-col items-center gap-0.5 min-w-0">
-
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${getBubbleClasses(stage, idx, isCompleted, isActive, isPendencia)}`}
-                  title={stage.label}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                </div>
-                {isActive && dataStage && (
-                  <div className="text-[9px] text-gray-400 dark:text-gray-500 text-center leading-tight mt-0.5 max-w-[54px]">
-                    {format(new Date(dataStage), 'dd/MM HH:mm')}
-                  </div>
-                )}
-                {isDevolvido && idx === 0 && (
-                  <div className="text-[9px] text-orange-500 text-center font-medium leading-tight max-w-[54px]">
-                    Devolvido
-                  </div>
-                )}
+            <div key={stage.key} className="flex flex-col items-center gap-0.5 min-w-0">
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${getBubbleClasses(stage, idx, isCompleted, isActive, isPendencia)}`}
+                title={stage.label}
+              >
+                <Icon className="w-3.5 h-3.5" />
               </div>
-
-            </React.Fragment>
+              {isActive && dataStage && (
+                <div className="text-[9px] text-gray-400 dark:text-gray-500 text-center leading-tight mt-0.5 max-w-[54px]">
+                  {format(new Date(dataStage), 'dd/MM HH:mm')}
+                </div>
+              )}
+              {isDevolvido && idx === 0 && (
+                <div className="text-[9px] text-orange-500 text-center font-medium leading-tight max-w-[54px]">
+                  Devolvido
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
