@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, Package2, ShoppingCart } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
 function ordenarItens(itens = []) {
   return [...itens].sort((a, b) => (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR'));
@@ -58,34 +57,29 @@ function EmbarqueCard({ embarque, defaultOpen = false }) {
       </button>
 
       {open && (
-        <div className="px-3 pb-3 space-y-2">
-          {itensOrdenados.map((item, index) => {
-            const quantidade = item.quantidade_embarcada || item.quantidade || 0;
-            const custo = item.custo_unitario || 0;
-            return (
-              <div key={`${item.produto_id || item.produto_nome}-${index}`} className="rounded-2xl bg-white dark:bg-gray-800 p-3 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.produto_nome || 'Item sem descrição'}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Quantidade: {quantidade}</p>
+        <div className="px-1 pb-1 pt-2">
+          <div className="grid grid-cols-[52px_minmax(0,1fr)_80px] gap-2 px-2 pb-2 text-[10px] uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400">
+            <span>Qtd</span>
+            <span>Descrição</span>
+            <span className="text-right">Vlr Tot</span>
+          </div>
+          <div className="space-y-2">
+            {itensOrdenados.map((item, index) => {
+              const quantidade = item.quantidade_embarcada || item.quantidade || 0;
+              const custo = item.custo_unitario || 0;
+              const total = quantidade * custo;
+              return (
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[52px_minmax(0,1fr)_80px] gap-2 px-2 py-2 text-sm text-gray-900 dark:text-gray-100">
+                  <span className="text-gray-600 dark:text-gray-300">{quantidade}</span>
+                  <div className="min-w-0">
+                    <p className="font-medium leading-tight break-words">{item.produto_nome || 'Item sem descrição'}</p>
+                    <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} un.</p>
                   </div>
-                  <Badge className="border-0 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 shadow-none">
-                    {(quantidade * custo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </Badge>
+                  <span className="text-right font-semibold whitespace-nowrap">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 px-2.5 py-2">
-                    <p className="text-gray-500 dark:text-gray-400">Valor compra</p>
-                    <p className="mt-1 font-semibold text-gray-900 dark:text-gray-100">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                  </div>
-                  <div className="rounded-2xl bg-gray-50 dark:bg-gray-700 px-2.5 py-2">
-                    <p className="text-gray-500 dark:text-gray-400">Valor total</p>
-                    <p className="mt-1 font-semibold text-gray-900 dark:text-gray-100">{(quantidade * custo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
