@@ -18,10 +18,13 @@ export function formatDate(value) {
   return parsed ? format(parsed, 'dd/MM/yyyy', { locale: ptBR }) : value;
 }
 
-export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], contasPrevistas = [] }) {
-  const contasFrete = (contasPrevistas || []).filter((conta) => {
-    const descricao = `${conta.descricao || ''} ${Array.isArray(conta.tags) ? conta.tags.join(' ') : ''}`.toLowerCase();
-    return descricao.includes('frete') || descricao.includes('cmv');
+export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lancamentosFinanceiros = [] }) {
+  // Mapa de lancamentos financeiros por referencia_id (evento logistico)
+  const mapaLancamentosFrete = {};
+  (lancamentosFinanceiros || []).forEach((lancamento) => {
+    if (lancamento.referencia_id && lancamento.referencia_tipo === 'EventosLogisticos') {
+      mapaLancamentosFrete[lancamento.referencia_id] = lancamento;
+    }
   });
 
   // Criar mapa de itens dos pedidos de compra para enriquecer os embarques
@@ -73,10 +76,7 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], con
       const totalEmbarquesAtivos = embarquesRelacionados.filter((emb) => emb.status !== 'Concluído').length;
       const totalEmbarquesConcluidos = embarquesRelacionados.filter((emb) => emb.status === 'Concluído').length;
 
-      const contaFrete = contasFrete.find((conta) => {
-        const ref = `${conta.referencia_id || ''} ${conta.descricao || ''}`;
-        return ref.includes(item.id) || ref.includes(item.codigo || '');
-      });
+      const lancamento = mapaLancamentosFrete[item.id] || null;
 
       return {
         ...item,
@@ -97,11 +97,13 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], con
         valor_total_carga: valorTotalCarga,
         total_embarques_ativos: totalEmbarquesAtivos,
         total_embarques_concluidos: totalEmbarquesConcluidos,
-        conta_frete: contaFrete || null,
-        conta_frete_status: contaFrete?.status || null,
-        conta_frete_valor: contaFrete?.valor || 0,
-        conta_frete_descricao: contaFrete?.descricao || '',
-        tem_conta_frete: Boolean(contaFrete)
+        // Dados financeiros do LancamentoFinanceiro
+        conta_frete: lancamento,
+        lancamento_financeiro_id: lancamento?.id || null,
+        lancamento_financeiro_valor: lancamento?.valor || 0,
+        lancamento_financeiro_status: lancamento?.status || null,
+        lancamento_financeiro_data_vencimento: lancamento?.data_vencimento || null,
+        tem_conta_frete: Boolean(lancamento)
       };
     })
     .sort((a, b) => new Date(b.data_saida_origem || 0) - new Date(a.data_saida_origem || 0));
@@ -132,10 +134,10 @@ export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
           data: formatDate(evento.data_saida_origem),
           cargas: evento.total_embarques_relacionados || 0,
           freteValor: evento.tem_conta_frete
-            ? (evento.conta_frete_valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+            ? (evento.lancamento_financeiro_valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
             : 'Frete pendente',
-          financeiroStatus: evento.conta_frete_status === 'Pago' ? 'pago' : evento.tem_conta_frete ? 'vinculado' : 'sem_conta',
-          pagamentoLabel: evento.tem_conta_frete ? (evento.conta_frete_status || 'Conta vinculada') : 'Sem conta',
+          financeiroStatus: evento.lancamento_financeiro_status === 'Pago' ? 'pago' : evento.tem_conta_frete ? 'vinculado' : 'sem_conta',
+          pagamentoLabel: evento.tem_conta_frete ? (evento.lancamento_financeiro_status || 'Conta vinculada') : 'Sem conta',
           embarques: evento.embarques_relacionados || [],
           anexos: [],
         })),
