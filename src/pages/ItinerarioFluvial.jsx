@@ -127,8 +127,6 @@ export default function ItinerarioFluvial() {
   }, [eventos]);
 
   const groupedEventos = useMemo(() => {
-    const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
-    const endDate = periodRange?.to || null;
 
     const getViewDate = (evento) => {
       if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
@@ -146,13 +144,10 @@ export default function ItinerarioFluvial() {
         };
       })
       .filter((evento) => {
-        if (!evento.visualizacao_data) return false;
-        if (selectedBoat !== 'all' && evento.embarcacao_nome !== selectedBoat) return false;
-        if (onlyLinked && !evento.tem_embarques_relacionados) return false;
-        const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
-        if (marco < targetDate) return false;
-        if (endDate && marco > endDate) return false;
-        return true;
+       if (!evento.visualizacao_data) return false;
+       if (selectedBoat !== 'all' && evento.embarcacao_nome !== selectedBoat) return false;
+       if (onlyLinked && !evento.tem_embarques_relacionados) return false;
+       return true;
       })
       .reduce((acc, evento) => {
         const key = evento.visualizacao_data;

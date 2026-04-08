@@ -111,8 +111,6 @@ export default function ItinerarioFluvialMobile() {
   }, [routeType, viewMode, simulationDate, freteMonth, periodRange, onlyLinked]);
 
   const groupedEventos = useMemo(() => {
-    const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
-    const endDate = periodRange?.to || null;
 
     const getViewDate = (evento) => {
       if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
@@ -137,9 +135,6 @@ export default function ItinerarioFluvialMobile() {
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         if (onlyLinked && linkedStatus === 'ativos' && !(evento.total_embarques_ativos > 0)) return false;
         if (onlyLinked && linkedStatus === 'concluidos' && !(evento.total_embarques_concluidos > 0 && evento.total_embarques_ativos === 0)) return false;
-        const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
-        if (marco < targetDate) return false;
-        if (endDate && marco > endDate) return false;
         return true;
       })
       .reduce((acc, evento) => {
