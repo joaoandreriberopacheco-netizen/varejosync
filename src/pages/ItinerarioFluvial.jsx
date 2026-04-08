@@ -16,6 +16,7 @@ import TimelinePeriodPicker from '@/components/logistica-sandbox/TimelinePeriodP
 import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
 import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
+import FreteHeaderTotal from '@/components/logistica-sandbox/FreteHeaderTotal';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
@@ -328,12 +329,16 @@ export default function ItinerarioFluvial() {
                     </Button>
                   )}
                 </div>
-                <FreteResumoCard
-                  totalFretes={freteResumo.totalFretes}
-                  totalValor={freteEventos.reduce((sum, e) => sum + (e.valor_total_carga || 0), 0)}
-                  totalComConta={freteResumo.totalComConta}
-                  totalSemConta={freteResumo.totalSemConta}
+                <FreteHeaderTotal
+                   periodo={format(freteMonth, "'FRETES'\nMMMM 'De' yyyy", { locale: ptBR })}
+                   totalValor={freteEventos.reduce((sum, e) => sum + (e.lancamento_financeiro_valor || 0), 0)}
                 />
+                <FreteResumoCard
+                   totalFretes={freteResumo.totalFretes}
+                   totalValor={freteEventos.reduce((sum, e) => sum + (e.lancamento_financeiro_valor || 0), 0)}
+                   totalComConta={freteResumo.totalComConta}
+                   totalSemConta={freteResumo.totalSemConta}
+                 />
                 <div className="space-y-3">
                   {freteEventos.map((evento) => (
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
