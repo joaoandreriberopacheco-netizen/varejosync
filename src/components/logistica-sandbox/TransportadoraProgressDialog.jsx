@@ -24,7 +24,7 @@ function StepItem({ label, active, done }) {
   );
 }
 
-export default function TransportadoraProgressDialog({ open, currentStep = 0, steps = [], success = false }) {
+export default function TransportadoraProgressDialog({ open, currentStep = 0, steps = [], success = false, stepStatuses = [] }) {
   return (
     <Dialog open={open}>
       <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[28px] border-0 bg-white p-0 shadow-2xl dark:bg-gray-900">
@@ -39,14 +39,17 @@ export default function TransportadoraProgressDialog({ open, currentStep = 0, st
           </div>
 
           <div className="space-y-3">
-            {steps.map((step, index) => (
-              <StepItem
-                key={step}
-                label={step}
-                active={!success && index === currentStep}
-                done={success || index < currentStep}
-              />
-            ))}
+            {steps.map((step, index) => {
+              const status = stepStatuses[index] || (success ? 'done' : index === currentStep ? 'active' : index < currentStep ? 'done' : 'waiting');
+              return (
+                <StepItem
+                  key={step}
+                  label={step}
+                  active={status === 'active'}
+                  done={status === 'done'}
+                />
+              );
+            })}
           </div>
         </div>
       </DialogContent>

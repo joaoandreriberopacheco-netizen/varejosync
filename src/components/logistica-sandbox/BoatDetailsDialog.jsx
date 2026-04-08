@@ -109,6 +109,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
   const [showProgress, setShowProgress] = React.useState(false);
   const [progressStep, setProgressStep] = React.useState(0);
   const [progressSuccess, setProgressSuccess] = React.useState(false);
+  const [stepStatuses, setStepStatuses] = React.useState(['waiting', 'waiting', 'waiting', 'waiting']);
 
   const progressSteps = ['Atualizando dados', 'Criando/atualizando viagens', 'Atualizando timeline', 'Sucesso'];
 
@@ -119,6 +120,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
     setShowProgress(false);
     setProgressStep(0);
     setProgressSuccess(false);
+    setStepStatuses(['waiting', 'waiting', 'waiting', 'waiting']);
   }, [transportadora]);
 
   if (!transportadora || !draft) return null;
@@ -129,8 +131,10 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
     setShowProgress(true);
     setProgressSuccess(false);
     setProgressStep(0);
+    setStepStatuses(['active', 'waiting', 'waiting', 'waiting']);
 
     setProgressStep(1);
+    setStepStatuses(['done', 'active', 'waiting', 'waiting']);
     await sincronizarViagensTransportadora({
       transportadoraId: draft.id,
       nome: draft.nome,
@@ -143,9 +147,11 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
     });
 
     setProgressStep(2);
+    setStepStatuses(['done', 'done', 'active', 'waiting']);
     await onSave?.(draft);
 
     setProgressStep(3);
+    setStepStatuses(['done', 'done', 'done', 'active']);
     setProgressSuccess(true);
     setIsEditing(false);
 
@@ -266,7 +272,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
       </Dialog>
 
       <BoatHistoryDetailsDialog open={!!selectedEvento} onOpenChange={(open) => !open && setSelectedEvento(null)} evento={selectedEvento} />
-      <TransportadoraProgressDialog open={showProgress} currentStep={progressStep} steps={progressSteps} success={progressSuccess} />
+      <TransportadoraProgressDialog open={showProgress} currentStep={progressStep} steps={progressSteps} success={progressSuccess} stepStatuses={stepStatuses} />
     </>
   );
 }

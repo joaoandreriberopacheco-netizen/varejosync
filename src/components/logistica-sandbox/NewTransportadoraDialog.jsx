@@ -13,6 +13,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
   const [showProgress, setShowProgress] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
   const [progressSuccess, setProgressSuccess] = useState(false);
+  const [stepStatuses, setStepStatuses] = useState(['waiting', 'waiting', 'waiting', 'waiting']);
 
   const progressSteps = ['Atualizando dados', 'Criando/atualizando viagens', 'Atualizando timeline', 'Sucesso'];
 
@@ -23,6 +24,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
       setShowProgress(false);
       setProgressStep(0);
       setProgressSuccess(false);
+      setStepStatuses(['waiting', 'waiting', 'waiting', 'waiting']);
     }
   }, [open]);
 
@@ -30,6 +32,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
     setShowProgress(true);
     setProgressSuccess(false);
     setProgressStep(0);
+    setStepStatuses(['active', 'waiting', 'waiting', 'waiting']);
 
     const novaTransportadora = await base44.entities.Transportadora.create({
       nome,
@@ -38,6 +41,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
     });
 
     setProgressStep(1);
+    setStepStatuses(['done', 'active', 'waiting', 'waiting']);
     await sincronizarViagensTransportadora({
       transportadoraId: novaTransportadora.id,
       nome,
@@ -46,10 +50,12 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
     });
 
     setProgressStep(2);
-    await base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 1);
+    setStepStatuses(['done', 'done', 'active', 'waiting']);
     await onCreated?.({ ...novaTransportadora, saida_referencia: saidaReferencia });
+    await base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 1);
 
     setProgressStep(3);
+    setStepStatuses(['done', 'done', 'done', 'active']);
     setProgressSuccess(true);
 
     toast({
@@ -85,7 +91,7 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
           </div>
         </DialogContent>
       </Dialog>
-      <TransportadoraProgressDialog open={showProgress} currentStep={progressStep} steps={progressSteps} success={progressSuccess} />
+      <TransportadoraProgressDialog open={showProgress} currentStep={progressStep} steps={progressSteps} success={progressSuccess} stepStatuses={stepStatuses} />
     </>
   );
 }
