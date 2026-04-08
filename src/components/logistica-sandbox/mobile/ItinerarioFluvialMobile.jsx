@@ -70,22 +70,6 @@ export default function ItinerarioFluvialMobile() {
     initialData: []
   });
 
-  const { refetch: refetchEventos } = useQuery({
-    queryKey: ['evento-logistico'],
-    queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 50),
-    initialData: []
-  });
-
-  // Subscribe para mudanças em LancamentoFinanceiro (criar/atualizar conta)
-  useEffect(() => {
-    const unsubscribe = base44.entities.LancamentoFinanceiro.subscribe((event) => {
-      if (event.data?.referencia_tipo === 'EventosLogisticos') {
-        refetchEventos();
-      }
-    });
-    return unsubscribe;
-  }, [refetchEventos]);
-
   const eventosBase = useMemo(() => buildFluvialEvents({ eventosLogisticos, embarques, contasPrevistas }), [eventosLogisticos, embarques, contasPrevistas]);
 
   const eventos = useMemo(() => {
