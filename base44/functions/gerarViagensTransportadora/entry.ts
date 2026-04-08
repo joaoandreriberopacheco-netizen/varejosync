@@ -15,17 +15,31 @@ function addDays(dateString, days, hour = 12) {
   return formatDate(date);
 }
 
-function buildCodigo(sequence) {
+function buildCodigoAleatorio() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let seed = sequence;
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
   let output = '';
 
   for (let index = 0; index < 6; index += 1) {
-    output = chars[seed % chars.length] + output;
-    seed = Math.floor(seed / chars.length);
+    output += chars[bytes[index] % chars.length];
   }
 
   return `${output.slice(0, 3)}-${output.slice(3)}`;
+}
+
+function gerarCodigoUnico(codigosExistentes) {
+  let tentativas = 0;
+
+  while (tentativas < 200) {
+    const codigo = buildCodigoAleatorio();
+    if (!codigosExistentes.has(codigo)) {
+      codigosExistentes.add(codigo);
+      return codigo;
+    }
+    tentativas += 1;
+  }
+
+  throw new Error('Não foi possível gerar um código único para a viagem');
 }
 
 function isSameOrBefore(dateA, dateB) {
@@ -68,9 +82,12 @@ Deno.serve(async (req) => {
     const limiteProspectivo = addMonths(hoje, 3);
     const sequenciaMaxima = 999;
 
-    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500);
+    const [viagensDaTransportadora, todasAsViagens] = await Promise.all([
+      base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500),
+      base44.asServiceRole.entities.EventoLogisticoSandbox.list('-created_date', 5000),
+    ]);
     const viagensNormalizadas = viagensDaTransportadora.map((viagem) => viagem.data || viagem);
-    const codigosExistentes = new Set(viagensNormalizadas.map((viagem) => viagem.codigo).filter(Boolean));
+    const codigosExistentes = new Set(todasAsViagens.map((viagem) => (viagem.data || viagem).codigo).filter(Boolean));
     const saidasExistentes = new Set(viagensNormalizadas.map((viagem) => viagem.data_saida_origem).filter(Boolean));
 
     let sequencia = 1;
@@ -83,9 +100,8 @@ Deno.serve(async (req) => {
         break;
       }
 
-      const codigo = buildCodigo(sequencia);
-
-      if (!saidasExistentes.has(saidaManaus) && !codigosExistentes.has(codigo)) {
+      if (!saidasExistentes.has(saidaManaus)) {
+        const codigo = gerarCodigoUnico(codigosExistentes);
         const chegadaManaus = addDays(saidaManaus, -7, 12);
         const etaTabatinga = addDays(saidaManaus, 7, 12);
         const proximaChegadaManaus = addDays(saidaManaus, 21, 12);
