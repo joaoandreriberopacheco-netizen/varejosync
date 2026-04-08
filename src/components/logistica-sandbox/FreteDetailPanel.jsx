@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
-import { DollarSign, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, LinkIcon } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 function getContaStatusStyle(temConta, status, estaAtrasada) {
   if (!temConta) return { bgClass: 'bg-gray-50 dark:bg-gray-800', strokeColor: '#d1d5db', label: 'Sem vinculação' };
@@ -14,13 +11,8 @@ function getContaStatusStyle(temConta, status, estaAtrasada) {
 }
 
 export default function FreteDetailPanel({ evento, embarques, onBack }) {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    descricao: `Frete - ${evento.embarcacao_nome}`,
-    valor: evento.valor_total_frete || 0,
-    data_vencimento: new Date().toISOString().split('T')[0]
-  });
+  const [contaAtualizada, setContaAtualizada] = useState(evento.conta_frete);
+  const [temConta, setTemConta] = useState(evento.tem_conta_frete);
 
   const calcularValorTotalEmbarques = () => {
     if (!embarques || embarques.length === 0) return 0;
@@ -32,36 +24,38 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
     }, 0);
   };
 
-  const handleSubmitForm = async () => {
-    try {
-      setFormLoading(true);
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'Despesa',
-        descricao: formData.descricao,
-        valor: formData.valor,
-        data_vencimento: formData.data_vencimento,
-        status: 'Em Aberto',
-        tags: ['frete'],
-        is_custo_mercadoria: true
-      });
-      toast.success('Conta a pagar criada com sucesso');
-      setShowCreateForm(false);
-      setFormData({
-        descricao: `Frete - ${evento.embarcacao_nome}`,
-        valor: evento.valor_total_frete || 0,
-        data_vencimento: new Date().toISOString().split('T')[0]
-      });
-    } catch (error) {
-      toast.error('Erro ao criar conta a pagar');
-      console.error(error);
-    } finally {
-      setFormLoading(false);
-    }
+  useEffect(() => {
+    if (!contaAtualizada?.id) return;
+
+    const unsubscribe = base44.entities.LancamentoFinanceiro.subscribe((event) => {
+      if (event.id === contaAtualizada.id) {
+        if (event.type === 'delete' || event.data?.status === 'Cancelado') {
+          setContaAtualizada(null);
+          setTemConta(false);
+        } else if (event.type === 'update') {
+          setContaAtualizada(event.data);
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [contaAtualizada?.id]);
+
+  const handleCreateContaFrete = () => {
+    const params = new URLSearchParams({
+      tipo: 'Despesa',
+      descricao: `Frete - ${evento.embarcacao_nome}`,
+      valor: evento.valor_total_frete || calcularValorTotalEmbarques() || 0,
+      tags: 'frete',
+      is_custo_mercadoria: 'true',
+      referencia_id: evento.id,
+      referencia_tipo: 'EventosLogisticos'
+    });
+    window.location.href = `/Financeiro?${params.toString()}`;
   };
 
-  const temConta = evento?.tem_conta_frete;
-  const statusConta = evento?.conta_frete_status;
-  const estaAtrasada = temConta && statusConta !== 'Pago' && evento.conta_frete?.data_vencimento && new Date(evento.conta_frete.data_vencimento) < new Date();
+  const statusConta = contaAtualizada?.status;
+  const estaAtrasada = temConta && statusConta !== 'Pago' && contaAtualizada?.data_vencimento && new Date(contaAtualizada.data_vencimento) < new Date();
   const { bgClass, strokeColor, label } = getContaStatusStyle(temConta, statusConta, estaAtrasada);
 
   return (
@@ -92,87 +86,34 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
       </div>
 
       {/* Informações da Conta ou CTA para criar */}
-      {temConta && evento.conta_frete ? (
+      {temConta && contaAtualizada ? (
         <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-2 text-xs">
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Valor:</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {(evento.conta_frete_valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {(contaAtualizada.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Status:</span>
             <span className="font-semibold text-gray-900 dark:text-white">{statusConta}</span>
           </div>
-          {evento.conta_frete.data_vencimento && (
+          {contaAtualizada.data_vencimento && (
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Vencimento:</span>
               <span className={`font-semibold ${estaAtrasada ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
-                {new Date(evento.conta_frete.data_vencimento).toLocaleDateString('pt-BR')}
+                {new Date(contaAtualizada.data_vencimento).toLocaleDateString('pt-BR')}
               </span>
             </div>
           )}
         </div>
-      ) : showCreateForm ? (
-        <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-3">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Criar Conta a Pagar</p>
-            <button
-              onClick={() => setShowCreateForm(false)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              disabled={formLoading}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Descrição</label>
-              <Input
-                value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                placeholder="Descrição"
-                className="h-9 text-sm"
-                disabled={formLoading}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Valor (R$)</label>
-              <Input
-                type="number"
-                value={formData.valor}
-                onChange={(e) => setFormData({ ...formData, valor: parseFloat(e.target.value) || 0 })}
-                placeholder="0,00"
-                step="0.01"
-                className="h-9 text-sm"
-                disabled={formLoading}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Data Vencimento</label>
-              <Input
-                type="date"
-                value={formData.data_vencimento}
-                onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
-                className="h-9 text-sm"
-                disabled={formLoading}
-              />
-            </div>
-            <Button
-              onClick={handleSubmitForm}
-              disabled={formLoading || !formData.valor}
-              className="w-full h-9 text-sm"
-            >
-              {formLoading ? 'Criando...' : 'Criar Conta'}
-            </Button>
-          </div>
-        </div>
       ) : (
         <button
-          onClick={() => setShowCreateForm(true)}
-          className="w-full rounded-3xl bg-lime-100 dark:bg-lime-900/20 px-4 py-3 text-sm font-medium text-lime-700 dark:text-lime-300 hover:bg-lime-200 dark:hover:bg-lime-900/30 transition-colors"
+          onClick={handleCreateContaFrete}
+          className="w-full rounded-3xl bg-lime-100 dark:bg-lime-900/20 px-4 py-3 flex items-center justify-between text-sm font-medium text-lime-700 dark:text-lime-300 hover:bg-lime-200 dark:hover:bg-lime-900/30 transition-colors"
         >
-          Criar Conta a Pagar
+          <span>Criar Conta a Pagar</span>
+          <LinkIcon className="w-4 h-4" />
         </button>
       )
       }
@@ -218,14 +159,14 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
           </div>
 
       {/* Seção de Anexos */}
-      {evento?.conta_frete?.id && (
+      {contaAtualizada?.id && (
         <AnexosPanel
-          referencia_id={evento.conta_frete.id}
+          referencia_id={contaAtualizada.id}
           referencia_tipo="LancamentoFinanceiro"
           titulo="Documentos"
         />
       )}
-      {!evento?.conta_frete?.id && (
+      {!contaAtualizada?.id && (
         <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 text-center text-xs text-gray-500 dark:text-gray-400">
           Crie uma conta a pagar para adicionar documentos
         </div>
