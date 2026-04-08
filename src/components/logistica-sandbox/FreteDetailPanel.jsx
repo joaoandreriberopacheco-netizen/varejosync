@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign, X } from 'lucide-react';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
-import LancamentoConfirmacaoDialog from '@/components/financeiro/LancamentoConfirmacaoDialog';
+import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
 
 function getContaStatusStyle(temConta, status, estaAtrasada) {
   if (!temConta) return { bgClass: 'bg-gray-50 dark:bg-gray-800', strokeColor: '#d1d5db', label: 'Sem vinculação' };
@@ -12,6 +12,16 @@ function getContaStatusStyle(temConta, status, estaAtrasada) {
 
 export default function FreteDetailPanel({ evento, embarques, onBack }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const calcularValorTotalEmbarques = () => {
+    if (!embarques || embarques.length === 0) return 0;
+    return embarques.reduce((total, emb) => {
+      const valorEmbarque = (emb.itens || []).reduce((sum, item) => {
+        return sum + ((item.quantidade_embarcada || 0) * (item.custo_unitario_momento || 0));
+      }, 0);
+      return total + valorEmbarque;
+    }, 0);
+  };
 
   const temConta = evento?.tem_conta_frete;
   const statusConta = evento?.conta_frete_status;
@@ -68,8 +78,8 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
           )}
         </div>
       ) : showCreateForm ? (
-        <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4">
+          <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Criar Conta a Pagar</p>
             <button
               onClick={() => setShowCreateForm(false)}
@@ -78,20 +88,16 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
               <X className="w-4 h-4" />
             </button>
           </div>
-          <LancamentoConfirmacaoDialog
-            isOpen={true}
+          <NovoLancamentoDialog
+            isOpen={showCreateForm}
             onClose={() => setShowCreateForm(false)}
-            defaultData={{
+            defaultLancamento={{
               tipo: 'Despesa',
               descricao: `Frete - ${evento.embarcacao_nome}`,
-              valor: evento.valor_total_frete || evento.valor_total_carga || 0,
-              categoria_id: 'frete',
+              valor: evento.valor_total_frete || calcularValorTotalEmbarques() || 0,
               tags: ['frete'],
-              is_custo_mercadoria: true,
-              referencia_id: evento.id,
-              referencia_tipo: 'EventosLogisticos'
+              is_custo_mercadoria: true
             }}
-            onSuccess={() => setShowCreateForm(false)}
           />
         </div>
       ) : (
@@ -138,7 +144,7 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
           <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
             <span className="font-semibold">Valor carga:</span>
             <span className="font-bold text-gray-900 dark:text-white">
-              {(evento.valor_total_carga || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {calcularValorTotalEmbarques().toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
           </div>
