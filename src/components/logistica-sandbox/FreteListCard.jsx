@@ -41,7 +41,7 @@ export default function FreteListCard({ evento, onSelect }) {
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{evento.embarcacao_nome}</p>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{evento.codigo || 'Sem código'}</p>
-          <div className="space-y-1 mt-3 text-[11px] text-gray-500 dark:text-gray-400">
+          <div className="space-y-1 mt-2 text-[11px] text-gray-500 dark:text-gray-400">
             <div className="flex justify-between gap-4">
               <span>{evento.total_embarques_relacionados || 0} embarques</span>
               <span>{(evento.valor_total_carga || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
@@ -51,15 +51,20 @@ export default function FreteListCard({ evento, onSelect }) {
             </div>
           </div>
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(evento);
-          }}
-          className={`flex-shrink-0 w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold text-xl transition-colors hover:opacity-80 ${borderColor}`}
-        >
-          $
-        </button>
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
+            {valorFrete.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </p>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(evento);
+            }}
+            className={`flex-shrink-0 w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold text-xl transition-colors hover:opacity-80 ${borderColor}`}
+          >
+            $
+          </button>
+        </div>
       </div>
     </button>
   );
