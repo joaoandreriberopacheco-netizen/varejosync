@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, Package2, ShoppingCart, Layers3 } from 'lucide-react';
+import { ChevronDown, ShoppingCart, Layers3 } from 'lucide-react';
 
 function ordenarItens(itens = []) {
   return [...itens].sort((a, b) => (a.produto_nome || '').localeCompare(b.produto_nome || '', 'pt-BR'));
@@ -9,40 +9,47 @@ function normalizarTexto(valor) {
   return String(valor || '').trim().toLowerCase();
 }
 
-function criarMapaItensPedido(embarques = []) {
+function registrarItemNoMapa(mapa, item = {}) {
+  const chaveId = item?.produto_id;
+  const chaveNome = normalizarTexto(item?.produto_nome);
+  const quantidadeBase = Number(item.quantidade_base ?? item.quantidade ?? 1) || 1;
+  const custoUnitario = Number(
+    item.custo_unitario ??
+    item.custo_unitario_momento ??
+    item.valor_unitario ??
+    item.total_unitario ??
+    ((Number(item.total) || 0) / quantidadeBase)
+  ) || 0;
+
+  const registro = {
+    produto_id: item?.produto_id || '',
+    produto_nome: item?.produto_nome || '',
+    quantidade_pedida: Number(item.quantidade ?? item.quantidade_base ?? 0) || 0,
+    unidade_medida: item?.unidade_medida || 'UN',
+    custo_unitario: custoUnitario,
+    total: Number(item.total ?? ((Number(item.quantidade ?? item.quantidade_base ?? 0) || 0) * custoUnitario)) || 0,
+  };
+
+  if (chaveId) {
+    mapa[chaveId] = registro;
+  }
+
+  if (chaveNome) {
+    mapa[chaveNome] = registro;
+  }
+}
+
+function criarMapaItensPedido(embarques = [], pedidosCompra = []) {
   const mapa = {};
 
   embarques.forEach((embarque) => {
     const itensPedido = embarque?._pedido_compra_itens || embarque?.pedido_compra_itens || embarque?.pedido_itens || [];
-    itensPedido.forEach((item) => {
-      const chaveId = item?.produto_id;
-      const chaveNome = normalizarTexto(item?.produto_nome);
-      const quantidadeBase = Number(item.quantidade_base ?? item.quantidade ?? 1) || 1;
-      const custoUnitario = Number(
-        item.custo_unitario ??
-        item.custo_unitario_momento ??
-        item.valor_unitario ??
-        item.total_unitario ??
-        ((Number(item.total) || 0) / quantidadeBase)
-      ) || 0;
+    itensPedido.forEach((item) => registrarItemNoMapa(mapa, item));
+  });
 
-      const registro = {
-        produto_id: item?.produto_id || '',
-        produto_nome: item?.produto_nome || '',
-        quantidade_pedida: Number(item.quantidade ?? item.quantidade_base ?? 0) || 0,
-        unidade_medida: item?.unidade_medida || 'UN',
-        custo_unitario: custoUnitario,
-        total: Number(item.total ?? ((Number(item.quantidade ?? item.quantidade_base ?? 0) || 0) * custoUnitario)) || 0,
-      };
-
-      if (chaveId && mapa[chaveId] == null) {
-        mapa[chaveId] = registro;
-      }
-
-      if (chaveNome && mapa[chaveNome] == null) {
-        mapa[chaveNome] = registro;
-      }
-    });
+  pedidosCompra.forEach((pedido) => {
+    const itens = pedido?.itens || [];
+    itens.forEach((item) => registrarItemNoMapa(mapa, item));
   });
 
   return mapa;
@@ -60,7 +67,13 @@ function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
       item.total_unitario ??
       itemPedido.custo_unitario
     ) || 0;
-    const total = Number(item.total ?? item.valor_total ?? (quantidade * custo)) || 0;
+    const total = Number(
+      item.total ??
+      item.valor_total ??
+      item.total_item ??
+      itemPedido.total ??
+      (quantidade * custo)
+    ) || 0;
 
     return {
       ...item,
@@ -116,10 +129,10 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
       </button>
 
       {open && (
-        <div className="mx-[-14px] mb-2 rounded-2xl bg-[#253042] px-1 py-2 shadow-inner sm:mx-[-18px] sm:px-2">
-          <div className="grid grid-cols-[42px_minmax(0,1fr)_72px] items-center gap-2 px-1 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300 sm:grid-cols-[48px_minmax(0,1fr)_84px]">
+        <div className="mx-[-16px] mb-2 rounded-2xl bg-[#253042] px-2 py-2 shadow-inner sm:mx-[-20px] sm:px-3">
+          <div className="grid grid-cols-[38px_minmax(0,1.7fr)_72px] items-center gap-2 px-1 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300 sm:grid-cols-[44px_minmax(0,2fr)_86px]">
             <span>Qtd</span>
-            <div className="grid grid-cols-[minmax(0,1fr)_76px] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_88px]">
+            <div className="grid grid-cols-[minmax(0,1fr)_68px] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_82px]">
               <span className="text-left">Descrição</span>
               <span className="text-right">V. Unt</span>
             </div>
@@ -129,11 +142,11 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
             {itensOrdenados.map((item, index) => {
               const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
               const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
-              const total = Number(item.total ?? item.valor_total ?? (quantidade * custo)) || 0;
+              const total = Number(item.total ?? item.valor_total ?? item.total_item ?? (quantidade * custo)) || 0;
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[42px_minmax(0,1fr)_72px] items-start gap-2 px-1 py-2 text-[10px] text-white sm:grid-cols-[48px_minmax(0,1fr)_84px]">
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[38px_minmax(0,1.7fr)_72px] items-start gap-2 px-1 py-2 text-[10px] text-white sm:grid-cols-[44px_minmax(0,2fr)_86px]">
                   <span className="pt-0.5 text-[10px] text-white">{quantidade}</span>
-                  <div className="grid grid-cols-[minmax(0,1fr)_76px] items-start gap-3 min-w-0 sm:grid-cols-[minmax(0,1fr)_88px]">
+                  <div className="grid grid-cols-[minmax(0,1fr)_68px] items-start gap-3 min-w-0 sm:grid-cols-[minmax(0,1fr)_82px]">
                     <p className="text-[10px] leading-tight break-words font-normal text-white text-left">{item.produto_nome || 'Item sem descrição'}</p>
                     <span className="pt-0.5 text-[10px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                   </div>
@@ -149,7 +162,18 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
 }
 
 export default function EventoEmbarquesPanel({ embarques = [] }) {
-  const itensPedidoMap = useMemo(() => criarMapaItensPedido(embarques), [embarques]);
+  const pedidosCompraRelacionados = useMemo(() => {
+    const mapaPedidos = {};
+    embarques.forEach((embarque) => {
+      const pedido = embarque?._pedido_compra;
+      if (pedido?.id) {
+        mapaPedidos[pedido.id] = pedido;
+      }
+    });
+    return Object.values(mapaPedidos);
+  }, [embarques]);
+
+  const itensPedidoMap = useMemo(() => criarMapaItensPedido(embarques, pedidosCompraRelacionados), [embarques, pedidosCompraRelacionados]);
   const resumoGeral = useMemo(() => {
     return embarques.reduce((acc, embarque) => {
       const resumo = resumoEmbarque(embarque, itensPedidoMap);
