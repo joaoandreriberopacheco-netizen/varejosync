@@ -25,6 +25,12 @@ function isSameOrBefore(dateA, dateB) {
   return createUtcDate(dateA).getTime() <= createUtcDate(dateB).getTime();
 }
 
+function addMonths(dateString, months) {
+  const date = createUtcDate(dateString, 12);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return formatDate(date);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -51,58 +57,57 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Transportadora sem saída de referência' }, { status: 400 });
     }
 
-    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500);
-    if (viagensDaTransportadora.length > 0) {
-      return Response.json({ created: 0, viagens: [], limite_global: null, skipped: true });
-    }
+    const hoje = formatDate(new Date());
+    const limiteProspectivo = addMonths(hoje, 3);
+    const sequenciaMaxima = 999;
 
-    const viagensGlobais = await base44.asServiceRole.entities.EventoLogisticoSandbox.list('-data_saida_origem', 1);
-    const ultimaSaidaProspectiva = viagensGlobais?.[0]?.data_saida_origem || null;
+    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, 'data_saida_origem', 500);
+    const codigosExistentes = new Set(viagensDaTransportadora.map((viagem) => viagem.codigo).filter(Boolean));
+    const saidasExistentes = new Set(viagensDaTransportadora.map((viagem) => viagem.data_saida_origem).filter(Boolean));
 
     let sequencia = 1;
     const novasViagens = [];
 
-    while (true) {
+    while (sequencia <= sequenciaMaxima) {
       const saidaManaus = addDays(transportadora.saida_referencia, (sequencia - 1) * 21, 12);
 
-      if (ultimaSaidaProspectiva && !isSameOrBefore(saidaManaus, ultimaSaidaProspectiva)) {
+      if (!isSameOrBefore(saidaManaus, limiteProspectivo)) {
         break;
       }
 
-      const chegadaManaus = addDays(saidaManaus, -7, 12);
-      const etaTabatinga = addDays(saidaManaus, 7, 12);
-      const proximaChegadaManaus = addDays(saidaManaus, 21, 12);
       const codigo = buildCodigo(sequencia);
 
-      novasViagens.push({
-        nome: `${transportadora.nome} · ${codigo}`,
-        codigo,
-        embarcacao_template_id: transportadoraId,
-        embarcacao_nome: transportadora.nome,
-        rota_nome: 'Manaus → Tabatinga',
-        status_operacao: 'Atracado na Origem',
-        data_referencia: chegadaManaus,
-        data_chegada_manaus: chegadaManaus,
-        data_saida_origem: saidaManaus,
-        previsao_chegada: etaTabatinga,
-        data_chegada_destino: etaTabatinga,
-        previsao_retorno: proximaChegadaManaus,
-        data_retorno_origem: proximaChegadaManaus,
-        proxima_chegada_manaus: proximaChegadaManaus,
-        ocupacao_percentual: 0,
-        dias_atraso: 0,
-        transportadora_id: transportadora.id,
-        transportadora_nome: transportadora.nome,
-        tipo_registro: 'Viagem',
-        observacoes: transportadora.observacoes || '',
-        chave_relacional_futura: 'viagem_id'
-      });
+      if (!saidasExistentes.has(saidaManaus) && !codigosExistentes.has(codigo)) {
+        const chegadaManaus = addDays(saidaManaus, -7, 12);
+        const etaTabatinga = addDays(saidaManaus, 7, 12);
+        const proximaChegadaManaus = addDays(saidaManaus, 21, 12);
+
+        novasViagens.push({
+          nome: `${transportadora.nome} · ${codigo}`,
+          codigo,
+          embarcacao_template_id: transportadoraId,
+          embarcacao_nome: transportadora.nome,
+          rota_nome: 'Manaus → Tabatinga',
+          status_operacao: 'Atracado na Origem',
+          data_referencia: chegadaManaus,
+          data_chegada_manaus: chegadaManaus,
+          data_saida_origem: saidaManaus,
+          previsao_chegada: etaTabatinga,
+          data_chegada_destino: etaTabatinga,
+          previsao_retorno: proximaChegadaManaus,
+          data_retorno_origem: proximaChegadaManaus,
+          proxima_chegada_manaus: proximaChegadaManaus,
+          ocupacao_percentual: 0,
+          dias_atraso: 0,
+          transportadora_id: transportadora.id,
+          transportadora_nome: transportadora.nome,
+          tipo_registro: 'Viagem',
+          observacoes: transportadora.observacoes || '',
+          chave_relacional_futura: 'viagem_id'
+        });
+      }
 
       sequencia += 1;
-
-      if (!ultimaSaidaProspectiva && sequencia > 1) {
-        break;
-      }
     }
 
     if (novasViagens.length > 0) {
@@ -112,7 +117,7 @@ Deno.serve(async (req) => {
     return Response.json({
       created: novasViagens.length,
       viagens: novasViagens,
-      limite_global: ultimaSaidaProspectiva,
+      limite_global: limiteProspectivo,
       skipped: false,
     });
   } catch (error) {

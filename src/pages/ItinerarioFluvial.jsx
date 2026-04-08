@@ -61,17 +61,33 @@ export default function ItinerarioFluvial() {
 
   const eventos = useMemo(() => {
     const simulationBaseDate = new Date(`${simulationDate}T00:00:00`);
+    const hojeReal = new Date();
+    const hojeRealBase = new Date(`${format(hojeReal, 'yyyy-MM-dd')}T00:00:00`);
 
     return eventosBase.map((item) => {
       const saidaManaus = item.data_saida_origem;
       const chegadaManaus = item.data_chegada_manaus;
-      const diasAteSaida = saidaManaus ? Math.round((new Date(`${saidaManaus}T00:00:00`) - simulationBaseDate) / (1000 * 60 * 60 * 24)) : null;
-      const diasDesdeChegada = chegadaManaus ? Math.round((simulationBaseDate - new Date(`${chegadaManaus}T00:00:00`)) / (1000 * 60 * 60 * 24)) : null;
-      const ocupacaoPercentualDinamica = diasAteSaida === null || diasDesdeChegada === null
-        ? (item.ocupacao_percentual || 0)
-        : diasDesdeChegada < 0 || diasAteSaida < 0
-          ? 0
-          : Math.max(0, Math.min(100, Math.round((Math.min(diasDesdeChegada, 7) / 7) * 100)));
+      const inicioReal = chegadaManaus ? new Date(`${chegadaManaus}T00:00:00`) : null;
+      const saidaReal = saidaManaus ? new Date(`${saidaManaus}T00:00:00`) : null;
+
+      let ocupacaoPercentualDinamica = item.ocupacao_percentual || 0;
+
+      if (!inicioReal || !saidaReal) {
+        ocupacaoPercentualDinamica = 0;
+      } else {
+        const aindaNaoComecouNoReal = hojeRealBase < inicioReal;
+        const aindaNaoComecouNoSimulador = simulationBaseDate < inicioReal;
+
+        if (aindaNaoComecouNoReal || aindaNaoComecouNoSimulador) {
+          ocupacaoPercentualDinamica = 0;
+        } else if (simulationBaseDate >= saidaReal) {
+          ocupacaoPercentualDinamica = 100;
+        } else {
+          const diasTotais = Math.max(1, Math.round((saidaReal - inicioReal) / (1000 * 60 * 60 * 24)));
+          const diasCorridos = Math.max(0, Math.round((simulationBaseDate - inicioReal) / (1000 * 60 * 60 * 24)));
+          ocupacaoPercentualDinamica = Math.max(0, Math.min(100, Math.round((diasCorridos / diasTotais) * 100)));
+        }
+      }
 
       return {
         ...item,
