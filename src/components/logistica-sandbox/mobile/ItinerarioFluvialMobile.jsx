@@ -111,9 +111,9 @@ export default function ItinerarioFluvialMobile() {
   }, [routeType, viewMode, simulationDate, freteMonth, periodRange, onlyLinked]);
 
   useEffect(() => {
-    const baseDate = new Date(`${simulationDate}T12:00:00`);
-    setPeriodRange({ from: subDays(baseDate, 30), to: addDays(baseDate, 30) });
-  }, [simulationDate]);
+    const today = new Date();
+    setPeriodRange({ from: subDays(today, 30), to: addDays(today, 30) });
+  }, []);
 
   const groupedEventos = useMemo(() => {
     const targetDate = periodRange?.from || new Date(`${simulationDate}T00:00:00`);
