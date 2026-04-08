@@ -4,6 +4,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import TimelineViewControls from '@/components/logistica-sandbox/TimelineViewControls';
 import TimelinePeriodPicker from '@/components/logistica-sandbox/TimelinePeriodPicker';
+import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 
 export default function FluvialBottomFilterSheet({
   open,
@@ -12,6 +13,8 @@ export default function FluvialBottomFilterSheet({
   onViewModeChange,
   periodRange,
   onPeriodRangeChange,
+  simulationDate,
+  onSimulationDateChange,
   onlyLinked = false,
   linkedStatus = 'todos',
   onLinkedStatusChange,
@@ -61,6 +64,7 @@ export default function FluvialBottomFilterSheet({
             ) : null}
           </div>
 
+          <TimelineDatePicker value={simulationDate} onChange={onSimulationDateChange} compact />
           <TimelineViewControls viewMode={viewMode} onViewModeChange={onViewModeChange} />
           <TimelinePeriodPicker range={periodRange} onChange={onPeriodRangeChange} />
         </div>

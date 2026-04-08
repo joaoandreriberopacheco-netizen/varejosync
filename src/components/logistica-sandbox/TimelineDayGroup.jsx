@@ -14,6 +14,11 @@ export default function TimelineDayGroup({ label, dayNumber, eventos = [], isTod
           {isToday && <span className="text-[11px] px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">Hoje</span>}
         </div>
         <div className="space-y-2">
+          {!eventos.length && isToday ? (
+            <div className="rounded-2xl bg-white/70 px-4 py-3 text-xs text-gray-500 shadow-sm dark:bg-gray-800/70 dark:text-gray-400">
+              Nenhuma viagem neste dia.
+            </div>
+          ) : null}
           {eventos.map((evento) => {
             const isSelected = selectedEventoId === evento.id;
             const comprasAtivas = evento.total_embarques_ativos || 0;

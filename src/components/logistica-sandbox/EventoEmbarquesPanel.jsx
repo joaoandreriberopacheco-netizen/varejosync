@@ -55,23 +55,43 @@ function criarMapaItensPedido(embarques = [], pedidosCompra = []) {
   return mapa;
 }
 
+function obterItemPedido(embarque, item, itensPedidoMap = {}) {
+  const pedido = embarque?._pedido_compra;
+  const itensPedidoDiretos = pedido?.itens || embarque?._pedido_compra_itens || embarque?.pedido_compra_itens || embarque?.pedido_itens || [];
+  const itemDireto = itensPedidoDiretos.find((pedidoItem) => {
+    if (item?.produto_id && pedidoItem?.produto_id) {
+      return pedidoItem.produto_id === item.produto_id;
+    }
+    return normalizarTexto(pedidoItem?.produto_nome) === normalizarTexto(item?.produto_nome);
+  });
+
+  if (itemDireto) {
+    return itemDireto;
+  }
+
+  return itensPedidoMap[item?.produto_id] || itensPedidoMap[normalizarTexto(item?.produto_nome)] || {};
+}
+
 function enriquecerItensEmbarque(embarque, itensPedidoMap = {}) {
   const itens = embarque.itens_embarcados || embarque.itens || [];
   return itens.map((item) => {
-    const itemPedido = itensPedidoMap[item.produto_id] || itensPedidoMap[normalizarTexto(item.produto_nome)] || {};
+    const itemPedido = obterItemPedido(embarque, item, itensPedidoMap);
     const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
     const custo = Number(
       item.custo_unitario ??
       item.custo_unitario_momento ??
       item.valor_unitario ??
       item.total_unitario ??
-      itemPedido.custo_unitario
+      itemPedido.custo_unitario ??
+      itemPedido.valor_unitario ??
+      itemPedido.total_unitario
     ) || 0;
     const total = Number(
       item.total ??
       item.valor_total ??
       item.total_item ??
       itemPedido.total ??
+      itemPedido.valor_total ??
       (quantidade * custo)
     ) || 0;
 
@@ -129,31 +149,29 @@ function EmbarqueCard({ embarque, defaultOpen = false, itensPedidoMap = {} }) {
       </button>
 
       {open && (
-        <div className="mx-[-16px] mb-2 rounded-2xl bg-[#253042] px-2 py-2 shadow-inner sm:mx-[-20px] sm:px-3">
-          <div className="grid grid-cols-[38px_minmax(0,1.7fr)_72px] items-center gap-2 px-1 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300 sm:grid-cols-[44px_minmax(0,2fr)_86px]">
-            <span>Qtd</span>
-            <div className="grid grid-cols-[minmax(0,1fr)_68px] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_82px]">
+        <div className="px-3 pb-3">
+          <div className="rounded-2xl bg-[#253042] px-2 py-2 shadow-inner">
+            <div className="grid grid-cols-[38px_minmax(0,1fr)_70px_78px] items-center gap-2 px-1 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
+              <span>Qtd</span>
               <span className="text-left">Descrição</span>
               <span className="text-right">V. Unt</span>
+              <span className="text-right">Vlr Tot</span>
             </div>
-            <span className="text-right">Vlr Tot</span>
-          </div>
-          <div className="space-y-1">
-            {itensOrdenados.map((item, index) => {
-              const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
-              const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
-              const total = Number(item.total ?? item.valor_total ?? item.total_item ?? (quantidade * custo)) || 0;
-              return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[38px_minmax(0,1.7fr)_72px] items-start gap-2 px-1 py-2 text-[10px] text-white sm:grid-cols-[44px_minmax(0,2fr)_86px]">
-                  <span className="pt-0.5 text-[10px] text-white">{quantidade}</span>
-                  <div className="grid grid-cols-[minmax(0,1fr)_68px] items-start gap-3 min-w-0 sm:grid-cols-[minmax(0,1fr)_82px]">
-                    <p className="text-[10px] leading-tight break-words font-normal text-white text-left">{item.produto_nome || 'Item sem descrição'}</p>
+            <div className="space-y-1">
+              {itensOrdenados.map((item, index) => {
+                const quantidade = Number(item.quantidade_embarcada ?? item.quantidade_pedida ?? item.quantidade ?? 0) || 0;
+                const custo = Number(item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? 0) || 0;
+                const total = Number(item.total ?? item.valor_total ?? item.total_item ?? (quantidade * custo)) || 0;
+                return (
+                  <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[38px_minmax(0,1fr)_70px_78px] items-start gap-2 rounded-xl px-1 py-2 text-[10px] text-white odd:bg-white/[0.03]">
+                    <span className="pt-0.5 text-[10px] text-white">{quantidade}</span>
+                    <p className="min-w-0 text-[10px] leading-tight break-words font-normal text-white text-left">{item.produto_nome || 'Item sem descrição'}</p>
                     <span className="pt-0.5 text-[10px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    <span className="pt-0.5 text-[10px] text-right font-normal whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                   </div>
-                  <span className="pt-0.5 text-[10px] text-right font-normal whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

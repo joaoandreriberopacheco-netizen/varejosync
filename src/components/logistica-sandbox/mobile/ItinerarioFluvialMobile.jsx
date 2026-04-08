@@ -139,7 +139,7 @@ export default function ItinerarioFluvialMobile() {
   }, [eventos, simulationDate, periodRange, viewMode, onlyLinked, linkedStatus, searchTerm]);
 
   const timelineItems = useMemo(() => {
-    return Object.entries(groupedEventos)
+    const sortedItems = Object.entries(groupedEventos)
       .sort(([a], [b]) => new Date(a) - new Date(b))
       .map(([dateKey, items]) => {
         const date = new Date(`${dateKey}T12:00:00`);
@@ -151,12 +151,49 @@ export default function ItinerarioFluvialMobile() {
           eventos: items
         };
       });
+
+    if (sortedItems.some((item) => item.isToday)) {
+      return sortedItems;
+    }
+
+    if (!sortedItems.length) {
+      return sortedItems;
+    }
+
+    const simulationBase = new Date(`${simulationDate}T12:00:00`).getTime();
+    let insertIndex = sortedItems.findIndex((item) => new Date(`${item.key}T12:00:00`).getTime() > simulationBase);
+    if (insertIndex === -1) {
+      insertIndex = sortedItems.length;
+    }
+
+    const marcadorHoje = {
+      key: `today-marker-${simulationDate}`,
+      label: format(new Date(`${simulationDate}T12:00:00`), "EEEE, d 'de' MMM", { locale: ptBR }),
+      dayNumber: format(new Date(`${simulationDate}T12:00:00`), 'd'),
+      isToday: true,
+      isMarkerOnly: true,
+      eventos: []
+    };
+
+    return [...sortedItems.slice(0, insertIndex), marcadorHoje, ...sortedItems.slice(insertIndex)];
   }, [groupedEventos, simulationDate]);
 
   useEffect(() => {
-    if (todayRef.current) {
-      todayRef.current.scrollIntoView({ block: 'center' });
+    const refElement = todayRef.current;
+    if (!refElement) return;
+
+    const container = refElement.closest('.js-fluvial-timeline-scroll');
+    if (!container) {
+      refElement.scrollIntoView({ block: 'center' });
+      return;
     }
+
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = refElement.getBoundingClientRect();
+    const currentScroll = container.scrollTop;
+    const targetScroll = currentScroll + (elementRect.top - containerRect.top) - (container.clientHeight / 2) + (elementRect.height / 2);
+
+    container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
   }, [timelineItems]);
 
   const viewModeLabel = viewMode === 'chegada_manaus' ? 'Chegada Manaus' : viewMode === 'chegada_tabatinga' ? 'Chegada Tabatinga' : 'Saída Manaus';
@@ -208,6 +245,8 @@ export default function ItinerarioFluvialMobile() {
               onViewModeChange={setViewMode}
               periodRange={periodRange}
               onPeriodRangeChange={setPeriodRange}
+              simulationDate={simulationDate}
+              onSimulationDateChange={setSimulationDate}
               onlyLinked={onlyLinked}
               linkedStatus={linkedStatus}
               onLinkedStatusChange={setLinkedStatus}
@@ -227,7 +266,7 @@ export default function ItinerarioFluvialMobile() {
               <TimelineSidebarCard evento={selectedEvento} />
             </div>
           ) : timelineItems.length > 0 ? (
-            <div className="space-y-4 pb-4 overflow-x-hidden">
+            <div className="js-fluvial-timeline-scroll max-h-[calc(100vh-14rem)] space-y-4 overflow-y-auto pb-4 pr-1 overflow-x-hidden">
               {timelineItems.map((item) => (
                 <div key={item.key} ref={item.isToday ? todayRef : null} className="relative">
                   {item.isToday ? <div className="absolute left-[2px] top-[4px] h-10 w-10 rounded-2xl ring-4 ring-lime-300/80 pointer-events-none" /> : null}
@@ -287,7 +326,7 @@ export default function ItinerarioFluvialMobile() {
           </div>
         )}
 
-        {routeType === 'Fluvial' && !selectedEvento ? (
+        {false ? (
           <FluvialSimulationFab value={simulationDate} onChange={setSimulationDate} />
         ) : null}
       </div>
