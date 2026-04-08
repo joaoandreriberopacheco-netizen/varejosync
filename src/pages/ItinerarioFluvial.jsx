@@ -14,7 +14,6 @@ import CreateEventoLogisticoDialog from '@/components/logistica-sandbox/CreateEv
 import TimelineViewControls from '@/components/logistica-sandbox/TimelineViewControls';
 import TimelinePeriodPicker from '@/components/logistica-sandbox/TimelinePeriodPicker';
 import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
-import FreteTotalValue from '@/components/logistica-sandbox/FreteTotalValue';
 import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
@@ -24,25 +23,18 @@ import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/Itine
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRef } from 'react';
 
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
-  const [periodRange, setPeriodRange] = useState(() => {
-    const hoje = new Date();
-    const from = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 30);
-    const to = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 30);
-    return { from, to };
-  });
+  const [periodRange, setPeriodRange] = useState({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1), to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0) });
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedBoat, setSelectedBoat] = useState('all');
   const [onlyLinked, setOnlyLinked] = useState(false);
-  const timelineScrollRef = useRef(null);
   const queryClient = useQueryClient();
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -215,196 +207,5 @@ export default function ItinerarioFluvial() {
 
   const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || freteEventos[0] || null;
 
-  useEffect(() => {
-    if (!isMobile && routeType === 'Fluvial' && timelineScrollRef.current) {
-      const todayMarker = timelineScrollRef.current.querySelector('[data-is-today="true"]');
-      if (todayMarker) {
-        todayMarker.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [isMobile, routeType]);
-
-  if (isMobile) {
-    return <ItinerarioFluvialMobile />;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6 overflow-x-hidden">
-      <div className="max-w-4xl mx-auto w-full px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
-        <LogisticaSandboxHeader />
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <RouteModeToggle value={routeType} onChange={setRouteType} />
-            {routeType === 'Fluvial' && !isMobile && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowFilters(true)}
-                className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
-              >
-                <ListFilter className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-        {routeType === 'Fluvial' && isMobile && !selectedEvento ? (
-          <FluvialExpandableFilters
-            open={showFilters}
-            onOpenChange={setShowFilters}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            periodRange={periodRange}
-            onPeriodRangeChange={setPeriodRange}
-            simulationDate={simulationDate}
-            onSimulationDateChange={setSimulationDate}
-            boatOptions={boatOptions}
-            selectedBoat={selectedBoat}
-            onBoatChange={setSelectedBoat}
-            onlyLinked={onlyLinked}
-            onOnlyLinkedChange={setOnlyLinked}
-          />
-        ) : null}
-        {routeType === 'Fluvial' ? (
-          <>
-            {isMobile ? (
-              selectedEvento ? (
-                <div className="space-y-4">
-                  <MobileDetailHeader
-                    title={selectedEvento.embarcacao_nome}
-                    subtitle={selectedEvento.codigo || 'Detalhes do evento'}
-                    onBack={() => setSelectedEvento(null)}
-                  />
-                  <TimelineSidebarCard evento={selectedEvento} />
-                </div>
-              ) : (
-                <div className="space-y-4 min-w-0">
-                  <div className="bg-transparent space-y-1 max-h-[calc(100vh-220px)] overflow-y-auto overflow-x-hidden pr-1 min-w-0 pb-2">
-                    {timelineItems.map((item) => (
-                      <TimelineDayGroup
-                        key={item.key}
-                        label={item.label}
-                        dayNumber={item.dayNumber}
-                        eventos={item.eventos}
-                        isToday={item.isToday}
-                        onSelect={setSelectedEvento}
-                        viewModeLabel={viewModeLabel}
-                        selectedEventoId={selectedEvento?.id}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )
-            ) : (
-              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
-                <div ref={timelineScrollRef} className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
-                  {timelineItems.map((item) => (
-                    <div data-is-today={item.isToday}>
-                      <TimelineDayGroup
-                        key={item.key}
-                        label={item.label}
-                        dayNumber={item.dayNumber}
-                        eventos={item.eventos}
-                        isToday={item.isToday}
-                        onSelect={setSelectedEvento}
-                        viewModeLabel={viewModeLabel}
-                        selectedEventoId={currentEvento?.id}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <TimelineSidebarCard evento={currentEvento} />
-              </div>
-            )}
-          </>
-        ) : routeType === 'Fretes' ? (
-          <div className="space-y-5">
-            {selectedEvento ? (
-              <div className="space-y-4">
-                {isMobile && (
-                  <MobileDetailHeader
-                    title={selectedEvento.embarcacao_nome}
-                    subtitle={selectedEvento.codigo || 'Resumo da carga'}
-                    onBack={() => setSelectedEvento(null)}
-                  />
-                )}
-                {!isMobile && (
-                  <button
-                    onClick={() => setSelectedEvento(null)}
-                    className="text-sm text-gray-500 dark:text-gray-400 font-medium hover:text-gray-700 dark:hover:text-gray-300"
-                  >
-                    ← Voltar
-                  </button>
-                )}
-                <FreteDetailPanel evento={selectedEvento} embarques={embarques.filter(e => e.evento_logistico_id === selectedEvento.id)} onBack={() => setSelectedEvento(null)} />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between gap-3">
-                  <FreteMonthNavigator
-                    currentMonth={freteMonth}
-                    onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-                    onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-                  />
-                  {!isMobile && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowFilters(true)}
-                      className="rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
-                    >
-                      <ListFilter className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-                <FreteTotalValue eventos={freteEventos} />
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 pb-2">
-                  {freteEventos.map((evento) => (
-                    <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
-                  ))}
-                  {freteEventos.length === 0 && (
-                    <div className="col-span-full bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
-                      Nenhum frete com carga encontrado neste período.
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        ) : (
-          <div className="w-full overflow-x-auto">
-            <BoatsTab />
-          </div>
-        )}
-        {routeType !== 'Fluvial' && !isMobile && showFilters ? (
-          <div className="w-full">
-            <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
-              <div className="space-y-4">
-                <TimelineViewControls
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                />
-                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
-                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
-              </div>
-            </div>
-          </div>
-        ) : routeType === 'Fluvial' && !isMobile && showFilters ? (
-          <div className="w-full">
-            <div className="max-w-4xl mx-auto rounded-[28px] bg-white dark:bg-gray-900 shadow-xl p-4 md:p-5">
-              <div className="space-y-4">
-                <TimelineViewControls
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                />
-                <TimelinePeriodPicker range={periodRange} onChange={setPeriodRange} />
-                <TimelineDatePicker value={simulationDate} onChange={setSimulationDate} />
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
+  return <ItinerarioFluvialMobile />;
 }
