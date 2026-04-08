@@ -33,7 +33,6 @@ Deno.serve(async (req) => {
 
     const response = await base44.asServiceRole.functions.invoke('gerarViagensTransportadora', {
       transportadoraId,
-      monthsToCreate: 3,
     });
 
     return Response.json({ success: true, ...response.data });

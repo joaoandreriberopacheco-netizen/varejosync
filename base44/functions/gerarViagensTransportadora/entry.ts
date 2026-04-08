@@ -1,21 +1,28 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-function addDays(dateString, days) {
-  const date = new Date(`${dateString}T00:00:00.000Z`);
-  date.setUTCDate(date.getUTCDate() + days);
+function createUtcDate(dateString, hour = 12) {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day, hour, 0, 0, 0));
+}
+
+function formatDate(date) {
   return date.toISOString().slice(0, 10);
 }
 
-function startOfToday() {
-  const now = new Date();
-  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  return date.toISOString().slice(0, 10);
+function addDays(dateString, days, hour = 12) {
+  const date = createUtcDate(dateString, hour);
+  date.setUTCDate(date.getUTCDate() + days);
+  return formatDate(date);
 }
 
 function buildCodigo(sequence) {
   const grupo = String(Math.floor((sequence - 1) / 999) + 1).padStart(3, '0');
   const item = String(((sequence - 1) % 999) + 1).padStart(3, '0');
   return `${grupo}-${item}`;
+}
+
+function isSameOrBefore(dateA, dateB) {
+  return createUtcDate(dateA).getTime() <= createUtcDate(dateB).getTime();
 }
 
 Deno.serve(async (req) => {
@@ -27,7 +34,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { transportadoraId, monthsToCreate = 3, ensureNextMonthOnly = false } = await req.json();
+    const { transportadoraId } = await req.json();
 
     if (!transportadoraId) {
       return Response.json({ error: 'transportadoraId é obrigatório' }, { status: 400 });
@@ -44,33 +51,30 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Transportadora sem saída de referência' }, { status: 400 });
     }
 
-    const viagensExistentes = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500);
-    const hoje = startOfToday();
-    const dataLimite = addDays(hoje, monthsToCreate * 30);
-    const sequencias = [];
-
-    let sequencia = 1;
-    while (true) {
-      const saidaManaus = addDays(transportadora.saida_referencia, (sequencia - 1) * 21);
-      const chegadaManaus = addDays(saidaManaus, -7);
-      if (new Date(`${chegadaManaus}T00:00:00.000Z`) > new Date(`${dataLimite}T00:00:00.000Z`)) break;
-      if (new Date(`${saidaManaus}T00:00:00.000Z`) >= new Date(`${hoje}T00:00:00.000Z`) || new Date(`${chegadaManaus}T00:00:00.000Z`) >= new Date(`${hoje}T00:00:00.000Z`)) {
-        sequencias.push(sequencia);
-      }
-      sequencia += 1;
+    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500);
+    if (viagensDaTransportadora.length > 0) {
+      return Response.json({ created: 0, viagens: [], limite_global: null, skipped: true });
     }
 
-    const sequenciasFiltradas = ensureNextMonthOnly ? sequencias.slice(-1) : sequencias;
+    const viagensGlobais = await base44.asServiceRole.entities.EventoLogisticoSandbox.list('-data_saida_origem', 1);
+    const ultimaSaidaProspectiva = viagensGlobais?.[0]?.data_saida_origem || null;
 
-    const novasViagens = sequenciasFiltradas.map((sequencia) => {
-      const saidaManaus = addDays(transportadora.saida_referencia, (sequencia - 1) * 21);
-      const chegadaManaus = addDays(saidaManaus, -7);
-      const etaTabatinga = addDays(saidaManaus, 7);
-      const proximaChegadaManaus = addDays(saidaManaus, 21);
+    let sequencia = 1;
+    const novasViagens = [];
 
+    while (true) {
+      const saidaManaus = addDays(transportadora.saida_referencia, (sequencia - 1) * 21, 12);
+
+      if (ultimaSaidaProspectiva && !isSameOrBefore(saidaManaus, ultimaSaidaProspectiva)) {
+        break;
+      }
+
+      const chegadaManaus = addDays(saidaManaus, -7, 12);
+      const etaTabatinga = addDays(saidaManaus, 7, 12);
+      const proximaChegadaManaus = addDays(saidaManaus, 21, 12);
       const codigo = buildCodigo(sequencia);
 
-      return {
+      novasViagens.push({
         nome: `${transportadora.nome} · ${codigo}`,
         codigo,
         embarcacao_template_id: transportadoraId,
@@ -92,14 +96,25 @@ Deno.serve(async (req) => {
         tipo_registro: 'Viagem',
         observacoes: transportadora.observacoes || '',
         chave_relacional_futura: 'viagem_id'
-      };
-    });
+      });
+
+      sequencia += 1;
+
+      if (!ultimaSaidaProspectiva && sequencia > 1) {
+        break;
+      }
+    }
 
     if (novasViagens.length > 0) {
       await base44.asServiceRole.entities.EventoLogisticoSandbox.bulkCreate(novasViagens);
     }
 
-    return Response.json({ created: novasViagens.length, viagens: novasViagens });
+    return Response.json({
+      created: novasViagens.length,
+      viagens: novasViagens,
+      limite_global: ultimaSaidaProspectiva,
+      skipped: false,
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
