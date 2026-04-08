@@ -47,10 +47,10 @@ export default function FluvialFAB({
                       onViewModeChange(mode.id);
                       setOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                       viewMode === mode.id
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 ring-2 ring-gray-400 dark:ring-gray-500'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 ring-1 ring-gray-200 dark:ring-gray-700'
                     }`}
                   >
                     {mode.label}
