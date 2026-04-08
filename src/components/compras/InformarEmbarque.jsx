@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog.jsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Truck, Package, Calendar, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Boxes, Plus, Check, X, Search, Anchor } from 'lucide-react';
 import { toast } from 'sonner';
 import VolumesDialog from '@/components/compras/VolumesDialog';
@@ -201,6 +202,11 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
   const [qtdEmbarque, setQtdEmbarque] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
 
+  const eventoSelecionado = useMemo(
+    () => eventosLogisticos.find((evento) => evento.id === eventoLogisticoId) || null,
+    [eventosLogisticos, eventoLogisticoId]
+  );
+
   const jaEmbarcado = useMemo(() =>
     calcularJaEmbarcadoSemEmbarque(pedido, embarqueExistente?.id),
     [pedido, embarqueExistente]
@@ -212,9 +218,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     loadEventosLogisticos();
     if (isEdicao) {
       setDataDespacho(embarqueExistente.data_embarque ? new Date(embarqueExistente.data_embarque).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10));
-        setTransportadoraId(embarqueExistente.transportadora_id || '');
-        setEventoLogisticoId(embarqueExistente.evento_logistico_id || '');
-        // ETA: pega só a data (YYYY-MM-DD)
+      setTransportadoraId(embarqueExistente.transportadora_id || '');
+      setEventoLogisticoId(embarqueExistente.evento_logistico_id || '');
       const etaVal = embarqueExistente.eta
         ? new Date(embarqueExistente.eta).toISOString().slice(0, 10)
         : '';
@@ -271,6 +276,22 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     }
   };
 
+  useEffect(() => {
+    if (!eventoSelecionado) return;
+
+    setTransportadoraId(eventoSelecionado.transportadora_id || '');
+
+    const dataSaida = eventoSelecionado.data_saida_origem || eventoSelecionado.data_referencia;
+    if (dataSaida) {
+      setDataDespacho(String(dataSaida).slice(0, 10));
+    }
+
+    const dataEta = eventoSelecionado.previsao_chegada || eventoSelecionado.data_chegada_destino;
+    if (dataEta) {
+      setEta(String(dataEta).slice(0, 10));
+    }
+  }, [eventoSelecionado]);
+
   const toggleItem = (produtoId) => {
     setSelectedItems(prev => ({ ...prev, [produtoId]: !prev[produtoId] }));
   };
@@ -291,7 +312,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
     setLoading(true);
     try {
       const transportadora = transportadoras.find(t => t.id === transportadoraId);
-      const eventoLogistico = eventosLogisticos.find(evento => evento.id === eventoLogisticoId);
       const embarquesExistentes = Array.isArray(pedido._embarques) ? pedido._embarques : (pedido.embarques_registrados || []);
       const letraExibicao = String.fromCharCode(65 + embarquesExistentes.length);
       const itensEmbarcados = (pedido.itens || [])
@@ -320,8 +340,6 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
         transportadora_id: transportadoraId,
         transportadora_nome: transportadora?.nome || '',
         evento_logistico_id: eventoLogisticoId || '',
-        evento_logistico_codigo: eventoLogistico?.codigo || '',
-        evento_logistico_nome: eventoLogistico?.embarcacao_nome || '',
         volumes: volumesTexto,
         volumes_detalhados: volumesDetalhados,
         peso_kg: totalPesoKg,
@@ -388,7 +406,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   type="date"
                   value={dataDespacho}
                   onChange={e => setDataDespacho(e.target.value)}
-                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100"
+                  disabled={!!eventoLogisticoId}
+                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
                 />
               </div>
               <div className="space-y-1.5">
@@ -400,7 +419,8 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
                   type="date"
                   value={eta}
                   onChange={e => setEta(e.target.value)}
-                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100"
+                  disabled={!!eventoLogisticoId}
+                  className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 disabled:opacity-70"
                 />
               </div>
             </div>
@@ -410,34 +430,41 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, e
               <label className="text-sm text-gray-500 dark:text-gray-400">
                 Transportadora <span className="text-xs text-gray-400 font-normal">(opcional)</span>
               </label>
-              <TransportadoraSearch
-                transportadoras={transportadoras}
-                value={transportadoraId}
-                onChange={setTransportadoraId}
-                onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
-              />
+              <div className={eventoLogisticoId ? 'pointer-events-none opacity-70' : ''}>
+                <TransportadoraSearch
+                  transportadoras={transportadoras}
+                  value={transportadoraId}
+                  onChange={setTransportadoraId}
+                  onCriarNova={nova => setTransportadoras(prev => [...prev, nova])}
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="text-sm text-gray-500 dark:text-gray-400">
-                Evento logístico <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+                Viagem vinculada <span className="text-xs text-gray-400 font-normal">(opcional)</span>
               </label>
-              <div className="relative">
-                <Anchor className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <select
-                  value={eventoLogisticoId}
-                  onChange={(e) => setEventoLogisticoId(e.target.value)}
-                  className="w-full h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 pl-11 pr-4 appearance-none"
-                >
-                  <option value="">Selecionar depois</option>
+              <Select value={eventoLogisticoId || '__none__'} onValueChange={(value) => setEventoLogisticoId(value === '__none__' ? '' : value)}>
+                <SelectTrigger className="h-12 rounded-xl border-0 bg-gray-50 dark:bg-gray-800 shadow-sm text-sm text-gray-900 dark:text-gray-100 pl-11">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <Anchor className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <SelectValue placeholder="Selecionar depois" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-0 bg-white dark:bg-gray-900 shadow-2xl">
+                  <SelectItem value="__none__">Selecionar depois</SelectItem>
                   {eventosLogisticos.map((evento) => (
-                    <option key={evento.id} value={evento.id}>
-                      {(evento.embarcacao_nome || 'Evento')} · {evento.codigo || 'Sem código'}
-                    </option>
+                    <SelectItem key={evento.id} value={evento.id}>
+                      {(evento.codigo || 'Sem código')} · {(evento.nome || evento.embarcacao_nome || 'Viagem')}
+                    </SelectItem>
                   ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+                </SelectContent>
+              </Select>
+              {eventoSelecionado && (
+                <p className="text-xs text-gray-400 px-1">
+                  Transportadora e datas serão puxadas automaticamente da viagem.
+                </p>
+              )}
             </div>
 
             {/* Volumes */}

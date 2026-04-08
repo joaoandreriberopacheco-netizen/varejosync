@@ -13,7 +13,7 @@ function getItensDoEmbarque(embarque) {
 }
 
 function hasDespachoVinculado(embarque) {
-  return !!(embarque?.transportadora_id || embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque);
+  return !!(embarque?.evento_logistico_id || embarque?.transportadora_id || embarque?.transportadora_nome || embarque?.eta || embarque?.data_embarque);
 }
 
 function isEmbarqueRealInformado(embarque) {
@@ -206,6 +206,7 @@ Deno.serve(async (req) => {
           eta: null,
           transportadora_id: null,
           transportadora_nome: null,
+          evento_logistico_id: null,
           itens: itensNecessidade,
           itens_embarcados: itensNecessidade,
           observacoes: necessidadeAtiva.observacoes || 'Embarque de necessidade criado automaticamente para itens pendentes.'
@@ -220,6 +221,7 @@ Deno.serve(async (req) => {
           tipo: 'Embarque',
           status: 'Pendente',
           status_recebimento: 'Pendente',
+          evento_logistico_id: null,
           observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
           itens: itensNecessidade,
           itens_embarcados: itensNecessidade
