@@ -27,7 +27,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
   const { data: eventosLogisticos = [] } = useQuery({
     queryKey: ['evento-logistico-selector'],
-    queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 50),
+    queryFn: () => base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 500),
     initialData: []
   });
 
