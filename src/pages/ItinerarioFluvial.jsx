@@ -16,6 +16,7 @@ import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeade
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
+import FluvialActionFab from '@/components/logistica-sandbox/FluvialActionFab';
 
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -24,6 +25,7 @@ export default function ItinerarioFluvial() {
   const [viewMode, setViewMode] = useState('saida_manaus');
   const [isMobile, setIsMobile] = useState(false);
   const [freteSearchQuery, setFreteSearchQuery] = useState('');
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
 
@@ -157,6 +159,12 @@ export default function ItinerarioFluvial() {
     }
   }, [timelineItems, isMobile]);
 
+  const handleScrollToToday = () => {
+    if (todayRef.current) {
+      todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const viewModeLabel = viewMode === 'chegada_manaus'
     ? 'Chegada Manaus'
     : viewMode === 'chegada_tabatinga'
@@ -203,26 +211,30 @@ export default function ItinerarioFluvial() {
         </div>
 
         {routeType === 'Fluvial' ? (
-          <>
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
-              <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
-                {timelineItems.map((item) => (
-                  <div key={item.key} ref={item.isToday ? todayRef : null}>
-                    <TimelineDayGroup
-                      label={item.label}
-                      dayNumber={item.dayNumber}
-                      eventos={item.eventos}
-                      isToday={item.isToday}
-                      onSelect={setSelectedEvento}
-                      viewModeLabel={viewModeLabel}
-                      selectedEventoId={currentEvento?.id}
-                    />
-                  </div>
-                ))}
-              </div>
-              <TimelineSidebarCard evento={currentEvento} />
-            </div>
-          </>
+           <>
+             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
+               <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
+                 {timelineItems.map((item) => (
+                   <div key={item.key} ref={item.isToday ? todayRef : null}>
+                     <TimelineDayGroup
+                       label={item.label}
+                       dayNumber={item.dayNumber}
+                       eventos={item.eventos}
+                       isToday={item.isToday}
+                       onSelect={setSelectedEvento}
+                       viewModeLabel={viewModeLabel}
+                       selectedEventoId={currentEvento?.id}
+                     />
+                   </div>
+                 ))}
+               </div>
+               <TimelineSidebarCard evento={currentEvento} />
+             </div>
+             <FluvialActionFab 
+               onScrollToToday={handleScrollToToday}
+               onOpenFilters={() => setShowFilterPanel(true)}
+             />
+           </>
         ) : routeType === 'Fretes' ? (
           <div className="space-y-5">
             {selectedEvento ? (
@@ -253,8 +265,8 @@ export default function ItinerarioFluvial() {
             )}
           </div>
         ) : (
-          <BoatsTab />
-        )}
+           <BoatsTab />
+         )}
       </div>
     </div>
   );
