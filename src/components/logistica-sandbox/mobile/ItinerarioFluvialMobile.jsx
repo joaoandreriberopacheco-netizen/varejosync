@@ -8,7 +8,8 @@ import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
-import FreteFilterTabs from '@/components/logistica-sandbox/FreteFilterTabs';
+import FreteFAB from '@/components/logistica-sandbox/mobile/FreteFAB';
+import FreteTotalValue from '@/components/logistica-sandbox/FreteTotalValue';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
@@ -318,16 +319,14 @@ export default function ItinerarioFluvialMobile() {
             />
           ) : (
             <div className="space-y-4 pb-4">
-              <FreteMonthNavigator
-                currentMonth={freteMonth}
-                onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-                onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-              />
-              <FreteFilterTabs
-                eventos={freteEventos}
-                selectedFilter={freteFilter}
-                onFilterChange={setFreteFilter}
-              />
+              <div>
+                <FreteMonthNavigator
+                  currentMonth={freteMonth}
+                  onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
+                  onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
+                />
+                <FreteTotalValue eventos={freteEventosFiltrados} />
+              </div>
               {freteEventosFiltrados.length > 0 ? freteEventosFiltrados.map((evento) => (
                 <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
               )) : (
@@ -336,6 +335,10 @@ export default function ItinerarioFluvialMobile() {
                   description="Não encontramos fretes com embarques no mês selecionado."
                 />
               )}
+              <FreteFAB
+                selectedFilter={freteFilter}
+                onFilterChange={setFreteFilter}
+              />
             </div>
           )
         ) : (
