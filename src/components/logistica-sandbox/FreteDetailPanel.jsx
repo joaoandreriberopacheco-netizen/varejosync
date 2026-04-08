@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { DollarSign, Paperclip, Upload, Trash2, FileText } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { DollarSign, Link as LinkIcon } from 'lucide-react';
+import AnexosPanel from '@/components/anexos/AnexosPanel';
 
 function getContaStatusStyle(temConta, status, estaAtrasada) {
   if (!temConta) return { bgClass: 'bg-gray-50 dark:bg-gray-800', strokeColor: '#d1d5db', label: 'Sem vinculação' };
@@ -11,57 +10,15 @@ function getContaStatusStyle(temConta, status, estaAtrasada) {
 }
 
 export default function FreteDetailPanel({ evento, embarques, onBack }) {
-  const [uploadFile, setUploadFile] = useState(null);
-  const queryClient = useQueryClient();
-
-  const { data: anexos = [] } = useQuery({
-    queryKey: ['anexos-frete', evento?.id],
-    queryFn: async () => {
-      if (!evento?.conta_frete?.id) return [];
-      return base44.entities.AnexoDocumento.filter({
-        referencia_id: evento.conta_frete.id,
-        referencia_tipo: 'LancamentoFinanceiro'
-      });
-    },
-    enabled: !!evento?.conta_frete?.id
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: async (file) => {
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
-      
-      if (evento.conta_frete?.id) {
-        await base44.entities.AnexoDocumento.create({
-          referencia_id: evento.conta_frete.id,
-          referencia_tipo: 'LancamentoFinanceiro',
-          url_arquivo: uploadRes.file_url,
-          nome_arquivo: file.name,
-          tipo_arquivo: file.type
-        });
-      }
-      
-      embarques.forEach(async (embarque) => {
-        await base44.entities.AnexoDocumento.create({
-          referencia_id: embarque.id,
-          referencia_tipo: 'Embarque',
-          url_arquivo: uploadRes.file_url,
-          nome_arquivo: file.name,
-          tipo_arquivo: file.type
-        });
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['anexos-frete', evento?.id] });
-      setUploadFile(null);
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (anexoId) => base44.entities.AnexoDocumento.delete(anexoId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['anexos-frete', evento?.id] });
-    }
-  });
+  const handleCreateContaFrete = () => {
+    const params = new URLSearchParams({
+      tipo: 'Despesa',
+      categoria_id: 'frete',
+      tags: 'frete',
+      is_custo_mercadoria: 'true'
+    });
+    window.location.href = `/Financeiro?${params.toString()}`;
+  };
 
   const temConta = evento?.tem_conta_frete;
   const statusConta = evento?.conta_frete_status;
@@ -95,8 +52,8 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
         <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">{label}</div>
       </div>
 
-      {/* Informações da Conta */}
-      {temConta && evento.conta_frete && (
+      {/* Informações da Conta ou CTA para criar */}
+      {temConta && evento.conta_frete ? (
         <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-2 text-xs">
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Valor:</span>
@@ -117,7 +74,29 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
             </div>
           )}
         </div>
-      )}
+      ) : (
+        <button
+          onClick={handleCreateContaFrete}
+          className="w-full rounded-3xl bg-lime-100 dark:bg-lime-900/20 px-4 py-3 flex items-center justify-between text-sm font-medium text-lime-700 dark:text-lime-300 hover:bg-lime-200 dark:hover:bg-lime-900/30 transition-colors"
+        >
+          <span>Criar Conta a Pagar</span>
+          <LinkIcon className="w-4 h-4" />
+        </button>
+      )
+      }
+
+      {/* Valor Total do Frete */}
+      <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-gray-500" />
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">Valor total do frete</span>
+          </div>
+          <span className="text-sm font-bold text-gray-900 dark:text-white">
+            {(evento.valor_total_frete || evento.valor_total_carga || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </span>
+        </div>
+      </div>
 
       {/* Resumo de Embarques */}
       <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 space-y-2">
@@ -141,60 +120,18 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
       </div>
 
       {/* Seção de Anexos */}
-      <div className="rounded-3xl bg-white dark:bg-gray-800 p-4 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Paperclip className="w-4 h-4 text-gray-500" />
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Documentos</p>
-            {anexos.length > 0 && (
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                {anexos.length}
-              </span>
-            )}
-          </div>
+      {evento?.conta_frete?.id && (
+        <AnexosPanel
+          referencia_id={evento.conta_frete.id}
+          referencia_tipo="LancamentoFinanceiro"
+          titulo="Documentos"
+        />
+      )}
+      {!evento?.conta_frete?.id && (
+        <div className="rounded-3xl bg-gray-50 dark:bg-gray-800 p-4 text-center text-xs text-gray-500 dark:text-gray-400">
+          Crie uma conta a pagar para adicionar documentos
         </div>
-
-        {/* Upload */}
-        <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-          <Upload className="w-4 h-4 text-gray-400" />
-          <span className="text-xs text-gray-600 dark:text-gray-400">Adicionar anexo</span>
-          <input
-            type="file"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.[0]) {
-                uploadMutation.mutate(e.target.files[0]);
-              }
-            }}
-            disabled={uploadMutation.isPending}
-          />
-        </label>
-
-        {/* Lista de Anexos */}
-        {anexos.length > 0 && (
-          <div className="space-y-1">
-            {anexos.map((anexo) => (
-              <div key={anexo.id} className="flex items-center justify-between px-2 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-700 dark:text-gray-300 truncate">{anexo.nome_arquivo}</span>
-                </div>
-                <button
-                  onClick={() => deleteMutation.mutate(anexo.id)}
-                  disabled={deleteMutation.isPending}
-                  className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex-shrink-0"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {anexos.length === 0 && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-2">Nenhum documento anexado</p>
-        )}
-      </div>
+      )}
     </div>
   );
 }
