@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     }
 
     const transportadoras = await base44.asServiceRole.entities.Transportadora.filter({ id: transportadoraId });
-    const transportadora = transportadoras?.[0];
+    const transportadora = transportadoras?.[0]?.data || transportadoras?.[0];
 
     if (!transportadora) {
       return Response.json({ error: 'Transportadora não encontrada' }, { status: 404 });
@@ -61,9 +61,10 @@ Deno.serve(async (req) => {
     const limiteProspectivo = addMonths(hoje, 3);
     const sequenciaMaxima = 999;
 
-    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, 'data_saida_origem', 500);
-    const codigosExistentes = new Set(viagensDaTransportadora.map((viagem) => viagem.codigo).filter(Boolean));
-    const saidasExistentes = new Set(viagensDaTransportadora.map((viagem) => viagem.data_saida_origem).filter(Boolean));
+    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500);
+    const viagensNormalizadas = viagensDaTransportadora.map((viagem) => viagem.data || viagem);
+    const codigosExistentes = new Set(viagensNormalizadas.map((viagem) => viagem.codigo).filter(Boolean));
+    const saidasExistentes = new Set(viagensNormalizadas.map((viagem) => viagem.data_saida_origem).filter(Boolean));
 
     let sequencia = 1;
     const novasViagens = [];
