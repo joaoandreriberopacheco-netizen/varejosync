@@ -13,8 +13,6 @@ import FreteTotalValue from '@/components/logistica-sandbox/FreteTotalValue';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
-import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
-import FreteCaixaCard from '@/components/logistica-sandbox/FreteCaixaCard';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
 import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
@@ -327,10 +325,7 @@ export default function ItinerarioFluvialMobile() {
                   onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
                   onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
                 />
-                <div className="space-y-3">
-                  <FreteResumoCard eventos={freteEventosFiltrados} />
-                  <FreteCaixaCard valor={0} />
-                </div>
+                <FreteTotalValue eventos={freteEventosFiltrados} />
               </div>
               {freteEventosFiltrados.length > 0 ? freteEventosFiltrados.map((evento) => (
                 <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
