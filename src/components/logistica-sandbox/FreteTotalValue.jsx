@@ -8,7 +8,7 @@ export default function FreteTotalValue({ eventos = [] }) {
   }, 0);
 
   return (
-    <div className="flex items-center justify-center py-2">
+    <div className="flex items-center justify-center py-1">
       <span className="text-base font-semibold text-gray-900 dark:text-white">
         {totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
       </span>
