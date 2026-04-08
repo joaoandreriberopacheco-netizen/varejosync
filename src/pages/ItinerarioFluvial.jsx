@@ -279,11 +279,6 @@ export default function ItinerarioFluvial() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-3">
-                    {routeType === 'Fluvial' && (
-                      <MobileFilterSheet open={showFilters} onOpenChange={setShowFilters} />
-                    )}
-                  </div>
                   <div className="bg-transparent space-y-1">
                     {timelineItems.map((item) => (
                       <TimelineDayGroup
