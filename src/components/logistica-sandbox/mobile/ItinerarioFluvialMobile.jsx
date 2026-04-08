@@ -11,6 +11,7 @@ import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNaviga
 import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
+import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
 import ItinerarioMobileHeader from '@/components/logistica-sandbox/mobile/ItinerarioMobileHeader';
@@ -304,14 +305,11 @@ export default function ItinerarioFluvialMobile() {
           )
         ) : routeType === 'Fretes' ? (
           selectedEvento ? (
-            <div className="space-y-4 pb-4">
-              <MobileDetailHeader
-                title={selectedEvento.embarcacao_nome}
-                subtitle={selectedEvento.codigo || 'Resumo da carga'}
-                onBack={() => setSelectedEvento(null)}
-              />
-              <EventoCargaReportCard evento={selectedEvento} />
-            </div>
+            <FreteDetailPanel
+              evento={selectedEvento}
+              embarques={selectedEvento.embarques_relacionados || []}
+              onBack={() => setSelectedEvento(null)}
+            />
           ) : (
             <div className="space-y-4 pb-4">
               <FreteMonthNavigator

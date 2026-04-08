@@ -1,19 +1,49 @@
 import React from 'react';
-import { Check, Package, ShipWheel } from 'lucide-react';
+import { DollarSign, ShipWheel } from 'lucide-react';
 
-function getContaStatusClasses(status) {
+function getContaStatusStyle(temConta, status, estaAtrazo) {
+  // Sem conta vinculada - cinza claro desaturado
+  if (!temConta) {
+    return {
+      bgClass: 'bg-gray-50 dark:bg-gray-800',
+      strokeColor: '#d1d5db' // cinza-300
+    };
+  }
+
+  // Com atraso - flamingo (rosa coral)
+  if (estaAtrazo) {
+    return {
+      bgClass: 'bg-red-50 dark:bg-red-900/20',
+      strokeColor: '#ff5a7f' // flamingo
+    };
+  }
+
+  // Pago - verde oliva
   if (status === 'Pago') {
-    return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-300/70 dark:ring-emerald-700/70';
+    return {
+      bgClass: 'bg-green-50 dark:bg-green-900/20',
+      strokeColor: '#7c8a0f' // verde oliva
+    };
   }
 
-  if (status === 'Pendente' || status === 'Boleto Anexado') {
-    return 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 ring-2 ring-amber-300/70 dark:ring-amber-700/70';
-  }
-
-  return 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300';
+  // Pendente - verde lima (vinculada mas não paga)
+  return {
+    bgClass: 'bg-lime-50 dark:bg-lime-900/20',
+    strokeColor: '#84cc16' // verde lima
+  };
 }
 
 export default function FreteListCard({ evento, onSelect }) {
+  const temContaFrete = evento.tem_conta_frete;
+  const statusConta = evento.conta_frete_status;
+  // Verificar se está atrasada comparando data_vencimento com hoje
+  const estaAtrasada = temContaFrete && 
+    statusConta !== 'Pago' && 
+    evento.conta_frete?.data_vencimento && 
+    new Date(evento.conta_frete.data_vencimento) < new Date();
+  
+  const { bgClass, strokeColor } = getContaStatusStyle(temContaFrete, statusConta, estaAtrasada);
+
   return (
     <button onClick={() => onSelect(evento)} className="w-full text-left bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm active:scale-[0.99] transition-transform">
       <div className="flex items-start justify-between gap-3">
@@ -30,16 +60,15 @@ export default function FreteListCard({ evento, onSelect }) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm ${getContaStatusClasses(evento.conta_frete_status)}`}>
-            <Check className="w-4 h-4" />
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${bgClass}`}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="8" />
+              <path d="M12 6v12" />
+              <path d="M9 9h6a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-6" />
+            </svg>
           </div>
-          {evento.tem_embarques_relacionados && (
-            <div className="w-9 h-9 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm">
-              <Package className="w-4 h-4" />
-            </div>
-          )}
         </div>
-      </div>
-    </button>
-  );
-}
+        </div>
+        </button>
+        );
+        }
