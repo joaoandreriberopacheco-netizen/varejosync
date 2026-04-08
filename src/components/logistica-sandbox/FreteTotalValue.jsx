@@ -3,8 +3,7 @@ import { DollarSign } from 'lucide-react';
 
 export default function FreteTotalValue({ eventos = [] }) {
   const totalValue = eventos.reduce((sum, evento) => {
-    // Soma o valor do LancamentoFinanceiro vinculado (conta de frete)
-    return sum + (evento.lancamento_financeiro_valor || 0);
+    return sum + (evento.valor_total_carga || 0);
   }, 0);
 
   return (
