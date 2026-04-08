@@ -177,11 +177,8 @@ export default function ItinerarioFluvial() {
 
 
   const freteEventos = useMemo(() => {
-    return eventos.filter((evento) => {
-      const embarquesRelacionados = embarques.filter((emb) => emb.evento_logistico_id === evento.id);
-      return embarquesRelacionados.length > 0;
-    });
-  }, [eventos, embarques]);
+    return eventos.filter((evento) => (evento.embarques_relacionados || []).length > 0);
+  }, [eventos]);
 
   const freteEventosFiltrados = useMemo(() => {
     if (!freteSearchQuery.trim()) return freteEventos;
