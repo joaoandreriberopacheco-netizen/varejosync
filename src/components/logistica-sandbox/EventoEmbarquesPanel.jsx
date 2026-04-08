@@ -15,7 +15,6 @@ function criarMapaCustosPedido(embarques = []) {
   embarques.forEach((embarque) => {
     const itensPedido = embarque?._pedido_compra_itens || embarque?.pedido_compra_itens || embarque?.pedido_itens || [];
     itensPedido.forEach((item) => {
-      if (!item?.produto_id || mapa[item.produto_id] != null) return;
       const quantidadeBase = Number(item.quantidade_base ?? item.quantidade ?? 1) || 1;
       const custoUnitario = Number(
         item.custo_unitario ??
@@ -24,7 +23,11 @@ function criarMapaCustosPedido(embarques = []) {
         item.total_unitario ??
         ((Number(item.total) || 0) / quantidadeBase)
       ) || 0;
-      mapa[item.produto_id] = custoUnitario;
+
+      if (item?.produto_id && mapa[item.produto_id] == null) {
+        mapa[item.produto_id] = custoUnitario;
+      }
+
       const nomeNormalizado = normalizarTexto(item.produto_nome);
       if (nomeNormalizado && mapa[nomeNormalizado] == null) {
         mapa[nomeNormalizado] = custoUnitario;
@@ -81,10 +84,13 @@ function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
       </button>
 
       {open && (
-        <div className="mx-[-1px] mb-2 rounded-2xl bg-[#253042] px-0 py-2 shadow-inner">
-          <div className="grid grid-cols-[42px_minmax(0,1fr)_70px] gap-1 px-0 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
+        <div className="mx-[-10px] mb-2 rounded-2xl bg-[#253042] px-0 py-2 shadow-inner">
+          <div className="grid grid-cols-[40px_minmax(0,1fr)_64px] items-center gap-1 px-2 pb-2 text-[10px] uppercase tracking-[0.08em] text-slate-300">
             <span>Qtd</span>
-            <span className="text-center">Descrição</span>
+            <div className="grid grid-cols-[minmax(0,1fr)_70px] items-center gap-2">
+              <span className="text-center">Descrição</span>
+              <span className="text-right">V. Unt</span>
+            </div>
             <span className="text-right">Vlr Tot</span>
           </div>
           <div className="space-y-1">
@@ -93,13 +99,13 @@ function EmbarqueCard({ embarque, defaultOpen = false, custosPedido = {} }) {
               const custo = item.custo_unitario ?? item.custo_unitario_momento ?? item.valor_unitario ?? item.total_unitario ?? custosPedido[item.produto_id] ?? custosPedido[normalizarTexto(item.produto_nome)] ?? 0;
               const total = item.total ?? item.valor_total ?? (quantidade * custo);
               return (
-                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[42px_minmax(0,1fr)_70px] gap-1 px-0 py-2 text-[10px] text-white">
-                  <span className="text-[10px] text-white">{quantidade}</span>
-                  <div className="min-w-0 text-center">
-                    <p className="text-[10px] leading-tight break-words font-normal text-white">{item.produto_nome || 'Item sem descrição'}</p>
-                    <p className="mt-1 text-[10px] text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} un.</p>
+                <div key={`${item.produto_id || item.produto_nome}-${index}`} className="grid grid-cols-[40px_minmax(0,1fr)_64px] items-start gap-1 px-2 py-2 text-[10px] text-white">
+                  <span className="pt-0.5 text-[10px] text-white">{quantidade}</span>
+                  <div className="grid grid-cols-[minmax(0,1fr)_70px] items-start gap-2 min-w-0">
+                    <p className="text-[10px] leading-tight break-words font-normal text-white text-center">{item.produto_nome || 'Item sem descrição'}</p>
+                    <span className="pt-0.5 text-[10px] text-right whitespace-nowrap text-slate-300">{custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                   </div>
-                  <span className="text-[10px] text-right font-normal whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  <span className="pt-0.5 text-[10px] text-right font-normal whitespace-nowrap text-white">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                 </div>
               );
             })}
