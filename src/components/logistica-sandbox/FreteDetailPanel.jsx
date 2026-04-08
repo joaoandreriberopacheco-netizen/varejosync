@@ -44,14 +44,12 @@ export default function FreteDetailPanel({ evento, embarques, onBack }) {
   const handleCreateContaFrete = () => {
     const eta = evento.data_previsao_chegada ? ` ETA ${new Date(evento.data_previsao_chegada).toLocaleDateString('pt-BR')}` : '';
     const descricao = `Frete - ${evento.embarcacao_nome} ${evento.codigo}${eta}`;
-    const params = new URLSearchParams({
-      tipo: 'Despesa',
-      descricao: descricao,
-      valor: (evento.valor_total_frete || calcularValorTotalEmbarques() || 0).toString(),
-      referencia_id: evento.id,
-      referencia_tipo: 'EventosLogisticos'
-    });
-    window.location.href = `/FluxoCaixa?${params.toString()}`;
+    const valor = evento.valor_total_frete || calcularValorTotalEmbarques() || 0;
+    
+    const encodedDesc = encodeURIComponent(descricao);
+    const encodedRef = encodeURIComponent(evento.id);
+    
+    window.location.href = `/FluxoCaixa?tipo=Despesa&descricao=${encodedDesc}&valor=${valor}&referencia_id=${encodedRef}&referencia_tipo=EventosLogisticos`;
   };
 
   const statusConta = contaAtualizada?.status;
