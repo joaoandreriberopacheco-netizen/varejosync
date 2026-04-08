@@ -19,16 +19,16 @@ function StatusBadge({ status }) {
 
 function BoatTimelineItem({ item }) {
   return (
-    <div className="relative pl-14">
+    <div className="relative pl-12 sm:pl-14 min-w-0">
       <div className="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700" />
       <div className="absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-2xl bg-white dark:bg-gray-800 shadow-sm text-gray-700 dark:text-gray-200 text-xs font-semibold">
         {item.dayLabel}
       </div>
       <div className="pb-5">
-        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <div className="rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm overflow-hidden">
+          <div className="flex items-start justify-between gap-3 min-w-0">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 break-words">
                 <CalendarDays className="w-3.5 h-3.5" />
                 {item.label}
               </div>
@@ -83,17 +83,17 @@ function HistoricoStatusIcon({ status }) {
 
 function HistoricoCard({ evento, onOpen }) {
   return (
-    <button type="button" onClick={() => onOpen(evento)} className="w-full rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm text-left">
-      <div className="flex items-center justify-between gap-3">
+    <button type="button" onClick={() => onOpen(evento)} className="w-full rounded-2xl bg-gray-50 dark:bg-gray-800 p-4 shadow-sm text-left overflow-hidden">
+      <div className="flex items-center justify-between gap-3 min-w-0">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{evento.titulo}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{evento.codigo} · {evento.data}</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 break-words">{evento.titulo}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-words">{evento.codigo} · {evento.data}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Badge className="border-0 shadow-none bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200">{evento.cargas} carga(s)</Badge>
-            <Badge className="border-0 shadow-none bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200">{evento.freteValor}</Badge>
+            <Badge className="border-0 shadow-none bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200 max-w-full break-all">{evento.freteValor}</Badge>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <HistoricoStatusIcon status={evento.financeiroStatus} />
           <ChevronRight className="w-4 h-4 text-gray-400" />
         </div>
@@ -176,10 +176,10 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl h-[90vh] p-0 overflow-hidden rounded-[28px] border-0 bg-white dark:bg-gray-900 shadow-2xl sm:rounded-[28px]">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-5xl h-[90vh] max-h-[90vh] p-0 overflow-hidden rounded-[28px] border-0 bg-white dark:bg-gray-900 shadow-2xl sm:rounded-[28px]">
           <div className="flex h-full min-h-0 flex-col relative">
-            <DialogHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 text-left">
-              <div className="flex items-start justify-between gap-3 pr-8">
+            <DialogHeader className="px-4 sm:px-5 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 text-left overflow-hidden">
+              <div className="flex items-start justify-between gap-3 pr-8 min-w-0">
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
                     <Anchor className="w-5 h-5 text-gray-700 dark:text-gray-200" />
@@ -193,23 +193,23 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
               </div>
             </DialogHeader>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-              <Tabs defaultValue="cadastro" className="space-y-4">
-                <TabsList className="w-full h-auto rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 grid grid-cols-3">
-                  <TabsTrigger value="cadastro" className="rounded-2xl text-xs">Cadastro</TabsTrigger>
-                  <TabsTrigger value="timeline" className="rounded-2xl text-xs">Timeline</TabsTrigger>
-                  <TabsTrigger value="historico" className="rounded-2xl text-xs">Histórico</TabsTrigger>
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-5 py-4">
+              <Tabs defaultValue="cadastro" className="space-y-4 min-w-0">
+                <TabsList className="w-full h-auto rounded-2xl bg-gray-100 dark:bg-gray-800 p-1 grid grid-cols-3 gap-1 min-w-0">
+                  <TabsTrigger value="cadastro" className="rounded-2xl text-[11px] sm:text-xs px-2 min-w-0">Cadastro</TabsTrigger>
+                  <TabsTrigger value="timeline" className="rounded-2xl text-[11px] sm:text-xs px-2 min-w-0">Timeline</TabsTrigger>
+                  <TabsTrigger value="historico" className="rounded-2xl text-[11px] sm:text-xs px-2 min-w-0">Histórico</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="timeline" className="mt-0">
-                  <div className="space-y-1 pr-1">
+                <TabsContent value="timeline" className="mt-0 min-w-0">
+                  <div className="space-y-1 pr-1 min-w-0">
                     {timelineItems.map((item) => (
                       <BoatTimelineItem key={`${item.label}-${item.data}`} item={item} />
                     ))}
                   </div>
                 </TabsContent>
 
-                <TabsContent value="cadastro" className="mt-0 space-y-4">
+                <TabsContent value="cadastro" className="mt-0 space-y-4 min-w-0">
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     <Button type="button" onClick={() => setIsEditing((prev) => !prev)} variant="outline" className="rounded-2xl border-0 bg-gray-100 dark:bg-gray-800 shadow-sm">
                       <Pencil className="w-4 h-4 mr-2" />
@@ -261,7 +261,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                   </div>
                 </TabsContent>
 
-                <TabsContent value="historico" className="mt-0">
+                <TabsContent value="historico" className="mt-0 min-w-0">
                   {eventoItems.length > 0 ? (
                     <div className="space-y-3">
                       {eventoItems.map((evento) => (

@@ -196,8 +196,8 @@ export default function ItinerarioFluvial() {
   const currentEvento = selectedEvento || timelineItems[0]?.eventos?.[0] || freteEventos[0] || null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6">
-      <div className="max-w-4xl mx-auto px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-6 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full px-3 py-4 md:p-6 space-y-4 md:space-y-6 overflow-x-hidden">
         <LogisticaSandboxHeader />
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -245,8 +245,8 @@ export default function ItinerarioFluvial() {
                   <TimelineSidebarCard evento={selectedEvento} />
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="bg-transparent space-y-1 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+                <div className="space-y-4 min-w-0">
+                  <div className="bg-transparent space-y-1 max-h-[calc(100vh-220px)] overflow-y-auto overflow-x-hidden pr-1 min-w-0 pb-2">
                     {timelineItems.map((item) => (
                       <TimelineDayGroup
                         key={item.key}
@@ -264,7 +264,7 @@ export default function ItinerarioFluvial() {
               )
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
-                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto pr-2">
+                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
                   {timelineItems.map((item) => (
                     <TimelineDayGroup
                       key={item.key}
