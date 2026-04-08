@@ -32,6 +32,7 @@ export default function ItinerarioFluvialMobile() {
   const [freteMonth, setFreteMonth] = useState(new Date());
   const [showFilters, setShowFilters] = useState(false);
   const [onlyLinked, setOnlyLinked] = useState(false);
+  const [linkedStatus, setLinkedStatus] = useState('todos');
   const todayRef = useRef(null);
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -116,6 +117,8 @@ export default function ItinerarioFluvialMobile() {
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
+        if (onlyLinked && linkedStatus === 'ativos' && !(evento.total_embarques_ativos > 0)) return false;
+        if (onlyLinked && linkedStatus === 'concluidos' && !(evento.total_embarques_concluidos > 0 && evento.total_embarques_ativos === 0)) return false;
         const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
         if (marco < targetDate) return false;
         if (endDate && marco > endDate) return false;
@@ -127,7 +130,7 @@ export default function ItinerarioFluvialMobile() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked]);
+  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked, linkedStatus]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -192,6 +195,8 @@ export default function ItinerarioFluvialMobile() {
               periodRange={periodRange}
               onPeriodRangeChange={setPeriodRange}
               onlyLinked={onlyLinked}
+              linkedStatus={linkedStatus}
+              onLinkedStatusChange={setLinkedStatus}
               onOnlyLinkedChange={setOnlyLinked}
             />
           </>

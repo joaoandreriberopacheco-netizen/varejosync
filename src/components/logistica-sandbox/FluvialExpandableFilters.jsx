@@ -13,6 +13,8 @@ export default function FluvialExpandableFilters({
   periodRange,
   onPeriodRangeChange,
   onlyLinked = false,
+  linkedStatus = 'todos',
+  onLinkedStatusChange,
   onOnlyLinkedChange,
 }) {
   return (
@@ -43,15 +45,22 @@ export default function FluvialExpandableFilters({
 
             <CollapsibleContent className="px-3 pb-3 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
               <div className="space-y-3 max-h-[62vh] overflow-y-auto pr-1">
-                <div className="rounded-3xl bg-white/5 p-3 shadow-sm">
+                <div className="rounded-3xl bg-white/5 p-3 shadow-sm space-y-2">
                   <button
                     type="button"
                     onClick={() => onOnlyLinkedChange?.(!onlyLinked)}
-                    className={`w-full flex items-center justify-between gap-3 rounded-2xl text-sm shadow-sm ${onlyLinked ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}
+                    className={`w-full flex items-center justify-between gap-3 rounded-2xl text-sm shadow-sm px-3 py-2.5 ${onlyLinked ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}
                   >
-                    <span className="flex items-center gap-2"><Link2 className="w-4 h-4" /> Apenas com embarques vinculados</span>
+                    <span className="flex items-center gap-2"><Link2 className="w-4 h-4" /> Apenas vinculados</span>
                     <span>{onlyLinked ? 'Ligado' : 'Todos'}</span>
                   </button>
+                  {onlyLinked ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      <button type="button" onClick={() => onLinkedStatusChange?.('todos')} className={`rounded-2xl px-3 py-2 text-xs shadow-sm ${linkedStatus === 'todos' ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}>Todos</button>
+                      <button type="button" onClick={() => onLinkedStatusChange?.('ativos')} className={`rounded-2xl px-3 py-2 text-xs shadow-sm ${linkedStatus === 'ativos' ? 'bg-lime-300 text-slate-900' : 'bg-white/10 text-white'}`}>Ativos</button>
+                      <button type="button" onClick={() => onLinkedStatusChange?.('concluidos')} className={`rounded-2xl px-3 py-2 text-xs shadow-sm ${linkedStatus === 'concluidos' ? 'bg-gray-300 text-slate-900' : 'bg-white/10 text-white'}`}>Concluídos</button>
+                    </div>
+                  ) : null}
                 </div>
                 <TimelineViewControls
                   viewMode={viewMode}

@@ -46,8 +46,14 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], con
 
       const resumoFornecedores = Array.from(fornecedoresMap.values());
       const valorTotalCarga = embarquesRelacionados.reduce((total, embarque) => {
-        return total + (embarque.itens || []).reduce((sum, itemEmbarque) => sum + ((itemEmbarque.quantidade_embarcada || 0) * (itemEmbarque.custo_unitario || 0)), 0);
+        return total + (embarque.itens || []).reduce((sum, itemEmbarque) => {
+          const quantidade = itemEmbarque.quantidade_embarcada ?? itemEmbarque.quantidade_pedida ?? itemEmbarque.quantidade ?? 0;
+          const custo = itemEmbarque.custo_unitario ?? itemEmbarque.custo_unitario_momento ?? itemEmbarque.valor_unitario ?? 0;
+          return sum + (quantidade * custo);
+        }, 0);
       }, 0);
+      const totalEmbarquesAtivos = embarquesRelacionados.filter((emb) => emb.status !== 'Concluído').length;
+      const totalEmbarquesConcluidos = embarquesRelacionados.filter((emb) => emb.status === 'Concluído').length;
 
       const contaFrete = contasFrete.find((conta) => {
         const ref = `${conta.referencia_id || ''} ${conta.descricao || ''}`;
@@ -71,6 +77,8 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], con
         total_fornecedores_relacionados: resumoFornecedores.length,
         resumo_fornecedores: resumoFornecedores,
         valor_total_carga: valorTotalCarga,
+        total_embarques_ativos: totalEmbarquesAtivos,
+        total_embarques_concluidos: totalEmbarquesConcluidos,
         conta_frete: contaFrete || null,
         conta_frete_status: contaFrete?.status || null,
         conta_frete_valor: contaFrete?.valor || 0,
