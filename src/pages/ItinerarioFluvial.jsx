@@ -359,8 +359,7 @@ export default function ItinerarioFluvial() {
                   )}
                 </div>
                 <FreteTotalValue eventos={freteEventos} />
-                <div className="flex items-center justify-center min-h-[calc(100vh-280px)]">
-                  <div className="w-full grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-5 pb-2">
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 pb-2">
                   {freteEventos.map((evento) => (
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
                   ))}
@@ -369,7 +368,6 @@ export default function ItinerarioFluvial() {
                       Nenhum frete com carga encontrado neste período.
                     </div>
                   )}
-                  </div>
                 </div>
               </>
             )}
