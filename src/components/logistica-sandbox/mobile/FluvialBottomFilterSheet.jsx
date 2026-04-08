@@ -22,15 +22,15 @@ export default function FluvialBottomFilterSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-[28px] border-0 bg-[#111827]/98 px-3 pb-5 pt-3 text-white shadow-2xl">
-        <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-white/15" />
-        <div className="mb-3 flex items-center justify-between gap-3">
+      <SheetContent side="bottom" className="rounded-t-[28px] border-0 bg-slate-900/95 backdrop-blur-sm px-4 pb-6 pt-4 text-white shadow-2xl">
+        <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-white/20" />
+        <div className="mb-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/10 shadow-sm">
               <SlidersHorizontal className="h-4 w-4 text-white" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-white/55">Filtros</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-white/60">Filtros & Simulador</p>
               <p className="truncate text-sm font-medium text-white">Visualização fluvial</p>
             </div>
           </div>
@@ -45,26 +45,78 @@ export default function FluvialBottomFilterSheet({
           </Button>
         </div>
 
-        <div className="max-h-[72vh] space-y-3 overflow-y-auto pr-1">
-          <div className="space-y-2 rounded-3xl bg-white/5 p-2.5 shadow-sm">
-            <button
-              type="button"
-              onClick={() => onOnlyLinkedChange?.(!onlyLinked)}
-              className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-sm shadow-sm ${onlyLinked ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}
-            >
-              <span className="flex items-center gap-2"><Link2 className="h-4 w-4" /> Apenas vinculados</span>
-              <span>{onlyLinked ? 'Ligado' : 'Todos'}</span>
-            </button>
-            {onlyLinked ? (
-              <div className="grid grid-cols-3 gap-2">
-                <button type="button" onClick={() => onLinkedStatusChange?.('todos')} className={`rounded-2xl px-3 py-2 text-xs shadow-sm ${linkedStatus === 'todos' ? 'bg-white text-slate-900' : 'bg-white/10 text-white'}`}>Todos</button>
-                <button type="button" onClick={() => onLinkedStatusChange?.('ativos')} className={`rounded-2xl px-3 py-2 text-xs shadow-sm ${linkedStatus === 'ativos' ? 'bg-lime-300 text-slate-900' : 'bg-white/10 text-white'}`}>Ativos</button>
-                <button type="button" onClick={() => onLinkedStatusChange?.('concluidos')} className={`rounded-2xl px-3 py-2 text-xs shadow-sm ${linkedStatus === 'concluidos' ? 'bg-gray-300 text-slate-900' : 'bg-white/10 text-white'}`}>Concluídos</button>
-              </div>
-            ) : null}
+        <div className="max-h-[72vh] space-y-4 overflow-y-auto pr-2">
+          {/* Simulador */}
+          <div className="space-y-2 rounded-3xl bg-indigo-500/15 p-3 shadow-sm border border-indigo-400/20">
+            <label className="block text-xs uppercase tracking-[0.16em] text-indigo-200 font-medium">
+              Simulador de Data
+            </label>
+            <input
+              type="date"
+              className="w-full rounded-2xl bg-white/8 border border-white/15 shadow-sm px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:bg-white/12 focus:border-indigo-400/50"
+            />
           </div>
 
-          <TimelineDatePicker value={simulationDate} onChange={onSimulationDateChange} compact />
+          {/* Filtros */}
+          <div className="space-y-3">
+            <label className="block text-xs uppercase tracking-[0.16em] text-white/60 font-medium">Filtros</label>
+            <div className="space-y-2 rounded-3xl bg-white/5 p-3 shadow-sm">
+              <button
+                type="button"
+                onClick={() => onOnlyLinkedChange?.(!onlyLinked)}
+                className={`flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm shadow-sm transition-colors ${
+                  onlyLinked
+                    ? 'bg-white text-slate-900 font-medium'
+                    : 'bg-white/10 text-white/80 hover:bg-white/15'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4" />
+                  Apenas vinculados
+                </span>
+                <span className="text-xs opacity-75">{onlyLinked ? 'Ligado' : 'Todos'}</span>
+              </button>
+              {onlyLinked ? (
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => onLinkedStatusChange?.('todos')}
+                    className={`rounded-2xl px-3 py-2.5 text-xs shadow-sm transition-colors ${
+                      linkedStatus === 'todos'
+                        ? 'bg-white text-slate-900 font-medium'
+                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                    }`}
+                  >
+                    Todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onLinkedStatusChange?.('ativos')}
+                    className={`rounded-2xl px-3 py-2.5 text-xs shadow-sm transition-colors ${
+                      linkedStatus === 'ativos'
+                        ? 'bg-lime-400 text-slate-900 font-medium'
+                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                    }`}
+                  >
+                    Ativos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onLinkedStatusChange?.('concluidos')}
+                    className={`rounded-2xl px-3 py-2.5 text-xs shadow-sm transition-colors ${
+                      linkedStatus === 'concluidos'
+                        ? 'bg-gray-300 text-slate-900 font-medium'
+                        : 'bg-white/10 text-white/70 hover:bg-white/15'
+                    }`}
+                  >
+                    Concluídos
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* View Mode e Period */}
           <TimelineViewControls viewMode={viewMode} onViewModeChange={onViewModeChange} />
           <TimelinePeriodPicker range={periodRange} onChange={onPeriodRangeChange} />
         </div>
