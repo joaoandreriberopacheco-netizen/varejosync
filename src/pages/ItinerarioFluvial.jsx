@@ -9,9 +9,9 @@ import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
-import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
 import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
+import FreteSearchBar from '@/components/logistica-sandbox/FreteSearchBar';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
@@ -22,8 +22,8 @@ export default function ItinerarioFluvial() {
   const [selectedEvento, setSelectedEvento] = useState(null);
   const [simulationDate, setSimulationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [viewMode, setViewMode] = useState('saida_manaus');
-  const [freteMonth, setFreteMonth] = useState(new Date());
   const [isMobile, setIsMobile] = useState(false);
+  const [freteSearchQuery, setFreteSearchQuery] = useState('');
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
 
@@ -90,7 +90,7 @@ export default function ItinerarioFluvial() {
 
   React.useEffect(() => {
     setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate, freteMonth]);
+  }, [routeType, viewMode, simulationDate]);
 
   React.useEffect(() => {
     if (routeType !== 'Fluvial') {
@@ -163,9 +163,23 @@ export default function ItinerarioFluvial() {
       ? 'Chegada Tabatinga'
       : 'Saída Manaus';
 
+
   const freteEventos = useMemo(() => {
-    return eventos.filter((evento) => evento.tem_conta_frete === true);
+    // Filtrar: não pagos (em aberto, vencido) com conta vinculada
+    return eventos.filter((evento) => {
+      if (!evento.lancamento_financeiro_id) return false;
+      const status = evento.lancamento_financeiro_status;
+      return status === 'Em Aberto' || status === 'Vencido';
+    });
   }, [eventos]);
+
+  const freteEventosFiltrados = useMemo(() => {
+    if (!freteSearchQuery.trim()) return freteEventos;
+    const query = freteSearchQuery.toLowerCase();
+    return freteEventos.filter((evento) => 
+      (evento.embarcacao_nome || '').toLowerCase().includes(query)
+    );
+  }, [freteEventos, freteSearchQuery]);
 
   const freteResumo = useMemo(() => ({
     totalFretes: freteEventos.length,
@@ -223,21 +237,15 @@ export default function ItinerarioFluvial() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between gap-3">
-                  <FreteMonthNavigator
-                    currentMonth={freteMonth}
-                    onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
-                    onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
-                  />
-                </div>
-                <FreteResumoCard eventos={freteEventos} />
+                <FreteSearchBar value={freteSearchQuery} onChange={setFreteSearchQuery} />
+                <FreteResumoCard eventos={freteEventosFiltrados} />
                 <div className="space-y-3">
-                  {freteEventos.map((evento) => (
+                  {freteEventosFiltrados.map((evento) => (
                     <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
                   ))}
-                  {freteEventos.length === 0 && (
+                  {freteEventosFiltrados.length === 0 && (
                     <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm text-sm text-gray-500 dark:text-gray-400">
-                      Nenhum frete encontrado.
+                      {freteSearchQuery ? 'Nenhuma embarcação encontrada.' : 'Nenhum frete em aberto.'}
                     </div>
                   )}
                 </div>
