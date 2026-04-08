@@ -8,7 +8,7 @@ import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
 import FreteMonthNavigator from '@/components/logistica-sandbox/FreteMonthNavigator';
-import FreteResumoCard from '@/components/logistica-sandbox/FreteResumoCard';
+import FreteFilterTabs from '@/components/logistica-sandbox/FreteFilterTabs';
 import FreteListCard from '@/components/logistica-sandbox/FreteListCard';
 import EventoCargaReportCard from '@/components/logistica-sandbox/EventoCargaReportCard';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
@@ -34,6 +34,7 @@ export default function ItinerarioFluvialMobile() {
   const [onlyLinked, setOnlyLinked] = useState(false);
   const [linkedStatus, setLinkedStatus] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
+  const [freteFilter, setFreteFilter] = useState('todos');
   const todayRef = useRef(null);
 
   const { data: eventosLogisticos = [] } = useQuery({
@@ -225,11 +226,16 @@ export default function ItinerarioFluvialMobile() {
     });
   }, [eventos, freteMonth]);
 
-  const freteResumo = useMemo(() => ({
-    totalFretes: freteEventos.length,
-    totalComConta: freteEventos.filter((evento) => evento.tem_conta_frete).length,
-    totalSemConta: freteEventos.filter((evento) => !evento.tem_conta_frete).length,
-  }), [freteEventos]);
+  const freteEventosFiltrados = useMemo(() => {
+    switch (freteFilter) {
+      case 'comConta':
+        return freteEventos.filter(e => e.tem_conta_frete);
+      case 'semConta':
+        return freteEventos.filter(e => !e.tem_conta_frete);
+      default:
+        return freteEventos;
+    }
+  }, [freteEventos, freteFilter]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 overflow-x-hidden">
@@ -317,12 +323,12 @@ export default function ItinerarioFluvialMobile() {
                 onPrev={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() - 1, 1))}
                 onNext={() => setFreteMonth(new Date(freteMonth.getFullYear(), freteMonth.getMonth() + 1, 1))}
               />
-              <FreteResumoCard
-                totalFretes={freteResumo.totalFretes}
-                totalComConta={freteResumo.totalComConta}
-                totalSemConta={freteResumo.totalSemConta}
+              <FreteFilterTabs
+                eventos={freteEventos}
+                selectedFilter={freteFilter}
+                onFilterChange={setFreteFilter}
               />
-              {freteEventos.length > 0 ? freteEventos.map((evento) => (
+              {freteEventosFiltrados.length > 0 ? freteEventosFiltrados.map((evento) => (
                 <FreteListCard key={evento.id} evento={evento} onSelect={setSelectedEvento} />
               )) : (
                 <ItinerarioMobileEmptyState
