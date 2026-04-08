@@ -113,10 +113,8 @@ export default function ItinerarioFluvialMobile() {
       }))
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
-        if (selectedBoat !== 'all' && evento.embarcacao_nome !== selectedBoat) return false;
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         const marco = new Date(`${evento.visualizacao_data}T00:00:00`);
-        if (onlyLinked && !evento.tem_embarques_relacionados) return false;
         if (marco < targetDate) return false;
         if (endDate && marco > endDate) return false;
         return true;
