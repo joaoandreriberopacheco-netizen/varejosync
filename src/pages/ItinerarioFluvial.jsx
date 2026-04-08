@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, isSameDay } from 'date-fns';
+import { buildFluvialEvents } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
@@ -52,83 +53,32 @@ export default function ItinerarioFluvial() {
     initialData: []
   });
 
-  const formatDate = (value) => {
-    if (!value) return '-';
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? value : format(parsed, 'dd/MM/yyyy');
-  };
+  const eventosBase = useMemo(() => buildFluvialEvents({
+    eventosLogisticos,
+    embarques,
+    contasPrevistas,
+  }), [eventosLogisticos, embarques, contasPrevistas]);
 
   const eventos = useMemo(() => {
-    const source = eventosLogisticos;
     const simulationBaseDate = new Date(`${simulationDate}T00:00:00`);
-    const contasFrete = (contasPrevistas || []).filter((conta) => {
-      const descricao = `${conta.descricao || ''} ${Array.isArray(conta.tags) ? conta.tags.join(' ') : ''}`.toLowerCase();
-      return descricao.includes('frete') || descricao.includes('cmv');
+
+    return eventosBase.map((item) => {
+      const saidaManaus = item.data_saida_origem;
+      const chegadaManaus = item.data_chegada_manaus;
+      const diasAteSaida = saidaManaus ? Math.round((new Date(`${saidaManaus}T00:00:00`) - simulationBaseDate) / (1000 * 60 * 60 * 24)) : null;
+      const diasDesdeChegada = chegadaManaus ? Math.round((simulationBaseDate - new Date(`${chegadaManaus}T00:00:00`)) / (1000 * 60 * 60 * 24)) : null;
+      const ocupacaoPercentualDinamica = diasAteSaida === null || diasDesdeChegada === null
+        ? (item.ocupacao_percentual || 0)
+        : diasDesdeChegada < 0 || diasAteSaida < 0
+          ? 0
+          : Math.max(0, Math.min(100, Math.round((Math.min(diasDesdeChegada, 7) / 7) * 100)));
+
+      return {
+        ...item,
+        ocupacao_percentual_dinamica: ocupacaoPercentualDinamica,
+      };
     });
-
-    return source
-      .map(item => {
-        const saidaManaus = item.data_saida_origem || item.data_referencia;
-        const chegadaTabatinga = item.data_chegada_destino || item.previsao_chegada;
-        const chegadaManaus = item.data_chegada_manaus || item.data_retorno_origem || item.previsao_retorno;
-        const proximaChegadaManaus = item.proxima_chegada_manaus || item.proximo_ciclo_chegada_manaus;
-        const embarquesRelacionados = (embarques || []).filter((emb) => emb.evento_logistico_id === item.id);
-        const fornecedoresMap = new Map();
-
-        embarquesRelacionados.forEach((embarque) => {
-          const key = embarque.fornecedor_nome || 'Fornecedor';
-          if (!fornecedoresMap.has(key)) {
-            fornecedoresMap.set(key, { fornecedor_nome: key, itens: [] });
-          }
-          const group = fornecedoresMap.get(key);
-          (embarque.itens || []).forEach((itemEmbarque) => {
-            group.itens.push(itemEmbarque);
-          });
-        });
-
-        const resumoFornecedores = Array.from(fornecedoresMap.values());
-        const valorTotalCarga = embarquesRelacionados.reduce((total, embarque) => {
-          return total + (embarque.itens || []).reduce((sum, itemEmbarque) => sum + ((itemEmbarque.quantidade_embarcada || 0) * (itemEmbarque.custo_unitario || 0)), 0);
-        }, 0);
-
-        const diasAteSaida = saidaManaus ? Math.round((new Date(`${saidaManaus}T00:00:00`) - simulationBaseDate) / (1000 * 60 * 60 * 24)) : null;
-        const diasDesdeChegada = chegadaManaus ? Math.round((simulationBaseDate - new Date(`${chegadaManaus}T00:00:00`)) / (1000 * 60 * 60 * 24)) : null;
-        const ocupacaoPercentualDinamica = diasAteSaida === null || diasDesdeChegada === null
-          ? (item.ocupacao_percentual || 0)
-          : diasDesdeChegada < 0 || diasAteSaida < 0
-            ? 0
-            : Math.max(0, Math.min(100, Math.round((Math.min(diasDesdeChegada, 7) / 7) * 100)));
-
-        const contaFrete = contasFrete.find((conta) => {
-          const ref = `${conta.referencia_id || ''} ${conta.descricao || ''}`;
-          return ref.includes(item.id) || ref.includes(item.codigo || '');
-        });
-
-        return {
-          ...item,
-          data_chegada_manaus: chegadaManaus,
-          data_saida_origem: saidaManaus,
-          data_chegada_destino: chegadaTabatinga,
-          proxima_chegada_manaus: proximaChegadaManaus,
-          data_chegada_manaus_formatada: formatDate(chegadaManaus),
-          data_saida_manaus_formatada: formatDate(saidaManaus),
-          data_chegada_destino_formatada: formatDate(chegadaTabatinga),
-          proxima_chegada_manaus_formatada: formatDate(proximaChegadaManaus),
-          data_retorno_origem_formatada: formatDate(proximaChegadaManaus),
-          ocupacao_percentual_dinamica: ocupacaoPercentualDinamica,
-          embarques_relacionados: embarquesRelacionados,
-          tem_embarques_relacionados: embarquesRelacionados.length > 0,
-          total_embarques_relacionados: embarquesRelacionados.length,
-          total_fornecedores_relacionados: resumoFornecedores.length,
-          resumo_fornecedores: resumoFornecedores,
-          valor_total_carga: valorTotalCarga,
-          conta_frete: contaFrete || null,
-          conta_frete_status: contaFrete?.status || null,
-          tem_conta_frete: Boolean(contaFrete)
-        };
-      })
-      .sort((a, b) => new Date(b.data_saida_origem || 0) - new Date(a.data_saida_origem || 0));
-  }, [eventosLogisticos, embarques, contasPrevistas, simulationDate]);
+  }, [eventosBase, simulationDate]);
 
   React.useEffect(() => {
     setSelectedEvento(null);

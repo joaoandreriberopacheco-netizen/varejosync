@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { format } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Anchor, ChevronDown, Plus, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { buildBoatViewModels, buildFluvialEvents } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,83 +64,30 @@ export default function BoatsTab() {
     initialData: [],
   });
 
+  const { data: embarquesData = [] } = useQuery({
+    queryKey: ['embarques-logistica-boats'],
+    queryFn: () => base44.entities.Embarque.list('-created_date', 500),
+    initialData: [],
+  });
+
+  const { data: contasPrevistasData = [] } = useQuery({
+    queryKey: ['contas-previstas-boats'],
+    queryFn: () => base44.entities.ContaPrevista.list('-data_vencimento', 500),
+    initialData: [],
+  });
+
+  const eventosEnriquecidos = useMemo(() => buildFluvialEvents({
+    eventosLogisticos: eventosData,
+    embarques: embarquesData,
+    contasPrevistas: contasPrevistasData,
+  }), [eventosData, embarquesData, contasPrevistasData]);
+
   const transportadorasNormalizadas = useMemo(() => {
-    return transportadorasData.map((item) => {
-      const eventosRelacionados = eventosData
-        .filter((evento) => evento.transportadora_id === item.id)
-        .sort((a, b) => new Date(a.data_saida_origem || 0) - new Date(b.data_saida_origem || 0));
-
-      const proximoEvento = eventosRelacionados.find((evento) => {
-        if (!evento.data_chegada_destino) return false;
-        return new Date(`${evento.data_chegada_destino}T00:00:00`) >= new Date();
-      }) || eventosRelacionados[0];
-
-      return {
-        ...item,
-        status: item.ativo === false ? 'inativa' : 'ativa',
-        proximo_eta: proximoEvento?.data_chegada_destino ? format(new Date(`${proximoEvento.data_chegada_destino}T00:00:00`), 'dd/MM/yyyy') : '-',
-        recorrencia: item.saida_referencia || '-',
-        eventos: eventosRelacionados.map((evento) => ({
-          id: evento.id,
-          titulo: evento.nome || `${item.nome} · ${evento.codigo}`,
-          codigo: evento.codigo || '-',
-          data: evento.data_saida_origem ? format(new Date(`${evento.data_saida_origem}T00:00:00`), 'dd/MM/yyyy') : '-',
-          cargas: evento.total_embarques_relacionados || 0,
-          freteValor: 'Frete pendente',
-          financeiroStatus: evento.tem_conta_frete ? 'vinculado' : 'sem_conta',
-          pagamentoLabel: evento.tem_conta_frete ? 'Conta vinculada' : 'Sem conta',
-          embarques: [],
-          anexos: [],
-        })),
-        timeline: eventosRelacionados.flatMap((evento) => ([
-          {
-            label: 'Chegada em Manaus',
-            data: evento.data_chegada_manaus ? format(new Date(`${evento.data_chegada_manaus}T00:00:00`), 'dd/MM/yyyy') : '-',
-            status: 'Planejado',
-            dayLabel: evento.data_chegada_manaus ? format(new Date(`${evento.data_chegada_manaus}T00:00:00`), 'dd') : '--',
-            hasLinked: false,
-            linkedCount: 0,
-          },
-          {
-            label: 'Saída de Manaus',
-            data: evento.data_saida_origem ? format(new Date(`${evento.data_saida_origem}T00:00:00`), 'dd/MM/yyyy') : '-',
-            status: 'Planejado',
-            dayLabel: evento.data_saida_origem ? format(new Date(`${evento.data_saida_origem}T00:00:00`), 'dd') : '--',
-            hasLinked: false,
-            linkedCount: 0,
-          },
-          {
-            label: 'ETA Tabatinga',
-            data: evento.data_chegada_destino ? format(new Date(`${evento.data_chegada_destino}T00:00:00`), 'dd/MM/yyyy') : '-',
-            status: 'Planejado',
-            dayLabel: evento.data_chegada_destino ? format(new Date(`${evento.data_chegada_destino}T00:00:00`), 'dd') : '--',
-            hasLinked: false,
-            linkedCount: 0,
-          }
-        ])),
-        itinerario_real: eventosRelacionados.flatMap((evento) => ([
-          {
-            id: `${evento.id}-manaus`,
-            etapa: 'Chegada em Manaus',
-            data: evento.data_chegada_manaus ? format(new Date(`${evento.data_chegada_manaus}T00:00:00`), 'dd/MM/yyyy') : '-',
-            tipo: 'passada',
-          },
-          {
-            id: `${evento.id}-saida`,
-            etapa: 'Saída de Manaus',
-            data: evento.data_saida_origem ? format(new Date(`${evento.data_saida_origem}T00:00:00`), 'dd/MM/yyyy') : '-',
-            tipo: 'atual',
-          },
-          {
-            id: `${evento.id}-tabatinga`,
-            etapa: 'ETA Tabatinga',
-            data: evento.data_chegada_destino ? format(new Date(`${evento.data_chegada_destino}T00:00:00`), 'dd/MM/yyyy') : '-',
-            tipo: 'futura',
-          }
-        ])),
-      };
+    return buildBoatViewModels({
+      transportadoras: transportadorasData,
+      eventos: eventosEnriquecidos,
     });
-  }, [transportadorasData, eventosData]);
+  }, [transportadorasData, eventosEnriquecidos]);
 
   const transportadoras = useMemo(() => {
     const termo = search.trim().toLowerCase();
@@ -158,11 +105,15 @@ export default function BoatsTab() {
     setSelectedBoat(boatAtualizada);
     queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
     queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
+    queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
+    queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
   };
 
   const handleCreatedBoat = (createdBoat) => {
     queryClient.invalidateQueries({ queryKey: ['transportadoras-fluvial'] });
     queryClient.invalidateQueries({ queryKey: ['eventos-logisticos-fluvial'] });
+    queryClient.invalidateQueries({ queryKey: ['embarques-logistica-boats'] });
+    queryClient.invalidateQueries({ queryKey: ['contas-previstas-boats'] });
     setSelectedBoat(createdBoat);
   };
 
