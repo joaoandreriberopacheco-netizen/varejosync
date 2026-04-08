@@ -45,7 +45,18 @@ export default function ItinerarioFluvial() {
 
   const { data: embarques = [] } = useQuery({
     queryKey: ['embarques-logistica'],
-    queryFn: () => base44.entities.Embarque.list('-created_date', 500),
+    queryFn: async () => {
+      const embarquesData = await base44.entities.Embarque.list('-created_date', 500);
+      const pedidosData = await base44.entities.PedidoCompra.list('', 500);
+      const mapaReferenciaoPedidos = {};
+      pedidosData.forEach(pedido => {
+        mapaReferenciaoPedidos[pedido.id] = pedido;
+      });
+      return embarquesData.map(embarque => ({
+        ...embarque,
+        _pedido_compra: mapaReferenciaoPedidos[embarque.pedido_compra_id] || null
+      }));
+    },
     initialData: []
   });
 
